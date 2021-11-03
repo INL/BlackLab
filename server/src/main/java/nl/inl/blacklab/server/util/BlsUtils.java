@@ -9,7 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -18,6 +20,7 @@ import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocResults;
@@ -46,7 +49,34 @@ public class BlsUtils {
         Analyzer analyzer = index.analyzer();
         if (filterLang.equals("luceneql")) {
             try {
-                QueryParser parser = new QueryParser("", analyzer);
+                // We need to override a couple of query implementations to allow searching on numeric fields
+                // By default lucene will interpret everything as text, and thus not return any matches when
+                // a query touches a field that is actually numeric.
+                QueryParser parser = new QueryParser("", analyzer) {
+                    @Override
+                    protected org.apache.lucene.search.Query newRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) {
+
+                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
+                        if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
+                            try {
+                                return NumericRangeQuery.newIntRange(field, Integer.parseInt(part1), Integer.parseInt(part2), startInclusive, endInclusive);
+                            } catch (NumberFormatException e) {
+                                // there is nothing we can do here, just return the default implementation, which will likely return no results
+                            }
+                        }
+                        return super.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
+                    }
+
+                    @Override
+                    protected org.apache.lucene.search.Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
+                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
+                        if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
+                            return newRangeQuery(field, queryText, queryText, true, true);
+                        }
+
+                        return super.newFieldQuery(analyzer, field, queryText, quoted);
+                    }
+                };
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(filter);
                 return query;
@@ -216,4 +246,20 @@ public class BlsUtils {
             return f.isDirectory() && f.canRead();
         }
     };
+
+    /**
+     * Convert a number of seconds to a M:SS string.
+     *
+     * @param sec number of seconds
+     * @return a string of the form M:SS, e.g. 1s, 5m or 12m34s
+     */
+    public static String describeIntervalSec(int sec) {
+        int min = sec / 60;
+        sec = sec % 60;
+        if (min == 0)
+            return sec + "s";
+        if (sec == 0)
+            return min + "m";
+        return String.format("%dm%02ds", min, sec);
+    }
 }

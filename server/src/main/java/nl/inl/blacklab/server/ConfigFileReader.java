@@ -29,11 +29,11 @@ import nl.inl.util.Json;
  */
 class ConfigFileReader {
     private static final Logger logger = LogManager.getLogger(ConfigFileReader.class);
-    
+
     private static final List<String> exts = Arrays.asList("json", "yaml", "yml");
 
     private String configFileRead = "(none)";
-    
+
     private String configFileContents = null;
 
     private boolean configFileIsJson;
@@ -53,7 +53,7 @@ class ConfigFileReader {
                 throw new ConfigurationException("Config file not found", e);
             } catch (IOException e) {
                 throw new ConfigurationException("Error reading config file: " + configFile, e);
-            }    
+            }
             configFileIsJson = configFile.getName().endsWith(".json");
         }
 
@@ -76,14 +76,7 @@ class ConfigFileReader {
                 break;
             }
         }
-        
-        ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-        try {
-            configFileJsonNode = mapper.readTree(new StringReader(configFileContents));
-        } catch (IOException e) {
-            throw new ConfigurationException("Error parsing config file: " + configFileRead, e);
-        }
-            
+
         if (configFileContents == null) {
             String descDirs = StringUtils.join(searchDirs, ", ");
             throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
@@ -95,6 +88,13 @@ class ConfigFileReader {
                     "  ]\n" +
                     "}\n\n" +
                     "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+        } else {
+            ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+            try {
+                configFileJsonNode = mapper.readTree(new StringReader(configFileContents));
+            } catch (IOException e) {
+                throw new ConfigurationException("Error parsing config file: " + configFileRead, e);
+            }
         }
     }
 
@@ -108,7 +108,7 @@ class ConfigFileReader {
 
     /**
      * Read JSON or YAML from config file, depending on type.
-     * 
+     *
      * @return config structure read
      * @throws JsonProcessingException on Json error
      * @throws IOException on any I/O error
@@ -116,13 +116,9 @@ class ConfigFileReader {
     public JsonNode getJsonConfig() throws JsonProcessingException, IOException {
         return configFileJsonNode;
     }
-    
-    public boolean isOldConfig() {
-        return !configFileJsonNode.has("configVersion");
-    }
-    
+
     public BLSConfig getConfig() throws InvalidConfiguration {
         return BLSConfig.read(new StringReader(configFileContents), isJson());
     }
-    
+
 }

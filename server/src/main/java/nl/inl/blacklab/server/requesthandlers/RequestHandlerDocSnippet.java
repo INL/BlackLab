@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,6 +16,7 @@ import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -52,7 +52,6 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
-        Hit hit;
         ContextSize wordsAroundHit;
         int start, end;
         boolean isHit = false;
@@ -67,13 +66,13 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             wordsAroundHit = ContextSize.hitOnly();
         }
 
-        if (start < 0 || end < 0 || wordsAroundHit.left() * 2 + end - start <= 0 || end < start || wordsAroundHit.left() < 0) {
+        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
         // Clamp snippet to max size
         int snippetStart = Math.max(0, start - wordsAroundHit.left());
-        int snippetEnd = end + wordsAroundHit.left();
+        int snippetEnd = end + wordsAroundHit.right();
         int maxContextSize = searchMan.config().getParameters().getContextSize().getMax();
         if (snippetEnd - snippetStart > maxContextSize) {
             int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
@@ -81,10 +80,12 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
-        hit = Hit.create(luceneDocId, start, end, 0);
+        HitsArrays hitsArrays = new HitsArrays();
+        //TODO hit = Hit.create(luceneDocId, start, end, 0);
+        hitsArrays.add(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        Hits hits = Hits.fromList(QueryInfo.create(blIndex), Arrays.asList(hit));
-        getHitOrFragmentInfo(ds, hits, hit, wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
+        Hits hits = Hits.fromList(QueryInfo.create(blIndex), hitsArrays, null);
+        getHitOrFragmentInfo(ds, hits, hitsArrays.get(0), wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
         return HTTP_OK;
     }
 

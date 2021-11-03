@@ -21,7 +21,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -29,6 +28,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestQueryRewrite {
 
@@ -67,7 +67,8 @@ public class TestQueryRewrite {
 
     void assertRewrite(String cql, String before, String after) {
         try {
-            QueryExplanation explanation = index.explain(QueryInfo.create(index), getPatternFromCql(cql), null);
+            BLSpanQuery q = getPatternFromCql(cql).toQuery(QueryInfo.create(index));
+            QueryExplanation explanation = index.explain(q);
             if (before != null) {
                 BLSpanQuery original = explanation.originalQuery();
                 Assert.assertEquals(before, original.toString());

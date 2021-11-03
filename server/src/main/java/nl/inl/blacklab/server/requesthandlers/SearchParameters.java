@@ -37,6 +37,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -49,6 +50,7 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -97,7 +99,7 @@ public class SearchParameters {
         defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
         defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultParameterValues.put("waitfortotal", "no");
-        defaultParameterValues.put("number", "20");
+        defaultParameterValues.put("number", "50");
         defaultParameterValues.put("wordsaroundhit", "5");
         defaultParameterValues.put("maxretrieve", "1000000");
         defaultParameterValues.put("maxcount", "10000000");
@@ -118,6 +120,18 @@ public class SearchParameters {
 
     public static void setDefault(String name, String value) {
         defaultParameterValues.put(name, value);
+    }
+
+    /**
+     * Set up parameter default values from the configuration.
+     */
+    public static void setDefaults(BLSConfigParameters param) {
+        // Set up the parameter default values
+        setDefault("number", "" + param.getPageSize().getDefaultValue());
+        setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
+        setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
+        setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
+        setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
 
     public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName,
@@ -372,7 +386,7 @@ public class SearchParameters {
         return debugMode ? getBoolean("usecache") : true;
     }
 
-    private SearchSettings getSearchSettings() {
+    public SearchSettings getSearchSettings() {
         int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
         int maxRetrieve = getInteger("maxretrieve");
         int maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
@@ -398,7 +412,7 @@ public class SearchParameters {
     public ContextSettings getContextSettings() {
         ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
         int maxContextSize = searchManager.config().getParameters().getContextSize().getMax();
-        if (contextSize.left() > maxContextSize) {
+        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);
         }
@@ -504,11 +518,11 @@ public class SearchParameters {
         return new HitGroupSettings(groupBy);
     }
 
-    private HitSortSettings hitsSortSettings() {
+    public HitSortSettings hitsSortSettings() {
         if (isDocsOperation)
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 
-        String groupBy = getString("groupby");
+        String groupBy = getString("group");
         if (groupBy != null && !groupBy.isEmpty())
             return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
@@ -548,6 +562,10 @@ public class SearchParameters {
         return map.containsKey(key);
     }
 
+    /**
+     * @return hits - filtered then sorted then sampled then windowed
+     * @throws BlsException
+     */
     public SearchHits hitsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
         if (windowSettings == null)
@@ -555,6 +573,10 @@ public class SearchParameters {
         return hitsSample().window(windowSettings.first(), windowSettings.size());
     }
 
+    /**
+     * @return hits - filtered then sorted then sampled
+     * @throws BlsException
+     */
     public SearchHits hitsSample() throws BlsException {
         SampleParameters sampleSettings = getSampleSettings();
         if (sampleSettings == null)
@@ -562,6 +584,10 @@ public class SearchParameters {
         return hitsSorted().sample(sampleSettings);
     }
 
+    /**
+     * @return hits - filtered then sorted
+     * @throws BlsException
+     */
     public SearchHits hitsSorted() throws BlsException {
         HitSortSettings hitsSortSettings = hitsSortSettings();
         if (hitsSortSettings == null)
@@ -569,6 +595,10 @@ public class SearchParameters {
         return hitsFiltered().sort(hitsSortSettings.sortBy());
     }
 
+    /**
+     * @return hits - filtered then sorted then sampled then counted
+     * @throws BlsException
+     */
     public SearchCount hitsCount() throws BlsException {
         return hitsSample().hitCount();
     }
@@ -584,7 +614,14 @@ public class SearchParameters {
 
     public SearchHits hits() throws BlsException {
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(getPattern(), getFilterQuery(), getSearchSettings());
+        try {
+            Query filter = hasFilter() ? getFilterQuery() : null;
+            return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
+        } catch (InvalidQuery e) {
+            throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
+        } catch (BlsException e) {
+            throw e;
+        }
     }
 
     public SearchDocs docsWindow() throws BlsException {
@@ -616,7 +653,7 @@ public class SearchParameters {
             docFilterQuery = new MatchAllDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(docFilterQuery);
+        return search.findDocuments(docFilterQuery);
     }
 
     /**
@@ -634,7 +671,7 @@ public class SearchParameters {
             docFilterQuery = new MatchAllDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
-        return search.find(docFilterQuery);
+        return search.findDocuments(docFilterQuery);
     }
 
     public SearchHitGroups hitsGrouped() throws BlsException {

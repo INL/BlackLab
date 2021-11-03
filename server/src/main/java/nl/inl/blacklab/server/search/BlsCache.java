@@ -9,56 +9,135 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.function.Supplier;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.ServerOverloaded;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
-import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
-import nl.inl.blacklab.server.config.BLSConfigPerformance;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
+import nl.inl.blacklab.server.logging.LogDatabaseDummy;
+import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
-import nl.inl.util.ThreadPauser;
-import nl.inl.util.ThreadPauserImpl;
 
 public class BlsCache implements SearchCache {
-    
-    private static final int ONE_MINUTE_MS = 60000;
 
     private static final Logger logger = LogManager.getLogger(BlsCache.class);
-    
-    public static final boolean ENABLE_NEW_CACHE = true;
 
-    /** Very rough measure of how large result objects are, based on a Hit (4 ints + 12 bytes object overhead) */
+    /** Milliseconds per minute */
+    private static final int LOG_CACHE_STATE_INTERVAL_SEC = 60;
+
+    private static final int LOG_CACHE_SNAPSHOT_INTERVAL_SEC = 60 * 5;
+
+    /** Bytes in one megabyte */
+    private static final long ONE_MB_BYTES = 1_000_000;
+
+    /** Bytes in one gigabyte */
+    private static final long ONE_GB_BYTES = ONE_MB_BYTES * 1_000;
+
+    /** Very rough measure of how large result objects are, based on a Hit (3 ints + 12 bytes object overhead) */
     public static final int SIZE_OF_HIT = 28;
 
+    /**
+     * A thread that regularly calls cleanUpSearches() to
+     * ensure that cache cleanup continues even if no new requests are coming in.
+     */
+    class CleanupSearchesThread extends Thread implements UncaughtExceptionHandler {
+
+        private static final int CLEAN_UP_CACHE_INTERVAL_MS = 500;
+
+        /** Construct the load manager thread object. */
+        public CleanupSearchesThread() {
+            super("CleanupSearches");
+            setUncaughtExceptionHandler(this);
+        }
+
+        /**
+         * Run the thread, performing the requested search.
+         */
+        @Override
+        public void run() {
+            while (!interrupted()) {
+                try {
+                    Thread.sleep(CLEAN_UP_CACHE_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    logger.info("CleanupSearchesThread interrupted");
+                    return;
+                }
+
+                updateCache();
+            }
+        }
+
+        @Override
+        public void uncaughtException(Thread t, Throwable e) {
+            logger.error("CleanupSearchesThread threw an exception!");
+            e.printStackTrace();
+        }
+
+    }
+
+    private BLSConfigCache config;
+
+    private int maxConcurrentSearches;
+
+    /** Abort an abandoned count after how much time? (s) */
+    private int abandonedCountAbortTimeSec;
+
     protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
-    
+
     protected boolean trace = false;
 
     private boolean cacheDisabled;
-    
-    private LogDatabase logDatabase = null;
 
-    public BlsCache(BLSConfig config) {
-        BLSConfigCache cacheConfig = config.getCache();
-        initLoadManagement(cacheConfig, config.getPerformance());
-        this.trace = config.getLog().getTrace().isCache();
-        cacheDisabled = cacheConfig.getMaxNumberOfJobs() == 0 || cacheConfig.getMaxJobAgeSec() == 0 || cacheConfig.getMaxSizeMegs() == 0;
-    }
+    private Comparator<BlsCacheEntry<?>> worthinessComparator;
 
-    public void setLogDatabase(LogDatabase logDatabase) {
+    private long cacheSizeBytes;
+
+    private CleanupSearchesThread cleanupThread;
+
+    private long lastCacheLogMs = 0;
+
+    private long lastCacheSnapshotMs = 0;
+
+    private String previousCacheStatsMessage = "";
+
+    /** SQLite database to log all our searches to (if enabled) */
+    private LogDatabase logDatabase = new LogDatabaseDummy();
+
+    @SuppressWarnings("deprecation")
+    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace, LogDatabase logDatabase) {
+        this.config = config;
+        this.maxConcurrentSearches = maxConcurrentSearches;
+        this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
+        this.trace = trace;
         this.logDatabase = logDatabase;
+        cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
+
+        if (!cacheDisabled) {
+            worthinessComparator = new Comparator<BlsCacheEntry<?>>() {
+                @Override
+                public int compare(BlsCacheEntry<?> o1, BlsCacheEntry<?> o2) {
+                    long result = o2.worthiness() - o1.worthiness();
+                    return result == 0 ? 0 : (result < 0 ? -1 : 1);
+                }
+            };
+
+            cleanupThread = new CleanupSearchesThread();
+            cleanupThread.setDaemon(true); // don't prevent JVM from exiting.
+            cleanupThread.start();
+        }
     }
 
     /**
@@ -66,11 +145,13 @@ public class BlsCache implements SearchCache {
      */
     @Override
     public void cleanup() {
-        loadManagerThread.interrupt();
-        loadManagerThread = null;
+        if (cleanupThread != null) {
+            cleanupThread.interrupt();
+            cleanupThread = null;
+        }
         clear(true);
     }
-    
+
     /**
      * Remove all cache entries for the specified index.
      *
@@ -79,12 +160,12 @@ public class BlsCache implements SearchCache {
     @Override
     public synchronized void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
+        traceInfo("Remove searches for index: " + index.name());
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();
             if (entry.getValue().search().queryInfo().index() == index) {
-                if (!entry.getValue().isSearchDone())
-                    entry.getValue().cancelSearch();
+                entry.getValue().cancel(true);
                 it.remove();
             }
         }
@@ -98,423 +179,368 @@ public class BlsCache implements SearchCache {
     @Override
     public synchronized void clear(boolean cancelRunning) {
         for (BlsCacheEntry<? extends SearchResult> cachedSearch : searches.values()) {
-            if (!cachedSearch.isSearchDone())
-                cachedSearch.cancelSearch();
+            cachedSearch.cancel(true);
         }
         searches.clear();
-        logger.debug("Cache cleared.");
-    }    
-    
-    public boolean isTrace() {
-        return trace;
-    }
-
-    public void setTrace(boolean trace) {
-        this.trace = trace;
+        traceInfo("Cache cleared.");
     }
 
     @Override
-    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, Supplier<R> searchTask) {
-        return getFromCache(search, searchTask, false);
-    }
-
-    @Override
-    public <R extends SearchResult> R get(Search<R> search, Supplier<R> searchTask) throws ExecutionException {
-        BlsCacheEntry<R> entry = getFromCache(search, searchTask, true);
-        try {
-            return entry.get();
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        }
+    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
+        return getFromCache(search, false, allowQueue);
     }
 
     @SuppressWarnings("unchecked")
-    private <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search,
-            Supplier<R> searchTask, boolean block) {
+    private synchronized <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean block, boolean allowQueue) {
+        //if (trace) logger.debug("getFromCache({}, block={}, allowQueue={})", search, block, allowQueue);
         BlsCacheEntry<R> future;
-        boolean created = false;
-        boolean useCache = search.queryInfo().useCache();
-        synchronized (this) {
-            future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
-            if (future == null) {
-                search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
-                try {
-                    checkFreeMemory(); // check that we have sufficient available memory
-                } catch (InsufficientMemoryAvailable e) {
-                    search.log(LogLevel.BASIC, "not enough memory for search: " + search + " (" + e.getMessage() + ")");
-                    throw e;
-                }
-                future = new BlsCacheEntry<>(search, searchTask);
-                created = true;
-                if (!cacheDisabled && useCache)
-                    searches.put(search, future);
-                if (!block)
-                    future.start(false);
-            } else {
-                search.log(LogLevel.BASIC, "found in cache (" + future.status() + "): " + search);
+        boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
+        future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
+        if (future == null) {
+            search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
+            int numQueued = numberOfQueuedSearches();
+            if (numQueued >= config.getMaxQueuedSearches()) {
+                logger.warn("Can't start new search, too many queued searches (numQueued = " + numQueued + ", maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
+                throw new ServerOverloaded("The server is too busy right now (" + numQueued + " searches queued). Please try again later.");
             }
-        }
-        if (created) {
-            if (trace)
-                logger.info("-- ADDED: " + search);
-            if (block)
-                future.start(true);
+
+            // Create the cache entry.
+            // Note that all entries start "queued" (i.e. the search itself hasn't been started yet).
+            // We will see if it can be started below.
+            future = new BlsCacheEntry<>(search);
+            if (useCache)
+                searches.put(search, future);
+
+            // Can we start the search, or should it remain queued for now?
+            if (block) {
+                // Blocking search. Run it now.
+                traceInfo("-- STARTING: {} (BLOCKING SEARCH)", search);
+                future.start();
+                waitUntilDone(future);
+            } else if (!allowQueue || !useCache) {
+                // No queueing allowed (i.e. subtask required by another subtask). Start the search right away.
+                // (we also do this if you bypass the cache, because then queueing doesn't work)
+                if (!allowQueue)
+                    traceInfo("-- STARTING: {} (TOP-LEVEL SEARCH)", search);
+                else
+                    traceInfo("-- STARTING: {} (NOT USING CACHE)", search);
+                future.start();
+            } else {
+                // Queueing is allowed.
+                // The new search hasn't been started yet (therefore it is "queued").
+                // Check if it (or an older queued search) can be started now.
+                startSearchIfPossible(false);
+                if (future.wasStarted()) {
+                    traceInfo("-- STARTING: {} (QUEUEING NOT NECESSARY)", search);
+                } else {
+                    traceInfo("-- QUEUEING: {}", search);
+                }
+            }
         } else {
-            if (trace)
-                logger.info("-- FOUND: " + search);
+            // Already in cache.
+            traceInfo("-- FOUND:    {}", search);
             future.updateLastAccess();
         }
+        //traceCacheStats("   CACHE AFTER GET", false);
         return future;
     }
-    
+
+    synchronized String getCacheStats() {
+        if (trace) {
+            Map<String, Integer> counts = getCountsPerStatus();
+            return String.format("%d queued, %d running, %d finished, %d cancelled",
+                counts.get("queued"),
+                counts.get("running"),
+                counts.get("finished"),
+                counts.get("cancelled")
+            );
+        }
+        return "";
+    }
+
+    private Map<String, Integer> getCountsPerStatus() {
+        int queued = 0, running = 0, finished = 0, cancelled = 0;
+        for (BlsCacheEntry<? extends SearchResult> entry: searches.values()) {
+            if (!entry.wasStarted())
+                queued++;
+            else if (entry.isCancelled())
+                cancelled++;
+            else if (entry.isDone())
+                finished++;
+            else
+                running++;
+        }
+        Map<String, Integer> countPerStatus = new HashMap<>();
+        countPerStatus.put("queued", queued);
+        countPerStatus.put("running", running);
+        countPerStatus.put("finished", finished);
+        countPerStatus.put("cancelled", cancelled);
+        return countPerStatus;
+    }
+
+    void traceCacheStats(String prompt, boolean onlyIfDifferent) {
+        if (trace) {
+            String msg = getCacheStats();
+            if (!onlyIfDifferent || !msg.equals(previousCacheStatsMessage)) {
+                double freeGigs = (double)(MemoryUtil.getFree() * 10 / ONE_GB_BYTES) / 10;
+                traceInfo("{}: {}, {}G free heap", prompt, msg, freeGigs);
+            }
+            previousCacheStatsMessage = msg;
+        }
+    }
+
     @Override
     @SuppressWarnings("unchecked")
-    public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
-        BlsCacheEntry<R> future = null;
-        synchronized (this) {
-            future = (BlsCacheEntry<R>) searches.remove(search);
-            if (future != null && trace)
-                logger.info("-- REMOVED: " + search);
-        }
+    synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
+        BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
+        if (future != null)
+            traceInfo("-- REMOVED:  {} ({} searches left)", search, searches.size());
         return future;
     }
 
-    // CACHE / LOAD MANAGEMENT
-    //----------------------------------------------------
-
     /**
-     * A thread that regularly calls performLoadManagement() to
-     * ensure that load management continues even if no new requests are coming in.
+     * Estimate number of result objects (e.g. Hits) in cache.
+     *
+     * This may not be accurate because Hits are sometimes but not always duplicated
+     * between tasks (e.g. gather, sort, group). It gives a rough estimate though
+     * that we can use to decide when to clean up.
+     *
+     * @return estimate of number of Hits in cache
      */
-    class LoadManagerThread extends Thread implements UncaughtExceptionHandler {
-
-        /** Construct the load manager thread object. */
-        public LoadManagerThread() {
-            setUncaughtExceptionHandler(this);
-        }
-
-        /**
-         * Run the thread, performing the requested search.
-         */
-        @Override
-        public void run() {
-            while (!interrupted()) {
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    logger.info("LOADMGR interrupted");
-                    return;
-                }
-
-                performLoadManagement();
-            }
-        }
-
-        @Override
-        public void uncaughtException(Thread t, Throwable e) {
-            logger.error("LoadManagerThread threw an exception!");
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * What we can do to a query in response to the server load.
-     */
-    public static enum ServerLoadQueryAction {
-        UNPAUSE, // unpause search (run normally)
-        PAUSE,   // pause search
-        ABORT,   // abort search
-    }
-
-    private BLSConfigCache config;
-    
-    private BLSConfigPerformance perfConfig;
-    
-    private Comparator<BlsCacheEntry<?>> wortinessComparator;
-
-    private int resultsObjectsInCache;
-
-    private LoadManagerThread loadManagerThread;
-
-    private long lastCacheLog = 0;
-
-    private long lastCacheSnapshot = 0;
-    
-    private void initLoadManagement(BLSConfigCache config, BLSConfigPerformance perfConfig) {
-        this.config = config;
-        this.perfConfig = perfConfig;
-        
-        // Make sure long operations can be paused.
-        ThreadPauserImpl.setEnabled(perfConfig.isPausingEnabled());
-        finishInit();
-    }
-
-    private void finishInit() {
-        wortinessComparator = new Comparator<BlsCacheEntry<?>>() {
-            @Override
-            public int compare(BlsCacheEntry<?> o1, BlsCacheEntry<?> o2) {
-                long result = o2.worthiness() - o1.worthiness();
-                return result == 0 ? 0 : (result < 0 ? -1 : 1);
-            }
-        };
-        
-        loadManagerThread = new LoadManagerThread();
-        loadManagerThread.start();
-    }
-
-    private synchronized int determineCacheSize() {
+    private synchronized long estimateResultObjectsInCache() {
         // Estimate the total cache size
-        resultsObjectsInCache = 0;
+        long resultsObjectsInCache = 0;
         for (BlsCacheEntry<?> search : searches.values()) {
             resultsObjectsInCache += search.numberOfStoredHits();
         }
         return resultsObjectsInCache;
     }
-    
+
+    void traceInfo(String msg, Object... params) {
+        if (trace) {
+            logger.info(msg, params);
+        }
+    }
+
+    public synchronized int numberOfRunningSearches() {
+        return (int) searches.values().stream().filter(s -> s.isRunning()).count();
+    }
+
+    private synchronized int numberOfQueuedSearches() {
+        return (int) searches.values().stream().filter(s -> !s.wasStarted()).count();
+    }
+
     /**
-     * Evaluate what we need to do (if anything) with each search given the current
-     * server load.
+     * If we can start another search, finds the oldest queued search and start it.
+     *
+     * @param report if true (and trace is on), report the search we started
      */
-    synchronized void performLoadManagement() {
-        
-        determineCacheSize();
-        long cacheSizeBytes = (long)resultsObjectsInCache * SIZE_OF_HIT;
+    synchronized void startSearchIfPossible(boolean report) {
+        // Is server load low enough to start a search?
+        if (canStartAnotherSearch()) {
+            // Find the oldest queued search and start it.
+            // Only start one per iteration (give it a little time to start its subtasks)
+
+            // Sort the searches based on descending "worthiness"
+            List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
+            for (BlsCacheEntry<?> s : searches)
+                s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
+            searches.sort(worthinessComparator);
+
+            // Find & start oldest queued search
+            BlsCacheEntry<?> search1 = searches.stream().filter(s -> !s.wasStarted()).findFirst().orElse(null);
+            if (search1 != null) {
+                if (report)
+                    traceInfo("-- UNQUEUE:  {}", search1);
+                search1.start();
+            }
+        }
+    }
+
+    /**
+     * See if server load is low enough that we can start (unqueue) another search.
+     *
+     * @return true if we can start a search, false if it's still too busy
+     */
+    private boolean canStartAnotherSearch() {
+        int runningSearches = numberOfRunningSearches();
+        long freeMemory = MemoryUtil.getFree();
+        int minFreeMemForSearchMegs = config.getMinFreeMemForSearchMegs();
+        boolean enoughMemory = freeMemory / ONE_MB_BYTES >= minFreeMemForSearchMegs;
+        boolean threadsAvailable = runningSearches < maxConcurrentSearches;
+        boolean canStartSearch = enoughMemory && threadsAvailable;
+        return canStartSearch;
+    }
+
+    /**
+     * Abort searches if too much memory is in use or the search is taking too long.
+     * Remove older finished searches from cache. Start a queued search if load is low enough.
+     */
+    synchronized void updateCache() {
+        long resultsObjectsInCache = estimateResultObjectsInCache();
+        cacheSizeBytes = resultsObjectsInCache * SIZE_OF_HIT;
 
         List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
-        int numberOfSearchesInCache = searches.size();
 
-        // Log cache state every 60s
-        if (logDatabase != null && System.currentTimeMillis() - lastCacheLog > ONE_MINUTE_MS) {
-            int numberRunning = 0, numberPaused = 0;
-            int largestEntryHits = 0;
-            long oldestEntryAgeMs = 0;
-            for (BlsCacheEntry<?> s: searches) {
-                if (!s.isSearchDone())
-                    numberRunning++;
-                if (s.threadPauser().isPaused())
-                    numberPaused++;
-                if (s.numberOfStoredHits() > largestEntryHits)
-                    largestEntryHits = s.numberOfStoredHits();
-                if (s.timeSinceCreation() > oldestEntryAgeMs)
-                    oldestEntryAgeMs = s.timeSinceCreation();
-            }
-            lastCacheLog = System.currentTimeMillis();
-            List<BlsCacheEntry<? extends SearchResult>> snapshot = null;
-            if (lastCacheLog - lastCacheSnapshot > ONE_MINUTE_MS * 5) {
-                // Capture a cache snapshot every 5 minutes
-                snapshot = searches;
-                lastCacheSnapshot = lastCacheLog;
-            }
-            logDatabase.addCacheInfo(snapshot, searches.size(), numberRunning, numberPaused, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
-        }
+        logCacheState();
 
         // Sort the searches based on descending "worthiness"
         for (BlsCacheEntry<?> s : searches)
             s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
-        searches.sort(wortinessComparator);
+        searches.sort(worthinessComparator);
 
         //------------------
         // STEP 1: remove least worthy, finished searches from cache
 
-        // If we're low on memory, remove searches from cache until we're not.
-        long freeMegs = MemoryUtil.getFree() / 1000000;
-        long memoryToFreeUp = config.getTargetFreeMemMegs() - freeMegs;
-
-        // Look at searches from least worthy to worthiest.
-        // Get rid of old searches
-        List<BlsCacheEntry<?>> removed = new ArrayList<>();
-        boolean lookAtCacheSizeAndSearchAccessTime = true;
+        // Abort searches that are taking too long (longer than maxSearchTimeSec)
         for (int i = searches.size() - 1; i >= 0; i--) {
-            BlsCacheEntry<?> search1 = searches.get(i);
-
-            if (!search1.isSearchDone() && search1.timeUserWaited() > config.getMaxSearchTimeSec() * 1000L) {
+            BlsCacheEntry<?> search = searches.get(i);
+            int maxSearchTimeSec = config.getMaxSearchTimeSec();
+            if (search.isRunning() && search.timeUserWaitedMs() > maxSearchTimeSec * 1000L) {
                 // Search is taking too long. Cancel it.
-                if (trace) {
-                    logger.debug("Search is taking too long (time " + (search1.timeUserWaited()/1000) + "s > max time "
-                            + config.getMaxSearchTimeSec() + "s)");
-                    logger.debug("  Cancelling searchjob: " + search1);
-                }
-                remove(search1.search());
-                cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
-                numberOfSearchesInCache--;
-                removed.add(search1);
-                search1.cancelSearch();
-            } else if (search1.isDone()) {
-                // Finished search
-                boolean removeBecauseOfCacheSizeOrAge = false;
-                boolean isCacheTooBig = false;
-                boolean isSearchTooOld = false;
-                long cacheSizeMegs = 0;
-                boolean tooMuchMemory = false;
-                boolean tooManySearches = false;
-                if (lookAtCacheSizeAndSearchAccessTime) {
-                    tooManySearches = config.getMaxNumberOfJobs() >= 0
-                            && numberOfSearchesInCache > config.getMaxNumberOfJobs();
-                    cacheSizeMegs = cacheSizeBytes / 1000000;
-                    tooMuchMemory = config.getMaxSizeMegs() >= 0
-                            && cacheSizeMegs > config.getMaxSizeMegs();
-                    isCacheTooBig = tooManySearches || tooMuchMemory;
-                    isSearchTooOld = false;
-                    if (!isCacheTooBig) {
-                        boolean tooOld = config.getMaxJobAgeSec() * 1000L >= 0
-                                && search1.timeUnused() > config.getMaxJobAgeSec() * 1000L;
-                        isSearchTooOld = tooOld;
-                    }
-                    removeBecauseOfCacheSizeOrAge = isCacheTooBig || isSearchTooOld;
-                }
-                if (memoryToFreeUp > 0 || removeBecauseOfCacheSizeOrAge) {
-                    // Search is too old or cache is too big. Keep removing searches until that's no
-                    // longer the case
-                    // logger.debug("Remove from cache: " + search);
-                    if (trace) {
-                        if (memoryToFreeUp > 0)
-                            logger.debug("Not enough free mem (free " + freeMegs + "M < min free "
-                                    + config.getTargetFreeMemMegs() + "M)");
-                        else if (tooManySearches)
-                            logger.debug("Too many searches in cache (" + searches.size() + " > max size "
-                                    + config.getMaxNumberOfJobs() + ")");
-                        else if (tooMuchMemory)
-                            logger.debug("Cache too large (size " + cacheSizeMegs + "M > max size "
-                                    + config.getMaxSizeMegs() + "M)");
-                        else
-                            logger.debug("Searchjob too old (age " + (int)(search1.timeUnused()/1000) + "s > max age "
-                                    + config.getMaxJobAgeSec() + "s)");
-                        logger.debug("  Removing searchjob: " + search1);
-                    }
-                    remove(search1.search());
-                    cacheSizeBytes -= search1.numberOfStoredHits() * SIZE_OF_HIT;
-                    numberOfSearchesInCache--;
-                    removed.add(search1);
-                    memoryToFreeUp -= search1.numberOfStoredHits() * SIZE_OF_HIT;
-                    
-                } else {
-                    // Cache is no longer too big and these searches are not too old. Stop checking
-                    // that,
-                    // just check for long-running searches
-                    lookAtCacheSizeAndSearchAccessTime = false;
-                }
+                traceInfo("Search is taking too long (time " + (search.timeUserWaitedMs()/1000) + "s > max time " + maxSearchTimeSec + "s)");
+                traceInfo("-- ABORT (taking too long): {}", search);
+                String maxTime = BlsUtils.describeIntervalSec(maxSearchTimeSec);
+                String retryTime = BlsUtils.describeIntervalSec(config.getDenyAbortedSearchSec());
+                search.setReason("Running search aborted because it took longer than " + maxTime + ". " +
+                        "This is done to ease server load. If you want to try again, please wait " +
+                        retryTime + ".");
+                search.cancel(true);
+                searches.remove(i);
             }
         }
-        // Make sure we don't look at the searches we removed again in the next step
-        for (BlsCacheEntry<?> r : removed) {
-            searches.remove(r);
+
+        // Look at completed searches.
+        // Get rid of completed searches that haven't been accessed in a while (maxJobAgeSec).
+        // If we're low on memory, remove searches so they will be garbage collected (targetFreeMemMegs).
+        boolean checkLastAccessTime = config.getMaxJobAgeSec() >= 0;
+        long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
+        long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
+        for (int i = searches.size() - 1; i >= 0; i--) {
+            BlsCacheEntry<?> search = searches.get(i);
+            if (!search.isDone())
+                continue;
+
+            boolean isSearchTooOld = false;
+            if (search.isCancelled()) {
+                // Cancelled (aborted) search kept in cache to prevent clients from resubmitting right away.
+                isSearchTooOld = checkLastAccessTime && (search.timeSinceFinishedMs() > config.getDenyAbortedSearchSec() * 1000L ||
+                        search.timeSinceCreationMs() > config.getMaxJobAgeSec() * 1000L);
+            } else {
+                // Finished search.
+                isSearchTooOld = checkLastAccessTime && search.timeUnusedMs() > config.getMaxJobAgeSec() * 1000L;
+            }
+            if (isSearchTooOld || memoryToFreeUpMegs > 0) {
+                // Search is too old or cache is too big. Keep removing searches until that's no
+                // longer the case
+                // logger.debug("Remove from cache: " + search);
+                String reason = "?";
+                if (memoryToFreeUpMegs > 0) {
+                    traceInfo("Not enough free mem (free " + freeMegs + "M < min free "
+                            + config.getTargetFreeMemMegs() + "M)");
+                    reason = "free up memory";
+                } else {
+                    traceInfo("Searchjob too old (age " + (int)(search.timeUnusedMs()/1000) + "s > max age "
+                            + config.getMaxJobAgeSec() + "s)");
+                    reason = "search too old";
+                }
+                traceInfo("-- REMOVE ({}): {}", reason, search);
+                remove(search.search());
+
+                memoryToFreeUpMegs -= (long)search.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES; // NB very rough guess, but ok
+                searches.remove(i);
+            }
         }
-        // NOTE: we used to hint the Java GC to run, but this caused severe
-        // slowdowns. It's better to rely on the incremental garbage collection.
 
         //------------------
-        // STEP 2: make sure the most worthy searches get the CPU, and pause
-        //         any others to avoid bringing down the server.
-
+        // STEP 2: abort any long-running counts that no client has asked about for a while.
         // LEXION CHANGE: we've commented out step 2, as it causes deadlocks under heavy load.
+   //     for (int i = 0; i < searches.size(); i++) {
+   //         BlsCacheEntry<?> search = searches.get(i);
+   //         if (search.isRunning()) {
+   //             // Running search. Run or abort?
+   //             boolean isCount = search.search() instanceof SearchCount;
+   //             if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
+   //                 // Abandoned counts are removed right away, because we do this quite quickly (e.g. 30s)
+   //                 // and don't want to penalize users if they decide to come back to this search.
+   //                 remove(search.search());
+   //                 traceInfo("-- ABORT (abandoned count): {}", search);
+   //                 String maxTime = BlsUtils.describeIntervalSec(abandonedCountAbortTimeSec);
+   //                 search.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
+   //                         "This is done to ease server load. If you need the results of this count, please try your search again.");
+   //                 search.cancel(true);
+   //                 searches.remove(i);
+   //                 i--; // don't skip an element
+   //             }
+   //         }
+   //     }
 
-//        int coresLeft = perfConfig.getMaxConcurrentSearches();
-//        int pauseSlotsLeft = perfConfig.getMaxPausedSearches();
-//        for (BlsCacheEntry<?> search : searches) {
-//            if (search.isDone()) {
-//                // Finished search. Keep in cache?
-//
-//                // NOTE: we'll leave this to removeOldSearches() for now.
-//                // Later we'll integrate the two.
-//            } else {
-//                // Running search. Run, pause or abort?
-//                boolean isCount = search.search() instanceof SearchCount;
-//                if (isCount && search.timeSinceLastAccess() > perfConfig.getAbandonedCountPauseTimeSec() * 1000L
-//                        && pauseSlotsLeft > 0) {
-//                    // This is a long-running count that seems to have been abandoned by the client.
-//                    // First we'll pause it so it doesn't consume CPU resources. Eventually we'll
-//                    // abort it so its memory is freed up.
-//                    if (search.timeSinceLastAccess() <= perfConfig.getAbandonedCountAbortTimeSec() * 1000L) {
-//                        pauseSlotsLeft--;
-//                        applyAction(search, ServerLoadQueryAction.PAUSE, "abandoned count");
-//                    } else {
-//                        applyAction(search, ServerLoadQueryAction.ABORT, "abandoned count");
-//                    }
-//                } else if (coresLeft > 0) {
-//                    // A core is available. Run the search.
-//                    coresLeft--;
-//                    applyAction(search, ServerLoadQueryAction.UNPAUSE, "core available");
-//                } else if (pauseSlotsLeft > 0) {
-//                    // No cores, but a pause slot is left. Pause it.
-//                    pauseSlotsLeft--;
-//                    applyAction(search, ServerLoadQueryAction.PAUSE, "no cores left");
-//                } else {
-//                    // No cores or pause slots. Abort the search.
-//                    applyAction(search, ServerLoadQueryAction.ABORT, "no cores or pause slots left");
-//                }
-//            }
-//        }
+        // See if we can start a queued search
+        startSearchIfPossible(true);
+
+        // Report the cache status (if it changed)
+        traceCacheStats("CACHE AFTER UPDATE", true);
     }
 
     /**
-     * Apply one of the load managing actions to a search.
+     * Regularly log state of the cache to the log database.
      *
-     * @param search the search
-     * @param action the action to apply
-     * @param reason the reason for this action, so we can log it
+     * Logs the current state every LOG_CACHE_STATE_INTERVAL_SEC, and a snapshot every
+     * LOG_CACHE_SNAPSHOT_INTERVAL_SEC.
+     *
+     * @param cacheSizeBytes
+     * @param searches
      */
-    private void applyAction(BlsCacheEntry<?> search, ServerLoadQueryAction action, String reason) {
-        // See what to do with the current search
-        ThreadPauser threadPauser = search.threadPauser();
-        switch (action) {
-        case UNPAUSE:
-            if (threadPauser.isPaused()) {
-                if (trace)
-                    logger.debug("LOADMGR: Resuming search: " + search + " (" + reason + ")");
-                threadPauser.pause(false);
+    private synchronized void logCacheState() {
+        // Log cache state
+        if (logDatabase != null && System.currentTimeMillis() - lastCacheLogMs > LOG_CACHE_STATE_INTERVAL_SEC * 1000) {
+            int numberRunning = 0;
+            int largestEntryHits = 0;
+            long oldestEntryAgeMs = 0;
+            for (BlsCacheEntry<?> s: searches.values()) {
+                if (!s.isDone())
+                    numberRunning++;
+                if (s.numberOfStoredHits() > largestEntryHits)
+                    largestEntryHits = s.numberOfStoredHits();
+                if (s.timeSinceCreationMs() > oldestEntryAgeMs)
+                    oldestEntryAgeMs = s.timeSinceCreationMs();
             }
-            break;
-        case PAUSE:
-            if (!threadPauser.isPaused()) {
-                if (trace)
-                    logger.debug("LOADMGR: Pausing search: " + search + " (" + reason + ")");
-                threadPauser.pause(true);
+            lastCacheLogMs = System.currentTimeMillis();
+            List<BlsCacheEntry<? extends SearchResult>> snapshot = null;
+            if (lastCacheLogMs - lastCacheSnapshotMs > LOG_CACHE_SNAPSHOT_INTERVAL_SEC * 1000) {
+                // Every now and then, also capture a cache snapshot
+                snapshot = new ArrayList<>(searches.values());
+                lastCacheSnapshotMs = lastCacheLogMs;
             }
-            break;
-        case ABORT:
-            if (!search.isSearchDone()) {
-                // TODO: Maybe we should blacklist certain searches for a time?
-                if (trace)
-                    logger.warn("LOADMGR: Aborting search: " + search + " (" + reason + ")");
-                remove(search.search());
-                search.cancelSearch();
-            }
-            break;
+            logDatabase.addCacheInfo(snapshot, searches.size(), numberRunning, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
         }
     }
-    
-    private void checkFreeMemory() {
-        long freeMegs = MemoryUtil.getFree() / 1000000;
-        if (freeMegs < config.getMinFreeMemForSearchMegs()) {
-            performLoadManagement(); //removeOldSearches(); // try to free up space for next search
-            logger.warn(
-                    "Can't start new search, not enough memory (" + freeMegs + "M < "
-                            + config.getMinFreeMemForSearchMegs() + "M)");
-            logger.warn("(NOTE: make sure Tomcat's max heap mem is set to an appropriate value!)");
-            throw new InsufficientMemoryAvailable(
-                    "The server has insufficient memory available to start a new search. Please try again later. (not enough JVM heap memory for new search; try increasing -Xmx value when starting JVM)");
-        }
-        // logger.debug("Enough free memory: " + freeMegs + "M");
-    }
-    
+
     /**
      * Dump information about the cache status.
      * @param ds where to write information to
      */
     public synchronized void dataStreamCacheStatus(DataStream ds) {
-        long maxSizeMegs = config.getMaxSizeMegs();
-        long maxSizeBytes = maxSizeMegs < 0 ? -1 : maxSizeMegs * 1000 * 1000;
-        ds.startMap()
-                .entry("maxSizeBytes", maxSizeBytes)
-                .entry("maxNumberOfSearches", config.getMaxNumberOfJobs())
-                .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
-                .entry("sizeBytes", resultsObjectsInCache * SIZE_OF_HIT)
-                .entry("numberOfSearches", searches.size())
-                .entry("freeMemory", MemoryUtil.getFree())
-                .endMap();
+        Map<String, Integer> counts = getCountsPerStatus();
+        ds.startMap();
+            ds.entry("targetFreeMemMegs", config.getTargetFreeMemMegs())
+            .entry("minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs())
+            .entry("maxQueuedSearches", config.getMaxQueuedSearches())
+            .entry("maxSearchTimeSec", config.getMaxSearchTimeSec())
+            .entry("maxJobAgeSec", config.getMaxJobAgeSec())
+            .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
+            .entry("sizeBytes", cacheSizeBytes)
+            .entry("numberOfSearches", searches.size())
+            .entry("freeMemory", MemoryUtil.getFree())
+            .startEntry("countsPerStatus").startMap();
+                ds.entry("queued", counts.get("queued"))
+                .entry("running", counts.get("running"))
+                .entry("finished", counts.get("finished"))
+                .entry("cancelled", counts.get("cancelled"));
+            ds.endEntry().endMap();
+        ds.endMap();
     }
-    
+
     /**
      * Dump cache contents.
      * @param ds where to write information to
@@ -529,5 +555,15 @@ public class BlsCache implements SearchCache {
         }
         ds.endList();
     }
- 
+
+    public static void waitUntilDone(BlsCacheEntry<?> entry) {
+        try {
+            entry.get(Long.MAX_VALUE, TimeUnit.DAYS);
+        } catch (InterruptedException e1) {
+            throw new InterruptedSearch(e1);
+        } catch (ExecutionException|TimeoutException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
+        }
+    }
+
 }

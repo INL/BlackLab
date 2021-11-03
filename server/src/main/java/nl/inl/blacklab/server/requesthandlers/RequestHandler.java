@@ -27,8 +27,8 @@ import org.apache.logging.log4j.ThreadContext;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.exceptions.InsufficientMemoryAvailable;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -137,7 +137,7 @@ public abstract class RequestHandler {
         }
 
         // Parse the URL
-        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getServletPath()), "/");
+        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         String[] parts = servletPath.split("/", 3);
         String indexName = parts.length >= 1 ? parts[0] : "";
         RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName,
@@ -309,11 +309,11 @@ public abstract class RequestHandler {
                                 return errorObj.unknownOperation(urlPathInfo);
                             }
                         } else if (handlerName.equals("hits") || handlerName.equals("docs")) {
-                            if (request.getParameter("group") != null) {
+                            if (!StringUtils.isBlank(request.getParameter("group"))) {
                                 String viewgroup = request.getParameter("viewgroup");
-                                if (viewgroup == null || viewgroup.length() == 0)
+                                if (StringUtils.isEmpty(viewgroup))
                                     handlerName += "-grouped"; // list of groups instead of contents
-                            } else if (request.getParameter("viewgroup") != null) {
+                            } else if (!StringUtils.isEmpty(request.getParameter("viewgroup"))) {
                                 // "viewgroup" parameter without "group" parameter; error.
 
                                 return errorObj.badRequest("ERROR_IN_GROUP_VALUE",
@@ -327,7 +327,7 @@ public abstract class RequestHandler {
                             return errorObj.unknownOperation(handlerName);
 
                         @SuppressWarnings("resource")
-                        SearchLogger logger = servlet.logDatabase().addRequest(indexName, handlerName, request.getParameterMap());
+                        SearchLogger logger = servlet.getSearchManager().getLogDatabase().addRequest(indexName, handlerName, request.getParameterMap());
                         boolean succesfullyCreatedRequestHandler = false;
                         try {
                             Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
@@ -350,8 +350,6 @@ public abstract class RequestHandler {
                         }
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
-                    } catch (InsufficientMemoryAvailable e) {
-                        return errorObj.error("OUT_OF_MEMORY", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
                     } catch (ReflectiveOperationException e) {
                         // (can only happen if the required constructor is not available in the RequestHandler subclass)
                         logger.error("Could not get constructor to create request handler", e);
@@ -543,7 +541,7 @@ public abstract class RequestHandler {
      * @throws BlsException if the query can't be executed
      * @throws InterruptedSearch if the thread was interrupted
      */
-    public abstract int handle(DataStream ds) throws BlsException;
+    public abstract int handle(DataStream ds) throws BlsException, InvalidQuery;
 
     /**
      * Stream document information (metadata, contents authorization)
@@ -595,43 +593,44 @@ public abstract class RequestHandler {
 
     protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
         MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
-        Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
-        for (MetadataFieldGroup metaGroup : metaGroups) {
-            for (MetadataField field: metaGroup) {
-                metadataFieldsNotInGroups.remove(field);
-            }
-        }
-
-        ds.startEntry("metadataFieldGroups").startList();
-        boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metaGroups) {
-            ds.startItem("metadataFieldGroup").startMap();
-            ds.entry("name", metaGroup.name());
-            ds.startEntry("fields").startList();
-            for (MetadataField field: metaGroup) {
-                ds.item("field", field.name());
-            }
-            if (!addedRemaining && metaGroup.addRemainingFields()) {
-                addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
-                for (MetadataField field: rest) {
-                    ds.item("field", field.name());
+        synchronized (metaGroups) { // concurrent requests
+            Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
+            for (MetadataFieldGroup metaGroup : metaGroups) {
+                for (MetadataField field: metaGroup) {
+                    metadataFieldsNotInGroups.remove(field);
                 }
             }
-            ds.endList().endEntry();
-            ds.endMap().endItem();
-        }
-        ds.endList().endEntry();
 
+            ds.startEntry("metadataFieldGroups").startList();
+            boolean addedRemaining = false;
+            for (MetadataFieldGroup metaGroup : metaGroups) {
+                ds.startItem("metadataFieldGroup").startMap();
+                ds.entry("name", metaGroup.name());
+                ds.startEntry("fields").startList();
+                for (MetadataField field: metaGroup) {
+                    ds.item("field", field.name());
+                }
+                if (!addedRemaining && metaGroup.addRemainingFields()) {
+                    addedRemaining = true;
+                    List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
+                    rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
+                    for (MetadataField field: rest) {
+                        ds.item("field", field.name());
+                    }
+                }
+                ds.endList().endEntry();
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+        }
     }
 
     /**
      * Returns the annotations to write out.
-     * 
+     *
      * By default, all annotations are returned.
      * Annotations are returned in requested order, or in their definition/display order.
-     * 
+     *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      * @throws BlsException
      */
@@ -653,10 +652,10 @@ public abstract class RequestHandler {
 
     /**
      * Returns a list of metadata fields to write out.
-     * 
+     *
      * By default, all metadata fields are returned.
      * Special fields (pidField, titleField, etc...) are always returned.
-     * 
+     *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      * @throws BlsException
      */
@@ -693,10 +692,9 @@ public abstract class RequestHandler {
         return indexMetadata.contentViewable();
     }
 
-    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc)
-            throws BlsException {
+    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc) throws InvalidQuery {
 
-        Facets facets = searchMan.search(user, facetDesc);
+        Facets facets = facetDesc.execute();
         Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
 
         ds.startMap();
@@ -763,10 +761,11 @@ public abstract class RequestHandler {
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
-        MetadataField pidField = index.metadataFields().special(MetadataFields.PID); //getIndexParam(indexName, user).getPidField();
-        if (pidField == null)
+        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
+        String pid = pidField == null ? null : document.get(pidField.name());
+        if (pid == null)
             return Integer.toString(luceneDocId);
-        return document.get(pidField.name());
+        return pid;
     }
 
     /**
@@ -848,7 +847,7 @@ public abstract class RequestHandler {
     static void addSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
         ds.startEntry("subcorpusSize").startMap()
             .entry("documents", subcorpusSize.getDocuments());
-        if (subcorpusSize.getTokens() >= 0)
+        if (subcorpusSize.hasTokenCount())
             ds.entry("tokens", subcorpusSize.getTokens());
         ds.endMap().endEntry();
     }

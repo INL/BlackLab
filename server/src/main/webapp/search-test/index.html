@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>BLS search test form</title>
+		<meta charset="UTF-8" /> 
+		<link rel='stylesheet' type='text/css' href='css/search.css'>
+		<script src="http://code.jquery.com/jquery-3.1.1.js"></script>
+		<script src="js/bls.js"></script>
+		<script src="js/search.js"></script>
+        <style>
+table { width: 100%; max-width: 100%; }
+td, th { text-align: left; max-width: 100%; }
+textarea { display: block; width: calc(100% - 4px); }
+input[type='number'] { width: 100px; }
+input[type='text'] { display: inline-block; width: 100%; box-sizing: border-box;}
+        </style>
+	</head>
+	<body>
+		<h1>BLS search test form</h1>
+		<form id='zoekForm'>
+			<table>
+                <tr>
+                    <th><label title="where the corpus can be found" for='corpusUrl'>Corpus URL</label></th>
+				    <td><input type='text' id='corpusUrl' value='/blacklab-server/my-corpus' /></td>
+                </tr>
+                <tr>
+                    <th><label title="CQL query" for='patt'>patt</label></th>
+                    <td><textarea id='patt'></textarea></td>
+                </tr>
+                <tr>
+                    <th><label title="Lucene query for filtering documents" for='patt'>filter</label></th>
+                    <td><textarea id='filter'></textarea></td>
+                </tr>
+                <tr>
+                    <th><label title="first result to return, 0-based" for='number'>first</label></th>
+                    <td><input type='number' id='number' value='' /></td>
+                </tr>
+                <tr>
+                    <th><label title="results window size" for='number'>number</label></th>
+                    <td><input type='number' id='number' value='' /></td>
+                </tr>
+                <tr>
+                    <th><label title="result context size" for='wordsaroundhit'>wordsaroundhit</label></th>
+                    <td><input type='number' id='wordsaroundhit' value='' /></td>
+                </tr>
+                <tr>
+                    <th><label title="how to sort results" for='sort'>sort</label></th>
+                    <td><input type='text' id='sort' value='' /></td>
+                </tr>
+                <tr>
+                    <th><label title="how to group results" for='group'>group</label></th>
+                    <td><input type='text' id='group' value='' /></td>
+                </tr>
+                <tr>
+                    <th><label title="use results cache?" for='usecache'>usecache</label></th>
+                    <td>
+                      <select id='usecache'>
+                        <option selected>no</option>
+                        <option>yes</option>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label title="include query rewrite explanation?" for='number'>explain</label></th>
+                    <td>
+                      <select id='explain'>
+                        <option>no</option>
+                        <option selected>yes</option>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label title="wait until all results found?" for='waitfortotal'>waitfortotal</label></th>
+                    <td>
+                      <select id='waitfortotal'>
+                        <option selected>no</option>
+                        <option>yes</option>
+                      </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th></th>
+                    <td><input type='submit' value='OK' /></td>
+                </tr> 
+            </table>
+		</form>
+		<p id='wait'>Even geduld a.u.b. ...</p>
+		<pre id="output"></pre>
+	</body>
+</html>

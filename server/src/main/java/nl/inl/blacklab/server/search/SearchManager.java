@@ -1,27 +1,20 @@
 package nl.inl.blacklab.server.search;
 
-import io.micrometer.core.instrument.Tag;
-import io.micrometer.core.instrument.Tags;
-import nl.inl.blacklab.exceptions.InvalidQuery;
+import java.io.File;
+import java.io.IOException;
+
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.blacklab.searches.Search;
-import nl.inl.blacklab.server.Metrics;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.BLSConfigParameters;
-import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.logging.LogDatabase;
-import nl.inl.blacklab.server.requesthandlers.SearchParameters;
+import nl.inl.blacklab.server.logging.LogDatabaseDummy;
+import nl.inl.blacklab.server.logging.LogDatabaseImpl;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-
+/**
+ * Manages the lifetime of a number of objects needed for the web service.
+ */
 public class SearchManager {
 
     //private static final Logger logger = LogManager.getLogger(SearchManager.class);
@@ -29,12 +22,9 @@ public class SearchManager {
     /** Our config */
     private BLSConfig config;
 
-//    /** All running searches as well as recently run searches */
-//    private BlsSearchCache cache;
-
     /** All running searches as well as recently run searches */
-    private BlsCache newCache;
-    
+    private BlsCache cache;
+
     /** System for determining the current user. */
     private AuthManager authSystem;
 
@@ -44,50 +34,44 @@ public class SearchManager {
     /** Main BlackLab object, containing the search executor service */
     private BlackLabEngine blackLab;
 
+    /** Database for logging detailed debug information (if enabled) */
+    private LogDatabase logDatabase;
+
     public SearchManager(BLSConfig config) throws ConfigurationException {
         this.config = config;
-        
+
         // Create BlackLab instance with the desired number of search threads
         int numberOfSearchThreads = config.getPerformance().getMaxConcurrentSearches();
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
         blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
-        startMonitoringOfThreadPools(blackLab);
+
+        // Open log database
+        try {
+            String sqliteDatabase = config.getLog().getSqliteDatabase();
+            if (sqliteDatabase != null) {
+                File dbFile = new File(sqliteDatabase);
+                String url = "jdbc:sqlite:" + dbFile.getCanonicalPath().replaceAll("\\\\", "/");
+                Class.forName("org.sqlite.JDBC");
+                logDatabase = new LogDatabaseImpl(url);
+            } else {
+                logDatabase = new LogDatabaseDummy();
+            }
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException("Error opening log database", e);
+        }
 
         // Create the cache
-        newCache = new BlsCache(config);
+        int abandonedCountAbortTimeSec = config.getPerformance().getAbandonedCountAbortTimeSec();
+        int maxConcurrentSearches = config.getPerformance().getMaxConcurrentSearches();
+        boolean traceCache = config.getLog().getTrace().isCache();
+        cache = new BlsCache(config.getCache(), maxConcurrentSearches, abandonedCountAbortTimeSec, traceCache, logDatabase);
 
         // Find the indices
         indexMan = new IndexManager(this, config);
 
         // Init auth system
         authSystem = new AuthManager(config.getAuthentication());
-        
-        // Set up the parameter default values
-        BLSConfigParameters param = config.getParameters();
-        SearchParameters.setDefault("number", "" + param.getPageSize().getDefaultValue());
-        SearchParameters.setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
-        SearchParameters.setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
-        SearchParameters.setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
-        SearchParameters.setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
-
-    private void startMonitoringOfThreadPools(BlackLabEngine blackLab) {
-        publishSearchExecutorsQueueSize(blackLab.searchExecutorService());
-    }
-
-    private void publishSearchExecutorsQueueSize(ExecutorService searchExecutorService) {
-        assert searchExecutorService instanceof ForkJoinPool;
-        ForkJoinPool executorService = (ForkJoinPool) searchExecutorService;
-        String name = "SearchExecutorQueueLen";
-        String description = "A metric tracking the lengths of all the queues in the SearchExecutorQueue";
-        Metrics.createGauge(name, description,  Tags.of("name", "submission"), executorService,
-                Metrics.toDoubleFn(ForkJoinPool::getQueuedSubmissionCount));
-        Metrics.createGauge(name, description,  Tags.of("name", "task"), executorService,
-                Metrics.toDoubleFn(ForkJoinPool::getQueuedTaskCount));
-        Metrics.createGauge(name, description,  Tags.of("name", "steal"), executorService,
-                Metrics.toDoubleFn(ForkJoinPool::getStealCount));
-    }
-
 
     /**
      * Clean up resources.
@@ -96,11 +80,22 @@ public class SearchManager {
      * searches.
      */
     public synchronized void cleanup() {
+
         // Stop any running searches
-        newCache.cleanup();
-        newCache = null;
-        
+        cache.cleanup();
+        cache = null;
+
+        try {
+            if (logDatabase != null) {
+                logDatabase.close();
+                logDatabase = null;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         blackLab.close();
+        blackLab = null;
 
         // Set other variables to null in case it helps GC
         config = null;
@@ -108,12 +103,12 @@ public class SearchManager {
         indexMan = null;
     }
 
-//    public BlsSearchCache getCache() {
-//        return cache;
-//    }
+    public LogDatabase getLogDatabase() {
+        return logDatabase;
+    }
 
     public BlsCache getBlackLabCache() {
-        return newCache;
+        return cache;
     }
 
     public BLSConfig config() {
@@ -126,22 +121,6 @@ public class SearchManager {
 
     public IndexManager getIndexManager() {
         return indexMan;
-    }
-
-    public <T extends SearchResult> T search(User user, Search<T> search) throws BlsException {
-        try {
-            return search.execute();
-        } catch (InvalidQuery e) {
-            throw new BadRequest("INVALID_QUERY", "Invalid query: " + e.getMessage());
-        }
-    }
-    
-    public <T extends SearchResult> BlsCacheEntry<T> searchNonBlocking(User user, Search<T> search) {
-        return (BlsCacheEntry<T>)search.executeAsync();
-    }
-
-    public void setLogDatabase(LogDatabase logDatabase) {
-        newCache.setLogDatabase(logDatabase);
     }
 
     public BlackLabEngine blackLabInstance() {

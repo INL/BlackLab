@@ -1,0 +1,79 @@
+# For displaying in user interface (optional)
+displayName: "TEI as used by the VOICE project"
+
+# For describing input format in user interface (optional)
+description: A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.
+
+helpUrl: http://www.tei-c.org/Guidelines/P5/
+
+# (Optional, informational)
+# content, metadata or mixed?
+# (not used by BlackLab, purely informational for the frontend application)
+type: content
+
+namespaces:
+  'xml': http://www.w3.org/XML/1998/namespace
+
+# What element starts a new document?
+# (the only absolute XPath; the rest is relative)
+documentPath: /TEI
+
+# Annotated, CQL-searchable fields (also called "complex fields").
+# We usually have just one, named "contents".
+annotatedFields:
+
+  contents:
+
+    # How to display the field in the interface (optional)
+    displayName: Contents
+
+    # How to describe the field in the interface (optional)
+    description: Contents of the documents.
+
+    # What element (relative to document) contains this field's contents?
+    # (if omitted, entire document is used)
+    containerPath: .//text
+
+    # What are our word tags? (relative to container)
+    wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)
+
+    # Punctuation between word tags (relative to container)
+    punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
+
+    # What annotation can each word have? How do we index them?
+    # (annotations are also called "(word) properties" in BlackLab)
+    # (valuePaths relative to word path)
+    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
+    #       and with forEachPath you could run in to an unknown new annotation mid-way through.
+    annotations:
+    - name: word
+      displayName: Word
+      valuePath: .
+    - name: lemma
+      displayName: Lemma
+      valuePath: "@lemma"
+    - name: pos
+      displayName: PoS
+      valuePath: "@type"
+
+    # XML tags within the content we'd like to index
+    # (relative to container)
+    inlineTags:
+    - path: .//u   # Utterance
+
+corpusConfig:
+  specialFields:
+    pidField: pid
+    titleField: title
+
+# FoLiA's native metadata
+metadata:
+  containerPath: .
+  fields:
+  - name: pid
+    valuePath: "@xml:id"
+  - name: title
+    valuePath: teiHeader/fileDesc/titleStmt/title
+  #- forEachPath: bibl/interpGrp/interp
+  #  namePath: ../@type                  # interpGrp/@type
+  #  valuePath: .                        # interp (text value of element, TEI P5)

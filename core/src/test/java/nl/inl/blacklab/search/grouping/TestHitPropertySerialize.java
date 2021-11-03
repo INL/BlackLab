@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockForwardIndex;
+import nl.inl.blacklab.mocks.MockMetadataField;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
@@ -30,12 +31,12 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
-    
+
     private MetadataField decadeField = new MockMetadataField("decade");
 
     private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private Hits hits = Hits.emptyList(mockIndex.createDefaultQueryInfo());
+    private Hits hits = Hits.immutableEmptyList(mockIndex.createDefaultQueryInfo());
 
     private Annotation lemmaAnnotation;
 

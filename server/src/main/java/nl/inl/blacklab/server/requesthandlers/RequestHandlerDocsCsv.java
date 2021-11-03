@@ -12,6 +12,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -65,9 +66,10 @@ public class RequestHandlerDocsCsv extends RequestHandler {
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
      * @throws BlsException
+     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits
-    private Result getDocs() throws BlsException {
+    private Result getDocs() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -81,11 +83,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
         DocResults docs = null;
         DocGroups groups = null;
-        DocResults subcorpusResults = searchMan.search(user, searchParam.subcorpus());
+        DocResults subcorpusResults = searchParam.subcorpus().execute();
 
         if (groupBy != null) {
-            groups = searchMan.search(user, searchParam.docsGrouped());
-            docs = searchMan.search(user, searchParam.docs());
+            groups = searchParam.docsGrouped().execute();
+            docs = searchParam.docs().execute();
 
             if (viewGroup != null) {
                 PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -110,7 +112,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             }
         } else {
             // Don't use JobDocsAll, as we only might not need them all.
-            docs = searchMan.search(user, searchParam.docsSorted());
+            docs = searchParam.docsSorted().execute();
         }
 
         // apply window settings
@@ -121,11 +123,16 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (!docs.docsProcessedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().getParameters().getPageSize().getMax();
-            if (searchParam.containsKey("number"))
-                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
+            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            if (searchParam.containsKey("number")) {
+                int requested = searchParam.getInteger("number");
+                if (number >= 0 || requested >= 0) { // clamp
+                    number = Math.min(requested, number);
+                }
+            }
 
-            docs = docs.window(first, number);
+            if (number >= 0)
+                docs = docs.window(first, number);
         }
 
         return new Result(docs, groups, subcorpusResults, viewGroup != null);
@@ -180,8 +187,8 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                     if (searchParam.hasPattern()) {
                         PropertyValue docPropValues = group.identity();
                         CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues, true);
-                        row.add(groupSubcorpusSize.getTokens() > 0 ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
-                        row.add(groupSubcorpusSize.getDocuments() > 0 ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
+                        row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
+                        row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
                     } else {
                         row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
                         row.add(Integer.toString(group.storedResults().subcorpusSize().getDocuments()));
@@ -262,21 +269,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                     boolean firstValue = true;
                     for (String value : doc.getValues(fieldId)) {
-                        int offset = 0, strlen = value.length();
-
                         if (!firstValue) {
                             sb.append(" ");
                         }
                         sb.append('"');
-                        while (offset < strlen) {
-                            int codepoint = value.codePointAt(offset);
-                            offset += Character.charCount(codepoint);
-                            sb.appendCodePoint(codepoint);
-                            if (codepoint == '"') {
-                                sb.appendCodePoint(codepoint);
-                            }
-                        }
-
+                        sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
                         sb.append('"');
                         firstValue = false;
                     }
@@ -300,7 +297,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         Result result = getDocs();
         if (result.groups == null || result.isViewGroup)
             writeDocs(result.docs, result.groups, result.subcorpusResults, (DataStreamPlain) ds);

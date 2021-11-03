@@ -462,7 +462,10 @@ public class IndexManager {
                         notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
                     if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !BlackLabIndex.isIndex(subDir)) {
                         if (subDir.getParentFile().equals(collection)) {
-                            logger.debug("  Direct subdir of collection dir is not an index or cannot read: " + subDir);
+                            if (!subDir.canRead())
+                                logger.debug("  Cannot read direct subdir of collection dir: " + subDir);
+                            else
+                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + subDir);
                         }
                         continue;
                     }

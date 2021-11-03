@@ -1,0 +1,20 @@
+# Docker Compose development overrides for BlackLab
+# (configure JPDA to allow remote JVM debugging)
+
+version: '3.9'
+
+services:
+
+  server:
+
+    # JPDA settings, to enable remote debugging
+    environment:
+      - JPDA_ADDRESS=*:5005
+      - JPDA_TRANSPORT=dt_socket
+
+    # Start Tomcat with JPDA enabled
+    command: catalina.sh jpda run
+
+    # Map JPDA port
+    ports:
+      - "5005:5005"

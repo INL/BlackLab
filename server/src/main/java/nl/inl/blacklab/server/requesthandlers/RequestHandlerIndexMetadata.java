@@ -87,12 +87,12 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("dateField", optSpecialFieldName(fields, MetadataFields.DATE))
                     .endMap().endEntry();
 
-            ds.startEntry(ElementNames.annotatedFields).startMap();
+            ds.startEntry("annotatedFields").startMap();
             // Annotated fields
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
                 if (field.isDummyFieldToStoreLinkedDocuments())
                     continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
-                ds.startAttrEntry(ElementNames.annotatedField, "name", field.name());
+                ds.startAttrEntry("annotatedField", "name", field.name());
 
                 Set<String> setShowValuesFor = searchParam.listValuesFor();
                 Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();

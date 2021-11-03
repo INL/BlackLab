@@ -11,7 +11,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import nl.inl.blacklab.TestIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
@@ -23,6 +22,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestSearches {
 
@@ -76,7 +77,7 @@ public class TestSearches {
     @Test
     public void testFilteredQuery() {
         expected = Arrays.asList("[The] quick", "over [the] lazy");
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(new Term("contents%word@i", "the"));
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
         TermQuery filterQuery = new TermQuery(new Term("contents%word@i", "fox"));
         Assert.assertEquals(expected, testIndex.findConc(new SpanQueryFiltered(patternQuery, filterQuery)));
     }
@@ -259,10 +260,10 @@ public class TestSearches {
     @Test
     public void testConstraintSimple4a() {
         expected = Arrays.asList(
-                "[The quick brown fox] jumps", 
-                "[The quick brown fox jumps] over", 
-                "[The quick brown fox jumps over] the", 
-                "[The quick brown fox jumps over the] lazy", 
+                "[The quick brown fox] jumps",
+                "[The quick brown fox jumps] over",
+                "[The quick brown fox jumps over] the",
+                "[The quick brown fox jumps over the] lazy",
                 "The [quick brown fox] jumps",
                 "The [quick brown fox jumps] over",
                 "The [quick brown fox jumps over] the",
@@ -276,10 +277,10 @@ public class TestSearches {
     @Test
     public void testNGramContainingWithAdjustment() {
         expected = Arrays.asList(
-            "[The quick brown] fox", 
-            "[The quick brown fox] jumps", 
-            "[The quick brown fox jumps] over", 
-            "[The quick brown fox jumps over] the", 
+            "[The quick brown] fox",
+            "[The quick brown fox] jumps",
+            "[The quick brown fox jumps] over",
+            "[The quick brown fox jumps over] the",
             "The [quick brown] fox",
             "The [quick brown fox] jumps",
             "The [quick brown fox jumps] over",
@@ -421,6 +422,18 @@ public class TestSearches {
     public void testBackref() {
         expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
         Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[word = a.word]"));
+    }
+
+    @Test
+    public void testCaptureGroups() {
+        Hits hits = testIndex.find("A:'aap'");
+        Assert.assertEquals(5, hits.size());
+        Assert.assertTrue(hits.hasCapturedGroups());
+        Span[] group = hits.capturedGroups().get(hits.get(0));
+        Assert.assertNotNull(group);
+        Assert.assertEquals(1, group.length);
+        Assert.assertEquals(2, group[0].start());
+        Assert.assertEquals(3, group[0].end());
     }
 
 }

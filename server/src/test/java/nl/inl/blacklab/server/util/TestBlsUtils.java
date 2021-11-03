@@ -83,4 +83,11 @@ public class TestBlsUtils {
         BlsUtils.parseFilter(index, "", "luceneql", true);
     }
 
+    @Test
+    public void testDescribeInterval() {
+        Assert.assertEquals("1s", BlsUtils.describeIntervalSec(1));
+        Assert.assertEquals("5m", BlsUtils.describeIntervalSec(300));
+        Assert.assertEquals("5m01s", BlsUtils.describeIntervalSec(301));
+    }
+
 }

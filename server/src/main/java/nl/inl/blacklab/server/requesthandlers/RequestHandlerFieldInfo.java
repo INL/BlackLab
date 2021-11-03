@@ -4,12 +4,12 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -51,8 +51,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();
-                rules = rules.replace("<'('<')'", ""); // Remove old rules for parentheses
-                rules = ", '(',')' " + rules; // Make parentheses ignorable characters
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
                 valueSortCollator = new RuleBasedCollator(rules);
             } catch (ParseException e) {
                 // Oh well, we'll use the collator as-is
@@ -110,7 +110,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexName != null)
             ds.entry("indexName", indexName);
         ds.entry("fieldName", fd.name())
-                .entry(ElementNames.isAnnotatedField, false)
+                .entry("isAnnotatedField", false)
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
@@ -188,20 +188,20 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         Annotations annotations = fieldDesc.annotations();
         ds
                 .entry("fieldName", fieldDesc.name())
-                .entry(ElementNames.isAnnotatedField, true)
+                .entry("isAnnotatedField", true)
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
                 .entry("hasXmlTags", fieldDesc.hasXmlTags())
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
-        ds.entry(ElementNames.mainProperty, annotations.main().name());
+        ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
-        ds.startEntry(ElementNames.annotations).startMap();
+        ds.startEntry("annotations").startMap();
         for (Annotation annotation: annotations) {
-            ds.startAttrEntry(ElementNames.annotation, "name", annotation.name()).startMap();
+            ds.startAttrEntry("annotation", "name", annotation.name()).startMap();
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
             String offsetsAlternative = offsetsSensitivity == null ? "" : offsetsSensitivity.sensitivity().luceneFieldSuffix();
             ds
@@ -216,37 +216,41 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             String luceneField = as.luceneField();
             if (annotationMatches(annotation.name(), showValuesFor)) {
                 boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                int maxValues = isInlineTagAnnotation ? -1 : MAX_FIELD_VALUES + 1;
-                Collection<String> values = LuceneUtil.getFieldTerms(index.reader(), luceneField, maxValues);
                 ds.startEntry("values").startList();
 
-                boolean valueListComplete = true;
-                int n = 0;
+                // Arrays because we have to access them from the closures
+                boolean[] valueListComplete = { true };
+                
+                final Set<String> terms = new TreeSet<>();
                 if (isInlineTagAnnotation) {
-                    for (String value : values) {
-                        if (!value.startsWith("@")) {
-                            ds.item("value", value);
-                            n++;
+                    LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                    	if (!term.startsWith("@") && !terms.contains(term)) {
+                    		if (terms.size() >= MAX_FIELD_VALUES) {
+                    			valueListComplete[0] = false;
+                    			return false;
+                    		}
+                    		terms.add(term);
                         }
-                        if (n == MAX_FIELD_VALUES) {
-                            valueListComplete = false;
-                            break;
-                        }
-                    }
+                    	return true;
+                    });
                 } else {
-                    for (String value : values) {
-                        if (!value.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR)) {
-                            ds.item("value", value);
-                            n++;
+                	LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                    	if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(term)) {
+                    		if (terms.size() >= MAX_FIELD_VALUES) {
+                    			valueListComplete[0] = false;
+                    			return false;
+                    		}
+                    		terms.add(term);
                         }
-                        if (n == MAX_FIELD_VALUES) {
-                            valueListComplete = false;
-                            break;
-                        }
-                    }
+                    	return true;
+                    });
                 }
+                for (String term: terms) {
+                	ds.item("value", term);
+                }
+                
                 ds.endList().endEntry();
-                ds.entry("valueListComplete", valueListComplete);
+                ds.entry("valueListComplete", valueListComplete[0]);
             }
             boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
             if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
@@ -254,11 +258,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     // Older index, where the subannotations are stored in the same Lucene field as their parent annotation.
                     // Detecting these requires enumerating all terms, so only do it when asked.
                     Map<String, Set<String>> subprops = LuceneUtil.getOldSingleFieldSubprops(index.reader(), luceneField);
-                    ds.startEntry(ElementNames.subannotations).startMap();
+                    ds.startEntry("subannotations").startMap();
                     for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
                         String name = subprop.getKey();
                         Set<String> values = subprop.getValue();
-                        ds.startAttrEntry(ElementNames.subannotation, "name", name).startList();
+                        ds.startAttrEntry("subannotation", "name", name).startList();
                         for (String value : values) {
                             ds.item("value", value);
                         }
@@ -268,9 +272,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 } else if (!annotation.subannotationNames().isEmpty()) {
                     // Newer index, where the subannotations are stored in their own Lucene fields.
                     // Always show these.
-                    ds.startEntry(ElementNames.subannotations).startList();
+                    ds.startEntry("subannotations").startList();
                     for (String name: annotation.subannotationNames()) {
-                        ds.item(ElementNames.subannotation, name);
+                        ds.item("subannotation", name);
                     }
                     ds.endList().endEntry();
                 }

@@ -1,5 +1,48 @@
 # Change Log
 
+## Improvements in 2.2.0-SNAPSHOT
+
+### Changed
+
+* Make forward-index matching much less frequent, as it's difficult to predict when it will help, and it often hurts.
+* Split into several projects that each handle specific functionality. More to do here.
+
+### New
+
+* Greatly improve startup time and passive memory usage.
+* Improved time to first result in (very) large indices.
+* Improved performance by instantiating fewer objects (e.g. using IntArrayLists instead of Hit objects)
+* Greatly improved speed of grouping on "any token" query, e.g. generating a frequency list for all or part of the corpus.
+* Searches will now be queued (not started yet) if server load is too high.
+  Pausing already-started searches was removed, as this can keep a lot of memory from being used for running searches.
+* If a search is aborted for taking too long, it will be held in cache for a while to prevent clients from immediately resubmitting.
+* /search-test/ debug interface.
+* Improved experimental Dockerfile.
+* BlackLab Server test suite using Docker, Mocha and Chai.
+* Simplified code for better maintainability.
+* Documented blacklab internals (see https://inl.github.io/BlackLab/blacklab-internals.html)
+* New setting debug.alwaysAllowDebugInfo, so each BLS request is considered in debugMode, e.g. /cache-info works, etc.
+* Handle index paths that are relative symlinks.
+
+### Fixed
+
+* Bug in TermsWriter that caused a crash when indexing more than 134M unique terms.
+* Deadlock because of fixed thread count and some subtasks getting run but not others. Now either allows entire search operation or queues it until later.
+* Fix not all hits always counted when grouping/sorting.
+* Fix metadata queries on numeric fields not working.
+* HitsFromQueryParallel queries can now be correctly aborted if they take too long.
+* HitsFromQueryParallel should work correctly with capture groups now. Sampled hits as well.
+* Prevent NPE when not all hits have captured groups.
+* Prevent ConcurrentModificationExceptions caused by not synchronizing.
+* Fix some caching bugs by consistently defining hashCode() and equals().
+* Many smaller bugfixes.
+
+### Removed
+
+* Support for pre-2.0 configuration files. See https://inl.github.io/BlackLab/configuration-files.html
+* Support for useOldElementnames (old BLS element names, using "properties" instead of "annotations")
+
+
 ## Improvements in 2.1.0
 
 ### Changed

@@ -1,0 +1,25 @@
+# Ignore these subdirs when building Docker image
+**/target
+**/bin
+**/.settings
+**/.idea
+**/*.iml
+**/.vscode
+**/doc
+**/.project
+**/.classpath
+**/.factorypath
+**/.apt_generated/
+**/.apt_generated_tests/
+
+.git
+vmtouch
+
+# vi temporary files
+**/*.swp
+
+# log files, such as JVM crash files
+**/*.log
+
+# Test defines its own container and doesn't need to be included in the main container context
+test

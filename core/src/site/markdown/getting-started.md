@@ -16,11 +16,15 @@ Let's go over these one by one.
 
 ## Server or Core?
 
-The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Groovy, etc.). Note that you will need a Java SE 8 compatible JVM to use the latest BlackLab versions.
+The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Kotlin, etc.). Note that you will need a Java SE 8 compatible JVM to use the latest BlackLab versions.
 
 For now, this guide will focus on BlackLab Core and Java. For more information on BlackLab Server, see this [overview](blacklab-server-overview.html).
 
 First you need to get the BlackLab library. The simplest way is to let Maven download it automatically from the Central Repository, but you can also download a prebuilt binary, and it's trivial to build it yourself.
+
+<blockquote>
+<b>Note to MacOS users</b>: Dirk Roorda at DANS wrote a detailed guide for installing and indexing data on MacOS. It's available <a href='https://github.com/Dans-labs/clariah-gm/blob/master/blacklab/install.md'>here</a>.
+</blockquote>
 
 <a id="getting-blacklab"></a>
 
@@ -58,7 +62,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
 
-NOTE: If you want to use BlackLab Server and [BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For the configuration file, see [BlackLab Server overview](blacklab-server-overview.html).
+NOTE: If you want to use BlackLab Server and [BlackLab AutoSearch](https://github.com/INL/corpus-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the "webapps" directory (e.g. /var/lib/tomcat/webapps/, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](blacklab-server-overview.html).
 
 <a id="preparing-your-data"></a>
 
@@ -148,13 +152,13 @@ Finally, let's look at an example Java application.
 
 Here’s the basic structure of a BlackLab search application, to give you an idea of where to look in the source code and documentation (note that we leave nl.inl.blacklab out of the package names for brevity):
 
-1.  Call BlackLab.open() to instantiate a BlackLabIndex object. This provides the main BlackLab API.
-2.  Construct a TextPattern structure that represents your query. You may want to do this from a query parser, or use one of the query parsers supplied with BlackLab (CorpusQueryLanguageParser, …).
-3.  Call the BlackLabIndex.find() method to execute the TextPattern and return a Hits object. (Internally, this translates the TextPattern into a Lucene SpanQuery, executes it, and collects the hits. Each of these steps may also be done manually if you wish to have more control over the process)
-4.  Sort or group the results, using Hits.sort() or Hits.group() and a HitProperty object to indicate the sorting/grouping criteria.
-5.  Select a few of your Hits to display by calling Hits.window().
-6.  Loop over the HitsWindow and display each hit.
-7.  Close the BlackLabIndex object.
+1. Call BlackLab.open() to instantiate a BlackLabIndex object. This provides the main BlackLab API.
+2. Construct a TextPattern structure that represents your query. You may want to do this from a query parser, or use one of the query parsers supplied with BlackLab (CorpusQueryLanguageParser, …).
+3. Call the BlackLabIndex.find() method to execute the TextPattern and return a Hits object. (Internally, this translates the TextPattern into a Lucene SpanQuery, executes it, and collects the hits. Each of these steps may also be done manually if you wish to have more control over the process)
+4. Sort or group the results, using Hits.sort() or Hits.group() and a HitProperty object to indicate the sorting/grouping criteria.
+5. Select a few of your Hits to display by calling Hits.window().
+6. Loop over the HitsWindow and display each hit.
+7. Close the BlackLabIndex object.
 
 The above in code:
 

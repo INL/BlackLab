@@ -1,0 +1,562 @@
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
+/*
+
+Corpus Query Language (CQL) parser definition.
+
+javacc is used to generate Java code from this parser definition.
+
+*/
+
+options 
+{
+	STATIC=false;
+	JAVA_UNICODE_ESCAPE=true;
+	//USER_CHAR_STREAM=true;
+}
+
+PARSER_BEGIN(GeneratedCorpusQueryLanguageParser)
+
+package nl.inl.blacklab.queryParser.corpusql;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
+import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
+import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
+import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
+import nl.inl.blacklab.search.matchfilter.MatchFilterString;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
+import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
+import nl.inl.blacklab.search.textpattern.TextPatternEdge;
+import nl.inl.blacklab.search.textpattern.TextPatternNot;
+import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
+import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
+
+@SuppressWarnings("all")
+
+public class GeneratedCorpusQueryLanguageParser {
+
+    CorpusQueryLanguageParser wrapper;
+    
+}
+
+PARSER_END(GeneratedCorpusQueryLanguageParser)
+
+// Skip whitespace and comment
+SKIP:  
+{
+	" " 
+|	"\t" 
+|	"\n" 
+|	"\r"
+}
+
+/* Comments are 'special tokens': they are not reported, but are available
+   for use by the next reported token */
+SPECIAL_TOKEN:
+{
+	<SINGLE_LINE_COMMENT: "#" (~["\n","\r"])* ("\n"|"\r"|"\r\n")? >
+|	<MULTI_LINE_COMMENT: "/*" (~["*"] | "*" ~["/"])* "*/">
+}
+
+// Token definitions
+TOKEN [IGNORE_CASE]:
+{
+    <WITHIN: "within" >
+|   <CONTAINING: "containing" >
+|	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
+|	<FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
+|	<NUMBER: (["0"-"9"])+ >
+|	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
+|   <SINGLE_QUOTED_STRING: "'" (~["'","\\"] | "\\" ~[] )* "'" >
+}
+
+// --- Grammar rules start here --- 
+
+/* a query */
+TextPattern query(): 
+{
+	TextPattern a = null;
+} 
+{
+    a=constrainedQuery() <EOF>
+    {
+        return a;
+    }
+}
+
+TextPattern constrainedQuery():
+{
+    TextPattern a = null;
+	MatchFilter b = null;
+} 
+{
+    a=complexQuery() [ "::" b=constraint() ]
+    {
+        if (b == null)
+            return a;
+        return new TextPatternConstrained(a, b);
+    }
+}
+
+MatchFilter constraint():
+{
+    MatchFilter a = null, c = null;
+    Token b = null;
+} 
+{
+    a=simpleConstraint() [ b=booleanOperator() c=constraint() ]
+    {
+		if (b == null)
+			return a;
+        if (b.toString().equals("->"))
+            return new MatchFilterImplication(a, c);
+		if (b.toString().equals("&"))
+			return new MatchFilterAnd(a, c);
+		return new MatchFilterOr(a, c);
+    }
+}
+
+MatchFilter simpleConstraint():
+{
+    MatchFilter v = null, w = null;
+    Token b = null;
+} 
+{
+    v=constraintValue() [ b=equalityOperator() w=constraintValue() ]
+    {
+		if (b == null)
+			return v;
+        if (b.toString().equals("="))
+            return new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE);
+		if (b.toString().equals("!="))
+			return new MatchFilterNot(new MatchFilterEquals(v, w, MatchSensitivity.INSENSITIVE));
+    }
+}
+
+Token equalityOperator():
+{
+	Token t = null;
+}
+{
+	(t="=" | t="!=")  { return t; }
+}
+
+MatchFilter constraintValue():
+{
+	MatchFilter v = null;
+	String q = null;
+	Token s = null;
+	String l = null;
+}
+{
+	q=quotedString()                    { return new MatchFilterString(q); }
+|	"(" v=constraint() ")"              { return v; }
+|   "!" v=constraintValue()             { return new MatchFilterNot(v); }
+|   l=captureLabel() ["." s=<NAME>]
+	{
+		return new MatchFilterTokenProperty(l, s == null ? null : s.toString());
+	}
+}
+
+TextPattern complexQuery():
+{
+    TextPattern a = null, b = null;
+    Token op = null;
+    Operation oper = Operation.CONTAINING;
+}
+{
+    a=simpleQuery() [ op=queryOperator() b=complexQuery() ]
+    {
+        if (op == null)
+            return a;
+        if (op.toString().equals("within")) {
+            // a within b
+            oper = Operation.WITHIN;
+        }
+        
+        return new TextPatternPositionFilter(a, b, oper);
+    }
+}
+
+Token queryOperator():
+{
+    Token t = null;
+}
+{
+    (t=<WITHIN> | t=<CONTAINING>)
+    {
+        return t;
+    }
+}
+
+/* a simple query (not including containing, within, etc.) */
+TextPattern simpleQuery(): 
+{
+    TextPattern query = null, rest = null;
+    Token b = null;
+} 
+{
+    query=sequence() [ b=booleanOperator() rest=simpleQuery() ]
+    {
+		if (b == null)
+			return query;
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(query, rest);
+		return new TextPatternOr(query, rest);
+    }
+}
+
+/* a sequence of token constraints */
+TextPattern sequence(): 
+{
+	TextPattern first = null;
+	TextPattern result = null;
+	TextPattern[] tag = null;
+    Token t2 = null;
+} 
+{
+    first=sequencePart() [ LOOKAHEAD(2) result=sequenceRest(first) ]
+	{
+		if (result == null)
+			result = first;
+			
+		return result;
+	}
+}
+
+/* a start or self-closing tag tag such as <s> or <s/> (for finding XML elements).
+ * Note that it returns one TextPattern, but if it's in [0] that means it's a start
+ * tag; if it's in [1] it's a self-closing tag.
+ */
+TextPattern tag():
+{
+    Token tagName, endTagSlash = null, selfCloseSlash = null;
+    Map<String, String> attr = new HashMap<String, String>();
+}
+{
+    "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
+    {
+        if (endTagSlash != null && selfCloseSlash != null) {
+            throw new MalformedTagException();
+        }
+        TextPattern tags = new TextPatternTags(tagName.toString(), attr);
+        if (selfCloseSlash != null)
+            return tags;
+        if (endTagSlash != null) {
+            if (attr.size() > 0) {
+                throw new MalformedTagException("Cannot filter XML end tag on attributes");
+            }
+            return new TextPatternEdge(tags, true); // right edge
+        }
+        return new TextPatternEdge(tags, false); // left edge
+    }
+}
+
+String quotedString():
+{
+    Token a;
+}
+{
+    (a=<QUOTED_STRING> | a=<SINGLE_QUOTED_STRING>)
+    {
+    	return wrapper.getStringBetweenQuotes(a.toString());
+    }
+}
+
+void attributes(Map<String, String> attr):
+{
+    Token name;
+    String value;
+}
+{
+    name=<NAME> "=" value=quotedString()
+    {
+        attr.put(name.toString(), value);
+    }
+}
+
+/* continuation of a sequence (after the first part) */
+TextPattern sequenceRest(TextPattern first):
+{
+	Token op = null;
+	TextPattern rest = null;
+}
+{
+	rest=sequence()
+	{
+		if (rest == null)
+			return first;
+		return new TextPatternSequence(first, rest);
+	}
+}
+
+/* a repetition specifier */
+Integer[] repetitionAmount():
+{
+	Token t = null, t2 = null;
+	Integer[] minMax = new Integer[2];
+}
+{
+	"*"                                 { minMax[0] = 0; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
+|	"+"                                 { minMax[0] = 1; minMax[1] = BLSpanQuery.MAX_UNLIMITED; return minMax; }
+|	"?"                                 { minMax[0] = 0; minMax[1] = 1; return minMax; }
+|	LOOKAHEAD(3) "{" t=<NUMBER> "}"     { minMax[0] = minMax[1] = wrapper.num(t); return minMax; }
+|	"{" t=<NUMBER> "," [ t2=<NUMBER> ] "}"
+	{
+		minMax[0] = wrapper.num(t);
+		if (t2 == null)
+			minMax[1] = BLSpanQuery.MAX_UNLIMITED;
+		else
+			minMax[1] = wrapper.num(t2);
+		return minMax; 
+	}
+}
+
+/* boolean operator: and, or or implication */
+Token booleanOperator():
+{
+	Token t = null;
+}
+{
+	(t="&" | t="|" | t="->")  { return t; }
+}
+
+/* sequence part: one part in a sequence, possibly with a repetition operator */
+TextPattern sequencePart(): 
+{
+	TextPattern m = null;
+	Integer[] rep = null;
+	String label = null;
+}
+{
+    LOOKAHEAD(2)
+    ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+    {
+        if (rep != null)
+        {
+            if (m instanceof TextPatternAnyToken)
+            {
+                TextPatternAnyToken any = (TextPatternAnyToken)m;
+                m = any.repeat(rep[0], rep[1]);
+            } else
+                m = new TextPatternRepetition(m, rep[0], rep[1]);
+        }
+        if (label != null) {
+            m = new TextPatternCaptureGroup(m, label);
+        }
+        return m;
+    }
+|
+	label=captureLabel() ":" ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	{
+		if (rep != null)
+		{
+            if (m instanceof TextPatternAnyToken)
+            {
+                TextPatternAnyToken any = (TextPatternAnyToken)m;
+                m = any.repeat(rep[0], rep[1]);
+            } else
+                m = new TextPatternRepetition(m, rep[0], rep[1]);
+		}
+		if (label != null) {
+		    m = new TextPatternCaptureGroup(m, label);
+		}
+		return m;
+	}
+}
+
+TextPattern queryFunctionCall():
+{
+    Token func = null;
+    List<TextPattern> queryFuncParamList;
+}
+{
+    func=<NAME> "(" queryFuncParamList=commaSeparatedListOfQueries() ")"
+    {
+        String funcName = func.toString(); 
+        if (!funcName.startsWith("_")) {
+            throw new UnsupportedOperationException("Query functions are a BlackLab-specific extension to Corpus Query Language and, to avoid future problems, must start with '_' !");
+        }
+        return new TextPatternQueryFunction(funcName, queryFuncParamList);
+    }
+}
+
+List<TextPattern> commaSeparatedListOfQueries():
+{
+    TextPattern q = null;
+    List<TextPattern> p = new ArrayList<TextPattern>();
+}
+{
+    q=complexQuery() [ "," p=commaSeparatedListOfQueries() ]
+    {
+        p.add(0, q);
+        return p;
+    }
+}
+
+String captureLabel():
+{
+	Token l = null;
+}
+{
+	( l=<NAME> | l=<NUMBER> )
+	{
+		return l.toString();
+	}
+}
+
+/* position: a simple attribute value or complex attribute expression between square brackets */
+TextPattern position():
+{
+	TextPattern m = null;
+	String f = null;
+}
+{
+	m=positionWord() [f=flags()]        { return m; }
+|	"[" [ m=positionLong() ] "]"
+    {
+        if (m == null)
+            return new TextPatternAnyToken(1, 1);
+        return m;
+    }
+}
+
+String flags():
+{
+	Token f;
+}
+{
+	f=<FLAGS> { return f.toString().substring(1); }
+}
+
+/* position word: no brackets, just a single token constraint for the default attribute (usually word form) */
+TextPattern positionWord():
+{
+	String t = null;
+}
+{
+	t=quotedString()      { return wrapper.simplePattern(t); }
+}
+
+/* expression inside square brackets: an attribute clause, or multiple 
+   attribute clauses combined with boolean operators */
+TextPattern positionLong():
+{
+	TextPattern a = null, c = null;
+	Token b = null;
+}
+{
+	a=positionLongPart() [ b=booleanOperator() c=positionLong() ]
+	{
+		if (b == null)
+			return a;
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(a, c);
+		return new TextPatternOr(a, c);
+	}
+}
+
+/* attribute clause: an attribute/value pair, attribute expression between parens, or a negated attribute/value pair */
+TextPattern positionLongPart():
+{
+	TextPattern m = null;
+}
+{
+	LOOKAHEAD(3)
+	m=attValuePair()              { return m; }
+|	"(" m=positionLong() ")"      { return m; }
+|	"!" m=positionLongPart()      { return new TextPatternNot(m); }
+}
+
+/* attribute/value pair, with equals or not equals sign, or possibly just a value (default attribute) */
+TextPattern attValuePair():
+{
+	TextPattern v = null;
+	String annot;
+	String f = null;
+}
+{
+	LOOKAHEAD(2)
+	annot=propName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
+|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
+|	v=valuePart() [f=flags()]                      { return v; }
+}
+
+String propName():
+{
+	Token t = null, subAnnot = null;
+}
+{
+	t=<NAME> [ "/" subAnnot=<NAME> ]
+	{
+		String propName = t.toString(); 
+		if (subAnnot == null)
+			return propName;
+		return propName + "/" + subAnnot.toString();
+	}
+}
+
+/* value expression: a value or multiple values combined with boolean operators */
+TextPattern value():
+{
+	TextPattern a = null, c = null;
+	Token b = null;
+}
+{
+	LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
+	{
+        if (b.toString().equals("->"))
+            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
+		if (b.toString().equals("&"))
+			return new TextPatternAnd(a, c);
+		return new TextPatternOr(a, c);
+	}
+|	a=valuePart()                   { return a; }
+}
+
+/* value: a quoted string, a value expression between parens, or a negated value */
+TextPattern valuePart():
+{
+	TextPattern m = null;
+	String t = null;
+}
+{
+	t=quotedString()              { return wrapper.simplePattern(t); }
+|	"(" m=value() ")"              { return m; }
+
+}

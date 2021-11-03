@@ -16,6 +16,7 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -72,9 +73,10 @@ public class RequestHandlerHitsCsv extends RequestHandler {
      * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
      *         within a group, Groups if looking at grouped hits.
      * @throws BlsException
+     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    private Result getHits() throws BlsException {
+    private Result getHits() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
         if (groupBy.isEmpty())
@@ -86,15 +88,15 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        BlsCacheEntry<?> job = null;
+        BlsCacheEntry<?> cacheEntry = null;
         Hits hits = null;
         HitGroups groups = null;
-        DocResults subcorpus = searchMan.search(user, searchParam.subcorpus());
+        DocResults subcorpus = searchParam.subcorpus().execute();
 
         try {
-            if (groupBy != null) {
-                hits = searchMan.search(user, searchParam.hits());
-                groups = searchMan.search(user, searchParam.hitsGrouped());
+            if (!StringUtils.isEmpty(groupBy)) {
+                hits = searchParam.hits().execute();
+                groups = searchParam.hitsGrouped().execute();
 
                 if (viewGroup != null) {
                     PropertyValue groupId = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
@@ -118,9 +120,9 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     }
                 }
             } else {
-                // Use a regular job for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                job = searchMan.searchNonBlocking(user, searchParam.hitsSample());
-                hits = (Hits) job.get();
+                // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
+                cacheEntry = (BlsCacheEntry<Hits>)searchParam.hitsSample().executeAsync();
+                hits = (Hits) cacheEntry.get();
             }
         } catch (InterruptedException | ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
@@ -134,15 +136,20 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().getParameters().getPageSize().getMax();
-            if (searchParam.containsKey("number"))
-                number = Math.min(Math.max(0, searchParam.getInteger("number")), number);
 
-            hits = hits.window(first, number);
+            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            if (searchParam.containsKey("number")) {
+                int requested = searchParam.getInteger("number");
+                if (number >= 0 || requested >= 0) { // clamp
+                    number = Math.min(requested, number);
+                }
+            }
+
+            if (number >= 0)
+                hits = hits.window(first, number);
         }
 
         return new Result(hits, groups, subcorpus, viewGroup != null);
-//        return Pair.of(hits, groups);
     }
 
     private void writeGroups(Hits inputHitsForGroups, HitGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
@@ -183,8 +190,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                     int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Integer.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize .getDocuments() > 0 ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
-                    row.add(groupSubcorpusSize .getTokens() > 0 ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
+                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
                 }
 
                 printer.printRecord(row);
@@ -302,7 +309,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         Result result = getHits();
         if (result.groups != null && !result.isViewGroup)
             writeGroups(result.hits, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
@@ -353,21 +360,11 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         StringBuilder sb = new StringBuilder();
         boolean firstValue = true;
         for (String value : strings) {
-            int offset = 0, strlen = value.length();
-
             if (!firstValue) {
                 sb.append(" ");
             }
             sb.append('"');
-            while (offset < strlen) {
-                int codepoint = value.codePointAt(offset);
-                offset += Character.charCount(codepoint);
-                sb.appendCodePoint(codepoint);
-                if (codepoint == '"') {
-                    sb.appendCodePoint(codepoint);
-                }
-            }
-
+            sb.append(value.replace("\n", "").replace("\r", "").replace("\"", "\"\""));
             sb.append('"');
             firstValue = false;
         }
