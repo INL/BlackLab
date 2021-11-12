@@ -38,6 +38,7 @@
         <log4j.version>2.13.3</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
+    	<closeTestReports>true</closeTestReports>
     </properties>
 
     <licenses>
@@ -199,6 +200,8 @@
                 <configuration>
                     <!-- deal with Debian openjdk-8 issue (see https://issues.apache.org/jira/browse/SUREFIRE-1588) -->
                     <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+                	<disableXmlReport>${closeTestReports}</disableXmlReport>
+
                     <!--
                     NOTE: this should enable parallel testing, but it causes errors. Look into this.
                     <parallel>classes</parallel>
