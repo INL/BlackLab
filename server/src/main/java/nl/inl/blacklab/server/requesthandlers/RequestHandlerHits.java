@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -132,8 +133,15 @@ public class RequestHandlerHits extends RequestHandler {
         if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
             throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 
-        Hits window = hits.window(windowSettings.first(), windowSettings.size());
-
+        // Request the window of hits we're interested in.
+        // (we hold on to the cache entry so that we can differentiate between search and count time later)
+        BlsCacheEntry<Hits> cacheEntryWindow = (BlsCacheEntry<Hits>)searchParam.hitsWindow().executeAsync();
+        Hits window;
+        try {
+            window = cacheEntryWindow.get(); // blocks until requested hits window is available
+        } catch (InterruptedException | ExecutionException e) {
+            throw RequestHandler.translateSearchException(e);
+        }
 
         DocResults perDocResults = null;
 
@@ -158,9 +166,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         long totalTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
 
-        // TODO timing is now broken because we always retrieve total and use a window on top of it,
-        // so we can no longer differentiate the total time from the time to retrieve the requested window
-        addSummaryCommonFields(ds, searchParam, cacheEntry.timeUserWaitedMs(), totalTime, null, window.windowStats());
+        addSummaryCommonFields(ds, searchParam, cacheEntryWindow.timeUserWaitedMs(), totalTime, null, window.windowStats());
         addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
