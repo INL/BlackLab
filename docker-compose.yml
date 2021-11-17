@@ -31,8 +31,8 @@ services:
         "cd /usr/local/lib/blacklab-tools && 
         java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/${INDEX_NAME} /input ${INDEX_FORMAT}"
     volumes:
-      - ${BLACKLAB_FORMATS_DIR}:/etc/blacklab/formats
-      - ${INDEX_INPUT_DIR}:/input
+      - "${BLACKLAB_FORMATS_DIR:-./formats}:/etc/blacklab/formats"
+      - "${INDEX_INPUT_DIR:-./input}:/input"
       - blacklab-data:/data
 
   # Indexes the test data and starts the server
@@ -51,7 +51,8 @@ services:
     # Create test index. Run Tomcat with JPDA enabled
     command: >-
         /bin/bash -c 
-        "cd /usr/local/lib/blacklab-tools && 
+        "cd /usr/local/lib/blacklab-tools &&
+        rm -rf /data/test &&
         java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/test /input voice-tei &&
         cd /usr/local/tomcat && catalina.sh jpda run"
     ports:
@@ -60,6 +61,7 @@ services:
     volumes:
       - ./test/data:/input
       - ./test/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
+      - blacklab-data:/data
 
   # Runs the tests on the test server
   test:
