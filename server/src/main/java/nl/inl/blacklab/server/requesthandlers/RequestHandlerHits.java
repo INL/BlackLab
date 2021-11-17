@@ -157,6 +157,19 @@ public class RequestHandlerHits extends RequestHandler {
 
         searchLogger.setResultsFound(hitsCount.processedSoFar());
 
+
+        // Find KWICs/concordances from forward index or original XML
+        // (note that on large indexes, this can actually take significant time)
+        long startTimeKwicsMs = System.currentTimeMillis();
+        ContextSettings contextSettings = searchParam.getContextSettings();
+        Concordances concordances = null;
+        Kwics kwics = null;
+        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
+            concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
+        else
+            kwics = window.kwics(contextSettings.size());
+        long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
+
         // Search is done; construct the results object
 
         ds.startMap();
@@ -164,10 +177,12 @@ public class RequestHandlerHits extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
 
-        long totalTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
-
-        addSummaryCommonFields(ds, searchParam, cacheEntryWindow.timeUserWaitedMs(), totalTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, totalTime < 0, null);
+        // Search time should be time user (originally) had to wait for the response to this request.
+        // Count time is the time it took (or is taking) to iterate through all the results to count the total.
+        long searchTime = cacheEntryWindow.timeUserWaitedMs() + kwicTimeMs;
+        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
+        addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
+        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
@@ -199,16 +214,9 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry();
 
         ds.startEntry("hits").startList();
-        Map<Integer, String> pids = new HashMap<>();
-        ContextSettings contextSettings = searchParam.getContextSettings();
-        Concordances concordances = null;
-        Kwics kwics = null;
-        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
-        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-            concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-        else
-            kwics = window.kwics(contextSettings.size());
 
+        Map<Integer, String> pids = new HashMap<>();
+        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
         Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
         for (Hit hit : window) {
             ds.startItem("hit").startMap();
