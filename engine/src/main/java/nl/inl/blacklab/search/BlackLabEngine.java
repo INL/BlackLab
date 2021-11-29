@@ -6,6 +6,8 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,16 +50,15 @@ public final class BlackLabEngine implements Closeable {
 
     BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();
-        this.searchExecutorService = Executors.newCachedThreadPool(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable runnable) {
-				Thread worker = Executors.defaultThreadFactory().newThread(runnable);
-				int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
-				worker.setName("SearchThread-" + threadNumber);
+        // Follows the same initialization as Executors.newWorkStealingPool
+        // and, it formats the thread names.
+        this.searchExecutorService = new ForkJoinPool(searchThreads,
+            (ForkJoinPool pool) -> {
+                ForkJoinWorkerThread worker = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+                int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
+                worker.setName("SearchThread-" + threadNumber);
                 return worker;
-            }
-		});
-
+            }, null, true);
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
 
