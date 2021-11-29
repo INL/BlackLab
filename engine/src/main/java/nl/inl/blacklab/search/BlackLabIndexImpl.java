@@ -19,6 +19,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
+import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooNewException;
@@ -26,6 +27,7 @@ import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
@@ -43,6 +45,7 @@ import nl.inl.blacklab.analysis.BLDutchAnalyzer;
 import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
 import nl.inl.blacklab.analysis.BLStandardAnalyzer;
 import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
+import nl.inl.blacklab.codec.BLCodec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -775,7 +778,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         Directory indexLuceneDir = FSDirectory.open(indexPath);
         if (useAnalyzer == null)
             useAnalyzer = new BLDutchAnalyzer();
-        IndexWriterConfig config = LuceneUtil.getIndexWriterConfig(useAnalyzer, create);
+
+        IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
+        config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
+        config.setRAMBufferSizeMB(150); // faster indexing
+        config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
+        config.setUseCompoundFile(false); // @@@ TEST
+
         IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
         if (create)
