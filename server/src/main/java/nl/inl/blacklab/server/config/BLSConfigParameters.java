@@ -19,6 +19,10 @@ public class BLSConfigParameters {
     DefaultMax pageSize = DefaultMax.get(50, 3000);
     
     DefaultMax contextSize = DefaultMax.get(5, 200);
+
+    private boolean writeHitsAndDocsInGroupedHits = false;
+
+    private boolean addSurroundingWordsToHits = true;
     
     @JsonGetter("defaultSearchSensitivity")
     public String getDefaultSearchSensitivityName() {
@@ -84,5 +88,21 @@ public class BLSConfigParameters {
 
     public void setDefaultSearchSensitivity(MatchSensitivity defaultSearchSensitivity) {
         this.defaultSearchSensitivity = defaultSearchSensitivity;
+    }
+
+    public boolean isWriteHitsAndDocsInGroupedHits() {
+        return writeHitsAndDocsInGroupedHits;
+    }
+
+    public void setWriteHitsAndDocsInGroupedHits(boolean writeHitsAndDocsInGroupedHits) {
+        this.writeHitsAndDocsInGroupedHits = writeHitsAndDocsInGroupedHits;
+    }
+
+    public boolean isAddSurroundingWordsToHits() {
+        return addSurroundingWordsToHits;
+    }
+
+    public void setAddSurroundingWordsToHits(boolean addSurroundingWordsToHits) {
+        this.addSurroundingWordsToHits = addSurroundingWordsToHits;
     }
 }

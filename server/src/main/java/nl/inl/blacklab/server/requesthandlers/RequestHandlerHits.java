@@ -250,21 +250,31 @@ public class RequestHandlerHits extends RequestHandler {
                         }
                     }
                     ds.endList().endEntry();
+                } else {
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
                 }
             }
 
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                 // Add concordance from original XML
                 Concordance c = concordances.get(hit);
-                ds.startEntry("left").plain(c.left()).endEntry()
+                if (searchMan.config().getParameters().isAddSurroundingWordsToHits()) {
+                    ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
                         .startEntry("right").plain(c.right()).endEntry();
+                } else {
+                    ds.startEntry("match").plain(c.match()).endEntry();
+                }
             } else {
                 // Add KWIC info
                 Kwic c = kwics.get(hit);
-                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                if (searchMan.config().getParameters().isAddSurroundingWordsToHits()) {
+                    ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                         .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
                         .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+                } else {
+                    ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                }
             }
             ds.endMap().endItem();
         }

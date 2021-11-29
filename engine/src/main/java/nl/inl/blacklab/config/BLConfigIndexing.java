@@ -17,6 +17,8 @@ public class BLConfigIndexing {
     
     int numberOfThreads = 2;
 
+    int maxNumberOfIndicesPerUser = 10;
+
     public boolean isDownloadAllowed() {
         return downloadAllowed;
     }
@@ -69,5 +71,13 @@ public class BLConfigIndexing {
     public int getNumberOfThreads() {
         return numberOfThreads;
     }
-    
+
+    public int getMaxNumberOfIndicesPerUser() {
+        return maxNumberOfIndicesPerUser;
+    }
+
+    public void setMaxNumberOfIndicesPerUser(int maxNumberOfIndicesPerUser) {
+        this.maxNumberOfIndicesPerUser = maxNumberOfIndicesPerUser;
+    }
+
 }

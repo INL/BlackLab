@@ -54,8 +54,6 @@ public class IndexManager {
 
     private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
-    private static final int MAX_USER_INDICES = 10;
-
     private SearchManager searchMan;
 
     /** Configured index collections directories */
@@ -217,14 +215,16 @@ public class IndexManager {
             throw new NotAuthorized("Could not create index. Can only create your own private indices.");
         String indexName = Index.getIndexName(indexId);
 
+        if (userCollectionsDir == null)
+            throw new BadRequest("CANNOT_CREATE_INDEX ",
+                "Could not create index. The server is not configured with support for user content.");
+
+        int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
         if (!canCreateIndex(user))
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create index. You already have the maximum of "
-                            + IndexManager.MAX_USER_INDICES + " indices.");
+                            + maxNumberOfIndices + " indices.");
 
-        if (userCollectionsDir == null)
-            throw new BadRequest("CANNOT_CREATE_INDEX ",
-                    "Could not create index. The server is not configured with support for user content.");
 
         File userDir = getUserCollectionDir(userId);
         if (userDir == null || !userDir.canWrite())
@@ -262,7 +262,14 @@ public class IndexManager {
     }
 
     public boolean canCreateIndex(User user) {
-        return userCollectionsDir != null && (getAvailablePrivateIndices(user.getUserId()).size() < IndexManager.MAX_USER_INDICES || user.isSuperuser());
+        int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
+
+        // No limit on the number of indices
+        if (maxNumberOfIndices ==  -1) {
+            return true;
+        }
+        return userCollectionsDir != null &&
+            (getAvailablePrivateIndices(user.getUserId()).size() <= maxNumberOfIndices || user.isSuperuser());
     }
 
     /**
