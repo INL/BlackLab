@@ -28,6 +28,7 @@
 
         <module>contrib/convert-and-tag</module>
         <module>contrib/legacy-docindexers</module>
+        <module>instrumentation/instrumentation</module>
     </modules>
 
     <properties>
@@ -367,6 +368,12 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>with-instrumentation</id>
+            <modules>
+                <module>instrumentation/instrumentation-impl</module>
+            </modules>
+        </profile>
         <profile>
             <id>release</id>
             <build>

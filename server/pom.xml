@@ -37,6 +37,11 @@
         </dependency>
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-instrumentation</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-mocks</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
@@ -59,8 +64,19 @@
             <artifactId>commons-dbcp</artifactId>
             <version>1.4</version>
         </dependency>
-
     </dependencies>
 
-
+    <!-- Selective decide via maven profiles if we want to have instrumentation -->
+    <profiles>
+        <profile>
+            <id>with-instrumentation</id>
+            <dependencies>
+                <dependency>
+                    <groupId>${project.parent.groupId}</groupId>
+                    <artifactId>blacklab-instrumentation-impl</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+            </dependencies>
+        </profile>
+    </profiles>
 </project>

@@ -16,6 +16,7 @@ import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.datastream.DataStream;
+import org.apache.logging.log4j.ThreadContext;
 
 public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
@@ -113,7 +114,11 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         if (future != null)
             throw new RuntimeException("Search already started");
         started = true;
-        future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> executeSearch());
+        final String requestId = ThreadContext.get("requestId");
+        future = search.queryInfo().index().blackLab().searchExecutorService().submit(() -> {
+            ThreadContext.put("requestId", requestId);
+            executeSearch();
+        });
     }
 
     /** Perform the requested search.

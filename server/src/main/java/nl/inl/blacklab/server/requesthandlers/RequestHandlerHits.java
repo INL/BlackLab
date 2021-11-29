@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
@@ -78,6 +80,8 @@ import nl.inl.blacklab.server.util.BlsUtils;
  * Request handler for hit results.
  */
 public class RequestHandlerHits extends RequestHandler {
+
+    private static final Logger logger = LogManager.getLogger(RequestHandlerHits.class);
 
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -176,11 +180,11 @@ public class RequestHandlerHits extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
         long searchTime = cacheEntryWindow.timeUserWaitedMs() + kwicTimeMs;
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
+        logger.info("Total search time is:{} ms", searchTime);
         addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
         addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, countTime < 0, null);
         if (includeTokenCount)
