@@ -17,6 +17,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
+import nl.inl.blacklab.instrumentation.MetricsProvider;
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -55,6 +60,8 @@ public class BlackLabServer extends HttpServlet {
 
     private boolean configRead = false;
 
+    private RequestInstrumentationProvider requestInstrumentationProvider = null;
+
     @Override
     public void init() throws ServletException {
         // Default init if no log4j.properties found
@@ -89,6 +96,8 @@ public class BlackLabServer extends HttpServlet {
 
             // Set default parameter settings from config
             SearchParameters.setDefaults(config.getParameters());
+            setMetricsProvider(config);
+            this.requestInstrumentationProvider = getRequestInstrumentationProvider(config);
 
         } catch (JsonProcessingException e) {
             throw new ConfigurationException("Invalid JSON in configuration file", e);
@@ -96,6 +105,50 @@ public class BlackLabServer extends HttpServlet {
             throw new ConfigurationException("Error reading configuration file", e);
         }
     }
+
+    private void setMetricsProvider(BLSConfig config) throws ConfigurationException {
+        String registryProviderClassName = config.getDebug().getMetricsProvider();
+        if ( StringUtils.isBlank(registryProviderClassName)) {
+            return;
+        }
+
+        String fqClassName = registryProviderClassName.startsWith("nl.inl.blacklab.instrumentation")
+            ? registryProviderClassName
+            : String.format("nl.inl.blacklab.instrumentation.impl.%s", registryProviderClassName);
+
+        try {
+            MetricsProvider meterRegistryProvider = (MetricsProvider)
+                Class.forName(fqClassName).getDeclaredConstructor().newInstance();
+            MeterRegistry registry = meterRegistryProvider.getRegistry();
+            Metrics.addRegistry(registry);
+        } catch (Exception ex) {
+            throw new ConfigurationException("Can not create metrics provider with class" + fqClassName);
+        }
+    }
+    private RequestInstrumentationProvider getRequestInstrumentationProvider(BLSConfig config) throws ConfigurationException {
+        if (requestInstrumentationProvider != null) {
+            return requestInstrumentationProvider;
+        }
+
+        String provider = config.getDebug().getRequestInstrumentationProvider();
+        if ( StringUtils.isBlank(provider)) {
+            return RequestInstrumentationProvider.noOpProvider();
+        }
+
+        String fqClassName = provider.startsWith("nl.inl.blacklab.instrumentation")
+            ? provider
+            : String.format("nl.inl.blacklab.instrumentation.impl.%s", provider);
+
+        try {
+            RequestInstrumentationProvider instrumentationProvider = (RequestInstrumentationProvider)
+                Class.forName(fqClassName).getDeclaredConstructor().newInstance();
+            return instrumentationProvider;
+
+        } catch (Exception ex) {
+            throw new ConfigurationException("Can not create request instrumentation provider with class" + fqClassName);
+        }
+    }
+
 
     /**
      * Process POST requests (add data to index)
@@ -150,13 +203,13 @@ public class BlackLabServer extends HttpServlet {
     }
 
 	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
-            try {
-                request.setCharacterEncoding("utf-8");
-            } catch (UnsupportedEncodingException ex) {
-                logger.warn(ex.getMessage(),ex);
-            }
+        try {
+            request.setCharacterEncoding("utf-8");
+        } catch (UnsupportedEncodingException ex) {
+            logger.warn(ex.getMessage(),ex);
+        }
 
-	    try {
+        try {
             request.setCharacterEncoding("utf-8");
         } catch (UnsupportedEncodingException ex) {
             logger.error(ex);
@@ -205,7 +258,7 @@ public class BlackLabServer extends HttpServlet {
         // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
         // TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
         DataFormat outputType = ServletUtil.getOutputType(request);
-        RequestHandler requestHandler = RequestHandler.create(this, request, debugMode, outputType);
+        RequestHandler requestHandler = RequestHandler.create(this, request, debugMode, outputType, this.requestInstrumentationProvider);
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
