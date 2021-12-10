@@ -28,6 +28,7 @@
 
         <module>contrib/convert-and-tag</module>
         <module>contrib/legacy-docindexers</module>
+        <module>instrumentation/instrumentation</module>
     </modules>
 
     <properties>
@@ -35,7 +36,7 @@
         <doclint>none</doclint>
         <blacklab.luceneVersion>8.10.1</blacklab.luceneVersion>
         <blacklab.version>${project.version}</blacklab.version>
-        <log4j.version>2.13.3</log4j.version>
+        <log4j.version>2.15.0</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
     </properties>
@@ -367,6 +368,12 @@
     </build>
 
     <profiles>
+        <profile>
+            <id>with-instrumentation</id>
+            <modules>
+                <module>instrumentation/instrumentation-impl</module>
+            </modules>
+        </profile>
         <profile>
             <id>release</id>
             <build>
