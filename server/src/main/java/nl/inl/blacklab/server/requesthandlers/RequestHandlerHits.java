@@ -262,7 +262,7 @@ public class RequestHandlerHits extends RequestHandler {
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                 // Add concordance from original XML
                 Concordance c = concordances.get(hit);
-                if (searchMan.config().getParameters().isAddSurroundingWordsToHits()) {
+                if (searchParam.getContextSettings().size().left() > 0){
                     ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
                         .startEntry("right").plain(c.right()).endEntry();
@@ -272,7 +272,7 @@ public class RequestHandlerHits extends RequestHandler {
             } else {
                 // Add KWIC info
                 Kwic c = kwics.get(hit);
-                if (searchMan.config().getParameters().isAddSurroundingWordsToHits()) {
+                if (searchParam.getContextSettings().size().left() > 0) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                         .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
                         .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();

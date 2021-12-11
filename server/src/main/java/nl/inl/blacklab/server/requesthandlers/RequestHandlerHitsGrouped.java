@@ -154,7 +154,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     }
                 }
 
-                if (searchMan.config().getParameters().isWriteHitsAndDocsInGroupedHits()) {
+                if (searchParam.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
                     writeHits(ds, hitsInGroup, pids);
                 }
@@ -164,7 +164,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         }
         ds.endList().endEntry();
 
-        if (searchMan.config().getParameters().isWriteHitsAndDocsInGroupedHits()) {
+        if (searchParam.includeGroupContents()) {
             writeDocInfos(ds, groups, pids, first, requestedWindowSize);
         }
         ds.endMap();

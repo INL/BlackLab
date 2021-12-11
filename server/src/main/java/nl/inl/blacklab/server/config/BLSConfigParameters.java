@@ -22,8 +22,7 @@ public class BLSConfigParameters {
 
     private boolean writeHitsAndDocsInGroupedHits = false;
 
-    private boolean addSurroundingWordsToHits = true;
-    
+
     @JsonGetter("defaultSearchSensitivity")
     public String getDefaultSearchSensitivityName() {
         return defaultSearchSensitivity.toString();
@@ -96,13 +95,5 @@ public class BLSConfigParameters {
 
     public void setWriteHitsAndDocsInGroupedHits(boolean writeHitsAndDocsInGroupedHits) {
         this.writeHitsAndDocsInGroupedHits = writeHitsAndDocsInGroupedHits;
-    }
-
-    public boolean isAddSurroundingWordsToHits() {
-        return addSurroundingWordsToHits;
-    }
-
-    public void setAddSurroundingWordsToHits(boolean addSurroundingWordsToHits) {
-        this.addSurroundingWordsToHits = addSurroundingWordsToHits;
     }
 }

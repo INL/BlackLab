@@ -417,6 +417,13 @@ public class SearchParameters {
         return new ContextSettings(contextSize, concType);
     }
 
+    public boolean includeGroupContents() {
+        if (containsKey("includegroupcontents")) {
+            return getBoolean("includegroupcontents");
+        }
+        return searchManager.config().getParameters().isWriteHitsAndDocsInGroupedHits();
+    }
+
     private List<DocProperty> getFacets() {
         if (facetProps == null) {
             String facets = getString("facets");
