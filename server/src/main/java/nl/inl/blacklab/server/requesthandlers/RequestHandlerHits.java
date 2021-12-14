@@ -259,10 +259,12 @@ public class RequestHandlerHits extends RequestHandler {
                 }
             }
 
+            ContextSize contextSize = searchParam.getContextSettings().size();
+            boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                 // Add concordance from original XML
                 Concordance c = concordances.get(hit);
-                if (searchParam.getContextSettings().size().left() > 0){
+                if (includeContext) {
                     ds.startEntry("left").plain(c.left()).endEntry()
                         .startEntry("match").plain(c.match()).endEntry()
                         .startEntry("right").plain(c.right()).endEntry();
@@ -272,7 +274,7 @@ public class RequestHandlerHits extends RequestHandler {
             } else {
                 // Add KWIC info
                 Kwic c = kwics.get(hit);
-                if (searchParam.getContextSettings().size().left() > 0) {
+                if (includeContext) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                         .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
                         .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
