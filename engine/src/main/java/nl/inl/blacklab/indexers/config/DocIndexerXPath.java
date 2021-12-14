@@ -652,31 +652,25 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                         // This for-each now processing for a sibling sub-annotation that has its own config, so use that config.
                         // BUT, use the xpath from the for-each, not the from sibling definition (if it configures an xpath, that will run on its own at another point in the loop)
-                        //
-                        if (actualSubAnnot != null) {
-                            if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
-                                // this sibling subannotation has its own value path,
-                                // skip it while processing the for-each.
-                                continue;
-                            }
-                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                                actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                                actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                                actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                            findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
-                        } else {
-                            // The annotation on whose behalf we're indexing does not have its own definition
-                            // So use the for-each as stand-in
-
-                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                                subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                                subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                                subAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                            // Note: pass null as process, findAnnotationMatches will use them already from the subAnnot argument.
-                            findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
+                        
+                        if (actualSubAnnot == null) {
+                            actualSubAnnot = subAnnot.copy();
+                            actualSubAnnot.setForEachPath(null);
+                            actualSubAnnot.setName(subannotationName);
+                            actualSubAnnot.setValuePath(subAnnot.getValuePath()); // value comes from already retrieved subAnnot.valuePath
+                            subAnnot.addSubAnnotation(actualSubAnnot);
+                        } else if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
+                            // this sibling subannotation has its own value path,
+                            // skip it while processing the for-each.
+                            continue;
                         }
+
+                        boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
+                            actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                            actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                            actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
+
+                        findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
@@ -689,6 +683,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                         subAnnot.isCaptureXml() == annotation.isCaptureXml();
 
+                    
+                    
                     findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
                 }
             }
