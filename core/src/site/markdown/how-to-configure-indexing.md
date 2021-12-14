@@ -499,7 +499,7 @@ annotatedFields:
   contents:
     containerPath: text
     wordPath: .//w
-    
+
     annotations:
     - name: word
       valuePath: t
@@ -512,9 +512,31 @@ annotatedFields:
       subannotations:       # structure of each subannotation is the same as a regular annotation
       - name: head         
         valuePath: "@head"  # "main" part of speech is found in head attribute of <pos/> element
+
+        # forEachPath will get the name and value of a set of annotations from just two xpaths.
+        # However you still need to declare all names in this config!
+        # If it encounters an unknown name a warning will be emitted.
       - forEachPath: "feat" # other features are found in <feat/> elements
         namePath: "@subset" # subset attribute contains the subannotation name
         valuePath: "@class" # class attribute contains the subannotation value
+      # now declare the expected names. See the example document above.
+      # the forEachPath makes it so we don't have to repeatedly set the valuePath with specific attribute qualifiers here.
+      - name: lwtype
+      - name: pdtype
+      - name: wvorm
+      - name: buiging
+
+      # Fully written out the above is equal to:
+      # If there are many of these qualifiers, the forEach construction will probably also perform a little better.
+      - name: lwtype
+        valuePath: feat[@subset='lwtype']
+      - name: pdtype
+        valuePath: feat[@subset='pdtype']
+      - name: wvorm
+        valuePath: feat[@subset='wvorm']
+      - name: buiging
+        valuePath: feat[@subset='buiging']
+
 ```
 
 Adding a few subproperties per token position like this will make the index slightly larger, but it shouldn't affect performance or index size too much.
