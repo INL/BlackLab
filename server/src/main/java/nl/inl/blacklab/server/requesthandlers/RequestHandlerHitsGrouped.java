@@ -11,10 +11,8 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.*;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.*;
-import nl.inl.blacklab.server.jobs.ContextSettings;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -156,7 +154,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
                 if (searchParam.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
-                    writeHits(ds, hitsInGroup, pids);
+                    writeHits(ds, hitsInGroup, pids, searchParam.getContextSettings());
                 }
 
                 ds.endMap().endItem();
@@ -172,75 +170,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         return HTTP_OK;
     }
 
-    private void writeHits(DataStream ds, Hits hits, Map<Integer, String> pids) throws BlsException {
-        ds.startEntry("hits").startList();
-        BlackLabIndex index = hits.index();
-        ContextSettings contextSettings = searchParam.getContextSettings();
-        Concordances concordances = null;
-        Kwics kwics = null;
-        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-            concordances = hits.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-        else
-            kwics = hits.kwics(contextSettings.size());
-
-        for (Hit hit : hits) {
-            ds.startItem("hit").startMap();
-
-            // Find pid
-            String pid = pids.get(hit.doc());
-            if (pid == null) {
-                Document document = index.doc(hit.doc()).luceneDoc();
-                pid = getDocumentPid(index, hit.doc(), document);
-                pids.put(hit.doc(), pid);
-            }
-
-            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-
-            // Add basic hit info
-            ds.entry("docPid", pid);
-            ds.entry("start", hit.start());
-            ds.entry("end", hit.end());
-
-            if (hits.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit);
-                ds.startEntry("captureGroups").startList();
-
-                for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                    if (capturedGroup.getValue() != null) {
-                        ds.startItem("group").startMap();
-                        ds.entry("name", capturedGroup.getKey());
-                        ds.entry("start", capturedGroup.getValue().start());
-                        ds.entry("end", capturedGroup.getValue().end());
-                        ds.endMap().endItem();
-                    }
-                }
-
-                ds.endList().endEntry();
-            }
-
-            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
-                // Add concordance from original XML
-                Concordance c = concordances.get(hit);
-                ds.startEntry("left").plain(c.left()).endEntry()
-                        .startEntry("match").plain(c.match()).endEntry()
-                        .startEntry("right").plain(c.right()).endEntry();
-            } else {
-                // Add KWIC info
-                Kwic c = kwics.get(hit);
-                Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
-                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
-            }
-            ds.endMap().endItem();
-        }
-        ds.endList().endEntry();
-    }
-
     private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, int first, int requestedWindowSize) throws BlsException {
-        ds.startEntry("docInfos").startMap();
-        //DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
         BlackLabIndex index = hitGroups.index();
+        ds.startEntry("docInfos").startMap();
         MutableIntSet docsDone = new IntHashSet();
         Document doc = null;
         String lastPid = "";

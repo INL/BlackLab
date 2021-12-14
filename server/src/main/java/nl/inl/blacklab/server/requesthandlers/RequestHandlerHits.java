@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -165,13 +164,6 @@ public class RequestHandlerHits extends RequestHandler {
         // Find KWICs/concordances from forward index or original XML
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
-        ContextSettings contextSettings = searchParam.getContextSettings();
-        Concordances concordances = null;
-        Kwics kwics = null;
-        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-            concordances = window.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-        else
-            kwics = window.kwics(contextSettings.size());
         long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
         // Search is done; construct the results object
@@ -217,80 +209,15 @@ public class RequestHandlerHits extends RequestHandler {
         }
         ds.endMap().endEntry();
 
-        ds.startEntry("hits").startList();
-
         Map<Integer, String> pids = new HashMap<>();
-        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
-        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
-        for (Hit hit : window) {
-            ds.startItem("hit").startMap();
-
-            // Find pid
-            String pid = pids.get(hit.doc());
-            if (pid == null) {
-                Document document = index.doc(hit.doc()).luceneDoc();
-                pid = getDocumentPid(index, hit.doc(), document);
-                pids.put(hit.doc(), pid);
-            }
-
-            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-
-            // Add basic hit info
-            ds.entry("docPid", pid);
-            ds.entry("start", hit.start());
-            ds.entry("end", hit.end());
-
-            if (window.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = window.capturedGroups().getMap(hit);
-                if (capturedGroups != null) {
-                    ds.startEntry("captureGroups").startList();
-                    for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                        if (capturedGroup.getValue() != null) {
-                            ds.startItem("group").startMap();
-                            ds.entry("name", capturedGroup.getKey());
-                            ds.entry("start", capturedGroup.getValue().start());
-                            ds.entry("end", capturedGroup.getValue().end());
-                            ds.endMap().endItem();
-                        }
-                    }
-                    ds.endList().endEntry();
-                } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
-                }
-            }
-
-            ContextSize contextSize = searchParam.getContextSettings().size();
-            boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
-            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
-                // Add concordance from original XML
-                Concordance c = concordances.get(hit);
-                if (includeContext) {
-                    ds.startEntry("left").plain(c.left()).endEntry()
-                        .startEntry("match").plain(c.match()).endEntry()
-                        .startEntry("right").plain(c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").plain(c.match()).endEntry();
-                }
-            } else {
-                // Add KWIC info
-                Kwic c = kwics.get(hit);
-                if (includeContext) {
-                    ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
-                }
-            }
-            ds.endMap().endItem();
-        }
-        ds.endList().endEntry();
+        writeHits(ds, window, pids, searchParam.getContextSettings());
 
         ds.startEntry("docInfos").startMap();
-        //DataObjectMapAttribute docInfos = new DataObjectMapAttribute("docInfo", "pid");
         MutableIntSet docsDone = new IntHashSet();
         Document doc = null;
         String lastPid = "";
+        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
+
         for (Hit hit : window) {
             String pid = pids.get(hit.doc());
 
