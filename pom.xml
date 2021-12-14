@@ -36,7 +36,7 @@
         <doclint>none</doclint>
         <blacklab.luceneVersion>5.5.5</blacklab.luceneVersion>
         <blacklab.version>${project.version}</blacklab.version>
-        <log4j.version>2.15.0</log4j.version>
+        <log4j.version>2.16.0</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
     </properties>
