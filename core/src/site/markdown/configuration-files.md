@@ -143,7 +143,7 @@ parameters:
     # By default, should we include the grouped hits in
     # grouped responses? If false, just include group 
     # identity and size. Can be overridden using the
-    # includegroupcontents parameter.
+    # "includegroupcontents" parameter.
     writeHitsAndDocsInGroupedHits: false
 
 

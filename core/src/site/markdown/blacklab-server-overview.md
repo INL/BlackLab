@@ -173,6 +173,10 @@ Below is an overview of parameters that can be passed to the various resources. 
 		<td>Grouping criteria, comma-separated. See below. (default: don’t group)</td>
 	</tr>
 	<tr>
+		<td>includegroupcontents </td>
+		<td>Whether to include the hits with each group (default: false).<br/>NOTE: only works for /hits requests for now.</td>
+	</tr>
+	<tr>
 		<td>viewgroup </td>
 		<td>Identity of one of the groups to view (identity values are returned with the grouping results).</td>
 	</tr>
