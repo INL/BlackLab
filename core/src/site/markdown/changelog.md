@@ -1,5 +1,11 @@
 # Change Log
 
+## Improvements in 2.1.1
+
+### Fixed
+
+* Upgrade to log4j-2.16.0 (fixes CVE-2021-45046).
+
 ## Improvements in 2.1.0
 
 ### Changed
