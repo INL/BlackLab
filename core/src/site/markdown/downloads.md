@@ -42,11 +42,13 @@ Also see the [Change log](changelog.html).
 			<td>In-development version</td>
 		</tr>
         <tr>
-            <td>v2.1.0</td>
-            <td><a href='https://github.com/INL/BlackLab/releases/download/v2.1.0/blacklab-server-2.1.0.war'>Binary (war)</a></td>
-            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.0.tar.gz'>Source (tgz)</a></td>
-            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.0.zip'>Source (zip)</a></td>
-            <td>Bugfixes. MetadataFieldsWriter allows programmatically setting specials fields such as pidField.</td>
+            <td>v2.1.1</td>
+            <td><a href='https://github.com/INL/BlackLab/releases/download/v2.1.1/blacklab-server-2.1.1.war'>BlackLab Server WAR</a></td>
+            <td><a href='https://github.com/INL/BlackLab/releases/download/v2.1.1/blacklab-core.zip'>BlackLab Core JAR and libs</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.1.tar.gz'>Source (tgz)</a></td>
+            <td><a href='https://github.com/INL/BlackLab/archive/v2.1.1.zip'>Source (zip)</a></td>
+            <td>Bugfixes. MetadataFieldsWriter allows programmatically setting specials fields such as pidField.
+            Fixes log4j security issue by upgrading to 2.16.0.</td>
         </tr>
         <tr>
             <td>v2.0.0</td>

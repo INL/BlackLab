@@ -26,6 +26,7 @@
 
 ### Fixed
 
+* Upgrade to log4j-2.16.0 (fixes CVE-2021-45046).
 * Bug in TermsWriter that caused a crash when indexing more than 134M unique terms.
 * Deadlock because of fixed thread count and some subtasks getting run but not others. Now either allows entire search operation or queues it until later.
 * Fix not all hits always counted when grouping/sorting.
@@ -42,6 +43,12 @@
 * Support for pre-2.0 configuration files. See https://inl.github.io/BlackLab/configuration-files.html
 * Support for useOldElementnames (old BLS element names, using "properties" instead of "annotations")
 
+
+## Improvements in 2.1.1
+
+### Fixed
+
+* Upgrade to log4j-2.16.0 (fixes CVE-2021-45046).
 
 ## Improvements in 2.1.0
 
