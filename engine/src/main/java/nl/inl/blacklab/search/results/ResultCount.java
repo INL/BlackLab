@@ -2,6 +2,10 @@ package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class ResultCount extends ResultsStats implements SearchResult {
 
     public enum CountType {
@@ -147,6 +151,18 @@ public class ResultCount extends ResultsStats implements SearchResult {
         return "ResultCount [count=" + count + ", wasInterrupted=" + wasInterrupted + "]";
     }
 
+    /**
+     * Return debug info.
+     */
+    public Map<String, Object> getDebugInfo() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("className", getClass().getName());
+        result.put("count-className", count.getClass().getName());
+        result.put("done", count.done());
+        result.put("processedSoFar", count.processedSoFar());
+        result.put("countedSoFar", count.countedSoFar());
+        return result;
+    }
 
 
 }
