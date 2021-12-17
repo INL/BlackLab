@@ -1,5 +1,26 @@
 package nl.inl.blacklab.search.results;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.SpanWeight.Postings;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -11,24 +32,6 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
 import nl.inl.util.ThreadAborter;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.SpanWeight.Postings;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.IntUnaryOperator;
-import java.util.stream.Collectors;
 
 public class HitsFromQueryParallel extends Hits {
 
@@ -60,9 +63,9 @@ public class HitsFromQueryParallel extends Hits {
         final AtomicInteger globalDocsCounted;
         final AtomicInteger globalHitsProcessed;
         final AtomicInteger globalHitsCounted;
-        /** Target number of hits to store in the {@link globalResults} list */
+        /** Target number of hits to store in the {@link #globalResults} list */
         final AtomicInteger globalHitsToProcess;
-        /** Target number of hits to count, must always be >= {@link globalHitsToProcess} */
+        /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
         final AtomicInteger globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
         private final HitsArrays globalResults;
@@ -87,10 +90,10 @@ public class HitsFromQueryParallel extends Hits {
          * It is done this way because of an initialization order issue with capture groups.
          * The issue is as follows:
          * - we want to lazy-initialize Spans objects:
-         *   1. because they hold a lot of memory for large indexes.
-         *   2. because only a few SpansReaders are active at a time.
-         *   3. because they take a long time to setup.
-         *   4. because we might not even need them all if a hits limit has been set.
+         * 1. because they hold a lot of memory for large indexes.
+         * 2. because only a few SpansReaders are active at a time.
+         * 3. because they take a long time to setup.
+         * 4. because we might not even need them all if a hits limit has been set.
          *
          * So if we precreate them all, we're doing a lot of upfront work we possibly don't need to.
          * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
@@ -113,31 +116,31 @@ public class HitsFromQueryParallel extends Hits {
          * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
          * lazy-initialize when needed.
          *
-         * @param weight span weight we're querying
-         * @param leafReaderContext leaf reader we're running on
+         * @param weight                span weight we're querying
+         * @param leafReaderContext     leaf reader we're running on
          * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
-         * @param globalResults global results object (must be locked before writing)
-         * @param globalCapturedGroups global captured groups object (must be locked before writing)
-         * @param globalDocsProcessed global docs retrieved counter
-         * @param globalDocsCounted global docs counter (includes ones that weren't retrieved because of max. settings)
-         * @param globalHitsProcessed  global hits retrieved counter
-         * @param globalHitsCounted global hits counter (includes ones that weren't retrieved because of max. settings)
-         * @param globalHitsToProcess how many more hits to retrieve
-         * @param globalHitsToCount how many more hits to count
+         * @param globalResults         global results object (must be locked before writing)
+         * @param globalCapturedGroups  global captured groups object (must be locked before writing)
+         * @param globalDocsProcessed   global docs retrieved counter
+         * @param globalDocsCounted     global docs counter (includes ones that weren't retrieved because of max. settings)
+         * @param globalHitsProcessed   global hits retrieved counter
+         * @param globalHitsCounted     global hits counter (includes ones that weren't retrieved because of max. settings)
+         * @param globalHitsToProcess   how many more hits to retrieve
+         * @param globalHitsToCount     how many more hits to count
          */
         private SpansReader(
-            BLSpanWeight weight,
-            LeafReaderContext leafReaderContext,
-            HitQueryContext sourceHitQueryContext,
+                BLSpanWeight weight,
+                LeafReaderContext leafReaderContext,
+                HitQueryContext sourceHitQueryContext,
 
-            HitsArrays globalResults,
-            CapturedGroups globalCapturedGroups,
-            AtomicInteger globalDocsProcessed,
-            AtomicInteger globalDocsCounted,
-            AtomicInteger globalHitsProcessed,
-            AtomicInteger globalHitsCounted,
-            AtomicInteger globalHitsToProcess,
-            AtomicInteger globalHitsToCount
+                HitsArrays globalResults,
+                CapturedGroups globalCapturedGroups,
+                AtomicInteger globalDocsProcessed,
+                AtomicInteger globalDocsCounted,
+                AtomicInteger globalHitsProcessed,
+                AtomicInteger globalHitsCounted,
+                AtomicInteger globalHitsToProcess,
+                AtomicInteger globalHitsToCount
         ) {
             this.spans = null; // inverted for uninitialized version
             this.weight = weight;
@@ -213,7 +216,7 @@ public class HitsFromQueryParallel extends Hits {
          * Collect all hits from our spans object.
          * Updates the global counters, shared with other SpansReader objects operating on the same result set.
          * Hits are periodically copied into the {@link SpansReader#globalResults} list when a large enough batch has been gathered.
-         *
+         * <p>
          * Updating the maximums while this is running is allowed.
          */
         @Override
@@ -376,7 +379,7 @@ public class HitsFromQueryParallel extends Hits {
 
         try {
             // Override FI match threshold? (debug use only!)
-            synchronized(ClauseCombinerNfa.class) {
+            synchronized (ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
                 if (searchSettings.fiMatchFactor() != -1) {
                     logger.debug("setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
@@ -406,17 +409,17 @@ public class HitsFromQueryParallel extends Hits {
             boolean hasInitialized = false;
             for (LeafReaderContext leafReaderContext : reader.leaves()) {
                 SpansReader spansReader = new SpansReader(
-                    weight,
-                    leafReaderContext,
-                    this.hitQueryContext,
-                    this.hitsArrays,
-                    this.capturedGroups,
-                    this.globalDocsProcessed,
-                    this.globalDocsCounted,
-                    this.globalHitsProcessed,
-                    this.globalHitsCounted,
-                    this.requestedHitsToProcess,
-                    this.requestedHitsToCount
+                        weight,
+                        leafReaderContext,
+                        this.hitQueryContext,
+                        this.hitsArrays,
+                        this.capturedGroups,
+                        this.globalDocsProcessed,
+                        this.globalDocsCounted,
+                        this.globalHitsProcessed,
+                        this.globalHitsCounted,
+                        this.requestedHitsToProcess,
+                        this.requestedHitsToCount
                 );
                 spansReaders.add(spansReader);
 
@@ -483,12 +486,12 @@ public class HitsFromQueryParallel extends Hits {
                 final AtomicInteger i = new AtomicInteger();
                 final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
                 List<Future<?>> pendingResults = spansReaders
-                    .stream()
-                    .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
-                    .values()
-                    .stream()
-                    .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
-                    .collect(Collectors.toList()); // gather the futures
+                        .stream()
+                        .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
+                        .values()
+                        .stream()
+                        .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
+                        .collect(Collectors.toList()); // gather the futures
 
                 // Wait for workers to complete.
                 try {
@@ -538,6 +541,7 @@ public class HitsFromQueryParallel extends Hits {
     protected int docsCountedSoFar() {
         return this.globalDocsCounted.get();
     }
+
     @Override
     protected int docsCountedTotal() {
         ensureAllResultsRead();
@@ -595,5 +599,19 @@ public class HitsFromQueryParallel extends Hits {
     @Override
     protected int resultsProcessedTotal() {
         return hitsProcessedTotal();
+    }
+
+
+    /**
+     * Return debug info.
+     */
+    public Map<String, Object> getDebugInfo() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("className", getClass().getName());
+        result.put("globalHitsCounted", globalHitsCounted);
+        result.put("allSourceSpansFullyRead", allSourceSpansFullyRead);
+        result.put("spansReaders-size", spansReaders.size());
+        result.put("spansReaders-done", spansReaders.stream().map(r -> r.isDone).collect(Collectors.toList()));
+        return result;
     }
 }

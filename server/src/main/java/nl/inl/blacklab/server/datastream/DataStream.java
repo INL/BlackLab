@@ -286,9 +286,7 @@ public abstract class DataStream {
 
     public abstract DataStream value(String value);
 
-    public DataStream value(Object value) {
-        return value(value == null ? "" : value.toString());
-    }
+    //public DataStream value(Object value) {         return value(value == null ? "" : value.toString()); }
 
     public abstract DataStream value(long value);
 
@@ -309,7 +307,7 @@ public abstract class DataStream {
     public <S, T> DataStream value(Map<S, T> value) {
         startMap();
         for (Map.Entry<S, T> entry: value.entrySet()) {
-            startEntry(entry.getKey().toString()).valueStruct(entry.getValue()).endEntry();
+            startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
         }
         endMap();
         return this;
@@ -329,7 +327,7 @@ public abstract class DataStream {
     public <T> DataStream value(List<T> value) {
         startList();
         for (T item: value) {
-            startItem("item").valueStruct(item).endItem();
+            startItem("item").value(item).endItem();
         }
         endList();
         return this;
@@ -339,18 +337,24 @@ public abstract class DataStream {
      * Output a value that may be a nested structure (Map or List) or simple value.
      *
      * @param value value to output
-     * @param <T> value type
      * @return this data stream
      */
-    public <T> DataStream valueStruct(T value) {
+    public DataStream value(Object value) {
         if (value instanceof Map) {
-            value((Map)value);
+            return value((Map)value);
         } else if (value instanceof List) {
-            value((List)value);
+            return value((List)value);
+        } else if (value instanceof String) {
+            return value((String)value);
+        } else if (value instanceof Long) {
+            return value((long)value);
+        } else if (value instanceof Double) {
+            return value((double)value);
+        } else if (value instanceof Boolean) {
+            return value((boolean)value);
         } else {
-            value(value);
+            return value(value == null ? "" : value.toString());
         }
-        return this;
     }
 
     public DataStream plain(String value) {
