@@ -302,13 +302,13 @@ public abstract class DataStream {
      * May contain nested structures (Map, List) and/or values.
      *
      * @param value map to output
-     * @param <S>   entry key type
-     * @param <T>   entry value type
+     * @param <S> entry key type
+     * @param <T> entry value type
      * @return this data stream
      */
     public <S, T> DataStream value(Map<S, T> value) {
         startMap();
-        for (Map.Entry<S, T> entry : value.entrySet()) {
+        for (Map.Entry<S, T> entry: value.entrySet()) {
             startEntry(entry.getKey().toString()).valueStruct(entry.getValue()).endEntry();
         }
         endMap();
@@ -323,12 +323,12 @@ public abstract class DataStream {
      * Uses "item" for the list item name (in XML mode).
      *
      * @param value list to output
-     * @param <T>   list item type
+     * @param <T> list item type
      * @return this data stream
      */
     public <T> DataStream value(List<T> value) {
         startList();
-        for (T item : value) {
+        for (T item: value) {
             startItem("item").valueStruct(item).endItem();
         }
         endList();
@@ -339,14 +339,14 @@ public abstract class DataStream {
      * Output a value that may be a nested structure (Map or List) or simple value.
      *
      * @param value value to output
-     * @param <T>   value type
+     * @param <T> value type
      * @return this data stream
      */
     public <T> DataStream valueStruct(T value) {
         if (value instanceof Map) {
-            value((Map) value);
+            value((Map)value);
         } else if (value instanceof List) {
-            value((List) value);
+            value((List)value);
         } else {
             value(value);
         }

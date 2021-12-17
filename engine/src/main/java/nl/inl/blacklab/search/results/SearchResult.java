@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Map;
+
 // Base interface for all possible search results
 public interface SearchResult {
     
@@ -16,5 +18,10 @@ public interface SearchResult {
      * @return how many hits are stored in this result object
      */
     int numberOfResultObjects();
+
+    /**
+     * Add relevant debug info to a response stream.
+     */
+    default Map<String, Object> getDebugInfo() { return null; }
     
 }
