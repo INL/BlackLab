@@ -14,10 +14,15 @@ import nl.inl.blacklab.instrumentation.MetricsProvider;
  * micrometer's SimpleRegistry
  */
 public class SimpleMetricsProvider implements MetricsProvider {
+    private final MeterRegistry registry;
+
+    public SimpleMetricsProvider() {
+        registry = new SimpleMeterRegistry();
+    }
+
     @Override
     public MeterRegistry getRegistry() {
-        SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
-        return simpleMeterRegistry;
+        return registry;
     }
 
 

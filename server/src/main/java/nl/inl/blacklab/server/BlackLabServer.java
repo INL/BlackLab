@@ -21,6 +21,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import nl.inl.blacklab.instrumentation.MetricsProvider;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -246,6 +247,10 @@ public class BlackLabServer extends HttpServlet {
                     return;
                 }
             }
+        }
+
+        if (PrometheusMetricsProvider.handlePrometheus(Metrics.globalRegistry, request, responseObject, OUTPUT_ENCODING.name())) {
+            return;
         }
 
         // === Create RequestHandler object
