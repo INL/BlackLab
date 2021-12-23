@@ -23,5 +23,10 @@
         <artifactId>blacklab-instrumentation</artifactId>
         <version>${project.version}</version>
     </dependency>
+    <dependency>
+        <groupId>io.micrometer</groupId>
+        <artifactId>micrometer-registry-prometheus</artifactId>
+        <version>1.7.0</version>
+    </dependency>
 </dependencies>
 </project>
