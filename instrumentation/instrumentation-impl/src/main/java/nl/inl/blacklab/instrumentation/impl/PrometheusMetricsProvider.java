@@ -6,6 +6,7 @@ import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
+import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
@@ -16,7 +17,12 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Optional;
 
+/**
+ * Create a registry backed by prometheus
+ * Adds system metrics to the registry
+ */
 public class PrometheusMetricsProvider implements MetricsProvider {
     private static final Logger logger = LogManager.getLogger(PrometheusMetricsProvider.class);
     private static final String DEFAULT_PROM_ENDPOINT = "/metrics";
@@ -51,18 +57,24 @@ public class PrometheusMetricsProvider implements MetricsProvider {
      * @param request
      * @param responseObject
      * @param charEncoding
-     * @return
+     * @return true if the request was handled, false otherwise
      */
-    protected static boolean handlePrometheus(MeterRegistry registry, HttpServletRequest request, HttpServletResponse responseObject, String charEncoding) {
+    public static boolean handlePrometheus(MeterRegistry registry, HttpServletRequest request, HttpServletResponse responseObject, String charEncoding) {
         if (!request.getRequestURI().contains(DEFAULT_PROM_ENDPOINT)) {
             return false;
         }
-        if (!(registry instanceof PrometheusMeterRegistry)) {
+        Optional<MeterRegistry> aRegistry = Optional.of(registry);
+        if (registry instanceof CompositeMeterRegistry) {
+            CompositeMeterRegistry composite = (CompositeMeterRegistry) registry;
+             aRegistry = composite.getRegistries().stream().filter(r -> r instanceof PrometheusMeterRegistry).findFirst();
+        }
+        if (!aRegistry.isPresent() || !(aRegistry.get() instanceof PrometheusMeterRegistry)) {
             logger.warn("Can not respond to /metrics without a PrometheusRegistry");
+            responseObject.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return true;
         }
 
-        PrometheusMeterRegistry prometheusMeterRegistry = (PrometheusMeterRegistry) registry;
+        PrometheusMeterRegistry prometheusMeterRegistry = (PrometheusMeterRegistry) aRegistry.get();
 
         try {
             prometheusMeterRegistry.scrape(responseObject.getWriter());
