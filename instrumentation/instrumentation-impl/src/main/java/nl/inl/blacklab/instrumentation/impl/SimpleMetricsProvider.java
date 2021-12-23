@@ -17,21 +17,10 @@ public class SimpleMetricsProvider implements MetricsProvider {
     @Override
     public MeterRegistry getRegistry() {
         SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
-        addSystemMetrics(simpleMeterRegistry);
         return simpleMeterRegistry;
     }
 
-    /**
-     * Adds metrics to measure the behaviour of the underlying JVM.
-     * @param registry the registry
-     */
-    private void addSystemMetrics(MeterRegistry registry) {
-        new JvmMemoryMetrics().bindTo(registry);
-        new JvmGcMetrics().bindTo(registry);
-        new JvmHeapPressureMetrics().bindTo(registry);
-        new JvmThreadMetrics().bindTo(registry);
-        new ProcessorMetrics().bindTo(registry);
-    }
+
 
 
 }
