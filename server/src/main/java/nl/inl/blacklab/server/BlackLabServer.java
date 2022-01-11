@@ -109,7 +109,7 @@ public class BlackLabServer extends HttpServlet {
 
     private void setMetricsProvider(BLSConfig config) throws ConfigurationException {
         String registryProviderClassName = config.getDebug().getMetricsProvider();
-        if ( StringUtils.isBlank(registryProviderClassName)) {
+        if (StringUtils.isBlank(registryProviderClassName)) {
             return;
         }
 
