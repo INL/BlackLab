@@ -586,7 +586,7 @@ public class IndexManager {
                         .findFirst();
                     indexToDelete.ifPresent(i -> {
                         logger.info("Deleting index {}, {}", i.getId(), i.getDir().getAbsolutePath());
-                        indices.remove(i.getId());
+                        indices.remove(i.getId()).close();
                     });
                 }
             }
