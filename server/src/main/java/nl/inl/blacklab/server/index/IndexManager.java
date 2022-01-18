@@ -136,7 +136,7 @@ public class IndexManager {
 
         checkAnyIndexesAvailable();
         List<File> allDirs = new ArrayList<>(collectionsDirs);
-        allDirs.add(userCollectionsDir);
+        if(userCollectionsDir != null) allDirs.add(userCollectionsDir); // Since userCollectionsDir is initialized as null, and might still be null here, check for nullity
         try {
             startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
         } catch (Exception ex) {
