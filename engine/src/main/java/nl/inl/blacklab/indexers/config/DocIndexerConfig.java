@@ -590,6 +590,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 super.addMetadataField(fieldName, s);
             }
         }
+        sortedMetadataValues.clear();
         super.endDocument();
     }
 }
