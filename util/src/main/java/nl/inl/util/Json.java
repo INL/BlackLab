@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 /**
  * Supports reading/writing JSON and YAML files.
@@ -25,7 +26,7 @@ public class Json {
 
     static private ObjectMapper jsonObjectMapper;
 
-    static private JsonFactory yamlFactory;
+    static private YAMLFactory yamlFactory;
 
     static private ObjectMapper yamlObjectMapper;
 
@@ -40,6 +41,7 @@ public class Json {
         jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
         yamlFactory = new YAMLFactory();
+        yamlFactory.configure(YAMLGenerator.Feature.CANONICAL_OUTPUT, true);
         yamlObjectMapper = new ObjectMapper(yamlFactory);
         yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
     }
@@ -80,7 +82,7 @@ public class Json {
      */
     public static String getString(JsonNode parent, String name, String defVal) {
         if (parent.has(name))
-            return parent.get(name).textValue();
+            return parent.get(name).asText(defVal);
         return defVal;
     }
 
@@ -94,8 +96,9 @@ public class Json {
      * @return the boolean value
      */
     public static boolean getBoolean(JsonNode parent, String name, boolean defVal) {
-        if (parent.has(name))
-            return parent.get(name).booleanValue();
+        if (parent.has(name)) {
+            return parent.get(name).asBoolean(defVal);
+        }
         return defVal;
     }
 
@@ -110,7 +113,7 @@ public class Json {
      */
     public static long getLong(ObjectNode parent, String name, long defVal) {
         if (parent.has(name))
-            return parent.get(name).longValue();
+            return parent.get(name).asLong(defVal);
         return defVal;
     }
 
@@ -125,7 +128,7 @@ public class Json {
      */
     public static int getInt(ObjectNode parent, String name, int defVal) {
         if (parent.has(name))
-            return parent.get(name).intValue();
+            return parent.get(name).asInt(defVal);
         return defVal;
     }
 
@@ -143,7 +146,7 @@ public class Json {
         List<String> result = new ArrayList<>();
         if (arr != null) {
             for (int i = 0; i < arr.size(); i++) {
-                result.add(arr.get(i).textValue());
+                result.add(arr.get(i).asText());
             }
         }
         return result;
