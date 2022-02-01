@@ -10,11 +10,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
+import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
+import org.apache.commons.io.monitor.FileAlterationMonitor;
+import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -52,9 +58,12 @@ public class IndexManager {
      */
     private static final String PENDING_DELETION_FILE_MARKER = ".markedfordeletion";
 
-    private static final Logger logger = LogManager.getLogger(IndexManager.class);
+    /**
+     * The frequency at which we check for removed indices in the file system.
+     */
+    private static final int REMOVED_INDICES_MONITOR_CHECK_IN_MS = 1000;
 
-    private static final int MAX_USER_INDICES = 10;
+    private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
     private SearchManager searchMan;
 
@@ -126,6 +135,15 @@ public class IndexManager {
         }
 
         checkAnyIndexesAvailable();
+        List<File> allDirs = new ArrayList<>(collectionsDirs);
+        // Since userCollectionsDir is initialized as null, and might still be null here, check for nullity
+        if (userCollectionsDir != null)
+            allDirs.add(userCollectionsDir);
+        try {
+            startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
+        } catch (Exception ex) {
+            throw  BlackLabRuntimeException.wrap(ex);
+        }
     }
 
     private void checkAnyIndexesAvailable() throws ConfigurationException {
@@ -172,7 +190,6 @@ public class IndexManager {
      */
     public synchronized boolean indexExists(String indexId) throws BlsException {
         try {
-            cleanupRemovedIndices();
             if (!indices.containsKey(indexId)) {
                 if (Index.isUserIndex(indexId))
                     loadUserIndices(Index.getUserId(indexId));
@@ -217,14 +234,16 @@ public class IndexManager {
             throw new NotAuthorized("Could not create index. Can only create your own private indices.");
         String indexName = Index.getIndexName(indexId);
 
+        if (userCollectionsDir == null)
+            throw new BadRequest("CANNOT_CREATE_INDEX ",
+                "Could not create index. The server is not configured with support for user content.");
+
+        int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
         if (!canCreateIndex(user))
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create index. You already have the maximum of "
-                            + IndexManager.MAX_USER_INDICES + " indices.");
+                            + maxNumberOfIndices + " indices.");
 
-        if (userCollectionsDir == null)
-            throw new BadRequest("CANNOT_CREATE_INDEX ",
-                    "Could not create index. The server is not configured with support for user content.");
 
         File userDir = getUserCollectionDir(userId);
         if (userDir == null || !userDir.canWrite())
@@ -262,7 +281,14 @@ public class IndexManager {
     }
 
     public boolean canCreateIndex(User user) {
-        return userCollectionsDir != null && (getAvailablePrivateIndices(user.getUserId()).size() < IndexManager.MAX_USER_INDICES || user.isSuperuser());
+        int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
+
+        // No limit on the number of indices
+        if (maxNumberOfIndices ==  -1) {
+            return true;
+        }
+        return userCollectionsDir != null &&
+            (getAvailablePrivateIndices(user.getUserId()).size() <= maxNumberOfIndices || user.isSuperuser());
     }
 
     /**
@@ -349,7 +375,6 @@ public class IndexManager {
      */
     public synchronized Index getIndex(String indexId) throws IndexNotFound {
         try {
-            cleanupRemovedIndices();
             if (!indices.containsKey(indexId)) {
                 if (Index.isUserIndex(indexId))
                     loadUserIndices(Index.getUserId(indexId));
@@ -394,7 +419,6 @@ public class IndexManager {
         if (userId == null)
             return Collections.emptyList();
 
-        cleanupRemovedIndices();
         loadUserIndices(userId);
 
         Set<Index> availableIndices = new HashSet<>();
@@ -415,7 +439,6 @@ public class IndexManager {
     public synchronized Collection<Index> getAvailablePublicIndices() {
         Set<Index> availableIndices = new HashSet<>();
 
-        cleanupRemovedIndices();
         loadPublicIndices();
         for (Index i : indices.values()) {
             if (!i.isUserIndex())
@@ -543,20 +566,39 @@ public class IndexManager {
     }
 
     /**
-     * Checks all indices to see if their directories are still readable, and
-     * removes them if this is not the case. This can happen when the index is
-     * deleted on-disk while we're running. This feature is explicitly supported.
+     * Starts a monitor to remove references to indices whose physical file was removed
+     * @param directories to monitor
+     * @param pollingIntervalInMs how ofter to monitor the directories
+     * @return the monitor
+     * @throws Exception
      */
-    private synchronized void cleanupRemovedIndices() {
-        List<String> removedIds = new ArrayList<>();
-        for (Index i : indices.values()) {
-            if (!i.getDir().canRead()) {
-                removedIds.add(i.getId());
+    public FileAlterationMonitor startRemovedIndicesMonitor(List<File> directories, long pollingIntervalInMs) throws Exception {
+        logger.info("Installing index removal watcher on: {}", directories);
+        FileAlterationMonitor monitor = new FileAlterationMonitor(pollingIntervalInMs);
+        List<FileAlterationObserver> observers = directories.stream()
+            .map(FileAlterationObserver::new)
+            .collect(Collectors.toList());
+        FileAlterationListenerAdaptor listener = new FileAlterationListenerAdaptor() {
+            @Override
+            public void onDirectoryDelete(File directory) {
+                logger.info("Directory deleted: {}", directory.getAbsolutePath());
+                synchronized (IndexManager.this) {
+                    Optional<Index> indexToDelete = indices.values().stream()
+                        .filter(i -> i.getDir().equals(directory))
+                        .findFirst();
+                    indexToDelete.ifPresent(i -> {
+                        logger.info("Deleting index {}, {}", i.getId(), i.getDir().getAbsolutePath());
+                        indices.remove(i.getId()).close();
+                    });
+                }
             }
-        }
-        for (String id : removedIds) {
-            indices.remove(id).close();
-        }
+        };
+        observers.forEach(o -> {
+            o.addListener(listener);
+            monitor.addObserver(o);
+        });
+        monitor.start();
+        return monitor;
     }
 
     private static void markForDeletion(File directory) {

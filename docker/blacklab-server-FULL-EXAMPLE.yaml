@@ -8,21 +8,24 @@ configVersion: 2
 # Where indexes can be found
 # (list directories whose subdirectories are indexes, or directories containing a single index)
 indexLocations:
-- /vol1/blacklab-indices
-
+    - /data/blacklab/indexes
 
 # Directory containing each users' private indexes
 # (only works if you've configured an authentication system, see below)
-userIndexes: /vol1/autosearch-indices
-
+userIndexes: /data/blacklab/indexes/users
 
 # Settings related to BlackLab Server's protocol, i.e. requests and responses
 protocol:
 
-    # If false, use the new element names in responses: annotatedField, annotation, etc.
-    # If true, use the old element names in responses: complexField, property, etc.
-    # It is recommended to set this to false. The old element names will eventually be removed
-    useOldElementNames: false
+    # If true, omits empty annotation values from XML results.
+    omitEmptyProperties: false
+
+    # Default response type (XML or JSON; default XML)
+    defaultOutputType: XML
+
+    # Value for the Access-Control-Allow-Origin HTTP header (default: *)
+    accessControlAllowOrigin: "*"
+
 
 
 # Defaults and maximum values for parameters
@@ -32,32 +35,33 @@ parameters:
     # Are searches case/accent-sensitive or -insensitive by default?
     defaultSearchSensitivity: insensitive
 
-    # The maximum number of hits to process (return as results, and 
+    # The maximum number of hits to process (return as results, and
     # use for sorting, grouping, etc.). -1 means no limit.
     # ("maxretrieve" parameter)
     # (higher values will put more stress on the server)
     processHits:
-        default: -1
-        max: -1
+        default: 1000000
+        max: 2000000
 
     # The maximum number of hits to count. -1 means no limit.
     # ("maxcount" parameter)
     # (higher values will put more stress on the server)
     countHits:
         default: -1
-        max: -1
+        max: 10000000
 
     # Number of results per page ("number" parameter). -1 means no limit.
     # (a very high max value might lead to performance problems)
     pageSize:
-        default: 20
-        max: -1
+        default: 50
+        max: 3000
 
     # Context around match ("wordsaroundhit" parameter)
     # (higher values might cause copyright issues and may stress the server)
+    # Set to 0 to omit the left and right context altogether.
     contextSize:
         default: 5
-        max: 25
+        max: 20
 
     #  Default pattern language to use.
     #  The pattlang GET parameter override this value.
@@ -67,45 +71,45 @@ parameters:
     #  The filterlang GET parameter override this value.
     filterLanguage: luceneql
 
+    # By default, should we include the grouped hits in
+    # grouped responses? If false, just include group
+    # identity and size. Can be overridden using the
+    # "includegroupcontents" parameter.
+    writeHitsAndDocsInGroupedHits: false
+
 
 
 #  Settings for job caching.
 cache:
 
-    # Maximum size the cache may grow to (in megabytes), or -1 for no limit.
-    # (we can only approximate the cache size, because different tasks refer to the same data.
-    # In the real-world we will probably stay well under this. On the other hand, cache size is 
-    # a lot smaller than peak memory usage, so don't this too high either
-    maxSizeMegs: 10000
-
-    # How many search tasks will we cache at most? (or -1 for no limit)
-    # A note about tasks: a request to BlackLab Server routinely results in 3+ simultaneous search tasks
-    # being launched: a task to get a window into the sorted hits, which launches a task to get sorted hits,
-    # which launches a task to get the unsorted hits. There's also usually a separate task for keeping track
-    # of the running total number of hits found (which re-uses the unsorted hits task). The reason for this
-    # architecture is that the results of tasks can be more easily re-used in subsequent searches that way:
-    # if the sort changes, we can still use the unsorted hits task, etc. Practical upshot of this: number of 
-    # tasks does not equal number of searches. Don't set this too low.
-    # Also, a better way to limit cache size is using maxSizeMegs, not by specifying an arbitrary number of tasks.
-    maxNumberOfJobs: 100
-
-    # After how much time will a completed search task be removed from the cache? (in seconds)
-    # (don't set this too low; instead, set maxSizeMegs, the target size for the cache)
-    maxJobAgeSec: 600
-
-    # After how much time should a running search be aborted?
-    # (larger values put stress on the server, but allow complicated searches to complete)
-    maxSearchTimeSec: 300
-
     # How much free memory the cache should shoot for (in megabytes) while cleaning up.
     # Because we don't have direct control over the garbage collector, we can't reliably clean up until
     # this exact number is available. Instead we just get rid of a few cached tasks whenever a
     # new task is added and we're under this target number.
-    targetFreeMemMegs: 3000
+    targetFreeMemMegs: 100
 
     # The minimum amount of free memory required to start a new search task. If this memory is not available,
-    # an error message is returned.
-    minFreeMemForSearchMegs: 1000
+    # your search will be queued.
+    minFreeMemForSearchMegs: 50
+
+    # Maximum number of searches that may be queued. If you try to add another search, this will return an error.
+    # Queued searches don't take up memory, but it's no use building up a huge queue that will take a very long time
+    # to get through. Better to ask users to return when server load is lower.
+    maxQueuedSearches: 20,
+
+    # How long after it was last accessed will a completed search task be removed from
+    # the cache? (in seconds)
+    # (don't set this too low; instead, set targetFreeMemMegs, the target amount of free memory)
+    # If you want to disable the cache altogether, set this to 0.
+    maxJobAgeSec: 3600
+
+    # If a search is aborted, how long should we keep the search in the cache to prevent
+    # the client from resubmitting right away? A sort of "deny list" if you will.
+    denyAbortedSearchSec: 600
+
+    # After how much time should a running search be aborted?
+    # (larger values put stress on the server, but allow complicated searches to complete)
+    maxSearchTimeSec: 300
 
     # How long the client may keep results we give them in their local (browser) cache.
     # This is used to write HTTP cache headers. Low values mean clients might re-request
@@ -114,6 +118,17 @@ cache:
     # the protocol) changes after an update. A value of an hour or so seems reasonable.
     clientCacheTimeSec: 3600
 
+    # [DEPRECATED, NO LONGER USED]
+    # Use targetFreeMemMegs to set a "free memory goal" as that can be measured
+    # accurately.
+    maxSizeMegs: 500
+
+    # [DEPRECATED, NO LONGER USED]
+    # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
+    # "cache cleanup goal".
+    maxNumberOfJobs: 100
+
+
 
 # Settings related to tuning server load and client responsiveness
 performance:
@@ -121,40 +136,22 @@ performance:
     # How many search tasks should be able to run simultaneously
     # (set this to take advantage of the cores/threads available to the machine;
     # probably don't set it any larger, as this won't help and might hurt)
+    # Note that this is a rough guideline, not an absolute maximum number of threads
+    # that will ever be running. New searches are only started (unqueued) if there's
+    # fewer than this number of threads running.
     # (-1 to autodetect)
-    maxConcurrentSearches: 12
+    maxConcurrentSearches: 6
 
     # How many threads may a single search task use at most?
     # (lower values will allow more simultaneous searches to run;
     # higher values improve search performance, but will crowd out other searches.
-    # e.g. if you set this to the same number as maxConcurrentSearches, a single 
+    # e.g. if you set this to the same number as maxConcurrentSearches, a single
     # search may queue all other searches until it's done)
-    maxThreadsPerSearch: 4
-
-    # Do we want to automatically pause long-running searches if there's 
-    # many simultaneous users?
-    pausingEnabled: true
-
-    # How many searches may be paused at most before we start aborting them
-    # (higher values means fewer aborted searches when multiple users are searching 
-    # simultaneously, but it may also lead to memory being exhausted)
-    maxPausedSearches: 4
-
-    # Pause a count if the client hasn't asked about it for 10s
-    # (lower values are easier on the CPU, but might take up more memory)
-    abandonedCountPauseTimeSec: 10
+    maxThreadsPerSearch: 3
 
     # Abhort a count if the client hasn't asked about it for 30s
     # (lower values are easier on the server, but might abort a count too soon)
     abandonedCountAbortTimeSec: 30
-
-    # The maximum number of tasks a user is allowed to have running at the same time.
-    # This only includes tasks that have not finished yet.
-    # The above remark about tasks applies here too: one search request will start multiple tasks.
-    # Therefore, this value shouldn't be set too low. This setting is meant to prevent over-eager scripts 
-    # and other abuse from bringing down the server. Regular users should never hit this limit.
-    # [NO LONGER USED IN 2.0, BUT MIGHT MAKE A COMEBACK AT SOME POINT]
-    maxRunningJobsPerUser: 10
 
 
 # Settings for diagnosing problems
@@ -166,33 +163,45 @@ debug:
     #  - output is prettyprinted by default (can be overriden with the prettyprint
     #    GET parameter)
     addresses:
-    - 127.0.0.1       #  IPv4 localhost
-    - 0:0:0:0:0:0:0:1 #  IPv6 localhost
-    - 172.16.10.19    #  Firewall DMZ
-    - 132.229.188.253 #  Proxy
+        - 127.0.0.1       #  IPv4 localhost
+        - 0:0:0:0:0:0:0:1 #  IPv6 localhost
 
 
 # How to determine current user
 # (you only need this if you want per-user private indices or authorization)
-#authentication:
-#    system:
-#        class: AuthDebugFixed
-#        userId: jan.niestadt@ivdnt.org
-#        # For CLARIN (Shibboleth), use the following authentication config:
-#        #class: AuthClarinEppn
-#
-#    #  Clients from these IPs may choose their own user id and send it along in a GET parameter userid.
-#    #  This setting exists for web applications that contact the webservice (partly) through the
-#    #  server component. They would get the same session id for each user, making them likely 
-#    #  to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of
-#    #  their clients and send them along with any request to the webservice.
-#    overrideUserIdIps:
-#    - 127.0.0.1       #  IPv4 localhost
-#    - 0:0:0:0:0:0:0:1 #  IPv6 localhost
+authentication:
+    system:
+        class: AuthDebugFixed
+        userId: jan.niestadt@ivdnt.org
+        # For CLARIN (Shibboleth), use the following authentication config:
+        #class: AuthClarinEppn
+
+    #  Clients from these IPs may choose their own user id and send it along in a GET parameter userid.
+    #  This setting exists for web applications that contact the webservice (partly) through the
+    #  server component. They would get the same session id for each user, making them likely
+    #  to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of
+    #  their clients and send them along with any request to the webservice.
+    overrideUserIdIps:
+        - 127.0.0.1       #  IPv4 localhost
+        - 0:0:0:0:0:0:0:1 #  IPv6 localhost
+
+    # This is an insecure way of authenticating to BlackLab Server by sending
+    # two HTTP headers. It is only intended for testing purposes.
+    #
+    # Choose a 'secret' password here. Then send your requests to BlackLab Server
+    # with the extra HTTP headers X-BlackLabAccessToken (the 'secret' password) and
+    # X-BlackLabUserId (the user you wish to authenticate as).
+    #
+    # Needless to say this method is insecure because it allows full access to
+    # all users' corpora, and the access token could potentially leak to an
+    # attacker.
+    #
+    # DO NOT USE EXCEPT FOR TESTING
+    #debugHttpHeaderAuthToken: secret
 
 
 # ---------------------------------------------------------------------------
-# What follows are general BlackLab settings that can apply to different 
+# What follows are general BlackLab settings that can apply to different
 # BlackLab applications, not just to BlackLab Server.
 # (These can go in a separate file named blacklab.yaml, which is read by all
 # BlackLab applications. Make sure to include configVersion as well)
@@ -205,7 +214,7 @@ debug:
 log:
 
     # Where to log detailed information about requests and cache stats
-    #sqliteDatabase: /vol1/logs/bls_sqlite_log_test.db
+    sqliteDatabase: /home/jan/blacklab/sqlite_log.db
 
     # What subjects to log messages for
     trace:
@@ -234,8 +243,8 @@ search:
 
     # The default maximum number of hits to retrieve (and use for sorting, grouping, etc.).
     # -1 means no limit, but be careful, this may stress your server.
-    maxHitsToRetrieve: -1 #1000000
-    
+    maxHitsToRetrieve: 1000000
+
     # The default maximum number of hits to count.
     # -1 means no limit, but be careful, this may stress your server.
     maxHitsToCount: -1
@@ -246,11 +255,11 @@ search:
 
 
 # Options for indexing operations, if enabled
-# (right now, they're only enabled for logged-in users in
+# (right now, in BLS, they're only enabled for logged-in users in
 #  their own private area)
 indexing:
 
-    # (By default, http downloads are not allowed)
+    # (By default, http downloads of e.g. metadata are not allowed)
     downloadAllowed: false
 
     # Where to store cached files
@@ -265,9 +274,20 @@ indexing:
     # Max. number of zip files to keep opened
     zipFilesMaxOpen: 10
 
+    # Number of threads to use for indexing operations
+    # (more threads is faster, but uses more memory)
+    numberOfThreads: 2
 
-# Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or 
-# apply linguistic tagging before indexing.
+    # Max. number of values to store per metadata field
+    maxMetadataValuesToStore: 100
+
+    # Max. number of indices per user
+    # (only relevant if you've configured private indices and authorization)
+    maxNumberOfIndicesPerUser: 10
+
+
+# Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or
+# apply linguistic tagging before indexing via BLS (experimental functionality).
 plugins:
 
     # Should we initialize plugins when they are first used?
@@ -276,15 +296,15 @@ plugins:
     delayInitialization: false
 
     # # Individual plugin configurations
-    # plugins:
+    plugins:
 
-    #     # Conversion plugin
-    #     OpenConvert:
-    #         jarPath: "/home/jan/projects/openconvert_en_tagger/OpenConvertMaven/target/OpenConvert-0.2.0.jar"
+        # Conversion plugin
+        OpenConvert:
+            jarPath: "/home/jan/projects/openconvert_en_tagger/OpenConvertMaven/target/OpenConvert-0.2.0.jar"
 
-    #     # Tagging plugin
-    #     DutchTagger:
-    #         jarPath: "/home/jan/projects/openconvert_en_tagger/DutchTagger/target/DutchTagger-0.2.0.jar"
-    #         vectorFile:  "/home/jan/projects/openconvert_en_tagger/tagger-data/sonar.vectors.bin"
-    #         modelFile:   "/home/jan/projects/openconvert_en_tagger/tagger-data/withMoreVectorrs"
-    #         lexiconFile: "/home/jan/projects/openconvert_en_tagger/tagger-data/spelling.tab"
+        # Tagging plugin
+        DutchTagger:
+            jarPath: "/home/jan/projects/openconvert_en_tagger/DutchTagger/target/DutchTagger-0.2.0.jar"
+            vectorFile:  "/home/jan/projects/openconvert_en_tagger/tagger-data/sonar.vectors.bin"
+            modelFile:   "/home/jan/projects/openconvert_en_tagger/tagger-data/withMoreVectorrs"
+            lexiconFile: "/home/jan/projects/openconvert_en_tagger/tagger-data/spelling.tab"

@@ -108,9 +108,9 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         ds.startMap();
         if (docPid != null) {
             // Add basic hit info
-            ds.entry("docPid", docPid)
-                    .entry("start", hit.start())
-                    .entry("end", hit.end());
+            ds.entry("docPid", docPid);
+            ds.entry("start", hit.start());
+            ds.entry("end", hit.end());
         }
 
         Hits singleHit = hits.window(hit);

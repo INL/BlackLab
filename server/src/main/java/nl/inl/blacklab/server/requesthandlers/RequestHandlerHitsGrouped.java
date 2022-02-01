@@ -2,10 +2,18 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.search.*;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.*;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
@@ -30,6 +38,8 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import nl.inl.util.BlockTimer;
 
 /**
@@ -97,6 +107,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
         List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
 
+        Map<Integer, String> pids = new HashMap<>();
+
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
 
@@ -139,13 +151,56 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                         addSubcorpusSize(ds, subcorpusSize);
                     }
                 }
+
+                if (searchParam.includeGroupContents()) {
+                    Hits hitsInGroup = group.storedResults();
+                    writeHits(ds, hitsInGroup, pids, searchParam.getContextSettings());
+                }
+
                 ds.endMap().endItem();
             }
         }
         ds.endList().endEntry();
+
+        if (searchParam.includeGroupContents()) {
+            writeDocInfos(ds, groups, pids, first, requestedWindowSize);
+        }
         ds.endMap();
 
         return HTTP_OK;
+    }
+
+    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, int first, int requestedWindowSize) throws BlsException {
+        BlackLabIndex index = hitGroups.index();
+        ds.startEntry("docInfos").startMap();
+        MutableIntSet docsDone = new IntHashSet();
+        Document doc = null;
+        String lastPid = "";
+        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
+
+        int i = 0;
+        for (HitGroup group : hitGroups) {
+            if (i >= first && i < first + requestedWindowSize) {
+                for (Hit hit : group.storedResults()) {
+                    String pid = pids.get(hit.doc());
+
+                    // Add document info if we didn't already
+                    if (!docsDone.contains(hit.doc())) {
+                        docsDone.add(hit.doc());
+                        ds.startAttrEntry("docInfo", "pid", pid);
+                        if (!pid.equals(lastPid)) {
+                            doc = index.doc(hit.doc()).luceneDoc();
+                            lastPid = pid;
+                        }
+                        dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
+                        ds.endAttrEntry();
+                    }
+                }
+            }
+            i++;
+        }
+
+        ds.endMap().endEntry();
     }
 
     static CorpusSize findSubcorpusSize(SearchParameters searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value, boolean countTokens) {

@@ -16,6 +16,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import nl.inl.blacklab.search.*;
+import nl.inl.blacklab.search.results.*;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
@@ -30,7 +33,6 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -39,18 +41,6 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Facets;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -936,8 +926,7 @@ public abstract class RequestHandler {
      *
      * @param printer
      * @param numColumns
-     * @param hitStats
-     * @param docStats
+     * @param hits
      * @param groups (optional) if grouped
      * @param subcorpusSize (optional) if available
      */
@@ -980,5 +969,85 @@ public abstract class RequestHandler {
                 return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
             }
         }
+    }
+
+    public void writeHits(DataStream ds, Hits hits, Map<Integer, String> pids,
+                                 ContextSettings contextSettings) throws BlsException {
+        BlackLabIndex index = hits.index();
+
+        Concordances concordances = null;
+        Kwics kwics = null;
+        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
+            concordances = hits.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
+        else
+            kwics = hits.kwics(contextSettings.size());
+
+        ds.startEntry("hits").startList();
+        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
+        for (Hit hit : hits) {
+            ds.startItem("hit").startMap();
+
+            // Find pid
+            String pid = pids.get(hit.doc());
+            if (pid == null) {
+                Document document = index.doc(hit.doc()).luceneDoc();
+                pid = getDocumentPid(index, hit.doc(), document);
+                pids.put(hit.doc(), pid);
+            }
+
+            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
+
+            // Add basic hit info
+            ds.entry("docPid", pid);
+            ds.entry("start", hit.start());
+            ds.entry("end", hit.end());
+
+            if (hits.hasCapturedGroups()) {
+                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit);
+                if (capturedGroups != null) {
+                    ds.startEntry("captureGroups").startList();
+
+                    for (Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+                        if (capturedGroup.getValue() != null) {
+                            ds.startItem("group").startMap();
+                            ds.entry("name", capturedGroup.getKey());
+                            ds.entry("start", capturedGroup.getValue().start());
+                            ds.entry("end", capturedGroup.getValue().end());
+                            ds.endMap().endItem();
+                        }
+                    }
+
+                    ds.endList().endEntry();
+                } else {
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
+                }
+            }
+
+            ContextSize contextSize = searchParam.getContextSettings().size();
+            boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
+            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
+                // Add concordance from original XML
+                Concordance c = concordances.get(hit);
+                if (includeContext) {
+                    ds.startEntry("left").plain(c.left()).endEntry()
+                            .startEntry("match").plain(c.match()).endEntry()
+                            .startEntry("right").plain(c.right()).endEntry();
+                } else {
+                    ds.startEntry("match").plain(c.match()).endEntry();
+                }
+            } else {
+                // Add KWIC info
+                Kwic c = kwics.get(hit);
+                if (includeContext) {
+                    ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                            .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                            .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+                } else {
+                    ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                }
+            }
+            ds.endMap().endItem();
+        }
+        ds.endList().endEntry();
     }
 }

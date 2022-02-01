@@ -623,7 +623,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             }
 
             // Find matches for this annotation.
-            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null, null);
+            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
 
             // For each configured subannotation...
             Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment
@@ -649,34 +649,29 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         String name = apName.evalXPathToString();
                         String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
                         ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
-
-                        // This for-each now processing for a sibling sub-annotation that has its own config, so use that config.
-                        // BUT, use the xpath from the for-each, not the from sibling definition (if it configures an xpath, that will run on its own at another point in the loop)
-                        //
-                        if (actualSubAnnot != null) {
-                            if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
-                                // this sibling subannotation has its own value path,
-                                // skip it while processing the for-each.
-                                continue;
+                        
+                        // It's not possible to create annotation on the fly at the moment. 
+                        // So since this was not declared in the config file, emit a warning and skip.
+                        if (actualSubAnnot == null) {
+                            if (!skippedAnnotations.contains(subannotationName)) {
+                                skippedAnnotations.add(subannotationName);
+                                logger.error(documentName + ": skipping undeclared annotation " + name + " (" + "as subannotation of forEachPath " + subAnnot.getName() + ")");
                             }
-                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                                actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                                actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                                actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                            findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, subAnnot.getProcess());
-                        } else {
-                            // The annotation on whose behalf we're indexing does not have its own definition
-                            // So use the for-each as stand-in
-
-                            boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                                subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                                subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                                subAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                            // Note: pass null as process, findAnnotationMatches will use them already from the subAnnot argument.
-                            findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
+                            continue;
                         }
+
+                        // The forEach xpath matched an annotation that specifies its own valuepath
+                        // Skip it as part of the forEach, because it will be processed by itself later.
+                        if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
+                            continue;
+                        }
+
+                        boolean reuseAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
+                            actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                            actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                            actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
+
+                        findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseAnnotationValue ? annotValue : null);
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
@@ -689,7 +684,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                         subAnnot.isCaptureXml() == annotation.isCaptureXml();
 
-                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null, null);
+                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null);
                 }
             }
 
@@ -703,7 +698,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected AutoPilot apDot = null;
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot, List<ConfigProcessStep> processInParentAnnotation)
+            List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot)
             throws XPathParseException, XPathEvalException, NavException {
         boolean evalXml = annotation.isCaptureXml();
 

@@ -14,24 +14,18 @@ import nl.inl.blacklab.instrumentation.MetricsProvider;
  * micrometer's SimpleRegistry
  */
 public class SimpleMetricsProvider implements MetricsProvider {
-    @Override
-    public MeterRegistry getRegistry() {
-        SimpleMeterRegistry simpleMeterRegistry = new SimpleMeterRegistry();
-        addSystemMetrics(simpleMeterRegistry);
-        return simpleMeterRegistry;
+    private final MeterRegistry registry;
+
+    public SimpleMetricsProvider() {
+        registry = new SimpleMeterRegistry();
     }
 
-    /**
-     * Adds metrics to measure the behaviour of the underlying JVM.
-     * @param registry the registry
-     */
-    private void addSystemMetrics(MeterRegistry registry) {
-        new JvmMemoryMetrics().bindTo(registry);
-        new JvmGcMetrics().bindTo(registry);
-        new JvmHeapPressureMetrics().bindTo(registry);
-        new JvmThreadMetrics().bindTo(registry);
-        new ProcessorMetrics().bindTo(registry);
+    @Override
+    public MeterRegistry getRegistry() {
+        return registry;
     }
+
+
 
 
 }

@@ -127,6 +127,7 @@ parameters:
 
     # Context around match ("wordsaroundhit" parameter)
     # (higher values might cause copyright issues and may stress the server)
+    # Set to 0 to omit the left and right context altogether.
     contextSize:
         default: 5
         max: 20
@@ -138,6 +139,12 @@ parameters:
     #  Default filter language to use.
     #  The filterlang GET parameter override this value.
     filterLanguage: luceneql
+
+    # By default, should we include the grouped hits in
+    # grouped responses? If false, just include group 
+    # identity and size. Can be overridden using the
+    # "includegroupcontents" parameter.
+    writeHitsAndDocsInGroupedHits: false
 
 
 
@@ -342,6 +349,10 @@ indexing:
     
     # Max. number of values to store per metadata field
     maxMetadataValuesToStore: 100
+    
+    # Max. number of indices per user
+    # (only relevant if you've configured private indices and authorization)
+    maxNumberOfIndicesPerUser: 10
 
 
 # Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or 
