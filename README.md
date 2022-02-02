@@ -9,6 +9,8 @@ BlackLab and BlackLab Server are licensed under the [Apache License 2.0](http://
 
 To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/).
 
+Learn about [BlackLab's structure and internals](./core/src/site/markdown/blacklab-internals.md) (work in progress). 
+
 ## Using BlackLab with Docker
 
 An experimental Docker setup is provided now. It will likely change in the future.
