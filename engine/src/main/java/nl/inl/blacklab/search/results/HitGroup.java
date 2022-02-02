@@ -58,8 +58,9 @@ public class HitGroup extends Group<Hit> {
      *
      * NOTE: the list is not copied!
      *
-     * @param queryInfo query info
+     * @param groupIdentity identity of the group
      * @param storedResults the hits
+     * @param totalSize total group size
      */
     protected HitGroup(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
         super(groupIdentity, storedResults, totalSize);

@@ -46,10 +46,11 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      *
      * @param queryInfo query info
      * @param results list of groups
-     * @param totalDocs total number of documents from which Results were created, pass null if unknown (when results have been filtered/windowed/sampled).
      * @param groupCriteria what hits would be grouped by
      * @param sampleParameters how groups were sampled, or null if not applicable
      * @param windowStats what groups window this is, or null if not applicable
+     * @param hitsStats hits statistics
+     * @param docsStats docs statistics
      * @return grouped hits
      */
     public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
@@ -69,7 +70,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     public static HitGroups tokenFrequencies(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty property, int maxHits) {
-        return HitGroupsTokenFrequencies.get(queryInfo, filterQuery, searchSettings, property, maxHits);
+        return HitGroupsTokenFrequencies.get(queryInfo, filterQuery, searchSettings, property);
     }
 
     private HitProperty criteria;

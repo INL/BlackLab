@@ -1,36 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
-import javax.servlet.http.HttpServletRequest;
-
-import nl.inl.blacklab.search.*;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.*;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
-import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.*;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -38,9 +15,18 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.util.BlockTimer;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.Query;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-import nl.inl.util.BlockTimer;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Request handler for grouped hit results.
@@ -58,9 +44,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         HitGroups groups;
         BlsCacheEntry<HitGroups> search;
-        try(BlockTimer t = BlockTimer.create("Searching hit groups")) {
+        try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
-            search = (BlsCacheEntry<HitGroups>)searchParam.hitsGrouped().executeAsync();
+            search = (BlsCacheEntry<HitGroups>)searchParam.hitsGroupedStats().executeAsync();
             // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -70,7 +56,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startMap();
         ds.startEntry("summary").startMap();
         WindowSettings windowSettings = searchParam.getWindowSettings();
-        final int first = windowSettings.first() < 0 ? 0 : windowSettings.first();
+        final int first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
         final int requestedWindowSize = windowSettings.size() < 0
                 || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
@@ -105,18 +91,18 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Collections.singletonList(groups.groupCriteria());
 
         Map<Integer, String> pids = new HashMap<>();
 
         ds.startEntry("hitGroups").startList();
         int last = Math.min(first + requestedWindowSize, groups.size());
 
-        try (BlockTimer t = BlockTimer.create("Serializing groups to JSON")) {
+        try (BlockTimer ignored = BlockTimer.create("Serializing groups to JSON")) {
             for (int i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 PropertyValue id = group.identity();
-                List<PropertyValue> valuesForGroup = isMultiValueGroup ? ((PropertyValueMultiple) id).values() : Arrays.asList(id);
+                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : Collections.singletonList(id);
 
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group

@@ -1,67 +1,16 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocValuesTermsQuery;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyDoc;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
-import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Doc;
-import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.QueryExplanation;
-import nl.inl.blacklab.search.SingleDocIdFilter;
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TermFrequency;
-import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.resultproperty.*;
+import nl.inl.blacklab.search.*;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultCount;
-import nl.inl.blacklab.search.results.Results;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternAnd;
-import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
-import nl.inl.blacklab.search.textpattern.TextPatternSensitive;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
+import nl.inl.blacklab.search.results.*;
+import nl.inl.blacklab.search.textpattern.*;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchHitGroupsFromHits;
 import nl.inl.blacklab.searches.SearchHits;
@@ -69,11 +18,23 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
 import nl.inl.blacklab.server.util.BlsUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocValuesTermsQuery;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Request handler for hit results.
@@ -351,7 +312,7 @@ public class RequestHandlerHits extends RequestHandler {
         PropertyValue viewGroupVal = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
         if (viewGroupVal == null)
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-        BlsCacheEntry<HitGroups> jobHitGroups = (BlsCacheEntry<HitGroups>)searchParam.hitsGrouped().executeAsync();
+        BlsCacheEntry<HitGroups> jobHitGroups = (BlsCacheEntry<HitGroups>)searchParam.hitsGroupedStats().executeAsync();
         HitGroups hitGroups = jobHitGroups.get();
         HitGroup group = hitGroups.get(viewGroupVal);
         if (group == null)
@@ -381,8 +342,7 @@ public class RequestHandlerHits extends RequestHandler {
             // Since the group we got from the cached results didn't contain the hits, we need to get the hits from their original query
             // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
             // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
-            SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) searchParam.hitsSample().group(groupByProp, Results.NO_LIMIT);
-            searchGroups.forceStoreHits();
+            SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) searchParam.hitsSample().groupWithStoredHits(groupByProp, Results.NO_LIMIT);
             // now run the separate grouping search, making sure not to actually store the hits.
             // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
             // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.

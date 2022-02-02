@@ -51,6 +51,7 @@ public class HitGroupsTokenFrequencies {
     /** Document length is always reported as one higher due to punctuation being a trailing value */
     private static final int subtractClosingToken = 1;
 
+    /** Precalculated hashcode for group id, to save time while grouping and sorting. */
     private static class GroupIdHash {
         private int[] tokenIds;
         private int[] tokenSortPositions;
@@ -59,8 +60,9 @@ public class HitGroupsTokenFrequencies {
 
         /**
          *
-         * @param tokenValues
-         * @param metadataValues
+         * @param tokenIds token term id for each token in the group id
+         * @param tokenSortPositions sort position for each token in the group id
+         * @param metadataValues relevant metadatavalues
          * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
          */
         public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, PropertyValue[] metadataValues, int metadataValuesHash) {
@@ -84,7 +86,7 @@ public class HitGroupsTokenFrequencies {
         }
     }
 
-    public static HitGroups get(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty requestedGroupingProperty, int maxHitsPerGroup) {
+    public static HitGroups get(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty requestedGroupingProperty) {
         try {
             /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits (left) and number of docs (right) */
             final ConcurrentHashMap<GroupIdHash, MutablePair<Integer, Integer>> occurances = new ConcurrentHashMap<>();

@@ -1,12 +1,5 @@
 package nl.inl.blacklab.testutil;
 
-import java.io.File;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.TermQuery;
-
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -23,6 +16,12 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.TermQuery;
+
+import java.io.File;
 
 public class TestNewSearchSystem {
 
@@ -103,7 +102,7 @@ public class TestNewSearchSystem {
             System.out.println("\nCount different spellings for 'schip': ");
             q = CorpusQueryLanguageParser.parse(cqlLemmaSchip).toQuery(QueryInfo.create(index));
             index.search().find(q, index.searchSettings())
-                    .group(new HitPropertyHitText(index), 3)
+                    .groupWithStoredHits(new HitPropertyHitText(index), 3)
                     .execute()
                     .forEach(group -> {
                         System.out.println("- " + group.identity() + " (stored " + group.numberOfStoredResults() + " of " + group.size() + ") ");
