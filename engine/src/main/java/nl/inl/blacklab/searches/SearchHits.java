@@ -131,9 +131,24 @@ public abstract class SearchHits extends SearchResults<Hits> {
         return false;
     }
 
-    protected Query getFilterQuery() {
+    /**
+     * Get a query that can be used for filtering.
+     *
+     * Note that this may be the full span query, or just a document filter query,
+     * or null for all documents. Not all documents that match this query may have
+     * actual hits.
+     *
+     * Used in HitGroupsTokenFrequencies optimization.
+     *
+     * @return filter query
+     */
+    public Query getFilterQuery() {
         return null;
     }
-    
-    protected abstract SearchSettings searchSettings();
+
+    /**
+     * Get the search settings, such as max. hits to process/count.
+     * @return search settings
+     */
+    public abstract SearchSettings searchSettings();
 }

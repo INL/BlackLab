@@ -11,15 +11,13 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsFromHits extends SearchHitGroups {
 
-    private SearchHits source;
+    private final SearchHits source;
 
-    private HitProperty property;
+    private final HitProperty property;
 
-    private int maxResultsToStorePerGroup;
+    private final int maxResultsToStorePerGroup;
 
-    private boolean mustStoreHits;
-
-    private boolean useFastPath;
+    private final boolean mustStoreHits;
 
     /**
      * A hit-grouping search.
@@ -41,7 +39,6 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         this.property = groupBy;
         this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;
         this.mustStoreHits = mustStoreHits;
-        this.useFastPath = fastPathAvailable();
     }
 
     /**
@@ -52,10 +49,14 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups executeInternal() throws InvalidQuery {
-        if (useFastPath)
-            return HitGroups.tokenFrequencies(source.queryInfo(), source.getFilterQuery(), source.searchSettings(), property, maxResultsToStorePerGroup);
-        else  // Just find all the hits and group them.
+        if (HitGroupsTokenFrequencies.canUse(mustStoreHits, source, property)) {
+            // Any token query, group by hit text or doc metadata! Choose faster path that just "looks up"
+            // token frequencies in the forward index(es).
+            return HitGroupsTokenFrequencies.get(source, property);
+        } else {
+            // Just find all the hits and group them.
             return HitGroups.fromHits(source.executeNoQueue(), property, maxResultsToStorePerGroup);
+        }
     }
 
     @Override
@@ -66,7 +67,6 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
         result = prime * result + ((property == null) ? 0 : property.hashCode());
         result = prime * result + ((source == null) ? 0 : source.hashCode());
         result = prime * result + Boolean.hashCode(mustStoreHits);
-        result = prime * result + Boolean.hashCode(useFastPath);
         return result;
     }
 
@@ -91,19 +91,11 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
                 return false;
         } else if (!source.equals(other.source))
             return false;
-        if (other.mustStoreHits != mustStoreHits)
-            return false;
-        return other.useFastPath == useFastPath;
+        return other.mustStoreHits == mustStoreHits;
     }
 
     @Override
     public String toString() {
         return toString("group", source, property, maxResultsToStorePerGroup);
-    }
-
-    private boolean fastPathAvailable() {
-        // Any token query! Choose faster path that just "looks up"
-        // token frequencies in the forward index(es).
-        return !mustStoreHits && HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && source.isAnyTokenQuery() && property.isDocPropOrHitText();
     }
 }

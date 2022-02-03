@@ -1,17 +1,16 @@
 package nl.inl.blacklab.search.results;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntUnaryOperator;
-import java.util.stream.Collectors;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.resultproperty.*;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.DocImpl;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.util.BlockTimer;
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -24,23 +23,20 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
-import nl.inl.blacklab.resultproperty.PropertyValueDoc;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.DocImpl;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.BlockTimer;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
 
+/**
+ * Determine token frequencies for (a subset of) a corpus, given a HitProperty to group on.
+ *
+ * Allows us to e.g. find lemma frequencies, or lemma frequencies per year.
+ * This implementation is faster than finding all hits, then grouping those.
+ */
 public class HitGroupsTokenFrequencies {
 
     public static final boolean TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED = true;
@@ -86,19 +82,45 @@ public class HitGroupsTokenFrequencies {
         }
     }
 
-    public static HitGroups get(QueryInfo queryInfo, Query filterQuery, SearchSettings searchSettings, HitProperty requestedGroupingProperty) {
+    /** Can this faster code be used for this grouping request?
+     *
+     * @param mustStoreHits do we need stored hits? if so, we can't use this path
+     * @param hitsSearch hits search to group. Must be any token query
+     * @param property property to group on. Must consist of DocProperties or HitPropertyHitText
+     * @return true if this path can be used
+     */
+    public static boolean canUse(boolean mustStoreHits, SearchHits hitsSearch, HitProperty property) {
+        return !mustStoreHits && HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && hitsSearch.isAnyTokenQuery() && property.isDocPropOrHitText();
+    }
+
+    /**
+     * Get the token frequencies for the given query and hit property.
+     *
+     * @param source query to find token frequencies for
+     * @param requestedGroupingProperty
+     * @return token frequencies
+     */
+    public static HitGroups get(SearchHits source, HitProperty requestedGroupingProperty) {
+
+        QueryInfo queryInfo = source.queryInfo();
+        Query filterQuery = source.getFilterQuery();
+        SearchSettings searchSettings = source.searchSettings();
+
         try {
             /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits (left) and number of docs (right) */
             final ConcurrentHashMap<GroupIdHash, MutablePair<Integer, Integer>> occurances = new ConcurrentHashMap<>();
 
             final BlackLabIndex index = queryInfo.index();
+
             /**
              * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
              * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
              */
             final List<DocProperty> docProperties = new ArrayList<>();
+
             /** Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms */
             final List<Triple<AnnotationForwardIndex, MatchSensitivity, Terms>> hitProperties = new ArrayList<>();
+
             /**
              * Stores the original index every (doc|hit)property has in the original interleaved/intertwined list.
              * The requestedGroupingProperty sometimes represents more than one property (in the form of HitPropertyMultiple) such as 3 properties: [token text, document year, token lemma]
@@ -113,8 +135,7 @@ public class HitGroupsTokenFrequencies {
 
             // Unpack the requestedGroupingProperty into its constituents and sort those into the appropriate categories: hit and doc properties.
             {
-                @SuppressWarnings("unchecked")
-                List<HitProperty> props = requestedGroupingProperty.props() != null ? (List<HitProperty>) requestedGroupingProperty.props() : Arrays.asList(requestedGroupingProperty);
+                List<HitProperty> props = requestedGroupingProperty.props() != null ? requestedGroupingProperty.props() : Arrays.asList(requestedGroupingProperty);
                 for (HitProperty p : props) {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
@@ -146,7 +167,7 @@ public class HitGroupsTokenFrequencies {
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
                 final List<Integer> docIds = new ArrayList<>();
                 try (BlockTimer d = c.child("Gathering documents")) {
-                    queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery,new SimpleCollector() {
+                    queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery, new SimpleCollector() {
                         private int docBase;
 
                         @Override

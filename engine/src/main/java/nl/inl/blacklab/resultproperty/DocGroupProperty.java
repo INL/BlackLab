@@ -18,6 +18,8 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocResult;
 
+import java.util.List;
+
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
@@ -108,5 +110,10 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     @Override
     public String toString() {
         return serialize();
+    }
+
+    @Override
+    public List<DocGroupProperty> props() {
+        return null;
     }
 }
