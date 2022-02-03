@@ -160,7 +160,11 @@ public final class BlackLab {
     }
 
     public static synchronized BlackLabIndex fromIndexReader(IndexReader reader) {
-        return blackLabFromIndexReader.get(reader).indexFromReader(reader);
+        BlackLabEngine blackLabEngine = blackLabFromIndexReader.get(reader);
+        if (blackLabEngine == null) {
+            return null;
+        }
+        return blackLabEngine.indexFromReader(reader);
     }
     
     /**
