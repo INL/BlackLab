@@ -1,19 +1,25 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+/**
+ * Apply a global constraint (or "match filter") to our matches.
+ *
+ * A global constraint is specified in Corpus Query Language using
+ * the :: operator, e.g. <code>a:[] "and" b:[] :: a.word = b.word</code>
+ * to find things like "more and more", "less and less", etc.
+ */
 public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
     MatchFilter constraint;

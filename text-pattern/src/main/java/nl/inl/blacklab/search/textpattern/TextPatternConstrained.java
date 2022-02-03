@@ -7,6 +7,13 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryConstrained;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 
+/**
+ * Apply a global constraint (or "match filter") to our matches.
+ *
+ * A global constraint is specified in Corpus Query Language using
+ * the :: operator, e.g. <code>a:[] "and" b:[] :: a.word = b.word</code>
+ * to find things like "more and more", "less and less", etc.
+ */
 public class TextPatternConstrained extends TextPatternCombiner {
 
     MatchFilter constraint;

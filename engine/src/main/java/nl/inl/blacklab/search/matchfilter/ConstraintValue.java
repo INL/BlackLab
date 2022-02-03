@@ -1,5 +1,12 @@
 package nl.inl.blacklab.search.matchfilter;
 
+/**
+ * Data value a constraint (MatchFilter) can evaluate to.
+ *
+ * e.g. the constraint <code>a.lemma</code> evaluates to a
+ * ConstraintValueString while the constraint
+ * <code>a.lemma = b.lemma</code> evaluates to a ConstraintValueBoolean.
+ */
 public abstract class ConstraintValue {
 
     private static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
