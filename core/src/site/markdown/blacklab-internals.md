@@ -19,7 +19,6 @@ This the current list of modules:
 | `core`            | will build the main BlackLab Java library. Doesn't contain any Java code itself but combines other modules (the main module is engine). |
 | `engine`          | implements most of the BlackLab functionality. |
 | `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar. |
-| `interfaces`      | was intended to contain interfaces shared between BlackLab modules, but currently empty. |
 | `mocks`           | mock objects useful for testing. Shouldn't be included in library build. |
 | `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser). |
 | `server`          | the BlackLab Server web service |
@@ -30,7 +29,6 @@ Future plans for this module structure:
 - `common` should probably not grow; rather shrink and ideally be eliminated altogether
 - `content-store` should be made optional, so you can also use e.g. an external webservice to retrieve the document contents.
 - `engine` currently does a lot, with a lot of interdependencies between classes, and could/should therefore be divided up into logical modules.
-- `interfaces` should either be used for truly shared interfaces, or should be removed. Probably the latter as interfaces belong with the module providing the associated functionality.
 - `query-parser` could be reduced to just the Corpus Query Language parser, with the Contextual Query Language parser moved into a `contrib` module.
 - `text-pattern` could eventually become unnecessary as we move their functionality into the various `SpanQuery` classes, and could then be moved to `contrib` for legacy uses.
 

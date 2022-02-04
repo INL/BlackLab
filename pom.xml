@@ -15,7 +15,6 @@
     <modules>
         <module>util</module>
         <module>common</module>
-        <module>interfaces</module>
         <module>content-store</module>
         <module>engine</module>
         <module>text-pattern</module>
