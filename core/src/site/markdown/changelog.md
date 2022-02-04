@@ -2,7 +2,17 @@
 
 ## Improvements in 2.3.0-SNAPSHOT
 
+### Changed
 
+- Language level set to Java 9, so we can use `Arrays.compare()` among other things (and stay on a supported version).
+
+### New
+
+- 
+
+### Removed
+
+- empty module `interfaces`
 
 ## Improvements in 2.2.0
 
