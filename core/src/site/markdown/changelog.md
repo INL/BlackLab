@@ -13,6 +13,7 @@
 ### Removed
 
 - empty module `interfaces`
+- support for old content store formats ContentStoreDirZip and -Utf8
 
 ## Improvements in 2.2.0
 
