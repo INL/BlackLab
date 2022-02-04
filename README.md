@@ -11,6 +11,22 @@ To learn how to index and search your data, see the [official project site](http
 
 Learn about [BlackLab's structure and internals](./core/src/site/markdown/blacklab-internals.md) (work in progress). 
 
+## Changed: 'main' branch
+
+The branch that corresponds to BlackLab's latest release is now called _main_ instead of _master_.
+
+Local clones can either be removed and re-cloned, or you can rename the local branch with these commands:
+
+```bash
+git branch -m master main
+git fetch origin
+git branch -u origin/main main
+git remote set-head origin -a
+```
+
+Please note that _dev_, not _main_, is the default branch. This is the development
+branch, which should be considered unstable.
+
 ## Using BlackLab with Docker
 
 An experimental Docker setup is provided now. It will likely change in the future.

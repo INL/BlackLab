@@ -1,6 +1,6 @@
 # Change Log
 
-## Improvements in 2.2.0-SNAPSHOT
+## Improvements in 2.2.0
 
 ### Changed
 
@@ -8,9 +8,12 @@
 * Split into several projects that each handle specific functionality. More to do here.
 * If either `wordsaroundhit` or `parameters.contextSize` are set to 0, don't include left and right context in the 
   results at all.  
+* The branch that corresponds to BlackLab's latest release is now called _main_ instead of _master_. The default 
+  branch remains the _dev_ branch (up to date but potentially unstable) 
 
 ### New
 
+* Added `instrumentation` modules to collect metrics using e.g. Prometheus.
 * Greatly improve startup time and passive memory usage.
 * Improved time to first result in (very) large indices.
 * Improved performance by instantiating fewer objects (e.g. using `IntArrayLists` instead of `Hit` objects)
@@ -31,7 +34,9 @@
 
 ### Fixed
 
-* Upgrade to `log4j-2.16.0` (fixes [CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) and [CVE-2021-45046](https://nvd.nist.gov/vuln/detail/CVE-2021-45046)).
+* Upgrade to `log4j-2.17.1` (fixes [CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) and [CVE-2021-45046](https://nvd.nist.gov/vuln/detail/CVE-2021-45046)).
+* Bug that could cause metadata values from a previously indexed document to also be added to the next.
+* YAML bug with metadata values containing newlines and colons.
 * Bug in `TermsWriter` that caused a crash when indexing more than 134M unique terms.
 * Deadlock because of fixed thread count and some subtasks getting run but not others. Now either allows entire search operation or queues it until later.
 * Fix not all hits always counted when grouping/sorting.
@@ -42,6 +47,7 @@
 * Prevent `ConcurrentModificationException` caused by not synchronizing.
 * Fix some caching bugs by consistently defining `hashCode()` and `equals()`.
 * Report correct search time (used to underreport).
+* Fixed slowdown when a lot of indexes are open at the same time.
 * Many smaller bugfixes.
 
 ### Removed
