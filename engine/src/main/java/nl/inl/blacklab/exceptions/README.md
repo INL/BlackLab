@@ -1,1 +1,0 @@
-Exception classes, although most have now been moved to the `common` module.

@@ -65,6 +65,7 @@ public final class BlackLab {
     /** BlackLab configuration */
     private static BlackLabConfig blackLabConfig = null;
 
+    /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
     public static BlackLabEngine createEngine(int searchThreads, int maxThreadsPerSearch) {
@@ -265,6 +266,14 @@ public final class BlackLab {
         blackLabConfig.getSearch().apply(index);
     }
 
+    /**
+     * This ensures that relevant configuration settings have been applied
+     * to several components of BlackLab. We call configuring these components
+     * "the global config" because these are shared between all indexes.
+     *
+     * This is called before any settings are applied to individual indexes,
+     * which could cause problems.
+     */
     private synchronized static void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
             
