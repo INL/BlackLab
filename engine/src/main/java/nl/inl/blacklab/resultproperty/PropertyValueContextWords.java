@@ -1,13 +1,12 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Arrays;
-
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.ArrayUtil;
+
+import java.util.Arrays;
 
 public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueTokenId;
@@ -15,7 +14,12 @@ public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
-    
+
+    /**
+     * With context before of the match, sorting/grouping occurs from
+     * front to back (e.g. right to left for English), but display should still
+     * be from back to front.
+     */
     private boolean reverseOnDisplay = false;
 
     public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
@@ -27,9 +31,14 @@ public class PropertyValueContextWords extends PropertyValueContext {
         this.reverseOnDisplay = reverseOnDisplay;
     }
 
+    public PropertyValueContextWords(int[] valueSortOrder) {
+        super((BlackLabIndex)null, null);
+        this.valueSortOrder = valueSortOrder;
+    }
+
     @Override
     public int compareTo(Object o) {
-        return ArrayUtil.compareArrays(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
+        return Arrays.compare(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
     }
 
     @Override

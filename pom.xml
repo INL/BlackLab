@@ -39,9 +39,9 @@
         <log4j.version>2.17.1</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.source>9</maven.compiler.source>
+        <maven.compiler.target>9</maven.compiler.target>
+        <maven.compiler.release>9</maven.compiler.release>
     </properties>
 
     <licenses>
