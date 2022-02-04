@@ -4,7 +4,8 @@
 
 ### Changed
 
-- Language level set to Java 9, so we can use `Arrays.compare()` among other things (and stay on a supported version).
+- Language level set to Java 9, so we can use `Arrays.compare()` among other things
+  (and stay on a supported Java version).
 
 ### New
 
@@ -13,7 +14,9 @@
 ### Removed
 
 - empty module `interfaces`
-- support for old content store formats ContentStoreDirZip and -Utf8
+- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
+  fi version 3; these were all replaced with newer versions six years ago. older indexes 
+  will need to be re-indexed)
 
 ## Improvements in 2.2.0
 

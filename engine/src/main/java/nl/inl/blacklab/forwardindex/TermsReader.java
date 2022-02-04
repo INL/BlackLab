@@ -1,5 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
+import gnu.trove.iterator.TIntObjectIterator;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -7,17 +17,6 @@ import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.Collator;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
-import gnu.trove.iterator.TIntObjectIterator;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.BlockTimer;
 
 public class TermsReader extends Terms {
 
@@ -47,9 +46,8 @@ public class TermsReader extends Terms {
      */
     private long[] termId2CharDataOffset;
 
-    public TermsReader(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
+    public TermsReader(Collators collators, File termsFile, boolean buildTermIndexesOnInit) {
         this.termsFile = termsFile;
-        this.useBlockBasedTermsFile = useBlockBasedTermsFile;
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
 

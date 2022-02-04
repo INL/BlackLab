@@ -15,16 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
+import nl.inl.util.UtilsForTesting;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.UtilsForTesting;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestForwardIndexDelete {
     private AnnotationForwardIndex fi;
@@ -46,7 +45,7 @@ public class TestForwardIndexDelete {
         // Create new test dir
         dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new AnnotationForwardIndexWriter(null, dir, Collators.defaultCollator(), true, true);
+        fi = new AnnotationForwardIndexWriter(null, dir, Collators.defaultCollator(), true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {
