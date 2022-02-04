@@ -15,29 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.MappedByteBuffer;
+import java.nio.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
+import java.util.*;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -73,8 +63,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Build term indexes right away or lazily? */
     private boolean buildTermIndexesOnInit;
 
-    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
-        super(annotation, dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean buildTermIndexesOnInit) {
+        super(annotation, dir, collators);
 
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -99,7 +89,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         //logger.debug("  END   read TOC " + tocFile);
 
         //logger.debug("  START read Terms " + tocFile);
-        terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
+        terms = Terms.openForReading(collators, termsFile, buildTermIndexesOnInit);
         //logger.debug("  END   read Terms " + tocFile);
         //logger.debug("  START Terms.initialize() " + tocFile);
         terms.initialize();

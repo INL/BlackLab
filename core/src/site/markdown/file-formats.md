@@ -50,14 +50,6 @@ NOTE: the forward index id (fiid) is the entry number in this file!
 
 - String "fi||<i>&lt;version&gt;</i>"  (version can currently be 3 or 4)
 
-### (old version (v3) of terms.dat)
-
-- int: number of terms n
-- n x int: term string byte offsets in term string data. [0] is always 0.
-- int: size of term string data in bytes, b
-- int: size of term string data in bytes, b (yes, this occurs twice)
-- b bytes: term string data
-
 
 ## Content Store layout
 
@@ -86,27 +78,6 @@ The content store contains:
 
 ### version.dat
 
-- String "<i>&lt;type&gt;</i>||<i>&lt;version&gt;</i>"  where type can be fixedblock (current), utf8zip (older), utf8 (legacy) 
-  and version is currently always 1.
-
-### (old version (utf8zip) of toc.dat)
-
-- int: number of entries
-- n entries, each entry:
-    - int: content store id (ciid)
-    - int: what CS file doc is stored in
-    - int: offset into the CS file of first block
-    - int: total length in bytes
-    - int: total length in characters
-    - boolean: doc deleted?
-    - int: size of blocks used (last block may be smaller)
-    - int: number of blocks
-    - n x int: block offsets in bytes (relative to start offset; first offset is always 0)
-
-### (old version (utf8zip) of file-contents.dat: multiple data\#\#\#\#.dat files)
-
-- a number of encoded blocks, representing a number of whole documents;
-  each block is zlib-compressed utf-8. Blocks can have different sizes (they
-  have a fixed uncompressed character size - the old toc.dat would tell us where
-  a document was stored and how many bytes were used)
-
+- String "<i>&lt;type&gt;</i>||<i>&lt;version&gt;</i>"  where type can only be fixedblock (current).
+  Legacy types utf8zip and utf8 are no longer supported. 
+  Version is currently always 1.
