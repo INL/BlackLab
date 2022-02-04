@@ -15,13 +15,12 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.IndexReader;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import org.apache.lucene.index.IndexReader;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the
