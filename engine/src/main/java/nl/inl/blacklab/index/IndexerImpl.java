@@ -15,35 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.Term;
-import org.mozilla.universalchardet.UniversalDetector;
-
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.exceptions.*;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -57,6 +31,23 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeStream;
+import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
+import org.mozilla.universalchardet.UniversalDetector;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -495,12 +486,6 @@ class IndexerImpl implements DocWriter, Indexer {
         listener().indexerClosed();
 
         closed = true;
-    }
-
-    @Override
-    @Deprecated
-    public boolean isClosed() {
-        return !isOpen();
     }
 
     @Override
