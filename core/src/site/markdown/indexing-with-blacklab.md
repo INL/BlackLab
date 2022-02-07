@@ -377,7 +377,9 @@ Here's a commented example of indexmetadata.yaml:
         - keywords
         addRemainingFields: true  # plus any fields that weren't mentioned yet 
         
-      # Information about annotated fields (formerly called "complex fields" in BlackLab)
+      # Information about annotated fields
+      # (these used to be called complex fields, hence the key name;
+      #  similarly, we used to call annotations "properties", as you can see below)
       complexFields:
       
         # Information about the contents field

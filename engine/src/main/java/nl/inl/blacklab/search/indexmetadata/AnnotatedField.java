@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-/** An annotated field (formerly "complex field") */
+/** An annotated field */
 public interface AnnotatedField extends Field {
 
 	/**

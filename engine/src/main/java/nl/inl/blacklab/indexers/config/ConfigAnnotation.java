@@ -1,16 +1,11 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 
+import java.util.*;
+
 /**
- * Configuration for a single annotation (formerly "property") of an annotated field
- * (formerly "complex field").
+ * Configuration for a single annotation (formerly "property") of an annotated field.
  */
 public class ConfigAnnotation {
 

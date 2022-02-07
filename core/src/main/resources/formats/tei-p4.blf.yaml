@@ -15,7 +15,7 @@ type: content
 # (the only absolute XPath; the rest is relative)
 documentPath: //TEI.2
 
-# Annotated, CQL-searchable fields (also called "complex fields").
+# Annotated, CQL-searchable fields.
 # We usually have just one, named "contents".
 annotatedFields:
 

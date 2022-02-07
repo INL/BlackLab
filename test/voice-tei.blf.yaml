@@ -18,7 +18,7 @@ namespaces:
 # (the only absolute XPath; the rest is relative)
 documentPath: /TEI
 
-# Annotated, CQL-searchable fields (also called "complex fields").
+# Annotated, CQL-searchable fields.
 # We usually have just one, named "contents".
 annotatedFields:
 
