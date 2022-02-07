@@ -15,11 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.List;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -27,11 +22,11 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.List;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -333,6 +328,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
         if (reverse != other.reverse)
             return false;
         return true;
+    }
+
+    @Override
+    public List<HitProperty> props() {
+        return null;
     }
 
     /**

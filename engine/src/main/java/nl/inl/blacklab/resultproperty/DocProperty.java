@@ -15,17 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.DocResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
@@ -219,6 +218,11 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
      */
     public boolean canConstructQuery(BlackLabIndex index, PropertyValue value) {
         return false;
+    }
+
+    @Override
+    public List<DocProperty> props() {
+        return null;
     }
 
 }

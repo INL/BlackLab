@@ -1,16 +1,11 @@
 package nl.inl.blacklab.searches;
 
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.*;
+import org.apache.lucene.search.Query;
 
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchResults<Hits> {
@@ -34,14 +29,41 @@ public abstract class SearchHits extends SearchResults<Hits> {
     }
 
     /**
-     * Group hits by a property.
+     * Group hits by a property and stores the grouped hits.
      * 
      * @param groupBy what to group by
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
+    public SearchHitGroups groupWithStoredHits(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, true);
+    }
+
+    /**
+     * Group hits by a property and stores the grouped hits.
+     *
+     * @param groupBy what to group by
+     * @param maxResultsToGatherPerGroup how many results to gather per group
+     * @return resulting operation
+     * @deprecated use either {@link #groupWithStoredHits(HitProperty, int)} or {@link #groupStats(HitProperty, int)}
+     */
+    @Deprecated
     public SearchHitGroups group(HitProperty groupBy, int maxResultsToGatherPerGroup) {
-        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup);
+        return groupWithStoredHits(groupBy, maxResultsToGatherPerGroup);
+    }
+
+    /**
+     * Group hits by a property, calculating the number of hits per group.
+     *
+     * (May or may not also store hits with the group. If you need these to be stored, call
+     * {@link #groupWithStoredHits(HitProperty, int)}})
+     *
+     * @param groupBy what to group by
+     * @param maxResultsToGatherPerGroup how many results to gather at most per group (if hits are stored)
+     * @return resulting operation
+     */
+    public SearchHitGroups groupStats(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, false);
     }
 
     /**
@@ -109,9 +131,24 @@ public abstract class SearchHits extends SearchResults<Hits> {
         return false;
     }
 
-    protected Query getFilterQuery() {
+    /**
+     * Get a query that can be used for filtering.
+     *
+     * Note that this may be the full span query, or just a document filter query,
+     * or null for all documents. Not all documents that match this query may have
+     * actual hits.
+     *
+     * Used in HitGroupsTokenFrequencies optimization.
+     *
+     * @return filter query
+     */
+    public Query getFilterQuery() {
         return null;
     }
-    
-    protected abstract SearchSettings searchSettings();
+
+    /**
+     * Get the search settings, such as max. hits to process/count.
+     * @return search settings
+     */
+    public abstract SearchSettings searchSettings();
 }

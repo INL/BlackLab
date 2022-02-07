@@ -60,7 +60,7 @@ public class SearchHitsSorted extends SearchHits {
     }
 
     @Override
-    protected SearchSettings searchSettings() {
+    public SearchSettings searchSettings() {
         return source.searchSettings();
     }
 }

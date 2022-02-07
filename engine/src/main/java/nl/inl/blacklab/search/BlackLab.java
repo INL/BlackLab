@@ -1,17 +1,5 @@
 package nl.inl.blacklab.search;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
-
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BLConfigLog;
 import nl.inl.blacklab.config.BlackLabConfig;
@@ -21,6 +9,13 @@ import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.util.FileUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Main BlackLab class, from which indexes can be opened.
@@ -70,6 +65,7 @@ public final class BlackLab {
     /** BlackLab configuration */
     private static BlackLabConfig blackLabConfig = null;
 
+    /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
     public static BlackLabEngine createEngine(int searchThreads, int maxThreadsPerSearch) {
@@ -77,10 +73,6 @@ public final class BlackLab {
             throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
         explicitlyCreated = true;
         return new BlackLabEngine(searchThreads, maxThreadsPerSearch);
-    }
-    
-    public static BlackLabEngine createEngine() {
-        return createEngine(DEFAULT_NUM_SEARCH_THREADS, DEFAULT_MAX_THREADS_PER_SEARCH);
     }
     
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
@@ -159,8 +151,19 @@ public final class BlackLab {
         return implicitInstance;
     }
 
+    /**
+     * Given an index reader that was opened using BlackLab, return the
+     * corresponding BlackLab index object.
+     *
+     * @param reader index reader that was opened using BlackLab
+     * @return BlackLab index object
+     */
     public static synchronized BlackLabIndex fromIndexReader(IndexReader reader) {
-        return blackLabFromIndexReader.get(reader).indexFromReader(reader);
+        BlackLabEngine blackLabEngine = blackLabFromIndexReader.get(reader);
+        if (blackLabEngine == null) {
+            return null;
+        }
+        return blackLabEngine.indexFromReader(reader);
     }
     
     /**
@@ -254,16 +257,23 @@ public final class BlackLab {
     /**
      * Configure the index according to the blacklab configuration.
      *
-     * @param index
-     * @throws IOException
+     * @param index index to apply the config to
      */
-    public synchronized static void applyConfigToIndex(BlackLabIndex index) throws IOException {
+    public synchronized static void applyConfigToIndex(BlackLabIndex index) {
         ensureGlobalConfigApplied();
         
         // Apply search settings from the config to this BlackLabIndex
         blackLabConfig.getSearch().apply(index);
     }
 
+    /**
+     * This ensures that relevant configuration settings have been applied
+     * to several components of BlackLab. We call configuring these components
+     * "the global config" because these are shared between all indexes.
+     *
+     * This is called before any settings are applied to individual indexes,
+     * which could cause problems.
+     */
     private synchronized static void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
             

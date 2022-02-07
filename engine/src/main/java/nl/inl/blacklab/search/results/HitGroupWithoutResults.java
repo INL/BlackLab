@@ -2,7 +2,14 @@ package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 
+/**
+ * A hit group that doesn't store any actual hits.
+ */
 public class HitGroupWithoutResults extends HitGroup {
+
+    /**
+     * A Hits object that only stores statistics about a set of hits, not the actual hits themselves (because we don't need them).
+     */
     private static class HitsWithoutResults extends Hits {
         protected final boolean maxHitsProcessed;
         protected final boolean maxHitsCounted;

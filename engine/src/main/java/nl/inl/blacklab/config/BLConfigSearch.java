@@ -56,6 +56,11 @@ public class BLConfigSearch {
         this.fiMatchFactor = fiMatchFactor;
     }
 
+    /**
+     * Apply the search configuration settings to an opened index.
+     *
+     * @param index index to apply the configuration to
+     */
     public void apply(BlackLabIndex index) {
         index.setCollator(getCollator().get());
         index.setDefaultContextSize(ContextSize.get(getContextSize()));

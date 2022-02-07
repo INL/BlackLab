@@ -61,7 +61,7 @@ public class SearchHitsWindow extends SearchHits {
     }
 
     @Override
-    protected SearchSettings searchSettings() {
+    public SearchSettings searchSettings() {
         return source.searchSettings();
     }
 }

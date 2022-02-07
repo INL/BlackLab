@@ -2,16 +2,50 @@
 
 Here we want to document how BlackLab works internally. At the moment it is still very much incomplete, but we intend to add and update information as time goes on.
 
-## Engine, index
+
+## Module structure
+
+BlackLab has been divided up into modules that serve specific functions.
+This is intended to make the structure and dependencies clearer, to make BlackLab
+easier to understand and make future improvements easier.
+
+This the current list of modules:
+
+| Module          | Description                                                  |
+|-----------------|--------------------------------------------------------------|
+| `common`          | classes used by a number of other modules. Currently only contains BlackLab-specific `Exception` subclasses.
+| `content-store`   | responsible for storing the input documents indexed in BlackLab for later display with optional highlighting of hits. |
+| `contrib/*`       | some modules that serve specific functions that some projects may need, but many don't. Currently contains plugins to convert and tag input documents before indexing, as well as some legacy `DocIndexer` implementations. |
+| `core`            | will build the main BlackLab Java library. Doesn't contain any Java code itself but combines other modules (the main module is engine). |
+| `engine`          | implements most of the BlackLab functionality. |
+| `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar. |
+| `interfaces`      | was intended to contain interfaces shared between BlackLab modules, but currently empty. |
+| `mocks`           | mock objects useful for testing. Shouldn't be included in library build. |
+| `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser). |
+| `server`          | the BlackLab Server web service |
+| `text-pattern`    | the `TextPattern` classes that currently sit between the query parser and the `SpanQuery` classes. |
+
+Future plans for this module structure:
+
+- `common` should probably not grow; rather shrink and ideally be eliminated altogether
+- `content-store` should be made optional, so you can also use e.g. an external webservice to retrieve the document contents.
+- `engine` currently does a lot, with a lot of interdependencies between classes, and could/should therefore be divided up into logical modules.
+- `interfaces` should either be used for truly shared interfaces, or should be removed. Probably the latter as interfaces belong with the module providing the associated functionality.
+- `query-parser` could be reduced to just the Corpus Query Language parser, with the Contextual Query Language parser moved into a `contrib` module.
+- `text-pattern` could eventually become unnecessary as we move their functionality into the various `SpanQuery` classes, and could then be moved to `contrib` for legacy uses.
+
+## Important classes and their function
+
+### Engine, index
 
 - `BlackLabEngine` is the class that manages the BlackLab search threads. It has a `searchExecutorService` that search threads can be submitted to. The `open` and `openForWriting` methods can be used to open indexes.
 - `BlackLabIndex` represents a single opened index. You can use it to search the index directly using methods like `find(BLSpanQuery)`, or you can construct a `Search` description using the `search()` methods and then either execute it synchronously using `Search.execute()` or go through the cache using `Search.executeAsync()`.
 
-## Search results
+### Search results
 
 - `SearchResult` is the base interface that all types of results objects implement: `Hits` (and its subclasses like `HitsFromQueryParallel`), `HitGroups`, `DocResults`, `Facets`, etc.
 
-## Search cache
+### Search cache
 
 BlackLab features a cache system that can keep track of results of finished queries as well as currently running queries.
 
@@ -21,7 +55,7 @@ The potential disadvantage of such a cache is that it can take up a lot of memor
 
 The implementation of the cache is left up to the user of BlackLab. BlackLab Server, the webservice accompanying BlackLab, provides an implementation that can be configured in various ways (see `BlsCache` below).
 
-### BlackLab caching
+#### BlackLab caching
 
 These are the important interfaces and classes involved in BlackLab's cache system and BLS's implementation:
 
@@ -32,7 +66,7 @@ NOTE: `BlackLabEngine`'s `searchExecutorService` uses a standard `Executors.newC
 
 NOTE: unless a custom `SearchCache` is configured (like BlackLab Server does), BlackLab uses a dummy cache that doesn't actually cache anything. So `executeAsync()` will block and return an already-completed `SearchCacheEntry`, effectively doing the same as `execute()`.
 
-### BLS cache implementation
+#### BLS cache implementation
 
 BlackLab Server implements a custom cache to improve performance for users who might be paging through results, re-ordering results, going from hits to grouped hits, etc.
 

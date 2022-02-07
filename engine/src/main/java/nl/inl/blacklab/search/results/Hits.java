@@ -29,6 +29,10 @@ import nl.inl.util.Sort;
 import nl.inl.util.Sort.Sortable;
 
 public abstract class Hits extends Results<Hit, HitProperty> {
+
+    /** A mutable implementation of Hit, to be used for short-lived
+     *  instances used while e.g. iterating through a list of hits.
+     */
     public static class EphemeralHit implements Hit {
         public int doc = -1;
         public int start = -1;
@@ -381,12 +385,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #fromArrays(QueryInfo, IntArrayList, IntArrayList, IntArrayList) }
+     * Prefer using @link { {@link #fromList(QueryInfo, HitsArrays, CapturedGroups)} }
      *
      * @param queryInfo information about the original query
-     * @param doc doc ids
-     * @param start hit starts
-     * @param end hit ends
+     * @param docs doc ids
+     * @param starts hit starts
+     * @param ends hit ends
      * @return hits found
      */
     public static Hits fromArrays(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {

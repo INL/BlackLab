@@ -178,11 +178,11 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>viewgroup </td>
-		<td>Identity of one of the groups to view (identity values are returned with the grouping results).</td>
+		<td>Identity of one of the groups to view (identity values are returned with the grouping results). <b>NOTE:</b> you may not get all results in the group because there is a limit to how many results are stored per group! Use <code>hitfiltercrit</code> to get all hits.</td>
 	</tr>
 	<tr>
 		<td>hitfiltercrit </td>
-		<td>A criterium to filter hits on. Also needs hitfilterval to work. See below. (default: don't filter)<br/>This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially supersede the viewgroup parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to hitfiltercrit/hitfilterval, you can keep diving deeper into your result set.</td>
+		<td>A criterium to filter hits on. Also needs hitfilterval to work. See below. (default: don't filter)<br/>This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially supersede the viewgroup parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to hitfiltercrit/hitfilterval, you can keep diving deeper into your result set. <b>NOTE:</b> this may be slow because it finds all hits, then filters them by this criterium.</td>
 	</tr>
 	<tr>
 		<td>hitfilterval </td>
