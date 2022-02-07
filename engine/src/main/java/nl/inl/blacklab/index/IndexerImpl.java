@@ -18,7 +18,6 @@ package nl.inl.blacklab.index;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.*;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -26,7 +25,6 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.ContentAccessor;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
@@ -511,23 +509,6 @@ class IndexerImpl implements DocWriter, Indexer {
         listener().luceneDocumentAdded();
     }
 
-    /**
-     * Add a list of tokens to an annotation forward index
-     *
-     * @param prop the annotation to get values and position increments from
-     * @return the id assigned to the content
-     * @deprecated add a whole field at a time using {@link #addToForwardIndex(AnnotatedFieldWriter, Document)}
-     */
-    @Override
-    @Deprecated
-    public int addToForwardIndex(AnnotationWriter prop) {
-        Annotation annotation = indexWriter.getOrCreateAnnotation(prop.field(), prop.name());
-        AnnotationForwardIndex forwardIndex = indexWriter.annotationForwardIndex(annotation);
-        if (forwardIndex == null)
-            throw new IllegalArgumentException("No forward index for field " + AnnotatedFieldNameUtil.annotationField(prop.field().name(), prop.name()));
-        return forwardIndex.addDocument(prop.values(), prop.positionIncrements());
-    }
-
     @Override
     public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, Document currentLuceneDoc) {
         Map<Annotation, List<String>> annotations = new HashMap<>();
@@ -721,12 +702,6 @@ class IndexerImpl implements DocWriter, Indexer {
             f = this.linkedFileResolver.apply(inputFile);
 
         return f;
-    }
-
-    @Override
-    @Deprecated
-    public void setUseThreads(boolean useThreads) {
-        this.setNumberOfThreadsToUse(useThreads ? 2 : 1);
     }
 
     @Override
