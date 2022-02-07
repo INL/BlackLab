@@ -65,20 +65,6 @@ public interface BlackLabIndex extends Closeable {
         return new BlackLabIndexImpl(blackLab, indexDir, false, false, (File) null);
     }
 
-    /**
-     * Open an index for reading ("search mode").
-     *
-     * @param indexDir the index directory
-     * @return index object
-     * @throw IndexTooOld if the index format is no longer supported
-     * @throws ErrorOpeningIndex on any error
-     * @deprecated use BlackLab.open()
-     */
-    @Deprecated
-    static BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
-        return BlackLab.open(indexDir);
-    }
-
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------
     
