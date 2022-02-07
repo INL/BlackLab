@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.datastream;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.util.ServletUtil;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 import java.util.Set;
-
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * Class to stream out XML or JSON data.
@@ -25,32 +25,6 @@ public abstract class DataStream {
     }
 
     /**
-     * Stream a simple status response.
-     *
-     * Status response may indicate success, or e.g. that the server is carrying out
-     * the request and will have results later.
-     *
-     * @param code (string) status code
-     * @param msg the message
-     * @param checkAgainMs advice for how long to wait before asking again (ms) (if
-     *            0, don't include this)
-     * @deprecated checkAgainMs will be removed eventually
-     */
-    @Deprecated
-    public void statusObject(String code, String msg, int checkAgainMs) {
-        startMap()
-                .startEntry("status")
-                .startMap()
-                .entry("code", code)
-                .entry("message", msg);
-        if (checkAgainMs != 0)
-            entry("checkAgainMs", checkAgainMs);
-        endMap()
-                .endEntry()
-                .endMap();
-    }
-
-    /**
      * Construct a simple status response object.
      *
      * Status response may indicate success, or e.g. that the server is carrying out
@@ -60,7 +34,14 @@ public abstract class DataStream {
      * @param msg the message
      */
     public void statusObject(String code, String msg) {
-        statusObject(code, msg, 0);
+        startMap()
+                .startEntry("status")
+                .startMap()
+                .entry("code", code)
+                .entry("message", msg);
+        endMap()
+                .endEntry()
+                .endMap();
     }
 
     /**
