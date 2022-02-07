@@ -15,15 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Constructor;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -32,6 +23,14 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Constructor;
 
 /**
  * Simple example indexer for plain text files. Reads a line, chops it into
@@ -46,10 +45,10 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
     AnnotatedFieldWriter contentsField;
 
     /** The main annotation (usually "word") */
-    AnnotationWriter propMain;
+    AnnotationWriter annotMain;
 
     /** The punctuation annotation */
-    AnnotationWriter propPunct;
+    AnnotationWriter annotPunct;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the
@@ -65,9 +64,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 getSensitivitySetting(mainPropName), false);
-        propMain = contentsField.mainAnnotation();
+        annotMain = contentsField.mainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
-        propPunct = contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), false);
+        annotPunct = contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), false);
         IndexMetadataWriter indexMetadata = indexer.indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
@@ -98,12 +97,12 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         return metadataFetcher;
     }
 
-    public AnnotationWriter getPropPunct() {
-        return propPunct;
+    public AnnotationWriter getAnnotPunct() {
+        return annotPunct;
     }
 
     public AnnotationWriter getMainAnnotation() {
-        return propMain;
+        return annotMain;
     }
 
     public AnnotatedFieldWriter getContentsField() {
@@ -118,7 +117,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
      * @return the current word position
      */
     public int getWordPosition() {
-        return propMain.lastValuePosition() + 1;
+        return annotMain.lastValuePosition() + 1;
     }
 
     public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
@@ -155,13 +154,13 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                     processContent(punctuation);
                 }
                 firstWord = false;
-                propPunct.addValue(punctuation);
+                annotPunct.addValue(punctuation);
 
                 // Handle the word itself, including character positions.
                 contentsField.addStartChar(getCharacterPosition());
                 processContent(words[i]); // add word to content store
                 contentsField.addEndChar(getCharacterPosition());
-                propMain.addValue(words[i]); // add word to index
+                annotMain.addValue(words[i]); // add word to index
 
                 // Report progress regularly but not too often
                 wordsDone++;
@@ -184,7 +183,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             // Make sure we always have one more token than the number of
             // words, so there's room for any tags after the last word, and we
             // know we should always skip the last token when matching.
-            if (propMain.lastValuePosition() == lastValuePos)
+            if (annotMain.lastValuePosition() == lastValuePos)
                 lastValuePos++;
 
             // Add empty values to all lagging properties
@@ -193,7 +192,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                     prop.addValue("");
                     if (prop.hasPayload())
                         prop.addPayload(null);
-                    if (prop == propMain) {
+                    if (prop == annotMain) {
                         contentsField.addStartChar(getCharacterPosition());
                         contentsField.addEndChar(getCharacterPosition());
                     }

@@ -47,7 +47,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
 import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
@@ -185,7 +185,7 @@ MatchFilter constraintValue():
 |   "!" v=constraintValue()             { return new MatchFilterNot(v); }
 |   l=captureLabel() ["." s=<NAME>]
 	{
-		return new MatchFilterTokenProperty(l, s == null ? null : s.toString());
+		return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());
 	}
 }
 
@@ -512,22 +512,22 @@ TextPattern attValuePair():
 }
 {
 	LOOKAHEAD(2)
-	annot=propName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
-|	annot=propName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
+	annot=annotName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
+|	annot=annotName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
 |	v=valuePart() [f=flags()]                      { return v; }
 }
 
-String propName():
+String annotName():
 {
 	Token t = null, subAnnot = null;
 }
 {
 	t=<NAME> [ "/" subAnnot=<NAME> ]
 	{
-		String propName = t.toString(); 
+		String annotName = t.toString(); 
 		if (subAnnot == null)
-			return propName;
-		return propName + "/" + subAnnot.toString();
+			return annotName;
+		return annotName + "/" + subAnnot.toString();
 	}
 }
 

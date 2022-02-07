@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
 import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenProperty;
+import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
@@ -171,7 +171,7 @@ if (b == null)
         jj_la1[4] = jj_gen;
         ;
       }
-{if ("" != null) return new MatchFilterTokenProperty(l, s == null ? null : s.toString());}
+{if ("" != null) return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());}
       break;
       }
     default:
@@ -732,7 +732,7 @@ if (b == null)
         String annot;
         String f = null;
     if (jj_2_7(2)) {
-      annot = propName();
+      annot = annotName();
       jj_consume_token(15);
       v = valuePart();
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -748,7 +748,7 @@ if (b == null)
     } else {
       switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
       case NAME:{
-        annot = propName();
+        annot = annotName();
         jj_consume_token(16);
         v = valuePart();
         switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
@@ -788,7 +788,7 @@ if (b == null)
     throw new Error("Missing return statement in function");
   }
 
-  final public String propName() throws ParseException {Token t = null, subAnnot = null;
+  final public String annotName() throws ParseException {Token t = null, subAnnot = null;
     t = jj_consume_token(NAME);
     switch ((jj_ntk==-1)?jj_ntk_f():jj_ntk) {
     case 22:{
@@ -800,10 +800,10 @@ if (b == null)
       jj_la1[31] = jj_gen;
       ;
     }
-String propName = t.toString();
+String annotName = t.toString();
                 if (subAnnot == null)
-                        {if ("" != null) return propName;}
-                {if ("" != null) return propName + "/" + subAnnot.toString();}
+                        {if ("" != null) return annotName;}
+                {if ("" != null) return annotName + "/" + subAnnot.toString();}
     throw new Error("Missing return statement in function");
   }
 

@@ -7,14 +7,14 @@ A BlackLab index is just a Lucene index with a few extra components: forward ind
 As said, this is just a Lucene index with some extras:
 
 - **version.dat** identifies the index as a BlackLab index. It always contains the string "blacklab||2". (The "2" is a version, but is not used right now. It might be used in the future in case of major changes)
-- **fi_<i>&lt;fieldname&gt;</i>%<i>&lt;property&gt;</i>** is the forward index for the a specific field and property, for example "fi_contents%lemma" is the forward index for the lemma property of the contents field. It provides a quick way to determine what lemma occurs at a particular corpus position. See below for the layout of this directory.
+- **fi_<i>&lt;fieldname&gt;</i>%<i>&lt;annotation&gt;</i>** is the forward index for the a specific field and annotation, for example "fi_contents%lemma" is the forward index for the lemma annotation of the contents field. It provides a quick way to determine what lemma occurs at a particular corpus position. See below for the layout of this directory.
 - **cs_<i>&lt;fieldname&gt;</i>** is the content store for the field. BlackLab indices typically contain only one field with a content store, typically called "contents", so the subdirectory is named "cs_contents". See below for the layout of this directory.
 
 ## Forward Index layout
 
 The forward index contains:
 
-- a terms file, which stores all the unique terms that occur in this field property
+- a terms file, which stores all the unique terms that occur in this field annotation
 - a documents file, which stores number of tokens in each document, and where to find them in the tokens file
 - a tokens file, which stores the term index for each position in each document
 - a version file, which identifies this as a forward index and stores the version

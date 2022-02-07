@@ -1,22 +1,17 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.IndexReader;
-
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.Annotations;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.*;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.IndexReader;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Autocompletion for metadata and annotated fields. Annotations must be
@@ -82,7 +77,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
             AnnotatedField annotatedField = indexMetadata.annotatedField(annotatedFieldName);
             Annotations annotations = annotatedField.annotations();
             if (!annotations.exists(fieldName))
-                throw new BadRequest("UNKNOWN_PROPERTY",
+                throw new BadRequest("UNKNOWN_ANNOTATION",
                         "Annotated field '" + annotatedFieldName + "' has no annotation '" + fieldName + "'.");
             Annotation annotation = annotations.get(fieldName);
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {

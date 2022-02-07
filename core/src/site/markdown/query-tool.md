@@ -21,9 +21,9 @@ Paging, sorting and grouping
 
 As a first query, type "de" (the) and press Enter. The first twenty hits for this query are shown. To page through the results, use the commands “next” and “previous” (or their one-letter abbreviations). You can also change the number of hits displayed per page by using the “pagesize” command followed by a number.
 
-You can sort the hits using the command “sort <criterium\>”. The criterium can be “match”, “left” or “right”. “match” sorts by matched text, “left” sorts by left context (the text to the left of the matched text), and “right” sorts by right context. You can also specify a property to sort on, e.g. word, lemma, or pos. If you don't specify this, hits will be sorted by word.
+You can sort the hits using the command “sort <criterium\>”. The criterium can be “match”, “left” or “right”. “match” sorts by matched text, “left” sorts by left context (the text to the left of the matched text), and “right” sorts by right context. You can also specify an annotation to sort on, e.g. word, lemma, or pos. If you don't specify this, hits will be sorted by word.
 
-You can group the hits using “group <criterium\>”. Valid values are again “match”, “left” or “right”. Here, “left” and “right” group on the single word occurring to the left or right of the matched text. Just like sort, you can optionally specify a property (word, lemma, pos) to group on. Word is the default.
+You can group the hits using “group <criterium\>”. Valid values are again “match”, “left” or “right”. Here, “left” and “right” group on the single word occurring to the left or right of the matched text. Just like sort, you can optionally specify an annotation (word, lemma, pos) to group on. Word is the default.
 
 Once you group hits, you enter group mode. The groups are displayed in columns: group number, group size and group identity. If there are many groups, you can page through the groups using the same command as for hits. You can also sort the groups by “identity” or “size”.
 

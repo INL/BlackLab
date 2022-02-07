@@ -83,18 +83,18 @@ public class MatchFilterEquals extends MatchFilter {
         MatchFilter x = a.rewrite();
         MatchFilter y = b.rewrite();
 
-        if (x instanceof MatchFilterTokenProperty && ((MatchFilterTokenProperty) x).hasProperty()
+        if (x instanceof MatchFilterTokenAnnotation && ((MatchFilterTokenAnnotation) x).hasAnnotation()
                 && y instanceof MatchFilterString) {
             // Simple annotation to string comparison, e.g. a.word = "cow"
             // This can be done more efficiently without string comparisons
             String termString = ((MatchFilterString) y).getString();
-            return ((MatchFilterTokenProperty) x).matchTokenString(termString, sensitivity);
+            return ((MatchFilterTokenAnnotation) x).matchTokenString(termString, sensitivity);
         }
 
-        if (x instanceof MatchFilterTokenProperty && y instanceof MatchFilterTokenProperty) {
-            MatchFilterTokenProperty xtp = ((MatchFilterTokenProperty) x);
-            MatchFilterTokenProperty ytp = ((MatchFilterTokenProperty) y);
-            if (xtp.getPropertyName().equals(ytp.getPropertyName())) {
+        if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterTokenAnnotation) {
+            MatchFilterTokenAnnotation xtp = ((MatchFilterTokenAnnotation) x);
+            MatchFilterTokenAnnotation ytp = ((MatchFilterTokenAnnotation) y);
+            if (xtp.getAnnotationName().equals(ytp.getAnnotationName())) {
                 // Expression of the form a.word = b.word;
                 // This can be done more efficiently without string comparisons
                 return xtp.matchOtherTokenSameProperty(ytp.getGroupName(), sensitivity);

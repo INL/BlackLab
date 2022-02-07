@@ -15,14 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A "keyword in context" for a hit (left context, hit text, right context).
@@ -147,9 +146,9 @@ public class Kwic {
     private List<String> singlePropertyContext(Annotation annotation, int start, int end) {
         final int nProp = fragment.annotations.size();
         final int size = end - start;
-        final int propIndex = fragment.annotations.indexOf(annotation);
-        final int startIndex = start * nProp + propIndex;
-        if (propIndex == -1)
+        final int annotIndex = fragment.annotations.indexOf(annotation);
+        final int startIndex = start * nProp + annotIndex;
+        if (annotIndex == -1)
             return null;
         return new AbstractList<String>() {
             @Override

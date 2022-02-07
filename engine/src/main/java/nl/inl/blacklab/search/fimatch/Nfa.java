@@ -1,15 +1,8 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+
+import java.util.*;
 
 /**
  * A fragment of an NFA being built. Contains a starting state and a list of
@@ -149,7 +142,7 @@ public class Nfa {
     }
 
     public void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        startingState.lookupPropertyNumbers(fiAccessor, statesVisited);
+        startingState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     public void finish() {

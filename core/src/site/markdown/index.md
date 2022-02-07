@@ -8,7 +8,7 @@ BlackLab is an open source corpus search engine built on top of [Apache Lucene](
 
 ## Who is it for?
 
-BlackLab was designed primarily for linguists who want to search for (potentially complex) patterns in large bodies of text annotated with linguistic properties (headword, part-of-speech, paragraphs, sentences, named entities, etc.). Apart from that, BlackLab is also being used for other purposes, including historical research and artifical intelligence.
+BlackLab was designed primarily for linguists who want to search for (potentially complex) patterns in large bodies of text annotated with linguistic annotations (headword, part-of-speech, paragraphs, sentences, named entities, etc.). Apart from that, BlackLab is also being used for other purposes, including historical research and artifical intelligence.
 
 * [List of features](features.html)
 * [See BlackLab in action](blacklab-in-action.html)
