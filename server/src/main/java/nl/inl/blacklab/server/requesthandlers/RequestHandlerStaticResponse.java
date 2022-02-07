@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 public class RequestHandlerStaticResponse extends RequestHandler {
 
@@ -24,21 +24,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
 
     /** If it's an internal error, this is nonempty */
     private String internalErrorCode = "";
-
-    private int checkAgainAdviceMs = 0;
-
-    /**
-     * Stream a busy response.
-     * 
-     * @return the request handler itself
-     */
-    public RequestHandlerStaticResponse busy() {
-        code = "WORKING";
-        msg = "Searching, please wait...";
-        checkAgainAdviceMs = 1000;
-        httpCode = HTTP_OK;
-        return this;
-    }
 
     /**
      * Stream a simple status response.
@@ -172,9 +157,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     @SuppressWarnings("deprecation")
     @Override
     public int handle(DataStream ds) throws BlsException {
-        if (checkAgainAdviceMs != 0) {
-            ds.statusObject(code, msg, checkAgainAdviceMs);
-        }
         if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
                 ds.internalError(exception, debugMode, internalErrorCode);
