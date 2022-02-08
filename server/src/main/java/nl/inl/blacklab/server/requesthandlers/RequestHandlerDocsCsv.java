@@ -149,8 +149,6 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     }
 
     private void writeGroups(DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
-        searchLogger.setResultsFound(groups.size());
-
         try {
             // Write the header
             List<String> row = new ArrayList<>();
@@ -200,9 +198,6 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     }
 
     private void writeDocs(DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize, DataStreamPlain ds) throws BlsException {
-
-        searchLogger.setResultsFound(docs.size());
-
         try {
             IndexMetadata indexMetadata = this.blIndex().metadata();
             MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);

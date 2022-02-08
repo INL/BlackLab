@@ -1,14 +1,14 @@
 package nl.inl.blacklab.search.results;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -19,16 +19,10 @@ import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.requestlogging.LogLevel;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A Hits object that is filled from a BLSpanQuery.
@@ -110,18 +104,18 @@ public class HitsFromQuery extends Hits {
             // Override FI match threshold? (debug use only!)
             long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
             if (searchSettings.fiMatchFactor() != -1) {
-                queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
+                logger.debug("setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                 ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
             }
 
             sourceQuery.setQueryInfo(queryInfo);
-            queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
+            logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
             BLSpanQuery optimize = sourceQuery.optimize(reader);
-            queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
+            logger.debug("Query after optimize(): " + optimize);
 
             BLSpanQuery spanQuery = optimize.rewrite(reader);
-            queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
+            logger.debug("Query after rewrite(): " + spanQuery);
 
             // Restore previous FI match threshold
             if (searchSettings.fiMatchFactor() != -1) {
@@ -220,7 +214,7 @@ public class HitsFromQuery extends Hits {
                             currentDocBase = context.docBase;
                             currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
                             if (!loggedSpans) {
-                                queryInfo().log(LogLevel.EXPLAIN, "got Spans: " + currentSourceSpans);
+                                logger.debug("got Spans: " + currentSourceSpans);
                                 loggedSpans = true;
                             }
                             if (currentSourceSpans != null) {

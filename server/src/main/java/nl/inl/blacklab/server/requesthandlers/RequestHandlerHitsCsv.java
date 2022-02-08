@@ -1,9 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -25,6 +21,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+
+import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Request handler for hit results.
@@ -139,8 +140,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     private void writeGroups(Hits inputHitsForGroups, HitGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
-        searchLogger.setResultsFound(groups.size());
-
         DocProperty metadataGroupProperties = null;
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
@@ -248,8 +247,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         DocResults subcorpusResults,
         DataStreamPlain ds
     ) throws BlsException {
-        searchLogger.setResultsFound(hits.size());
-
         final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
         try {
             // Build the table headers

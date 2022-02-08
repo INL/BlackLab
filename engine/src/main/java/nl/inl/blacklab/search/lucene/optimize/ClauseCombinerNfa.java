@@ -1,10 +1,5 @@
 package nl.inl.blacklab.search.lucene.optimize;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
-
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -12,6 +7,9 @@ import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
 import nl.inl.util.LuceneUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
 
 /**
  * Converts one clause to an NFA and uses the other as the anchor in a FISEQ
@@ -139,7 +137,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
         if (BlackLabIndexImpl.traceOptimization()) {
-            left.log(LogLevel.CHATTY, String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
+            logger.debug(String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
                     forwardPossible ? 1 : 0,
                     backwardPossible ? 1 : 0,
                     costNfaToReverseForward,
@@ -177,21 +175,22 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         if (nfaThreshold == NO_NFA_MATCHING) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: nfa matching switched off)");
+                logger.debug("(CCNFA: nfa matching switched off)");
             return CANNOT_COMBINE;
         }
 
         long factor = getFactor(left, right, reader);
-        left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ")");
+        if (BlackLabIndexImpl.traceOptimization())
+            logger.debug("(CCNFA: factor == " + factor + ")");
         if (factor == 0) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: cannot combine)");
+                logger.debug("(CCNFA: cannot combine)");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
+                logger.debug("(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
 
@@ -199,7 +198,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             long maxTermsRight = LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField());
             long maxTermsLeft = LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField());
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
+                logger.debug("(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
             if (factor > 0 && maxTermsRight < 10_000 ||
                 factor < 0 && maxTermsLeft < 10_000) {
 

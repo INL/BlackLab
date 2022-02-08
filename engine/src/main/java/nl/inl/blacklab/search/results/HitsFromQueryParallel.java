@@ -1,5 +1,23 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
+import nl.inl.util.ThreadAborter;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.spans.SpanWeight.Postings;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.Bits;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -11,26 +29,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
-
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.SpanWeight.Postings;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.Bits;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.requestlogging.LogLevel;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
-import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
 
@@ -381,18 +379,18 @@ public class HitsFromQueryParallel extends Hits {
             synchronized(ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
                 if (searchSettings.fiMatchFactor() != -1) {
-                    queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
+                    logger.debug("setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                     ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
                 }
 
                 sourceQuery.setQueryInfo(queryInfo);
-                queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
+                logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
                 optimizedQuery = sourceQuery.optimize(reader);
-                queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimizedQuery);
+                logger.debug("Query after optimize(): " + optimizedQuery);
 
                 optimizedQuery = optimizedQuery.rewrite(reader);
-                queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + optimizedQuery);
+                logger.debug("Query after rewrite(): " + optimizedQuery);
 
                 optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
 

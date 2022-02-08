@@ -1,24 +1,8 @@
 package nl.inl.blacklab.server.search;
 
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.ServerOverloaded;
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -26,10 +10,17 @@ import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.logging.LogDatabase;
-import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 public class BlsCache implements SearchCache {
 
@@ -113,16 +104,12 @@ public class BlsCache implements SearchCache {
 
     private String previousCacheStatsMessage = "";
 
-    /** SQLite database to log all our searches to (if enabled) */
-    private LogDatabase logDatabase = new LogDatabaseDummy();
-
     @SuppressWarnings("deprecation")
-    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace, LogDatabase logDatabase) {
+    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
         this.config = config;
         this.maxConcurrentSearches = maxConcurrentSearches;
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
         this.trace = trace;
-        this.logDatabase = logDatabase;
         cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
 
         if (!cacheDisabled) {
@@ -197,7 +184,7 @@ public class BlsCache implements SearchCache {
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
         future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
         if (future == null) {
-            search.log(LogLevel.BASIC, "not found in cache, starting search: " + search);
+            logger.info("not found in cache, starting search: " + search);
             int numQueued = numberOfQueuedSearches();
             if (numQueued >= config.getMaxQueuedSearches()) {
                 logger.warn("Can't start new search, too many queued searches (numQueued = " + numQueued + ", maxQueuedSearches = " + config.getMaxQueuedSearches() + ")");
@@ -382,8 +369,6 @@ public class BlsCache implements SearchCache {
 
         List<BlsCacheEntry<?>> searches = new ArrayList<>(this.searches.values());
 
-        logCacheState();
-
         // Sort the searches based on descending "worthiness"
         for (BlsCacheEntry<?> s : searches)
             s.calculateWorthiness(); // calculate once before sorting so we don't run into Comparable contract issues because of threading
@@ -479,40 +464,6 @@ public class BlsCache implements SearchCache {
 
         // Report the cache status (if it changed)
         traceCacheStats("CACHE AFTER UPDATE", true);
-    }
-
-    /**
-     * Regularly log state of the cache to the log database.
-     *
-     * Logs the current state every LOG_CACHE_STATE_INTERVAL_SEC, and a snapshot every
-     * LOG_CACHE_SNAPSHOT_INTERVAL_SEC.
-     *
-     * @param cacheSizeBytes
-     * @param searches
-     */
-    private synchronized void logCacheState() {
-        // Log cache state
-        if (logDatabase != null && System.currentTimeMillis() - lastCacheLogMs > LOG_CACHE_STATE_INTERVAL_SEC * 1000) {
-            int numberRunning = 0;
-            int largestEntryHits = 0;
-            long oldestEntryAgeMs = 0;
-            for (BlsCacheEntry<?> s: searches.values()) {
-                if (!s.isDone())
-                    numberRunning++;
-                if (s.numberOfStoredHits() > largestEntryHits)
-                    largestEntryHits = s.numberOfStoredHits();
-                if (s.timeSinceCreationMs() > oldestEntryAgeMs)
-                    oldestEntryAgeMs = s.timeSinceCreationMs();
-            }
-            lastCacheLogMs = System.currentTimeMillis();
-            List<BlsCacheEntry<? extends SearchResult>> snapshot = null;
-            if (lastCacheLogMs - lastCacheSnapshotMs > LOG_CACHE_SNAPSHOT_INTERVAL_SEC * 1000) {
-                // Every now and then, also capture a cache snapshot
-                snapshot = new ArrayList<>(searches.values());
-                lastCacheSnapshotMs = lastCacheLogMs;
-            }
-            logDatabase.addCacheInfo(snapshot, searches.size(), numberRunning, cacheSizeBytes, MemoryUtil.getFree(), (long)largestEntryHits * SIZE_OF_HIT, (int)(oldestEntryAgeMs / 1000));
-        }
     }
 
     /**

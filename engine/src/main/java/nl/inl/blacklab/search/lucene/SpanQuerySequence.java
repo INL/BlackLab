@@ -15,13 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
+import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,16 +34,8 @@ import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.requestlogging.LogLevel;
-import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
-import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombiner;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
@@ -234,11 +228,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         boolean anyRewrittenThisCycle = true;
         int pass = 0;
         BLSpanQuery searchLogger = !cl.isEmpty() && BlackLabIndexImpl.traceOptimization() ? cl.get(0) : null;
-        if (searchLogger != null)
-            searchLogger.log(LogLevel.OPT, "SpanQuerySequence.combineAdjacentClauses() start");
+        logger.debug("SpanQuerySequence.combineAdjacentClauses() start");
         while (anyRewrittenThisCycle) {
-            if (searchLogger != null)
-                searchLogger.log(LogLevel.OPT, "Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
+            logger.debug("Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
             pass++;
 
             anyRewrittenThisCycle = false;
@@ -255,9 +247,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                     int prio = combiner.priority(left, right, reader);
                     if (searchLogger != null) {
                         if (prio == ClauseCombiner.CANNOT_COMBINE)
-                            searchLogger.log(LogLevel.CHATTY, "(Cannot apply " + combiner + "(" + left + ", " + right + "))");
+                            logger.debug("(Cannot apply " + combiner + "(" + left + ", " + right + "))");
                         else
-                            searchLogger.log(LogLevel.DETAIL, "Can apply " + combiner + "(" + left + ", " + right + "), priority: " + prioName(prio));
+                            logger.debug("Can apply " + combiner + "(" + left + ", " + right + "), priority: " + prioName(prio));
                     }
                     if (prio < highestPrio) {
                         highestPrio = prio;
@@ -269,11 +261,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Any combiners found?
             if (highestPrio < ClauseCombiner.CANNOT_COMBINE) {
                 // Yes, execute the highest-prio combiner
-                if (searchLogger != null) {
-                    left = cl.get(highestPrioIndex - 1);
-                    right = cl.get(highestPrioIndex);
-                    searchLogger.log(LogLevel.OPT, "Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
-                }
+                left = cl.get(highestPrioIndex - 1);
+                right = cl.get(highestPrioIndex);
+                logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
                 BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
@@ -285,8 +275,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             if (anyRewrittenThisCycle)
                 anyRewritten = true;
         }
-        if (searchLogger != null)
-            searchLogger.log(LogLevel.OPT, "Cannot combine any other clauses. Result: " + StringUtils.join(cl, ", "));
+        logger.info("Cannot combine any other clauses. Result: " + StringUtils.join(cl, ", "));
 
         return anyRewritten;
     }

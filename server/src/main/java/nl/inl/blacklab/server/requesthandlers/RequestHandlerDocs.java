@@ -1,13 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -17,21 +9,19 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.*;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.BlsCacheEntry;
+import org.apache.lucene.document.Document;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Request handler for the doc results.
@@ -194,8 +184,6 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.endEntry();
 
         ds.endMap().endEntry();
-
-        searchLogger.setResultsFound(docsStats.processedSoFar());
 
         // The hits and document info
         ds.startEntry("docs").startList();

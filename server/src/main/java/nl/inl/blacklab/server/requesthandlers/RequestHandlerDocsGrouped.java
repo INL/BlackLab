@@ -87,7 +87,6 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
 
         ds.endMap().endEntry();
-        searchLogger.setResultsFound(groups.size());
 
         /* Gather group values per property:
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
