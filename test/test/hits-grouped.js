@@ -102,17 +102,35 @@ expectHitsGrouped('"a"', 'field:title', 3, 17, 3, {
     "identityDisplay": "interview about conference experience and impressions of city",
     "size": 8,
     "properties": [
-      {
-        "name": "field:title",
-        "value": "interview about conference experience and impressions of city"
-      }
+        {
+            "name": "field:title",
+            "value": "interview about conference experience and impressions of city"
+        }
     ],
     "numberOfDocs": 1,
     "subcorpusSize": {
-      "documents": 1,
-      "tokens": 268
+        "documents": 1,
+        "tokens": 268
     }
 });
+
+// Compare hit grouping with regular (HitGroupFromHits) and fast (HitGroupsTokenFrequencies) path.
+// Results should be identical
+const wordFreqParam = ['hit:word:i', 210, 766, 3, {
+    "identity": "cws:word:i:_0",
+    "identityDisplay": "_0",
+    "size": 43,
+    "properties": [
+        {
+            "name": "hit:word:i",
+            "value": "_0"
+        }
+    ],
+    "numberOfDocs": 3
+}];
+expectHitsGrouped('[word != "abcdefg"]', ...wordFreqParam); // regular path
+expectHitsGrouped('[]', ...wordFreqParam); // fast path, same results expected
+
 
 // A few simpler tests, just checking matching text
 //expectHitsGrouped('"two|four"', 3, 1, "two");
