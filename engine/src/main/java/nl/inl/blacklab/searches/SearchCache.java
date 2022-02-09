@@ -59,4 +59,13 @@ public interface SearchCache {
      */
     void cleanup();
 
+    /**
+     * Populates CacheInfoDataStream with the cache status.
+     */
+    void getCacheStatus(CacheInfoDataStream dataStream);
+
+    /**
+     * Populates CacheInfoDataStream with the cache contents.
+     */
+    void getCacheContent(CacheInfoDataStream dataStream, boolean includeDebugInfo);
 }

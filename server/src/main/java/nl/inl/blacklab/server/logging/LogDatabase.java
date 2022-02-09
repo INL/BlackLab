@@ -6,7 +6,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.blacklab.server.search.BlsCacheEntry;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 
 public interface LogDatabase {
 
@@ -55,7 +55,7 @@ public interface LogDatabase {
      * @param largestEntryBytes largest cache entry
      * @param oldestEntryAgeSec oldest cache entry
      */
-    void addCacheInfo(List<BlsCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, long sizeBytes, long freeMemoryBytes,
-            long largestEntryBytes, int oldestEntryAgeSec);
+    void addCacheInfo(List<SearchCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, long sizeBytes, long freeMemoryBytes,
+                      long largestEntryBytes, int oldestEntryAgeSec);
 
 }

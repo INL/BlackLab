@@ -21,6 +21,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -329,7 +330,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
     }
 
     @Override
-    public void addCacheInfo(List<BlsCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, long sizeBytes, long freeMemoryBytes, long largestEntryBytes, int oldestEntryAgeSec) {
+    public void addCacheInfo(List<SearchCacheEntry<? extends SearchResult>> snapshot, int numberOfSearches, int numberRunning, long sizeBytes, long freeMemoryBytes, long largestEntryBytes, int oldestEntryAgeSec) {
         try (Connection conn = pool.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_stats (snapshot, time, timestamp, num_searches, num_running, size_bytes, free_mem_bytes, " +
                     "largest_entry_bytes, oldest_entry_sec) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -348,7 +349,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                     try (ResultSet rs = stmt.getGeneratedKeys()) {
                         if (rs.next()) {
                             int cacheStatsId = rs.getInt(1);
-                            for (BlsCacheEntry<? extends SearchResult> entry: snapshot) {
+                            for (SearchCacheEntry<? extends SearchResult> entry: snapshot) {
                                 addCacheSnapshotRecord(cacheStatsId, entry);
                             }
                         } else {
@@ -363,7 +364,7 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
         }
     }
 
-    private void addCacheSnapshotRecord(int cacheStatsId, BlsCacheEntry<? extends SearchResult> entry) {
+    private void addCacheSnapshotRecord(int cacheStatsId, SearchCacheEntry<? extends SearchResult> cacheEntry) {
         /*cache_entry\" (",
                             "  `cache_stats_id` INTEGER NOT NULL,",
                             "  `search` TEXT NOT NULL,",
@@ -376,6 +377,11 @@ public class LogDatabaseImpl implements Closeable, LogDatabase {
                             "  `not_accessed_for_sec` INTEGER NOT NULL,",
                             "  FOREIGN KEY(`cache_stats_id`) REFERENCES cache_stats ( id )",
          * */
+        if (!(cacheEntry instanceof BlsCacheEntry)) {
+            return;
+        }
+        BlsCacheEntry<?> entry = (BlsCacheEntry<?>) cacheEntry;
+
         try (Connection conn = pool.getConnection()) {
             try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO cache_entry (cache_stats_id, search, status, cancelled, " +
                     "future_status, exception_thrown, size_bytes, total_time_ms, not_accessed_for_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {

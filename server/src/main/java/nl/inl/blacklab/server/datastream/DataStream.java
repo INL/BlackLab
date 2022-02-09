@@ -8,13 +8,15 @@ import java.io.StringWriter;
 import java.util.List;
 import java.util.Set;
 
+import nl.inl.blacklab.searches.CacheInfoDataStream;
+
 /**
  * Class to stream out XML or JSON data.
  *
  * This is faster than building a full object tree first. Intended to replace
  * the DataObject classes.
  */
-public abstract class DataStream {
+public abstract class DataStream implements CacheInfoDataStream {
 
     public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint, String jsonpCallback) {
         if (format == DataFormat.JSON)

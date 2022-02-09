@@ -2,10 +2,12 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.search.BlsCache;
 
 /**
  * Display the contents of the cache.
@@ -27,10 +29,11 @@ public class RequestHandlerCacheInfo extends RequestHandler {
         boolean debugInfo = strDebugInfo == null ? false : strDebugInfo.matches("true|yes|1");
         ds.startMap()
                 .startEntry("cacheStatus");
-        searchMan.getBlackLabCache().dataStreamCacheStatus(ds);
+        SearchCache blackLabCache = searchMan.getBlackLabCache();
+        blackLabCache.getCacheStatus(ds);
         ds.endEntry()
-                .startEntry("cacheContents");
-        searchMan.getBlackLabCache().dataStreamContents(ds, debugInfo);
+            .startEntry("cacheContents");
+        blackLabCache.getCacheContent(ds, debugInfo);
         ds.endEntry()
                 .endMap();
         return HTTP_OK;
