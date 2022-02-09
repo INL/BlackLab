@@ -9,17 +9,20 @@ const util = require('./util');
 
 // Test that a hits search for a pattern returns the correct number of hits and docs,
 // and optionally test that the first hit matches (either JSON or text).
-function expectHitsGrouped(pattern, groupBy, numberOfGroups, numberOfHits, numberOfDocs, expectedFirstGroupJson) {
-    describe(`/hits with pattern ${pattern} grouped by ${groupBy}`, () => {
+function expectHitsGrouped(params, numberOfGroups, numberOfHits, numberOfDocs, expectedFirstGroupJson) {
+    const pattern = params.patt;
+    const groupBy = params.group;
+    const filteredBy  = params.filter ? `, filtered by ${params.filter}` : '';
+
+    describe(`/hits with pattern ${pattern}${filteredBy}, grouped by ${groupBy}`, () => {
         it('should return expected response (#groups/hits/docs, structure)', done => {
             chai
                 .request(constants.SERVER_URL)
                 .get('/test/hits')
                 .query({
-                    patt: pattern,
                     sort: "size,identity",
                     wordsaroundhit: 1,
-                    group: groupBy,
+                    ...params,
                 })
                 .set('Accept', 'application/json')
                 .end((err, res) => {
@@ -55,10 +58,9 @@ function expectHitsGrouped(pattern, groupBy, numberOfGroups, numberOfHits, numbe
                 expect(summary).to.deep.include({
                     "searchParam": {
                         "indexname": "test",
-                        "patt": pattern,
                         "sort": "size,identity",
                         "wordsaroundhit": "1",
-                        "group": groupBy,
+                        ...params
                     },
                     "windowFirstResult": 0,
                     "numberOfGroups": numberOfGroups,
@@ -84,7 +86,7 @@ function expectHitsGrouped(pattern, groupBy, numberOfGroups, numberOfHits, numbe
 
 
 // Single word
-expectHitsGrouped('"very"', 'wordright:word:i', 6, 7, 2, {
+expectHitsGrouped({ patt: '"very"', group: 'wordright:word:i' }, 6, 7, 2, {
     "identity": "cwo:word:i:much",
     "identityDisplay": "much",
     "size": 2,
@@ -97,7 +99,7 @@ expectHitsGrouped('"very"', 'wordright:word:i', 6, 7, 2, {
     "numberOfDocs": 2
 });
 
-expectHitsGrouped('"a"', 'field:title', 3, 17, 3, {
+expectHitsGrouped({ patt: '"a"', group: 'field:title' }, 3, 17, 3, {
     "identity": "str:interview about conference experience and impressions of city",
     "identityDisplay": "interview about conference experience and impressions of city",
     "size": 8,
@@ -116,7 +118,7 @@ expectHitsGrouped('"a"', 'field:title', 3, 17, 3, {
 
 // Compare hit grouping with regular (HitGroupFromHits) and fast (HitGroupsTokenFrequencies) path.
 // Results should be identical
-const wordFreqParam = ['hit:word:i', 210, 766, 3, {
+const param1 = [210, 766, 3, {
     "identity": "cws:word:i:_0",
     "identityDisplay": "_0",
     "size": 43,
@@ -128,9 +130,21 @@ const wordFreqParam = ['hit:word:i', 210, 766, 3, {
     ],
     "numberOfDocs": 3
 }];
-expectHitsGrouped('[word != "abcdefg"]', ...wordFreqParam); // regular path
-expectHitsGrouped('[]', ...wordFreqParam); // fast path, same results expected
+expectHitsGrouped({ patt: '[word != "abcdefg"]', group: 'hit:word:i'}, ...param1); // regular path
+expectHitsGrouped({ patt: '[]', group: 'hit:word:i'}, ...param1); // fast path, same results expected
 
-
-// A few simpler tests, just checking matching text
-//expectHitsGrouped('"two|four"', 3, 1, "two");
+// Same comparison but with metadata filter
+const param2 = [118, 334, 1, {
+    "identity": "cws:word:i:_0",
+    "identityDisplay": "_0",
+    "size": 22,
+    "properties": [
+        {
+            "name": "hit:word:i",
+            "value": "_0"
+        }
+    ],
+    "numberOfDocs": 1
+}];
+expectHitsGrouped({ patt: '[word != "abcdefg"]', filter: 'fromInputFile:"/input/PBsve430.xml"', group: 'hit:word:i'}, ...param2); // fast path, same results expected
+expectHitsGrouped({ patt: '[]', filter: 'fromInputFile:"/input/PBsve430.xml"', group: 'hit:word:i'}, ...param2); // fast path, same results expected
