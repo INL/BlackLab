@@ -1,18 +1,16 @@
 package nl.inl.blacklab.index;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 /**
  * Interface the DocIndexer gets to store documents.
@@ -36,15 +34,6 @@ public interface DocWriter {
      * @throws IOException
      */
     void add(Document document) throws IOException;
-
-    /**
-     * Add a list of tokens to a forward index
-     *
-     * @param field what forward index to add this to
-     * @param prop the a to get values and position increments from
-     * @return the id assigned to the content
-     */
-    int addToForwardIndex(AnnotationWriter prop);
 
     /**
      * Should we continue indexing or stop?

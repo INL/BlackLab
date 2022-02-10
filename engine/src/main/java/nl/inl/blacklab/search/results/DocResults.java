@@ -15,16 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.resultproperty.*;
+import nl.inl.blacklab.search.results.Hits.EphemeralHit;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValues;
@@ -37,17 +32,11 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyDoc;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueDoc;
-import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.results.Hits.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
+import java.io.IOException;
+import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -507,20 +496,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public int numberOfResultObjects() {
         return resultObjects;
-    }
-
-    /**
-     * Count total number of tokens in matching documents.
-     *
-     * This is fast if the query was created from a Query object (and the index contains DocValues),
-     * but slower if it was created from Hits or a list of DocResult objects.
-     *
-     * @return total number of tokens in matching documents.
-     * @deprecated use subcorpusSize().getTokens()
-     */
-    @Deprecated
-    public long tokensInMatchingDocs() {
-        return subcorpusSize().getTokens();
     }
 
     /**

@@ -1,11 +1,10 @@
 package nl.inl.blacklab.mocks;
 
-import java.io.File;
-
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import java.io.File;
 
 public class MockTerms extends Terms {
 
@@ -63,12 +62,6 @@ public class MockTerms extends Terms {
     public int idToSortPosition(int id, MatchSensitivity sensitivity) {
         //
         return id;
-    }
-
-    @Override
-    protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
-        //
-
     }
 
     @Override

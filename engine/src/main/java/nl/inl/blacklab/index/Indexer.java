@@ -1,5 +1,11 @@
 package nl.inl.blacklab.index;
 
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.Term;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,13 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.Term;
-
-import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
@@ -111,13 +110,6 @@ public interface Indexer {
      */
     // TODO this should call close() on running FileProcessors
     void close();
-
-    /**
-     * @return true iff indexer is closed
-     * @deprecated changed to isOpen to match Lucene
-     */
-    @Deprecated
-    boolean isClosed();
 
     /**
      * Is this indexer open?
@@ -252,9 +244,6 @@ public interface Indexer {
     void setLinkedFileDirs(List<File> linkedFileDirs);
 
     void setLinkedFileResolver(Function<String, File> resolver);
-
-    @Deprecated
-    void setUseThreads(boolean useThreads);
 
     void setNumberOfThreadsToUse(int numberOfThreadsToUse);
 

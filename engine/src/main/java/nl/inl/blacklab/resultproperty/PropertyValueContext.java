@@ -17,7 +17,7 @@ public abstract class PropertyValueContext extends PropertyValue {
 
     public PropertyValueContext(BlackLabIndex index, Annotation annotation) {
         this.annotation = annotation;
-        this.terms = index.annotationForwardIndex(annotation).terms();
+        this.terms = index == null ? null : index.annotationForwardIndex(annotation).terms();
     }
 
     @Override

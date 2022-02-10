@@ -15,30 +15,19 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.Buffer;
-import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileChannel.MapMode;
-import java.util.AbstractSet;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.*;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileChannel.MapMode;
+import java.util.*;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -78,8 +67,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     /** Deleted TOC entries. Always sorted by size. */
     List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
-        super(annotation, dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create) {
+        super(annotation, dir, collators);
 
         if (!dir.exists()) {
             if (!create)
@@ -99,14 +88,13 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
         try {
             if (tocFile.exists()) {
                 readToc();
-                terms = Terms.openForWriting(collators, termsFile, useBlockBasedTermsFile);
+                terms = Terms.openForWriting(collators, termsFile);
                 tocModified = false;
             } else {
-                terms = Terms.openForWriting(collators, null, true);
+                terms = Terms.openForWriting(collators, null);
                 if (!tokensFile.createNewFile())
                     throw new BlackLabRuntimeException("Could not create file: " + tokensFile);
                 tocModified = true;
-                terms.setBlockBasedFile(useBlockBasedTermsFile);
             }
             // Tricks to speed up reading
             // Index mode. Open for writing.
