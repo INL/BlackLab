@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,14 +23,12 @@ import nl.inl.blacklab.exceptions.ServerOverloaded;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.blacklab.searches.CacheInfoDataStream;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
 import nl.inl.blacklab.server.logging.LogDatabaseDummy;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -517,63 +516,30 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public void getCacheStatus(CacheInfoDataStream stream) {
-        if (!(stream instanceof DataStream)) {
-           logger.error("cache status can only be  serialized to Datastream");
-           return;
-        }
-        DataStream dataStream = (DataStream) stream;
-        dataStreamCacheStatus(dataStream);
+    public Map<String, Object> getCacheStatus() {
+        Map<String, Integer> counts = getCountsPerStatus();
+        return Map.of(
+            "targetFreeMemMegs", config.getTargetFreeMemMegs(),
+            "minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs(),
+            "maxQueuedSearches", config.getMaxQueuedSearches(),
+            "maxSearchTimeSec", config.getMaxSearchTimeSec(),
+            "maxJobAgeSec", config.getMaxJobAgeSec(),
+            "maxSearchAgeSec", config.getMaxJobAgeSec(),
+            "sizeBytes", cacheSizeBytes,
+            "numberOfSearches", searches.size(),
+            "freeMemory", MemoryUtil.getFree(),
+            "countsPerStatus", Map.of(
+                "queued", counts.get("queued"),
+                "running", counts.get("running"),
+                "finished", counts.get("finished"),
+                "cancelled", counts.get("cancelled")
+            )
+        );
     }
 
     @Override
-    public void getCacheContent(CacheInfoDataStream stream, boolean includeDebugInfo) {
-        if (!(stream instanceof DataStream)) {
-            logger.error("cache content can only be  serialized to Datastream");
-            return;
-        }
-        DataStream dataStream = (DataStream) stream;
-        dataStreamContents(dataStream, includeDebugInfo);
-    }
-
-    /**
-     * Dump information about the cache status.
-     * @param ds where to write information to
-     */
-    public synchronized void dataStreamCacheStatus(DataStream ds) {
-        Map<String, Integer> counts = getCountsPerStatus();
-        ds.startMap();
-            ds.entry("targetFreeMemMegs", config.getTargetFreeMemMegs())
-            .entry("minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs())
-            .entry("maxQueuedSearches", config.getMaxQueuedSearches())
-            .entry("maxSearchTimeSec", config.getMaxSearchTimeSec())
-            .entry("maxJobAgeSec", config.getMaxJobAgeSec())
-            .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
-            .entry("sizeBytes", cacheSizeBytes)
-            .entry("numberOfSearches", searches.size())
-            .entry("freeMemory", MemoryUtil.getFree())
-            .startEntry("countsPerStatus").startMap();
-                ds.entry("queued", counts.get("queued"))
-                .entry("running", counts.get("running"))
-                .entry("finished", counts.get("finished"))
-                .entry("cancelled", counts.get("cancelled"));
-            ds.endEntry().endMap();
-        ds.endMap();
-    }
-
-    /**
-     * Dump cache contents.
-     * @param ds where to write information to
-     * @param debugInfo include debug info?
-     */
-    public synchronized void dataStreamContents(DataStream ds, boolean debugInfo) {
-        ds.startList();
-        for (BlsCacheEntry<? extends SearchResult> e: searches.values()) {
-            ds.startItem("job");
-            e.dataStream(ds, debugInfo);
-            ds.endItem();
-        }
-        ds.endList();
+    public List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).collect(Collectors.toList());
     }
 
     public static void waitUntilDone(BlsCacheEntry<?> entry) {

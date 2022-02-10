@@ -54,14 +54,4 @@ public class SearchCacheDebug implements SearchCache {
     public void cleanup() {
         // NOP
     }
-
-    @Override
-    public void getCacheStatus(CacheInfoDataStream dataStream) {
-        //Noop
-    }
-
-    @Override
-    public void getCacheContent(CacheInfoDataStream dataStream, boolean includeDebugInfo) {
-        //Noop
-    }
 }

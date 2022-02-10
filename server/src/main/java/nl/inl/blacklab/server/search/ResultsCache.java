@@ -1,29 +1,35 @@
 package nl.inl.blacklab.server.search;
 
-import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
-import com.github.benmanes.caffeine.cache.CacheLoader;
-import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.core.instrument.Tags;
-import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.blacklab.searches.CacheInfoDataStream;
-import nl.inl.blacklab.searches.Search;
-import nl.inl.blacklab.searches.SearchCache;
-import nl.inl.blacklab.searches.SearchCacheEntry;
-import nl.inl.blacklab.searches.SearchCacheEntryFromFuture;
-import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.BLSConfigCache;
-import nl.inl.blacklab.server.logging.LogDatabase;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.Map;
-import java.util.concurrent.*;
+import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
+import io.micrometer.core.instrument.Metrics;
+import io.micrometer.core.instrument.Tags;
+import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.searches.Search;
+import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.searches.SearchCacheEntryFromFuture;
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.logging.LogDatabase;
 
 public class ResultsCache implements SearchCache {
     private static final Logger logger = LogManager.getLogger(ResultsCache.class);
@@ -154,12 +160,12 @@ public class ResultsCache implements SearchCache {
     }
 
     @Override
-    public void getCacheStatus(CacheInfoDataStream dataStream) {
-        //Noop
+    public Map<String, Object> getCacheStatus() {
+        return null;
     }
 
     @Override
-    public void getCacheContent(CacheInfoDataStream dataStream, boolean includeDebugInfo) {
-        //Noop
+    public List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+        return null;
     }
 }

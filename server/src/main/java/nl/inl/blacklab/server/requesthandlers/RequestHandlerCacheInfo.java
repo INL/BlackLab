@@ -7,7 +7,6 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.BlsCache;
 
 /**
  * Display the contents of the cache.
@@ -30,10 +29,10 @@ public class RequestHandlerCacheInfo extends RequestHandler {
         ds.startMap()
                 .startEntry("cacheStatus");
         SearchCache blackLabCache = searchMan.getBlackLabCache();
-        blackLabCache.getCacheStatus(ds);
+        ds.value(blackLabCache.getCacheStatus());
         ds.endEntry()
             .startEntry("cacheContents");
-        blackLabCache.getCacheContent(ds, debugInfo);
+        ds.value(blackLabCache.getCacheContent(debugInfo));
         ds.endEntry()
                 .endMap();
         return HTTP_OK;
