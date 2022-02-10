@@ -13,10 +13,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import nl.inl.blacklab.searches.CacheInfoDataStream;
-import nl.inl.blacklab.searches.SearchCacheEntry;
-import nl.inl.blacklab.searches.SearchCount;
-import nl.inl.blacklab.server.config.BLSConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,8 +22,12 @@ import nl.inl.blacklab.exceptions.ServerOverloaded;
 import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.blacklab.searches.CacheInfoDataStream;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.logging.LogDatabase;
@@ -120,16 +120,11 @@ public class BlsCache implements SearchCache {
     /** SQLite database to log all our searches to (if enabled) */
     private LogDatabase logDatabase = new LogDatabaseDummy();
 
-    public BlsCache(BLSConfig config, ExecutorService executorService, LogDatabase logDatabase) {
-        this(config.getCache(), config.getPerformance().getMaxConcurrentSearches(),
-            config.getPerformance().getAbandonedCountAbortTimeSec(), config.getLog().getTrace().isCache(), logDatabase);
-    }
-    @SuppressWarnings("deprecation")
-    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace, LogDatabase logDatabase) {
-        this.config = config;
-        this.maxConcurrentSearches = maxConcurrentSearches;
-        this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
-        this.trace = trace;
+    public BlsCache(BLSConfig blsConfig, ExecutorService executorService, LogDatabase logDatabase) {
+        this.config = blsConfig.getCache();
+        this.maxConcurrentSearches = blsConfig.getPerformance().getMaxConcurrentSearches();
+        this.abandonedCountAbortTimeSec = blsConfig.getPerformance().getAbandonedCountAbortTimeSec();
+        this.trace = blsConfig.getLog().getTrace().isCache();
         this.logDatabase = logDatabase;
         cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
 
@@ -495,8 +490,6 @@ public class BlsCache implements SearchCache {
      * Logs the current state every LOG_CACHE_STATE_INTERVAL_SEC, and a snapshot every
      * LOG_CACHE_SNAPSHOT_INTERVAL_SEC.
      *
-     * @param cacheSizeBytes
-     * @param searches
      */
     private synchronized void logCacheState() {
         // Log cache state
