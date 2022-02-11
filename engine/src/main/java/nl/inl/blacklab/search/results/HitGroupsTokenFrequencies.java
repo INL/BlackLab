@@ -231,13 +231,20 @@ public class HitGroupsTokenFrequencies {
                     final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v;
                     final String fieldName = index.mainAnnotatedField().name();
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
+
+                    // Determine all the fields we want to be able to load, so we don't need to load the entire document
+                    List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getLeft().annotation().forwardIndexIdField()).collect(Collectors.toList());
+                    final Set<String> fieldsToLoad = new HashSet<>();
+                    fieldsToLoad.add(lengthTokensFieldName);
+                    fieldsToLoad.addAll(annotationFINames);
+
                     numberOfDocsProcessed = docIds.parallelStream().filter(docId -> {
                         try {
 
                             // Step 1: read all values for the to-be-grouped annotations for this document
                             // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
-                            final Document doc = reader.document(docId);
+                            final Document doc = reader.document(docId, fieldsToLoad);
                             final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
 
                             try (BlockTimer e = c.child("Read annotations from forward index")) {
