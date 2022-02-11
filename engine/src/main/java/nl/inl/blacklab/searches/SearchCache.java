@@ -1,5 +1,8 @@
 package nl.inl.blacklab.searches;
 
+import java.util.List;
+import java.util.Map;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 
@@ -59,4 +62,19 @@ public interface SearchCache {
      */
     void cleanup();
 
+    /**
+     * Get the cache status.
+     * @return a map containing various properties relevant to the cache
+     */
+    default Map<String, Object> getCacheStatus() {
+        return null;
+    }
+
+    /**
+     * Get the cache contents.
+     * @return list of maps with information about cache entries
+     */
+    default List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+        return null;
+    }
 }

@@ -14,9 +14,9 @@ import nl.inl.blacklab.search.results.SearchResult;
  *
  * @param <R> the type of search result this search will yield
  */
-class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntry<R> {
+public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntry<R> {
 
-    Future<R> future;
+    final Future<R> future;
 
     public SearchCacheEntryFromFuture(Future<R> future) {
         this.future = future;

@@ -1,5 +1,21 @@
 package nl.inl.blacklab.server.search;
 
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.ServerOverloaded;
@@ -9,18 +25,8 @@ import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfigCache;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.lang.Thread.UncaughtExceptionHandler;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class BlsCache implements SearchCache {
 
@@ -466,44 +472,31 @@ public class BlsCache implements SearchCache {
         traceCacheStats("CACHE AFTER UPDATE", true);
     }
 
-    /**
-     * Dump information about the cache status.
-     * @param ds where to write information to
-     */
-    public synchronized void dataStreamCacheStatus(DataStream ds) {
+    @Override
+    public Map<String, Object> getCacheStatus() {
         Map<String, Integer> counts = getCountsPerStatus();
-        ds.startMap();
-            ds.entry("targetFreeMemMegs", config.getTargetFreeMemMegs())
-            .entry("minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs())
-            .entry("maxQueuedSearches", config.getMaxQueuedSearches())
-            .entry("maxSearchTimeSec", config.getMaxSearchTimeSec())
-            .entry("maxJobAgeSec", config.getMaxJobAgeSec())
-            .entry("maxSearchAgeSec", config.getMaxJobAgeSec())
-            .entry("sizeBytes", cacheSizeBytes)
-            .entry("numberOfSearches", searches.size())
-            .entry("freeMemory", MemoryUtil.getFree())
-            .startEntry("countsPerStatus").startMap();
-                ds.entry("queued", counts.get("queued"))
-                .entry("running", counts.get("running"))
-                .entry("finished", counts.get("finished"))
-                .entry("cancelled", counts.get("cancelled"));
-            ds.endEntry().endMap();
-        ds.endMap();
+        return Map.of(
+            "targetFreeMemMegs", config.getTargetFreeMemMegs(),
+            "minFreeMemForSearchMegs", config.getMinFreeMemForSearchMegs(),
+            "maxQueuedSearches", config.getMaxQueuedSearches(),
+            "maxSearchTimeSec", config.getMaxSearchTimeSec(),
+            "maxJobAgeSec", config.getMaxJobAgeSec(),
+            "maxSearchAgeSec", config.getMaxJobAgeSec(),
+            "sizeBytes", cacheSizeBytes,
+            "numberOfSearches", searches.size(),
+            "freeMemory", MemoryUtil.getFree(),
+            "countsPerStatus", Map.of(
+                "queued", counts.get("queued"),
+                "running", counts.get("running"),
+                "finished", counts.get("finished"),
+                "cancelled", counts.get("cancelled")
+            )
+        );
     }
 
-    /**
-     * Dump cache contents.
-     * @param ds where to write information to
-     * @param debugInfo include debug info?
-     */
-    public synchronized void dataStreamContents(DataStream ds, boolean debugInfo) {
-        ds.startList();
-        for (BlsCacheEntry<? extends SearchResult> e: searches.values()) {
-            ds.startItem("job");
-            e.dataStream(ds, debugInfo);
-            ds.endItem();
-        }
-        ds.endList();
+    @Override
+    public List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).collect(Collectors.toList());
     }
 
     public static void waitUntilDone(BlsCacheEntry<?> entry) {

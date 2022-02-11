@@ -1,7 +1,16 @@
 package nl.inl.blacklab.server.search;
 
+import java.lang.reflect.Constructor;
+import java.util.concurrent.ExecutorService;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -11,13 +20,13 @@ import nl.inl.blacklab.server.index.IndexManager;
  */
 public class SearchManager {
 
-    //private static final Logger logger = LogManager.getLogger(SearchManager.class);
+    private static final Logger logger = LogManager.getLogger(SearchManager.class);
 
     /** Our config */
     private BLSConfig config;
 
     /** All running searches as well as recently run searches */
-    private BlsCache cache;
+    private SearchCache cache;
 
     /** System for determining the current user. */
     private AuthManager authSystem;
@@ -37,10 +46,8 @@ public class SearchManager {
         blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
 
         // Create the cache
-        int abandonedCountAbortTimeSec = config.getPerformance().getAbandonedCountAbortTimeSec();
-        int maxConcurrentSearches = config.getPerformance().getMaxConcurrentSearches();
-        boolean traceCache = config.getLog().getTrace().isCache();
-        cache = new BlsCache(config.getCache(), maxConcurrentSearches, abandonedCountAbortTimeSec, traceCache);
+        String cacheClass = config.getCache().getImplementation();
+        cache = createCache(cacheClass, config, blackLab.searchExecutorService());
 
         // Find the indices
         indexMan = new IndexManager(this, config);
@@ -70,7 +77,7 @@ public class SearchManager {
         indexMan = null;
     }
 
-    public BlsCache getBlackLabCache() {
+    public SearchCache getBlackLabCache() {
         return cache;
     }
 
@@ -88,6 +95,34 @@ public class SearchManager {
 
     public BlackLabEngine blackLabInstance() {
         return blackLab;
+    }
+
+    private SearchCache createCache(String implementationName, BLSConfig config, ExecutorService executorService) {
+        // If no implementation is set load the BlsCache as the default implementation
+        if (StringUtils.isBlank(implementationName))
+            implementationName = "BlsCache";
+
+        // Otherwise load a cache implementation as configured in the settings
+        String fqClassName = implementationName.contains(".")
+            ? implementationName
+            : String.format("nl.inl.blacklab.server.search.%s", implementationName);
+
+        try {
+            // Load a class via configuration settings
+            // by finding a constructor that matches the below arguments
+            // if no constructor is found, the creation of the class fails.
+            Constructor<?> declaredConstructor = Class.forName(fqClassName)
+                .getDeclaredConstructor(BLSConfig.class, ExecutorService.class);
+            SearchCache cache = (SearchCache) declaredConstructor
+                .newInstance(config, executorService);
+            logger.info("Created cache with class: {}", fqClassName);
+            return cache;
+        } catch (Exception ex) {
+            String message = String.format("Can not create cache with class: %s. Did you check your implementation" +
+                "matches the expected arguments", fqClassName);
+            logger.error(message, ex);
+            throw BlackLabRuntimeException.wrap(new ConfigurationException(message));
+        }
     }
 
 }
