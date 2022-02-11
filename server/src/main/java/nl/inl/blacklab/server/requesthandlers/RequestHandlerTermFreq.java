@@ -1,13 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.lucene.search.Query;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -20,6 +12,12 @@ import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
+import org.apache.lucene.search.Query;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -37,10 +35,10 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String propName = searchParam.getString("annotation");
-        if (propName.length() == 0)
-            propName = searchParam.getString("property");
-        Annotation annotation = cfd.annotation(propName);
+        String annotName = searchParam.getString("annotation");
+        if (annotName.length() == 0)
+            annotName = searchParam.getString("property"); // old parameter name, deprecated
+        Annotation annotation = cfd.annotation(annotName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 

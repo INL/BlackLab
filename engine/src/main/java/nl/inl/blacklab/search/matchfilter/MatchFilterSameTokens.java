@@ -1,17 +1,17 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import java.util.Arrays;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
-public class MatchFilterSameTokens extends MatchFilter {
-    private String propertyName;
+import java.util.Arrays;
 
-    private int propIndex = -1;
+public class MatchFilterSameTokens extends MatchFilter {
+    private String annotationName;
+
+    private int annotIndex = -1;
 
     private String[] groupName;
 
@@ -19,18 +19,18 @@ public class MatchFilterSameTokens extends MatchFilter {
 
     private MatchSensitivity sensitivity;
 
-    public MatchFilterSameTokens(String leftGroup, String rightGroup, String propertyName, MatchSensitivity sensitivity) {
+    public MatchFilterSameTokens(String leftGroup, String rightGroup, String annotationName, MatchSensitivity sensitivity) {
         this.groupName = new String[] { leftGroup, rightGroup };
         this.groupIndex = new int[2];
 
-        this.propertyName = propertyName;
+        this.annotationName = annotationName;
         this.sensitivity = sensitivity;
     }
 
     @Override
     public String toString() {
-        String propPart = propertyName == null ? "" : "." + propertyName;
-        return groupName[0] + propPart + " = " + groupName[1] + propPart;
+        String annotPart = annotationName == null ? "" : "." + annotationName;
+        return groupName[0] + annotPart + " = " + groupName[1] + annotPart;
     }
 
     @Override
@@ -39,8 +39,8 @@ public class MatchFilterSameTokens extends MatchFilter {
         int result = 1;
         result = prime * result + Arrays.hashCode(groupIndex);
         result = prime * result + Arrays.hashCode(groupName);
-        result = prime * result + propIndex;
-        result = prime * result + ((propertyName == null) ? 0 : propertyName.hashCode());
+        result = prime * result + annotIndex;
+        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
         result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
         return result;
     }
@@ -58,12 +58,12 @@ public class MatchFilterSameTokens extends MatchFilter {
             return false;
         if (!Arrays.equals(groupName, other.groupName))
             return false;
-        if (propIndex != other.propIndex)
+        if (annotIndex != other.annotIndex)
             return false;
-        if (propertyName == null) {
-            if (other.propertyName != null)
+        if (annotationName == null) {
+            if (other.annotationName != null)
                 return false;
-        } else if (!propertyName.equals(other.propertyName))
+        } else if (!annotationName.equals(other.annotationName))
             return false;
         return sensitivity == other.sensitivity;
     }
@@ -83,21 +83,21 @@ public class MatchFilterSameTokens extends MatchFilter {
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
             int tokenPosition = span.start();
-            if (propIndex < 0)
+            if (annotIndex < 0)
                 termId[i] = tokenPosition;
             else
-                termId[i] = fiDoc.getToken(propIndex, tokenPosition);
+                termId[i] = fiDoc.getToken(annotIndex, tokenPosition);
         }
         if (sensitivity == MatchSensitivity.SENSITIVE)
             return ConstraintValue.get(termId[0] == termId[1]);
         // (Somewhat) insensitive; let Terms determine if term ids have the same sort position or not
-        return ConstraintValue.get(fiDoc.termsEqual(propIndex, termId, sensitivity));
+        return ConstraintValue.get(fiDoc.termsEqual(annotIndex, termId, sensitivity));
     }
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        if (propertyName != null) {
-            propIndex = fiAccessor.getAnnotationNumber(propertyName);
+        if (annotationName != null) {
+            annotIndex = fiAccessor.getAnnotationNumber(annotationName);
         }
     }
 

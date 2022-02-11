@@ -20,7 +20,7 @@ namespaces:
 # (the only absolute XPath; the rest is relative)
 documentPath: //folia:FoLiA
 
-# Annotated, CQL-searchable fields (also called "complex fields").
+# Annotated, CQL-searchable fields.
 # We usually have just one, named "contents".
 annotatedFields:
 
@@ -44,7 +44,6 @@ annotatedFields:
     tokenPositionIdPath: "@xml:id"
 
     # What annotation can each word have? How do we index them?
-    # (annotations are also called "(word) properties" in BlackLab)
     # (valuePaths relative to word path)
     # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
     #       and with forEachPath you could run in to an unknown new annotation mid-way through.

@@ -17,28 +17,23 @@ package nl.inl.blacklab.search.lucene;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexReaderContext;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.Spans;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
+import org.apache.lucene.index.*;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
+import org.apache.lucene.search.spans.Spans;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -214,8 +209,8 @@ public class BLSpanTermQuery extends BLSpanQuery {
             // Does our annotation have a forward index?
             String[] comp = AnnotatedFieldNameUtil.getNameComponents(query.getTerm().field());
             String fieldName = comp[0];
-            String propertyName = comp[1];
-            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(propertyName).hasForwardIndex();
+            String annotationName = comp[1];
+            hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(annotationName).hasForwardIndex();
             hasForwardIndexDetermined = true;
         }
         if (!hasForwardIndex)

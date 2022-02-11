@@ -6,23 +6,23 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
-public class MatchFilterTokenProperty extends MatchFilter {
+public class MatchFilterTokenAnnotation extends MatchFilter {
     private String groupName;
 
     private int groupIndex;
 
-    private String propertyName;
+    private String annotationName;
 
-    private int propIndex = -1;
+    private int annotationIndex = -1;
 
-    public MatchFilterTokenProperty(String label, String propertyName) {
+    public MatchFilterTokenAnnotation(String label, String annotationName) {
         this.groupName = label;
-        this.propertyName = propertyName;
+        this.annotationName = annotationName;
     }
 
     @Override
     public String toString() {
-        return groupName + (propertyName == null ? "" : "." + propertyName);
+        return groupName + (annotationName == null ? "" : "." + annotationName);
     }
 
     @Override
@@ -30,7 +30,7 @@ public class MatchFilterTokenProperty extends MatchFilter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((groupName == null) ? 0 : groupName.hashCode());
-        result = prime * result + ((propertyName == null) ? 0 : propertyName.hashCode());
+        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
         return result;
     }
 
@@ -42,16 +42,16 @@ public class MatchFilterTokenProperty extends MatchFilter {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        MatchFilterTokenProperty other = (MatchFilterTokenProperty) obj;
+        MatchFilterTokenAnnotation other = (MatchFilterTokenAnnotation) obj;
         if (groupName == null) {
             if (other.groupName != null)
                 return false;
         } else if (!groupName.equals(other.groupName))
             return false;
-        if (propertyName == null) {
-            if (other.propertyName != null)
+        if (annotationName == null) {
+            if (other.annotationName != null)
                 return false;
-        } else if (!propertyName.equals(other.propertyName))
+        } else if (!annotationName.equals(other.annotationName))
             return false;
         return true;
     }
@@ -67,17 +67,17 @@ public class MatchFilterTokenProperty extends MatchFilter {
         if (span == null)
             return ConstraintValue.undefined();
         int tokenPosition = span.start();
-        if (propIndex < 0)
+        if (annotationIndex < 0)
             return ConstraintValue.get(tokenPosition);
-        int termId = fiDoc.getToken(propIndex, tokenPosition);
-        String term = fiDoc.getTermString(propIndex, termId);
+        int termId = fiDoc.getToken(annotationIndex, tokenPosition);
+        String term = fiDoc.getTermString(annotationIndex, termId);
         return ConstraintValue.get(term);
     }
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        if (propertyName != null)
-            propIndex = fiAccessor.getAnnotationNumber(propertyName);
+        if (annotationName != null)
+            annotationIndex = fiAccessor.getAnnotationNumber(annotationName);
     }
 
     @Override
@@ -86,19 +86,19 @@ public class MatchFilterTokenProperty extends MatchFilter {
     }
 
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        return new MatchFilterTokenPropertyEqualsString(groupName, propertyName, str, sensitivity);
+        return new MatchFilterTokenPropertyEqualsString(groupName, annotationName, str, sensitivity);
     }
 
     public MatchFilter matchOtherTokenSameProperty(String otherGroupName, MatchSensitivity sensitivity) {
-        return new MatchFilterSameTokens(groupName, otherGroupName, propertyName, sensitivity);
+        return new MatchFilterSameTokens(groupName, otherGroupName, annotationName, sensitivity);
     }
 
-    public boolean hasProperty() {
-        return propertyName != null;
+    public boolean hasAnnotation() {
+        return annotationName != null;
     }
 
-    public String getPropertyName() {
-        return propertyName;
+    public String getAnnotationName() {
+        return annotationName;
     }
 
     public String getGroupName() {

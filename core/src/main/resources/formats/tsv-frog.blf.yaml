@@ -20,7 +20,7 @@ fileTypeOptions:
   # Does the file have column names in the first line?
   columnNames: false
 
-# Annotated, CQL-searchable fields (also called "complex fields").
+# Annotated, CQL-searchable fields.
 # We usually have just one, named "contents".
 annotatedFields:
   contents:

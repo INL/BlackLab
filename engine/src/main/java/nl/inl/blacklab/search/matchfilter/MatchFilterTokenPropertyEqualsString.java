@@ -1,22 +1,21 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
     private String groupName;
 
     private int groupIndex;
 
-    private String propertyName;
+    private String annotationName;
 
-    private int propIndex = -1;
+    private int annotIndex = -1;
 
     private String compareToTermString;
 
@@ -26,17 +25,17 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
 
     private MatchSensitivity sensitivity;
 
-    public MatchFilterTokenPropertyEqualsString(String label, String propertyName, String termString,
-            MatchSensitivity sensitivity) {
+    public MatchFilterTokenPropertyEqualsString(String label, String annotationName, String termString,
+                                                MatchSensitivity sensitivity) {
         this.groupName = label;
-        this.propertyName = propertyName;
+        this.annotationName = annotationName;
         this.compareToTermString = termString;
         this.sensitivity = sensitivity;
     }
 
     @Override
     public String toString() {
-        return groupName + (propertyName == null ? "" : "." + propertyName) + " = " + compareToTermString;
+        return groupName + (annotationName == null ? "" : "." + annotationName) + " = " + compareToTermString;
     }
 
     @Override
@@ -44,7 +43,7 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((groupName == null) ? 0 : groupName.hashCode());
-        result = prime * result + ((propertyName == null) ? 0 : propertyName.hashCode());
+        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
         result = prime * result + ((compareToTermString == null) ? 0 : compareToTermString.hashCode());
         return result;
     }
@@ -63,10 +62,10 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
                 return false;
         } else if (!groupName.equals(other.groupName))
             return false;
-        if (propertyName == null) {
-            if (other.propertyName != null)
+        if (annotationName == null) {
+            if (other.annotationName != null)
                 return false;
-        } else if (!propertyName.equals(other.propertyName))
+        } else if (!annotationName.equals(other.annotationName))
             return false;
         if (compareToTermString == null) {
             if (other.compareToTermString != null)
@@ -87,9 +86,9 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
         if (span == null)
             return ConstraintValue.undefined();
         int tokenPosition = span.start();
-        if (propIndex < 0)
+        if (annotIndex < 0)
             return ConstraintValue.get(tokenPosition);
-        int leftTermId = fiDoc.getToken(propIndex, tokenPosition);
+        int leftTermId = fiDoc.getToken(annotIndex, tokenPosition);
         if (compareToTermId >= 0)
             return ConstraintValue.get(leftTermId == compareToTermId); // just a single term to compare to
         return ConstraintValue.get(compareToTermIds.contains(leftTermId)); // multiple terms, use set.contains()
@@ -97,11 +96,11 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        if (propertyName != null) {
-            propIndex = fiAccessor.getAnnotationNumber(propertyName);
+        if (annotationName != null) {
+            annotIndex = fiAccessor.getAnnotationNumber(annotationName);
             compareToTermIds = new IntHashSet();
             compareToTermId = -1;
-            fiAccessor.getTermNumbers(compareToTermIds, propIndex, compareToTermString, sensitivity);
+            fiAccessor.getTermNumbers(compareToTermIds, annotIndex, compareToTermString, sensitivity);
             if (compareToTermIds.size() == 1) {
                 compareToTermId = compareToTermIds.intIterator().next();
             }

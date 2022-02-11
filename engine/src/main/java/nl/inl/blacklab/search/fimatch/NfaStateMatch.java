@@ -57,7 +57,7 @@ public class NfaStateMatch extends NfaState {
     }
 
     @Override
-    void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         // NOP
     }
 

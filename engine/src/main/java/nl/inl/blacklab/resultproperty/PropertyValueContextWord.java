@@ -42,8 +42,8 @@ public class PropertyValueContextWord extends PropertyValueContext {
 
     public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String info) {
         String[] parts = PropertySerializeUtil.splitParts(info);
-        String propName = parts[0];
-        Annotation annotation = field.annotation(propName);
+        String annotationName = parts[0];
+        Annotation annotation = field.annotation(annotationName);
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         String term = parts[2];
         Terms termsObj = index.annotationForwardIndex(annotation).terms();

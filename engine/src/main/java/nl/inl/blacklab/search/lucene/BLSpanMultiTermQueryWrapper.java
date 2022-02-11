@@ -1,21 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Arrays;
-
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.AutomatonQuery;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.MultiTermQuery;
-import org.apache.lucene.search.PrefixQuery;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.RegexpQuery;
-import org.apache.lucene.search.WildcardQuery;
-import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
-import org.apache.lucene.search.spans.SpanQuery;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -23,6 +7,15 @@ import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.SpanMultiTermQueryWrapper;
+import org.apache.lucene.search.spans.SpanQuery;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 
 /**
  * Subclasses SpanMultiTermQueryWrapper so it correctly produces BLSpanOrQuery
@@ -67,7 +60,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             if (result instanceof BLSpanOrQuery) {
                 BLSpanOrQuery or = (BLSpanOrQuery) result;
                 or.setHitsAreFixedLength(1);
-                or.setClausesAreSimpleTermsInSameProperty(true);
+                or.setClausesAreSimpleTermsInSameAnnotation(true);
                 or.setField(getRealField());
             } else {
                 throw new BlackLabRuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +

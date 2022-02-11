@@ -34,8 +34,8 @@ public class TextPatternAnnotation extends TextPattern {
 
     private String annotationName;
 
-    public TextPatternAnnotation(String propertyName, TextPattern input) {
-        this.annotationName = propertyName == null ? "" : propertyName;
+    public TextPatternAnnotation(String annotationName, TextPattern input) {
+        this.annotationName = annotationName == null ? "" : annotationName;
         this.input = input;
     }
 

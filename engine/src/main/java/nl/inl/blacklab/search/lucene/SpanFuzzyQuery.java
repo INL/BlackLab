@@ -18,19 +18,13 @@
  */
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.List;
-
+import nl.inl.blacklab.search.results.QueryInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.FuzzyQuery;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.*;
 
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.io.IOException;
+import java.util.List;
 
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
@@ -97,7 +91,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
             }
             BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
             query.setHitsAreFixedLength(1);
-            query.setClausesAreSimpleTermsInSameProperty(true);
+            query.setClausesAreSimpleTermsInSameAnnotation(true);
             return query;
         }
 

@@ -99,8 +99,8 @@ public abstract class DataStream {
 
     private final boolean prettyPrintPref;
 
-    /** Should contextList omit empty properties if possible? */
-    protected boolean omitEmptyProperties = false;
+    /** Should contextList omit empty annotations if possible? */
+    protected boolean omitEmptyAnnotations = false;
 
     public DataStream(PrintWriter out, boolean prettyPrint) {
         this.out = out;
@@ -404,8 +404,8 @@ public abstract class DataStream {
         out.println("");
     }
 
-    public void setOmitEmptyProperties(boolean omitEmptyProperties) {
-        this.omitEmptyProperties = omitEmptyProperties;
+    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
+        this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
 }

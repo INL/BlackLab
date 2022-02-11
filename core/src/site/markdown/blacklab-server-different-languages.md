@@ -44,7 +44,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 		    }
 		}
        
-		/** Context of the hit is passed in arrays, per property
+		/** Context of the hit is passed in arrays, per annotation
 		 * (word/lemma/PoS). Right now we only want to display the 
 		 * words. This is how we join the word array to a string.
 		 * @param context context structure containing word, lemma, PoS.
@@ -78,7 +78,7 @@ Below are examples of using BlackLab Server to fetch hits for a simple Corpus Qu
 				// Add the document title and the hit information
 				JsonNode doc = (JsonNode)docs.get((String)hit.get("docPid"));
               
-				// Context of the hit is passed in arrays, per property
+				// Context of the hit is passed in arrays, per annotation
 				// (word/lemma/PoS). Right now we only want to display the 
 				// words. This is how we join the word array to a string.
 				String left = words((JsonNode)hit.get("left"));
@@ -129,7 +129,7 @@ Javascript with jQuery:
 	// Show an array of hits in a table
 	function showHits(hits, docs) {
        
-		// Context of the hit is passed in arrays, per property
+		// Context of the hit is passed in arrays, per annotation
 		// (word/lemma/PoS). Right now we only want to display the 
 		// words. This is how we join the word array to a string.
 		function words(context) {
@@ -297,7 +297,7 @@ Javascript with jQuery:
 	def showHits(hits, docs)
 		""" Show an array of hits in a table """
        
-		# Context of the hit is passed in arrays, per property
+		# Context of the hit is passed in arrays, per annotation
 		# (word/lemma/PoS). Right now we only want to display the 
 		# words. This is how we join the word array to a string.
 		def words(context)
@@ -347,7 +347,7 @@ Javascript with jQuery:
     function showHits($hits, $docs) {
         print "<table><tr><th>Title</th><th>Keyword in context</th></tr>\n";
     
-        // Context of the hit is passed in arrays, per property
+        // Context of the hit is passed in arrays, per annotation
         // (word/lemma/PoS). Right now we only want to display the 
         // words. This is how we join the word array to a string.
         function words($context) {
@@ -419,7 +419,7 @@ Javascript with jQuery:
             # Get the document metadata so we can print the title.
             my $doc = $docs->{$hit->{'docPid'}};
           
-            # Context of the hit is passed in arrays, per property
+            # Context of the hit is passed in arrays, per annotation
             # (word/lemma/PoS). Right now we only want to display the 
             # words. Join the arrays into strings.
             my $left  = join(" ", @{$hit->{'left'}{'word'}});

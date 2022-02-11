@@ -17,37 +17,22 @@ package nl.inl.blacklab.search.lucene;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.DisiPriorityQueue;
-import org.apache.lucene.search.DisiWrapper;
-import org.apache.lucene.search.DisjunctionDISIApproximation;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.util.PriorityQueue;
-
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermContext;
+import org.apache.lucene.search.*;
+import org.apache.lucene.search.spans.*;
+import org.apache.lucene.util.PriorityQueue;
+
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Matches the union of its clauses.
@@ -67,7 +52,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     private int fixedHitLength = -1;
 
     /** Are all our clauses simple term queries? Yes if true, not sure if false. */
-    private boolean clausesAreSimpleTermsInSameProperty = false;
+    private boolean clausesAreSimpleTermsInSameAnnotation = false;
 
     /**
      * Construct a SpanOrQuery merging the provided clauses. All clauses must have
@@ -105,7 +90,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
         BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
         if (allSimpleTerms && allInSameField)
-            out.setClausesAreSimpleTermsInSameProperty(true);
+            out.setClausesAreSimpleTermsInSameAnnotation(true);
         return out;
     }
 
@@ -201,7 +186,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 return rewrittenCl.get(0);
             BLSpanOrQuery result = new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
             result.setHitsAreFixedLength(fixedHitLength);
-            result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+            result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
             result.setField(getRealField());
             return result;
         }
@@ -238,7 +223,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
         BLSpanOrQuery result = new BLSpanOrQuery(newCl.toArray(new BLSpanQuery[0]));
         result.setHitsAreFixedLength(fixedHitLength);
-        result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+        result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
         return result;
     }
 
@@ -676,20 +661,20 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         boolean canBeTokenState = false;
         if (hitsAllSameLength() && hitsLengthMax() == 1) {
             canBeTokenState = true;
-            if (terms == null && clausesAreSimpleTermsInSameProperty) {
+            if (terms == null && clausesAreSimpleTermsInSameAnnotation) {
                 // We know all our clauses are simple terms, and we
                 // don't care about which terms at this point. Just return true.
                 return true;
             }
             String luceneField = null;
             for (SpanQuery cl : getClauses()) {
-                if (!clausesAreSimpleTermsInSameProperty && !(cl instanceof BLSpanTermQuery)) {
+                if (!clausesAreSimpleTermsInSameAnnotation && !(cl instanceof BLSpanTermQuery)) {
                     // Not all simple term queries. Can't rewrite to token state.
                     canBeTokenState = false;
                     break;
                 }
                 BLSpanTermQuery blcl = (BLSpanTermQuery) cl;
-                if (!clausesAreSimpleTermsInSameProperty) {
+                if (!clausesAreSimpleTermsInSameAnnotation) {
                     // We don't know if all our clauses are in the same annotation. Check.
                     if (luceneField == null) {
                         luceneField = blcl.getRealField();
@@ -704,13 +689,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             }
         }
         if (canBeTokenState)
-            clausesAreSimpleTermsInSameProperty = true; // save this result for next time
+            clausesAreSimpleTermsInSameAnnotation = true; // save this result for next time
         return canBeTokenState;
     }
 
     @Override
     public boolean canMakeNfa() {
-        if (clausesAreSimpleTermsInSameProperty)
+        if (clausesAreSimpleTermsInSameAnnotation)
             return true;
         for (SpanQuery cl : getClauses()) {
             BLSpanQuery clause = (BLSpanQuery) cl;
@@ -753,7 +738,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         SpanQuery[] clauses = getClauses();
-        if (clausesAreSimpleTermsInSameProperty) {
+        if (clausesAreSimpleTermsInSameAnnotation) {
             return clauses.length * BLSpanTermQuery.FIXED_FORWARD_MATCHING_COST;
         }
         boolean producesSingleState = getNfaTokenStateTerms(null);
@@ -779,8 +764,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         fixedHitLength = i;
     }
 
-    public void setClausesAreSimpleTermsInSameProperty(boolean b) {
-        clausesAreSimpleTermsInSameProperty = b;
+    public void setClausesAreSimpleTermsInSameAnnotation(boolean b) {
+        clausesAreSimpleTermsInSameAnnotation = b;
     }
 
 }
