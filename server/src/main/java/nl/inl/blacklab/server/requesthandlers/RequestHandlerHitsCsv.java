@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.*;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -20,7 +21,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.BlsCacheEntry;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
@@ -74,7 +74,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        BlsCacheEntry<?> cacheEntry = null;
+        SearchCacheEntry<?> cacheEntry = null;
         Hits hits = null;
         HitGroups groups = null;
         DocResults subcorpus = searchParam.subcorpus().execute();
@@ -107,7 +107,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
                 }
             } else {
                 // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                cacheEntry = (BlsCacheEntry<Hits>)searchParam.hitsSample().executeAsync();
+                cacheEntry = searchParam.hitsSample().executeAsync();
                 hits = (Hits) cacheEntry.get();
             }
         } catch (InterruptedException | ExecutionException e) {

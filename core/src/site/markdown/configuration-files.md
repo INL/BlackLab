@@ -196,6 +196,13 @@ cache:
     # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
     # "cache cleanup goal".
     maxNumberOfJobs: 100
+    
+    # The cache implementation to use.
+    # (FQDN or class name (in package nl.inl.blacklab.server.search) of
+    # SearchCache subclass to instantiate)
+    # The default is BlsCache. An alternative is ResultsCache, which is more
+    # efficient if you have a large number of small, short-lived indexes.
+    implementation: BlsCache
 
 
 

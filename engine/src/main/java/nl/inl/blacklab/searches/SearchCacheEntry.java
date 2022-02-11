@@ -49,4 +49,13 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
     public String getReason() {
         return "";
     }
+
+    public long timeUserWaitedMs() {
+        return -1;
+    }
+
+    public boolean threwException() {
+        return false;
+    }
+
 }

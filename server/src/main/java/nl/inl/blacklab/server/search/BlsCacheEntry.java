@@ -2,12 +2,16 @@ package nl.inl.blacklab.server.search;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.ThreadContext;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -15,8 +19,6 @@ import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
-import nl.inl.blacklab.server.datastream.DataStream;
-import org.apache.logging.log4j.ThreadContext;
 
 public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
@@ -106,8 +108,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /**
      * Start performing the task.
-     *
-     * @param block if true, blocks until the result is available
      */
     @Override
     public void start() {
@@ -123,7 +123,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** Perform the requested search.
      *
-     * {@link #start(boolean)} submits a Runnable to the search executor service that calls this.
+     * {@link #start()} submits a Runnable to the search executor service that calls this.
      */
     public void executeSearch() {
         try {
@@ -375,55 +375,43 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return "running";
     }
 
-    public void dataStream(DataStream ds, boolean debugInfo) {
-        boolean isCount = search instanceof SearchCount;
-        ds.startMap()
-                //.entry("id", id)
-                .entry("class", search.getClass().getSimpleName())
-                .entry("jobDesc", search.toString())
-                .startEntry("stats")
-                .startMap()
-                .entry("type", isCount ? "count" : "search")
-                .entry("status", status());
-                //.entry("cancelled", isCancelled());
-                //.entry("futureStatus", futureStatus())
+    public Map<String, Object> getInfo(boolean includeDebugInfo) {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("type", search instanceof SearchCount ? "count" : "search");
+        stats.put("status", status());
         if (exceptionThrown != null) {
-             ds.entry("exceptionThrown", exceptionThrown.getClass().getSimpleName());
+             stats.put("exceptionThrown", exceptionThrown.getClass().getSimpleName());
         }
         if (!StringUtils.isEmpty(reason))
-            ds.entry("cancelReason", reason);
-        ds.entry("numberOfStoredHits", numberOfStoredHits())
-                .entry("userWaitTime", timeUserWaitedMs() / 1000.0)
-                .entry("notAccessedFor", timeSinceLastAccessMs() / 1000.0)
-                //.entry("createdBy", shortUserId())
-                //.entry("refsToJob", refsToJob - 1) // (- 1 because the cache always references it)
-                //.entry("waitingForJobs", waitingFor.size())
-                //.entry("url", jobDesc.getUrl())
-                .endMap()
-                .endEntry();
-        if (debugInfo) {
-            ds.startEntry("debugInfo");
-            dataStreamDebugInfo(ds, this);
-            ds.endEntry();
+            stats.put("cancelReason", reason);
+        stats.put("numberOfStoredHits", numberOfStoredHits());
+        stats.put("userWaitTime", timeUserWaitedMs() / 1000.0);
+        stats.put("notAccessedFor", timeSinceLastAccessMs() / 1000.0);
+
+        Map<String, Object> info = new HashMap<>();
+        info.put("class", search.getClass().getSimpleName());
+        info.put("jobDesc", search.toString());
+        info.put("stats", stats);
+        if (includeDebugInfo) {
+            Map<String, Object> debugInfo = new HashMap<>();
+            debugInfo.put("timeSinceCreation", timeSinceCreationMs());
+            debugInfo.put("timeSinceFinished", timeSinceFinishedMs());
+            debugInfo.put("timeSinceLastAccess", timeSinceLastAccessMs());
+            debugInfo.put("searchCancelled", isCancelled());
+            if (exceptionThrown != null) {
+                PrintWriter st = new PrintWriter(new StringWriter());
+                exceptionThrown.printStackTrace(st);
+                Map<String, Object> thrownException = Map.of(
+                        "class", exceptionThrown.getClass().getName(),
+                        "message", exceptionThrown.getMessage(),
+                        "stackTrace", st.toString()
+                );
+                debugInfo.put("thrownException", thrownException);
+            }
+            info.put("debugInfo", debugInfo);
         }
-//        dataStreamSubclassEntries(ds);
-//        if (inputJob != null) {
-//            ds.startEntry("inputJob").startMap();
-//            ds.entry("type", inputJob.getClass().getName());
-//            Hits hits = null;
-//            if (inputJob instanceof JobWithHits) {
-//                hits = ((JobWithHits) inputJob).getHits();
-//            }
-//            ds.entry("hasHitsObject", hits != null);
-//            if (hits != null) {
-//                ResultsStats hitsStats = hits.hitsStats();
-//                ds.entry("hitsObjId", hits.resultsObjId())
-//                        .entry("retrievedSoFar", hitsStats.processedSoFar())
-//                        .entry("doneFetchingHits", hitsStats.done());
-//            }
-//            ds.endMap().endEntry();
-//        }
-        ds.endMap();
+
+        return Collections.unmodifiableMap(info);
     }
 
     public String futureStatus() {
@@ -442,51 +430,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             return "done";
         }
         return "running";
-    }
-
-    private static void dataStreamDebugInfo(DataStream ds, BlsCacheEntry<?> entry) {
-        ds.startMap();
-        // More information about job state
-        ds.entry("timeSinceCreation", entry.timeSinceCreationMs())
-                .entry("timeSinceFinished", entry.timeSinceFinishedMs())
-                .entry("timeSinceLastAccess", entry.timeSinceLastAccessMs())
-                .entry("searchCancelled", entry.isCancelled())
-                .startEntry("thrownException")
-                .startMap();
-        // Information about thrown exception, if any
-        Throwable exceptionThrown = entry.exceptionThrown();
-        if (exceptionThrown != null) {
-            PrintWriter st = new PrintWriter(new StringWriter());
-            exceptionThrown.printStackTrace(st);
-            ds
-                    .entry("class", exceptionThrown.getClass().getName())
-                    .entry("message", exceptionThrown.getMessage())
-                    .entry("stackTrace", st.toString());
-        }
-        ds.endMap()
-                .endEntry()
-                .startEntry("searchThread")
-                .startMap();
-        // Information about thread object, if any
-//        Thread thread = entry.thread();
-//        if (thread != null) {
-//            StackTraceElement[] stackTrace = thread.getStackTrace();
-//            StringBuilder stackTraceStr = new StringBuilder();
-//            for (StackTraceElement element : stackTrace) {
-//                stackTraceStr.append(element.toString()).append("\n");
-//            }
-//            ds
-//                    .entry("name", thread.getName())
-//                    .entry("osPriority", thread.getPriority())
-//                    .entry("isAlive", thread.isAlive())
-//                    .entry("isDaemon", thread.isDaemon())
-//                    .entry("isInterrupted", thread.isInterrupted())
-//                    .entry("state", thread.getState().toString())
-//                    .entry("currentlyExecuting", stackTraceStr.toString());
-//        }
-        ds.endMap()
-                .endEntry()
-                .endMap();
     }
 
     @Override
