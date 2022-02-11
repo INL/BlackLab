@@ -15,23 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.requestlogging.LogLevel;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.fimatch.NfaTwoWay;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
@@ -389,11 +387,6 @@ public abstract class BLSpanQuery extends SpanQuery {
     
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
-    }
-    
-    public void log(LogLevel level, String msg) {
-        if (queryInfo != null)
-            queryInfo.log(level, msg);
     }
 
 }

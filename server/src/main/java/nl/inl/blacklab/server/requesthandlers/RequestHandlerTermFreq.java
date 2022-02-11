@@ -50,7 +50,6 @@ public class RequestHandlerTermFreq extends RequestHandler {
         Set<String> terms = searchParam.getString("terms") != null ? new HashSet<>(Arrays.asList(searchParam.getString("terms").trim().split("\\s*,\\s*"))) : null;
          
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
-        searchLogger.setResultsFound(tfl.size());
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
             int first = searchParam.getInteger("first");

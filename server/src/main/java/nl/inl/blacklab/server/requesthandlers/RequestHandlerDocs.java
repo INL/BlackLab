@@ -6,7 +6,6 @@ import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -27,6 +26,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -194,8 +194,6 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.endEntry();
 
         ds.endMap().endEntry();
-
-        searchLogger.setResultsFound(docsStats.processedSoFar());
 
         // The hits and document info
         ds.startEntry("docs").startList();

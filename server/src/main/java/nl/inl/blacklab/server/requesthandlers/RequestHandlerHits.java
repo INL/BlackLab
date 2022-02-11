@@ -148,9 +148,6 @@ public class RequestHandlerHits extends RequestHandler {
             totalTokens = perDocResults.subcorpusSize().getTokens();
         }
 
-        searchLogger.setResultsFound(hitsCount.processedSoFar());
-
-
         // Find KWICs/concordances from forward index or original XML
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
@@ -315,7 +312,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         // All specifiers merged!
         // Construct the query that will get us our hits.
-        SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache(), searchLogger);
+        SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache());
         QueryInfo queryInfo = QueryInfo.create(blIndex(), blIndex().mainAnnotatedField());
         BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
         SearchHits hits = search.find(query, searchParam.getSearchSettings());

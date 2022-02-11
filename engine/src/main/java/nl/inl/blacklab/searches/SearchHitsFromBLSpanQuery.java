@@ -33,7 +33,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      */
     @Override
     public Hits executeInternal() throws InvalidQuery {
-        return queryInfo().index().find(spanQuery, searchSettings, queryInfo().searchLogger());
+        return queryInfo().index().find(spanQuery, searchSettings);
     }
 
     @Override

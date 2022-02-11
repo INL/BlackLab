@@ -289,9 +289,6 @@ authentication:
 # Settings related to logging
 log:
 
-    # Where to log detailed information about requests and cache stats
-    sqliteDatabase: /home/jan/blacklab/sqlite_log.db
-
     # What subjects to log messages for
     trace:
         # BL trace settings

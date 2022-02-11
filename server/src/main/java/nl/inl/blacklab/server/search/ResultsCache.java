@@ -29,7 +29,6 @@ import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCacheEntryFromFuture;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.logging.LogDatabase;
 
 public class ResultsCache implements SearchCache {
     private static final Logger logger = LogManager.getLogger(ResultsCache.class);
@@ -91,7 +90,7 @@ public class ResultsCache implements SearchCache {
         }
     }
 
-    public ResultsCache(BLSConfig config, ExecutorService threadPool, LogDatabase logDatabase)  {
+    public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
         this.threadPool = threadPool;
 
         CacheLoader<Search<? extends SearchResult>, SearchResult> cacheLoader = new CacheLoader<Search<? extends SearchResult>, SearchResult>() {
