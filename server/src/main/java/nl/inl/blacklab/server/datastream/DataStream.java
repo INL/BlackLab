@@ -286,8 +286,6 @@ public abstract class DataStream {
 
     public abstract DataStream value(String value);
 
-    //public DataStream value(Object value) {         return value(value == null ? "" : value.toString()); }
-
     public abstract DataStream value(long value);
 
     public abstract DataStream value(double value);

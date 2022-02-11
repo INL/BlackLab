@@ -216,7 +216,7 @@ public class HitsFromQueryParallel extends Hits {
          * Collect all hits from our spans object.
          * Updates the global counters, shared with other SpansReader objects operating on the same result set.
          * Hits are periodically copied into the {@link SpansReader#globalResults} list when a large enough batch has been gathered.
-         * <p>
+         *
          * Updating the maximums while this is running is allowed.
          */
         @Override
