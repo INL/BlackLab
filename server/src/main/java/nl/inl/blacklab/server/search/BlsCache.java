@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -24,6 +25,7 @@ import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.MemoryUtil;
@@ -110,12 +112,11 @@ public class BlsCache implements SearchCache {
 
     private String previousCacheStatsMessage = "";
 
-    @SuppressWarnings("deprecation")
-    public BlsCache(BLSConfigCache config, int maxConcurrentSearches, int abandonedCountAbortTimeSec, boolean trace) {
-        this.config = config;
-        this.maxConcurrentSearches = maxConcurrentSearches;
-        this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
-        this.trace = trace;
+    public BlsCache(BLSConfig blsConfig, ExecutorService executorService) {
+        this.config = blsConfig.getCache();
+        this.maxConcurrentSearches = blsConfig.getPerformance().getMaxConcurrentSearches();
+        this.abandonedCountAbortTimeSec = blsConfig.getPerformance().getAbandonedCountAbortTimeSec();
+        this.trace = blsConfig.getLog().getTrace().isCache();
         cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
 
         if (!cacheDisabled) {
