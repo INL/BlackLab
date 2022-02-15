@@ -407,6 +407,8 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
                         "stackTrace", st.toString()
                 );
                 debugInfo.put("thrownException", thrownException);
+            } else {
+                debugInfo.put("thrownException", Collections.emptyMap());
             }
             info.put("debugInfo", debugInfo);
         }

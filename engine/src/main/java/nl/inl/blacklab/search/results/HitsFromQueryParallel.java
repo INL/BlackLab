@@ -501,6 +501,7 @@ public class HitsFromQueryParallel extends Hits {
                     }
                 } catch (InterruptedException e) {
                     // Interrupt our worker threads as well
+                    logger.debug("HFQP.ensureResultsRead: interrupted, stopping worker threads");
                     pendingResults.forEach(f -> f.cancel(true));
                     throw e;
                 }
@@ -513,11 +514,15 @@ public class HitsFromQueryParallel extends Hits {
                 }
                 this.allSourceSpansFullyRead = spansReaders.isEmpty();
             } catch (Exception e) {
+                Throwable cause = e.getCause();
                 if (!(e instanceof InterruptedException))
                     e.printStackTrace();
-                throw e.getCause(); // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
+                else
+                    logger.debug("HFQP.ensureResultsRead: caught InterruptedException, cause = " + (cause == null ? "null" : cause.getMessage()));
+                throw cause == null ? e : cause; // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
             }
         } catch (InterruptedException e) {
+            logger.debug("HFQP.ensureResultsRead: caught InterruptedException, throw InterruptedSearch");
             throw new InterruptedSearch(e);
         } catch (Throwable e) {
             throw BlackLabRuntimeException.wrap(e);
