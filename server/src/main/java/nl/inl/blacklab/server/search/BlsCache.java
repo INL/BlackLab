@@ -447,19 +447,19 @@ public class BlsCache implements SearchCache {
         //------------------
         // STEP 2: abort any long-running counts that no client has asked about for a while.
         for (int i = 0; i < searches.size(); i++) {
-            BlsCacheEntry<?> search = searches.get(i);
-            if (search.isRunning()) {
+            BlsCacheEntry<?> cacheEntry = searches.get(i);
+            if (cacheEntry.isRunning()) {
                 // Running search. Run or abort?
-                boolean isCount = search.search() instanceof SearchCount;
-                if (isCount && search.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
+                boolean isCount = cacheEntry.search() instanceof SearchCount;
+                if (isCount && cacheEntry.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
                     // Abandoned counts are removed right away, because we do this quite quickly (e.g. 30s)
                     // and don't want to penalize users if they decide to come back to this search.
-                    remove(search.search());
-                    traceInfo("-- ABORT (abandoned count): {}", search);
+                    remove(cacheEntry.search());
+                    traceInfo("-- ABORT (abandoned count): {}", cacheEntry);
                     String maxTime = BlsUtils.describeIntervalSec(abandonedCountAbortTimeSec);
-                    search.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
+                    cacheEntry.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
                             "This is done to ease server load. If you need the results of this count, please try your search again.");
-                    search.cancel(true);
+                    cacheEntry.cancel(true);
                     searches.remove(i);
                     i--; // don't skip an element
                 }

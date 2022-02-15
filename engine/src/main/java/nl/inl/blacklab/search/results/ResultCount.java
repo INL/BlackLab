@@ -1,10 +1,9 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
-
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
+
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 
 public class ResultCount extends ResultsStats implements SearchResult {
 
@@ -18,7 +17,11 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     private boolean wasInterrupted = false;
 
+    /** Type of results we're counting, to report in toString() */
+    private final CountType type;
+
     public ResultCount(Results<?, ?> count, CountType type) {
+        this.type = type;
         switch (type) {
         case RESULTS:
             this.count = count.resultsStats();
@@ -148,7 +151,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     @Override
     public String toString() {
-        return "ResultCount [count=" + count + ", wasInterrupted=" + wasInterrupted + "]";
+        return "ResultCount [count=" + count + ", type=" + type + ", wasInterrupted=" + wasInterrupted + "]";
     }
 
     /**

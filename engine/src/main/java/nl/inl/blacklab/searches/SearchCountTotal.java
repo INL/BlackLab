@@ -52,7 +52,7 @@ public class SearchCountTotal<T extends Results<?, ?>> extends SearchCount {
 
     @Override
     public String toString() {
-        return toString("count", source);
+        return toString("counttotal", source);
     }
 
 }
