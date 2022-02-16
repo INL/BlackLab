@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that produces DocResults. */
-public abstract class SearchDocs extends SearchResults<DocResults> {
+public abstract class SearchDocs extends SearchForResults<DocResults> {
 
     public SearchDocs(QueryInfo queryInfo) {
         super(queryInfo);

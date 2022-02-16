@@ -1,5 +1,6 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import nl.inl.blacklab.search.results.SearchResult;
@@ -56,6 +57,11 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     public boolean threwException() {
         return false;
+    }
+
+    /** If possible, peek at the result even if it's not yet finished (used for running counts). */
+    public R peek() throws ExecutionException {
+        return null;
     }
 
 }

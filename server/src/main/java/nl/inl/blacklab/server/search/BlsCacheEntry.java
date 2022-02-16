@@ -451,4 +451,17 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return reason;
     }
 
+    /**
+     * Peek at the result even if it's not yet finished.
+     *
+     * Used for running counts.
+     *
+     * @return the result so far, or null if not supported for this operation
+     */
+    @Override
+    public T peek() throws ExecutionException {
+        if (isCancelled())
+            throw new ExecutionException(exceptionThrown);
+        return this.search.peek();
+    }
 }

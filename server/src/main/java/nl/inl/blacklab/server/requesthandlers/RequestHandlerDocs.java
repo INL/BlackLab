@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -44,7 +44,7 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     SearchCacheEntry<?> search = null;
-    SearchCacheEntry<ResultCount> originalHitsSearch;
+    SearchCacheEntry<ResultsStats> originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
@@ -169,13 +169,13 @@ public class RequestHandlerDocs extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-        ResultCount totalHits;
+        ResultsStats totalHits, docsStats;
         try {
-            totalHits = originalHitsSearch == null ? null : originalHitsSearch.get();
-        } catch (InterruptedException | ExecutionException e) {
+            totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
+            docsStats = searchParam.docsCount().executeAsync().peek();
+        } catch (ExecutionException e) {
             throw RequestHandler.translateSearchException(e);
         }
-        ResultCount docsStats = searchParam.docsCount().execute();
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)

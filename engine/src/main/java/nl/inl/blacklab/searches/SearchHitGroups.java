@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that yields groups of hits. */
-public abstract class SearchHitGroups extends SearchResults<HitGroups> {
+public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
     
     public SearchHitGroups(QueryInfo queryInfo) {
         super(queryInfo);
