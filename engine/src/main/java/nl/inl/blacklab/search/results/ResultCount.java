@@ -142,11 +142,6 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int numberOfResultObjects() {
-        return 1;
-    }
-
-    @Override
     public boolean wasInterrupted() {
         return wasInterrupted;
     }
