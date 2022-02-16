@@ -270,22 +270,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      */
     public void updateLastAccess() {
         this.lastAccessTime = now();
-
-        // If this job depends on other cache jobs, refresh those as well.
-        //
-        // The only example right now is SearchCountFromResults (which returns
-        // a running count) depending on SearchCountTotal (which actually gathers
-        // all the hits). If we don't do this, SearchCountTotal could get cancelled
-        // even if the user is still monitoring SearchCountFromResults.
-        //
-        // SearchCountFromResults in this case would not have any way to know that
-        // SearchCountTotal had been cancelled, so would see itself as not cancelled
-        // and still running, even though the count would never complete.
-        this.search.getRequiredOtherCacheEntries().forEach(e -> {
-            if (e instanceof BlsCacheEntry) {
-                ((BlsCacheEntry)e).updateLastAccess();
-            }
-        });
     }
 
     /**

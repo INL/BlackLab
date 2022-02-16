@@ -1,8 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
@@ -17,9 +14,6 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
 
     private final SearchResults<T> source;
     private final CountType type;
-
-    /** SearchCountTotal we need to keep reporting the running count */
-    private SearchCacheEntry<ResultCount> cacheEntrySearchCountTotal;
 
     public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, CountType type) {
         super(queryInfo);
@@ -36,17 +30,9 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         //  result object, and the caller can monitor this object to see the running total
         //  while it is being counted)
         SearchCountTotal<Results<?, ?>> searchCountTotal = new SearchCountTotal<>(queryInfo(), resultCount);
-        cacheEntrySearchCountTotal = searchCountTotal.executeAsyncNoQueue();
-        resultCount.setFutureToMonitor(cacheEntrySearchCountTotal);
+        searchCountTotal.executeAsyncNoQueue();
 
         return resultCount;
-    }
-
-    @Override
-    public Collection<SearchCacheEntry<?>> getRequiredOtherCacheEntries() {
-        if (cacheEntrySearchCountTotal == null)
-            return Collections.emptyList();
-        return Collections.singletonList(cacheEntrySearchCountTotal);
     }
 
     @Override

@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
@@ -20,8 +19,6 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     /** Type of results we're counting, to report in toString() */
     private final CountType type;
-
-    private Future<ResultCount> futureToMonitor;
 
     public ResultCount(Results<?, ?> count, CountType type) {
         this.type = type;
@@ -58,24 +55,12 @@ public class ResultCount extends ResultsStats implements SearchResult {
         update();
     }
 
-    public void setFutureToMonitor(Future<ResultCount> future) {
-        this.futureToMonitor = future;
-    }
-
     private void update() {
-        if (futureToMonitor != null && futureToMonitor.isCancelled()) {
-            // The job actually gathering all the results has been cancelled.
-            // That means our count will never complete, so cancel us as well.
-            wasInterrupted = true;
-            throw new InterruptedSearch();
-        }
-
         if (!count.isStatic() && count.done()) {
             // We were monitoring the count from a results object that stores all the results.
             // In order to allow that to be garbage collected when possible, disengage from
             // the search object and save the totals.
             count = count.save();
-            futureToMonitor = null;
         }
     }
 

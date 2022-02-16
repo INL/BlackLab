@@ -1,8 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -116,24 +113,6 @@ public interface Search<R extends SearchResult> {
      * @throws InvalidQuery
      */
     R executeInternal() throws InvalidQuery;
-
-    /**
-     * Return other cache entries we need to perform our task.
-     *
-     * If these are aborted, we will also be aborted. If we're used by a request,
-     * these cache entries should also be pinged so they're kept alive.
-     *
-     * For example: a SearchCount ("report on running total") needs its
-     * SearchCountTotal ("gather all results until total is known") to keep running.
-     *
-     * Note that this method will be called once after executeInternal runs,
-     * and will not be called again.
-     *
-     * @return other cache entries we need to function
-     */
-    default Collection<SearchCacheEntry<?>> getRequiredOtherCacheEntries() {
-        return Collections.emptyList();
-    }
 
     @Override
     boolean equals(Object obj);
