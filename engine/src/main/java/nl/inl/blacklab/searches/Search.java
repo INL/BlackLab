@@ -131,7 +131,7 @@ public interface Search<R extends SearchResult> {
      *
      * @return other cache entries we need to function
      */
-    default Collection<SearchCacheEntry> getRequiredOtherCacheEntries() {
+    default Collection<SearchCacheEntry<?>> getRequiredOtherCacheEntries() {
         return Collections.emptyList();
     }
 

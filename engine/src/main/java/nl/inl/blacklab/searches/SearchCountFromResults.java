@@ -15,8 +15,8 @@ import nl.inl.blacklab.search.results.Results;
  */
 public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
 
-    private SearchResults<T> source;
-    private CountType type;
+    private final SearchResults<T> source;
+    private final CountType type;
 
     /** SearchCountTotal we need to keep reporting the running count */
     private SearchCacheEntry<ResultCount> cacheEntrySearchCountTotal;
@@ -37,14 +37,15 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         //  while it is being counted)
         SearchCountTotal<Results<?, ?>> searchCountTotal = new SearchCountTotal<>(queryInfo(), resultCount);
         cacheEntrySearchCountTotal = searchCountTotal.executeAsyncNoQueue();
+        resultCount.setFutureToMonitor(cacheEntrySearchCountTotal);
 
         return resultCount;
     }
 
     @Override
-    public Collection<SearchCacheEntry> getRequiredOtherCacheEntries() {
+    public Collection<SearchCacheEntry<?>> getRequiredOtherCacheEntries() {
         if (cacheEntrySearchCountTotal == null)
-            return super.getRequiredOtherCacheEntries();
+            return Collections.emptyList();
         return Collections.singletonList(cacheEntrySearchCountTotal);
     }
 
