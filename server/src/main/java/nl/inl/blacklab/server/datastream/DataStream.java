@@ -344,10 +344,10 @@ public abstract class DataStream {
             return value((List)value);
         } else if (value instanceof String) {
             return value((String)value);
-        } else if (value instanceof Long) {
-            return value((long)value);
-        } else if (value instanceof Double) {
-            return value((double)value);
+        } else if (value instanceof Integer || value instanceof Long) {
+            return value(((Number) value).longValue());
+        } else if (value instanceof Double || value instanceof Float) {
+            return value(((Number) value).doubleValue());
         } else if (value instanceof Boolean) {
             return value((boolean)value);
         } else {
@@ -357,53 +357,6 @@ public abstract class DataStream {
 
     public DataStream plain(String value) {
         return print(value);
-    }
-
-    public static void main(String[] args) {
-        PrintWriter out = new PrintWriter(System.out);
-
-        DataStream test;
-        test = new DataStreamXml(out, true);
-        go(test, out);
-        test = new DataStreamXml(out, false);
-        go(test, out);
-        test = new DataStreamJson(out, true, null);
-        go(test, out);
-//		test = new DataStreamJson(System.out, false, null);
-//		go(test, out);
-        test = new DataStreamJson(out, false, "myJsonCallback");
-        go(test, out);
-
-        out.flush();
-    }
-
-    private static void go(DataStream test, PrintWriter out) {
-        test
-                .startDocument("test")
-                .entry("fun", true)
-                .startEntry("cats")
-                .startMap()
-                .startAttrEntry("cat", "name", "Sylvie")
-                .startAttrEntry("cat", "prefix:missing", "notdeclared")
-                .startList()
-                .item("place", "Voorschoten")
-                .endList()
-                .endEntry()
-                .startAttrEntry("cat", "name", "Jelmer")
-                .startList()
-                .item("place", "Haarlem")
-                .item("place", "Leiden")
-                .item("place", "Haarlem")
-                .endList()
-                .endEntry()
-                .entry("test", "bla")
-                .attrEntry("test", "attr", "key", "value")
-                .indent().startCompact().startAttrEntry("test", "attr", "key2").value("value2").endAttrEntry()
-                .endCompact().newline()
-                .endMap()
-                .endEntry()
-                .endDocument("test");
-        out.println("");
     }
 
     public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
