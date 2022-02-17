@@ -88,6 +88,11 @@ public class ResultsCache implements SearchCache {
         public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
             return results;
         }
+
+        @Override
+        public T peek() throws ExecutionException {
+            return results;
+        }
     }
 
     public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
@@ -126,7 +131,7 @@ public class ResultsCache implements SearchCache {
     public <T extends SearchResult> SearchCacheEntry<T> getAsync(final Search<T> search, final boolean allowQueue) {
         try {
             CompletableFuture<SearchResult> resultsFuture = searchCache.get(search);
-            return new SearchCacheEntryFromFuture(resultsFuture);
+            return new SearchCacheEntryFromFuture(resultsFuture, search);
         }catch (Exception ex) {
             ex.printStackTrace();
             throw ex;
