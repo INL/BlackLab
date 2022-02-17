@@ -129,18 +129,18 @@ public class HitsFromQueryParallel extends Hits {
          * @param globalHitsToCount     how many more hits to count
          */
         private SpansReader(
-                BLSpanWeight weight,
-                LeafReaderContext leafReaderContext,
-                HitQueryContext sourceHitQueryContext,
+            BLSpanWeight weight,
+            LeafReaderContext leafReaderContext,
+            HitQueryContext sourceHitQueryContext,
 
-                HitsArrays globalResults,
-                CapturedGroups globalCapturedGroups,
-                AtomicInteger globalDocsProcessed,
-                AtomicInteger globalDocsCounted,
-                AtomicInteger globalHitsProcessed,
-                AtomicInteger globalHitsCounted,
-                AtomicInteger globalHitsToProcess,
-                AtomicInteger globalHitsToCount
+            HitsArrays globalResults,
+            CapturedGroups globalCapturedGroups,
+            AtomicInteger globalDocsProcessed,
+            AtomicInteger globalDocsCounted,
+            AtomicInteger globalHitsProcessed,
+            AtomicInteger globalHitsCounted,
+            AtomicInteger globalHitsToProcess,
+            AtomicInteger globalHitsToCount
         ) {
             this.spans = null; // inverted for uninitialized version
             this.weight = weight;
@@ -409,17 +409,17 @@ public class HitsFromQueryParallel extends Hits {
             boolean hasInitialized = false;
             for (LeafReaderContext leafReaderContext : reader.leaves()) {
                 SpansReader spansReader = new SpansReader(
-                        weight,
-                        leafReaderContext,
-                        this.hitQueryContext,
-                        this.hitsArrays,
-                        this.capturedGroups,
-                        this.globalDocsProcessed,
-                        this.globalDocsCounted,
-                        this.globalHitsProcessed,
-                        this.globalHitsCounted,
-                        this.requestedHitsToProcess,
-                        this.requestedHitsToCount
+                    weight,
+                    leafReaderContext,
+                    this.hitQueryContext,
+                    this.hitsArrays,
+                    this.capturedGroups,
+                    this.globalDocsProcessed,
+                    this.globalDocsCounted,
+                    this.globalHitsProcessed,
+                    this.globalHitsCounted,
+                    this.requestedHitsToProcess,
+                    this.requestedHitsToCount
                 );
                 spansReaders.add(spansReader);
 
@@ -486,12 +486,12 @@ public class HitsFromQueryParallel extends Hits {
                 final AtomicInteger i = new AtomicInteger();
                 final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
                 List<Future<?>> pendingResults = spansReaders
-                        .stream()
-                        .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
-                        .values()
-                        .stream()
-                        .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
-                        .collect(Collectors.toList()); // gather the futures
+                    .stream()
+                    .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
+                    .values()
+                    .stream()
+                    .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
+                    .collect(Collectors.toList()); // gather the futures
 
                 // Wait for workers to complete.
                 try {
