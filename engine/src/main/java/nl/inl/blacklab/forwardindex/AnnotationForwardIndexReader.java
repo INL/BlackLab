@@ -15,19 +15,29 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.*;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.*;
+import java.util.AbstractSet;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Keeps a forward index of documents, to quickly answer the question "what word
@@ -266,16 +276,20 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             if (whichChunk == null) {
                 throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
             }
-            ((Buffer)whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
-            ib = whichChunk.asIntBuffer();
-
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
+            synchronized (whichChunk) {
+                ((Buffer) whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
+                ib = whichChunk.asIntBuffer();
 
-            // The file is mem-mapped (search mode).
-            // Position us at the correct place in the file.
-            ib.position(start);
-            ib.get(snippet);
+                // The file is mem-mapped (search mode).
+                // Position us at the correct place in the file.
+                if (start > ib.limit()) {
+                    logger.debug("  start=" + start + ", ib.limit()=" + ib.limit());
+                }
+                ib.position(start);
+                ib.get(snippet);
+            }
             result.add(snippet);
         }
 

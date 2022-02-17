@@ -150,8 +150,8 @@ public class Contexts implements Iterable<int[]> {
      * Get context words from the forward index.
      *
      * @param hits the hits
-     * @param start inclusive
-     * @param end exclusive
+     * @param start first hit to get context words for
+     * @param end first hit NOT to get context for (hit after the last to get context for)
      * @param contextSize how many words of context we want
      * @param contextSources forward indices to get context from
      * @param fiidLookups how to find the forward index ids of documents
@@ -313,6 +313,7 @@ public class Contexts implements Iterable<int[]> {
                     int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
                     for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
                     // start a new document
+                    prevDoc = curDoc;
                     firstHitInCurrentDoc = i;
                 }
             }
@@ -336,7 +337,7 @@ public class Contexts implements Iterable<int[]> {
     /**
      * Return the context(s) for the specified hit number
      *
-     * @param hit which hit we want the context(s) for
+     * @param index which hit we want the context(s) for
      * @return the context(s)
      */
     public int[] get(int index) {

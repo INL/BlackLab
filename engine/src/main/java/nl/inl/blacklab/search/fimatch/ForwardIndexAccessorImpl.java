@@ -20,6 +20,8 @@ import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
  * Allows the forward index matching subsystem to access the forward indices,
  * including an easy and fast way to read any annotation at any position from a
  * document.
+ *
+ * Thread-safe.
  */
 class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
 
@@ -101,6 +103,11 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         return new ForwardIndexAccessorLeafReaderImpl(reader);
     }
 
+    /**
+     * Forward index accessor for a single LeafReader.
+     *
+     * Thread-safe.
+     */
     class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
         private List<DocIntFieldGetter> fiidGetters;

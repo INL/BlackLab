@@ -1,5 +1,19 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Consumer;
+
+import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
+
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -13,16 +27,13 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.Sort;
 import nl.inl.util.Sort.Sortable;
-import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import java.util.*;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-
+/**
+ * A collection of matches.
+ *
+ * Mostly thread-safe. Deprecated method sortInPlace() is not and
+ * should be avoided.
+ */
 public abstract class Hits extends Results<Hit, HitProperty> {
 
     /** A mutable implementation of Hit, to be used for short-lived
@@ -292,7 +303,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * Note this will be less efficient than regular sort(), because this avoids allocating copies of internal data, thus needing more swaps.
          * In order to do that, more swaps and pointer chases are required (in practice, 0.5n pointer chases of average length log2(n), and 0.5n
          * swaps)
+         *
+         * @deprecated unused and not threadsafe
          */
+        @Deprecated
         public void sortInPlace(HitProperty p) {
             this.lock.writeLock().lock();
 
