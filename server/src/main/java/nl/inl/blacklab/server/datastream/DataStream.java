@@ -304,8 +304,10 @@ public abstract class DataStream {
      */
     public <S, T> DataStream value(Map<S, T> value) {
         startMap();
-        for (Map.Entry<S, T> entry: value.entrySet()) {
-            startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
+        if (value != null) {
+            for (Map.Entry<S, T> entry : value.entrySet()) {
+                startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
+            }
         }
         endMap();
         return this;
@@ -324,8 +326,10 @@ public abstract class DataStream {
      */
     public <T> DataStream value(List<T> value) {
         startList();
-        for (T item: value) {
-            startItem("item").value(item).endItem();
+        if (value != null) {
+            for (T item : value) {
+                startItem("item").value(item).endItem();
+            }
         }
         endList();
         return this;
