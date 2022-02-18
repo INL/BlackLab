@@ -394,7 +394,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token" at the end
+            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -562,7 +562,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                     break;
                                 numberOfDocuments++;
                                 if (countTokens)
-                                    numberOfTokens += tokenLengthValues.get(docId) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN;
+                                    numberOfTokens += tokenLengthValues.get(docId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             }
                         }
                     }

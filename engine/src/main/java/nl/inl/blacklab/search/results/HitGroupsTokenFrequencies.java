@@ -213,7 +213,7 @@ public class HitGroupsTokenFrequencies {
                         final int[] emptyTokenValuesArray = new int[0];
 
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
+                            final int docLength = (int) propTokens.get(docId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
@@ -265,7 +265,7 @@ public class HitGroupsTokenFrequencies {
                             }
 
                             // Step 2: retrieve the to-be-grouped metadata for this document
-                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
+                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }

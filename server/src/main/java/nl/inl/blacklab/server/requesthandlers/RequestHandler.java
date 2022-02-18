@@ -541,7 +541,7 @@ public abstract class RequestHandler {
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
 
         if (tokenLengthField != null)
-            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN);
+            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN);
         ds.entry("mayView", mayView(index.metadata(), document))
                 .endMap();
 

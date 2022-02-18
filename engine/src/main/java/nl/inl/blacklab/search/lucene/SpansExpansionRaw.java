@@ -279,7 +279,7 @@ class SpansExpansionRaw extends BLSpans {
                 if (currentDoc != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = currentDoc;
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
                 maxExpandSteps = tokenLength - end;
             }

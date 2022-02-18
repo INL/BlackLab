@@ -144,7 +144,7 @@ class SpansNot extends BLSpans {
             else if (clauseDoc < currentDoc)
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token" at the end
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

@@ -244,7 +244,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
                 // Length field, if applicable
                 if (tokenLengthField != null)
-                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN)); // lengthInTokens
+                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN)); // lengthInTokens
 
                 // other fields in order of appearance
                 for (String fieldId : metadataFieldIds) {

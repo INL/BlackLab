@@ -108,7 +108,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
                     synchronized (prevDocValues) {
-                        return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN;
+                        return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                     }
                 }
                 prev = e;
@@ -117,13 +117,13 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
             synchronized (prevDocValues) {
-                return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN;
+                return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             }
         }
         
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return Long.parseLong(index.reader().document(docId).get(fieldName)) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN;
+            return Long.parseLong(index.reader().document(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -132,7 +132,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     private long get(PropertyValueDoc identity) {
         if (identity.value().isLuceneDocCached()) {
             // if we already have the document, get the value from there
-            return Long.parseLong(identity.luceneDoc().get(fieldName)) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN;
+            return Long.parseLong(identity.luceneDoc().get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         } else
             return get(identity.id());
     }

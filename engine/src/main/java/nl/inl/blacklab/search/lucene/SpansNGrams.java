@@ -133,7 +133,7 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

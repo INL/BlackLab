@@ -40,7 +40,7 @@ public interface BlackLabIndex extends Closeable {
     /** Document length in Lucene and forward index is always reported as one
      *  higher due to punctuation being a trailing value. We call this the
      *  "extra closing token". */
-    int SUBTRACT_EXTRA_CLOSING_TOKEN = 1;
+    int IGNORE_EXTRA_CLOSING_TOKEN = 1;
 
     // Static [factory] methods
     //---------------------------------------------------------------
