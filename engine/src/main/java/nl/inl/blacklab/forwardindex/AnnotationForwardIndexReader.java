@@ -61,7 +61,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Offset of each document */
     long[] offset;
 
-    /** Length of each document */
+    /** Length of each document (INCLUDING the extra closing token at the end) */
     int[] length;
 
     /** Deleted status of each document */
@@ -415,7 +415,9 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     /**
-     * Gets the length (in tokens) of a document
+     * Gets the length (in tokens) of a document.
+     *
+     * NOTE: this INCLUDES the extra closing token at the end.
      *
      * @param fiid forward index id of a document
      * @return length of the document

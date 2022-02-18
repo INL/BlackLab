@@ -35,6 +35,8 @@ import nl.inl.blacklab.search.results.DocResult;
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
  * tokens.
  *
+ * This INCLUDES the extra closing token at the end.
+ *
  * This class is thread-safe.
  * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
  *  and each of those should only be used from one thread at a time)
@@ -96,7 +98,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     public long get(int docId) {
-        long subtractClosingToken = 1;
         if (docValues != null) {
             // Find the fiid in the correct segment
             Entry<Integer, NumericDocValues> prev = null;
@@ -107,7 +108,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
                     synchronized (prevDocValues) {
-                        return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
+                        return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                     }
                 }
                 prev = e;
@@ -116,13 +117,13 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
             synchronized (prevDocValues) {
-                return prevDocValues.get(docId - prevDocBase) - subtractClosingToken;
+                return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             }
         }
         
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return Long.parseLong(index.reader().document(docId).get(fieldName)) - subtractClosingToken;
+            return Long.parseLong(index.reader().document(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -131,8 +132,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     private long get(PropertyValueDoc identity) {
         if (identity.value().isLuceneDocCached()) {
             // if we already have the document, get the value from there
-            long subtractClosingToken = 1;
-            return Long.parseLong(identity.luceneDoc().get(fieldName)) - subtractClosingToken;
+            return Long.parseLong(identity.luceneDoc().get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         } else
             return get(identity.id());
     }

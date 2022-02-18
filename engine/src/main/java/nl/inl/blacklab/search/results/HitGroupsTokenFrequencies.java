@@ -1,16 +1,17 @@
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.resultproperty.*;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.DocImpl;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.searches.SearchHits;
-import nl.inl.util.BlockTimer;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
@@ -23,13 +24,23 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.SimpleCollector;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntUnaryOperator;
-import java.util.stream.Collectors;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
+import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.DocImpl;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.util.BlockTimer;
 
 /**
  * Determine token frequencies for (a subset of) a corpus, given a HitProperty to group on.
@@ -43,9 +54,6 @@ public class HitGroupsTokenFrequencies {
     public static final boolean DEBUG = true;
 
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
-
-    /** Document length is always reported as one higher due to punctuation being a trailing value */
-    private static final int subtractClosingToken = 1;
 
     /** Precalculated hashcode for group id, to save time while grouping and sorting. */
     private static class GroupIdHash {
@@ -205,7 +213,7 @@ public class HitGroupsTokenFrequencies {
                         final int[] emptyTokenValuesArray = new int[0];
 
                         docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId) - subtractClosingToken; // ignore "extra closing token"
+                            final int docLength = (int) propTokens.get(docId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
@@ -257,7 +265,7 @@ public class HitGroupsTokenFrequencies {
                             }
 
                             // Step 2: retrieve the to-be-grouped metadata for this document
-                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - subtractClosingToken; // ignore "extra closing token"
+                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }

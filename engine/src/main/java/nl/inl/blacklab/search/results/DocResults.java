@@ -45,6 +45,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
@@ -393,7 +394,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().id());
+            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -550,7 +551,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
-                    int subtractClosingToken = 1; // the count is always 1 too high because of the "extra closing token" (position for closing tags)
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
@@ -562,7 +562,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                     break;
                                 numberOfDocuments++;
                                 if (countTokens)
-                                    numberOfTokens += tokenLengthValues.get(docId) - subtractClosingToken;
+                                    numberOfTokens += tokenLengthValues.get(docId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             }
                         }
                     }

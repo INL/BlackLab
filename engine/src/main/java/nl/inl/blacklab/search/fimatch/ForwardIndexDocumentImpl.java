@@ -19,7 +19,9 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     /** Lucene document id of the document we're looking at */
     private int docId;
 
-    /** Number of tokens in document. */
+    /** Number of tokens in document.
+     *  NOTE: This does NOT include the extra closing token at the end.
+     */
     private int docLengthTokens;
 
     /**
