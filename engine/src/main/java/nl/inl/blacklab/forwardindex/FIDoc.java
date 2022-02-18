@@ -8,9 +8,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public interface FIDoc {
     
     /**
-     * Delete document from the forward index
-     *
-     * @param fiid id of the document to delete
+     * Delete document from the forward index.
      */
     void delete();
     
@@ -32,7 +30,6 @@ public interface FIDoc {
      * tried. For now we just disable memory mapping on Windows.
      * 
      * @param annotation annotation for which to retrieve content
-     * @param fiid forward index document id
      * @param start the starting points of the parts to retrieve (in words) (-1 for
      *            start of document)
      * @param end the end points (i.e. first token beyond) of the parts to retrieve
@@ -42,7 +39,9 @@ public interface FIDoc {
     List<int[]> retrievePartsInt(Annotation annotation, int[] start, int[] end);
     
     /**
-     * Gets the length (in tokens) of the document
+     * Gets the length (in tokens) of the document.
+     *
+     * NOTE: this INCLUDES the extra closing token at the end.
      * 
      * @return length of the document
      */

@@ -79,7 +79,9 @@ public abstract class ForwardIndexAccessor {
         public abstract ForwardIndexDocument getForwardIndexDoc(int docId);
 
         /**
-         * Return the document length in tokens
+         * Return the document length in tokens.
+         *
+         * NOTE: this does NOT include the extra closing token at the end.
          * 
          * @param docId Lucene document id
          * @return document length in tokens
@@ -93,7 +95,7 @@ public abstract class ForwardIndexAccessor {
          * @param docId Lucene document id
          * @param start first token to get
          * @param end one more than the last token to get
-         * @return document length in tokens
+         * @return chunk of tokens
          */
         abstract int[] getChunk(int annotIndex, int docId, int start, int end);
 
@@ -102,7 +104,7 @@ public abstract class ForwardIndexAccessor {
          *
          * @param annotIndex annotation to get tokens for
          * @param docId Lucene document id
-         * @return document length in tokens
+         * @return forward index id
          */
         abstract int getFiid(int annotIndex, int docId);
 

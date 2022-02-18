@@ -20,7 +20,9 @@ class TocEntry implements Comparable<TocEntry> {
     /** token offset in tokens.dat */
     public long offset;
 
-    /** number of tokens in document */
+    /** Number of tokens in document.
+     *  NOTE: this INCLUDES the extra closing token at the end.
+     */
     public int length;
 
     /** was this entry deleted? (remove in next compacting run) */

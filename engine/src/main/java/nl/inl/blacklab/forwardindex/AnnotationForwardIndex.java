@@ -1,14 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.VersionFile;
-import org.apache.lucene.document.Document;
-
 import java.io.File;
 import java.text.Collator;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.lucene.document.Document;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.util.VersionFile;
 
 /**
  * A component that can quickly tell you what word occurs at a specific position
@@ -287,7 +288,9 @@ public abstract class AnnotationForwardIndex {
     }
 
     /**
-     * Gets the length (in tokens) of a document
+     * Gets the length (in tokens) of a document.
+     *
+     * NOTE: this INCLUDES the extra closing token at the end of the document!
      * 
      * @param fiid forward index id of a document
      * @return length of the document

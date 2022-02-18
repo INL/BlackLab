@@ -23,6 +23,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -48,9 +49,6 @@ class SpansNGrams extends BLSpans {
 
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
-
-    /** How much to subtract from length (for ignoring "extra closing token") */
-    private int subtractClosingToken;
 
     /** Highest document id plus one */
     private int maxDoc;
@@ -91,7 +89,6 @@ class SpansNGrams extends BLSpans {
     public SpansNGrams(LeafReader reader, String fieldName, int min, int max) {
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiFields.getLiveDocs(reader);
-        subtractClosingToken = 1;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         this.min = min;
         this.max = max;
@@ -136,7 +133,7 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractClosingToken;
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

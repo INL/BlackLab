@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
@@ -85,14 +86,10 @@ class SpansExpansionRaw extends BLSpans {
     /** Used to get the field length in tokens for a document */
     private DocFieldLengthGetter lengthGetter;
 
-    /** How much to subtract from length (for ignoring "extra closing token") */
-    private int subtractClosingToken;
-
     private boolean alreadyAtFirstHit;
 
     public SpansExpansionRaw(LeafReader reader, String fieldName, BLSpans clause,
             Direction direction, int min, int max) {
-        subtractClosingToken = 1;
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // TODO: cache this in BlackLabIndex..?
@@ -109,7 +106,6 @@ class SpansExpansionRaw extends BLSpans {
     }
 
     public SpansExpansionRaw(DocFieldLengthGetter lengthGetter, BLSpans clause, Direction direction, int min, int max) {
-        subtractClosingToken = 1;
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
             // TODO: cache this in BlackLabIndex..?
@@ -283,7 +279,7 @@ class SpansExpansionRaw extends BLSpans {
                 if (currentDoc != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = currentDoc;
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractClosingToken;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndex.SUBTRACT_EXTRA_CLOSING_TOKEN; // ignore "extra closing token"
                 }
                 maxExpandSteps = tokenLength - end;
             }
