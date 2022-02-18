@@ -46,6 +46,8 @@ public class ExportCorpus implements AutoCloseable {
         try (ExportCorpus exportCorpus = new ExportCorpus(indexDir)) {
             System.out.println("Calling export()...");
             exportCorpus.export(exportDir);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
