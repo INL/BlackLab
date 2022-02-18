@@ -18,6 +18,8 @@ import nl.inl.util.ThreadAborter;
 /**
  * A list of results of some type.
  *
+ * All subclasses should be thread-safe.
+ *
  * @param <T> result type, e.g. Hit
  */
 public abstract class Results<T, P extends ResultProperty<T>> implements SearchResult, Iterable<T> {

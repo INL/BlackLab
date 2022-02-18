@@ -15,21 +15,26 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.search.Query;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * Abstract base class for criteria on which to group DocResult objects.
  * Subclasses implement specific grouping criteria (number of hits, the value of
  * a stored field in the Lucene document, ...)
+ *
+ * This class is thread-safe.
+ * Some DocProperty instances use synchronization for threadsafety, e.g. DocPropertyStoredField,
+ * because they store DocValues instances, which may only be used from one thread at a time.
  */
 public abstract class DocProperty implements ResultProperty<DocResult>, Comparator<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);

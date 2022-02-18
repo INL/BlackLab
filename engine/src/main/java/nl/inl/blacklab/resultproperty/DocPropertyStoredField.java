@@ -15,23 +15,6 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.util.LuceneUtil;
-import nl.inl.util.StringUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.*;
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.BytesRef;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -40,10 +23,37 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
+
 /**
  * For grouping DocResult objects by the value of a stored field in the Lucene
  * documents. The field name is given when instantiating this class, and might
  * be "author", "year", and such.
+ *
+ * This class is thread-safe.
+ * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
+ *  and each of those should only be used from one thread at a time)
  */
 public class DocPropertyStoredField extends DocProperty {
     //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
@@ -136,13 +146,17 @@ public class DocPropertyStoredField extends DocProperty {
                     SortedDocValues a = targetDocValues.getLeft();
                     SortedSetDocValues b = targetDocValues.getRight();
                     if (a != null) { // old index, only one value
-                        BytesRef val = a.get(docId - targetDocBase);
-                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
-                    } else { // newer index, (possibly) multiple values.
-                        b.setDocument(docId - targetDocBase);
-                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
-                            BytesRef val = b.lookupOrd(ord);
+                        synchronized (a) { // SortedDocValues is not thread-safe
+                            BytesRef val = a.get(docId - targetDocBase);
                             ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                        }
+                    } else { // newer index, (possibly) multiple values.
+                        synchronized (b) { // SortedSetDocValues is not thread-safe
+                            b.setDocument(docId - targetDocBase);
+                            for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
+                                BytesRef val = b.lookupOrd(ord);
+                                ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
+                            }
                         }
                     }
                 }
@@ -163,7 +177,9 @@ public class DocPropertyStoredField extends DocProperty {
                 final Integer targetDocBase = target.getKey();
                 final NumericDocValues targetDocValues = target.getValue();
                 if (targetDocValues != null) {
-                    ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
+                    synchronized (targetDocValues) {
+                        ret.add(Long.toString(targetDocValues.get(docId - targetDocBase)));
+                    }
                 }
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.
