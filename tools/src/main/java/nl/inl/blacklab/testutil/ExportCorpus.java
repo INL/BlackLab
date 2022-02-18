@@ -17,7 +17,7 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 
 /** Export the original corpus from a BlackLab index. */
-public class ExportCorpus {
+public class ExportCorpus implements AutoCloseable {
 
     public static void main(String[] args) throws ErrorOpeningIndex {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
@@ -43,9 +43,10 @@ public class ExportCorpus {
             System.exit(1);
         }
 
-        ExportCorpus exportCorpus = new ExportCorpus(indexDir);
-        System.out.println("Calling export()...");
-        exportCorpus.export(exportDir);
+        try (ExportCorpus exportCorpus = new ExportCorpus(indexDir)) {
+            System.out.println("Calling export()...");
+            exportCorpus.export(exportDir);
+        }
     }
 
     BlackLabIndex index;
@@ -113,5 +114,11 @@ public class ExportCorpus {
                 }
             }
         });
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (index != null)
+            index.close();
     }
 }
