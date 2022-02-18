@@ -179,7 +179,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         else
             wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
 
-        docWriter.listener().tokensDone(wordsDoneSinceLastReport);
+        tokensDone(wordsDoneSinceLastReport);
         wordsDoneAtLastReport = wordsDone;
     }
 

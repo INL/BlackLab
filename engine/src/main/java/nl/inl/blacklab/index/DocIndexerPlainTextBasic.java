@@ -15,6 +15,15 @@
  *******************************************************************************/
 package nl.inl.blacklab.index;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.lang.reflect.Constructor;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field.Store;
+import org.apache.lucene.document.IntField;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -23,14 +32,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Constructor;
 
 /**
  * Simple example indexer for plain text files. Reads a line, chops it into
@@ -237,7 +238,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed();
 
-            docWriter.listener().documentDone(documentName);
+            documentDone(documentName);
 
             // Reset contents field for next document
             contentsField.clear(true);

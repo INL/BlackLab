@@ -443,7 +443,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             reportTokensProcessed();
         }
         if (docWriter != null && !indexingIntoExistingLuceneDoc)
-            docWriter.listener().documentDone(documentName);
+            documentDone(documentName);
 
         currentLuceneDoc = null;
 
@@ -674,7 +674,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
 
-        docWriter.listener().tokensDone(wordsDoneSinceLastReport);
+        tokensDone(wordsDoneSinceLastReport);
         wordsDoneAtLastReport = wordsDone;
     }
 

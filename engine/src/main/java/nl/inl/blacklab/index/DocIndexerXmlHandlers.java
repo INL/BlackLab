@@ -170,7 +170,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed();
 
-            docWriter.listener().documentDone(documentName);
+            documentDone(documentName);
 
             // Reset contents field for next document
             contentsField.clear(true);
