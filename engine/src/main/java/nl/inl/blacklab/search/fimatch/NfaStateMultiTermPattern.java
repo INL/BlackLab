@@ -1,13 +1,13 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * A regex, wildcard or prefix clause.
@@ -136,12 +136,12 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     abstract String getPatternType();
 
     @Override
-    public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    public void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-        String propertyName = comp[1];
-        propertyNumber = fiAccessor.getAnnotationNumber(propertyName);
+        String annotationName = comp[1];
+        propertyNumber = fiAccessor.getAnnotationNumber(annotationName);
         if (nextState != null)
-            nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     @Override

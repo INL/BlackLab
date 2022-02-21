@@ -1,11 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * An AND-node where none of the clauses cycle back to an earlier node. This can
@@ -177,13 +172,13 @@ public class NfaStateAndAcyclic extends NfaState {
     }
 
     @Override
-    void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         for (NfaState s : clauses) {
             if (s != null)
-                s.lookupPropertyNumbers(fiAccessor, statesVisited);
+                s.lookupAnnotationNumbers(fiAccessor, statesVisited);
         }
         if (nextState != null)
-            nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     @Override

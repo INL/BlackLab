@@ -15,12 +15,9 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -28,9 +25,11 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  *
@@ -176,7 +175,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
     /**
      * Returns the name of the search field. In the case of a annotated field, the
-     * clauses may actually query different properties of the same annotated field
+     * clauses may actually query different annotations of the same annotated field
      * (e.g. "description" and "description__pos"). That's why only the prefix is
      * returned.
      *

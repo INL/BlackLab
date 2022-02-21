@@ -18,6 +18,10 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class for looking up forward index id, using DocValues or stored fields.
+ *
+ * This class is thread-safe.
+ * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
+ *  and each of those should only be used from one thread at a time)
  */
 public class FiidLookup {
 
@@ -81,9 +85,10 @@ public class FiidLookup {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
-					try {
+					// FIXME: using sequential DocValues from multiple threads
+                    try {
                         prevDocValues.advanceExact(docId - prevDocBase);
-                        return (int)prevDocValues.longValue(); // should change to long 
+                        return (int)prevDocValues.longValue(); // should change to long
 					} catch (IOException e1) {
 						throw BlackLabRuntimeException.wrap(e1);
 					}
@@ -93,9 +98,10 @@ public class FiidLookup {
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
+            // FIXME: using sequential DocValues from multiple threads
             try {
             	prevDocValues.advanceExact(docId - prevDocBase);
-				return (int)prevDocValues.longValue();// should change to long 
+				return (int)prevDocValues.longValue();// should change to long
 			} catch (IOException e1) {
 				throw BlackLabRuntimeException.wrap(e1);
 			}

@@ -20,6 +20,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -86,14 +87,10 @@ class SpansFilterNGramsRaw extends BLSpans {
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
 
-    /** How much to subtract from length (for ignoring "extra closing token") */
-    private int subtractClosingToken;
-
     private boolean alreadyAtFirstHit;
 
     public SpansFilterNGramsRaw(LeafReader reader, String fieldName, BLSpans clause,
             SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
-        subtractClosingToken = 1;
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right
@@ -296,7 +293,7 @@ class SpansFilterNGramsRaw extends BLSpans {
                 if (currentDoc != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = currentDoc;
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractClosingToken;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
                 // First n-gram containing source hit: minimum start position,
@@ -319,7 +316,7 @@ class SpansFilterNGramsRaw extends BLSpans {
                 if (currentDoc != tokenLengthDocId) {
                     // No, determine length now
                     tokenLengthDocId = currentDoc;
-                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - subtractClosingToken;
+                    tokenLength = lengthGetter.getFieldLength(tokenLengthDocId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
 
                 // First n-gram containing source hit: minimum start position,

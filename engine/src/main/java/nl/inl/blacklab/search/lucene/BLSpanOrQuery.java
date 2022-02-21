@@ -68,7 +68,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     private int fixedHitLength = -1;
 
     /** Are all our clauses simple term queries? Yes if true, not sure if false. */
-    private boolean clausesAreSimpleTermsInSameProperty = false;
+    private boolean clausesAreSimpleTermsInSameAnnotation = false;
 
     /**
      * Construct a SpanOrQuery merging the provided clauses. All clauses must have
@@ -106,7 +106,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
         BLSpanOrQuery out = new BLSpanOrQuery(blClauses);
         if (allSimpleTerms && allInSameField)
-            out.setClausesAreSimpleTermsInSameProperty(true);
+            out.setClausesAreSimpleTermsInSameAnnotation(true);
         return out;
     }
 
@@ -202,7 +202,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 return rewrittenCl.get(0);
             BLSpanOrQuery result = new BLSpanOrQuery(rewrittenCl.toArray(new BLSpanQuery[0]));
             result.setHitsAreFixedLength(fixedHitLength);
-            result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+            result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
             result.setField(getRealField());
             return result;
         }
@@ -239,7 +239,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
         BLSpanOrQuery result = new BLSpanOrQuery(newCl.toArray(new BLSpanQuery[0]));
         result.setHitsAreFixedLength(fixedHitLength);
-        result.setClausesAreSimpleTermsInSameProperty(clausesAreSimpleTermsInSameProperty);
+        result.setClausesAreSimpleTermsInSameAnnotation(clausesAreSimpleTermsInSameAnnotation);
         return result;
     }
 
@@ -677,20 +677,20 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         boolean canBeTokenState = false;
         if (hitsAllSameLength() && hitsLengthMax() == 1) {
             canBeTokenState = true;
-            if (terms == null && clausesAreSimpleTermsInSameProperty) {
+            if (terms == null && clausesAreSimpleTermsInSameAnnotation) {
                 // We know all our clauses are simple terms, and we
                 // don't care about which terms at this point. Just return true.
                 return true;
             }
             String luceneField = null;
             for (SpanQuery cl : getClauses()) {
-                if (!clausesAreSimpleTermsInSameProperty && !(cl instanceof BLSpanTermQuery)) {
+                if (!clausesAreSimpleTermsInSameAnnotation && !(cl instanceof BLSpanTermQuery)) {
                     // Not all simple term queries. Can't rewrite to token state.
                     canBeTokenState = false;
                     break;
                 }
                 BLSpanTermQuery blcl = (BLSpanTermQuery) cl;
-                if (!clausesAreSimpleTermsInSameProperty) {
+                if (!clausesAreSimpleTermsInSameAnnotation) {
                     // We don't know if all our clauses are in the same annotation. Check.
                     if (luceneField == null) {
                         luceneField = blcl.getRealField();
@@ -705,13 +705,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             }
         }
         if (canBeTokenState)
-            clausesAreSimpleTermsInSameProperty = true; // save this result for next time
+            clausesAreSimpleTermsInSameAnnotation = true; // save this result for next time
         return canBeTokenState;
     }
 
     @Override
     public boolean canMakeNfa() {
-        if (clausesAreSimpleTermsInSameProperty)
+        if (clausesAreSimpleTermsInSameAnnotation)
             return true;
         for (SpanQuery cl : getClauses()) {
             BLSpanQuery clause = (BLSpanQuery) cl;
@@ -754,7 +754,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     @Override
     public int forwardMatchingCost() {
         SpanQuery[] clauses = getClauses();
-        if (clausesAreSimpleTermsInSameProperty) {
+        if (clausesAreSimpleTermsInSameAnnotation) {
             return clauses.length * BLSpanTermQuery.FIXED_FORWARD_MATCHING_COST;
         }
         boolean producesSingleState = getNfaTokenStateTerms(null);
@@ -780,8 +780,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         fixedHitLength = i;
     }
 
-    public void setClausesAreSimpleTermsInSameProperty(boolean b) {
-        clausesAreSimpleTermsInSameProperty = b;
+    public void setClausesAreSimpleTermsInSameAnnotation(boolean b) {
+        clausesAreSimpleTermsInSameAnnotation = b;
     }
 
 }

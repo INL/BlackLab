@@ -1,11 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NfaStateAnd extends NfaState {
 
@@ -155,10 +150,10 @@ public class NfaStateAnd extends NfaState {
     }
 
     @Override
-    void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         for (NfaState s : nextStates) {
             if (s != null)
-                s.lookupPropertyNumbers(fiAccessor, statesVisited);
+                s.lookupAnnotationNumbers(fiAccessor, statesVisited);
         }
     }
 

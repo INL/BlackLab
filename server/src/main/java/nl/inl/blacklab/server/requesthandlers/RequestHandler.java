@@ -15,10 +15,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
-import nl.inl.blacklab.search.*;
-import nl.inl.blacklab.search.results.*;
-import nl.inl.blacklab.server.jobs.ContextSettings;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
@@ -30,9 +26,14 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.requestlogging.SearchLogger;
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -41,6 +42,21 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.Concordances;
+import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Facets;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -52,6 +68,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -309,27 +326,11 @@ public abstract class RequestHandler {
                             return errorObj.unknownOperation(handlerName);
 
                         @SuppressWarnings("resource")
-                        SearchLogger logger = servlet.getSearchManager().getLogDatabase().addRequest(indexName, handlerName, request.getParameterMap());
-                        boolean succesfullyCreatedRequestHandler = false;
-                        try {
-                            Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
-                            Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
-                                    HttpServletRequest.class, User.class, String.class, String.class, String.class);
-                            //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
-                            requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
-                            requestHandler.setLogger(logger);
-                            succesfullyCreatedRequestHandler = true;
-                        } finally {
-                            if (!succesfullyCreatedRequestHandler) {
-                                // Operation didn't complete succesfully. Make sure logger gets closed cleanly.
-                                // (if reqhandler *was* created succesfully, its cleanup() method will close the logger)
-                                try {
-                                    logger.close();
-                                } catch (IOException e) {
-                                    throw new InternalServerError("INTERR_CLOSING_LOGGER");
-                                }
-                            }
-                        }
+                        Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
+                        Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
+                                HttpServletRequest.class, User.class, String.class, String.class, String.class);
+                        //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
+                        requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (ReflectiveOperationException e) {
@@ -354,14 +355,6 @@ public abstract class RequestHandler {
         requestHandler.setRequestId(requestId);
 
         return requestHandler;
-    }
-
-    protected SearchLogger searchLogger;
-
-    private void setLogger(SearchLogger searchLogger) {
-        this.searchLogger = searchLogger;
-        if (searchParam != null)
-            searchParam.setLogger(searchLogger);
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -457,12 +450,7 @@ public abstract class RequestHandler {
     }
 
     public void cleanup() {
-        try {
-            if (searchLogger != null)
-                searchLogger.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // (no op)
     }
 
     /**
@@ -550,11 +538,10 @@ public abstract class RequestHandler {
             ds.endList().endEntry();
         }
 
-        int subtractClosingToken = 1;
         String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
 
         if (tokenLengthField != null)
-            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - subtractClosingToken);
+            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN);
         ds.entry("mayView", mayView(index.metadata(), document))
                 .endMap();
 

@@ -23,6 +23,8 @@ function expectHitsImpl(params, numberOfHits, numberOfDocs, expectedFirstHitJson
             .query({
                 sort: "wordleft:word:i,wordright:word:i,field:pid",
                 wordsaroundhit: 1,
+                waitfortotal: "true",
+                usecache: "no",
                 ...useParams
             })
             .set('Accept', 'application/json')
@@ -46,6 +48,8 @@ function expectHitsImpl(params, numberOfHits, numberOfDocs, expectedFirstHitJson
                         "indexname": "test",
                         "sort": "wordleft:word:i,wordright:word:i,field:pid",
                         "wordsaroundhit": "1",
+                        "waitfortotal": "true",
+                        "usecache": "no",
                         ...useParams,
                     },
                     "windowFirstResult": 0,

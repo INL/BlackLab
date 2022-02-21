@@ -1,13 +1,12 @@
 package nl.inl.blacklab.server.datastream;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class to stream out XML data.
@@ -237,7 +236,7 @@ public class DataStreamXml extends DataStream {
             for (int k = 1; k < annotations.size() - 1; k++) {
                 Annotation annotation = annotations.get(k);
                 String value = values.get(vIndex + 1 + j);
-                if (annotationsToList.contains(annotation) && (!omitEmptyProperties || !value.isEmpty()))
+                if (annotationsToList.contains(annotation) && (!omitEmptyAnnotations || !value.isEmpty()))
                     print(" ").print(annotation.name()).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
                 j++;
             }

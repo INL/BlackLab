@@ -19,11 +19,11 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -49,9 +49,6 @@ class SpansNGrams extends BLSpans {
 
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
-
-    /** How much to subtract from length (for ignoring "extra closing token") */
-    private int subtractClosingToken;
 
     /** Highest document id plus one */
     private int maxDoc;
@@ -92,7 +89,6 @@ class SpansNGrams extends BLSpans {
     public SpansNGrams(LeafReader reader, String fieldName, int min, int max) {
         maxDoc = reader == null ? -1 : reader.maxDoc();
         liveDocs = reader == null ? null : MultiBits.getLiveDocs(reader);
-        subtractClosingToken = 1;
         this.lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         this.min = min;
         this.max = max;
@@ -137,7 +133,7 @@ class SpansNGrams extends BLSpans {
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - subtractClosingToken;
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

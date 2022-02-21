@@ -39,12 +39,12 @@ public class TestQueryRewrite {
     public static void setUp() {
         testIndex = new TestIndex();
         index = testIndex.index();
-        ClauseCombinerNfa.setNfaMatchingEnabled(false);
+        ClauseCombinerNfa.setForwardIndexMatchingEnabled(false);
     }
 
     @AfterClass
     public static void tearDown() {
-        ClauseCombinerNfa.setNfaMatchingEnabled(true);
+        ClauseCombinerNfa.setForwardIndexMatchingEnabled(true);
         if (index != null)
             index.close();
         if (testIndex != null)

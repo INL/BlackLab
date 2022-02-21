@@ -68,7 +68,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             if (result instanceof BLSpanOrQuery) {
                 BLSpanOrQuery or = (BLSpanOrQuery) result;
                 or.setHitsAreFixedLength(1);
-                or.setClausesAreSimpleTermsInSameProperty(true);
+                or.setClausesAreSimpleTermsInSameAnnotation(true);
                 or.setField(getRealField());
             } else {
                 throw new BlackLabRuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +

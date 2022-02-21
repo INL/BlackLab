@@ -1,12 +1,11 @@
 package nl.inl.blacklab.search;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import org.apache.commons.text.StringEscapeUtils;
+
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
-
-import org.apache.commons.text.StringEscapeUtils;
-
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * (Part of) the contents of a document, in separate annotations read from the
@@ -104,13 +103,13 @@ public class DocContentsFromForwardIndex extends DocContents {
     private List<String> singlePropertyContext(Annotation annotation) {
         final int nProp = annotations.size();
         final int size = tokens.size() / nProp;
-        final int propIndex = annotations.indexOf(annotation);
-        if (propIndex == -1)
+        final int annotIndex = annotations.indexOf(annotation);
+        if (annotIndex == -1)
             return null;
         return new AbstractList<String>() {
             @Override
             public String get(int index) {
-                return tokens.get(propIndex + nProp * index);
+                return tokens.get(annotIndex + nProp * index);
             }
 
             @Override

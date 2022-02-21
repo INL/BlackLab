@@ -1,13 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -249,13 +242,13 @@ public abstract class NfaState {
         return Collections.newSetFromMap(new IdentityHashMap<NfaState, Boolean>());
     }
 
-    public final void lookupPropertyNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         if (statesVisited.containsKey(this))
             return;
         statesVisited.put(this, true);
-        lookupPropertyNumbersInternal(fiAccessor, statesVisited);
+        lookupAnnotationNumbersInternal(fiAccessor, statesVisited);
     }
 
-    abstract void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited);
+    abstract void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited);
 
 }

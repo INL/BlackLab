@@ -7,9 +7,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.logging.log4j.ThreadContext;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -62,14 +62,40 @@ public final class BlackLabEngine implements Closeable {
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
 
+    /**
+     * Gracefully shut down an ExecutorService.
+     *
+     * Taken from https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ExecutorService.html
+     *
+     * @param pool thread pool to shut down
+     */
+    private static void closeExecutorPool(ExecutorService pool) {
+        pool.shutdown(); // Disable new tasks from being submitted
+        try {
+            // Wait a while for existing tasks to terminate
+            if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+                pool.shutdownNow(); // Cancel currently executing tasks
+                // Wait a while for tasks to respond to being cancelled
+                if (!pool.awaitTermination(60, TimeUnit.SECONDS))
+                    System.err.println("Pool did not terminate");
+            }
+        } catch (InterruptedException ie) {
+            // (Re-)Cancel if current thread also interrupted
+            pool.shutdownNow();
+            // Preserve interrupt status
+            Thread.currentThread().interrupt();
+        }
+    }
+
     @Override
     public void close() {
+
         if (searchExecutorService != null) {
-            searchExecutorService.shutdownNow();
+            closeExecutorPool(searchExecutorService);
             searchExecutorService = null;
         }
         if (initializationExecutorService != null) {
-            initializationExecutorService.shutdownNow();
+            closeExecutorPool(initializationExecutorService);
             initializationExecutorService = null;
         }
         for (BlackLabIndex index: searcherFromIndexReader.values()) {

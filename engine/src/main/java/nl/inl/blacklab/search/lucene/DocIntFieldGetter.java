@@ -16,6 +16,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * Used to get an integer field value for a document.
  *
  * This is used by SpanQueryFiSeq to get the forward index id (fiid).
+ *
+ * This class is thread-safe.
+ * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
+ *  and each of those should only be used from one thread at a time)
  */
 public class DocIntFieldGetter implements Closeable {
 
@@ -27,9 +31,6 @@ public class DocIntFieldGetter implements Closeable {
 
     /** Lengths may have been cached using FieldCache */
     private NumericDocValues docValues;
-
-    /** Reader for getting docValues even when they weren't explicitly indexed */
-    private UninvertingReader uninv;
 
     public DocIntFieldGetter(LeafReader reader, String fieldName) {
         this.reader = reader;
@@ -53,13 +54,7 @@ public class DocIntFieldGetter implements Closeable {
 
     @Override
     public void close() {
-        if (uninv != null) {
-            try {
-                uninv.close();
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
+        // NOP
     }
 
     /**
@@ -72,6 +67,10 @@ public class DocIntFieldGetter implements Closeable {
 
         // Cached doc values?
         if (docValues != null) {
+            // FIXME: we may be using DocValues from
+            //    multiple threads here! Synchronization
+            //    is not enough because the api is now
+            //    sequential.
         	try {
         		docValues.advanceExact(doc);
 				return (int)docValues.longValue();

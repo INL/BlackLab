@@ -150,6 +150,13 @@
 		    <artifactId>trove4j</artifactId>
 		    <version>3.0.3</version>
 		</dependency>
+
+        <!-- caffeine for cache -->
+        <dependency>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>3.0.5</version>
+        </dependency>
 		        
 
     </dependencies>

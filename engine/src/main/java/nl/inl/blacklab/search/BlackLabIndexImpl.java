@@ -49,7 +49,6 @@ import nl.inl.blacklab.exceptions.*;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.search.indexmetadata.*;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.*;
@@ -446,16 +445,16 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings, SearchLogger logger) throws WildcardTermTooBroad {
-        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true, logger);
+    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
+        QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true);
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query, SearchLogger searchLogger) throws WildcardTermTooBroad {
+    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
         try {
             IndexReader indexReader = reader();
-            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true, searchLogger));
+            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -545,8 +544,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public DocResults queryDocuments(Query documentFilterQuery, SearchLogger searchLogger) {
-        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true, searchLogger), documentFilterQuery);
+    public DocResults queryDocuments(Query documentFilterQuery) {
+        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true), documentFilterQuery);
     }
 
     public boolean canDoNfaMatching() {
@@ -966,8 +965,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public SearchEmpty search(AnnotatedField field, boolean useCache, SearchLogger searchLogger) {
-        return new SearchEmpty(QueryInfo.create(this, field, useCache, searchLogger));
+    public SearchEmpty search(AnnotatedField field, boolean useCache) {
+        return new SearchEmpty(QueryInfo.create(this, field, useCache));
     }
 
     @Override
@@ -994,4 +993,5 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     public boolean isOpen() {
         return indexWriter.isOpen();
     }
+
 }

@@ -99,6 +99,12 @@ public abstract class DocIndexer implements AutoCloseable {
 
     Set<String> numericFields = new HashSet<>();
 
+    /** How many documents we've processed */
+    private int numberOfDocsDone = 0;
+
+    /** How many tokens we've processed */
+    private int numberOfTokensDone = 0;
+
     @Override
     public abstract void close();
 
@@ -609,4 +615,27 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public abstract void reportTokensProcessed();
 
+    /**
+     * Keep track of how many tokens have been processed.
+     */
+    public void documentDone(String documentName) {
+        numberOfDocsDone++;
+        docWriter.listener().documentDone(documentName);
+    }
+
+    /**
+     * Keep track of how many tokens have been processed.
+     */
+    public void tokensDone(int n) {
+        numberOfTokensDone += n;
+        docWriter.listener().tokensDone(n);
+    }
+
+    public int numberOfDocsDone() {
+        return numberOfDocsDone;
+    }
+
+    public long numberOfTokensDone() {
+        return numberOfTokensDone;
+    }
 }

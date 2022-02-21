@@ -128,6 +128,13 @@ cache:
     # "cache cleanup goal".
     maxNumberOfJobs: 100
 
+    # The cache implementation to use.
+    # (FQDN or class name (in package nl.inl.blacklab.server.search) of
+    # SearchCache subclass to instantiate)
+    # The default is BlsCache. An alternative is ResultsCache, which is more
+    # efficient if you have a large number of small, short-lived indexes.
+    implementation: BlsCache
+
 
 
 # Settings related to tuning server load and client responsiveness
@@ -212,9 +219,6 @@ authentication:
 
 # Settings related to logging
 log:
-
-    # Where to log detailed information about requests and cache stats
-    sqliteDatabase: /home/jan/blacklab/sqlite_log.db
 
     # What subjects to log messages for
     trace:

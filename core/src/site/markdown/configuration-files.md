@@ -196,6 +196,13 @@ cache:
     # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
     # "cache cleanup goal".
     maxNumberOfJobs: 100
+    
+    # The cache implementation to use.
+    # (FQDN or class name (in package nl.inl.blacklab.server.search) of
+    # SearchCache subclass to instantiate)
+    # The default is BlsCache. An alternative is ResultsCache, which is more
+    # efficient if you have a large number of small, short-lived indexes.
+    implementation: BlsCache
 
 
 
@@ -282,9 +289,6 @@ authentication:
 # Settings related to logging
 log:
 
-    # Where to log detailed information about requests and cache stats
-    sqliteDatabase: /home/jan/blacklab/sqlite_log.db
-
     # What subjects to log messages for
     trace:
         # BL trace settings
@@ -320,6 +324,8 @@ search:
 
     # How eagerly to apply "forward index matching" to certain queries
     # [advanced technical setting; don't worry about this unless you want to experiment]
+    # [if you want to disable forward index matching, which may be beneficial
+    #  if you indexes are small and your query volume is high, set this to 0]
     fiMatchFactor: 900
 
 

@@ -1,17 +1,16 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -139,17 +138,17 @@ public class NfaStateToken extends NfaState {
     }
 
     @Override
-    public void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    public void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-        String propertyName = comp[1];
-        propertyNumber = fiAccessor.getAnnotationNumber(propertyName);
+        String annotationName = comp[1];
+        propertyNumber = fiAccessor.getAnnotationNumber(annotationName);
         MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         inputTokens = new IntHashSet(); //new HashSet<>();
         for (String token : inputTokenStrings) {
             fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, sensitivity);
         }
         if (nextState != null)
-            nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     @Override

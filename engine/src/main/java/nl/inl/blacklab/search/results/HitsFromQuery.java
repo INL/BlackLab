@@ -23,7 +23,6 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -110,19 +109,19 @@ public class HitsFromQuery extends Hits {
 
             // Override FI match threshold? (debug use only!)
             long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
-            if (searchSettings.fiMatchFactor() != -1) {
-                queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
+            if (searchSettings.fiMatchFactor() != -1 && searchSettings.fiMatchFactor() != ClauseCombinerNfa.getNfaThreshold()) {
+                logger.debug("setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                 ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
             }
 
             sourceQuery.setQueryInfo(queryInfo);
-            queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
+            logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
             BLSpanQuery optimize = sourceQuery.optimize(reader);
-            queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimize);
+            logger.debug("Query after optimize(): " + optimize);
 
             BLSpanQuery spanQuery = optimize.rewrite(reader);
-            queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + spanQuery);
+            logger.debug("Query after rewrite(): " + spanQuery);
 
             // Restore previous FI match threshold
             if (searchSettings.fiMatchFactor() != -1) {
@@ -221,7 +220,7 @@ public class HitsFromQuery extends Hits {
                             currentDocBase = context.docBase;
                             currentSourceSpans = (BLSpans) weight.getSpans(context, Postings.OFFSETS);
                             if (!loggedSpans) {
-                                queryInfo().log(LogLevel.EXPLAIN, "got Spans: " + currentSourceSpans);
+                                logger.debug("got Spans: " + currentSourceSpans);
                                 loggedSpans = true;
                             }
                             if (currentSourceSpans != null) {

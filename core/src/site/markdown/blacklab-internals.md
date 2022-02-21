@@ -3,6 +3,99 @@
 Here we want to document how BlackLab works internally. At the moment it is still very much incomplete, but we intend to add and update information as time goes on.
 
 
+## BlackLab technical overview
+
+The basis of a BlackLab index is the Lucene index. The Lucene files are all found in the main 
+index directory. Lucene provides the reverse index part of BlackLab, that is, it can quickly 
+locate in what documents and at what positions certain word(s) or constructs appear.
+
+You can identify a BlackLab index by the `version.dat` file in the main index directory. This
+file should always contain the text `blacklab||2`.
+
+What BlackLab adds to the Lucene index are a _content store_ and _forward indexes_.
+
+### content store
+
+The content store is the simplest to explain: it stores the original (e.g. XML) documents you
+added to BlackLab. The documents can be retrieved from the content store if you want to display
+them (e.g. using XSLT). Matches may be highlighted in the document.
+
+It is also possible to retrieve snippets from the original document (XML is carefully kept 
+wellformed), and even to generate the keyword-in-context (KWIC) view using the original 
+content (normally the KWIC view is generated using the forward index, which is faster but doesn't
+preserve the original tag structure, e.g. sentence tags, named entity tags, etc.)
+
+In the future, we may want to make the content store optional, because users often have these
+documents available from another source, such as a webservice. The challenge in this case is 
+to keep highlighting efficient (BlackLab stores its content such that the position information
+it gets from Lucene can be used directly to highlight the document).
+
+The content store is found in the subdirectory `cs_contents` (at least, if your annotated 
+field is named `contents`; you could even have multiple annotated fields).
+The content store subdirectory has its own `version.dat`, which should contain `fixedblock||1`.
+
+### forward index
+
+Each of your annotations can have a forward index.
+
+The combined forward indexes also contain most of the contents of the documents, but missing are
+the tags around an in between the words (bold and italic tags, paragraph and sentence tags, 
+header and body tags, metadata tags, etc.).
+
+All annotations get a forward index by default, but you 
+can [disable this if you want](how-to-configure-indexing.md#disable-fi).
+
+Each annotation has its own forward index directory. These directories are 
+named `fi_contents%word`, `fi_contents%word`, etc. (again, assuming your annotated field is 
+`contents`). The `version.dat` file in each forward index directory should contain either
+`fi||4` or `fi||5`. (these versions differ only in the collators used for sorting terms) 
+
+For more in-depth information about the layout of the non-Lucene files in a BlackLab index, 
+see [File formats for the forward index and content store](file-formats.md).
+
+### index metadata file
+
+Each index has a file called `indexmetadata.yaml`. This file contains information that 
+BlackLab needs, such as:
+
+- total number of tokens
+- pid field
+- analyzers used for metadata fields
+- whether or not the full content of a document may be retrieved
+- metadata field type (tokenized, untokenized, text, numeric)
+
+It also contains extra information that may be useful for applications using BlackLab, such as the "official" [corpus-frontend](https://gibhub.com/INL/corpus-frontend):
+
+- name and description of the index and its fields
+- document format name
+- metadata fields containing title, author, date
+- version info
+- text direction, LTR or RTL
+- how missing metadata fields were handled during indexing (`unknownValue`, `unknownCondition`)
+- metadata field values, display values
+- display order for metadata and annotated fields  
+- how metadata fields should logically be grouped
+
+It could be argued that the second group of properties don't really belong in BlackLab and
+should perhaps be moved to the application using BlackLab. This might be the direction we take 
+in the future. We estimate that beside our own corpus-frontend, not many other applications use
+these properties.
+
+A complete, documented example of `indexmetadata.yaml` can be found [here](indexing-with-blacklab.md#edit-index-metadata).
+
+
+### files needed for indexing
+
+index configuration file (`.blf.yaml`) / DocIndexer
+
+A complete, documented example of an input format configuration file can be 
+found [here](how-to-configure-indexing.md#annotated-input-format-configuration-file).
+
+### performance optimizations
+
+...
+
+
 ## Module structure
 
 BlackLab has been divided up into modules that serve specific functions.

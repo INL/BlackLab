@@ -15,15 +15,14 @@
  *******************************************************************************/
 package nl.inl.blacklab.indexers;
 
-import java.io.Reader;
-
-import org.xml.sax.Attributes;
-
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import org.xml.sax.Attributes;
+
+import java.io.Reader;
 
 /**
  * Index a FoLiA file. For information about FoLiA, see
@@ -48,13 +47,13 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
     public DocIndexerFolia(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 
-        // Get handles to the default properties (the main one & punct)
-        final AnnotationWriter propMain = mainAnnotation();
-        final AnnotationWriter propPunct = punctAnnotation();
+        // Get handles to the default annotations (the main one & punct)
+        final AnnotationWriter annotMain = mainAnnotation();
+        final AnnotationWriter annotPunct = punctAnnotation();
 
-        // Add some extra properties
-        final AnnotationWriter propLemma = addAnnotation("lemma");
-        final AnnotationWriter propPartOfSpeech = addAnnotation("pos");
+        // Add some extra annotations
+        final AnnotationWriter annotLemma = addAnnotation("lemma");
+        final AnnotationWriter annotPartOfSpeech = addAnnotation("pos");
 
         registerContentsField();
         
@@ -77,10 +76,10 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
             public void endElement(String uri, String localName, String qName) {
                 super.endElement(uri, localName, qName);
                 if (wordform.length() > 0) {
-                    propMain.addValue(wordform);
-                    propPartOfSpeech.addValue(pos);
-                    propLemma.addValue(lemma);
-                    propPunct.addValue(" ");
+                    annotMain.addValue(wordform);
+                    annotPartOfSpeech.addValue(pos);
+                    annotLemma.addValue(lemma);
+                    annotPunct.addValue(" ");
                 }
             }
         });

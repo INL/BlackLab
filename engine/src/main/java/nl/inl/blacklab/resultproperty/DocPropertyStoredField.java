@@ -44,6 +44,10 @@ import java.util.TreeMap;
  * For grouping DocResult objects by the value of a stored field in the Lucene
  * documents. The field name is given when instantiating this class, and might
  * be "author", "year", and such.
+ *
+ * This class is thread-safe.
+ * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
+ *  and each of those should only be used from one thread at a time)
  */
 public class DocPropertyStoredField extends DocProperty {
     //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
@@ -137,10 +141,12 @@ public class DocPropertyStoredField extends DocProperty {
 	                    SortedDocValues a = targetDocValues.getLeft();
 	                    SortedSetDocValues b = targetDocValues.getRight();
 	                    if (a != null) { // old index, only one value
+                            // FIXME: using sequential DocValues from multiple threads
 	                    	a.advanceExact(docId - targetDocBase);
 	                        BytesRef val = a.binaryValue();// equals to a.get(docId - targetDocBase)?
 	                        ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
 	                    } else { // newer index, (possibly) multiple values.
+                            // FIXME: using sequential DocValues from multiple threads
 	                        b.advanceExact(docId - targetDocBase);//equals to b.setDocument(docId - targetDocBase)?
 	                        for (long ord = b.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = b.nextOrd()) {
 	                            BytesRef val = b.lookupOrd(ord);
@@ -168,6 +174,7 @@ public class DocPropertyStoredField extends DocProperty {
                 final Integer targetDocBase = target.getKey();
                 final NumericDocValues targetDocValues = target.getValue();
                 if (targetDocValues != null) {
+                    // FIXME: using sequential DocValues from multiple threads
                 	try {
                 		targetDocValues.advanceExact(docId - targetDocBase);
 						ret.add(Long.toString(targetDocValues.longValue()));

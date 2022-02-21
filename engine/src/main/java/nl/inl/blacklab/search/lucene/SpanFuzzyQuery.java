@@ -98,7 +98,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
             }
             BLSpanOrQuery query = new BLSpanOrQuery(spanQueries);
             query.setHitsAreFixedLength(1);
-            query.setClausesAreSimpleTermsInSameProperty(true);
+            query.setClausesAreSimpleTermsInSameAnnotation(true);
             return query;
         }
 

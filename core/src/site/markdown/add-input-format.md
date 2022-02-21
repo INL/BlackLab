@@ -28,19 +28,19 @@ We create a DocumentElementHandler (an inner class defined in DocIndexerXmlHandl
 
 Note that, if we want, we can customize the handler. We'll see an example of this later. But for this document element handler, we don't need any customization. The default DocumentElementHandler will make sure BlackLab knows where our documents start and end and get added to the index in the correct way. It will also automatically add any attributes of the element as metadata fields, but the TEI document elements don't have attributes, so that doesn't apply here.
 
-Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these properties to your index as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:
+Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these annotations to your index as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:
 
-	// Add some extra properties
+	// Add some extra annotations
 	final AnnotationWriter annotLemma = addAnnotation("lemma");
 	final AnnotationWriter annotPartOfSpeech = addAnnotation("pos");
 
-Because we will also be working with the two default properties that every indexer gets, word and punct, we also need to store a reference to those:
+Because we will also be working with the two default annotations that every indexer gets, word and punct, we also need to store a reference to those:
 
-	// Get handles to the default properties (the main one & punct)
+	// Get handles to the default annotations (the main one & punct)
 	final AnnotationWriter annotMain = mainAnnotation();
 	final AnnotationWriter annotPunct = punctAnnotation();
 
-The main property (named "word") generally contains the word forms of the text. The punct property is used to store the characters between the words: punctuation and whitespace. These two properties together can be used to generate snippets of context when needed.
+The main annotation (named "word") generally contains the word forms of the text. The punct annotation is used to store the characters between the words: punctuation and whitespace. These two annotations together can be used to generate snippets of context when needed.
 
 Before we create the handler for the word tags, let's create another one for the body tag. We only want to index word tags that occur in a body tag, and we will refer back to this handler to see when we're inside a body tag. Place this line at the end of the constructor:
 
@@ -80,11 +80,11 @@ Now it's time to add a handler for word tags:
 		}
 	});
 
-Here we see an example of customizing a default handler. The default handler is called WordHandlerBase, and it takes care of storing character positions (needed if we want to highlight hits in the original XML) and reporting progress, but nothing else. You are responsible for indexing the different properties (the defaults word and punct, plus the we you added ourselves, lemma and pos). We use an anonymous inner class and override the startElement() and endElement() methods.
+Here we see an example of customizing a default handler. The default handler is called WordHandlerBase, and it takes care of storing character positions (needed if we want to highlight hits in the original XML) and reporting progress, but nothing else. You are responsible for indexing the different annotations (the defaults word and punct, plus the we you added ourselves, lemma and pos). We use an anonymous inner class and override the startElement() and endElement() methods.
 
 At the top of those methods, notice how we use the body handler we added earlier: we check if we're inside a body element, and return if not, even before calling the superclass method. This makes sure any &lt;w/&gt; tags outside &lt;body/&gt; tags are skipped.
 
-The values for lemma and part of speech are taken from the element attributes and added to the properties we created earlier; simple enough. For the main property ("word", the actual word forms) and the "punct" property (punctuation and whitespace between words), we use the consumeCharacterContent() method. All character content in the XML is collected, and calling consumeCharacterContent() returns the context collected since the last call, and clears the buffer again. At the start of each word, we consume the character content and add it to the punct property; at the end of each word, we do the same again and add it to the main property ("word").
+The values for lemma and part of speech are taken from the element attributes and added to the annotations we created earlier; simple enough. For the main annotation ("word", the actual word forms) and the "punct" annotation (punctuation and whitespace between words), we use the consumeCharacterContent() method. All character content in the XML is collected, and calling consumeCharacterContent() returns the context collected since the last call, and clears the buffer again. At the start of each word, we consume the character content and add it to the punct annotation; at the end of each word, we do the same again and add it to the main annotation ("word").
 
 If we also want to capture sentence tags, so we can search for sentences containing a word for example, we can add this handler:
 
@@ -126,7 +126,7 @@ We're almost done, but there's one subtle thing to take care of. What happens to
 		});
 	});
 
-Note how we've also overridden the startElement() method in order to clean the character content buffer at the start of the body element. If we didn't do that, we might get some junk at the first position of the punct property.
+Note how we've also overridden the startElement() method in order to clean the character content buffer at the start of the body element. If we didn't do that, we might get some junk at the first position of the punct annotation.
 
 That's all there is to it, really. Well, we haven't covered capturing metadata, mostly because TEI doesn't have a clear standard for how metadata is represented. But indexing your particular type of metadata is easy. There's a few helper classes: MetadataElementHandler assumes the matched element name is the name of your metadata field and the character content is the value. MetadataAttributesHandler stores all the attributes from the matched element as metadata fields. MetadataNameValueAttributeHandler assumes the matched element has a name attribute and a value attribute (the attribute names can be specified in the constructor) and stores those as metadata fields.
 

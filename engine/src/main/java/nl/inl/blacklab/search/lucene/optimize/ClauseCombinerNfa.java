@@ -4,7 +4,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -14,8 +13,28 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
 import nl.inl.util.LuceneUtil;
 
 /**
- * Converts one clause to an NFA and uses the other as the anchor in a FISEQ
- * operation to match using the forward index.
+ * Tries to optimize the query using "forward index matching" (also called NFA
+ * matching because it uses a nondeterministic finite automaton).
+ *
+ * Looks for adjacent clauses that may benefit from this. One of the clauses would
+ * be resolved normally using Lucene's reverse index, yielding a list of matches.
+ * We would then use the forward index to see if these are actual matches by checking
+ * if the other clause actually occurs next to the match found using the reverse index.
+ *
+ * This works best when one clause has few matches while the other has very many.
+ * The first clause would be matched traditionally using Lucene's reverse index, while
+ * the second, much more frequent clause would be matched using the forward index.
+ *
+ * If such as situation is found, we converts the clause to be matched using the forward
+ * index to an NFA (nondeterministic finite automaton) and use the other as the "anchor"
+ * (because a forward index matching operations always needs a starting position).
+ * Together they are combined in a FISEQ (forward index sequence) operation whic, like
+ * explained above, will first find infrequent matches using Lucene, then decide using
+ * the forward index if they are actual matches or not.
+ *
+ * Checking this for all adjacent clauses (repeatedly) can be a costly operation, so
+ * you might want to disable this if you have high query volume and your indexes are not
+ * very large.
  */
 public class ClauseCombinerNfa extends ClauseCombiner {
 
@@ -45,7 +64,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     /**
      * The default value of nfaThreshold.
      */
-    public static final long DEFAULT_NFA_THRESHOLD = 900; //DISABLE: NO_NFA_MATCHING;
+    public static long defaultForwardIndexMatchingThreshold = 900; //DISABLE: NO_NFA_MATCHING;
 
     /**
      * Indicates how expensive fetching a lot of term positions from Lucene is; Used
@@ -62,19 +81,28 @@ public class ClauseCombinerNfa extends ClauseCombiner {
     private static final long COST_RATIO_CONSTANT_FACTOR = 1000;
 
     /**
+     * Should we try forward index matching at all or skip it altogether?
+     */
+    private static boolean enableForwardIndexmatching = true;
+
+    /**
      * The ratio of estimated numbers of hits that we use to decide whether or not
      * to try NFA-matching with two clauses / subsequences. The lower the number,
      * the more we use NFA-matching.
      *
      * (we compare this to the absolute "combinability factor"; see below)
      */
-    private static long nfaThreshold = DEFAULT_NFA_THRESHOLD;
+    private static long nfaThreshold = defaultForwardIndexMatchingThreshold;
 
     /**
      * Don't NFA optimization if there's too few unique terms?
      * (disable for testing)
      */
     private static boolean onlyUseNfaForManyUniqueTerms = true;
+
+    public static void setDefaultForwardIndexMatchingThreshold(long threshold) {
+        ClauseCombinerNfa.defaultForwardIndexMatchingThreshold = threshold;
+    }
 
     public static void setOnlyUseNfaForManyUniqueTerms(boolean onlyUseNfaForManyUniqueTerms) {
         ClauseCombinerNfa.onlyUseNfaForManyUniqueTerms = onlyUseNfaForManyUniqueTerms;
@@ -88,10 +116,12 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         return ClauseCombinerNfa.nfaThreshold;
     }
 
-    public static void setNfaMatchingEnabled(boolean doNfaMatching) {
-        boolean doingNfaMatching = nfaThreshold != NO_NFA_MATCHING;
-        if (doNfaMatching != doingNfaMatching)
-            nfaThreshold = doNfaMatching ? DEFAULT_NFA_THRESHOLD : NO_NFA_MATCHING;
+    public static void setForwardIndexMatchingEnabled(boolean doNfaMatching) {
+        enableForwardIndexmatching = doNfaMatching;
+    }
+
+    private static boolean isForwardIndexMatchingEnabled() {
+        return enableForwardIndexmatching && nfaThreshold > NO_NFA_MATCHING;
     }
 
     /**
@@ -113,7 +143,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
      * @return the "combinability factor"
      */
     private static long getFactor(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-        if (nfaThreshold == NO_NFA_MATCHING)
+        if (!isForwardIndexMatchingEnabled())
             return 0;
 
         // Estimate the performance cost of matching the whole sequence using reverse matching.
@@ -139,7 +169,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
         if (BlackLabIndexImpl.traceOptimization()) {
-            left.log(LogLevel.CHATTY, String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
+            logger.debug(String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
                     forwardPossible ? 1 : 0,
                     backwardPossible ? 1 : 0,
                     costNfaToReverseForward,
@@ -175,23 +205,24 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
     @Override
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-        if (nfaThreshold == NO_NFA_MATCHING) {
+        if (!isForwardIndexMatchingEnabled()) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: nfa matching switched off)");
+                logger.debug("(CCNFA: nfa matching switched off)");
             return CANNOT_COMBINE;
         }
 
         long factor = getFactor(left, right, reader);
-        left.log(LogLevel.DETAIL, "(CCNFA: factor == " + factor + ")");
+        if (BlackLabIndexImpl.traceOptimization())
+            logger.debug("(CCNFA: factor == " + factor + ")");
         if (factor == 0) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: cannot combine)");
+                logger.debug("(CCNFA: cannot combine)");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
+                logger.debug("(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
 
@@ -199,7 +230,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             long maxTermsRight = LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField());
             long maxTermsLeft = LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField());
             if (BlackLabIndexImpl.traceOptimization())
-                left.log(LogLevel.DETAIL, "(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
+                logger.debug("(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
             if (factor > 0 && maxTermsRight < 10_000 ||
                 factor < 0 && maxTermsLeft < 10_000) {
 

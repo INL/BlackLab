@@ -608,7 +608,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         try {
             String valuePath = annotation.getValuePath();
             if (valuePath == null) {
-                // No valuePath given. Assume this will be captures using forEach.
+                // No valuePath given. Assume this will be captured using forEach.
                 return;
             }
 
@@ -626,7 +626,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
             Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
 
             // For each configured subannotation...
-            Set<String> alreadySeen = new HashSet<>(); // keep track of which annotation have multiple values so we can use the correct position increment
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
                 // Subannotation configs without a valuePath are just for
                 // adding information about subannotations captured in forEach's,
@@ -641,7 +640,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     navpush();
                     AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
                     AutoPilot apName = acquireAutoPilot(subAnnot.getName());
-                    alreadySeen.clear();
                     while (apForEach.evalXPath() != -1) {
                         // Find the name and value for this forEach match
                         apName.resetXPath();

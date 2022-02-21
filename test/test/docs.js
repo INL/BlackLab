@@ -24,7 +24,9 @@ function expectDocs(pattern, filter, numberOfHits, numberOfDocs, firstDocJsonInc
                     patt: pattern,
                     filter,
                     sort: "field:pid",
-                    wordsaroundhit: 1
+                    wordsaroundhit: 1,
+                    waitfortotal: "true",
+                    usecache: "no",
                 })
                 .set('Accept', 'application/json')
                 .end((err, res) => {
@@ -43,7 +45,9 @@ function expectDocs(pattern, filter, numberOfHits, numberOfDocs, firstDocJsonInc
                 const searchParam = {
                     "indexname": "test",
                     "sort": "field:pid",
-                    "wordsaroundhit": "1"
+                    "wordsaroundhit": "1",
+                    "waitfortotal": "true",
+                    "usecache": "no",
                 };
                 let expectedSummaryIncludes = {
                     searchParam,

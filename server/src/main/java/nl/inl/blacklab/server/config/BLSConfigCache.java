@@ -22,6 +22,8 @@ public class BLSConfigCache {
 
     private int denyAbortedSearchSec = 600;
 
+    private String implementation = "";
+
     @Deprecated
     public int getMaxSizeMegs() {
         return maxSizeMegs;
@@ -96,6 +98,14 @@ public class BLSConfigCache {
 
     public void setDenyAbortedSearchSec(int denyAbortedSearchSec) {
         this.denyAbortedSearchSec = denyAbortedSearchSec;
+    }
+
+    public String getImplementation() {
+        return implementation;
+    }
+
+    public void setImplementation(String implementation) {
+        this.implementation = implementation;
     }
 
 }

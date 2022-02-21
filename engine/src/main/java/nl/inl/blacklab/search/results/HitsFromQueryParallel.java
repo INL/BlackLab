@@ -22,7 +22,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -382,18 +381,18 @@ public class HitsFromQueryParallel extends Hits {
             synchronized(ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
                 if (searchSettings.fiMatchFactor() != -1) {
-                    queryInfo.log(LogLevel.OPT, "setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
+                    logger.debug("setting NFA threshold for this query to " + searchSettings.fiMatchFactor());
                     ClauseCombinerNfa.setNfaThreshold(searchSettings.fiMatchFactor());
                 }
 
                 sourceQuery.setQueryInfo(queryInfo);
-                queryInfo.log(LogLevel.EXPLAIN, "Query before optimize()/rewrite(): " + sourceQuery);
+                logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
                 optimizedQuery = sourceQuery.optimize(reader);
-                queryInfo.log(LogLevel.EXPLAIN, "Query after optimize(): " + optimizedQuery);
+                logger.debug("Query after optimize(): " + optimizedQuery);
 
                 optimizedQuery = optimizedQuery.rewrite(reader);
-                queryInfo.log(LogLevel.EXPLAIN, "Query after rewrite(): " + optimizedQuery);
+                logger.debug("Query after rewrite(): " + optimizedQuery);
 
                 optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
 

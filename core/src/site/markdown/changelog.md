@@ -6,6 +6,9 @@
 
 - Language level set to Java 9, so we can use `Arrays.compare()` among other things
   (and stay on a supported Java version).
+- Documentation, comments and code now use the terms "annotated field" and "annotation"
+  everywhere (some lingering occurrences of the older terms "complex field" and 
+  "property" were removed).
 
 ### New
 
@@ -17,6 +20,9 @@
 - support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
   fi version 3; these were all replaced with newer versions six years ago. older indexes 
   will need to be re-indexed)
+- SQLite logging. Was never fully realized, and the new approach using Prometheus (see 
+  `instrumentation` modules) is better.
+- several long-deprecated methods were removed.
 
 ## Improvements in 2.2.0
 

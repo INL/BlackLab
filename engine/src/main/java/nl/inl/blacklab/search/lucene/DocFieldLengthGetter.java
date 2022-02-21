@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Terms;
@@ -21,6 +22,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  *
  * This is used by SpanQueryNot and SpanQueryExpansion to make sure we don't go
  * beyond the document end.
+ *
+ * This class is instantiated and used by a single Spans to get lengths for a single
+ * index segment. It does not need to be thread-safe.
  */
 class DocFieldLengthGetter implements Closeable {
     /**
@@ -50,6 +54,9 @@ class DocFieldLengthGetter implements Closeable {
     /** Field name to check for the length of the field in tokens */
     private String lengthTokensFieldName;
 
+    /** Field visitor to get the field value (without loading the entire document) */
+    private final DocumentStoredFieldVisitor lengthTokensFieldVisitor;
+
     /** Lengths may have been cached using FieldCache */
     private NumericDocValues cachedFieldLengths;
 
@@ -59,6 +66,7 @@ class DocFieldLengthGetter implements Closeable {
         this.reader = reader;
         this.fieldName = fieldName;
         lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
+        lengthTokensFieldVisitor = new DocumentStoredFieldVisitor(lengthTokensFieldName);
 
         if (fieldName.equals(Indexer.DEFAULT_CONTENTS_FIELD_NAME)) {
             // Cache the lengths for this field to speed things up
@@ -154,7 +162,8 @@ class DocFieldLengthGetter implements Closeable {
             // We either know the field length is stored in the index,
             // or we haven't checked yet and should do so now.
             try {
-                Document document = reader.document(doc);
+                reader.document(doc, lengthTokensFieldVisitor);
+                Document document = lengthTokensFieldVisitor.getDocument();
                 String strLength = document.get(lengthTokensFieldName);
                 lookedForLengthField = true;
                 if (strLength != null) {

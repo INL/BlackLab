@@ -27,7 +27,6 @@ import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.requestlogging.LogLevel;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -390,11 +389,6 @@ public abstract class BLSpanQuery extends SpanQuery {
     
     public void setQueryInfo(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
-    }
-    
-    public void log(LogLevel level, String msg) {
-        if (queryInfo != null)
-            queryInfo.log(level, msg);
     }
 
 }

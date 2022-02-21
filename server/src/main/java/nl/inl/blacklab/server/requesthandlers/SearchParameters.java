@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.requestlogging.SearchLogger;
 import nl.inl.blacklab.resultproperty.*;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -183,8 +182,6 @@ public class SearchParameters {
     private boolean isDocsOperation;
 
     private List<DocProperty> facetProps;
-
-    private SearchLogger searchLogger;
 
     private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
         this.searchManager = searchManager;
@@ -586,7 +583,7 @@ public class SearchParameters {
     }
 
     public SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        SearchEmpty search = blIndex().search(null, getUseCache());
         try {
             Query filter = hasFilter() ? getFilterQuery() : null;
             return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
@@ -625,7 +622,7 @@ public class SearchParameters {
         if (pattern == null && docFilterQuery == null) {
             docFilterQuery = new MatchAllDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        SearchEmpty search = blIndex().search(null, getUseCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -643,7 +640,7 @@ public class SearchParameters {
         if (docFilterQuery == null) {
             docFilterQuery = new MatchAllDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, getUseCache(), searchLogger);
+        SearchEmpty search = blIndex().search(null, getUseCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -698,10 +695,6 @@ public class SearchParameters {
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void setLogger(SearchLogger searchLogger) {
-        this.searchLogger = searchLogger;
     }
 
 }

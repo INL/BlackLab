@@ -27,45 +27,42 @@ import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.LogUtil;
 
 /** Export the metadata of all documents from a BlackLab index. */
-public class ExportMetadata {
+public class ExportMetadata implements AutoCloseable {
 
     private static String escapeTabs(String str) {
         return str.replaceAll("\t", "\\t");
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
-        try {
-            LogUtil.setupBasicLoggingConfig(Level.DEBUG);
+        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
-            if (args.length != 2) {
-                System.out.println("Usage: ExportMetadata <indexDir> <exportFile>");
-                System.exit(1);
-            }
+        if (args.length != 2) {
+            System.out.println("Usage: ExportMetadata <indexDir> <exportFile>");
+            System.exit(1);
+        }
 
-            File indexDir = new File(args[0]);
-            if (!indexDir.isDirectory() || !indexDir.canRead()) {
-                System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
-                System.exit(1);
-            }
-            if (!BlackLabIndex.isIndex(indexDir)) {
-                System.out.println("Not a BlackLab index: " + indexDir);
-                System.exit(1);
-            }
+        File indexDir = new File(args[0]);
+        if (!indexDir.isDirectory() || !indexDir.canRead()) {
+            System.out.println("Directory doesn't exist or is unreadable: " + indexDir);
+            System.exit(1);
+        }
+        if (!BlackLabIndex.isIndex(indexDir)) {
+            System.out.println("Not a BlackLab index: " + indexDir);
+            System.exit(1);
+        }
 
-            File exportFile = new File(args[1]);
+        File exportFile = new File(args[1]);
 
-            ExportMetadata exportMetadata = new ExportMetadata(indexDir);
+        try (ExportMetadata exportMetadata = new ExportMetadata(indexDir)) {
             System.out.println("Collecting metadata...");
             exportMetadata.collect();
             System.out.println("Exporting metadata...");
             exportMetadata.exportCsv(exportFile);
             System.out.println("Done exporting metadata.");
             System.out.flush();
-        } finally {
-            System.out.println("Done closing index.");
-            System.out.flush();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        System.out.flush();
     }
 
     Set<String> fieldNames = new HashSet<>();
@@ -81,9 +78,7 @@ public class ExportMetadata {
     }
 
     /**
-     * Export the whole corpus.
-     *
-     * @param exportDir directory to export to
+     * Export the corpus metadata.
      */
     private void collect() {
 
@@ -137,5 +132,11 @@ public class ExportMetadata {
             }
             System.out.println("Close export file...");
         }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (index != null)
+            index.close();
     }
 }

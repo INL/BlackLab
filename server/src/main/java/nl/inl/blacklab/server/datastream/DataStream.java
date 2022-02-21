@@ -1,12 +1,13 @@
 package nl.inl.blacklab.server.datastream;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.util.ServletUtil;
-
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * Class to stream out XML or JSON data.
@@ -98,8 +99,8 @@ public abstract class DataStream {
 
     private final boolean prettyPrintPref;
 
-    /** Should contextList omit empty properties if possible? */
-    protected boolean omitEmptyProperties = false;
+    /** Should contextList omit empty annotations if possible? */
+    protected boolean omitEmptyAnnotations = false;
 
     public DataStream(PrintWriter out, boolean prettyPrint) {
         this.out = out;
@@ -244,7 +245,7 @@ public abstract class DataStream {
     public DataStream entry(String key, boolean value) {
         return startEntry(key).value(value).endEntry();
     }
-    
+
     /* NOTE: the attrEntry methods that follow mirror the entry methods above.
      *       Both sets of methods are intended only for entries in maps.
      *       The attrEntry versions are specifically meant for the case where you're not sure
@@ -294,6 +295,63 @@ public abstract class DataStream {
     public abstract DataStream value(double value);
 
     public abstract DataStream value(boolean value);
+
+    /**
+     * Output a map.
+     *
+     * May contain nested structures (Map, List) and/or values.
+     *
+     * @param value map to output
+     * @param <S>   entry key type
+     * @param <T>   entry value type
+     * @return this data stream
+     */
+    public <S, T> DataStream value(Map<S, T> value) {
+        startMap();
+        for (Map.Entry<S, T> entry : value.entrySet()) {
+            startEntry(entry.getKey().toString()).valueStruct(entry.getValue()).endEntry();
+        }
+        endMap();
+        return this;
+    }
+
+    /**
+     * Output a list.
+     *
+     * May contain nested structures (Map, List) and/or values.
+     *
+     * Uses "item" for the list item name (in XML mode).
+     *
+     * @param value list to output
+     * @param <T>   list item type
+     * @return this data stream
+     */
+    public <T> DataStream value(List<T> value) {
+        startList();
+        for (T item : value) {
+            startItem("item").valueStruct(item).endItem();
+        }
+        endList();
+        return this;
+    }
+
+    /**
+     * Output a value that may be a nested structure (Map or List) or simple value.
+     *
+     * @param value value to output
+     * @param <T>   value type
+     * @return this data stream
+     */
+    public <T> DataStream valueStruct(T value) {
+        if (value instanceof Map) {
+            value((Map) value);
+        } else if (value instanceof List) {
+            value((List) value);
+        } else {
+            value(value);
+        }
+        return this;
+    }
 
     public DataStream plain(String value) {
         return print(value);
@@ -346,8 +404,8 @@ public abstract class DataStream {
         out.println("");
     }
 
-    public void setOmitEmptyProperties(boolean omitEmptyProperties) {
-        this.omitEmptyProperties = omitEmptyProperties;
+    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
+        this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
 }

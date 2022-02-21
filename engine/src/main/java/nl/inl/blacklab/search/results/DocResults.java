@@ -15,11 +15,16 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.resultproperty.*;
-import nl.inl.blacklab.search.results.Hits.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValues;
@@ -32,14 +37,23 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 
-import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueDoc;
+import nl.inl.blacklab.resultproperty.PropertyValueInt;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.Hits.EphemeralHit;
+import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A list of DocResult objects (document-level query results).
+ *
+ * This class is thread-safe.
  */
 public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
 
@@ -377,7 +391,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().id());
+            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -533,8 +547,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    int subtractClosingToken = 1; // the count is always 1 too high because of the "extra closing token" (position for closing tags)
+                    Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
@@ -547,7 +560,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                 numberOfDocuments++;
                                 if (countTokens){
                                 	tokenLengthValues.advanceExact(docId);
-                                    numberOfTokens += tokenLengthValues.longValue() - subtractClosingToken;
+                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;;
                                 }
                             }
                         }

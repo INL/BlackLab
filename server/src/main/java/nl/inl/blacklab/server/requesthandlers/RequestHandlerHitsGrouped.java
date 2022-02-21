@@ -8,13 +8,13 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.*;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.blacklab.server.search.BlsCacheEntry;
 import nl.inl.util.BlockTimer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -43,10 +43,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         HitGroups groups;
-        BlsCacheEntry<HitGroups> search;
+        SearchCacheEntry<HitGroups> search;
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
-            search = (BlsCacheEntry<HitGroups>)searchParam.hitsGroupedStats().executeAsync();
+            search = searchParam.hitsGroupedStats().executeAsync();
             // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -83,8 +83,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false, subcorpusSize);
         ds.endMap().endEntry();
-
-        searchLogger.setResultsFound(groups.size());
 
         /* Gather group values per property:
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will

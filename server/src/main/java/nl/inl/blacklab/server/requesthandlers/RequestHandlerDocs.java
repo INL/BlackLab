@@ -26,12 +26,12 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultCount;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.search.BlsCacheEntry;
 
 /**
  * Request handler for the doc results.
@@ -43,8 +43,8 @@ public class RequestHandlerDocs extends RequestHandler {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    BlsCacheEntry<?> search = null;
-    BlsCacheEntry<ResultCount> originalHitsSearch;
+    SearchCacheEntry<?> search = null;
+    SearchCacheEntry<ResultCount> originalHitsSearch;
     DocResults totalDocResults;
     DocResults window;
     private DocResults docResults;
@@ -64,7 +64,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = (BlsCacheEntry<ResultCount>)searchParam.hitsCount().executeAsync();
+            originalHitsSearch = searchParam.hitsCount().executeAsync();
         }
 
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
@@ -82,9 +82,9 @@ public class RequestHandlerDocs extends RequestHandler {
     private int doViewGroup(DataStream ds, String viewGroup) throws BlsException, InvalidQuery {
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
 
-        BlsCacheEntry<DocGroups> docGroupFuture;
+        SearchCacheEntry<DocGroups> docGroupFuture;
         // Yes. Group, then show hits from the specified group
-        search = docGroupFuture = (BlsCacheEntry<DocGroups>)searchParam.docsGrouped().executeAsync();
+        search = docGroupFuture = searchParam.docsGrouped().executeAsync();
         DocGroups groups;
         try {
             groups = docGroupFuture.get();
@@ -129,11 +129,11 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
-        BlsCacheEntry<DocResults> searchWindow = (BlsCacheEntry<DocResults>)searchParam.docsWindow().executeAsync();
+        SearchCacheEntry<DocResults> searchWindow = searchParam.docsWindow().executeAsync();
         search = searchWindow;
 
         // Also determine the total number of hits
-        BlsCacheEntry<DocResults> total = (BlsCacheEntry<DocResults>)searchParam.docs().executeAsync();
+        SearchCacheEntry<DocResults> total = searchParam.docs().executeAsync();
 
         try {
             window = searchWindow.get();
@@ -194,8 +194,6 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.endEntry();
 
         ds.endMap().endEntry();
-
-        searchLogger.setResultsFound(docsStats.processedSoFar());
 
         // The hits and document info
         ds.startEntry("docs").startList();

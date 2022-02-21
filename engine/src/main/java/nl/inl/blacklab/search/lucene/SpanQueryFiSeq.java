@@ -15,11 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import java.io.IOException;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
-
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -27,10 +26,10 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.NfaTwoWay;
+import java.io.IOException;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Find hits that match the specified NFA, starting from the specified anchor
@@ -95,7 +94,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         // Finalize our NFA, so it looks up annotation numbers for its annotation names.
         nfa.finish();
-        nfa.lookupPropertyNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
+        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;

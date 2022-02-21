@@ -13,7 +13,7 @@ public class MatchFilterString extends MatchFilter {
 
     /**
      * Term index if we know the annotation index to use for this expression (i.e.
-     * propIndex >= 0), or -1 if not
+     * annotIndex >= 0), or -1 if not
      */
     int termIndex = -1;
 

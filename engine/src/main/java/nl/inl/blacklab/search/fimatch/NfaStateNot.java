@@ -84,11 +84,11 @@ public class NfaStateNot extends NfaState {
     }
 
     @Override
-    void lookupPropertyNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         if (clause != null)
-            clause.lookupPropertyNumbers(fiAccessor, statesVisited);
+            clause.lookupAnnotationNumbers(fiAccessor, statesVisited);
         if (nextState != null)
-            nextState.lookupPropertyNumbers(fiAccessor, statesVisited);
+            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }
 
     @Override

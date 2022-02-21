@@ -49,7 +49,7 @@ public class TestQueryRewriteNfa {
     @AfterClass
     public static void tearDown() {
         ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(true);
-        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
+        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.defaultForwardIndexMatchingThreshold);
         if (index != null)
             index.close();
         if (testIndex != null)
