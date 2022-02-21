@@ -1,4 +1,8 @@
-#!/bin/sh
+#!/bin/bash
+
+set -e
+
+export DOCKER_BUILDKIT=1
 
 # Build and run BlackLab Server
 # (--force-recreate to avoid error 'network not found')
