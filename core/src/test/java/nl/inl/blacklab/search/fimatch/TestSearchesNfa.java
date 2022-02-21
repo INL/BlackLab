@@ -31,7 +31,7 @@ public class TestSearchesNfa {
     public static void tearDown() {
         if (testIndex != null)
             testIndex.close();
-        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.DEFAULT_NFA_THRESHOLD);
+        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.defaultForwardIndexMatchingThreshold);
     }
 
     @Test

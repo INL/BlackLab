@@ -324,6 +324,8 @@ search:
 
     # How eagerly to apply "forward index matching" to certain queries
     # [advanced technical setting; don't worry about this unless you want to experiment]
+    # [if you want to disable forward index matching, which may be beneficial
+    #  if you indexes are small and your query volume is high, set this to 0]
     fiMatchFactor: 900
 
 
