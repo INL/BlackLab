@@ -547,7 +547,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
+                    Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
@@ -560,7 +560,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                 numberOfDocuments++;
                                 if (countTokens){
                                 	tokenLengthValues.advanceExact(docId);
-                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;;
+                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                                 }
                             }
                         }
