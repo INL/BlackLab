@@ -8,7 +8,9 @@ configVersion: 2
 # Where indexes can be found
 # (list directories whose subdirectories are indexes, or directories containing a single index)
 indexLocations:
-- /data
+- /data/index
+
+userIndexes: /data/user-index
 
 
 # Settings related to tuning server load and client responsiveness
@@ -45,3 +47,10 @@ debug:
     # Always allow debug info? (default: no)
     # Useful for development. Disable in production.
     alwaysAllowDebugInfo: yes
+
+# How to determine current user
+# (you only need this if you want per-user private indices or authorization)
+authentication:
+    system:
+        class: AuthHttpBasic
+

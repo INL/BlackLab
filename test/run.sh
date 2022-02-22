@@ -15,4 +15,4 @@ docker-compose run --rm test
 # Clean up
 # (stop then down to avoid warning about network in use)
 docker-compose stop testserver
-docker-compose down testserver
+docker-compose down -v
