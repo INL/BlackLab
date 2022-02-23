@@ -56,11 +56,19 @@ public abstract class ForwardIndexAccessor {
     /**
      * Get an accessor for forward index documents from this leafreader.
      *
+     * The returned accessor may not be threadsafe, which is okay, because it is only used
+     * from Spans (which are always single-threaded).
+     *
      * @param reader index reader
      * @return reader-specific accessor
      */
     public abstract ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader);
 
+    /**
+     * A way to access the forward index for documents from a single LeafReader.
+     *
+     * Not thread-safe (only used from Spans).
+     */
     public abstract class ForwardIndexAccessorLeafReader {
 
         protected LeafReader reader;

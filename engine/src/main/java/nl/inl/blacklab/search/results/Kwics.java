@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-/** KWICs for a list of hits. */
+/** KWICs ("key words in context") for a list of hits. */
 public class Kwics {
     
     /**
@@ -56,11 +56,12 @@ public class Kwics {
     /**
      * Retrieve KWICs for a (sub)list of hits.
      *
-     * KWICs are the hit words 'centered' with a certain number of context words
-     * around them.
+     * KWICs ("key words in context") are the hit words 'centered' with a
+     * certain number of context words around them.
      *
+     * @param hits hits to retrieve kwics for
      * @param contextSize how many words around the hit to retrieve
-     * @param fieldName field to use for building KWICs
+     * @param field field to use for building KWICs
      *
      * @return the KWICs
      */

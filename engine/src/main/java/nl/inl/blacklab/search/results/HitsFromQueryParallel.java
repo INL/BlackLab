@@ -616,4 +616,9 @@ public class HitsFromQueryParallel extends Hits {
         result.put("spansReaders-done", spansReaders.stream().map(r -> r.isDone).collect(Collectors.toList()));
         return result;
     }
+
+    @Override
+    public boolean hasAscendingLuceneDocIds() {
+        return true;
+    }
 }

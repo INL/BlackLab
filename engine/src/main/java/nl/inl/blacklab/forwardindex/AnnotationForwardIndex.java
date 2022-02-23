@@ -33,9 +33,6 @@ public abstract class AnnotationForwardIndex {
      */
     private static final String CURRENT_VERSION = "5";
 
-    /** The number of cached fiids we check to see if this field is set anywhere. */
-    static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
-
     /**
      * Java has as limit of 2GB for MappedByteBuffer. But this could be worked
      * around using arrays of MappedByteBuffers, see:

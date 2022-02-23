@@ -38,6 +38,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     /**
      * Count occurrences of context words around hit.
+     *
      * @param hits hits to get collocations for
      * @param annotation annotation to use for the collocations, or null if default
      * @param contextSize how many words around hits to use

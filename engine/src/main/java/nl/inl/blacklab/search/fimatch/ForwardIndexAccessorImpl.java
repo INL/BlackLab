@@ -106,7 +106,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     /**
      * Forward index accessor for a single LeafReader.
      *
-     * Thread-safe.
+     * Not thread-safe (only used from Spans).
      */
     class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 

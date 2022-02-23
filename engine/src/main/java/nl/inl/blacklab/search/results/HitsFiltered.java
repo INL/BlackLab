@@ -32,9 +32,19 @@ public class HitsFiltered extends Hits {
 
     private int indexInSource = -1;
 
+    private boolean ascendingLuceneDocIds;
+
+    /**
+     * Filter hits.
+     *
+     * @param hits hits to filter
+     * @param property property to filter by
+     * @param value value to filter with
+     */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo(), false);
         this.source = hits;
+        ascendingLuceneDocIds = source.hasAscendingLuceneDocIds();
 
         // If the filter property requires contexts, fetch them now.
         List<Annotation> contextsNeeded = property.needsContext();
@@ -127,5 +137,10 @@ public class HitsFiltered extends Hits {
     @Override
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
+    }
+
+    @Override
+    public boolean hasAscendingLuceneDocIds() {
+        return ascendingLuceneDocIds;
     }
 }

@@ -1,5 +1,10 @@
 # Change Log
 
+## Improvements in future Lucene 8 version
+
+- Update to the new DocValues API (sequential instead of random-access) 
+  See https://sbdevel.wordpress.com/2019/03/12/docvalues-jump-tables-in-lucene-solr-8/
+
 ## Improvements in 2.3.0-SNAPSHOT
 
 ### Changed

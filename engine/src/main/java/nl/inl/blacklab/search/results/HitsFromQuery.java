@@ -326,4 +326,8 @@ public class HitsFromQuery extends Hits {
         return maxStats;
     }
 
+    @Override
+    public boolean hasAscendingLuceneDocIds() {
+        return true;
+    }
 }
