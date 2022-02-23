@@ -24,7 +24,7 @@ function expectHitsImpl(params, numberOfHits, numberOfDocs, expectedFirstHitJson
                 sort: "wordleft:word:i,wordright:word:i,field:pid",
                 wordsaroundhit: 1,
                 waitfortotal: "true",
-                usecache: "no",
+                //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
                 ...useParams
             })
             .set('Accept', 'application/json')
@@ -49,7 +49,7 @@ function expectHitsImpl(params, numberOfHits, numberOfDocs, expectedFirstHitJson
                         "sort": "wordleft:word:i,wordright:word:i,field:pid",
                         "wordsaroundhit": "1",
                         "waitfortotal": "true",
-                        "usecache": "no",
+                        //"usecache": "no", // causes the search to be executed multiple times (hits, count, etc.)
                         ...useParams,
                     },
                     "windowFirstResult": 0,
