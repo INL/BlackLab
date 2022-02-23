@@ -151,7 +151,7 @@ public class RequestHandlerDocs extends RequestHandler {
         totalTime = total.threwException() ? -1 : total.timeUserWaitedMs();
 
         return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
-}
+    }
 
     private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
