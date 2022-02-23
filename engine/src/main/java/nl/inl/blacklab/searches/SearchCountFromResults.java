@@ -1,10 +1,12 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.ResultCount.CountType;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * A search operation that yields a count as its result.
@@ -12,26 +14,109 @@ import nl.inl.blacklab.search.results.Results;
  */
 public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
 
-    private SearchResults<T> source;
-    private CountType type;
+    /** Placeholder ResultsStats for when counting hasn't begun yet.
+     *
+     *  Will return 0 if the count object doesn't exist yet, and simply
+     *  delegate after it has been created. */
+    private static class ResultsStatsDelegate extends ResultsStats {
 
-    public SearchCountFromResults(QueryInfo queryInfo, SearchResults<T> source, CountType type) {
+        private ResultsStats count;
+
+        public void setRealCount(ResultsStats count) {
+            this.count = count;
+        }
+
+        @Override
+        public boolean processedAtLeast(int lowerBound) {
+            return count == null ? lowerBound == 0 : count.processedAtLeast(lowerBound);
+        }
+
+        @Override
+        public int processedTotal() {
+            return count == null ? 0 : count.processedTotal();
+        }
+
+        @Override
+        public int processedSoFar() {
+            return count == null ? 0 : count.processedSoFar();
+        }
+
+        @Override
+        public int countedSoFar() {
+            return count == null ? 0 : count.countedSoFar();
+        }
+
+        @Override
+        public int countedTotal() {
+            return count == null ? 0 : count.countedTotal();
+        }
+
+        @Override
+        public boolean done() {
+            return count == null ? false : count.done();
+        }
+
+        @Override
+        public MaxStats maxStats() {
+            return count == null ? MaxStats.NOT_EXCEEDED : count.maxStats();
+        }
+
+        @Override
+        public String toString() {
+            return "ResultsStatsDelegate(" + (count == null ? "no count yet" : count.toString()) + ")";
+        }
+    }
+
+    /**
+     * The search we're doing a count for.
+     */
+    private final SearchForResults<T> source;
+
+    /**
+     * Type of count we want (number of hits or docs).
+     */
+    private final CountType type;
+
+    /**
+     * The (running or finished) result count.
+     * We can peek at this while it's running, or wait for executeInternal() to
+     * complete, returning the final results.
+     */
+    private ResultsStatsDelegate resultCount;
+
+    public SearchCountFromResults(QueryInfo queryInfo, SearchForResults<T> source, CountType type) {
         super(queryInfo);
         this.source = source;
         this.type = type;
+
+        // Make sure we can peek at the count right away
+        resultCount = new ResultsStatsDelegate();
     }
 
     @Override
-    public ResultCount executeInternal() throws InvalidQuery {
-        ResultCount resultCount = new ResultCount(source.executeNoQueue(), type);
+    public ResultsStats executeInternal() throws InvalidQuery {
+        // Start the search and construct the count object
+        ResultsStats actualCount = new ResultCount(source.executeNoQueue(), type);
 
-        // Ensure that the all hits will be counted in a separate thread.
-        // (Why a separate thread? Because SearchCountFromResults immediately returns its
-        //  result object, and the caller can monitor this object to see the running total
-        //  while it is being counted)
-        SearchCountTotal<Results<?, ?>> searchCountTotal = new SearchCountTotal<>(queryInfo(), resultCount);
-        searchCountTotal.executeAsyncNoQueue();
+        // Update our ResultsStatsDelegate to report the actual count from now on
+        resultCount.setRealCount(actualCount);
 
+        // Gather all the hits.
+        // This runs synchronously, so SearchCountFromResults will not be finished until
+        // the entire count it finished. You can peek at the running count in the meantime,
+        // however.
+        resultCount.processedTotal();
+
+        return resultCount;
+    }
+
+    /**
+     * Peek at the running count.
+     *
+     * @return running count
+     */
+    @Override
+    public ResultsStats peek() {
         return resultCount;
     }
 
@@ -66,7 +151,7 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
 
     @Override
     public String toString() {
-        return toString("count", source, type);
+        return toString("countfromresults", source, type);
     }
 
 }

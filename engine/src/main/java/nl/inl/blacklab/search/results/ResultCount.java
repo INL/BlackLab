@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
 public class ResultCount extends ResultsStats implements SearchResult {
@@ -14,7 +17,11 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     private boolean wasInterrupted = false;
 
+    /** Type of results we're counting, to report in toString() */
+    private final CountType type;
+
     public ResultCount(Results<?, ?> count, CountType type) {
+        this.type = type;
         switch (type) {
         case RESULTS:
             this.count = count.resultsStats();
@@ -50,7 +57,9 @@ public class ResultCount extends ResultsStats implements SearchResult {
 
     private void update() {
         if (!count.isStatic() && count.done()) {
-            // Disengage from the search object and save the totals.
+            // We were monitoring the count from a results object that stores all the results.
+            // In order to allow that to be garbage collected when possible, disengage from
+            // the search object and save the totals.
             count = count.save();
         }
     }
@@ -133,20 +142,27 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int numberOfResultObjects() {
-        return 1;
-    }
-
-    @Override
     public boolean wasInterrupted() {
         return wasInterrupted;
     }
 
     @Override
     public String toString() {
-        return "ResultCount [count=" + count + ", wasInterrupted=" + wasInterrupted + "]";
+        return "ResultCount [count=" + count + ", type=" + type + ", wasInterrupted=" + wasInterrupted + "]";
     }
 
+    /**
+     * Return debug info.
+     */
+    public Map<String, Object> getDebugInfo() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("className", getClass().getName());
+        result.put("count-className", count.getClass().getName());
+        result.put("done", count.done());
+        result.put("processedSoFar", count.processedSoFar());
+        result.put("countedSoFar", count.countedSoFar());
+        return result;
+    }
 
 
 }

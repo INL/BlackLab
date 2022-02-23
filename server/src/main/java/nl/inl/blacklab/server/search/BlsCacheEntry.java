@@ -160,18 +160,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return worthiness;
     }
 
-    public Throwable exceptionThrown() {
-        return exceptionThrown;
-    }
-
-    public String exceptionStacktrace() {
-        if (exceptionThrown == null)
-            return "";
-        StringWriter out = new StringWriter();
-        exceptionThrown.printStackTrace(new PrintWriter(out));
-        return out.toString();
-    }
-
     @Override
     public boolean isCancelled() {
         return cancelled || future != null && future.isCancelled();
@@ -407,6 +395,8 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
                         "stackTrace", st.toString()
                 );
                 debugInfo.put("thrownException", thrownException);
+            } else {
+                debugInfo.put("thrownException", Collections.emptyMap());
             }
             info.put("debugInfo", debugInfo);
         }
@@ -461,4 +451,17 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return reason;
     }
 
+    /**
+     * Peek at the result even if it's not yet finished.
+     *
+     * Used for running counts.
+     *
+     * @return the result so far, or null if not supported for this operation
+     */
+    @Override
+    public T peek() throws ExecutionException {
+        if (isCancelled())
+            throw new ExecutionException(exceptionThrown);
+        return this.search.peek();
+    }
 }

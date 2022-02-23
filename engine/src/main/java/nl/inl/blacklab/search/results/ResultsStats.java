@@ -1,6 +1,9 @@
 package nl.inl.blacklab.search.results;
 
-public abstract class ResultsStats {
+import java.util.Collections;
+import java.util.Map;
+
+public abstract class ResultsStats implements SearchResult {
 
     public abstract boolean processedAtLeast(int lowerBound);
 
@@ -67,5 +70,22 @@ public abstract class ResultsStats {
 
     @Override
     public abstract String toString();
+
+    /**
+     * How many result objects are stored here?
+     * @return
+     */
+    @Override
+    public int numberOfResultObjects() {
+        return 1;
+    }
+
+    /**
+     * Return debug info.
+     */
+    @Override
+    public Map<String, Object> getDebugInfo() {
+        return Collections.emptyMap();
+    }
 
 }

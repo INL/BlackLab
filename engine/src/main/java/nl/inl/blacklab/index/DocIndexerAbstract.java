@@ -148,6 +148,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      * @param reader document
      */
     @Override
+    @Deprecated
     public void setDocument(Reader reader) {
         this.reader = new CountingReader(reader);
     }

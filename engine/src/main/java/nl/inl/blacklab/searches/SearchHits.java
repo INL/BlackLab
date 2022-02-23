@@ -1,14 +1,19 @@
 package nl.inl.blacklab.searches;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.*;
-import org.apache.lucene.search.Query;
+import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
-public abstract class SearchHits extends SearchResults<Hits> {
+public abstract class SearchHits extends SearchForResults<Hits> {
 
     public SearchHits(QueryInfo queryInfo) {
         super(queryInfo);

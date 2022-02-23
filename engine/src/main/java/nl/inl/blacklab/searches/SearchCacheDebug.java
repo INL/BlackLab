@@ -24,7 +24,7 @@ public class SearchCacheDebug implements SearchCache {
             } catch (InvalidQuery e) {
                 throw new CompletionException(e);
             }
-            result = SearchCacheEntry.fromFuture(CompletableFuture.completedFuture(searchResults));
+            result = SearchCacheEntry.fromFuture(CompletableFuture.completedFuture(searchResults), search);
             searches.put(search, result);
             System.out.println("Not found in cache, adding now: " + search);
         } else {
