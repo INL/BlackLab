@@ -114,6 +114,17 @@ public interface Search<R extends SearchResult> {
      */
     R executeInternal() throws InvalidQuery;
 
+    /**
+     * Peek at the result of some operations even if the operation isn't finished yet.
+     *
+     * Used for running counts.
+     *
+     * @return the result so far, or null if not supported for this operation
+     */
+    default R peek() {
+        return null;
+    }
+
     @Override
     boolean equals(Object obj);
 

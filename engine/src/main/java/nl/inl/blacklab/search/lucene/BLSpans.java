@@ -29,6 +29,9 @@ import nl.inl.blacklab.search.Span;
  *
  * The default implementation is appropriate for Spans classes that return only
  * single-term hits.
+ *
+ * Note that Spans will iterate through a Lucene index segment in a single thread,
+ * therefore Spans and subclasses don't need to be thread-safe.
  */
 public abstract class BLSpans extends Spans {
 

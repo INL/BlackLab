@@ -16,10 +16,13 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntry<R> {
 
+    private final Search<R> search;
+
     final Future<R> future;
 
-    public SearchCacheEntryFromFuture(Future<R> future) {
+    public SearchCacheEntryFromFuture(Future<R> future, Search<R> search) {
         this.future = future;
+        this.search = search;
     }
 
     @Override
@@ -35,6 +38,13 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
     @Override
     public R get(long arg0, TimeUnit arg1) throws InterruptedException, ExecutionException, TimeoutException {
         return future.get(arg0, arg1);
+    }
+
+    @Override
+    public R peek() throws ExecutionException {
+        if (isCancelled())
+            throw new ExecutionException("Search was cancelled", null);
+        return search.peek();
     }
 
     /**

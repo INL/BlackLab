@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.results.Results;
 /** A search that yields results.
  * @param <R> results type, e.g. Hits
  */
-public abstract class SearchResults<R extends Results<?, ?>> extends AbstractSearch<R> {
+public abstract class SearchForResults<R extends Results<?, ?>> extends AbstractSearch<R> {
 
-    SearchResults(QueryInfo queryInfo) {
+    SearchForResults(QueryInfo queryInfo) {
         super(queryInfo);
     }
 

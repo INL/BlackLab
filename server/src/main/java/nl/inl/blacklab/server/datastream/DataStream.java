@@ -286,10 +286,6 @@ public abstract class DataStream {
 
     public abstract DataStream value(String value);
 
-    public DataStream value(Object value) {
-        return value(value == null ? "" : value.toString());
-    }
-
     public abstract DataStream value(long value);
 
     public abstract DataStream value(double value);
@@ -302,14 +298,16 @@ public abstract class DataStream {
      * May contain nested structures (Map, List) and/or values.
      *
      * @param value map to output
-     * @param <S>   entry key type
-     * @param <T>   entry value type
+     * @param <S> entry key type
+     * @param <T> entry value type
      * @return this data stream
      */
     public <S, T> DataStream value(Map<S, T> value) {
         startMap();
-        for (Map.Entry<S, T> entry : value.entrySet()) {
-            startEntry(entry.getKey().toString()).valueStruct(entry.getValue()).endEntry();
+        if (value != null) {
+            for (Map.Entry<S, T> entry : value.entrySet()) {
+                startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
+            }
         }
         endMap();
         return this;
@@ -323,13 +321,15 @@ public abstract class DataStream {
      * Uses "item" for the list item name (in XML mode).
      *
      * @param value list to output
-     * @param <T>   list item type
+     * @param <T> list item type
      * @return this data stream
      */
     public <T> DataStream value(List<T> value) {
         startList();
-        for (T item : value) {
-            startItem("item").valueStruct(item).endItem();
+        if (value != null) {
+            for (T item : value) {
+                startItem("item").value(item).endItem();
+            }
         }
         endList();
         return this;
@@ -339,69 +339,28 @@ public abstract class DataStream {
      * Output a value that may be a nested structure (Map or List) or simple value.
      *
      * @param value value to output
-     * @param <T>   value type
      * @return this data stream
      */
-    public <T> DataStream valueStruct(T value) {
+    public DataStream value(Object value) {
         if (value instanceof Map) {
-            value((Map) value);
+            return value((Map)value);
         } else if (value instanceof List) {
-            value((List) value);
+            return value((List)value);
+        } else if (value instanceof String) {
+            return value((String)value);
+        } else if (value instanceof Integer || value instanceof Long) {
+            return value(((Number) value).longValue());
+        } else if (value instanceof Double || value instanceof Float) {
+            return value(((Number) value).doubleValue());
+        } else if (value instanceof Boolean) {
+            return value((boolean)value);
         } else {
-            value(value);
+            return value(value == null ? "" : value.toString());
         }
-        return this;
     }
 
     public DataStream plain(String value) {
         return print(value);
-    }
-
-    public static void main(String[] args) {
-        PrintWriter out = new PrintWriter(System.out);
-
-        DataStream test;
-        test = new DataStreamXml(out, true);
-        go(test, out);
-        test = new DataStreamXml(out, false);
-        go(test, out);
-        test = new DataStreamJson(out, true, null);
-        go(test, out);
-//		test = new DataStreamJson(System.out, false, null);
-//		go(test, out);
-        test = new DataStreamJson(out, false, "myJsonCallback");
-        go(test, out);
-
-        out.flush();
-    }
-
-    private static void go(DataStream test, PrintWriter out) {
-        test
-                .startDocument("test")
-                .entry("fun", true)
-                .startEntry("cats")
-                .startMap()
-                .startAttrEntry("cat", "name", "Sylvie")
-                .startAttrEntry("cat", "prefix:missing", "notdeclared")
-                .startList()
-                .item("place", "Voorschoten")
-                .endList()
-                .endEntry()
-                .startAttrEntry("cat", "name", "Jelmer")
-                .startList()
-                .item("place", "Haarlem")
-                .item("place", "Leiden")
-                .item("place", "Haarlem")
-                .endList()
-                .endEntry()
-                .entry("test", "bla")
-                .attrEntry("test", "attr", "key", "value")
-                .indent().startCompact().startAttrEntry("test", "attr", "key2").value("value2").endAttrEntry()
-                .endCompact().newline()
-                .endMap()
-                .endEntry()
-                .endDocument("test");
-        out.println("");
     }
 
     public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
