@@ -1,7 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.ResultCount.CountType;
@@ -13,59 +13,6 @@ import nl.inl.blacklab.search.results.ResultsStats;
  * @param <T> result type, e.g. Hit
  */
 public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
-
-    /** Placeholder ResultsStats for when counting hasn't begun yet.
-     *
-     *  Will return 0 if the count object doesn't exist yet, and simply
-     *  delegate after it has been created. */
-    private static class ResultsStatsDelegate extends ResultsStats {
-
-        private ResultsStats count;
-
-        public void setRealCount(ResultsStats count) {
-            this.count = count;
-        }
-
-        @Override
-        public boolean processedAtLeast(int lowerBound) {
-            return count == null ? lowerBound == 0 : count.processedAtLeast(lowerBound);
-        }
-
-        @Override
-        public int processedTotal() {
-            return count == null ? 0 : count.processedTotal();
-        }
-
-        @Override
-        public int processedSoFar() {
-            return count == null ? 0 : count.processedSoFar();
-        }
-
-        @Override
-        public int countedSoFar() {
-            return count == null ? 0 : count.countedSoFar();
-        }
-
-        @Override
-        public int countedTotal() {
-            return count == null ? 0 : count.countedTotal();
-        }
-
-        @Override
-        public boolean done() {
-            return count == null ? false : count.done();
-        }
-
-        @Override
-        public MaxStats maxStats() {
-            return count == null ? MaxStats.NOT_EXCEEDED : count.maxStats();
-        }
-
-        @Override
-        public String toString() {
-            return "ResultsStatsDelegate(" + (count == null ? "no count yet" : count.toString()) + ")";
-        }
-    }
 
     /**
      * The search we're doing a count for.
@@ -82,24 +29,18 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      * We can peek at this while it's running, or wait for executeInternal() to
      * complete, returning the final results.
      */
-    private ResultsStatsDelegate resultCount;
+    private ResultsStats resultCount;
 
     public SearchCountFromResults(QueryInfo queryInfo, SearchForResults<T> source, CountType type) {
         super(queryInfo);
         this.source = source;
         this.type = type;
-
-        // Make sure we can peek at the count right away
-        resultCount = new ResultsStatsDelegate();
     }
 
     @Override
     public ResultsStats executeInternal() throws InvalidQuery {
         // Start the search and construct the count object
-        ResultsStats actualCount = new ResultCount(source.executeNoQueue(), type);
-
-        // Update our ResultsStatsDelegate to report the actual count from now on
-        resultCount.setRealCount(actualCount);
+        resultCount = new ResultCount(source.executeNoQueue(), type);
 
         // Gather all the hits.
         // This runs synchronously, so SearchCountFromResults will not be finished until
@@ -117,7 +58,14 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      */
     @Override
     public ResultsStats peek() {
-        return resultCount;
+        try {
+            while (resultCount == null) {
+                Thread.sleep(50);
+            }
+            return resultCount;
+        } catch (InterruptedException e) {
+            throw new InterruptedSearch(e);
+        }
     }
 
     @Override
