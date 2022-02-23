@@ -22,7 +22,10 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.LogMergePolicy;
 import org.apache.lucene.index.MergePolicy;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -294,7 +297,19 @@ public final class LuceneUtil {
             String prefix, boolean sensitive) {
         return findTermsByPrefix(index, fieldName, prefix, sensitive, -1);
     }
-    
+
+    public static SortedDocValuesCacher cacher(SortedDocValues dv) {
+        return dv == null ? null : new SortedDocValuesCacher(dv);
+    }
+
+    public static SortedSetDocValuesCacher cacher(SortedSetDocValues dv) {
+        return dv == null ? null : new SortedSetDocValuesCacher(dv);
+    }
+
+    public static NumericDocValuesCacher cacher(NumericDocValues dv) {
+        return dv == null ? null : new NumericDocValuesCacher(dv);
+    }
+
     /** Handle a term. */
     @FunctionalInterface
     public interface TermHandler {

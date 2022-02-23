@@ -68,6 +68,9 @@ public abstract class ForwardIndexAccessor {
      * A way to access the forward index for documents from a single LeafReader.
      *
      * Not thread-safe (only used from Spans).
+     *
+     * CAUTION: the methods like advanceForwardIndexDoc() that take a Lucene doc id
+     * MUST be called with ascending doc ids! Only work with one ForwardIndexDocument at a time!
      */
     public abstract class ForwardIndexAccessorLeafReader {
 
@@ -81,10 +84,13 @@ public abstract class ForwardIndexAccessor {
          * Get a token source, which we can use to get tokens from a document for
          * different annotations.
          *
+         * CAUTION: only call this with ascending doc ids, and only work with one
+         * ForwardIndexDocument at a time!
+         *
          * @param docId Lucene document id
          * @return the token source
          */
-        public abstract ForwardIndexDocument getForwardIndexDoc(int docId);
+        public abstract ForwardIndexDocument advanceForwardIndexDoc(int docId);
 
         /**
          * Return the document length in tokens.
@@ -94,7 +100,7 @@ public abstract class ForwardIndexAccessor {
          * @param docId Lucene document id
          * @return document length in tokens
          */
-        public abstract int getDocLength(int docId);
+        protected abstract int getDocLength(int docId);
 
         /**
          * Get a chunk of tokens from a forward index
@@ -105,16 +111,7 @@ public abstract class ForwardIndexAccessor {
          * @param end one more than the last token to get
          * @return chunk of tokens
          */
-        abstract int[] getChunk(int annotIndex, int docId, int start, int end);
-
-        /**
-         * Get the forward index id for the specified annotation and document.
-         *
-         * @param annotIndex annotation to get tokens for
-         * @param docId Lucene document id
-         * @return forward index id
-         */
-        abstract int getFiid(int annotIndex, int docId);
+        protected abstract int[] getChunk(int annotIndex, int docId, int start, int end);
 
         /**
          * Get the number of mapped annotations.

@@ -17,8 +17,9 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * This is used by SpanQueryFiSeq to get the forward index id (fiid).
  *
- * Not thread-safe (only used from Spans).
- * Reason: DocValues can only be used from a single thread.
+ * Not thread-safe (because of DocValues; but only used from Spans).
+ *
+ * CAUTION: the advance() method can only be called with ascending doc ids!
  */
 public class DocIntFieldGetter implements Closeable {
 
@@ -62,12 +63,11 @@ public class DocIntFieldGetter implements Closeable {
      * @param doc the document
      * @return value of the int field
      */
-    public synchronized int getFieldValue(int doc) {
+    public synchronized int advance(int doc) {
 
         // Cached doc values?
         if (docValues != null) {
         	try {
-                // FIXME: cannot use random access to DocValues anymore!
         		docValues.advanceExact(doc);
 				return (int)docValues.longValue();
 			} catch (IOException e) {

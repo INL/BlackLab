@@ -30,6 +30,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.util.LuceneUtil;
+import nl.inl.util.NumericDocValuesCacher;
 
 /**
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
@@ -52,7 +54,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     private String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
-    private Map<Integer, NumericDocValues> docValues = null;
+    private Map<Integer, NumericDocValuesCacher> docValues = null;
     
     private BlackLabIndex index;
 
@@ -81,7 +83,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     numericDocValues = uninv.getNumericDocValues(fieldName);
                 }
                 if (numericDocValues != null) {
-                    docValues.put(rc.docBase, numericDocValues);
+                    docValues.put(rc.docBase, LuceneUtil.cacher(numericDocValues));
                 }
             }
             if (docValues.isEmpty()) {
@@ -100,33 +102,21 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     public long get(int docId) {
         if (docValues != null) {
             // Find the fiid in the correct segment
-            Entry<Integer, NumericDocValues> prev = null;
-            for (Entry<Integer, NumericDocValues> e : docValues.entrySet()) {
+            Entry<Integer, NumericDocValuesCacher> prev = null;
+            for (Entry<Integer, NumericDocValuesCacher> e : docValues.entrySet()) {
                 Integer docBase = e.getKey();
                 if (docBase > docId) {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
-                    NumericDocValues prevDocValues = prev.getValue();
-                    // FIXME: using sequential DocValues from multiple threads!
-                    try {
-                    	prevDocValues.advanceExact(docId - prevDocBase);
- 						return prevDocValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
- 					} catch (IOException e1) {
- 						 throw BlackLabRuntimeException.wrap(e1);
- 					}
+                    NumericDocValuesCacher prevDocValues = prev.getValue();
+                    return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
-            NumericDocValues prevDocValues = prev.getValue();
-            // FIXME: using sequential DocValues from multiple threads!
-            try {
-            	prevDocValues.advanceExact(docId - prevDocBase);
-				return prevDocValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
-			} catch (IOException e1) {
-				 throw BlackLabRuntimeException.wrap(e1);
-			}
+            NumericDocValuesCacher prevDocValues = prev.getValue();
+            return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         }
         
         // Not cached; find fiid by reading stored value from Document now

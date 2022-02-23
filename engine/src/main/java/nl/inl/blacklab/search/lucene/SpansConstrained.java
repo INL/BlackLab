@@ -96,7 +96,7 @@ public class SpansConstrained extends BLSpans {
     private int ensureValidDoc() throws IOException {
         int currentDocId = clause.docID();
         while (currentDocId != NO_MORE_DOCS) {
-            currentFiDoc = fiAccessor.getForwardIndexDoc(currentDocId);
+            currentFiDoc = fiAccessor.advanceForwardIndexDoc(currentDocId);
             clause.nextStartPosition();
             if (ensureValidHit() != NO_MORE_POSITIONS) {
                 alreadyAtFirstMatch = true;

@@ -76,7 +76,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
      * @param number the chunk number to fetch
      * @return the chunk
      */
-    protected int[] fetchChunk(int annotIndex, int number) {
+    private int[] fetchChunk(int annotIndex, int number) {
         int start = number * CHUNK_SIZE;
         int end = start + CHUNK_SIZE;
         if (end > docLengthTokens) {
