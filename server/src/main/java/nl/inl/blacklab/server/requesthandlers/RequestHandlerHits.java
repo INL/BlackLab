@@ -20,6 +20,7 @@ import org.apache.lucene.search.DocValuesTermsQuery;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -47,15 +48,18 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternSensitive;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchHitGroupsFromHits;
 import nl.inl.blacklab.searches.SearchHits;
@@ -92,8 +96,8 @@ public class RequestHandlerHits extends RequestHandler {
 
         SearchCacheEntry<?> cacheEntry;
         Hits hits;
-        ResultsStats hitsCount; // [running] hits count
-        ResultsStats docsCount; // [running] docs count
+        ResultsStats hitsCount = null; // [running] hits count
+        ResultsStats docsCount = null; // [running] docs count
 
         boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
         try {
@@ -106,11 +110,28 @@ public class RequestHandlerHits extends RequestHandler {
                 hitsCount = hits.hitsStats();
                 docsCount = hits.docsStats();
             } else {
-                // Regular hits request. Start the search.
-                cacheEntry = searchParam.hitsCount().executeAsync(); // always launch totals nonblocking!
-                hits = searchParam.hitsSample().execute();
-                hitsCount = ((SearchCacheEntry<ResultsStats>)cacheEntry).peek();
-                docsCount = searchParam.docsCount().executeAsync().peek();
+                // Regular hits request.
+                // Create the search objects
+                SearchHits searchHits = searchParam.hitsSample();
+                SearchCount searchHitCount = searchHits.hitCount();
+                SearchCount searchDocCount = searchHits.docCount();
+                // Start the search.
+                // - First start the hit count, which will start the underlying hits search.
+                // - Then get the underlying hits search from the cache (this may take a while as
+                //   it will complete when the Hits object is available)
+                cacheEntry = searchHitCount.executeAsync();
+                hits = searchHits.execute();
+                try {
+                    hitsCount = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
+                    docsCount = searchDocCount.executeAsync().peek();
+                } catch (InterruptedSearch e) {
+                    // Our count was probably aborted.
+                    logger.debug("Error getting count(s)", e);
+                    if (hitsCount == null)
+                        hitsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                    if (docsCount == null)
+                        docsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                }
             }
             // Wait until all hits have been counted.
             if (searchParam.getBoolean("waitfortotal")) {
@@ -118,6 +139,7 @@ public class RequestHandlerHits extends RequestHandler {
                 docsCount.countedTotal();
             }
         } catch (InterruptedException | ExecutionException | InvalidQuery e) {
+            logger.debug("Searching threw an exception", e);
             throw RequestHandler.translateSearchException(e);
         }
 
@@ -136,7 +158,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (!viewingGroup) {
             // Request the window of hits we're interested in.
             // (we hold on to the cache entry so that we can differentiate between search and count time later)
-            cacheEntryWindow = (SearchCacheEntry<Hits>) searchParam.hitsWindow().executeAsync();
+            cacheEntryWindow = searchParam.hitsWindow().executeAsync();
             try {
                 window = cacheEntryWindow.get(); // blocks until requested hits window is available
             } catch (InterruptedException | ExecutionException e) {

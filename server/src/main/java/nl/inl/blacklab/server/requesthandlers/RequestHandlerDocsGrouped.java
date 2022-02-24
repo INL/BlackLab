@@ -36,7 +36,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsCount().executeAsync();
+            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
         }
         // Get the window we're interested in
         DocResults docResults = searchParam.docs().execute();

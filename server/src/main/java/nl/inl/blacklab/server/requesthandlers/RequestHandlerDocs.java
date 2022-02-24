@@ -64,7 +64,7 @@ public class RequestHandlerDocs extends RequestHandler {
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
         if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsCount().executeAsync();
+            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
         }
 
         if (groupBy.length() > 0 && viewGroup.length() > 0) {

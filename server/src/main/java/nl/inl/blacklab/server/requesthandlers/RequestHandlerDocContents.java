@@ -94,7 +94,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (searchParam.hasPattern()) {
             //@@@ TODO: filter on document!
             searchParam.put("docpid", docPid);
-            hits = searchParam.hits().execute();
+            hits = searchParam.hitsSample().execute();
         }
 
         String content;
