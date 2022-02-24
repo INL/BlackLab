@@ -520,6 +520,11 @@ public class HitsFromQueryParallel extends Hits {
                 throw cause == null ? e : cause; // Something went wrong in one of the worker threads (interrupted?), process exception using outer catch
             }
         } catch (InterruptedException e) {
+            // Thread was interrupted (probably killed for taking too long)
+            // NOTE: you might think we should free any spansReaders left so they can be garbage-collected,
+            //       but killing a search thread doesn't invalidate the Hits object. Later requests can come
+            //       back to this object and resume where we left off, so the spansReaders must be kept for that
+            //       purpose. Of course they will be GCed once the Hits object is removed from the cache anyway.
             throw new InterruptedSearch(e);
         } catch (Throwable e) {
             throw BlackLabRuntimeException.wrap(e);
