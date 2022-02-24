@@ -114,6 +114,22 @@ public abstract class BLSpans extends Spans {
         return BLSpanQuery.inf(max);
     }
 
+    /**
+     * Ensure that given spans are startpoint-sorted within documents.
+     *
+     * It is assumed that they are already document-sorted, or at least
+     * all hits from one document are contiguous.
+     *
+     * Just uses PerDocumentSortedSpans for now, but could be perhaps be
+     * optimized to only look at startpoints within the document.
+     *
+     * @param spans spans that may not be startpoint sorted
+     * @return startpoint sorted spans
+     */
+    public static BLSpans ensureStartPointSorted(BLSpans spans) {
+        return optSortUniq(spans, true, false);
+    }
+
     public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
         if (spans == null)
             return null;

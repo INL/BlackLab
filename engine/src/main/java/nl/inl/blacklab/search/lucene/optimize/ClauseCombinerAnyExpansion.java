@@ -39,18 +39,15 @@ class ClauseCombinerAnyExpansion extends ClauseCombiner {
     @Override
     public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
         SpanQueryAnyToken any, any2;
-        SpanQueryExpansion result;
         switch (getType(left, right)) {
         case LEFT_ANY:
             // Expand to left
             any = (SpanQueryAnyToken) left;
-            result = new SpanQueryExpansion(right, Direction.LEFT, any.hitsLengthMin(), any.hitsLengthMax());
-            return result;
+            return new SpanQueryExpansion(right, Direction.LEFT, any.hitsLengthMin(), any.hitsLengthMax());
         case RIGHT_ANY:
             // Expand to right
             any = (SpanQueryAnyToken) right;
-            result = new SpanQueryExpansion(left, Direction.RIGHT, any.hitsLengthMin(), any.hitsLengthMax());
-            return result;
+            return new SpanQueryExpansion(left, Direction.RIGHT, any.hitsLengthMin(), any.hitsLengthMax());
         case BOTH_ANY:
             // Combine two anytoken clauses
             any = (SpanQueryAnyToken) left;

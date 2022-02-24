@@ -28,7 +28,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
 /**
- * Return n-grams contained in the from the source spans hits.
+ * Return n-grams containing or within the hits from the source spans.
  */
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
@@ -112,8 +112,15 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            return new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
+            BLSpans filtered = new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
                     spansSource, op, min, max, leftAdjust, rightAdjust);
+
+            // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
+            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
+            if (q != null && !q.hitsStartPointSorted())
+                return BLSpans.ensureStartPointSorted(filtered);
+
+            return filtered;
         }
 
     }
