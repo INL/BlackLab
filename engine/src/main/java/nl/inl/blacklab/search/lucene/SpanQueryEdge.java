@@ -81,10 +81,18 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansEdge(spans, rightEdge);
+            BLSpans edge = new SpansEdge(spans, rightEdge);
+
+            // Re-sort the results if necessary (if we took the right edge)
+            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
+            if (q != null && !q.hitsStartPointSorted())
+                return BLSpans.ensureStartPointSorted(edge);
+
+            return edge;
         }
 
     }

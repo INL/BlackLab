@@ -43,8 +43,7 @@ class ClauseCombinerNot extends ClauseCombiner {
             // Rewrite to NOTCONTAINING clause, incorporating previous part.
             int myLen = right.hitsLengthMin();
             container = new SpanQueryExpansion(right, Direction.LEFT, 1, 1);
-            posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING,
-                    true);
+            posf = new SpanQueryPositionFilter(container, left.inverted(), SpanQueryPositionFilter.Operation.CONTAINING, true);
             posf.adjustRight(-myLen);
             return posf;
         case CONST_NOT:

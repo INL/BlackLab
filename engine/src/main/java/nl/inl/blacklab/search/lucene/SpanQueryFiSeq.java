@@ -15,20 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.fimatch.NfaTwoWay;
+import java.io.IOException;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermContext;
 import org.apache.lucene.search.IndexSearcher;
 
-import java.io.IOException;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.Nfa;
+import nl.inl.blacklab.search.fimatch.NfaState;
+import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
  * Find hits that match the specified NFA, starting from the specified anchor
@@ -97,17 +98,20 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, needsScores);
         Map<Term, TermContext> contexts = needsScores ? getTermContexts(anchorWeight) : null;
-        return new SpanWeightFiSeq(anchorWeight, searcher, contexts);
+        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, !hitsStartPointSorted());
     }
 
     class SpanWeightFiSeq extends BLSpanWeight {
 
         final BLSpanWeight anchorWeight;
 
-        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        private final boolean mustSort;
+
+        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermContext> terms, boolean mustSort)
                 throws IOException {
             super(SpanQueryFiSeq.this, searcher, terms);
             this.anchorWeight = anchorWeight;
+            this.mustSort = mustSort;
         }
 
         @Override
@@ -127,8 +131,14 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
                 return null;
             if (!clauses.get(0).hitsAreUnique())
                 anchorSpans = BLSpans.optSortUniq(anchorSpans, !clauses.get(0).hitsStartPointSorted(), true);
-            return new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
+            BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
                     fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
+
+            // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
+            if (mustSort)
+                return BLSpans.ensureStartPointSorted(result);
+
+            return result;
         }
     }
 
