@@ -69,6 +69,14 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
     int max;
 
+    /** Construct a startpoint-sorted SpanQueryExpansion query.
+     *
+     * @param clause the query to expand
+     * @param direction direction for the expansion
+     * @param min minimum number of tokens to expand
+     * @param max maximum number of tokens to expand
+     * @return resulting query object
+     */
     public SpanQueryExpansion(BLSpanQuery clause, Direction direction, int min, int max) {
         super(clause);
         this.direction = direction;
@@ -134,8 +142,14 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            return new SpansExpansionRaw(context.reader(), clauses.get(0).getField(),
-                    spansSource, direction, min, max);
+            BLSpans expanded = new SpansExpansionRaw(context.reader(), clauses.get(0).getField(), spansSource, direction, min, max);
+
+            // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
+            BLSpanQuery q = (BLSpanQuery) weight.getQuery();
+            if (q != null && !q.hitsStartPointSorted())
+                return BLSpans.ensureStartPointSorted(expanded);
+
+            return expanded;
         }
 
     }

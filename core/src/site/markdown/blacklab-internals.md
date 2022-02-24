@@ -138,7 +138,7 @@ These include:
 
 - flattening nested queries e.g. `"the" ("quick" ("brown")) "fox"` to `"the" "quick" "brown" "fox"`
 - recognizing a `containing` search like `<s> []* "lazy" "dog" []* </s>` to `<s/> containing "lazy" "dog"`
-- combining adjacent clauses (applying possbile `ClauseCombiner` operations from highest-scoring to lowest-scoring)
+- combining adjacent clauses (applying possible `ClauseCombiner` operations from highest-scoring to lowest-scoring)
 
 `ClauseCombiner` operations include:
 
