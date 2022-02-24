@@ -36,10 +36,42 @@ The content store subdirectory has its own `version.dat`, which should contain `
 
 ### forward index
 
-Each of your annotations can have a forward index.
+Each of your annotations can have a forward index. A forward index is a structure that can quickly
+answer questions of the form "what annotation values occur in document 123 at positions 20 ... 24?"
+
+#### How the forward index is used
+
+The forward index is used to speed up sorting and grouping hits by context. For example, sorting 
+hits by their "lemma" annotation, or grouping them by their "pos" (part of speech) annotation. Without
+the forward index, we would have to retrieve the original input file, get XML snippet corresponding with
+our match, and parse it to get the annotation values. Needless to say this would be way too slow.
+
+The forward index is also used to resolve "global constraints", such as in a Corpus Query like
+`A:[] "and" B:[] :: A.word = B.word`. The global constraint is the part after `::`, and it is used
+to filter hits found using the part before `::`.
+
+Finally, the forward index can be used to speed up certain searches that would be slow using Lucene's
+index. For example, in a very large index (say more than a 1G (billion) words), regex clauses can be
+very slow. A query like `".*e" "ship"` (a word ending in _e_ followed by the word _ship_) would take 
+a very long time finding all terms that end in _e_ and then finding all matches for those terms. Instead
+we use Lucene's reverse index to find all occurrences of _ship_, then use the forward index to check if
+the preceding word ends in `".e"`. Another way of putting it is to say we rewrite the query to convert
+the problematic clause to a global constraint, so the query becomes
+`A:[] "ship" :: A.word = ".*e""` (even though this is not what happens internally).
+
+Forward index matching is also called NFA matching in the code, because it uses a nondeterministic finite 
+automaton to evaluate queries against the forward index.
+
+While it can make certain queries faster, deciding whether or not to use the forward index does take
+a bit of time (many possibilities are tried and term frequencies are looked up; see `ClauseCombinerNfa`). For scenarios with
+small indexes and many queries per second, this functionality may hurt rather than help.
+If you want to disable forward-index matching , you can set `search.fiMatchFactor` to `0` in 
+`blacklab-server.yml`.
+
+#### Structure of the forward index
 
 The combined forward indexes also contain most of the contents of the documents, but missing are
-the tags around an in between the words (bold and italic tags, paragraph and sentence tags, 
+the tags around an in between the words (bold and italic tags, paragraph and sentence tags,
 header and body tags, metadata tags, etc.).
 
 All annotations get a forward index by default, but you 
@@ -84,16 +116,56 @@ these properties.
 A complete, documented example of `indexmetadata.yaml` can be found [here](indexing-with-blacklab.md#edit-index-metadata).
 
 
-### files needed for indexing
+### Files needed for indexing
+
+TODO
 
 index configuration file (`.blf.yaml`) / DocIndexer
 
 A complete, documented example of an input format configuration file can be 
 found [here](how-to-configure-indexing.md#annotated-input-format-configuration-file).
 
-### performance optimizations
+### Performance optimizations
 
-...
+BlackLab tries to find the most efficient way to execute a query. This is done when a `BLSpanQuery` is
+about to be executed. Lucene's `SpanQuery` class has a `rewrite` method that rewrites the query if needed
+(e.g. SpanRegexQuery will rewrite to SpanBooleanQuery+SpanTermQuery, effectively OR'ing SpanTermQueries 
+for all matching terms). `BLSpanQuery` adds an `optimize` method that is run first. `optimize()` is 
+only implemented by `SpanQuerySequence` for now. Here we look at high-level optimizations that 
+should be tried before the "normal" rewrite process. 
+
+These include:
+
+- flattening nested queries e.g. `"the" ("quick" ("brown")) "fox"` to `"the" "quick" "brown" "fox"`
+- recognizing a `containing` search like `<s> []* "lazy" "dog" []* </s>` to `<s/> containing "lazy" "dog"`
+- combining adjacent clauses (applying possbile `ClauseCombiner` operations from highest-scoring to lowest-scoring)
+
+`ClauseCombiner` operations include:
+
+- "internalization" (making longer sequences that are better for optimization, but might need the resulting hit start/end to be adjusted, e.g. "[] x:A" to "x:([] A)", but with the start of x adjusted by +1)
+- "anytoken expansion", i.e. making sure queries like `[] "fox"` are not resolved by finding all 
+  tokens in the corpus, then combining them with _fox_, but by finding _fox_ and adjusting the 
+  hit starts by -1.
+- "nfa": forward index matching, as discussed before
+- "not containing": converting `[word != "red"] "fox"` to `([] "fox") notcontaining "red"` if 
+  possible (instead of finding all tokens that are not _red_)
+- "repetition": converting `"jump" "jump" "jump"` to `"jump"{3}`, which is faster to process
+
+To help choose the best possible optimizations, `BLSpanQuery` contains a number of "guarantee methods":
+
+- `okayToInvertForOptimization`: is this a suitable clause to invert if that helps us optimize?
+  (e.g. `[word != "red"]` would be suitable, but `[lemma = "fox"]` would not)
+- `isSingleTokenNot`: is this a negative query that matches a single token such as `[word != "red"]`
+- `producesSingleTokens`: does this query produce only hits of length 1?
+- `hitsAllSameLength`: does this query produce hits that are all the same length?
+- ...etc.
+
+Besides deciding what optimization to apply, these methods also help us decide if a query can produce 
+duplicate matches (which should be filtered out later) and if a query can produce matches that are not
+sorted by match starting position (which should be re-sorted later).
+For example (e.g. `[]{1,3} "ship"` will produce a SpanQueryExpansion to expand hits
+for _ship_ to the left by 1-3 tokens, but the resulting matches are not guaranteed to be sorted by starting
+position, so the hits could be something like 0-3, 1-3, 2-3, 1-4, 2-4, 3-4, etc.
 
 
 ## Module structure
