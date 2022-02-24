@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.jobs;
 
-import java.util.Map;
-
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 
 public class HitGroupSortSettings {
@@ -20,10 +18,6 @@ public class HitGroupSortSettings {
     @Override
     public String toString() {
         return "hitgroupsort=" + sortBy;
-    }
-
-    public void getUrlParam(Map<String, String> param) {
-        param.put("sort", sortBy.serialize());
     }
 
 }

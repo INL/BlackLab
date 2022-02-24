@@ -24,6 +24,7 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
@@ -387,13 +388,16 @@ public class HitsFromQueryParallel extends Hits {
                 }
 
                 sourceQuery.setQueryInfo(queryInfo);
-                logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
+                if (BlackLabIndexImpl.traceOptimization())
+                    logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
                 optimizedQuery = sourceQuery.optimize(reader);
-                logger.debug("Query after optimize(): " + optimizedQuery);
+                if (BlackLabIndexImpl.traceOptimization())
+                    logger.debug("Query after optimize(): " + optimizedQuery);
 
                 optimizedQuery = optimizedQuery.rewrite(reader);
-                logger.debug("Query after rewrite(): " + optimizedQuery);
+                if (BlackLabIndexImpl.traceOptimization())
+                    logger.debug("Query after rewrite(): " + optimizedQuery);
 
                 optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
 

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.jobs;
 
-import java.util.Map;
-
 import nl.inl.blacklab.resultproperty.DocProperty;
 
 public class DocSortSettings {
@@ -19,10 +17,6 @@ public class DocSortSettings {
     @Override
     public String toString() {
         return "docsort=" + sortBy.serialize();
-    }
-
-    public void getUrlParam(Map<String, String> param) {
-        param.put("sort", sortBy.serialize());
     }
 
 }

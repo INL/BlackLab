@@ -1,22 +1,22 @@
 package nl.inl.blacklab.forwardindex;
 
-import gnu.trove.iterator.TIntObjectIterator;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.BlockTimer;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.Collator;
-import java.util.concurrent.TimeUnit;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import gnu.trove.iterator.TIntObjectIterator;
+import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
 
 public class TermsReader extends Terms {
 
@@ -62,7 +62,7 @@ public class TermsReader extends Terms {
 
     private void read(FileChannel fc) throws IOException {
         try (BlockTimer t = BlockTimer.create("Initializing terms " + this.termsFile)) {
-            logger.debug("Initializing termsreader " + termsFile);
+            //logger.debug("Initializing termsreader " + termsFile);
             final long start = System.nanoTime();
 
             long fileLength = termsFile.length();
@@ -99,7 +99,7 @@ public class TermsReader extends Terms {
             fillTermCharData(this.terms);
             this.terms = null;
 
-            logger.debug("finishing initializing termsreader " + termsFile + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms to process " + numberOfTerms + " terms");
+            //logger.debug("finishing initializing termsreader " + termsFile + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms to process " + numberOfTerms + " terms");
         }
     }
 
