@@ -11,9 +11,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.MutablePair;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -103,6 +100,53 @@ public class HitGroupsTokenFrequencies {
         return !mustStoreHits && HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && hitsSearch.isAnyTokenQuery() && property.isDocPropOrHitText();
     }
 
+    /** Counts of hits and docs while grouping. */
+    private static final class OccurranceCounts {
+        public int hits;
+        public int docs;
+
+        public OccurranceCounts(int hits, int docs) {
+            this.hits = hits;
+            this.docs = docs;
+        }
+    }
+
+    /** Info about doc and hit properties while grouping. */
+    private static final class PropInfo {
+
+        public static PropInfo doc(int index) {
+            return new PropInfo(true, index);
+        }
+
+        public static PropInfo hit(int index) {
+            return new PropInfo(false, index);
+        }
+
+        public boolean isDocProperty;
+
+        public int indexInList;
+
+        private PropInfo(boolean isDocProperty, int indexInList) {
+            this.isDocProperty = isDocProperty;
+            this.indexInList = indexInList;
+        }
+    }
+
+    /** Info about an annotation we're grouping on. */
+    private static final class AnnotInfo {
+        public AnnotationForwardIndex annotationForwardIndex;
+
+        public MatchSensitivity matchSensitivity;
+
+        public Terms terms;
+
+        public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity, Terms terms) {
+            this.annotationForwardIndex = annotationForwardIndex;
+            this.matchSensitivity = matchSensitivity;
+            this.terms = terms;
+        }
+    }
+
     /**
      * Get the token frequencies for the given query and hit property.
      *
@@ -118,7 +162,7 @@ public class HitGroupsTokenFrequencies {
 
         try {
             /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits (left) and number of docs (right) */
-            final ConcurrentHashMap<GroupIdHash, MutablePair<Integer, Integer>> occurances = new ConcurrentHashMap<>();
+            final ConcurrentHashMap<GroupIdHash, OccurranceCounts> occurances = new ConcurrentHashMap<>();
 
             final BlackLabIndex index = queryInfo.index();
 
@@ -129,7 +173,7 @@ public class HitGroupsTokenFrequencies {
             final List<DocProperty> docProperties = new ArrayList<>();
 
             /** Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms */
-            final List<Triple<AnnotationForwardIndex, MatchSensitivity, Terms>> hitProperties = new ArrayList<>();
+            final List<AnnotInfo> hitProperties = new ArrayList<>();
 
             /**
              * Stores the original index every (doc|hit)property has in the original interleaved/intertwined list.
@@ -141,7 +185,7 @@ public class HitGroupsTokenFrequencies {
              * Integer contains index in the source list (docProperties or hitProperties, from just above)
              * Boolean is true when origin list was docProperties, false for hitProperties.
              */
-            final List<Pair<Integer, Boolean>> originalOrderOfUnpackedProperties = new ArrayList<>();
+            final List<PropInfo> originalOrderOfUnpackedProperties = new ArrayList<>();
 
             // Unpack the requestedGroupingProperty into its constituents and sort those into the appropriate categories: hit and doc properties.
             {
@@ -154,7 +198,7 @@ public class HitGroupsTokenFrequencies {
                         }
                         final int positionInUnpackedList = docProperties.size();
                         docProperties.add(asDocPropIfApplicable);
-                        originalOrderOfUnpackedProperties.add(Pair.of(positionInUnpackedList, true));
+                        originalOrderOfUnpackedProperties.add(PropInfo.doc(positionInUnpackedList));
                     } else { // Property couldn't be converted to DocProperty (is null). The current property is an actual HitProperty (applies to annotation/token/hit value)
                         List<Annotation> annot = p.needsContext();
                         if (DEBUG && (annot == null || annot.size() != 1)) {
@@ -163,8 +207,8 @@ public class HitGroupsTokenFrequencies {
 
                         final int positionInUnpackedList = hitProperties.size();
                         final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annot.get(0));
-                        hitProperties.add(Triple.of(annotationFI, p.getSensitivities().get(0), annotationFI.terms()));
-                        originalOrderOfUnpackedProperties.add(Pair.of(positionInUnpackedList, false));
+                        hitProperties.add(new AnnotInfo(annotationFI, p.getSensitivities().get(0), annotationFI.terms()));
+                        originalOrderOfUnpackedProperties.add(PropInfo.hit(positionInUnpackedList));
                     }
                 }
             }
@@ -226,11 +270,11 @@ public class HitGroupsTokenFrequencies {
                             final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray, emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
                             occurances.compute(groupId, (__, groupSizes) -> {
                                 if (groupSizes != null) {
-                                    groupSizes.left += docLength;
-                                    groupSizes.right += 1;
+                                    groupSizes.hits += docLength;
+                                    groupSizes.docs += 1;
                                     return groupSizes;
                                 } else {
-                                    return MutablePair.of(docLength, 1);
+                                    return new OccurranceCounts(docLength, 1);
                                 }
                             });
                         });
@@ -248,7 +292,7 @@ public class HitGroupsTokenFrequencies {
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
-                    final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getLeft().annotation().forwardIndexIdField()).collect(Collectors.toList());
+                    final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.annotationForwardIndex.annotation().forwardIndexIdField()).collect(Collectors.toList());
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
                     fieldsToLoad.addAll(annotationFINames);
@@ -271,25 +315,21 @@ public class HitGroupsTokenFrequencies {
                             final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                             try (BlockTimer e = c.child("Read annotations from forward index")) {
-                                for (Triple<AnnotationForwardIndex, MatchSensitivity, Terms> annot : hitProperties) {
-                                    final AnnotationForwardIndex afi = annot.getLeft();
+                                for (AnnotInfo annot : hitProperties) {
+                                    final AnnotationForwardIndex afi = annot.annotationForwardIndex;
                                     final String annotationFIName = afi.annotation().forwardIndexIdField();
                                     final int fiid = doc.getField(annotationFIName).numericValue().intValue();
                                     final int[] tokenValues = afi.getDocument(fiid);
                                     tokenValuesPerAnnotation.add(tokenValues);
 
                                     // Look up sort values
-                                    // TODO: make this a method inside terms?
-                                    int docLength = tokenValues.length;
-                                    MatchSensitivity matchSensitivity = annot.getMiddle();
-                                    Terms terms = annot.getRight();
-
                                     // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
                                     //       but that was slower...
+                                    int docLength = tokenValues.length;
                                     int[] sortValues = new int[docLength];
                                     for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
                                         final int termId = tokenValues[tokenIndex];
-                                        sortValues[tokenIndex] = terms.idToSortPosition(termId, matchSensitivity);
+                                        sortValues[tokenIndex] = annot.terms.idToSortPosition(termId, annot.matchSensitivity);
                                     }
                                     sortValuesPerAnnotation.add(sortValues);
                                 }
@@ -328,18 +368,22 @@ public class HitGroupsTokenFrequencies {
                                         sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];
                                     }
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
-                                    // TODO: calculate map within document first, then merge with global map?
+
                                     occurances.compute(groupId, (__, groupSize) -> {
+                                        boolean newGroupIdForThisDoc = groupsInThisDocument.add(groupId);
                                         if (groupSize != null) {
-                                            groupSize.left += 1;
-                                            // second (or more) occurance of these token values in this document
-                                            groupSize.right += groupsInThisDocument.add(groupId) ? 1 : 0;
+                                            // Group existed already (because we or another doc created it earlier).
+                                            // Count hit and doc (if this doc wasn't counted yet in this group)
+                                            groupSize.hits += 1;
+                                            groupSize.docs += newGroupIdForThisDoc ? 1 : 0;;
                                             return groupSize;
                                         } else {
-                                            return MutablePair.of(1, groupsInThisDocument.add(groupId) ? 1 : 0); // should always return true, but we need to add this group anyway!
+                                            // New group. Count hit and doc.
+                                            return new OccurranceCounts(1, 1); // should always return true, but we need to add this group anyway!
                                         }
                                     });
                                 }
+
 
                                 // If we exceeded maxHitsToCount, remember that and don't process more docs.
                                 // (NOTE: we don't care if we don't get exactly maxHitsToCount in this case; just that
@@ -364,8 +408,8 @@ public class HitGroupsTokenFrequencies {
             try (final BlockTimer c = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
                 groups = occurances.entrySet().parallelStream().map(e -> {
-                    final int groupSizeHits = e.getValue().getLeft();
-                    final int groupSizeDocs = e.getValue().getRight();
+                    final int groupSizeHits = e.getValue().hits;
+                    final int groupSizeDocs = e.getValue().docs;
                     final int[] annotationValues = e.getKey().tokenIds;
                     final PropertyValue[] metadataValues = e.getKey().metadataValues;
                     // allocate new - is not copied when moving into propertyvaluemultiple
@@ -374,13 +418,16 @@ public class HitGroupsTokenFrequencies {
                     // Convert all raw values (integers) into their appropriate PropertyValues
                     // Taking care to preserve the order of the resultant PropertyValues with the order of the input HitProperties
                     int indexInOutput = 0;
-                    for (Pair<Integer, Boolean> p : originalOrderOfUnpackedProperties) {
-                        final int indexInInput = p.getLeft();
-                        if (p.getRight()) { // is docprop, add PropertyValue as-is
+                    for (PropInfo p : originalOrderOfUnpackedProperties) {
+                        final int indexInInput = p.indexInList;
+                        if (p.isDocProperty) {
+                            // is docprop, add PropertyValue as-is
                             groupIdAsList[indexInOutput++] = metadataValues[indexInInput];
-                        } else { // is hitprop, convert value to PropertyValue.
-                            Annotation annot = hitProperties.get(indexInInput).getLeft().annotation();
-                            MatchSensitivity sens = hitProperties.get(indexInInput).getMiddle();
+                        } else {
+                             // is hitprop, convert value to PropertyValue.
+                            AnnotInfo annotInfo = hitProperties.get(indexInInput);
+                            Annotation annot = annotInfo.annotationForwardIndex.annotation();
+                            MatchSensitivity sens = annotInfo.matchSensitivity;
                             groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens, new int[] {annotationValues[indexInInput]}, false);
                         }
                     }
