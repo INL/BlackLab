@@ -1,10 +1,11 @@
 package nl.inl.blacklab.mocks;
 
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import java.io.File;
+
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import java.io.File;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockTerms extends Terms {
 

@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.MutablePair;
@@ -90,7 +89,10 @@ public class HitGroupsTokenFrequencies {
         }
     }
 
-    /** Can this faster code be used for this grouping request?
+    /**
+     * Can the given grouping request be answered using the faster codepath in this classs?
+     *
+     * If not, it will be handled by {@link HitGroups}, see {@link nl.inl.blacklab.searches.SearchHitGroupsFromHits}.
      *
      * @param mustStoreHits do we need stored hits? if so, we can't use this path
      * @param hitsSearch hits search to group. Must be any token query
@@ -170,9 +172,11 @@ public class HitGroupsTokenFrequencies {
             final int numAnnotations = hitProperties.size();
             long numberOfDocsProcessed;
             final AtomicInteger numberOfHitsProcessed = new AtomicInteger();
-            final AtomicBoolean hitMaxHitsToProcess = new AtomicBoolean(false);
+            final AtomicBoolean hitMaxHitsToCount = new AtomicBoolean(false);
 
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
+
+                // Collect all doc ids that match the given filter (or all docs if no filter specified)
                 final List<Integer> docIds = new ArrayList<>();
                 try (BlockTimer d = c.child("Gathering documents")) {
                     queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery, new SimpleCollector() {
@@ -197,16 +201,13 @@ public class HitGroupsTokenFrequencies {
                     });
                 }
 
-
-                numberOfDocsProcessed = docIds.size();
-                final IndexReader reader = queryInfo.index().reader();
-                final int[] minusOne = new int[] { -1 };
-
-                // Matched all tokens but not grouping by a specific annotation, only metadata
-                // This requires a different approach because we never retrieve the individual tokens if there's no annotation
-                // e.g. match '*' group by document year --
-                // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
+                // Start actually calculating the requests frequencies.
                 if (hitProperties.isEmpty()) {
+                    // Matched all tokens but not grouping by a specific annotation, only metadata
+                    // This requires a different approach because we never retrieve the individual tokens if there's no annotation
+                    // e.g. match '*' group by document year --
+                    // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
+                    numberOfDocsProcessed = docIds.size();
                     try (BlockTimer f = c.child("Grouping documents (metadata only path)")) {
                         String fieldName = index.mainAnnotatedField().name();
                         DocPropertyAnnotatedFieldLength propTokens = new DocPropertyAnnotatedFieldLength(index, fieldName);
@@ -235,18 +236,31 @@ public class HitGroupsTokenFrequencies {
                         });
                     }
                 } else {
-                    final int maxHitsToProcess = searchSettings.maxHitsToProcess() > 0 ? searchSettings.maxHitsToProcess() : Integer.MAX_VALUE;
-                    final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToProcess ? v + 1 : v;
+                    // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
+                    // calculate the frequencies.
+                    // TODO: maybe we don't need to respect the maxHitsToCount setting here? The whole point of this
+                    //       code is that it can perform this operation faster and using less memory, and the setting
+                    //       exists to manage server load, so maybe we can ignore it here? I guess then we might need
+                    //       another setting that can limit this operation as well.
+                    final int maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : Integer.MAX_VALUE;
+                    //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
                     final String fieldName = index.mainAnnotatedField().name();
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
-                    List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getLeft().annotation().forwardIndexIdField()).collect(Collectors.toList());
+                    final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getLeft().annotation().forwardIndexIdField()).collect(Collectors.toList());
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
                     fieldsToLoad.addAll(annotationFINames);
 
+                    final IndexReader reader = queryInfo.index().reader();
+
                     numberOfDocsProcessed = docIds.parallelStream().filter(docId -> {
+
+                        // If we've already exceeded the maximum, skip this doc
+                        if (numberOfHitsProcessed.get() >= maxHitsToCount)
+                            return false;
+
                         try {
 
                             // Step 1: read all values for the to-be-grouped annotations for this document
@@ -254,14 +268,32 @@ public class HitGroupsTokenFrequencies {
 
                             final Document doc = reader.document(docId, fieldsToLoad);
                             final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
+                            final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                             try (BlockTimer e = c.child("Read annotations from forward index")) {
                                 for (Triple<AnnotationForwardIndex, MatchSensitivity, Terms> annot : hitProperties) {
-                                    final String annotationFIName = annot.getLeft().annotation().forwardIndexIdField();
+                                    final AnnotationForwardIndex afi = annot.getLeft();
+                                    final String annotationFIName = afi.annotation().forwardIndexIdField();
                                     final int fiid = doc.getField(annotationFIName).numericValue().intValue();
-                                    final List<int[]> tokenValues = annot.getLeft().retrievePartsInt(fiid, minusOne, minusOne);
-                                    tokenValuesPerAnnotation.addAll(tokenValues);
+                                    final int[] tokenValues = afi.getDocument(fiid);
+                                    tokenValuesPerAnnotation.add(tokenValues);
+
+                                    // Look up sort values
+                                    // TODO: make this a method inside terms?
+                                    int docLength = tokenValues.length;
+                                    MatchSensitivity matchSensitivity = annot.getMiddle();
+                                    Terms terms = annot.getRight();
+
+                                    // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
+                                    //       but that was slower...
+                                    int[] sortValues = new int[docLength];
+                                    for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
+                                        final int termId = tokenValues[tokenIndex];
+                                        sortValues[tokenIndex] = terms.idToSortPosition(termId, matchSensitivity);
+                                    }
+                                    sortValuesPerAnnotation.add(sortValues);
                                 }
+
                             }
 
                             // Step 2: retrieve the to-be-grouped metadata for this document
@@ -279,29 +311,24 @@ public class HitGroupsTokenFrequencies {
                              */
                             HashSet<GroupIdHash> groupsInThisDocument = new HashSet<>();
                             try (BlockTimer f = c.child("Group tokens")) {
-                                for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
-                                    if (numberOfHitsProcessed.getAndUpdate(incrementUntilMax) >= maxHitsToProcess) {
-                                        hitMaxHitsToProcess.set(true);
-                                        return tokenIndex > 0; // true if any token of this document made the cut, false if we escaped immediately
-                                    }
 
+                                for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
+                                    int[] annotationValuesForThisToken = new int[numAnnotations];
+                                    int[] sortPositions = new int[numAnnotations];
 
                                     // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                                     // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
                                     // so in essence it's also an "id", but a case-insensitive one.
                                     // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
                                     // that hashes the token ids instead of the sortpositions in that case.
-                                    int[] annotationValuesForThisToken = new int[numAnnotations];
-                                    int[] sortPositions = new int[annotationValuesForThisToken.length];
                                     for (int annotationIndex = 0; annotationIndex < numAnnotations; ++annotationIndex) {
-                                        int[] tokenValuesThisAnnotation = tokenValuesPerAnnotation.get(annotationIndex);
-                                        final int termId = annotationValuesForThisToken[annotationIndex] = tokenValuesThisAnnotation[tokenIndex];
-                                        Triple<AnnotationForwardIndex, MatchSensitivity, Terms> currentHitProp = hitProperties.get(annotationIndex);
-                                        MatchSensitivity matchSensitivity = currentHitProp.getMiddle();
-                                        Terms terms = currentHitProp.getRight();
-                                        sortPositions[annotationIndex] = terms.idToSortPosition(termId, matchSensitivity);
+                                        int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
+                                        annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
+                                        int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
+                                        sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];
                                     }
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
+                                    // TODO: calculate map within document first, then merge with global map?
                                     occurances.compute(groupId, (__, groupSize) -> {
                                         if (groupSize != null) {
                                             groupSize.left += 1;
@@ -313,6 +340,14 @@ public class HitGroupsTokenFrequencies {
                                         }
                                     });
                                 }
+
+                                // If we exceeded maxHitsToCount, remember that and don't process more docs.
+                                // (NOTE: we don't care if we don't get exactly maxHitsToCount in this case; just that
+                                //  we stop the operation before the server is overloaded)
+                                if (numberOfHitsProcessed.getAndUpdate(i -> i + docLength) >= maxHitsToCount) {
+                                    hitMaxHitsToCount.set(true);
+                                }
+
                             }
                         } catch (IOException e) {
                             throw BlackLabRuntimeException.wrap(e);
@@ -364,8 +399,8 @@ public class HitGroupsTokenFrequencies {
             }
             logger.debug("fast path used for grouping");
 
-            ResultsStats hitsStats = new ResultsStatsStatic(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
-            ResultsStats docsStats = new ResultsStatsStatic((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, new MaxStats(hitMaxHitsToProcess.get(), hitMaxHitsToProcess.get()));
+            ResultsStats hitsStats = new ResultsStatsStatic(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), new MaxStats(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
+            ResultsStats docsStats = new ResultsStatsStatic((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, new MaxStats(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
             return HitGroups.fromList(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats);
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
