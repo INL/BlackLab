@@ -15,6 +15,7 @@ import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
@@ -61,7 +62,8 @@ public class TermsReader extends Terms {
     }
 
     private void read(FileChannel fc) throws IOException {
-        try (BlockTimer t = BlockTimer.create("Initializing terms " + this.termsFile)) {
+        boolean traceIndexOpening = BlackLab.config().getLog().getTrace().isIndexOpening();
+        try (BlockTimer t = BlockTimer.create(traceIndexOpening, "Initializing terms " +this.termsFile)) {
             //logger.debug("Initializing termsreader " + termsFile);
             final long start = System.nanoTime();
 
