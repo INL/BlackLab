@@ -122,23 +122,43 @@ public class HitGroupsTokenFrequencies {
             return new PropInfo(false, index);
         }
 
-        public boolean isDocProperty;
+        private boolean docProperty;
 
-        public int indexInList;
+        private int indexInList;
 
-        private PropInfo(boolean isDocProperty, int indexInList) {
-            this.isDocProperty = isDocProperty;
+        public boolean isDocProperty() {
+            return docProperty;
+        }
+
+        public int getIndexInList() {
+            return indexInList;
+        }
+
+        private PropInfo(boolean docProperty, int indexInList) {
+            this.docProperty = docProperty;
             this.indexInList = indexInList;
         }
     }
 
     /** Info about an annotation we're grouping on. */
     private static final class AnnotInfo {
-        public AnnotationForwardIndex annotationForwardIndex;
+        private AnnotationForwardIndex annotationForwardIndex;
 
-        public MatchSensitivity matchSensitivity;
+        private MatchSensitivity matchSensitivity;
 
-        public Terms terms;
+        private Terms terms;
+
+        public AnnotationForwardIndex getAnnotationForwardIndex() {
+            return annotationForwardIndex;
+        }
+
+        public MatchSensitivity getMatchSensitivity() {
+            return matchSensitivity;
+        }
+
+        public Terms getTerms() {
+            return terms;
+        }
 
         public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity, Terms terms) {
             this.annotationForwardIndex = annotationForwardIndex;
@@ -292,7 +312,7 @@ public class HitGroupsTokenFrequencies {
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
-                    final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.annotationForwardIndex.annotation().forwardIndexIdField()).collect(Collectors.toList());
+                    final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getAnnotationForwardIndex().annotation().forwardIndexIdField()).collect(Collectors.toList());
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
                     fieldsToLoad.addAll(annotationFINames);
@@ -316,7 +336,7 @@ public class HitGroupsTokenFrequencies {
 
                             try (BlockTimer e = c.child("Read annotations from forward index")) {
                                 for (AnnotInfo annot : hitProperties) {
-                                    final AnnotationForwardIndex afi = annot.annotationForwardIndex;
+                                    final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
                                     final String annotationFIName = afi.annotation().forwardIndexIdField();
                                     final int fiid = doc.getField(annotationFIName).numericValue().intValue();
                                     final int[] tokenValues = afi.getDocument(fiid);
@@ -329,7 +349,7 @@ public class HitGroupsTokenFrequencies {
                                     int[] sortValues = new int[docLength];
                                     for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
                                         final int termId = tokenValues[tokenIndex];
-                                        sortValues[tokenIndex] = annot.terms.idToSortPosition(termId, annot.matchSensitivity);
+                                        sortValues[tokenIndex] = annot.getTerms().idToSortPosition(termId, annot.getMatchSensitivity());
                                     }
                                     sortValuesPerAnnotation.add(sortValues);
                                 }
@@ -419,15 +439,15 @@ public class HitGroupsTokenFrequencies {
                     // Taking care to preserve the order of the resultant PropertyValues with the order of the input HitProperties
                     int indexInOutput = 0;
                     for (PropInfo p : originalOrderOfUnpackedProperties) {
-                        final int indexInInput = p.indexInList;
-                        if (p.isDocProperty) {
+                        final int indexInInput = p.getIndexInList();
+                        if (p.isDocProperty()) {
                             // is docprop, add PropertyValue as-is
                             groupIdAsList[indexInOutput++] = metadataValues[indexInInput];
                         } else {
                              // is hitprop, convert value to PropertyValue.
                             AnnotInfo annotInfo = hitProperties.get(indexInInput);
-                            Annotation annot = annotInfo.annotationForwardIndex.annotation();
-                            MatchSensitivity sens = annotInfo.matchSensitivity;
+                            Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
+                            MatchSensitivity sens = annotInfo.getMatchSensitivity();
                             groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens, new int[] {annotationValues[indexInInput]}, false);
                         }
                     }
