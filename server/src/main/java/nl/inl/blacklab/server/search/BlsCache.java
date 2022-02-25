@@ -441,7 +441,7 @@ public class BlsCache implements SearchCache {
                     remove(cacheEntry.search());
                     traceInfo("-- ABORT (abandoned count): {}", cacheEntry);
                     String maxTime = BlsUtils.describeIntervalSec(abortCountAfterSec);
-                    cacheEntry.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
+                    cacheEntry.setReason("Running count aborted because of runtime > " + maxTime + " with no requests. " +
                             "This is done to ease server load. If you need the results of this count, please try your search again.");
                     cacheEntry.cancel(true);
                     searches.remove(i);
