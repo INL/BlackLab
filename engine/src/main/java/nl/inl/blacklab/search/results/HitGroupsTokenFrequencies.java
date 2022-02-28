@@ -360,7 +360,8 @@ public class HitGroupsTokenFrequencies {
                             int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
                             final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(new DocImpl(queryInfo.index(), docId)), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
-                            for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
+                            for (int i = 0; i < docProperties.size(); ++i)
+                                metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);
                             final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
 
                             // now we have all values for all relevant annotations for this document
