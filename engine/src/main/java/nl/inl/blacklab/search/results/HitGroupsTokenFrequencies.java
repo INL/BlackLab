@@ -183,7 +183,7 @@ public class HitGroupsTokenFrequencies {
         SearchSettings searchSettings = source.searchSettings();
 
         try {
-            /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits (left) and number of docs (right) */
+            /** This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits and number of docs */
             final ConcurrentHashMap<GroupIdHash, OccurranceCounts> occurances = new ConcurrentHashMap<>();
 
             final BlackLabIndex index = queryInfo.index();
