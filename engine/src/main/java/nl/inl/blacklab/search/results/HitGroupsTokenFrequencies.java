@@ -3,8 +3,10 @@ package nl.inl.blacklab.search.results;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -370,7 +372,7 @@ public class HitGroupsTokenFrequencies {
                              * Bookkeeping: track which groups we've already seen in this document,
                              * so we only count this document once per group
                              */
-                            HashSet<GroupIdHash> groupsInThisDocument = new HashSet<>();
+                            Map<GroupIdHash, OccurranceCounts> occsInDoc = new HashMap<>();
                             try (BlockTimer f = c.child("Group tokens")) {
 
                                 for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
@@ -390,20 +392,31 @@ public class HitGroupsTokenFrequencies {
                                     }
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
+                                    OccurranceCounts occ = occsInDoc.get(groupId);
+                                    if (occ == null) {
+                                        occ = new OccurranceCounts(1, 1);
+                                        occsInDoc.put(groupId, occ);
+                                    } else {
+                                        occ.hits++;
+                                    }
+
+
+                                }
+
+                                occsInDoc.forEach((groupId, occ) -> {
                                     occurances.compute(groupId, (__, groupSize) -> {
-                                        boolean newGroupIdForThisDoc = groupsInThisDocument.add(groupId);
                                         if (groupSize != null) {
-                                            // Group existed already (because we or another doc created it earlier).
-                                            // Count hit and doc (if this doc wasn't counted yet in this group)
-                                            groupSize.hits += 1;
-                                            groupSize.docs += newGroupIdForThisDoc ? 1 : 0;;
+                                            // Group existed already
+                                            // Count hits and doc
+                                            groupSize.hits += occ.hits;
+                                            groupSize.docs += 1;
                                             return groupSize;
                                         } else {
-                                            // New group. Count hit and doc.
-                                            return new OccurranceCounts(1, 1); // should always return true, but we need to add this group anyway!
+                                            // New group. Count hits and doc.
+                                            return occ;
                                         }
                                     });
-                                }
+                                });
 
 
                                 // If we exceeded maxHitsToCount, remember that and don't process more docs.
