@@ -368,10 +368,7 @@ public class HitGroupsTokenFrequencies {
 
                             // now we have all values for all relevant annotations for this document
                             // iterate again and pair up the nth entries for all annotations, then store that as a group.
-                            /**
-                             * Bookkeeping: track which groups we've already seen in this document,
-                             * so we only count this document once per group
-                             */
+                            /** Keep track of term occurrences in this document; later we'll merge it with the global term frequencies */
                             Map<GroupIdHash, OccurranceCounts> occsInDoc = new HashMap<>();
                             try (BlockTimer f = c.child("Group tokens")) {
 
@@ -392,6 +389,7 @@ public class HitGroupsTokenFrequencies {
                                     }
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
+                                    // Count occurrence in this doc
                                     OccurranceCounts occ = occsInDoc.get(groupId);
                                     if (occ == null) {
                                         occ = new OccurranceCounts(1, 1);
@@ -403,6 +401,7 @@ public class HitGroupsTokenFrequencies {
 
                                 }
 
+                                // Merge occurrences in this doc with global occurrences
                                 occsInDoc.forEach((groupId, occ) -> {
                                     occurances.compute(groupId, (__, groupSize) -> {
                                         if (groupSize != null) {
