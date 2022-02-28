@@ -285,31 +285,6 @@ public class TermsReader extends Terms {
         return sensitivity.isCaseSensitive() ? this.getSortPositionSensitive(id): this.getSortPositionInsensitive(id);
     }
 
-    /**
-     * Get the sort position for an array of terms based on its term id
-     *
-     * CAUTION: for maximum speed, does not verify that the term ids are valid!
-     * This is not a problem if you e.g. read them from the forward index, but
-     * it is if they came from e.g. a URL parameter.
-     *
-     * @param ids the term ids
-     * @param sensitivity whether we want the sensitive or insensitive sort position
-     * @return the sort positions
-     */
-    public int[] idToSortPositionUnsafe(int[] ids, MatchSensitivity sensitivity) {
-        int[] sortValues = new int[ids.length];
-        if (sensitivity.isCaseSensitive()) {
-            for (int tokenIndex = 0; tokenIndex < ids.length; ++tokenIndex) {
-                sortValues[tokenIndex] = this.termId2SensitivePosition[ids[tokenIndex]];
-            }
-        } else {
-            for (int tokenIndex = 0; tokenIndex < ids.length; ++tokenIndex) {
-                sortValues[tokenIndex] = this.termId2InsensitivePosition[ids[tokenIndex]];
-            }
-        }
-        return sortValues;
-    }
-
     @Override
     public String get(int id) {
         if (id >= numberOfTerms || id < 0) { return ""; }
