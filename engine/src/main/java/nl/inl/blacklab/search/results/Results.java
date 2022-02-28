@@ -42,7 +42,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
         List<T> results = new ArrayList<>();
 
         Random random = new Random(sampleParameters.seed());
-        int numberOfHitsToSelect = sampleParameters.numberOfHits(source.size());
+        long numberOfHitsToSelect = sampleParameters.numberOfHits(source.size());
         if (numberOfHitsToSelect > source.size())
             numberOfHitsToSelect = source.size(); // default to all hits in this case
         // Choose the hits
@@ -341,19 +341,19 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      *
      * @return number of hits processed total
      */
-    public int size() {
+    public long size() {
         return resultsProcessedTotal();
     }
 
-    protected abstract int resultsProcessedTotal();
+    protected abstract long resultsProcessedTotal();
 
-    protected abstract int resultsProcessedSoFar();
+    protected abstract long resultsProcessedSoFar();
 
-    protected int resultsCountedSoFar() {
+    protected long resultsCountedSoFar() {
         return resultsProcessedSoFar();
     }
 
-    protected int resultsCountedTotal() {
+    protected long resultsCountedTotal() {
         return resultsProcessedTotal();
     }
 

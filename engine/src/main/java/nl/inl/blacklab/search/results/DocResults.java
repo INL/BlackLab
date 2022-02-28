@@ -447,12 +447,12 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public int sumOfGroupSizes() {
+    public long sumOfGroupSizes() {
         return totalHits;
     }
 
     @Override
-    public int largestGroupSize() {
+    public long largestGroupSize() {
         ensureAllResultsRead();
         return mostHitsInDocument;
     }
@@ -508,7 +508,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 

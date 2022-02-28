@@ -91,7 +91,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     /**
      * Size of the largest group.
      */
-    private int largestGroupSize = 0;
+    private long largestGroupSize = 0;
 
     private WindowStats windowStats = null;
 
@@ -215,7 +215,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return the number of hits
      */
     @Override
-    public int sumOfGroupSizes() {
+    public long sumOfGroupSizes() {
         return hitsStats.countedTotal();
     }
 
@@ -225,7 +225,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return size of the largest group
      */
     @Override
-    public int largestGroupSize() {
+    public long largestGroupSize() {
         return largestGroupSize;
     }
 
@@ -308,7 +308,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 

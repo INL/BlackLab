@@ -46,11 +46,11 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     private Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
-    private int largestGroupSize = 0;
+    private long largestGroupSize = 0;
 
     private int totalResults = 0;
     
-    private int resultObjects = 0;
+    private long resultObjects = 0;
 
     private DocProperty groupBy;
     
@@ -119,12 +119,12 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     }
 
     @Override
-    public int largestGroupSize() {
+    public long largestGroupSize() {
         return largestGroupSize;
     }
 
     @Override
-    public int sumOfGroupSizes() {
+    public long sumOfGroupSizes() {
         return totalResults;
     }
 
@@ -181,7 +181,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 

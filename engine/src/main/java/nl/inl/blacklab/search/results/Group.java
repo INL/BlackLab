@@ -29,9 +29,9 @@ public abstract class Group<T> implements Result<Group<T>> {
 
     private Results<T, ? extends ResultProperty<T>> storedResults;
     
-    private int totalSize;
+    private long totalSize;
 
-    protected Group(PropertyValue groupIdentity, Results<T, ? extends ResultProperty<T>> storedResults, int totalSize) {
+    protected Group(PropertyValue groupIdentity, Results<T, ? extends ResultProperty<T>> storedResults, long totalSize) {
         this.groupIdentity = groupIdentity;
         this.storedResults = storedResults;
         this.totalSize = totalSize;
@@ -49,7 +49,7 @@ public abstract class Group<T> implements Result<Group<T>> {
         return storedResults != null ? storedResults.size() : 0;
     }
 
-    public int size() {
+    public long size() {
         return totalSize;
     }
 

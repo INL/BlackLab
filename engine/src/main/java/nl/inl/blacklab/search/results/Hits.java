@@ -416,7 +416,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                                 HitsArrays hits,
                                 WindowStats windowStats,
                                 SampleParameters sampleParameters,
-                                int hitsCounted,
+                                long hitsCounted,
                                 int docsRetrieved,
                                 int docsCounted,
                                 CapturedGroups capturedGroups,
@@ -484,7 +484,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * The number of hits we've seen and counted so far. May be more than the number
      * of hits we've retrieved if that exceeds maxHitsToRetrieve.
      */
-    protected int hitsCounted = 0;
+    protected long hitsCounted = 0;
 
     /**
      * The number of separate documents we've seen in the hits retrieved.
@@ -500,7 +500,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     private ResultsStats docsStats = new ResultsStats() {
 
         @Override
-        public boolean processedAtLeast(int lowerBound) {
+        public boolean processedAtLeast(long lowerBound) {
             while (!doneProcessingAndCounting() && docsProcessedSoFar() < lowerBound) {
                 ensureResultsRead(hitsArrays.size() + FETCH_HITS_MIN);
             }
@@ -508,22 +508,22 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         @Override
-        public int processedTotal() {
+        public long processedTotal() {
             return docsProcessedTotal();
         }
 
         @Override
-        public int processedSoFar() {
+        public long processedSoFar() {
             return docsProcessedSoFar();
         }
 
         @Override
-        public int countedSoFar() {
+        public long countedSoFar() {
             return docsCountedSoFar();
         }
 
         @Override
-        public int countedTotal() {
+        public long countedTotal() {
             return docsCountedTotal();
         }
 
@@ -611,7 +611,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         // Instead, first call ensureResultsRead so we block until we have either have enough or finish
         this.ensureResultsRead(first + windowSize);
         // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        int number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
+        long number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
 
         // Copy the hits we're interested in.
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
@@ -655,20 +655,20 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         Random random = new Random(sampleParameters.seed());
-        Set<Integer> chosenHitIndices = new TreeSet<>();
-        int numberOfHitsToSelect = sampleParameters.numberOfHits(size());
+        Set<Long> chosenHitIndices = new TreeSet<>();
+        long numberOfHitsToSelect = sampleParameters.numberOfHits(size());
         if (numberOfHitsToSelect > size()) {
             numberOfHitsToSelect = size(); // default to all hits in this case
-            for (int i = 0; i < numberOfHitsToSelect; ++i) {
+            for (long i = 0; i < numberOfHitsToSelect; ++i) {
                 chosenHitIndices.add(i);
             }
         } else {
             // Choose the hits
             for (int i = 0; i < numberOfHitsToSelect; i++) {
                 // Choose a hit we haven't chosen yet
-                int hitIndex;
+                long hitIndex;
                 do {
-                    hitIndex = random.nextInt(size());
+                    hitIndex = random.nextLong() % size();
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
@@ -681,7 +681,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         this.hitsArrays.withReadLock(__ -> {
             int previousDoc = -1;
             EphemeralHit hit = new EphemeralHit();
-            for (Integer hitIndex : chosenHitIndices) {
+            for (Long hitIndex : chosenHitIndices) {
                 this.hitsArrays.getEphemeral(hitIndex, hit);
                 if (hit.doc != previousDoc) {
                     docsInSample.add(1);
@@ -766,12 +766,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     }
 
     @Override
-    protected int resultsCountedTotal() {
+    protected long resultsCountedTotal() {
         return hitsCountedTotal();
     }
 
     @Override
-    protected int resultsCountedSoFar() {
+    protected long resultsCountedSoFar() {
         return hitsCountedSoFar();
     }
 
@@ -787,12 +787,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     }
 
     @Override
-    protected int resultsProcessedSoFar() {
+    protected long resultsProcessedSoFar() {
         return hitsProcessedSoFar();
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return this.hitsArrays.size();
     }
 
@@ -927,16 +927,16 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return this.hitsArrays.size() >= lowerBound;
     }
 
-    protected int hitsProcessedTotal() {
+    protected long hitsProcessedTotal() {
         ensureAllResultsRead();
         return this.hitsArrays.size();
     }
 
-    protected int hitsProcessedSoFar() {
+    protected long hitsProcessedSoFar() {
         return this.hitsArrays.size();
     }
 
-    protected int hitsCountedTotal() {
+    protected long hitsCountedTotal() {
         ensureAllResultsRead();
         return hitsCounted;
     }
@@ -955,15 +955,15 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return docsCounted;
     }
 
-    protected int hitsCountedSoFar() {
+    protected long hitsCountedSoFar() {
         return hitsCounted;
     }
 
-    protected int docsCountedSoFar() {
+    protected long docsCountedSoFar() {
         return docsCounted;
     }
 
-    protected int docsProcessedSoFar() {
+    protected long docsProcessedSoFar() {
         return docsRetrieved;
     }
 
@@ -972,7 +972,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /** Assumes this hit is within our lists. */
     public Hits window(Hit hit) {
-        int size = this.size();
+        long size = this.size();
 
         boolean isLastHit = this.hitsArrays.get(this.hitsArrays.size() - 1).equals(hit);
         boolean hasMoreHits = isLastHit ? resultsProcessedAtLeast(size + 1) : true;

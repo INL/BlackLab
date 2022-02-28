@@ -53,7 +53,7 @@ public class HitsList extends Hits {
                        HitsArrays hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
-                       int hitsCounted,
+                       long hitsCounted,
                        int docsRetrieved,
                        int docsCounted,
                        CapturedGroups capturedGroups,

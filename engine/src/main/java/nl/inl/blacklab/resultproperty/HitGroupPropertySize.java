@@ -39,7 +39,8 @@ public class HitGroupPropertySize extends HitGroupProperty {
 
     @Override
     public int compare(HitGroup a, HitGroup b) {
-        return reverse ? b.size() - a.size() : a.size() - b.size();
+        int cmpResult = Long.compare(a.size(), b.size());
+        return reverse ? -cmpResult : cmpResult;
     }
 
     @Override

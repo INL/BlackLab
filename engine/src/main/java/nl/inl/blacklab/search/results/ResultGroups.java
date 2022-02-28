@@ -25,14 +25,14 @@ public interface ResultGroups<T> {
      *
      * @return the number of results that were grouped
      */
-    int sumOfGroupSizes();
+    long sumOfGroupSizes();
 
     /**
      * Return the size of the largest group
      *
      * @return size of the largest group
      */
-    int largestGroupSize();
+    long largestGroupSize();
 
     /**
      * Return the number of groups

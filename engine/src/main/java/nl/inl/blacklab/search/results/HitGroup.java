@@ -23,19 +23,19 @@ import nl.inl.blacklab.search.results.Hits.HitsArrays;
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
 public class HitGroup extends Group<Hit> {
-    public static HitGroup empty(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+    public static HitGroup empty(QueryInfo queryInfo, PropertyValue groupIdentity, long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }
 
-    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, int totalSize) {
+    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, storedResults, capturedGroups, totalSize);
     }
 
-    public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
+    public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
         return new HitGroup(groupIdentity, storedResults, totalSize);
     }
 
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, int totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, long totalSize) {
         this(groupIdentity, Hits.immutableEmptyList(queryInfo), totalSize);
     }
 
@@ -49,7 +49,7 @@ public class HitGroup extends Group<Hit> {
      * @param capturedGroups captured groups for hits in this group
      * @param totalSize total group size
      */
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, int totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, long totalSize) {
         super(groupIdentity, Hits.fromList(queryInfo, storedResults, capturedGroups), totalSize);
     }
 
@@ -62,7 +62,7 @@ public class HitGroup extends Group<Hit> {
      * @param storedResults the hits
      * @param totalSize total group size
      */
-    protected HitGroup(PropertyValue groupIdentity, Hits storedResults, int totalSize) {
+    protected HitGroup(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
         super(groupIdentity, storedResults, totalSize);
     }
     

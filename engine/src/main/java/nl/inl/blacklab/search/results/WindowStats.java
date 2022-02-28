@@ -8,15 +8,15 @@ package nl.inl.blacklab.search.results;
  */
 public class WindowStats {
     
-    private final int first;
+    private final long first;
     
-    private final int actualWindowSize;
+    private final long actualWindowSize;
     
-    private final int requestedWindowSize;
+    private final long requestedWindowSize;
 
     private boolean hasNext;
 
-    public WindowStats(boolean hasNext, int first, int requestedWindowSize, int actualWindowSize) {
+    public WindowStats(boolean hasNext, long first, long requestedWindowSize, long actualWindowSize) {
         this.first = first;
         this.hasNext = hasNext;
         this.actualWindowSize = actualWindowSize;
@@ -31,27 +31,27 @@ public class WindowStats {
         return first > 0;
     }
 
-    public int nextFrom() {
+    public long nextFrom() {
         return first + actualWindowSize;
     }
 
-    public int prevFrom() {
+    public long prevFrom() {
         return first - 1;
     }
 
-    public int first() {
+    public long first() {
         return first;
     }
 
-    public int last() {
+    public long last() {
         return first + actualWindowSize - 1;
     }
 
-    public int windowSize() {
+    public long windowSize() {
         return actualWindowSize;
     }
 
-    public int requestedWindowSize() {
+    public long requestedWindowSize() {
         return requestedWindowSize;
     }
 }

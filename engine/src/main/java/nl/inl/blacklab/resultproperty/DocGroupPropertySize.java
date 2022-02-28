@@ -39,7 +39,8 @@ public class DocGroupPropertySize extends DocGroupProperty {
 
     @Override
     public int compare(DocGroup a, DocGroup b) {
-        return reverse ? b.size() - a.size() : a.size() - b.size();
+        int cmpResult = Long.compare(a.size(), b.size());
+        return reverse ? -cmpResult : cmpResult;
     }
 
     @Override

@@ -5,24 +5,24 @@ import java.util.Map;
 
 public abstract class ResultsStats implements SearchResult {
 
-    public abstract boolean processedAtLeast(int lowerBound);
+    public abstract boolean processedAtLeast(long lowerBound);
 
     /**
      * This is an alias of resultsProcessedTotal().
      *
      * @return number of hits processed total
      */
-    public int size() {
+    public long size() {
         return processedTotal();
     }
 
-    public abstract int processedTotal();
+    public abstract long processedTotal();
 
-    public abstract int processedSoFar();
+    public abstract long processedSoFar();
 
-    public abstract int countedSoFar();
+    public abstract long countedSoFar();
 
-    public abstract int countedTotal();
+    public abstract long countedTotal();
 
     public abstract boolean done();
 

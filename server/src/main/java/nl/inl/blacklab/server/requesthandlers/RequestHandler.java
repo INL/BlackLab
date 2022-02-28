@@ -827,7 +827,7 @@ public abstract class RequestHandler {
             // Viewing single group of documents, possibly based on a hits search.
             // group.getResults().getOriginalHits() returns null in this case,
             // so we have to iterate over the DocResults and sum up the hits ourselves.
-            int numberOfHits = 0;
+            long numberOfHits = 0;
             for (DocResult dr : docResults) {
                 numberOfHits += dr.size();
             }
@@ -939,7 +939,7 @@ public abstract class RequestHandler {
         addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
 
         writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
-        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().collect(Collectors.summingInt(r -> r.size())));
+        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().collect(Collectors.summingLong(r -> r.size())));
     }
 
     protected static BlsException translateSearchException(Exception e) {

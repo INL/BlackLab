@@ -7,25 +7,25 @@ package nl.inl.blacklab.search.results;
  */
 public class ResultsStatsStatic extends ResultsStats {
 
-    private int processed;
+    private long processed;
 
-    private int counted;
+    private long counted;
 
     private MaxStats maxStats;
 
-    public ResultsStatsStatic(int processed, int counted, MaxStats maxStats) {
+    public ResultsStatsStatic(long processed, long counted, MaxStats maxStats) {
         this.processed = processed;
         this.counted = counted;
         this.maxStats = maxStats;
     }
 
     @Override
-    public int processedTotal() {
+    public long processedTotal() {
         return processed;
     }
 
     @Override
-    public int countedTotal() {
+    public long countedTotal() {
         return counted;
     }
 
@@ -35,12 +35,12 @@ public class ResultsStatsStatic extends ResultsStats {
     }
 
     @Override
-    public int processedSoFar() {
+    public long processedSoFar() {
         return processedTotal();
     }
 
     @Override
-    public int countedSoFar() {
+    public long countedSoFar() {
         return countedTotal();
     }
 
