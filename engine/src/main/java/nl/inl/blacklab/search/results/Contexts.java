@@ -161,10 +161,10 @@ public class Contexts implements Iterable<int[]> {
      */
     private static int[][] getContextWordsSingleDocument(HitsArrays hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
-        final int n = (int)(end - start); // @@@ should be long
+        final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
-        int[] startsOfSnippets = new int[n];
+        int[] startsOfSnippets = new int[n]; // TODO: should be BigArrays? (but unlikely to exceed 2^31 hits in single doc)
         int[] endsOfSnippets = new int[n];
 
         EphemeralHit hit = new EphemeralHit();
@@ -222,13 +222,13 @@ public class Contexts implements Iterable<int[]> {
      * There may be multiple contexts for each hit. Each
      * int array starts with three bookkeeping integers, followed by the contexts
      * information. The bookkeeping integers are:
-     * 0 = hit start, index of the hit word (and length of the left context), counted from the start the context
+     * 0 = hit start, index of the hit word (and length of the left context), counted from the start of the context
      * 1 = right start, start of the right context, counted from the start the context
      * 2 = context length, length of 1 context. As stated above, there may be multiple contexts.
      *
      * The first context therefore starts at index 3.
      */
-    private List<int[]> contexts; // @@@ should be BigList
+    private List<int[]> contexts; // FIXME: should be BigList
 
     /**
      * If we have context information, this specifies the annotation(s) (i.e. word,
@@ -309,7 +309,7 @@ public class Contexts implements Iterable<int[]> {
         final long size = ha.size(); // TODO ugly, might be slow because of required locking
         int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;
-        contexts = new ArrayList<>((int)hits.size()); // @@@ should be BigArray
+        contexts = new ArrayList<>((int)hits.size());
 
         if (size > 0) {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0

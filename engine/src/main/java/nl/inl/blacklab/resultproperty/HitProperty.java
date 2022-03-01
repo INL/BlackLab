@@ -190,7 +190,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
             // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
             if (contexts != null) {
                 long count = contexts.size();
-                this.contextIndices = new IntArrayList((int)count); // @@@ should be BigList
+                this.contextIndices = new IntArrayList((int)count); // FIXME: should be BigList
                 for (int i = 0; i < count; ++i) this.contextIndices.add(i, i);
             }
         }
@@ -220,6 +220,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
 //    @Override
     public abstract PropertyValue get(int hitIndex);
 
+    // FIXME: int must be long!
     // A default implementation is nice, but slow.
     @Override
     public int compare(int indexA, int indexB) {

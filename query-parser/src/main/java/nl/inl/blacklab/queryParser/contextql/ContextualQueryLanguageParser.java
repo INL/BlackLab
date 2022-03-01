@@ -90,7 +90,7 @@ public class ContextualQueryLanguageParser {
         boolean isContentsSearch = false;
         String prop = "word";
         boolean isProperty;
-        if (index != null && !index.getClass().getSimpleName().startsWith("Mock")) // FIXME: ARGH...
+        if (index != null && !index.getClass().getSimpleName().startsWith("Mock")) // TODO: improve testability
             isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
             isProperty = field.equals("word") || field.equals("lemma") || field.equals("pos"); // common case

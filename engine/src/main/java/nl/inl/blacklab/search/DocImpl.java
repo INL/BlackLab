@@ -185,12 +185,14 @@ public class DocImpl implements Doc {
     /**
      * Get character positions from a list of hits.
      *
+     * Used by DocImpl to highlight content in a document.
+     *
      * @param hits the hits for which we wish to find character positions
      * @return a list of HitSpan objects containing the character positions for the
      *         hits.
      */
     private List<HitCharSpan> getCharacterOffsets(Hits hits) {
-        int[] starts = new int[(int)hits.size()]; // @@@ should be BigArray
+        int[] starts = new int[(int)hits.size()]; // TODO: should be BigArray? (but unlikely to exceed 2^31 hits in single doc)
         int[] ends = new int[(int)hits.size()];
         Iterator<Hit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {

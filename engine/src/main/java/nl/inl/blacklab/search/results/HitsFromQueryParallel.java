@@ -324,11 +324,7 @@ public class HitsFromQueryParallel extends Hits {
                 }
             }
 
-            hits.withWriteLock(__ -> {
-                hits.docs().clear();
-                hits.starts().clear();
-                hits.ends().clear();
-            });
+            hits.clear();
         }
 
         public HitQueryContext getHitContext() {

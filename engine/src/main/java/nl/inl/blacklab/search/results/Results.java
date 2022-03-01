@@ -51,7 +51,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
             // Choose a hit we haven't chosen yet
             long hitIndex;
             do {
-                hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, source.size())); // @@@ should sample from all, not just first 2^31 items
+                hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, source.size())); // TODO: should sample from all, not just first 2^31 items
             } while (chosenHitIndices.contains(hitIndex));
             chosenHitIndices.add(hitIndex);
         }

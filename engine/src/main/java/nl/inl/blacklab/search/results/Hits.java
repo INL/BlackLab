@@ -38,12 +38,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     /** A mutable implementation of Hit, to be used for short-lived
      *  instances used while e.g. iterating through a list of hits.
      */
-    public static class EphemeralHit implements Hit {
-        public int doc = -1;
-        public int start = -1;
-        public int end = -1;
+    static class EphemeralHit implements Hit {
+        int doc = -1;
+        int start = -1;
+        int end = -1;
 
-        public HitImpl toHit() {
+        Hit toHit() {
             return new HitImpl(doc, start, end);
         }
 
@@ -63,13 +63,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
     }
 
-    public static class HitsArrays implements Iterable<EphemeralHit> {
-        @FunctionalInterface
-        public static interface HitConsumer {
-            public void consume(int doc, int start, int end);
-        }
+    static class HitsArrays implements Iterable<EphemeralHit> {
+//        @FunctionalInterface
+//        public static interface HitConsumer {
+//            public void consume(int doc, int start, int end);
+//        }
 
-        public static class HitIterator implements Iterator<EphemeralHit> {
+        static class HitIterator implements Iterator<EphemeralHit> {
             private HitsArrays hits;
             private int pos = 0;
             private final EphemeralHit hit = new EphemeralHit();
@@ -108,18 +108,18 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         private ReadWriteLock lock = new ReentrantReadWriteLock();
 
-        // @@@ should use fastuil's BigArray for >2G elements
+        // FIXME: use fastuil's BigArray for >2G elements
         private final IntArrayList docs;
         private final IntArrayList starts;
         private final IntArrayList ends;
 
-        public HitsArrays() {
+        HitsArrays() {
             this.docs = new IntArrayList();
             this.starts = new IntArrayList();
             this.ends = new IntArrayList();
         }
 
-        public HitsArrays(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
+        HitsArrays(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
             if (docs == null || starts == null || ends == null)
                 throw new NullPointerException();
             if (docs.size() != starts.size() || docs.size() != ends.size())
@@ -130,7 +130,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.ends = ends;
         }
 
-        public void add(int doc, int start, int end) {
+        void add(int doc, int start, int end) {
             this.lock.writeLock().lock();
             docs.add(doc);
             starts.add(start);
@@ -138,16 +138,16 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().unlock();
         }
 
-        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
-            this.lock.writeLock().lock();
-            this.docs.addAll(docs);
-            this.starts.addAll(starts);
-            this.ends.addAll(ends);
-            this.lock.writeLock().unlock();
-        }
+//        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
+//            this.lock.writeLock().lock();
+//            this.docs.addAll(docs);
+//            this.starts.addAll(starts);
+//            this.ends.addAll(ends);
+//            this.lock.writeLock().unlock();
+//        }
 
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-        public void add(EphemeralHit hit) {
+        void add(EphemeralHit hit) {
             this.lock.writeLock().lock();
             docs.add(hit.doc);
             starts.add(hit.start);
@@ -156,7 +156,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-        public void add(Hit hit) {
+        void add(Hit hit) {
             this.lock.writeLock().lock();
             docs.add(hit.doc());
             starts.add(hit.start());
@@ -164,45 +164,56 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().unlock();
         }
 
-        public void addAll(List<Hit> hits) {
-            this.lock.writeLock().lock();
-            for (Hit hit : hits) {
-                docs.add(hit.doc());
-                starts.add(hit.start());
-                ends.add(hit.end());
-            }
-            this.lock.writeLock().unlock();
-        }
+//        public void addAll(List<Hit> hits) {
+//            this.lock.writeLock().lock();
+//            for (Hit hit : hits) {
+//                docs.add(hit.doc());
+//                starts.add(hit.start());
+//                ends.add(hit.end());
+//            }
+//            this.lock.writeLock().unlock();
+//        }
 
-        public void addAll(HitsArrays hits) {
+        void addAll(HitsArrays hits) {
             this.lock.writeLock().lock();
             hits.lock.readLock().lock();
-            docs.addAll(hits.docs());
-            starts.addAll(hits.starts());
-            ends.addAll(hits.ends());
+            docs.addAll(hits.docs);
+            starts.addAll(hits.starts);
+            ends.addAll(hits.ends);
             hits.lock.readLock().unlock();
             this.lock.writeLock().unlock();
         }
 
-        public void withReadLock(Consumer<HitsArrays> cons) {
-            lock.readLock().lock();
-            cons.accept(this);
-            lock.readLock().unlock();
-        }
-
-        public void withWriteLock(Consumer<HitsArrays> cons) {
+        /**
+         * Clear the arrays.
+         */
+        void clear() {
             lock.writeLock().lock();
-            cons.accept(this);
+            docs.clear();
+            starts.clear();
+            ends.clear();
             lock.writeLock().unlock();
         }
 
-        public void use(long index, HitConsumer cons) {
+        private void withReadLock(Consumer<HitsArrays> cons) {
             lock.readLock().lock();
-            cons.consume(docs.get((int)index), starts.get((int)index), ends.get((int)index));
+            cons.accept(this);
             lock.readLock().unlock();
         }
 
-        public HitImpl get(long index) {
+//        public void withWriteLock(Consumer<HitsArrays> cons) {
+//            lock.writeLock().lock();
+//            cons.accept(this);
+//            lock.writeLock().unlock();
+//        }
+
+//        public void use(long index, HitConsumer cons) {
+//            lock.readLock().lock();
+//            cons.consume(docs.get((int)index), starts.get((int)index), ends.get((int)index));
+//            lock.readLock().unlock();
+//        }
+
+        Hit get(long index) {
             lock.readLock().lock();
             HitImpl h = new HitImpl(docs.get((int)index), starts.get((int)index), ends.get((int)index));
             lock.readLock().unlock();
@@ -223,7 +234,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * }
          * </pre>
          */
-        public void getEphemeral(long index, EphemeralHit h) {
+        void getEphemeral(long index, EphemeralHit h) {
             lock.readLock().lock();
             h.doc = docs.get((int)index);
             h.start = starts.get((int)index);
@@ -231,28 +242,28 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             lock.readLock().unlock();
         }
 
-        public int doc(long index) {
+        int doc(long index) {
             lock.readLock().lock();
             int doc = this.docs.get((int)index);
             lock.readLock().unlock();
             return doc;
         }
 
-        public int start(long index) {
+        int start(long index) {
             lock.readLock().lock();
             int start = this.starts.get((int)index);
             lock.readLock().unlock();
             return start;
         }
 
-        public int end(long index) {
+        int end(long index) {
             lock.readLock().lock();
             int end = this.ends.get((int)index);
             lock.readLock().unlock();
             return end;
         }
 
-        public long size() {
+        long size() {
             lock.readLock().lock();
             int size = docs.size();
             lock.readLock().unlock();
@@ -264,32 +275,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * The array is not locked, so care should be taken when reading it.
          * Best to wrap usage of this function and the returned in a withReadLock call.
          *
+         * NOTE JN: only used in HitsList constructor; eliminate entirely?
+         *
          * @return
          */
-        public IntArrayList docs() {
+        IntArrayList docs() {
             return docs;
-        }
-
-        /**
-         * Expert use: get the internal starts array.
-         * The array is not locked, so care should be taken when reading it.
-         * Best to wrap usage of this function and the returned in a withReadLock call.
-         *
-         * @return
-         */
-        public IntArrayList starts() {
-            return starts;
-        }
-
-        /**
-         * Expert use: get the internal ends array.
-         * The array is not locked, so care should be taken when reading it.
-         * Best to wrap usage of this function and the returned in a withReadLock call.
-         *
-         * @return
-         */
-        public IntArrayList ends() {
-            return ends;
         }
 
         /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
@@ -298,10 +289,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             return new HitIterator(this);
         }
 
-        public HitsArrays sort(HitProperty p) {
+        HitsArrays sort(HitProperty p) {
             this.lock.readLock().lock();
 
-            int[] indices = new int[(int)this.size()]; // @@@ should be BigArray
+            int[] indices = new int[(int)this.size()]; // FIXME: should be BigArray
             for (int i = 0; i < indices.length; ++i)
                 indices[i] = i;
 
@@ -327,10 +318,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         public void add(int doc, int start, int end){throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
         @Override
         public void addAll(HitsArrays hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
-        @Override
-        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
-        @Override
-        public void addAll(List<Hit> hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+//        @Override
+//        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
+//        @Override
+//        public void addAll(List<Hit> hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); };
     };
 
 
@@ -396,6 +387,19 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                             docsCounted,
                             capturedGroups,
                             ascendingLuceneDocIds);
+    }
+
+    /**
+     * Return a Hits object with a single hit
+     *
+     * @param queryInfo query info
+     * @param luceneDocId Lucene document id
+     * @param start start of hit
+     * @param end end of hit
+     * @return hits object
+     */
+    public static Hits singleton(QueryInfo queryInfo, int luceneDocId, int start, int end) {
+        return fromArrays(queryInfo, new int [] {luceneDocId}, new int[] {start}, new int[] {end});
     }
 
     /**
@@ -633,7 +637,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, size())); // @@@ should sample from all, not just first 2^31 items
+                    hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, size())); // TODO: should sample from all, not just first 2^31 items
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
@@ -995,4 +999,30 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return hitsArrays;
     }
 
+    /**
+     * Get Lucene document id for the specified hit
+     * @param index hit index
+     * @return document id
+     */
+    public int doc(long index) {
+        return hitsArrays.doc(index);
+    }
+
+    /**
+     * Get start position for the specified hit
+     * @param index hit index
+     * @return document id
+     */
+    public int start(long index) {
+        return hitsArrays.start(index);
+    }
+
+    /**
+     * Get end position for the specified hit
+     * @param index hit index
+     * @return document id
+     */
+    public int end(long index) {
+        return hitsArrays.end(index);
+    }
 }

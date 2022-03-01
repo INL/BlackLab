@@ -106,6 +106,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
     }
 
+    // TODO: should be BigList? But unlikely to exceed 2^31 unique terms
     List<TermFrequency> list;
 
     long totalFrequency = 0;
@@ -141,7 +142,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     @Override
     public TermFrequency get(long index) {
-        return list.get((int)index); // @@@ should be BigList
+        return list.get((int)index);
     }
 
     /**
@@ -164,7 +165,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     public TermFrequencyList subList(long fromIndex, long toIndex) {
-        return new TermFrequencyList(queryInfo(), list.subList((int)fromIndex, (int)toIndex)); // @@@ should be BigList
+        return new TermFrequencyList(queryInfo(), list.subList((int)fromIndex, (int)toIndex));
     }
 
     @Override

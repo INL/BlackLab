@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -80,11 +79,9 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
-        HitsArrays hitsArrays = new HitsArrays();
-        hitsArrays.add(luceneDocId, start, end);
         boolean origContent = searchParam.getString("usecontent").equals("orig");
-        Hits hits = Hits.fromList(QueryInfo.create(blIndex), hitsArrays, null);
-        getHitOrFragmentInfo(ds, hits, hitsArrays.get(0), wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
+        Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
+        getHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
         return HTTP_OK;
     }
 

@@ -13,7 +13,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     /**
      * The results.
      */
-    protected List<T> results; //@@@ should be BigList
+    protected List<T> results; // FIXME: should be BigList
     
     public ResultsList(QueryInfo queryInfo) {
         super(queryInfo);
@@ -101,7 +101,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
         ensureResultsRead(toIndex);
         if (toIndex > results.size())
             toIndex = results.size();
-        return results.subList((int)fromIndex, (int)toIndex); // @@@ should be BigList
+        return results.subList((int)fromIndex, (int)toIndex);
     }
     
     /**

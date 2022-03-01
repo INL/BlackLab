@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import org.eclipse.collections.api.iterator.MutableIntIterator;
+import org.eclipse.collections.api.iterator.IntIterator;
 
 /**
  * A basic Hits object implemented with a list.
@@ -29,7 +29,7 @@ public class HitsList extends Hits {
 
         hitsCounted = this.hitsArrays.size();
         int prevDoc = -1;
-        MutableIntIterator it = this.hitsArrays.docs().intIterator();
+        IntIterator it = this.hitsArrays.docs().intIterator();
         ascendingLuceneDocIds = true;
         while (it.hasNext()) {
             int docId = it.next();

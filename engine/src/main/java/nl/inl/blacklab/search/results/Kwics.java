@@ -111,7 +111,7 @@ public class Kwics {
         int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
         for (int i = 1; i < hits.size(); ++i) {
-            int curDocId = hits.hitsArrays().doc(i);
+            int curDocId = hits.doc(i);
             if (curDocId != lastDocId) {
                 if (firstIndexWithCurrentDocId != i) {
                     Contexts.makeKwicsSingleDocForwardIndex(
