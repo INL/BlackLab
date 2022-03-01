@@ -78,7 +78,7 @@ public class Concordances {
             return;
         QueryInfo queryInfo = hits.queryInfo();
         Doc doc = queryInfo.index().doc(hits.get(0).doc());
-        int arrayLength = hits.size() * 2;
+        int arrayLength = (int)(hits.size() * 2); // @@@ should be long
         int[] startsOfWords = new int[arrayLength];
         int[] endsOfWords = new int[arrayLength];
 
@@ -86,6 +86,9 @@ public class Concordances {
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
         for (Hit hit : hits) {
+            if (startEndArrayIndex > Integer.MAX_VALUE - 2)
+                break;
+
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 

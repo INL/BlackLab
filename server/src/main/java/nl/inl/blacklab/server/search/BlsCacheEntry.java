@@ -293,7 +293,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             // - the smaller, the worthier
 
             // Size score from 1-100; 1M per unit, so 100 corresponds to 100M or larger
-            int sizeScore = Math.max(1, Math.min(100, numberOfStoredHits() * BlsCache.SIZE_OF_HIT / 1000000));
+            long sizeScore = Math.max(1, Math.min(100, numberOfStoredHits() * BlsCache.SIZE_OF_HIT / 1000000));
 
             // Run time score from 1-10000; 0.03s per unit, so 10000 corresponds to 5 minutes or longer
             long runTimeScore = Math.max(1, Math.min(10000, timeUserWaitedMs() * 10 / 300));
@@ -347,7 +347,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return exceptionThrown != null;
     }
 
-    public int numberOfStoredHits() {
+    public long numberOfStoredHits() {
         if (result == null)
             return 0;
         return result.numberOfResultObjects();

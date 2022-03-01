@@ -159,9 +159,9 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      * @param fiidLookups how to find the forward index ids of documents
      */
-    private static int[][] getContextWordsSingleDocument(HitsArrays hits, int start, int end, ContextSize contextSize,
+    private static int[][] getContextWordsSingleDocument(HitsArrays hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
-        final int n = end - start;
+        final int n = (int)(end - start); // @@@ should be long
         if (n == 0)
             return new int[0][];
         int[] startsOfSnippets = new int[n];
