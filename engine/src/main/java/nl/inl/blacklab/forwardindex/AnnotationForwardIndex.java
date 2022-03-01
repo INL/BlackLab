@@ -252,6 +252,16 @@ public abstract class AnnotationForwardIndex {
     public abstract List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
 
     /**
+     * Retrieve token ids for the entire document.
+     * @param fiid forward index id
+     * @return token ids for the entire document.
+     */
+    public int[] getDocument(int fiid) {
+        int[] fullDoc = new int[] { -1 };
+        return retrievePartsInt(fiid, fullDoc, fullDoc).get(0);
+    }
+
+    /**
      * Get the Terms object in order to translate ids to token strings
      * 
      * @return the Terms object
@@ -306,8 +316,7 @@ public abstract class AnnotationForwardIndex {
         if (!initialized)
             initialize();
         for (Integer fiid: idSet()) {
-            int[] tokenIds = retrievePartsInt(fiid, new int[] { -1 }, new int[] { -1 }).get(0);
-            task.perform(fiid, tokenIds);
+            task.perform(fiid, getDocument(fiid));
         }
     }
 

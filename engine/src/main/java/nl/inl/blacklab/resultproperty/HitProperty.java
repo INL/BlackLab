@@ -15,6 +15,11 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -22,11 +27,11 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.*;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.List;
+import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Contexts;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Results;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
@@ -342,6 +347,8 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
      * return the latter as a DocPropertyStoredField.
      * 
      * This is used for calculating the relative frequency when grouping on a metadata field.
+     *
+     * It is also used in HitGroupsTokenFrequencies to speed up large frequency list requests.
      * 
      * @return metadata portion of this property, or null if there is none
      */
