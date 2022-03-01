@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -8,9 +10,9 @@ public class SearchDocsFromHits extends SearchDocs {
 
     private SearchHits source;
 
-    private int maxHits = 0;
+    private long maxHits = 0;
 
-    public SearchDocsFromHits(QueryInfo queryInfo, SearchHits hitSearch, int maxHitsToGatherPerDocument) {
+    public SearchDocsFromHits(QueryInfo queryInfo, SearchHits hitSearch, long maxHitsToGatherPerDocument) {
         super(queryInfo);
         this.source = hitSearch;
         this.maxHits = maxHitsToGatherPerDocument;
@@ -22,31 +24,17 @@ public class SearchDocsFromHits extends SearchDocs {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + maxHits;
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        SearchDocsFromHits that = (SearchDocsFromHits) o;
+        return maxHits == that.maxHits && source.equals(that.source);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SearchDocsFromHits other = (SearchDocsFromHits) obj;
-        if (maxHits != other.maxHits)
-            return false;
-        if (source == null) {
-            if (other.source != null)
-                return false;
-        } else if (!source.equals(other.source))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), source, maxHits);
     }
 
     @Override

@@ -4,21 +4,21 @@ public final class CorpusSize {
 
     public static final CorpusSize EMPTY = new CorpusSize(0, 0);
 
-    public static CorpusSize get(int documents, long tokens) {
+    public static CorpusSize get(long documents, long tokens) {
         return new CorpusSize(documents, tokens);
     }
 
-    private int documents;
+    private long documents;
 
     private long tokens;
 
-    private CorpusSize(int documents, long tokens) {
+    private CorpusSize(long documents, long tokens) {
         super();
         this.documents = documents;
         this.tokens = tokens;
     }
 
-    public int getDocuments() {
+    public long getDocuments() {
         return documents;
     }
 

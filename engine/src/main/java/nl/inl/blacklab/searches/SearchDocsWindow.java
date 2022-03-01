@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -8,11 +10,11 @@ public class SearchDocsWindow extends SearchDocs {
 
     private SearchDocs source;
 
-    private int first;
+    private long first;
 
-    private int number;
+    private long number;
 
-    public SearchDocsWindow(QueryInfo queryInfo, SearchDocs docsSearch, int first, int number) {
+    public SearchDocsWindow(QueryInfo queryInfo, SearchDocs docsSearch, long first, long number) {
         super(queryInfo);
         this.source = docsSearch;
         this.first = first;
@@ -25,34 +27,17 @@ public class SearchDocsWindow extends SearchDocs {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + first;
-        result = prime * result + number;
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        SearchDocsWindow that = (SearchDocsWindow) o;
+        return first == that.first && number == that.number && source.equals(that.source);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SearchDocsWindow other = (SearchDocsWindow) obj;
-        if (first != other.first)
-            return false;
-        if (number != other.number)
-            return false;
-        if (source == null) {
-            if (other.source != null)
-                return false;
-        } else if (!source.equals(other.source))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), source, first, number);
     }
 
     @Override

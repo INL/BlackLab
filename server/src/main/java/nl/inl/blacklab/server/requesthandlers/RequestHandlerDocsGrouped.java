@@ -56,7 +56,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         int number = searchParam.getInteger("number");
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
-        int numberOfGroupsInWindow = 0;
+        long numberOfGroupsInWindow = 0;
         numberOfGroupsInWindow = number;
         if (first + number > groups.size())
             numberOfGroupsInWindow = groups.size() - first;
@@ -101,7 +101,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
 
         ds.startEntry("docGroups").startList();
-        int last = Math.min(first + number, groups.size());
+        long last = Math.min(first + number, groups.size());
         for (int i = first; i < last; ++i) {
             DocGroup group = groups.get(i);
             List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : Arrays.asList(group.identity());

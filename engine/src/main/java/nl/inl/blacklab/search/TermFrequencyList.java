@@ -130,7 +130,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public int size() {
+    public long size() {
         return list.size();
     }
 
@@ -140,8 +140,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public TermFrequency get(int index) {
-        return list.get(index);
+    public TermFrequency get(long index) {
+        return list.get((int)index); // @@@ should be BigList
     }
 
     /**
@@ -163,18 +163,18 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return totalFrequency;
     }
 
-    public TermFrequencyList subList(int fromIndex, int toIndex) {
-        return new TermFrequencyList(queryInfo(), list.subList(fromIndex, toIndex));
+    public TermFrequencyList subList(long fromIndex, long toIndex) {
+        return new TermFrequencyList(queryInfo(), list.subList((int)fromIndex, (int)toIndex)); // @@@ should be BigList
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // NOP
     }
 
     @Override
     public ResultGroups<TermFrequency> group(ResultProperty<TermFrequency> criteria,
-            int maxResultsToStorePerGroup) {
+                                             long maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException();
     }
 
@@ -189,7 +189,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public TermFrequencyList window(int first, int windowSize) {
+    public TermFrequencyList window(long first, long windowSize) {
         throw new UnsupportedOperationException();
     }
 
@@ -204,7 +204,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return results.size();
     }
 

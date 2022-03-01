@@ -46,32 +46,32 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
         if (numberOfHitsToSelect > source.size())
             numberOfHitsToSelect = source.size(); // default to all hits in this case
         // Choose the hits
-        Set<Integer> chosenHitIndices = new TreeSet<>();
+        Set<Long> chosenHitIndices = new TreeSet<>();
         for (int i = 0; i < numberOfHitsToSelect; i++) {
             // Choose a hit we haven't chosen yet
-            int hitIndex;
+            long hitIndex;
             do {
-                hitIndex = random.nextInt(source.size());
+                hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, source.size())); // @@@ should sample from all, not just first 2^31 items
             } while (chosenHitIndices.contains(hitIndex));
             chosenHitIndices.add(hitIndex);
         }
 
         // Add the hits in order of their index
-        for (Integer hitIndex : chosenHitIndices) {
+        for (Long hitIndex : chosenHitIndices) {
             T hit = source.get(hitIndex);
             results.add(hit);
         }
         return results;
     }
 
-    protected static <T, P extends ResultProperty<T>> List<T> doWindow(ResultsList<T, P> results, int first, int number) {
+    protected static <T, P extends ResultProperty<T>> List<T> doWindow(ResultsList<T, P> results, long first, long number) {
         if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
             //throw new BlackLabRuntimeException("First hit out of range");
             return Collections.emptyList();
         }
 
         // Auto-clamp number
-        int actualSize = number;
+        long actualSize = number;
         if (!results.resultsProcessedAtLeast(first + actualSize))
             actualSize = results.size() - first;
 
@@ -104,27 +104,27 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
 
     private ResultsStats resultsStats = new ResultsStats() {
         @Override
-        public boolean processedAtLeast(int lowerBound) {
+        public boolean processedAtLeast(long lowerBound) {
             return resultsProcessedAtLeast(lowerBound);
         }
 
         @Override
-        public int processedTotal() {
+        public long processedTotal() {
             return resultsProcessedTotal();
         }
 
         @Override
-        public int processedSoFar() {
+        public long processedSoFar() {
             return resultsProcessedSoFar();
         }
 
         @Override
-        public int countedSoFar() {
+        public long countedSoFar() {
             return resultsCountedSoFar();
         }
 
         @Override
-        public int countedTotal() {
+        public long countedTotal() {
             return resultsCountedTotal();
         }
 
@@ -253,7 +253,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * @param i index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
-    public abstract T get(int i);
+    public abstract T get(long i);
 
     /**
      * Group these hits by a criterium (or several criteria).
@@ -262,7 +262,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * @param maxResultsToStorePerGroup maximum number of results to store per group, or -1 for all
      * @return a HitGroups object representing the grouped hits
      */
-    public abstract ResultGroups<T> group(P criteria, int maxResultsToStorePerGroup);
+    public abstract ResultGroups<T> group(P criteria, long maxResultsToStorePerGroup);
 
     /**
      * Select only the results where the specified property has the specified value.
@@ -307,7 +307,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      * @param windowSize desired size of the window (if there's enough results)
      * @return the window
      */
-    public abstract Results<T, P> window(int first, int windowSize);
+    public abstract Results<T, P> window(long first, long windowSize);
 
     @Override
     public String toString() {
@@ -321,7 +321,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
      */
-    protected abstract void ensureResultsRead(int number);
+    protected abstract void ensureResultsRead(long number);
 
     /**
      * Ensure that we have read all results.
@@ -334,7 +334,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
         return resultsStats;
     }
 
-    protected abstract boolean resultsProcessedAtLeast(int lowerBound);
+    protected abstract boolean resultsProcessedAtLeast(long lowerBound);
 
     /**
      * This is an alias of resultsProcessedTotal().

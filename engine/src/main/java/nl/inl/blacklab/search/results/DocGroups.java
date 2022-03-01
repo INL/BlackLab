@@ -103,7 +103,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     }
 
     @Override
-    public ResultGroups<DocGroup> group(GroupProperty<DocResult, DocGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<DocGroup> group(GroupProperty<DocResult, DocGroup> criteria, long maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group DocGroups");
     }
 
@@ -134,7 +134,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     }
     
     @Override
-    public DocGroups window(int first, int number) {
+    public DocGroups window(long first, long number) {
         List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
@@ -142,7 +142,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // NOP
     }
 

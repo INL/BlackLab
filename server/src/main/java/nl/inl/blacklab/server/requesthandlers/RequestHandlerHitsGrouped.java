@@ -1,21 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.*;
-import nl.inl.blacklab.searches.SearchCacheEntry;
-import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.config.DefaultMax;
-import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.util.BlockTimer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -24,9 +18,29 @@ import org.apache.lucene.search.Query;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.DefaultMax;
+import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.util.BlockTimer;
 
 /**
  * Request handler for grouped hit results.
@@ -56,13 +70,13 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startMap();
         ds.startEntry("summary").startMap();
         WindowSettings windowSettings = searchParam.getWindowSettings();
-        final int first = Math.max(windowSettings.first(), 0);
+        final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
-        final int requestedWindowSize = windowSettings.size() < 0
+        final long requestedWindowSize = windowSettings.size() < 0
                 || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
                         : windowSettings.size();
-        int totalResults = groups.size();
-        final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
+        long totalResults = groups.size();
+        final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
@@ -94,10 +108,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         Map<Integer, String> pids = new HashMap<>();
 
         ds.startEntry("hitGroups").startList();
-        int last = Math.min(first + requestedWindowSize, groups.size());
+        long last = Math.min(first + requestedWindowSize, groups.size());
 
         try (BlockTimer ignored = BlockTimer.create("Serializing groups to JSON")) {
-            for (int i = first; i < last; ++i) {
+            for (long i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 PropertyValue id = group.identity();
                 List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : Collections.singletonList(id);
@@ -109,7 +123,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 //                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
-                int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                 ds.startItem("hitgroup").startMap();
                 ds
@@ -154,7 +168,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         return HTTP_OK;
     }
 
-    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, int first, int requestedWindowSize) throws BlsException {
+    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, long first, long requestedWindowSize) throws BlsException {
         BlackLabIndex index = hitGroups.index();
         ds.startEntry("docInfos").startMap();
         MutableIntSet docsDone = new IntHashSet();

@@ -1,5 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -12,12 +20,6 @@ import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-import org.apache.lucene.search.Query;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -50,14 +52,14 @@ public class RequestHandlerTermFreq extends RequestHandler {
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            int first = searchParam.getInteger("first");
+            long first = searchParam.getInteger("first");
             if (first < 0 || first >= tfl.size())
                 first = 0;
-            int number = searchParam.getInteger("number");
+            long number = searchParam.getInteger("number");
             DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
                 number = pageSize.getDefaultValue();
-            int last = first + number;
+            long last = first + number;
             if (last > tfl.size())
                 last = tfl.size();
 

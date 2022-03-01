@@ -14,7 +14,7 @@ public class HitGroupWithoutResults extends HitGroup {
         protected final boolean maxHitsProcessed;
         protected final boolean maxHitsCounted;
 
-        public HitsWithoutResults(QueryInfo queryInfo, int totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
+        public HitsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
             super(queryInfo, true);
             this.hitsCounted = totalHits;
             this.docsCounted = totalDocuments;
@@ -25,7 +25,7 @@ public class HitGroupWithoutResults extends HitGroup {
         }
 
         @Override
-        protected void ensureResultsRead(int number) {
+        protected void ensureResultsRead(long number) {
             // NOP
         }
 

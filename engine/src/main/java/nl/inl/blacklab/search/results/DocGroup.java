@@ -48,7 +48,7 @@ public class DocGroup extends Group<DocResult> {
         return (DocResults) super.storedResults();
     }
 
-    public int numberOfStoredHits() {
+    public long numberOfStoredHits() {
         return storedHits;
     }
 

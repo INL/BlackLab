@@ -22,7 +22,7 @@ public abstract class SearchDocs extends SearchForResults<DocResults> {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchDocGroups group(DocProperty groupBy, int maxResultsToGatherPerGroup) {
+    public SearchDocGroups group(DocProperty groupBy, long maxResultsToGatherPerGroup) {
         return new SearchDocGroupsFromDocs(queryInfo(), this, groupBy, maxResultsToGatherPerGroup);
     }
 
@@ -66,7 +66,7 @@ public abstract class SearchDocs extends SearchForResults<DocResults> {
      * @param number number of hits to select
      * @return resulting operation
      */
-    public SearchDocs window(int first, int number) {
+    public SearchDocs window(long first, long number) {
         return new SearchDocsWindow(queryInfo(), this, first, number);
     }
 

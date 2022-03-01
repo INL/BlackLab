@@ -30,7 +30,7 @@ public class ResultsStatsStatic extends ResultsStats {
     }
 
     @Override
-    public boolean processedAtLeast(int lowerBound) {
+    public boolean processedAtLeast(long lowerBound) {
         return processedSoFar() >= lowerBound;
     }
 

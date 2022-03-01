@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -15,7 +17,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
 
     private final HitProperty property;
 
-    private final int maxResultsToStorePerGroup;
+    private final long maxResultsToStorePerGroup;
 
     private final boolean mustStoreHits;
 
@@ -33,7 +35,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @param mustStoreHits if true, up to maxResultsToStorePerGroup hits will be stored. If false, no hits may be
      *                      stored, depending on how the grouping is performed.
      */
-    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, int maxResultsToStorePerGroup, boolean mustStoreHits) {
+    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, long maxResultsToStorePerGroup, boolean mustStoreHits) {
         super(queryInfo);
         this.source = hitsSearch;
         this.property = groupBy;
@@ -60,38 +62,17 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + maxResultsToStorePerGroup;
-        result = prime * result + ((property == null) ? 0 : property.hashCode());
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
-        result = prime * result + Boolean.hashCode(mustStoreHits);
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        SearchHitGroupsFromHits that = (SearchHitGroupsFromHits) o;
+        return maxResultsToStorePerGroup == that.maxResultsToStorePerGroup && mustStoreHits == that.mustStoreHits && source.equals(that.source) && property.equals(that.property);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SearchHitGroupsFromHits other = (SearchHitGroupsFromHits) obj;
-        if (maxResultsToStorePerGroup != other.maxResultsToStorePerGroup)
-            return false;
-        if (property == null) {
-            if (other.property != null)
-                return false;
-        } else if (!property.equals(other.property))
-            return false;
-        if (source == null) {
-            if (other.source != null)
-                return false;
-        } else if (!source.equals(other.source))
-            return false;
-        return other.mustStoreHits == mustStoreHits;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), source, property, maxResultsToStorePerGroup, mustStoreHits);
     }
 
     @Override

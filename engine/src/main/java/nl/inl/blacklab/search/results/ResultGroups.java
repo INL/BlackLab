@@ -39,7 +39,7 @@ public interface ResultGroups<T> {
      *
      * @return number of groups
      */
-    int size();
+    long size();
     
     /**
      * Get our original query info.
@@ -71,7 +71,7 @@ public interface ResultGroups<T> {
     
     Group<T> get(PropertyValue prop);
     
-    Group<T> get(int i);
+    Group<T> get(long i);
     
     /**
      * Get an instance of this grouping with fewer stored results per group.

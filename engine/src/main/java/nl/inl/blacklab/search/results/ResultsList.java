@@ -13,7 +13,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     /**
      * The results.
      */
-    protected List<T> results;
+    protected List<T> results; //@@@ should be BigList
     
     public ResultsList(QueryInfo queryInfo) {
         super(queryInfo);
@@ -60,27 +60,27 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     }
     
     @Override
-    public synchronized T get(int i) {
+    public synchronized T get(long i) {
         ensureResultsRead(i + 1);
         if (i >= results.size())
             return null;
-        return results.get(i);
+        return results.get((int)i);
     }
     
     @Override
-    protected boolean resultsProcessedAtLeast(int lowerBound) {
+    protected boolean resultsProcessedAtLeast(long lowerBound) {
         ensureResultsRead(lowerBound);
         return results.size() >= lowerBound;
     }
     
     @Override
-    protected int resultsProcessedTotal() {
+    protected long resultsProcessedTotal() {
         ensureAllResultsRead();
         return results.size();
     }
     
     @Override
-    protected int resultsProcessedSoFar() {
+    protected long resultsProcessedSoFar() {
         return results.size();
     }
     
@@ -97,11 +97,11 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
      * 
      * @return the list of hits
      */
-    protected List<T> resultsSubList(int fromIndex, int toIndex) {
+    protected List<T> resultsSubList(long fromIndex, long toIndex) {
         ensureResultsRead(toIndex);
         if (toIndex > results.size())
             toIndex = results.size();
-        return results.subList(fromIndex, toIndex);
+        return results.subList((int)fromIndex, (int)toIndex); // @@@ should be BigList
     }
     
     /**

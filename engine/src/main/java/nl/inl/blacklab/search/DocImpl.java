@@ -1,5 +1,15 @@
 package nl.inl.blacklab.search;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.TermsEnum;
+import org.apache.lucene.search.DocIdSetIterator;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -8,15 +18,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.search.DocIdSetIterator;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
 public class DocImpl implements Doc {
     
@@ -189,8 +190,8 @@ public class DocImpl implements Doc {
      *         hits.
      */
     private List<HitCharSpan> getCharacterOffsets(Hits hits) {
-        int[] starts = new int[hits.size()];
-        int[] ends = new int[hits.size()];
+        int[] starts = new int[(int)hits.size()]; // @@@ should be BigArray
+        int[] ends = new int[(int)hits.size()];
         Iterator<Hit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {
             Hit hit = hitsIt.next(); // hits.get(i);

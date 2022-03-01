@@ -29,7 +29,7 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchDocs docs(int maxResultsToGatherPerGroup) {
+    public SearchDocs docs(long maxResultsToGatherPerGroup) {
         return new SearchDocsFromHits(queryInfo(), this, maxResultsToGatherPerGroup);
     }
 
@@ -40,7 +40,7 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchHitGroups groupWithStoredHits(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+    public SearchHitGroups groupWithStoredHits(HitProperty groupBy, long maxResultsToGatherPerGroup) {
         return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, true);
     }
 
@@ -53,7 +53,7 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * @deprecated use either {@link #groupWithStoredHits(HitProperty, int)} or {@link #groupStats(HitProperty, int)}
      */
     @Deprecated
-    public SearchHitGroups group(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+    public SearchHitGroups group(HitProperty groupBy, long maxResultsToGatherPerGroup) {
         return groupWithStoredHits(groupBy, maxResultsToGatherPerGroup);
     }
 
@@ -67,7 +67,7 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * @param maxResultsToGatherPerGroup how many results to gather at most per group (if hits are stored)
      * @return resulting operation
      */
-    public SearchHitGroups groupStats(HitProperty groupBy, int maxResultsToGatherPerGroup) {
+    public SearchHitGroups groupStats(HitProperty groupBy, long maxResultsToGatherPerGroup) {
         return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, false);
     }
 
@@ -111,7 +111,7 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * @param number number of hits to select
      * @return resulting operation
      */
-    public SearchHits window(int first, int number) {
+    public SearchHits window(long first, long number) {
         return new SearchHitsWindow(queryInfo(), this, first, number);
     }
     

@@ -132,10 +132,10 @@ public class QueryTool {
     private Annotation collocAnnotation = null;
 
     /** The first hit or group to show on the current results page. */
-    private int firstResult;
+    private long firstResult;
 
     /** Number of hits or groups to show per results page. */
-    private int resultsPerPage = 20;
+    private long resultsPerPage = 20;
 
     /** Show document titles between hits? */
     private boolean showDocTitle = false;
@@ -1109,7 +1109,7 @@ public class QueryTool {
             showResultsPage();
             reportTime(t.elapsed());
             if (determineTotalNumberOfHits)
-                statInfo = Integer.toString(hits.size());
+                statInfo = Long.toString(hits.size());
             else
                 statInfo = "?";
             commandWasQuery = true;
@@ -1130,12 +1130,12 @@ public class QueryTool {
      *
      * @param pageNumber which page to show
      */
-    private void showPage(int pageNumber) {
+    private void showPage(long pageNumber) {
         if (hits != null) {
 
             if (determineTotalNumberOfHits) {
                 // Clamp page number of total number of hits
-                int totalResults;
+                long totalResults;
                 switch (showSetting) {
                 case COLLOC:
                     totalResults = collocations.size();
@@ -1148,7 +1148,7 @@ public class QueryTool {
                     break;
                 }
 
-                int totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
+                long totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
                 if (pageNumber < 0)
                     pageNumber = totalPages - 1;
                 if (pageNumber >= totalPages)
@@ -1422,7 +1422,7 @@ public class QueryTool {
         int i = 0;
         for (TermFrequency coll : collocations) {
             if (i >= firstResult && i < firstResult + resultsPerPage) {
-                int j = i - firstResult + 1;
+                long j = i - firstResult + 1;
                 outprintln(String.format("%4d %7d %s", j, coll.frequency, coll.term));
             }
             i++;
@@ -1439,8 +1439,7 @@ public class QueryTool {
      * Show the current page of group results.
      */
     private void showGroupsPage() {
-        int i;
-        for (i = firstResult; i < groups.size() && i < firstResult + resultsPerPage; i++) {
+        for (long i = firstResult; i < groups.size() && i < firstResult + resultsPerPage; i++) {
             Group<Hit> g = groups.get(i);
             outprintln(String.format("%4d. %5d %s", i + 1, g.size(), g.identity().toString()));
         }
@@ -1468,7 +1467,7 @@ public class QueryTool {
 
         // Compile hits display info and calculate necessary width of left context column
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
-        int hitNr = window.windowStats().first() + 1;
+        long hitNr = window.windowStats().first() + 1;
         for (Group<Hit> result : window) {
             Doc doc = ((PropertyValueDoc)result.identity()).value();
             Document d = doc.luceneDoc();
@@ -1482,7 +1481,7 @@ public class QueryTool {
         }
 
         // Summarize
-        int docsCounted = docs.size();
+        long docsCounted = docs.size();
         if (determineTotalNumberOfHits && currentHitSet != null)
             docsCounted = currentHitSet.docsStats().countedTotal();
         outprintln(docsCounted + " docs");
@@ -1565,7 +1564,7 @@ public class QueryTool {
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
-        int hitNr = window.windowStats().first() + 1;
+        long hitNr = window.windowStats().first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {
                 if (currentDoc != -1)
@@ -1594,7 +1593,7 @@ public class QueryTool {
         if (!determineTotalNumberOfHits) {
             msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
-            int numberRetrieved = hitsToShow.size();
+            long numberRetrieved = hitsToShow.size();
             ResultsStats docsStats = hitsToShow.docsStats();
             String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
             if (hits.maxStats().hitsProcessedExceededMaximum()) {

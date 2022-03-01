@@ -72,7 +72,7 @@ public class SampleParameters {
      * @param totalNumberOfHits the total number of hits
      * @return number to sample
      */
-    public int numberOfHits(long totalNumberOfHits) {
+    public long numberOfHits(long totalNumberOfHits) {
         return isPercentage() ? Math.round((float)percentageOfHits() * totalNumberOfHits) : numberOfHitsSet();
     }
     
@@ -132,7 +132,7 @@ public class SampleParameters {
     
     @Override
     public String toString() {
-        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Integer.toString(numberOfHitsSet)) + 
+        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Long.toString(numberOfHitsSet)) +
                 ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED)" : " (RANDOM)");
     }
 

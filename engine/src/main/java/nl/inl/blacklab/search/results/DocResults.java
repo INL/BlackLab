@@ -119,7 +119,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
+    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
     }
 
@@ -157,17 +157,17 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     Lock ensureResultsReadLock;
 
     /** Largest number of hits in a single document */
-    private int mostHitsInDocument = 0;
+    private long mostHitsInDocument = 0;
 
-    private int totalHits = 0;
+    private long totalHits = 0;
 
-    private int resultObjects = 0;
+    private long resultObjects = 0;
 
     private WindowStats windowStats;
 
     private SampleParameters sampleParameters;
 
-    private int maxHitsToStorePerDoc = 0;
+    private long maxHitsToStorePerDoc = 0;
 
     /** The Query this was created from, or null if it wasn't created from a Query.
      *
@@ -195,7 +195,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
+    protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
         this.sourceHitsIterator = hits.ephemeralIterator();
@@ -268,7 +268,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         return resultsProcessedAtLeast(lowerBound);
     }
 
-    public int docsProcessedSoFar() {
+    public long docsProcessedSoFar() {
         return resultsProcessedSoFar();
     }
 
@@ -281,7 +281,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      *
      * @return the number of documents.
      */
-    protected int docsProcessedTotal() {
+    protected long docsProcessedTotal() {
         return size();
     }
 
@@ -289,13 +289,13 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * If we still have only partially read our Hits object, read some more of it
      * and add the hits.
      *
-     * @param index the number of results we want to ensure have been read, or
+     * @param number the number of results we want to ensure have been read, or
      *            negative for all results
      */
     @Override
-    protected void ensureResultsRead(int index) {
+    protected void ensureResultsRead(long number) {
         try {
-            if (doneProcessingAndCounting() || (index >= 0 && results.size() > index))
+            if (doneProcessingAndCounting() || (number >= 0 && results.size() > number))
                 return;
 
             while (!ensureResultsReadLock.tryLock()) {
@@ -305,7 +305,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 Thread.sleep(50);
-                if (doneProcessingAndCounting() || (index >= 0 && results.size() >= index))
+                if (doneProcessingAndCounting() || (number >= 0 && results.size() >= number))
                     return;
             }
 
@@ -314,14 +314,14 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 HitsArrays docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
-                while (sourceHitsIterator.hasNext() && (index < 0 || index > results.size())) {
+                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
                     EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                            int size = docHits.size();
+                            long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
 
@@ -340,8 +340,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                         Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                        int size = docHits.size();
-                        addDocResultToList(doc, hits, size);
+                        addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
                     }
@@ -354,7 +353,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         }
     }
 
-    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, int totalNumberOfHits) {
+    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
             docResult = DocResult.fromHits(doc, Hits.immutableEmptyList(queryInfo()), totalNumberOfHits);
@@ -370,7 +369,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public DocGroups group(DocProperty groupBy, int maxResultsToStorePerGroup) {
+    public DocGroups group(DocProperty groupBy, long maxResultsToStorePerGroup) {
         ensureAllResultsRead();
 
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
@@ -418,7 +417,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @return the window
      */
     @Override
-    public DocResults window(int first, int number) {
+    public DocResults window(long first, long number) {
         List<DocResult> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
@@ -540,7 +539,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     public CorpusSize subcorpusSize(boolean countTokens) {
         if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
             long numberOfTokens;
-            int numberOfDocuments;
+            long numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
 //                logger.debug("## DocResults.tokensInMatchingDocs: fast path");

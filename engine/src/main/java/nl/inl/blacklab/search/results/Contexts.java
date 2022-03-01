@@ -168,10 +168,10 @@ public class Contexts implements Iterable<int[]> {
         int[] endsOfSnippets = new int[n];
 
         EphemeralHit hit = new EphemeralHit();
-        for (int i = start; i < end; ++i) {
+        for (long i = start; i < end; ++i) {
             hits.getEphemeral(i, hit);
-            startsOfSnippets[i - start] = Math.max(0, hit.start - contextSize.left());
-            endsOfSnippets[i - start] = hit.end + contextSize.right();
+            startsOfSnippets[(int)(i - start)] = Math.max(0, hit.start - contextSize.left());
+            endsOfSnippets[(int)(i - start)] = hit.end + contextSize.right();
         }
 
         int fiNumber = 0;
@@ -192,7 +192,7 @@ public class Contexts implements Iterable<int[]> {
             // Build the actual concordances
 //            int hitNum = 0;
             for (int i = 0; i < n; ++i) {
-                int hitIndex = start + i;
+                long hitIndex = start + i;
                 int[] theseWords = words.get(i);
                 hits.getEphemeral(hitIndex, hit);
 
@@ -228,7 +228,7 @@ public class Contexts implements Iterable<int[]> {
      *
      * The first context therefore starts at index 3.
      */
-    private List<int[]> contexts;
+    private List<int[]> contexts; // @@@ should be BigList
 
     /**
      * If we have context information, this specifies the annotation(s) (i.e. word,
@@ -306,10 +306,10 @@ public class Contexts implements Iterable<int[]> {
 
         // setup first iteration
         HitsArrays ha = hits.hitsArrays;
-        final int size = ha.size(); // TODO ugly, might be slow because of required locking
+        final long size = ha.size(); // TODO ugly, might be slow because of required locking
         int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;
-        contexts = new ArrayList<>(hits.size());
+        contexts = new ArrayList<>((int)hits.size()); // @@@ should be BigArray
 
         if (size > 0) {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
@@ -347,11 +347,11 @@ public class Contexts implements Iterable<int[]> {
      * @param index which hit we want the context(s) for
      * @return the context(s)
      */
-    public int[] get(int index) {
-        return contexts.get(index);
+    public int[] get(long index) {
+        return contexts.get((int)index);
     }
 
-    public int size() {
+    public long size() {
         return contexts.size();
     }
 

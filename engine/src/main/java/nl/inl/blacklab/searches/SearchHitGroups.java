@@ -56,7 +56,7 @@ public abstract class SearchHitGroups extends SearchForResults<HitGroups> {
      * @param number number of hits to select
      * @return resulting operation
      */
-    public SearchHitGroups window(int first, int number) {
+    public SearchHitGroups window(long first, long number) {
         return new SearchHitGroupsWindow(queryInfo(), this, first, number);
     }
 

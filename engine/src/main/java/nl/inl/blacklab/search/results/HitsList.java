@@ -54,8 +54,8 @@ public class HitsList extends Hits {
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
                        long hitsCounted,
-                       int docsRetrieved,
-                       int docsCounted,
+                       long docsRetrieved,
+                       long docsCounted,
                        CapturedGroups capturedGroups,
                        boolean ascendingLuceneDocIds
                        ) {
@@ -82,7 +82,7 @@ public class HitsList extends Hits {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // subclasses may override
     }
 

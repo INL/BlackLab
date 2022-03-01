@@ -189,8 +189,8 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
     
             // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
             if (contexts != null) {
-                int count = contexts.size();
-                this.contextIndices = new IntArrayList(count);
+                long count = contexts.size();
+                this.contextIndices = new IntArrayList((int)count); // @@@ should be BigList
                 for (int i = 0; i < count; ++i) this.contextIndices.add(i, i);
             }
         }

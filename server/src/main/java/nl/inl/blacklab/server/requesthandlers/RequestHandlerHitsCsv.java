@@ -179,16 +179,16 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Integer.toString(group.storedResults().hitsStats().countedSoFar()));
+                row.add(Long.toString(group.storedResults().hitsStats().countedSoFar()));
 
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), metadataGroupProperties, docPropValues, true);
-                    int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
-                    row.add(Integer.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
+                    row.add(Long.toString(numberOfDocsInGroup));
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
                     row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
                 }
 

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -10,10 +12,10 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SearchCollocationsWindow extends SearchCollocations {
 
     private SearchCollocations source;
-    private int first;
-    private int number;
+    private long first;
+    private long number;
 
-    public SearchCollocationsWindow(QueryInfo queryInfo, SearchCollocations source, int first, int number) {
+    public SearchCollocationsWindow(QueryInfo queryInfo, SearchCollocations source, long first, long number) {
         super(queryInfo);
         this.source = source;
         this.first = first;
@@ -27,12 +29,7 @@ public class SearchCollocationsWindow extends SearchCollocations {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + first;
-        result = prime * result + number;
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
-        return result;
+        return Objects.hash(super.hashCode(), source, first, number);
     }
 
     @Override

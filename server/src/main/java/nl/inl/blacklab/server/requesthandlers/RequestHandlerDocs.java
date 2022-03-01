@@ -206,7 +206,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Combine all
             ds.entry("docPid", pid);
-            int numHits = result.size();
+            long numHits = result.size();
             if (numHits > 0)
                 ds.entry("numberOfHits", numHits);
 

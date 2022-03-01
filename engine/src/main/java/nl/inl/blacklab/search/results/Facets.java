@@ -33,7 +33,7 @@ public class Facets implements SearchResult {
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 

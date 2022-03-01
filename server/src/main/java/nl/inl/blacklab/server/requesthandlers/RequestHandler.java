@@ -834,7 +834,7 @@ public abstract class RequestHandler {
             ds.entry("numberOfHits", numberOfHits)
                     .entry("numberOfHitsRetrieved", numberOfHits);
 
-            int numberOfDocsCounted = docResults.size();
+            long numberOfDocsCounted = docResults.size();
             if (countFailed)
                 numberOfDocsCounted = -1;
             ds.entry("numberOfDocs", numberOfDocsCounted)

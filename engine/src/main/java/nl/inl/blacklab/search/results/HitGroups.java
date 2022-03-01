@@ -64,7 +64,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @param maxResultsToStorePerGroup max results to store
      * @return grouped hits
      */
-    public static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+    public static HitGroups fromHits(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
         return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
     }
 
@@ -106,7 +106,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @param criteria the criteria to group on
      * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    protected HitGroups(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+    protected HitGroups(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
         super(hits.queryInfo());
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
@@ -183,7 +183,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // NOP
     }
 
@@ -240,7 +240,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public int size() {
+    public long size() {
         return groups.size();
     }
 
@@ -255,7 +255,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public HitGroups window(int first, int number) {
+    public HitGroups window(long first, long number) {
         List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
@@ -272,7 +272,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public ResultGroups<HitGroup> group(GroupProperty<Hit, HitGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<HitGroup> group(GroupProperty<Hit, HitGroup> criteria, long maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 
@@ -336,9 +336,9 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return hitsStats in left, docsStats in right
      */
     private static Pair<ResultsStats, ResultsStats> getStatsOfSample(List<HitGroup> sample, MaxStats maxHitsStatsOfSource, MaxStats maxDocsStatsOfSource) {
-        int hitsCounted = 0;
-        int hitsRetrieved = 0;
-        int docsRetrieved = 0;
+        long hitsCounted = 0;
+        long hitsRetrieved = 0;
+        long docsRetrieved = 0;
         
         IntHashSet docs = new IntHashSet();
         for (HitGroup h : sample) {

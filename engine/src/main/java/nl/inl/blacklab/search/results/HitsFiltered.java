@@ -75,7 +75,7 @@ public class HitsFiltered extends Hits {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
             if (doneFiltering || number >= 0 && hitsArrays.size() > number)
