@@ -782,7 +782,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     @Override
     protected int resultsProcessedTotal() {
-        ensureResultsRead(-1);
+        ensureAllResultsRead();
         return this.hitsArrays.size();
     }
 
@@ -821,6 +821,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     @Override
     public Hit get(int i) {
+        ensureResultsRead(i + 1);
         return this.hitsArrays.get(i);
     }
 
