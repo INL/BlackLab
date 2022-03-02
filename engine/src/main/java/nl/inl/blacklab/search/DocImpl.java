@@ -192,7 +192,7 @@ public class DocImpl implements Doc {
      *         hits.
      */
     private List<HitCharSpan> getCharacterOffsets(Hits hits) {
-        int[] starts = new int[(int)hits.size()]; // TODO: should be BigArray? (but unlikely to exceed 2^31 hits in single doc)
+        int[] starts = new int[(int)hits.size()]; // FIXME: should be BigArray? (but unlikely to exceed 2^31 hits in single doc)
         int[] ends = new int[(int)hits.size()];
         Iterator<Hit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {

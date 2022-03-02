@@ -106,7 +106,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
     }
 
-    // TODO: should be BigList? But unlikely to exceed 2^31 unique terms
+    // FIXME: should be BigList? But unlikely to exceed 2^31 unique terms
     List<TermFrequency> list;
 
     long totalFrequency = 0;

@@ -79,7 +79,7 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         Doc doc = queryInfo.index().doc(hits.get(0).doc());
         int arrayLength = (int)(hits.size() * 2);
-        int[] startsOfWords = new int[arrayLength]; // TODO: use BigArrays? (but unlikely to exceed 2^31)
+        int[] startsOfWords = new int[arrayLength]; // FIXME: use BigArrays? (but unlikely to exceed 2^31 hits in single doc)
         int[] endsOfWords = new int[arrayLength];
 
         // Determine the first and last word of the concordance, as well as the

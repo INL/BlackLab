@@ -638,7 +638,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    // TODO: should sample from all, not just first 2^31 items.
+                    // FIXME: should sample from all, not just first 2^31 items.
                     //       Ideally, old seeds would keep working as well (although that may not be practical,
                     //       and not likely to be a huge issue)
                     hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, size()));

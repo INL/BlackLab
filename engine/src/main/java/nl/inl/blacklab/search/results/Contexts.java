@@ -167,7 +167,7 @@ public class Contexts implements Iterable<int[]> {
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
-        int[] startsOfSnippets = new int[n]; // TODO: should be BigArrays? (but unlikely to exceed 2^31 hits in single doc)
+        int[] startsOfSnippets = new int[n]; // FIXME: should be BigArrays? (but unlikely to exceed 2^31 hits in single doc)
         int[] endsOfSnippets = new int[n];
 
         EphemeralHit hit = new EphemeralHit();
