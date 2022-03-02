@@ -698,7 +698,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(),
                 docsInSample.getValue(), docsInSample.getValue(), capturedGroups,
-                false);
+                hasAscendingLuceneDocIds());
     }
 
     /**
