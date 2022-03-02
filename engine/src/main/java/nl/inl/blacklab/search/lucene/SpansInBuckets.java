@@ -64,10 +64,6 @@ public interface SpansInBuckets {
     
     int NO_MORE_BUCKETS = Spans.NO_MORE_POSITIONS;
 
-    interface BucketSpanComparator {
-        int compare(int start1, int end1, int start2, int end2);
-    }
-
     /**
      * Document id of current bucket
      *

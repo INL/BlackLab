@@ -13,7 +13,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     /**
      * The results.
      */
-    protected List<T> results; // FIXME: should be BigList
+    protected List<T> results; // TODO: should be BigList (but unlikely to exceed 2^31 items, because these are not hits)
     
     public ResultsList(QueryInfo queryInfo) {
         super(queryInfo);

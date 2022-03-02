@@ -63,7 +63,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
     }
 
     @Override
-    public PropertyValueContextWords get(int hitIndex) {
+    public PropertyValueContextWords get(long hitIndex) {
         int[] context = contexts.get(hitIndex);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         //int contextRightStart = context[Contexts.CONTEXTS_RIGHT_START_INDEX];
@@ -89,7 +89,7 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         int[] ca = contexts.get(indexA);
         int caHitStart = ca[Contexts.HIT_START_INDEX];
         int caLength = ca[Contexts.LENGTH_INDEX];

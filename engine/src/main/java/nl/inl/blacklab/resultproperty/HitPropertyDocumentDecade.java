@@ -66,12 +66,12 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public PropertyValueDecade get(int hitIndex) {
+    public PropertyValueDecade get(long hitIndex) {
         return docPropertyDocumentDecade.get(hits.doc(hitIndex));
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         return docPropertyDocumentDecade.compare(
             hits.doc(indexA),
             hits.doc(indexB)

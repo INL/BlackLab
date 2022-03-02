@@ -44,7 +44,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public PropertyValueInt get(int hitIndex) {
+    public PropertyValueInt get(long hitIndex) {
         return new PropertyValueInt(hits.start(hitIndex));
     }
 
@@ -54,7 +54,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         int startA = hits.start(indexA);
         int startB = hits.start(indexB);
         int endA = hits.end(indexA);

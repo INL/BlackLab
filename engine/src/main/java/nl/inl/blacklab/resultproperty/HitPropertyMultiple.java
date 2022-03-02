@@ -207,7 +207,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public PropertyValueMultiple get(int hitIndex) {
+    public PropertyValueMultiple get(long hitIndex) {
         PropertyValue[] rv = new PropertyValue[properties.size()];
         int i = 0;
         for (HitProperty crit: properties) {
@@ -218,7 +218,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         for (HitProperty crit: properties) {
             int cmp = reverse ? crit.compare(indexB, indexA) : crit.compare(indexA, indexB);
             if (cmp != 0)

@@ -14,9 +14,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import it.unimi.dsi.fastutil.BigArrays;
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
+import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.FiidLookup;
@@ -291,20 +291,35 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         HitsArrays sort(HitProperty p) {
-            this.lock.readLock().lock();
+            long size = this.size(); // gather all hits and get size
 
-            int[] indices = new int[(int)this.size()]; // FIXME: should be BigArray
-            for (int i = 0; i < indices.length; ++i)
-                indices[i] = i;
+            this.lock.readLock().lock(); // TODO: no longer necessary because hits is immutable after calling size()?
 
-            IntArrays.quickSort(indices, p);
+            // Fill an indices BigArray with 0 ... size
+            long[][] indices = LongBigArrays.newBigArray(size);
+            int i = 0;
+            for(int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
+                final long[] segment = indices[segmentNumber];
+                for(int displacement = 0; displacement < segment.length; displacement++) {
+                    segment[displacement] = i;
+                    i++;
+                }
+            }
 
+            // Sort the indices using the given HitProperty
+            LongBigArrays.quickSort(indices, p);
+
+            // Now use the sorted indices to fill a new HitsArrays with the actual hits
             HitsArrays r = new HitsArrays();
             EphemeralHit eph = new EphemeralHit();
-            for (int index : indices) {
-                getEphemeral(index, eph);
-                r.add(eph);
+            for(int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
+                final long[] segment = indices[segmentNumber];
+                for(int displacement = 0; displacement < segment.length; displacement++) {
+                    getEphemeral(segment[displacement], eph);
+                    r.add(eph);
+                }
             }
+
             this.lock.readLock().unlock();
             return r;
         }

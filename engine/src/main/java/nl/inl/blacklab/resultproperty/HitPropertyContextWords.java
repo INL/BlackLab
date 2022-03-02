@@ -272,7 +272,7 @@ public class HitPropertyContextWords extends HitProperty {
     }
 
     @Override
-    public PropertyValueContextWords get(int hitIndex) {
+    public PropertyValueContextWords get(long hitIndex) {
         int[] context = contexts.get(hitIndex);
         int contextHitStart = context[Contexts.HIT_START_INDEX];
         int contextRightStart = context[Contexts.RIGHT_START_INDEX];
