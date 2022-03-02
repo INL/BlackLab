@@ -234,10 +234,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         boolean anyRewrittenThisCycle = true;
         int pass = 0;
         BLSpanQuery searchLogger = !cl.isEmpty() && BlackLabIndexImpl.traceOptimization() ? cl.get(0) : null;
-        logger.debug("SpanQuerySequence.combineAdjacentClauses() start");
+        if (BlackLabIndexImpl.traceOptimization())
+            logger.debug("SpanQuerySequence.combineAdjacentClauses() start");
         while (anyRewrittenThisCycle) {
-            logger.debug("Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
-            pass++;
+            if (BlackLabIndexImpl.traceOptimization()) {
+                logger.debug("Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
+                pass++;
+            }
 
             anyRewrittenThisCycle = false;
 
@@ -269,7 +272,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 // Yes, execute the highest-prio combiner
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
-                logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
+                if (BlackLabIndexImpl.traceOptimization())
+                    logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
                 BLSpanQuery combined = highestPrioCombiner.combine(left, right, reader);
@@ -281,7 +285,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             if (anyRewrittenThisCycle)
                 anyRewritten = true;
         }
-        logger.info("Cannot combine any other clauses. Result: " + StringUtils.join(cl, ", "));
+        if (BlackLabIndexImpl.traceOptimization())
+            logger.info("Cannot combine any other clauses. Result: " + StringUtils.join(cl, ", "));
 
         return anyRewritten;
     }

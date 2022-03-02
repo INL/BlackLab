@@ -430,13 +430,18 @@ public class BlsCache implements SearchCache {
             if (cacheEntry.isRunning()) {
                 // Running search. Run or abort?
                 boolean isCount = cacheEntry.search() instanceof SearchCount;
-                if (isCount && cacheEntry.timeSinceLastAccessMs() > abandonedCountAbortTimeSec * 1000L) {
+
+                // Don't abort count before hits search, as this will fail if a search is so heavy that it cannot
+                // produce the first page of hits before its count is aborted.
+                int abortCountAfterSec = Math.max(abandonedCountAbortTimeSec, config.getMaxJobAgeSec());
+
+                if (isCount && cacheEntry.timeSinceLastAccessMs() > abortCountAfterSec * 1000L) {
                     // Abandoned counts are removed right away, because we do this quite quickly (e.g. 30s)
                     // and don't want to penalize users if they decide to come back to this search.
                     remove(cacheEntry.search());
                     traceInfo("-- ABORT (abandoned count): {}", cacheEntry);
-                    String maxTime = BlsUtils.describeIntervalSec(abandonedCountAbortTimeSec);
-                    cacheEntry.setReason("Running count aborted because no client asked for it for " + maxTime + ". " +
+                    String maxTime = BlsUtils.describeIntervalSec(abortCountAfterSec);
+                    cacheEntry.setReason("Running count aborted because of runtime > " + maxTime + " with no requests. " +
                             "This is done to ease server load. If you need the results of this count, please try your search again.");
                     cacheEntry.cancel(true);
                     searches.remove(i);

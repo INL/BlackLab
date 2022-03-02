@@ -142,6 +142,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.2.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -332,9 +333,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <systemPropertyVariables>
-                        <jacoco-agent.destfile>target/jacoco.exec</jacoco-agent.destfile>
-                    </systemPropertyVariables>
+                    <destFile>target/jacoco.exec</destFile>
                 </configuration>
             </plugin>
 
@@ -386,7 +385,7 @@
                                 </goals>
                             </execution>
                         </executions>
-                    </plugin>     
+                    </plugin>
 
                     <!-- Create a javadoc jar -->
                     <plugin>
@@ -563,10 +562,9 @@
                 <version>3.12.0</version>
                 <configuration>
                     <rulesets>
-                        <!-- TODO: These appear to be ignored..? -->
-                        <ruleset>${project.parent.basedir}/pmd-rules.xml</ruleset>
+                        <ruleset>${project.basedir}/pmd-rules.xml</ruleset>
                     </rulesets>
-                    <linkXref>true</linkXref>
+                    <!-- <linkXref>true</linkXref>-->
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
                     <targetJdk>1.8</targetJdk>
@@ -582,7 +580,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <configLocation>${project.parent.basedir}/checkstyle.xml</configLocation>
+                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
                     <excludes>**/queryParser/**/*,**/util/json/**/*</excludes>
                 </configuration>
                 <reportSets>

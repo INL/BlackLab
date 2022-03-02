@@ -26,9 +26,13 @@ public class BlockTimer implements AutoCloseable {
     public BlockTimer child(String message) {
         return this.group.child(message);
     }
-    
+
+    public static BlockTimer create(boolean log, String message) {
+        return new TimerGroup(log, message, null).get();
+    }
+
     public static BlockTimer create(String message) {
-        return new TimerGroup(message, null).get();
+        return create(true, message);
     }
     
     private void start() {
@@ -50,7 +54,8 @@ public class BlockTimer implements AutoCloseable {
         return this.end != RUNNING;
     }
     
-    private static class TimerGroup { 
+    private static class TimerGroup {
+        private boolean log;
         private String message;
         private long invocations = 0;
         private long running = 0;
@@ -63,7 +68,8 @@ public class BlockTimer implements AutoCloseable {
         private final ConcurrentHashMap<String, TimerGroup> children = new ConcurrentHashMap<>();
 
         
-        private TimerGroup(String message, TimerGroup parent) {
+        private TimerGroup(boolean log, String message, TimerGroup parent) {
+            this.log = log;
             this.message = message;
             this.parent = parent;
             this.ownThread = Thread.currentThread();
@@ -89,7 +95,7 @@ public class BlockTimer implements AutoCloseable {
         }
         
         private BlockTimer child(String message) {
-            return this.children.computeIfAbsent(message, __ -> new TimerGroup(message, this)).get();
+            return this.children.computeIfAbsent(message, __ -> new TimerGroup(log, message, this)).get();
         }
 
         private synchronized void checkDone() {
@@ -123,7 +129,8 @@ public class BlockTimer implements AutoCloseable {
             if (this.parent != null) {
                 return msg.toString();
             } else {
-                logger.debug(msg.toString());
+                if (log)
+                    logger.debug(msg.toString());
                 return null;
             }      
         }

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -7,7 +9,6 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
-import org.apache.lucene.search.Query;
 
 /** A search that yields hits. */
 public class SearchHitsFromBLSpanQuery extends SearchHits {
