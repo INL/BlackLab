@@ -621,11 +621,15 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      */
     @Override
     public Hits sample(SampleParameters sampleParameters) {
+
+        // Determine total number of hits (fetching all of them)
+        long totalNumberOfHits = size();
+
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
         Random random = new Random(sampleParameters.seed());
         Set<Long> chosenHitIndices = new TreeSet<>();
-        long numberOfHitsToSelect = sampleParameters.numberOfHits(size());
+        long numberOfHitsToSelect = sampleParameters.numberOfHits(totalNumberOfHits);
         if (numberOfHitsToSelect > size()) {
             numberOfHitsToSelect = size(); // default to all hits in this case
             for (long i = 0; i < numberOfHitsToSelect; ++i) {
@@ -750,7 +754,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     }
 
     @Override
-    protected int resultsProcessedTotal() {
+    protected long resultsProcessedTotal() {
         ensureAllResultsRead();
         return this.hitsArrays.size();
     }
@@ -941,7 +945,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     /** Assumes this hit is within our lists. */
     public Hits window(Hit hit) {
-        long size = this.size();
+        long size = this.size(); // ensure all results read and get size
 
         boolean isLastHit = this.hitsArrays.get(this.hitsArrays.size() - 1).equals(hit);
         boolean hasMoreHits = isLastHit ? resultsProcessedAtLeast(size + 1) : true;
@@ -995,16 +999,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         return new Kwics(this, contextSize);
     }
 
-    public HitsArrays hitsArrays() {
-        return hitsArrays;
-    }
-
     /**
      * Get Lucene document id for the specified hit
      * @param index hit index
      * @return document id
      */
     public int doc(long index) {
+        ensureResultsRead(index + 1);
         return hitsArrays.doc(index);
     }
 
@@ -1014,6 +1015,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @return document id
      */
     public int start(long index) {
+        ensureResultsRead(index + 1);
         return hitsArrays.start(index);
     }
 
@@ -1023,6 +1025,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @return document id
      */
     public int end(long index) {
+        ensureResultsRead(index + 1);
         return hitsArrays.end(index);
     }
 }
