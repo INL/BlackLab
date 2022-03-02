@@ -2,12 +2,15 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import it.unimi.dsi.fastutil.BigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -73,7 +76,7 @@ public class Contexts implements Iterable<int[]> {
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
-            punctContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, Arrays.asList(punctForwardIndex), Arrays.asList(fiidLookups.get(punctForwardIndex.annotation())));
+            punctContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(punctForwardIndex), List.of(fiidLookups.get(punctForwardIndex.annotation())));
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
 
@@ -92,13 +95,13 @@ public class Contexts implements Iterable<int[]> {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
-                attrContext[i] = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, Arrays.asList(attrFI[i]), Arrays.asList(fiidLookups.get(attrName[i])));
+                attrContext[i] = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(attrFI[i]), List.of(fiidLookups.get(attrName[i])));
                 i++;
             }
         }
 
         // Get word context
-        int[][] wordContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, Arrays.asList(forwardIndex), Arrays.asList(fiidLookups.get(forwardIndex.annotation())));
+        int[][] wordContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(forwardIndex), List.of(fiidLookups.get(forwardIndex.annotation())));
         Terms terms = forwardIndex.terms();
 
         // Make the concordances from the context
@@ -228,13 +231,13 @@ public class Contexts implements Iterable<int[]> {
      *
      * The first context therefore starts at index 3.
      */
-    private List<int[]> contexts; // FIXME: should be BigList
+    private final BigList<int[]> contexts;
 
     /**
      * If we have context information, this specifies the annotation(s) (i.e. word,
      * lemma, pos) the context came from. Otherwise, it is null.
      */
-    private List<Annotation> annotations;
+    private final List<Annotation> annotations;
 
     // Methods that read data
     //------------------------------------------------------------------------------
@@ -257,17 +260,16 @@ public class Contexts implements Iterable<int[]> {
             throw new BlackLabRuntimeException("Not all requested contexts were present");
 
         // Copy only the requested contexts
-        int numberOfHits = source.contexts.size();
-        contexts = new ArrayList<>(numberOfHits);
+        long numberOfHits = source.contexts.size64();
+        contexts = new ObjectBigArrayBigList<>(numberOfHits);
 
-        for (int i = 0; i < source.contexts.size(); ++i) {
-            int[] context = source.contexts.get(i);
+        for (int[] context : source.contexts) {
             int hitContextLength = (context.length - NUMBER_OF_BOOKKEEPING_INTS)
                     / source.annotations.size();
             int[] result = new int[NUMBER_OF_BOOKKEEPING_INTS + hitContextLength * annotations.size()];
             System.arraycopy(context, 0, result, 0, NUMBER_OF_BOOKKEEPING_INTS);
             int resultContextNumber = 0;
-            for (Integer sourceContextNumber: contextsToSelect) {
+            for (Integer sourceContextNumber : contextsToSelect) {
                 System.arraycopy(context,
                         NUMBER_OF_BOOKKEEPING_INTS + sourceContextNumber * hitContextLength, result,
                         NUMBER_OF_BOOKKEEPING_INTS + resultContextNumber * hitContextLength,
@@ -309,7 +311,7 @@ public class Contexts implements Iterable<int[]> {
         final long size = ha.size(); // TODO ugly, might be slow because of required locking
         int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;
-        contexts = new ArrayList<>((int)hits.size());
+        contexts = new ObjectBigArrayBigList<>(hits.size());
 
         if (size > 0) {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
@@ -318,7 +320,7 @@ public class Contexts implements Iterable<int[]> {
                     try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
                     // process hits in this document:
                     int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
-                    for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
+                    Collections.addAll(contexts, docContextArray);
                     // start a new document
                     prevDoc = curDoc;
                     firstHitInCurrentDoc = i;
@@ -326,7 +328,7 @@ public class Contexts implements Iterable<int[]> {
             }
             // Process trailing hits
             int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, fiidLookups);
-            for (int[] contextForHit : docContextArray) { contexts.add(contextForHit); }
+            Collections.addAll(contexts, docContextArray);
         }
 
         this.annotations = new ArrayList<>(annotations);
@@ -348,11 +350,11 @@ public class Contexts implements Iterable<int[]> {
      * @return the context(s)
      */
     public int[] get(long index) {
-        return contexts.get((int)index);
+        return contexts.get(index);
     }
 
     public long size() {
-        return contexts.size();
+        return contexts.size64();
     }
 
     /**

@@ -219,7 +219,6 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
 
     public abstract PropertyValue get(long hitIndex);
 
-    // FIXME: int must be long!
     // A default implementation is nice, but slow.
     @Override
     public int compare(long indexA, long indexB) {

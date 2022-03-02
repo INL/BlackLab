@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +102,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Collections.singletonList(groups.groupCriteria());
+        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : List.of(groups.groupCriteria());
 
         Map<Integer, String> pids = new HashMap<>();
 
@@ -114,7 +113,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             for (long i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 PropertyValue id = group.identity();
-                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : Collections.singletonList(id);
+                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : List.of(id);
 
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
