@@ -24,7 +24,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private static final int MAX_VALUE_STORE_LENGTH = 256;
 
     private static int maxMetadataValuesToStore = 50;
-    
+
+    /** Did we encounter a value that was too long to store and warn the user about it? */
+    private boolean warnedAboutValueLength = false;
+
     public static void setMaxMetadataValuesToStore(int n) {
         maxMetadataValuesToStore = n;
     }
@@ -249,7 +252,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         if (value.length() > MAX_VALUE_STORE_LENGTH) {
             // Value too long to store.
             valueListComplete = ValueListComplete.NO;
-            logger.warn("Metadata field " + name() + " includes a value too long to store in indexmetadata.yaml (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false. The value will still be indexed/stored in Lucene as normal.");
+            if (!warnedAboutValueLength) {
+                warnedAboutValueLength = true;
+                logger.warn("Metadata field " + name() + " includes a value too long to store in indexmetadata.yaml (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false. The value will still be indexed/stored in Lucene as normal. This warning only appears once.");
+            }
             return this;
         }
         if (values.containsKey(value)) {
