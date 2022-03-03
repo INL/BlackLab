@@ -25,8 +25,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
@@ -37,6 +35,8 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 
+import it.unimi.dsi.fastutil.BigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -57,14 +57,12 @@ import nl.inl.blacklab.search.results.Hits.HitsArrays;
  */
 public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
 
-    static final Logger logger = LogManager.getLogger(DocResults.class);
-
     private static final class SimpleDocCollector extends SimpleCollector {
-        private final List<DocResult> results;
+        private final BigList<DocResult> results;
         private final QueryInfo queryInfo;
         private int docBase;
 
-        SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
+        SimpleDocCollector(BigList<DocResult> results, QueryInfo queryInfo) {
             this.results = results;
             this.queryInfo = queryInfo;
         }
@@ -108,6 +106,19 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @return document results
      */
     public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+        return new DocResults(queryInfo, results, sampleParameters, windowStats);
+    }
+
+    /**
+     * Construct a DocResults from a list of results.
+     *
+     * @param queryInfo query info
+     * @param results results
+     * @param sampleParameters sample parameters (if this is a sample)
+     * @param windowStats window stats (if this is a window)
+     * @return document results
+     */
+    public static DocResults fromList(QueryInfo queryInfo, BigList<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         return new DocResults(queryInfo, results, sampleParameters, windowStats);
     }
 
@@ -182,7 +193,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     /**
      * Construct an empty DocResults.
-     * @param queryInfo
+     * @param queryInfo query info
      */
     protected DocResults(QueryInfo queryInfo) {
         super(queryInfo);
@@ -215,9 +226,27 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param results the list of results
      * @param windowStats window stats
      */
-    protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+    protected DocResults(QueryInfo queryInfo, BigList<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
         this.results = results;
+        this.sampleParameters = sampleParameters;
+        this.windowStats = windowStats;
+    }
+
+    /**
+     * Creates a DocResults with the specified DocResult objects.
+     *
+     * NOTE: the list is copied!
+     *
+     * Used by DocGroups constructor.
+     *
+     * @param queryInfo query info
+     * @param results the list of results
+     * @param windowStats window stats
+     */
+    protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
+        this(queryInfo);
+        this.results = new ObjectBigArrayBigList<>(results);
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
     }
@@ -227,7 +256,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         this.query = query;
         // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-        results = new ArrayList<>();
+        results = new ObjectBigArrayBigList<>();
         try {
             queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
         } catch (IOException e) {
@@ -248,9 +277,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocResults sort(DocProperty sortProp) {
         ensureAllResultsRead();
-        List<DocResult> sorted = new ArrayList<DocResult>(this.results);
+        List<DocResult> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
-        return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), sorted, null, null);
     }
 
     /**
@@ -295,7 +324,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     protected void ensureResultsRead(long number) {
         try {
-            if (doneProcessingAndCounting() || (number >= 0 && results.size() > number))
+            if (doneProcessingAndCounting() || (number >= 0 && results.size64() > number))
                 return;
 
             while (!ensureResultsReadLock.tryLock()) {
@@ -305,7 +334,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 Thread.sleep(50);
-                if (doneProcessingAndCounting() || (number >= 0 && results.size() >= number))
+                if (doneProcessingAndCounting() || (number >= 0 && results.size64() >= number))
                     return;
             }
 
@@ -314,7 +343,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 HitsArrays docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
-                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
+                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size64())) {
                     EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
@@ -381,11 +410,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
-            List<DocResult> group = groupLists.get(groupId);
-            if (group == null) {
-                group = new ArrayList<>();
-                groupLists.put(groupId, group);
-            }
+            List<DocResult> group = groupLists.computeIfAbsent(groupId, k -> new ArrayList<>());
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
@@ -406,7 +431,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, groupBy, (SampleParameters)null, (WindowStats)null);
+        return DocGroups.fromList(queryInfo(), results, groupBy, null, null);
     }
 
     /**
@@ -421,7 +446,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         List<DocResult> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return DocResults.fromList(queryInfo(), resultsWindow, (SampleParameters)null, windowStats);
+        return DocResults.fromList(queryInfo(), resultsWindow, null, windowStats);
     }
 
     /**
@@ -476,13 +501,13 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return DocResults.fromList(queryInfo(), truncatedGroups, (SampleParameters)null, windowStats);
+        return DocResults.fromList(queryInfo(), truncatedGroups, null, windowStats);
     }
 
     @Override
     public DocResults filter(DocProperty property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), list, null, null);
     }
 
     /**
@@ -493,7 +518,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
-        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, null);
     }
 
     @Override

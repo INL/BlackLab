@@ -68,12 +68,16 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
     }
 
-    private HitProperty criteria;
+    private final HitProperty criteria;
 
     /**
      * The groups.
+     * Note that we keep the groups both in the ResultsList.results object for
+     * the ordering and access by index as well as in this map to access by group
+     * identity. Ideally this wouldn't be necessary, but we need direct access to
+     * the ordering for e.g. paging.
      */
-    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
+    private final Map<PropertyValue, HitGroup> groups = new HashMap<>(); // TODO: handle more than 2^31 groups? needed?
 
     /**
      * Total number of results in the source set of hits. 
@@ -190,10 +194,10 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups sort(GroupProperty<Hit, HitGroup> sortProp) {
         ensureAllResultsRead();
-        List<HitGroup> sorted = new ArrayList<HitGroup>(this.results);
+        List<HitGroup> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         // Sorted contains the same hits as us, so we can pass on our result statistics.
-        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null, hitsStats, docsStats);
+        return HitGroups.fromList(queryInfo(), sorted, criteria, null, null, hitsStats, docsStats);
     }
     
     /**
@@ -206,7 +210,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     public HitGroups sample(SampleParameters sampleParameters) {
         List<HitGroup> sample = Results.doSample(this, sampleParameters);
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, (WindowStats)null, stats.getLeft(), stats.getRight());
+        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
     }
 
     /**
@@ -261,14 +265,14 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         // Note: a window is just a subset of the total result set.
         // We shouldn't recalculate the totals, as windows are "transparent"
-        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
+        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
     }
 
     @Override
     public HitGroups filter(GroupProperty<Hit, HitGroup> property, PropertyValue value) {
-        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()); 
+        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList());
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null, stats.getLeft(), stats.getRight());
+        return HitGroups.fromList(queryInfo(), list, groupCriteria(), null, null, stats.getLeft(), stats.getRight());
     }
 
     @Override
@@ -294,7 +298,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         // So we need to copy back in the original docs count.
         ResultsStats hitsStats = new ResultsStatsStatic(stats.getLeft().processedTotal(), this.hitsStats.countedTotal(), this.hitsStats.maxStats());
         ResultsStats docsStats = new ResultsStatsStatic(stats.getRight().processedTotal(), this.docsStats.countedTotal(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats, hitsStats, docsStats);
+        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, null, windowStats, hitsStats, docsStats);
     }
 
     @Override
