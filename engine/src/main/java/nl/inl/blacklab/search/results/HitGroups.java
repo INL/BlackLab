@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -77,7 +78,10 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * identity. Ideally this wouldn't be necessary, but we need direct access to
      * the ordering for e.g. paging.
      */
-    private final Map<PropertyValue, HitGroup> groups = new HashMap<>(); // TODO: handle more than 2^31 groups? needed?
+    private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
+
+    /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
+    public final static int MAX_NUMBER_OF_GROUPS = 1073741824;
 
     /**
      * Total number of results in the source set of hits. 
@@ -129,6 +133,10 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             PropertyValue identity = criteria.get(i);
             HitsArrays group = groupLists.get(identity);
             if (group == null) {
+
+                if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
+                    throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+
                 group = new HitsArrays();
                 groupLists.put(identity, group);
             }

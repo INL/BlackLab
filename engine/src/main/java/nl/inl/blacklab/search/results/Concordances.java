@@ -7,6 +7,7 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
@@ -78,9 +79,11 @@ public class Concordances {
             return;
         QueryInfo queryInfo = hits.queryInfo();
         Doc doc = queryInfo.index().doc(hits.get(0).doc());
-        int arrayLength = (int)(hits.size() * 2);
-        int[] startsOfWords = new int[arrayLength]; // FIXME: use BigArrays? (but unlikely to exceed 2^31 hits in single doc)
-        int[] endsOfWords = new int[arrayLength];
+        long arrayLength = hits.size() * 2;
+        if (arrayLength > Integer.MAX_VALUE)
+            throw new BlackLabRuntimeException("Cannot handle more than 2^30 hits in a single doc");
+        int[] startsOfWords = new int[(int)arrayLength];
+        int[] endsOfWords = new int[(int)arrayLength];
 
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.

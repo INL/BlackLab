@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import it.unimi.dsi.fastutil.BigList;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -52,7 +52,10 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
      * identity. Ideally this wouldn't be necessary, but we need direct access to
      * the ordering for e.g. paging.
      */
-    private final Map<PropertyValue, DocGroup> groups = new HashMap<>(); // TODO: handle more than 2^31 groups? needed?
+    private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
+
+    /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
+    public final static int MAX_NUMBER_OF_GROUPS = 1073741824;
 
     private long largestGroupSize = 0;
 
@@ -68,6 +71,10 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
+
+        if (groups.size() > MAX_NUMBER_OF_GROUPS)
+            throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+
         this.groupBy = groupBy;
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
@@ -160,7 +167,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
             maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
         List<DocGroup> truncatedGroups = new ArrayList<>();
         for (DocGroup group: results) {
-            BigList<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;
+            List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;
             DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());
             truncatedGroups.add(newGroup);
         }

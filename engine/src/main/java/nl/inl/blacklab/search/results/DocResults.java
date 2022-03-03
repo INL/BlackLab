@@ -35,8 +35,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 
-import it.unimi.dsi.fastutil.BigList;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -58,11 +56,11 @@ import nl.inl.blacklab.search.results.Hits.HitsArrays;
 public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
 
     private static final class SimpleDocCollector extends SimpleCollector {
-        private final BigList<DocResult> results;
+        private final List<DocResult> results;
         private final QueryInfo queryInfo;
         private int docBase;
 
-        SimpleDocCollector(BigList<DocResult> results, QueryInfo queryInfo) {
+        SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
             this.results = results;
             this.queryInfo = queryInfo;
         }
@@ -77,6 +75,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
+            if (results.size() >= Integer.MAX_VALUE) {
+                // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+                throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+            }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
         }
 
@@ -106,19 +108,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @return document results
      */
     public static DocResults fromList(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
-        return new DocResults(queryInfo, results, sampleParameters, windowStats);
-    }
-
-    /**
-     * Construct a DocResults from a list of results.
-     *
-     * @param queryInfo query info
-     * @param results results
-     * @param sampleParameters sample parameters (if this is a sample)
-     * @param windowStats window stats (if this is a window)
-     * @return document results
-     */
-    public static DocResults fromList(QueryInfo queryInfo, BigList<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         return new DocResults(queryInfo, results, sampleParameters, windowStats);
     }
 
@@ -226,27 +215,13 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param results the list of results
      * @param windowStats window stats
      */
-    protected DocResults(QueryInfo queryInfo, BigList<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
-        this(queryInfo);
-        this.results = results;
-        this.sampleParameters = sampleParameters;
-        this.windowStats = windowStats;
-    }
-
-    /**
-     * Creates a DocResults with the specified DocResult objects.
-     *
-     * NOTE: the list is copied!
-     *
-     * Used by DocGroups constructor.
-     *
-     * @param queryInfo query info
-     * @param results the list of results
-     * @param windowStats window stats
-     */
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
-        this.results = new ObjectBigArrayBigList<>(results);
+        if (results.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+        }
+        this.results = results;
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
     }
@@ -256,7 +231,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         this.query = query;
         // TODO: a better approach is to only read documents we're actually interested in instead of all of them; compare with Hits.
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
-        results = new ObjectBigArrayBigList<>();
+        results = new ArrayList<>();
         try {
             queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
         } catch (IOException e) {
@@ -324,7 +299,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     protected void ensureResultsRead(long number) {
         try {
-            if (doneProcessingAndCounting() || (number >= 0 && results.size64() > number))
+            if (doneProcessingAndCounting() || (number >= 0 && results.size() > number))
                 return;
 
             while (!ensureResultsReadLock.tryLock()) {
@@ -334,7 +309,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 Thread.sleep(50);
-                if (doneProcessingAndCounting() || (number >= 0 && results.size64() >= number))
+                if (doneProcessingAndCounting() || (number >= 0 && results.size() >= number))
                     return;
             }
 
@@ -343,7 +318,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 HitsArrays docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
-                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size64())) {
+                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
                     EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
@@ -383,6 +358,11 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
+        if (results.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+        }
+
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
             docResult = DocResult.fromHits(doc, Hits.immutableEmptyList(queryInfo()), totalNumberOfHits);

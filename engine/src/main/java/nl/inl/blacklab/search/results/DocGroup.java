@@ -15,10 +15,8 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
-import java.util.Collection;
 import java.util.List;
 
-import it.unimi.dsi.fastutil.BigList;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
@@ -32,25 +30,12 @@ public class DocGroup extends Group<DocResult> {
         return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);
     }
 
-    public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, BigList<DocResult> storedResults, long totalDocuments, long totalTokens) {
-        return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);
-    }
-
     private long totalTokens;
 
     private int storedHits;
 
     protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
         super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters) null, (WindowStats) null), totalDocuments);
-        init(storedResults);
-    }
-
-    protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, BigList<DocResult> storedResults, long totalDocuments, long totalTokens) {
-        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters)null, (WindowStats)null), totalDocuments);
-        init(storedResults);
-    }
-
-    private void init(Collection<DocResult> storedResults) {
         this.totalTokens = totalTokens;
         storedHits = 0;
         for (DocResult result: storedResults) {

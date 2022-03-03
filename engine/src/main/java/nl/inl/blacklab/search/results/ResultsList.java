@@ -1,10 +1,11 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 
-import it.unimi.dsi.fastutil.BigList;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
 public abstract class ResultsList<T, P extends ResultProperty<T>> extends Results<T, P> {
@@ -12,11 +13,11 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     /**
      * The results.
      */
-    protected BigList<T> results;
+    protected List<T> results;
     
     public ResultsList(QueryInfo queryInfo) {
         super(queryInfo);
-        results = new ObjectBigArrayBigList<>();
+        results = new ArrayList<>();
     }
     
     /**
@@ -30,7 +31,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
         // list, but can also take into account the Spans object that may not have
         // been fully read. This ensures we don't instantiate Hit objects for all hits
         // if we just want to display the first few.
-        return new Iterator<>() {
+        return new Iterator<T>() {
         
             int index = -1;
         
@@ -38,7 +39,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
                 ensureResultsRead(index + 2);
-                return results.size64() >= index + 2;
+                return results.size() >= index + 2;
             }
         
             @Override
@@ -61,7 +62,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     @Override
     public synchronized T get(long i) {
         ensureResultsRead(i + 1);
-        if (i >= results.size64())
+        if (i >= results.size())
             return null;
         return results.get((int)i);
     }
@@ -69,18 +70,18 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
     @Override
     protected boolean resultsProcessedAtLeast(long lowerBound) {
         ensureResultsRead(lowerBound);
-        return results.size64() >= lowerBound;
+        return results.size() >= lowerBound;
     }
     
     @Override
     protected long resultsProcessedTotal() {
         ensureAllResultsRead();
-        return results.size64();
+        return results.size();
     }
     
     @Override
     protected long resultsProcessedSoFar() {
-        return results.size64();
+        return results.size();
     }
     
     
@@ -96,10 +97,23 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
      * 
      * @return the list of hits
      */
-    protected BigList<T> resultsSubList(long fromIndex, long toIndex) {
+    protected List<T> resultsSubList(long fromIndex, long toIndex) {
         ensureResultsRead(toIndex);
-        if (toIndex > results.size64())
-            toIndex = results.size64();
-        return results.subList(fromIndex, toIndex);
+        if (toIndex > results.size())
+            toIndex = results.size();
+        return results.subList((int)fromIndex, (int)toIndex);
+    }
+
+    /**
+     * Get the list of results.
+     *
+     * Clients shouldn't use this. Used internally for certain performance-sensitive
+     * operations like sorting.
+     *
+     * @return the list of hits
+     */
+    protected List<T> resultsList() {
+        ensureAllResultsRead();
+        return Collections.unmodifiableList(results);
     }
 }

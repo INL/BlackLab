@@ -192,7 +192,9 @@ public class DocImpl implements Doc {
      *         hits.
      */
     private List<HitCharSpan> getCharacterOffsets(Hits hits) {
-        int[] starts = new int[(int)hits.size()]; // FIXME: should be BigArray? (but unlikely to exceed 2^31 hits in single doc)
+        if (hits.size() > Integer.MAX_VALUE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
+        int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
         Iterator<Hit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {

@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,11 +12,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
-import it.unimi.dsi.fastutil.BigArrays;
-import it.unimi.dsi.fastutil.BigList;
-import it.unimi.dsi.fastutil.BigSwapper;
-import it.unimi.dsi.fastutil.longs.LongComparator;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -113,31 +111,26 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
-        ((ObjectBigArrayBigList)results).ensureCapacity(wordFreq.size());
+        if (wordFreq.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+        }
+        results = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
             results.add(new TermFrequency(e.getKey(), e.getValue()));
         }
         if (sort) {
-            LongComparator cmp = (i, j) -> results.get(i).compareTo(results.get(j));
-            BigSwapper swapper = (i, j) -> {
-                TermFrequency fr = results.get(i);
-                results.set(i, results.get(j));
-                results.set(j, fr);
-            };
-            BigArrays.mergeSort(0, results.size64(), cmp, swapper);
-            //results.sort(Comparator.naturalOrder());
+            results.sort(Comparator.naturalOrder());
         }
         calculateTotalFrequency();
     }
 
     TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
         super(queryInfo);
-        this.results.addAll(list);
-        calculateTotalFrequency();
-    }
-
-    TermFrequencyList(QueryInfo queryInfo, BigList<TermFrequency> list) {
-        super(queryInfo);
+        if (list.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+        }
         this.results = list;
         calculateTotalFrequency();
     }
@@ -151,7 +144,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     @Override
     public long size() {
-        return results.size64();
+        return results.size();
     }
 
     @Override
@@ -161,7 +154,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     @Override
     public TermFrequency get(long index) {
-        return results.get(index);
+        return results.get((int)index);
     }
 
     /**
@@ -184,7 +177,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return totalFrequency;
     }
 
-    public TermFrequencyList subList(long fromIndex, long toIndex) {
+    public TermFrequencyList subList(int fromIndex, int toIndex) {
         return new TermFrequencyList(queryInfo(), results.subList(fromIndex, toIndex));
     }
 
@@ -226,7 +219,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     @Override
     public long numberOfResultObjects() {
-        return results.size64();
+        return results.size();
     }
 
 }

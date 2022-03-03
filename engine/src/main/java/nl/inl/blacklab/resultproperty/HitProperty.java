@@ -190,8 +190,8 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     
             // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
             if (contexts != null) {
-                long numberOfAnnotations = contexts.annotations().size();
-                this.contextIndices = new IntArrayList((int)numberOfAnnotations);
+                int numberOfAnnotations = contexts.annotations().size();
+                this.contextIndices = new IntArrayList(numberOfAnnotations);
                 for (int i = 0; i < numberOfAnnotations; ++i) this.contextIndices.add(i, i);
             }
         }
