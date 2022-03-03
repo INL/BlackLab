@@ -113,10 +113,10 @@ public class RequestHandlerDocs extends RequestHandler {
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);
 
-        int first = searchParam.getInteger("first");
+        long first = searchParam.getLong("first");
         if (first < 0)
             first = 0;
-        int number = searchParam.getInteger("number");
+        long number = searchParam.getLong("number");
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         totalDocResults = docsSorted;

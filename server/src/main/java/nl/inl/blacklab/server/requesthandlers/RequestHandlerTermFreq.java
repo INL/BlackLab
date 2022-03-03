@@ -52,10 +52,10 @@ public class RequestHandlerTermFreq extends RequestHandler {
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            long first = searchParam.getInteger("first");
+            long first = searchParam.getLong("first");
             if (first < 0 || first >= tfl.size())
                 first = 0;
-            long number = searchParam.getInteger("number");
+            long number = searchParam.getLong("number");
             DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
                 number = pageSize.getDefaultValue();

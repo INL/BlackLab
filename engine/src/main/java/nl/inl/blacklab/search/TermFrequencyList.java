@@ -177,8 +177,10 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return totalFrequency;
     }
 
-    public TermFrequencyList subList(int fromIndex, int toIndex) {
-        return new TermFrequencyList(queryInfo(), results.subList(fromIndex, toIndex));
+    public TermFrequencyList subList(long fromIndex, long toIndex) {
+        if (fromIndex < 0 || toIndex < 0 || fromIndex > results.size() || toIndex > results.size())
+            throw new BlackLabRuntimeException("index out of range");
+        return new TermFrequencyList(queryInfo(), results.subList((int)fromIndex, (int)toIndex));
     }
 
     @Override

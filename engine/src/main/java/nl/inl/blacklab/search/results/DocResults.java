@@ -268,7 +268,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      *
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
-    public boolean docsProcessedAtLeast(int lowerBound) {
+    public boolean docsProcessedAtLeast(long lowerBound) {
         return resultsProcessedAtLeast(lowerBound);
     }
 

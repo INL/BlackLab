@@ -132,14 +132,14 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
-            int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
+            long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
 
-            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
             if (searchParam.containsKey("number")) {
-                int requested = searchParam.getInteger("number");
+                long requested = searchParam.getLong("number");
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
