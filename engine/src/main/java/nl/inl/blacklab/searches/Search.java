@@ -4,6 +4,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 
+import java.util.concurrent.Future;
+
 /**
  * A 'recipe' of search operations.
  *
@@ -121,7 +123,7 @@ public interface Search<R extends SearchResult> {
      *
      * @return the result so far, or null if not supported for this operation
      */
-    default R peek() {
+    default R peek(Future<R> task) {
         return null;
     }
 
