@@ -81,7 +81,7 @@ public class Concordances {
         Doc doc = queryInfo.index().doc(hits.get(0).doc());
         long arrayLength = hits.size() * 2;
         if (arrayLength > Integer.MAX_VALUE)
-            throw new BlackLabRuntimeException("Cannot handle more than 2^30 hits in a single doc");
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 
@@ -89,9 +89,6 @@ public class Concordances {
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
         for (Hit hit : hits) {
-            if (startEndArrayIndex > Integer.MAX_VALUE - 2)
-                break;
-
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 

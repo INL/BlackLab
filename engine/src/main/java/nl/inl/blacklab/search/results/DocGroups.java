@@ -55,7 +55,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = 1073741824;
+    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
 
     private long largestGroupSize = 0;
 
