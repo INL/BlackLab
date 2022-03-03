@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
+import nl.inl.blacklab.search.results.HitsInternal.HitIterator;
 import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
@@ -70,7 +70,7 @@ public class HitsFromQueryParallel extends Hits {
         /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
         final AtomicLong globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-        private final HitsArrays globalResults;
+        private final HitsInternal globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
         private CapturedGroups globalCapturedGroups;
 
@@ -135,7 +135,7 @@ public class HitsFromQueryParallel extends Hits {
             LeafReaderContext leafReaderContext,
             HitQueryContext sourceHitQueryContext,
 
-            HitsArrays globalResults,
+            HitsInternal globalResults,
             CapturedGroups globalCapturedGroups,
             AtomicLong globalDocsProcessed,
             AtomicLong globalDocsCounted,
@@ -232,7 +232,7 @@ public class HitsFromQueryParallel extends Hits {
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
             final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
 
-            final HitsArrays results = new HitsArrays();
+            final HitsInternal results = HitsInternal.create();
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
             final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
@@ -308,7 +308,7 @@ public class HitsFromQueryParallel extends Hits {
             this.leafReaderContext = null;
         }
 
-        void addToGlobalResults(HitsArrays hits, List<Span[]> capturedGroups) {
+        void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
             globalResults.addAll(hits);
 
             if (globalCapturedGroups != null) {
@@ -347,9 +347,9 @@ public class HitsFromQueryParallel extends Hits {
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
     protected final AtomicLong requestedHitsToCount = new AtomicLong();
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
-    protected final int maxHitsToProcess;
+    protected final long maxHitsToProcess;
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
-    protected final int maxHitsToCount;
+    protected final long maxHitsToCount;
 
     // state
     protected final HitQueryContext hitQueryContext = new HitQueryContext();
@@ -358,7 +358,7 @@ public class HitsFromQueryParallel extends Hits {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo, new HitsArrays()); // explicitly construct HitsArrays so they're writeable
+        super(queryInfo, HitsInternal.create()); // explicitly construct HitsInternal so they're writeable
         this.searchSettings = searchSettings;
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
@@ -366,8 +366,8 @@ public class HitsFromQueryParallel extends Hits {
 
         // Ensure maxcount >= maxprocess >= 0
         // After this both will be above 0 and process will never exceed count
-        int configuredMaxHitsToCount = searchSettings.maxHitsToCount();
-        int configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
+        long configuredMaxHitsToCount = searchSettings.maxHitsToCount();
+        long configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
         if (configuredMaxHitsToCount < 0)
             configuredMaxHitsToCount = Integer.MAX_VALUE;
         if (configuredMaxHitsToProcess < 0 || configuredMaxHitsToProcess > configuredMaxHitsToCount)

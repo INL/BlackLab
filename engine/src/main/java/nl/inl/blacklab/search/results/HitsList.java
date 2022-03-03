@@ -23,13 +23,13 @@ public class HitsList extends Hits {
      * @param hits the list of hits to wrap, or null for a new list
      * @param capturedGroups the list of hits to wrap, or null for no captured groups
      */
-    protected HitsList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
         super(queryInfo, hits);
         this.capturedGroups = capturedGroups;
 
         hitsCounted = this.hitsArrays.size();
         int prevDoc = -1;
-        IntIterator it = this.hitsArrays.docs().intIterator();
+        IntIterator it = this.hitsArrays.docsIterator();
         ascendingLuceneDocIds = true;
         while (it.hasNext()) {
             int docId = it.nextInt();
@@ -50,7 +50,7 @@ public class HitsList extends Hits {
      */
     protected HitsList(
                        QueryInfo queryInfo,
-                       HitsArrays hits,
+                       HitsInternal hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
                        long hitsCounted,

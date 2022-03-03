@@ -12,7 +12,6 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import nl.inl.util.XmlHighlighter;
 
 /** Concordances for a list of hits. */
@@ -129,17 +128,17 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<HitsArrays> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {
-            HitsArrays hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = new HitsArrays();
+                hitsInDoc = HitsInternal.create();
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (HitsArrays l : hitsPerDocument.values()) {
+        for (HitsInternal l : hitsPerDocument.values()) {
             Hits hitsInThisDoc = Hits.fromList(queryInfo, l, null);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }

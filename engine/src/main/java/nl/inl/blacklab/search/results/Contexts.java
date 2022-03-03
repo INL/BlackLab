@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 public class Contexts implements Iterable<int[]> {
 
@@ -162,7 +161,7 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      * @param fiidLookups how to find the forward index ids of documents
      */
-    private static int[][] getContextWordsSingleDocument(HitsArrays hits, long start, long end, ContextSize contextSize,
+    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
         if (end - start > Integer.MAX_VALUE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
@@ -309,7 +308,7 @@ public class Contexts implements Iterable<int[]> {
         // Group hits per document
 
         // setup first iteration
-        HitsArrays ha = hits.hitsArrays;
+        HitsInternal ha = hits.hitsArrays;
         final long size = ha.size(); // TODO ugly, might be slow because of required locking
         int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;

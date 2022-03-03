@@ -13,9 +13,12 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import it.unimi.dsi.fastutil.BigArrays;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -65,48 +68,11 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
     }
 
-    static class HitsArrays implements Iterable<EphemeralHit> {
+    static class HitsArrays implements HitsInternal {
 //        @FunctionalInterface
 //        public static interface HitConsumer {
 //            public void consume(int doc, int start, int end);
 //        }
-
-        static class HitIterator implements Iterator<EphemeralHit> {
-            private final HitsArrays hits;
-            private int pos = 0;
-            private final EphemeralHit hit = new EphemeralHit();
-
-            private HitIterator(HitsArrays h) {
-                this.hits = h;
-            }
-
-            @Override
-            public boolean hasNext() {
-                // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-                return this.hits.docs.size64() > this.pos;
-            }
-
-            @Override
-            public EphemeralHit next() {
-                this.hit.doc = this.hits.docs.getInt(pos);
-                this.hit.start = this.hits.starts.getInt(pos);
-                this.hit.end = this.hits.ends.getInt(pos);
-                ++this.pos;
-                return this.hit;
-            }
-
-            public int doc() {
-                return this.hit.doc;
-            }
-
-            public int start() {
-                return this.hit.start;
-            }
-
-            public int end() {
-                return this.hit.end;
-            }
-        }
 
         private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -120,6 +86,12 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.ends = new IntBigArrayBigList();
         }
 
+        HitsArrays(long initialCapacity) {
+            this.docs = new IntBigArrayBigList(initialCapacity);
+            this.starts = new IntBigArrayBigList(initialCapacity);
+            this.ends = new IntBigArrayBigList(initialCapacity);
+        }
+
         HitsArrays(IntBigList docs, IntBigList starts, IntBigList ends) {
             if (docs == null || starts == null || ends == null)
                 throw new NullPointerException();
@@ -131,7 +103,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.ends = ends;
         }
 
-        void add(int doc, int start, int end) {
+        public void add(int doc, int start, int end) {
             this.lock.writeLock().lock();
             docs.add(doc);
             starts.add(start);
@@ -139,16 +111,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().unlock();
         }
 
-//        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {
-//            this.lock.writeLock().lock();
-//            this.docs.addAll(docs);
-//            this.starts.addAll(starts);
-//            this.ends.addAll(ends);
-//            this.lock.writeLock().unlock();
-//        }
-
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-        void add(EphemeralHit hit) {
+        public void add(EphemeralHit hit) {
             this.lock.writeLock().lock();
             docs.add(hit.doc);
             starts.add(hit.start);
@@ -157,7 +121,14 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-        void add(Hit hit) {
+        public void addNoLock(EphemeralHit hit) {
+            docs.add(hit.doc);
+            starts.add(hit.start);
+            ends.add(hit.end);
+        }
+
+        /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
+        public void add(Hit hit) {
             this.lock.writeLock().lock();
             docs.add(hit.doc());
             starts.add(hit.start());
@@ -165,17 +136,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().unlock();
         }
 
-//        public void addAll(List<Hit> hits) {
-//            this.lock.writeLock().lock();
-//            for (Hit hit : hits) {
-//                docs.add(hit.doc());
-//                starts.add(hit.start());
-//                ends.add(hit.end());
-//            }
-//            this.lock.writeLock().unlock();
-//        }
-
-        void addAll(HitsArrays hits) {
+        public void addAll(HitsArrays hits) {
             this.lock.writeLock().lock();
             hits.lock.readLock().lock();
             docs.addAll(hits.docs);
@@ -185,10 +146,20 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().unlock();
         }
 
+        public void addAll(HitsInternal hits) {
+            this.lock.writeLock().lock();
+            hits.withReadLock(c -> {
+                for (EphemeralHit h: hits) {
+                    addNoLock(h);
+                }
+            });
+            this.lock.writeLock().unlock();
+        }
+
         /**
          * Clear the arrays.
          */
-        void clear() {
+        public void clear() {
             lock.writeLock().lock();
             docs.clear();
             starts.clear();
@@ -196,25 +167,13 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             lock.writeLock().unlock();
         }
 
-        private void withReadLock(Consumer<HitsArrays> cons) {
+        public void withReadLock(Consumer<HitsInternal> cons) {
             lock.readLock().lock();
             cons.accept(this);
             lock.readLock().unlock();
         }
 
-//        public void withWriteLock(Consumer<HitsArrays> cons) {
-//            lock.writeLock().lock();
-//            cons.accept(this);
-//            lock.writeLock().unlock();
-//        }
-
-//        public void use(long index, HitConsumer cons) {
-//            lock.readLock().lock();
-//            cons.consume(docs.get((int)index), starts.get((int)index), ends.get((int)index));
-//            lock.readLock().unlock();
-//        }
-
-        Hit get(long index) {
+        public Hit get(long index) {
             lock.readLock().lock();
             HitImpl h = new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index));
             lock.readLock().unlock();
@@ -235,7 +194,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          * }
          * </pre>
          */
-        void getEphemeral(long index, EphemeralHit h) {
+        public void getEphemeral(long index, EphemeralHit h) {
             lock.readLock().lock();
             h.doc = docs.getInt(index);
             h.start = starts.getInt(index);
@@ -243,32 +202,50 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             lock.readLock().unlock();
         }
 
-        int doc(long index) {
+        public int doc(long index) {
             lock.readLock().lock();
             int doc = this.docs.getInt(index);
             lock.readLock().unlock();
             return doc;
         }
 
-        int start(long index) {
+        public int start(long index) {
             lock.readLock().lock();
             int start = this.starts.getInt(index);
             lock.readLock().unlock();
             return start;
         }
 
-        int end(long index) {
+        public int end(long index) {
             lock.readLock().lock();
             int end = this.ends.getInt(index);
             lock.readLock().unlock();
             return end;
         }
 
-        long size() {
-            lock.readLock().lock();
-            long size = docs.size64();
-            lock.readLock().unlock();
-            return size;
+        public long size() {
+            try {
+                lock.readLock().lock();
+                return sizeNoLock();
+            } finally {
+                lock.readLock().unlock();
+            }
+        }
+
+        public long sizeNoLock() {
+            return docs.size64();
+        }
+
+        public int docNoLock(long index) {
+            return this.docs.getInt(index);
+        }
+
+        public int startNoLock(long index) {
+            return this.starts.getInt(index);
+        }
+
+        public int endNoLock(long index) {
+            return this.ends.getInt(index);
         }
 
         /**
@@ -280,8 +257,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
          *
          * @return list of document ids
          */
-        IntBigList docs() {
-            return docs;
+        public IntIterator docsIterator() {
+            return docs.intIterator();
         }
 
         /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
@@ -290,58 +267,61 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             return new HitIterator(this);
         }
 
-        HitsArrays sort(HitProperty p) {
+        public HitsInternal sort(HitProperty p) {
             long size = this.size(); // gather all hits and get size
 
             this.lock.readLock().lock(); // TODO: no longer necessary because hits is immutable after calling size()?
+            try {
+                HitsInternal r;
+                if (size > Integer.MAX_VALUE) {
+                    // Fill an indices BigArray with 0 ... size
+                    long[][] indices = LongBigArrays.newBigArray(size);
+                    int i = 0;
+                    for (int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
+                        final long[] segment = indices[segmentNumber];
+                        for (int displacement = 0; displacement < segment.length; displacement++) {
+                            segment[displacement] = i;
+                            i++;
+                        }
+                    }
 
-            // Fill an indices BigArray with 0 ... size
-            long[][] indices = LongBigArrays.newBigArray(size);
-            int i = 0;
-            for(int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
-                final long[] segment = indices[segmentNumber];
-                for(int displacement = 0; displacement < segment.length; displacement++) {
-                    segment[displacement] = i;
-                    i++;
+                    // Sort the indices using the given HitProperty
+                    LongBigArrays.quickSort(indices, p);
+
+                    // Now use the sorted indices to fill a new HitsInternal with the actual hits
+                    r = HitsInternal.createHuge();
+                    EphemeralHit eph = new EphemeralHit();
+                    for (int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
+                        final long[] segment = indices[segmentNumber];
+                        for (int displacement = 0; displacement < segment.length; displacement++) {
+                            getEphemeral(segment[displacement], eph);
+                            r.add(eph);
+                        }
+                    }
+                } else {
+                    // We can use regular arrays Collections classes, faster
+                    int[] indices = new int[(int) size];
+                    for (int i = 0; i < indices.length; ++i)
+                        indices[i] = i;
+
+                    IntArrays.quickSort(indices, p::compare);
+
+                    r = HitsInternal.createSmall();
+                    EphemeralHit eph = new EphemeralHit();
+                    for (int i = 0; i < indices.length; ++i) {
+                        getEphemeral(indices[i], eph);
+                        r.add(eph);
+                    }
                 }
+                return r;
+            } finally {
+                this.lock.readLock().unlock();
             }
-
-            // Sort the indices using the given HitProperty
-            LongBigArrays.quickSort(indices, p);
-
-            // Now use the sorted indices to fill a new HitsArrays with the actual hits
-            HitsArrays r = new HitsArrays();
-            EphemeralHit eph = new EphemeralHit();
-            for(int segmentNumber = 0; segmentNumber < indices.length; segmentNumber++) {
-                final long[] segment = indices[segmentNumber];
-                for(int displacement = 0; displacement < segment.length; displacement++) {
-                    getEphemeral(segment[displacement], eph);
-                    r.add(eph);
-                }
-            }
-
-            this.lock.readLock().unlock();
-            return r;
         }
     }
 
-    private static final HitsArrays EMPTY_SINGLETON = new HitsArrays() {
-        @Override
-        public void add(EphemeralHit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-        @Override
-        public void add(Hit hit) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-        @Override
-        public void add(int doc, int start, int end){throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-        @Override
-        public void addAll(HitsArrays hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-//        @Override
-//        public void addAll(IntArrayList docs, IntArrayList starts, IntArrayList ends) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-//        @Override
-//        public void addAll(List<Hit> hits) {throw new BlackLabRuntimeException("Attempting to write into empty Hits object"); }
-    };
 
-
-    protected final HitsArrays hitsArrays;
+    protected final HitsInternal hitsArrays;
 
     protected static final Logger logger = LogManager.getLogger(Hits.class);
 
@@ -367,7 +347,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      *
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #fromList(QueryInfo, HitsArrays, CapturedGroups)} }
+     * Prefer using @link { {@link #fromList(QueryInfo, HitsInternal, CapturedGroups)} }
      *
      * @param queryInfo information about the original query
      * @param docs doc ids
@@ -377,20 +357,20 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      */
     public static Hits fromArrays(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
 
-        IntBigArrayBigList blDocs = new IntBigArrayBigList(BigArrays.wrap(docs));
-        IntBigArrayBigList blStarts = new IntBigArrayBigList(BigArrays.wrap(starts));
-        IntBigArrayBigList blEnds = new IntBigArrayBigList(BigArrays.wrap(ends));
+        IntList lDocs = new IntArrayList(docs);
+        IntList lStarts = new IntArrayList(starts);
+        IntList lEnds = new IntArrayList(ends);
 
-        return new HitsList(queryInfo, new HitsArrays(blDocs, blStarts, blEnds), null);
+        return new HitsList(queryInfo, new HitsArrays32(lDocs, lStarts, lEnds), null);
     }
 
-    public static Hits fromList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
+    public static Hits fromList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
         return new HitsList(queryInfo, hits, capturedGroups);
     }
 
     public static Hits fromList(
                                 QueryInfo queryInfo,
-                                HitsArrays hits,
+                                HitsInternal hits,
                                 WindowStats windowStats,
                                 SampleParameters sampleParameters,
                                 long hitsCounted,
@@ -430,7 +410,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     public static Hits immutableEmptyList(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, EMPTY_SINGLETON, null);
+        return new HitsList(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
     }
 
     /**
@@ -515,7 +495,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      *
      * @param queryInfo query info for corresponding query
      * @deprecated if you need an empty Hits object, use {@link #immutableEmptyList(QueryInfo)};
-     *     otherwise, use {@link #Hits(QueryInfo, HitsArrays)}
+     *     otherwise, use {@link #Hits(QueryInfo, HitsInternal)}
      */
     @Deprecated
     public Hits(QueryInfo queryInfo) {
@@ -528,7 +508,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
     public Hits(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? EMPTY_SINGLETON : new HitsArrays());
+        this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create());
     }
 
     /**
@@ -539,9 +519,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public Hits(QueryInfo queryInfo, HitsArrays hits) {
+    public Hits(QueryInfo queryInfo, HitsInternal hits) {
         super(queryInfo);
-        this.hitsArrays = hits == null ? new HitsArrays() : hits;
+        this.hitsArrays = hits == null ? HitsInternal.create() : hits;
     }
 
     // Inherited from Results
@@ -582,7 +562,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         // Copy the hits we're interested in.
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsArrays window = new HitsArrays();
+        HitsInternal window = HitsInternal.createFixed(windowSize);
 
         this.hitsArrays.withReadLock(h -> {
             int prevDoc = -1;
@@ -653,7 +633,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         MutableInt docsInSample = new MutableInt(0);
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
-        HitsArrays sample = new HitsArrays();
+        HitsInternal sample = HitsInternal.createFixed(numberOfHitsToSelect);
 
         this.hitsArrays.withReadLock(__ -> {
             int previousDoc = -1;
@@ -698,7 +678,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
-        HitsArrays sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
+        HitsInternal sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
 
         CapturedGroups capturedGroups = capturedGroups();
         long hitsCounted = hitsCountedSoFar();
@@ -884,7 +864,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
     public Hits getHitsInDoc(int docid) {
         ensureAllResultsRead();
-        HitsArrays r = new HitsArrays();
+        HitsInternal r = HitsInternal.create(size() > Integer.MAX_VALUE);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsArrays) {
             if (h.doc == docid)
@@ -956,7 +936,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             capturedGroups.put(hit, this.capturedGroups.get(hit));
         }
 
-        HitsArrays r = new HitsArrays();
+        HitsInternal r = HitsInternal.createFixed(1);
         r.add(hit);
 
         return Hits.fromList(

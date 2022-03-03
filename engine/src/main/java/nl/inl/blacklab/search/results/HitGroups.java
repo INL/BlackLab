@@ -30,7 +30,6 @@ import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -125,19 +124,20 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, HitsArrays> groupLists = new HashMap<>();
+        Map<PropertyValue, HitsInternal> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
+        boolean listIsHuge = hits.size() > Integer.MAX_VALUE;
         for (Hit hit: hits) {
             PropertyValue identity = criteria.get(i);
-            HitsArrays group = groupLists.get(identity);
+            HitsInternal group = groupLists.get(identity);
             if (group == null) {
 
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = new HitsArrays();
+                group = HitsInternal.create(listIsHuge);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -155,9 +155,9 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             ++i;
         }
         resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, HitsArrays> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsInternal> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
-            HitsArrays hitList = e.getValue();
+            HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);

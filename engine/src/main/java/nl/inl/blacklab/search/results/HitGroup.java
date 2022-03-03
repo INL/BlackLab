@@ -16,7 +16,6 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -27,7 +26,7 @@ public class HitGroup extends Group<Hit> {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }
 
-    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, long totalSize) {
+    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults, CapturedGroups capturedGroups, long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, storedResults, capturedGroups, totalSize);
     }
 
@@ -49,7 +48,7 @@ public class HitGroup extends Group<Hit> {
      * @param capturedGroups captured groups for hits in this group
      * @param totalSize total group size
      */
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsArrays storedResults, CapturedGroups capturedGroups, long totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults, CapturedGroups capturedGroups, long totalSize) {
         super(groupIdentity, Hits.fromList(queryInfo, storedResults, capturedGroups), totalSize);
     }
 

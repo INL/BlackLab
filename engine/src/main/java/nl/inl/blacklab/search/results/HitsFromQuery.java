@@ -194,8 +194,8 @@ public class HitsFromQuery extends Hits {
             }
             try {
                 boolean readAllHits = number < 0;
-                int maxHitsToCount = searchSettings.maxHitsToCount();
-                int maxHitsToProcess = searchSettings.maxHitsToProcess();
+                long maxHitsToCount = searchSettings.maxHitsToCount();
+                long maxHitsToProcess = searchSettings.maxHitsToProcess();
                 while (readAllHits || hitsArrays.size() < number) {
 
                     // Abort if asked

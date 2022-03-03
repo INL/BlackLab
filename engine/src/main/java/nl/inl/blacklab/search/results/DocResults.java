@@ -46,7 +46,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -144,7 +143,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private HitsArrays partialDocHits;
+    private HitsInternal partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -315,7 +314,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
             try {
                 // Fill list of document results
-                HitsArrays docHits = partialDocHits;
+                HitsInternal docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
@@ -329,7 +328,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                             addDocResultToList(doc, hits, size);
                         }
 
-                        docHits = new HitsArrays();
+                        docHits = HitsInternal.create();
                     }
 
                     docHits.add(h);
