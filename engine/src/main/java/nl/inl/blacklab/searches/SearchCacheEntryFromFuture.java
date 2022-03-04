@@ -44,7 +44,7 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
     public R peek() throws ExecutionException {
         if (isCancelled())
             throw new ExecutionException("Search was cancelled", null);
-        return search.peek();
+        return search.peek(future);
     }
 
     /**

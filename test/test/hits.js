@@ -127,6 +127,11 @@ function expectHitsJson(pattern, numberOfHits, numberOfDocs, expectedFirstHitJso
 function expectHitsText(pattern, numberOfHits, numberOfDocs, expectedFirstHitText) {
     expectHitsImpl(pattern, numberOfHits, numberOfDocs, undefined, expectedFirstHitText, undefined);
 }
+function expectHitsTextMultipleSearches(pattern, numberOfHits, numberOfDocs, expectedFirstHitText) {
+    for (let i = 0; i < 5; i++) {
+        expectHitsImpl(pattern, numberOfHits, numberOfDocs, undefined, expectedFirstHitText, undefined);
+    }
+}
 
 // Test that a hits search for a pattern returns the correct number of hits and docs,
 // and optionally test that the first hit text matches the specified text.
@@ -228,6 +233,7 @@ expectHitsText('"two|four"', 3, 1, "two");
 expectHitsText('"two"|"four"', 3, 1, "two");
 expectHitsText('[lemma="be" & word="are"]', 7, 2, "are");
 expectHitsText('[lemma="be" & word!="are"]', 35, 3, "'m");
+expectHitsTextMultipleSearches('[lemma="be" & word!="are"]', 35, 3, "'m");
 expectHitsText('<u/> containing "good"', 5, 1, "oh er it 's it 's very good _0 the the er _0 very fresh air and kind people _0");
 
 // Check if docPid, hit start and hit end match

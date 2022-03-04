@@ -7,6 +7,13 @@ import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.ResultCount.CountType;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * A search operation that yields a count as its result.
@@ -14,6 +21,7 @@ import nl.inl.blacklab.search.results.ResultsStats;
  */
 public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
 
+    private static final Logger logger = LogManager.getLogger(SearchCountFromResults.class);
     /**
      * The search we're doing a count for.
      */
@@ -31,16 +39,29 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      */
     private ResultsStats resultCount;
 
+    /**
+     * Latch that marks the end of the search for this count.
+     */
+    private final CountDownLatch searchLatch;
+
+    /**
+     * Maximum time to wait for a search before giving up
+     */
+    private final int MAX_SEARCH_WAIT_IN_MS = 2000;
+
     public SearchCountFromResults(QueryInfo queryInfo, SearchForResults<T> source, CountType type) {
         super(queryInfo);
         this.source = source;
         this.type = type;
+        this.searchLatch = new CountDownLatch(1);
     }
 
     @Override
     public ResultsStats executeInternal() throws InvalidQuery {
         // Start the search and construct the count object
         resultCount = new ResultCount(source.executeNoQueue(), type);
+        // Mark the end of the search.
+        searchLatch.countDown();
 
         // Gather all the hits.
         // This runs synchronously, so SearchCountFromResults will not be finished until
@@ -57,12 +78,26 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      * @return running count
      */
     @Override
-    public ResultsStats peek() {
+    public ResultsStats peek(Future<ResultsStats> searchTask) {
+        if (resultCount != null) {
+            return resultCount;
+        }
+
         try {
-            while (resultCount == null) {
-                Thread.sleep(50);
+            // Get the results from a finished task first.
+            if (searchTask != null && searchTask.isDone()) {
+                resultCount = searchTask.get();
+                return resultCount;
+            }
+
+            // Otherwise, wait for the search to finish.
+            boolean finished = searchLatch.await(MAX_SEARCH_WAIT_IN_MS, TimeUnit.MILLISECONDS);
+            if (!finished) {
+                throw new InterruptedSearch("Could not finish searching for count");
             }
             return resultCount;
+        } catch (ExecutionException e) {
+            throw new InterruptedSearch(e);
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         }

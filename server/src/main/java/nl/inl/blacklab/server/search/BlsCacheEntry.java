@@ -462,6 +462,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     public T peek() throws ExecutionException {
         if (isCancelled())
             throw new ExecutionException(exceptionThrown);
-        return this.search.peek();
+        return this.search.peek(this);
     }
 }
