@@ -1,19 +1,14 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
+import java.util.concurrent.Future;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.ResultCount.CountType;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import nl.inl.blacklab.search.results.ResultsStatsDelegate;
 
 /**
  * A search operation that yields a count as its result.
@@ -21,7 +16,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
 
-    private static final Logger logger = LogManager.getLogger(SearchCountFromResults.class);
     /**
      * The search we're doing a count for.
      */
@@ -32,36 +26,16 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      */
     private final CountType type;
 
-    /**
-     * The (running or finished) result count.
-     * We can peek at this while it's running, or wait for executeInternal() to
-     * complete, returning the final results.
-     */
-    private ResultsStats resultCount;
-
-    /**
-     * Latch that marks the end of the search for this count.
-     */
-    private final CountDownLatch searchLatch;
-
-    /**
-     * Maximum time to wait for a search before giving up
-     */
-    private final int MAX_SEARCH_WAIT_IN_MS = 2000;
-
     public SearchCountFromResults(QueryInfo queryInfo, SearchForResults<T> source, CountType type) {
         super(queryInfo);
         this.source = source;
         this.type = type;
-        this.searchLatch = new CountDownLatch(1);
     }
 
     @Override
     public ResultsStats executeInternal() throws InvalidQuery {
         // Start the search and construct the count object
-        resultCount = new ResultCount(source.executeNoQueue(), type);
-        // Mark the end of the search.
-        searchLatch.countDown();
+        ResultsStats resultCount = new ResultCount(source.executeNoQueue(), type);
 
         // Gather all the hits.
         // This runs synchronously, so SearchCountFromResults will not be finished until
@@ -73,34 +47,17 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
     }
 
     /**
-     * Peek at the running count.
+     * Return the initial peek value.
      *
-     * @return running count
+     * If we peek at this result while it's executing, but no intermediate result is
+     * available yet, what value should we return? E.g. a zero value for a count.
+     *
+     * @return initial peek value, or null if not supported for this operation
      */
-    @Override
-    public ResultsStats peek(Future<ResultsStats> searchTask) {
-        if (resultCount != null) {
-            return resultCount;
-        }
-
-        try {
-            // Get the results from a finished task first.
-            if (searchTask != null && searchTask.isDone()) {
-                resultCount = searchTask.get();
-                return resultCount;
-            }
-
-            // Otherwise, wait for the search to finish.
-            boolean finished = searchLatch.await(MAX_SEARCH_WAIT_IN_MS, TimeUnit.MILLISECONDS);
-            if (!finished) {
-                throw new InterruptedSearch("Could not finish searching for count");
-            }
-            return resultCount;
-        } catch (ExecutionException e) {
-            throw new InterruptedSearch(e);
-        } catch (InterruptedException e) {
-            throw new InterruptedSearch(e);
-        }
+    public ResultsStats peekObject(Future<ResultsStats> future) {
+        // Create a temporary stats object that will return 0 until it receives the
+        // real object and will delegate to that.
+        return new ResultsStatsDelegate(future);
     }
 
     @Override

@@ -67,12 +67,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         ds.startEntry("summary").startMap();
         WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
         ResultsStats totalHits, docsStats;
-        try {
-            totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
-            docsStats = searchParam.docsCount().executeAsync().peek();
-        } catch (ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
+        totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
+        docsStats = searchParam.docsCount().executeAsync().peek();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;

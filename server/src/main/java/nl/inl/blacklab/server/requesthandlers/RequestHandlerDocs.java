@@ -170,12 +170,8 @@ public class RequestHandlerDocs extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
         ResultsStats totalHits, docsStats;
-        try {
-            totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
-            docsStats = searchParam.docsCount().executeAsync().peek();
-        } catch (ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
+        totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
+        docsStats = searchParam.docsCount().executeAsync().peek();
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (totalHits == null)

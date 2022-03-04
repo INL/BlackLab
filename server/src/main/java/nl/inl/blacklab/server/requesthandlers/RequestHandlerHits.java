@@ -94,7 +94,7 @@ public class RequestHandlerHits extends RequestHandler {
         if (viewGroup == null)
             viewGroup = "";
 
-        SearchCacheEntry<?> cacheEntry;
+        SearchCacheEntry<?> cacheEntry, cacheEntryDocsCount;
         Hits hits;
         ResultsStats hitsCount = null; // [running] hits count
         ResultsStats docsCount = null; // [running] docs count
@@ -120,10 +120,16 @@ public class RequestHandlerHits extends RequestHandler {
                 // - Then get the underlying hits search from the cache (this may take a while as
                 //   it will complete when the Hits object is available)
                 cacheEntry = searchHitCount.executeAsync();
+                cacheEntryDocsCount = searchDocCount.executeAsync();
                 hits = searchHits.execute();
                 try {
                     hitsCount = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
                     docsCount = searchDocCount.executeAsync().peek();
+                    // Wait until all hits have been counted.
+                    if (searchParam.getBoolean("waitfortotal")) {
+                        hitsCount.countedTotal();
+                        docsCount.countedTotal();
+                    }
                 } catch (InterruptedSearch e) {
                     // Our count was probably aborted.
                     logger.debug("Error getting count(s)", e);
@@ -132,11 +138,6 @@ public class RequestHandlerHits extends RequestHandler {
                     if (docsCount == null)
                         docsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
                 }
-            }
-            // Wait until all hits have been counted.
-            if (searchParam.getBoolean("waitfortotal")) {
-                hitsCount.countedTotal();
-                docsCount.countedTotal();
             }
         } catch (InterruptedException | ExecutionException | InvalidQuery e) {
             logger.debug("Searching threw an exception", e);

@@ -5,6 +5,8 @@ import java.util.Map;
 
 public abstract class ResultsStats implements SearchResult {
 
+    public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStatsStatic(0, 0, MaxStats.NOT_EXCEEDED);
+
     public abstract boolean processedAtLeast(int lowerBound);
 
     /**
