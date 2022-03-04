@@ -85,7 +85,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         if (totalHits == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
+            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 

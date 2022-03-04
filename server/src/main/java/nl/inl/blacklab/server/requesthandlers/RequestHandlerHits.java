@@ -100,6 +100,7 @@ public class RequestHandlerHits extends RequestHandler {
         ResultsStats docsCount = null; // [running] docs count
 
         boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
+        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
         try {
             if (viewingGroup) {
                 // We're viewing a single group. Get the hits from the grouping results.
@@ -126,7 +127,7 @@ public class RequestHandlerHits extends RequestHandler {
                     hitsCount = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
                     docsCount = searchDocCount.executeAsync().peek();
                     // Wait until all hits have been counted.
-                    if (searchParam.getBoolean("waitfortotal")) {
+                    if (waitForTotal) {
                         hitsCount.countedTotal();
                         docsCount.countedTotal();
                     }
@@ -199,7 +200,7 @@ public class RequestHandlerHits extends RequestHandler {
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
         logger.info("Total search time is:{} ms", searchTime);
         addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, countTime < 0, null);
+        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 

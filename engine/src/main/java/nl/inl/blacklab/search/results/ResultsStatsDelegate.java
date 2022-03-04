@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.results;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
@@ -14,8 +12,6 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
  */
 public class ResultsStatsDelegate extends ResultsStats {
 
-    private static final long MAX_SEARCH_WAIT_TIME_MS = 20;
-
     /** Our cache entry */
     private final Future<ResultsStats> future;
 
@@ -23,23 +19,25 @@ public class ResultsStatsDelegate extends ResultsStats {
         this.future = future;
     }
 
+    /**
+     * Get the running count, or a fake 0 count if not started yet.
+     */
     private ResultsStats stats() {
         if (future.isCancelled())
             throw new InterruptedSearch();
         try {
-            // Wait a short time in case the underlying search was already done,
-            // but that needs to be established for this Future to complete.
-            // (e.g. a count for an already-completed hits or docs result still
-            //  needs to check that its result object was indeed completed)
-            return future.get(MAX_SEARCH_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
+            if (future.isDone())
+                return future.get();
         } catch (InterruptedException|ExecutionException e) {
             throw new InterruptedSearch(e);
-        } catch (TimeoutException e) {
-            // Didn't return in time; results object must not be available yet; return 0
-            return ResultsStats.SEARCH_NOT_STARTED_YET;
         }
+        // Didn't return in time; results object must not be available yet; return 0
+        return ResultsStats.SEARCH_NOT_STARTED_YET;
     }
 
+    /**
+     * Get the running count, even if we have to wait a while to get it.
+     */
     private ResultsStats realStats() {
         if (future.isCancelled())
             throw new InterruptedSearch();
