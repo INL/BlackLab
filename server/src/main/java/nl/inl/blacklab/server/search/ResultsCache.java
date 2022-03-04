@@ -107,7 +107,7 @@ public class ResultsCache implements SearchCache {
                 if (runningJobs.containsKey(search)) {
                     job = runningJobs.get(search);
                 } else {
-                    job = ResultsCache.this.threadPool.submit( () -> search.executeInternal() );
+                    job = ResultsCache.this.threadPool.submit(search::executeInternal);
                     runningJobs.put(search, job);
                 }
                 SearchResult searchResult = job.get();
@@ -131,8 +131,7 @@ public class ResultsCache implements SearchCache {
     public <T extends SearchResult> SearchCacheEntry<T> getAsync(final Search<T> search, final boolean allowQueue) {
         try {
             CompletableFuture<SearchResult> resultsFuture = searchCache.get(search);
-            SearchCacheEntryFromFuture cacheEntry = new SearchCacheEntryFromFuture(resultsFuture, search);
-            return cacheEntry;
+            return new SearchCacheEntryFromFuture(resultsFuture, search);
         }catch (Exception ex) {
             ex.printStackTrace();
             throw ex;

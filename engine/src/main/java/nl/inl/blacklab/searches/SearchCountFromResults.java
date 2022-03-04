@@ -47,12 +47,15 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
     }
 
     /**
-     * Return the initial peek value.
+     * Return the peek object, given a cache entry.
      *
-     * If we peek at this result while it's executing, but no intermediate result is
-     * available yet, what value should we return? E.g. a zero value for a count.
+     * This object will be returned when SearchCacheEntry.peek() is called while
+     * the search is executing. Here we return a ResultsStatsDelegate object that will return 0
+     * while there's no real count available yet, but will return the real count once
+     * it's available.
      *
-     * @return initial peek value, or null if not supported for this operation
+     * @param future future result object
+     * @return peek object, or null if not supported for this operation
      */
     public ResultsStats peekObject(Future<ResultsStats> future) {
         // Create a temporary stats object that will return 0 until it receives the

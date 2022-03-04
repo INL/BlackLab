@@ -14,7 +14,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
  */
 public class ResultsStatsDelegate extends ResultsStats {
 
-    private static final long MAX_SEARCH_WAIT_TIME_MS = 200;
+    private static final long MAX_SEARCH_WAIT_TIME_MS = 20;
 
     /** Our cache entry */
     private final Future<ResultsStats> future;
@@ -29,6 +29,8 @@ public class ResultsStatsDelegate extends ResultsStats {
         try {
             // Wait a short time in case the underlying search was already done,
             // but that needs to be established for this Future to complete.
+            // (e.g. a count for an already-completed hits or docs result still
+            //  needs to check that its result object was indeed completed)
             return future.get(MAX_SEARCH_WAIT_TIME_MS, TimeUnit.MILLISECONDS);
         } catch (InterruptedException|ExecutionException e) {
             throw new InterruptedSearch(e);
