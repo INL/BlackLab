@@ -23,7 +23,7 @@ public class SearchHitsFiltered extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(Peekable<Hits> peekable) throws InvalidQuery {
+    public Hits executeInternal(Peekable<Hits> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().filter(property, value);
     }
 

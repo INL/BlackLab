@@ -21,7 +21,7 @@ public class SearchFacets extends AbstractSearch<Facets> {
     }
 
     @Override
-    public Facets executeInternal(Peekable<Facets> peekable) throws InvalidQuery {
+    public Facets executeInternal(Peekable<Facets> progressReporter) throws InvalidQuery {
         return new Facets(source.executeNoQueue(), properties);
     }
 

@@ -62,7 +62,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
-    public abstract R executeInternal(Peekable<R> peekable) throws InvalidQuery;
+    public abstract R executeInternal(Peekable<R> progressReporter) throws InvalidQuery;
 
     @Override
     public QueryInfo queryInfo() {

@@ -19,7 +19,7 @@ public class SearchHitsSampled extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(Peekable<Hits> peekable) throws InvalidQuery {
+    public Hits executeInternal(Peekable<Hits> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().sample(sampleParameters);
     }
 

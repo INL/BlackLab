@@ -14,7 +14,8 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
  */
 public class ResultsStatsDelegate extends ResultsStats {
 
-    private static final long WAIT_TIME_MS = 50;
+    /** How often should we poll for the real stats to be available in realStats()? */
+    private static final long STATS_POLL_TIME_MS = 50;
 
     /** Our cache entry */
     private final Future<ResultsStats> future;
@@ -22,6 +23,7 @@ public class ResultsStatsDelegate extends ResultsStats {
     /** The actual stats to monitor, as soon as they're available. Null otherwise. */
     private ResultsStats realStats;
 
+    /** Used to let us wait until the stats are available. */
     private CountDownLatch realStatsAvailable;
 
     public void setRealStats(ResultsStats realStats) {
@@ -46,12 +48,12 @@ public class ResultsStatsDelegate extends ResultsStats {
         } catch (InterruptedException|ExecutionException e) {
             throw new InterruptedSearch(e);
         }
-        // Didn't return in time; results object must not be available yet; return 0
+        // Either return 0, or the running count object if we have it available
         return realStats == null ? ResultsStats.SEARCH_NOT_STARTED_YET : realStats;
     }
 
     /**
-     * Get the running count, even if we have to wait a while to get it.
+     * Get the running count, even if we have to wait for a while to get it.
      */
     private ResultsStats realStats() {
 
@@ -65,13 +67,17 @@ public class ResultsStatsDelegate extends ResultsStats {
                 if (future.isCancelled())
                     throw new InterruptedSearch();
 
-                // We need the actual stats. Wait a short time for them,
-                // or until the underlying search is cancelled.
-                if (realStatsAvailable.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)) {
+                // If search is completely done, return the final stats.
+                if (future.isDone())
+                    return future.get();
+
+                // Search is not done, and we need the running stats.
+                // Wait a short time for them.
+                if (realStatsAvailable.await(STATS_POLL_TIME_MS, TimeUnit.MILLISECONDS)) {
                     return realStats;
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException|ExecutionException e) {
             throw new InterruptedSearch(e);
         }
     }

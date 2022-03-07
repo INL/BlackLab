@@ -20,7 +20,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     @Override
-    public SearchResult executeInternal(Peekable<SearchResult> peekable) throws InvalidQuery {
+    public SearchResult executeInternal(Peekable<SearchResult> progressReporter) throws InvalidQuery {
         throw new UnsupportedOperationException();
     }
 

@@ -114,10 +114,12 @@ public interface Search<R extends SearchResult> {
      * executeAsync submits this search to the cache, which then calls this method from a Runnable
      * to run the search.
      *
+     * @param progressReporter where some operations will report on their progress, for example
+     *                 to be able to monitor the running count while hits are being fetched
      * @return result of the operation
      * @throws InvalidQuery
      */
-    R executeInternal(Peekable<R> peekable) throws InvalidQuery;
+    R executeInternal(Peekable<R> progressReporter) throws InvalidQuery;
 
     /**
      * Return the peek object, given a cache entry.

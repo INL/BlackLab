@@ -18,7 +18,7 @@ public class SearchDocsSampled extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(Peekable<DocResults> peekable) throws InvalidQuery {
+    public DocResults executeInternal(Peekable<DocResults> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().sample(sampleParameters);
     }
 
