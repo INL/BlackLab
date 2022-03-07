@@ -169,15 +169,15 @@ public class RequestHandlerDocs extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-        ResultsStats totalHits, docsStats;
-        totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
+        ResultsStats hitsStats, docsStats;
+        hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = searchParam.docsCount().executeAsync().peek();
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
-        if (totalHits == null)
+        if (hitsStats == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, waitForTotal, countFailed, null);
+            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 

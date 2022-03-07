@@ -801,10 +801,10 @@ public abstract class RequestHandler {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
 
-        long hitsCounted = countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
-        long hitsProcessed = waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar();
-        long docsCounted = countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
-        long docsProcessed = waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar();
+        long hitsCounted = hitsStats == null || countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = hitsStats == null ? -1 : (waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar());
+        long docsCounted = docsStats == null || countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = docsStats == null ? -1 : (waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar());
 
         ds.entry("stillCounting", !hitsStats.done());
         ds.entry("numberOfHits", hitsCounted)

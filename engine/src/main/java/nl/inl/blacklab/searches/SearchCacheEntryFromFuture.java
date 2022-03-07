@@ -22,7 +22,7 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
     final Future<R> future;
 
     /** A peek at the future result, or null if not available. */
-    private R peekValue;
+    private final R peekValue;
 
     public SearchCacheEntryFromFuture(Future<R> future, Search<R> search) {
         this.future = future;

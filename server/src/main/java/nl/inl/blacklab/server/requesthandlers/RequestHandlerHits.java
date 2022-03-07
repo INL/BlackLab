@@ -96,8 +96,8 @@ public class RequestHandlerHits extends RequestHandler {
 
         SearchCacheEntry<?> cacheEntry, cacheEntryDocsCount;
         Hits hits;
-        ResultsStats hitsCount = null; // [running] hits count
-        ResultsStats docsCount = null; // [running] docs count
+        ResultsStats hitsStats = null; // [running] hits count
+        ResultsStats docsStats = null; // [running] docs count
 
         boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
         boolean waitForTotal = searchParam.getBoolean("waitfortotal");
@@ -108,8 +108,8 @@ public class RequestHandlerHits extends RequestHandler {
                 cacheEntry = res.getLeft();
                 hits = res.getRight();
                 // The hits are already complete - get the stats directly.
-                hitsCount = hits.hitsStats();
-                docsCount = hits.docsStats();
+                hitsStats = hits.hitsStats();
+                docsStats = hits.docsStats();
             } else {
                 // Regular hits request.
                 // Create the search objects
@@ -124,20 +124,20 @@ public class RequestHandlerHits extends RequestHandler {
                 cacheEntryDocsCount = searchDocCount.executeAsync();
                 hits = searchHits.execute();
                 try {
-                    hitsCount = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
-                    docsCount = searchDocCount.executeAsync().peek();
+                    hitsStats = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
+                    docsStats = searchDocCount.executeAsync().peek();
                     // Wait until all hits have been counted.
                     if (waitForTotal) {
-                        hitsCount.countedTotal();
-                        docsCount.countedTotal();
+                        hitsStats.countedTotal();
+                        docsStats.countedTotal();
                     }
                 } catch (InterruptedSearch e) {
                     // Our count was probably aborted.
                     logger.debug("Error getting count(s)", e);
-                    if (hitsCount == null)
-                        hitsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
-                    if (docsCount == null)
-                        docsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                    if (hitsStats == null)
+                        hitsStats = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                    if (docsStats == null)
+                        docsStats = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
                 }
             }
         } catch (InterruptedException | ExecutionException | InvalidQuery e) {
@@ -200,7 +200,7 @@ public class RequestHandlerHits extends RequestHandler {
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
         logger.info("Total search time is:{} ms", searchTime);
         addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, waitForTotal, countTime < 0, null);
+        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
