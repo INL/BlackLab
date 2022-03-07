@@ -74,6 +74,41 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 //            public void consume(int doc, int start, int end);
 //        }
 
+        private static class HitIterator implements HitsInternal.Iterator {
+            private final HitsArrays hits;
+            private int pos = 0;
+            private final Hits.EphemeralHit hit = new Hits.EphemeralHit();
+
+            public HitIterator(HitsArrays h) {
+                this.hits = h;
+            }
+
+            @Override
+            public boolean hasNext() {
+                // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
+                return this.hits.docs.size64() > this.pos;
+            }
+
+            @Override
+            public Hits.EphemeralHit next() {
+                this.hit.doc = this.hits.docs.getInt(pos);
+                this.hit.start = this.hits.starts.getInt(pos);
+                this.hit.end = this.hits.ends.getInt(pos);
+                ++this.pos;
+                return this.hit;
+            }
+
+            public int doc() {
+                return this.hit.doc;
+            }
+            public int start() {
+                return this.hit.start;
+            }
+            public int end() {
+                return this.hit.end;
+            }
+        }
+
         private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
         private final IntBigList docs;
@@ -121,13 +156,6 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         }
 
         /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-        public void addNoLock(EphemeralHit hit) {
-            docs.add(hit.doc);
-            starts.add(hit.start);
-            ends.add(hit.end);
-        }
-
-        /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
         public void add(Hit hit) {
             this.lock.writeLock().lock();
             docs.add(hit.doc());
@@ -150,7 +178,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             this.lock.writeLock().lock();
             hits.withReadLock(c -> {
                 for (EphemeralHit h: hits) {
-                    addNoLock(h);
+                    docs.add(h.doc);
+                    starts.add(h.start);
+                    ends.add(h.end);
                 }
             });
             this.lock.writeLock().unlock();
@@ -226,26 +256,10 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         public long size() {
             try {
                 lock.readLock().lock();
-                return sizeNoLock();
+                return docs.size64();
             } finally {
                 lock.readLock().unlock();
             }
-        }
-
-        public long sizeNoLock() {
-            return docs.size64();
-        }
-
-        public int docNoLock(long index) {
-            return this.docs.getInt(index);
-        }
-
-        public int startNoLock(long index) {
-            return this.starts.getInt(index);
-        }
-
-        public int endNoLock(long index) {
-            return this.ends.getInt(index);
         }
 
         /**
@@ -263,7 +277,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
 
         /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
         @Override
-        public HitIterator iterator() {
+        public HitsInternal.Iterator iterator() {
             return new HitIterator(this);
         }
 

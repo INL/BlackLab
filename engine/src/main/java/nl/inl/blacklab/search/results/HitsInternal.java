@@ -9,6 +9,10 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 
 public interface HitsInternal extends Iterable<Hits.EphemeralHit> {
 
+    interface Iterator extends java.util.Iterator<Hits.EphemeralHit> {
+
+    }
+
     /**
      * Create a HitsInternal with an initial and maximum capacity.
      *
@@ -98,37 +102,7 @@ public interface HitsInternal extends Iterable<Hits.EphemeralHit> {
         return allowHugeLists ? new Hits.HitsArrays(initialCapacity) : new HitsArrays32((int)initialCapacity);
     }
 
-    HitsInternal EMPTY_SINGLETON = new HitsArrays32() {
-        @Override
-        public void add(Hits.EphemeralHit hit) {
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-
-        @Override
-        public void addNoLock(Hits.EphemeralHit hit) {
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-
-        @Override
-        public void add(Hit hit) {
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-
-        @Override
-        public void add(int doc, int start, int end){
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-
-        @Override
-        public void addAll(HitsInternal hits) {
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-
-        @Override
-        public void clear() {
-            throw new BlackLabRuntimeException("Attempting to write into empty HitsInternal object");
-        }
-    };
+    HitsInternal EMPTY_SINGLETON = new HitsInternalImmutable();
 
     void add(int doc, int start, int end);
 
@@ -152,57 +126,13 @@ public interface HitsInternal extends Iterable<Hits.EphemeralHit> {
 
     long size();
 
-    long sizeNoLock();
-
-    int docNoLock(long index);
-
-    int startNoLock(long index);
-
-    int endNoLock(long index);
-
     IntIterator docsIterator();
 
     @Override
-    HitIterator iterator();
+    HitsInternal.Iterator iterator();
 
     HitsInternal sort(HitProperty p);
 
     void clear();
 
-    class HitIterator implements Iterator<Hits.EphemeralHit> {
-        private final HitsInternal hits;
-        private int pos = 0;
-        private final Hits.EphemeralHit hit = new Hits.EphemeralHit();
-
-        public HitIterator(HitsInternal h) {
-            this.hits = h;
-        }
-
-        @Override
-        public boolean hasNext() {
-            // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-            return this.hits.sizeNoLock() > this.pos;
-        }
-
-        @Override
-        public Hits.EphemeralHit next() {
-            this.hit.doc = this.hits.docNoLock(pos);
-            this.hit.start = this.hits.startNoLock(pos);
-            this.hit.end = this.hits.endNoLock(pos);
-            ++this.pos;
-            return this.hit;
-        }
-
-        public int doc() {
-            return this.hit.doc;
-        }
-
-        public int start() {
-            return this.hit.start;
-        }
-
-        public int end() {
-            return this.hit.end;
-        }
-    }
 }

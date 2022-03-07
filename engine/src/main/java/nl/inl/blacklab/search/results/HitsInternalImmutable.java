@@ -1,41 +1,36 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
-
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
-/**
- * A HitsInternal class that can handle up to Integer.MAX_VALUE
- * hits, but may be faster than HitsArrays.
- */
-public class HitsArrays32 implements HitsInternal {
+import java.util.function.Consumer;
 
-    private static class HitIterator implements HitsInternal.Iterator {
-        private final HitsArrays32 hits;
+/**
+ * An immutable implementation of HitsInternal.
+ */
+public class HitsInternalImmutable implements HitsInternal {
+
+    private class Iterator implements HitsInternal.Iterator {
         private int pos = 0;
         private final Hits.EphemeralHit hit = new Hits.EphemeralHit();
 
-        public HitIterator(HitsArrays32 h) {
-            this.hits = h;
+        public Iterator() {
         }
 
         @Override
         public boolean hasNext() {
             // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-            return this.hits.docs.size() > this.pos;
+            return HitsInternalImmutable.this.docs.size() > this.pos;
         }
 
         @Override
         public Hits.EphemeralHit next() {
-            this.hit.doc = this.hits.docs.getInt(pos);
-            this.hit.start = this.hits.starts.getInt(pos);
-            this.hit.end = this.hits.ends.getInt(pos);
+            this.hit.doc = HitsInternalImmutable.this.docs.getInt(pos);
+            this.hit.start = HitsInternalImmutable.this.starts.getInt(pos);
+            this.hit.end = HitsInternalImmutable.this.ends.getInt(pos);
             ++this.pos;
             return this.hit;
         }
@@ -51,25 +46,17 @@ public class HitsArrays32 implements HitsInternal {
         }
     }
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
     private final IntList docs;
     private final IntList starts;
     private final IntList ends;
 
-    public HitsArrays32() {
-        this.docs = new IntArrayList();
-        this.starts = new IntArrayList();
-        this.ends = new IntArrayList();
+    public HitsInternalImmutable() {
+        this.docs = new IntArrayList(0);
+        this.starts = new IntArrayList(0);
+        this.ends = new IntArrayList(0);
     }
 
-    public HitsArrays32(int initialCapacity) {
-        this.docs = new IntArrayList(initialCapacity);
-        this.starts = new IntArrayList(initialCapacity);
-        this.ends = new IntArrayList(initialCapacity);
-    }
-
-    public HitsArrays32(IntList docs, IntList starts, IntList ends) {
+    public HitsInternalImmutable(IntList docs, IntList starts, IntList ends) {
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size())
@@ -82,79 +69,44 @@ public class HitsArrays32 implements HitsInternal {
 
     @Override
     public void add(int doc, int start, int end) {
-        this.lock.writeLock().lock();
-        docs.add(doc);
-        starts.add(start);
-        ends.add(end);
-        this.lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hits.EphemeralHit hit) {
-        this.lock.writeLock().lock();
-        docs.add(hit.doc);
-        starts.add(hit.start);
-        ends.add(hit.end);
-        this.lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        this.lock.writeLock().lock();
-        docs.add(hit.doc());
-        starts.add(hit.start());
-        ends.add(hit.end());
-        this.lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
     }
 
     public void addAll(HitsArrays32 hits) {
-        this.lock.writeLock().lock();
-        hits.withReadLock(c -> {
-            docs.addAll(hits.docs);
-            starts.addAll(hits.starts);
-            ends.addAll(hits.ends);
-        });
-        this.lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
     }
 
     public void addAll(HitsInternal hits) {
-        this.lock.writeLock().lock();
-        hits.withReadLock(c -> {
-            for (Hits.EphemeralHit h: hits) {
-                docs.add(h.doc);
-                starts.add(h.start);
-                ends.add(h.end);
-            }
-        });
-        this.lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
     }
 
     /**
      * Clear the arrays.
      */
     public void clear() {
-        lock.writeLock().lock();
-        docs.clear();
-        starts.clear();
-        ends.clear();
-        lock.writeLock().unlock();
+        throw new UnsupportedOperationException("Cannot add to immutable HitsInternal");
     }
 
     @Override
     public void withReadLock(Consumer<HitsInternal> cons) {
-        lock.readLock().lock();
         cons.accept(this);
-        lock.readLock().unlock();
     }
 
     @Override
     public HitImpl get(long index) {
-        lock.readLock().lock();
-        HitImpl h = new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index));
-        lock.readLock().unlock();
-        return h;
+        return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index));
     }
 
     /**
@@ -173,43 +125,29 @@ public class HitsArrays32 implements HitsInternal {
      */
     @Override
     public void getEphemeral(long index, Hits.EphemeralHit h) {
-        lock.readLock().lock();
         h.doc = docs.getInt((int)index);
         h.start = starts.getInt((int)index);
         h.end = ends.getInt((int)index);
-        lock.readLock().unlock();
     }
 
     @Override
     public int doc(long index) {
-        lock.readLock().lock();
-        int doc = this.docs.getInt((int)index);
-        lock.readLock().unlock();
-        return doc;
+        return this.docs.getInt((int)index);
     }
 
     @Override
     public int start(long index) {
-        lock.readLock().lock();
-        int start = this.starts.getInt((int)index);
-        lock.readLock().unlock();
-        return start;
+        return this.starts.getInt((int)index);
     }
 
     @Override
     public int end(long index) {
-        lock.readLock().lock();
-        int end = this.ends.getInt((int)index);
-        lock.readLock().unlock();
-        return end;
+        return this.ends.getInt((int)index);
     }
 
     @Override
     public long size() {
-        lock.readLock().lock();
-        int size = docs.size();
-        lock.readLock().unlock();
-        return size;
+        return docs.size();
     }
 
     public IntIterator docsIterator() {
@@ -219,26 +157,26 @@ public class HitsArrays32 implements HitsInternal {
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
     @Override
     public HitsInternal.Iterator iterator() {
-        return new HitIterator(this);
+        return new Iterator();
     }
 
     @Override
     public HitsInternal sort(HitProperty p) {
-        this.lock.readLock().lock();
-
         int[] indices = new int[(int)this.size()];
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
         IntArrays.quickSort(indices, p::compare);
 
-        HitsArrays32 r = new HitsArrays32();
         Hits.EphemeralHit eph = new Hits.EphemeralHit();
+        IntList sDocs = new IntArrayList(indices.length);
+        IntList sStarts = new IntArrayList(indices.length);
+        IntList sEnds = new IntArrayList(indices.length);
         for (int index : indices) {
-            getEphemeral(index, eph);
-            r.add(eph);
+            sDocs.add(docs.getInt(index));
+            sStarts.add(starts.getInt(index));
+            sEnds.add(ends.getInt(index));
         }
-        this.lock.readLock().unlock();
-        return r;
+        return new HitsInternalImmutable(sDocs, sStarts, sEnds);
     }
 }
