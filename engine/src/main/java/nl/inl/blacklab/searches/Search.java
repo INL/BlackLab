@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -116,7 +117,7 @@ public interface Search<R extends SearchResult> {
      * @return result of the operation
      * @throws InvalidQuery
      */
-    R executeInternal() throws InvalidQuery;
+    R executeInternal(Peekable<R> peekable) throws InvalidQuery;
 
     /**
      * Return the peek object, given a cache entry.
@@ -143,5 +144,4 @@ public interface Search<R extends SearchResult> {
 
     @Override
     String toString();
-
 }

@@ -1,7 +1,9 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
@@ -12,11 +14,24 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
  */
 public class ResultsStatsDelegate extends ResultsStats {
 
+    private static final long WAIT_TIME_MS = 50;
+
     /** Our cache entry */
     private final Future<ResultsStats> future;
 
+    /** The actual stats to monitor, as soon as they're available. Null otherwise. */
+    private ResultsStats realStats;
+
+    private CountDownLatch realStatsAvailable;
+
+    public void setRealStats(ResultsStats realStats) {
+        this.realStats = realStats;
+        realStatsAvailable.countDown();
+    }
+
     public ResultsStatsDelegate(Future<ResultsStats> future) {
         this.future = future;
+        realStatsAvailable = new CountDownLatch(1);
     }
 
     /**
@@ -32,19 +47,31 @@ public class ResultsStatsDelegate extends ResultsStats {
             throw new InterruptedSearch(e);
         }
         // Didn't return in time; results object must not be available yet; return 0
-        return ResultsStats.SEARCH_NOT_STARTED_YET;
+        return realStats == null ? ResultsStats.SEARCH_NOT_STARTED_YET : realStats;
     }
 
     /**
      * Get the running count, even if we have to wait a while to get it.
      */
     private ResultsStats realStats() {
-        if (future.isCancelled())
-            throw new InterruptedSearch();
+
         try {
-            // We need the actual stats. Wait for them, or until the underlying search is cancelled.
-            return future.get();
-        } catch (InterruptedException|ExecutionException e) {
+
+            // Wait until real running count is available or the search
+            // has been cancelled.
+            while (true) {
+
+                // Check that the search hasn't been cancelled
+                if (future.isCancelled())
+                    throw new InterruptedSearch();
+
+                // We need the actual stats. Wait a short time for them,
+                // or until the underlying search is cancelled.
+                if (realStatsAvailable.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS)) {
+                    return realStats;
+                }
+            }
+        } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         }
     }

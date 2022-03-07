@@ -22,7 +22,7 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal() throws InvalidQuery {
+    public DocGroups executeInternal(Peekable<DocGroups> peekable) throws InvalidQuery {
         return source.executeNoQueue().group(property, maxDocs);
     }
 

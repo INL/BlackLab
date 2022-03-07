@@ -6,6 +6,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.
@@ -26,7 +27,7 @@ public class SearchCollocationsFiltered extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> peekable) throws InvalidQuery {
         return source.executeNoQueue().filter(property, value);
     }
 
@@ -71,4 +72,5 @@ public class SearchCollocationsFiltered extends SearchCollocations {
     public String toString() {
         return toString("filter", source, property, value);
     }
+
 }

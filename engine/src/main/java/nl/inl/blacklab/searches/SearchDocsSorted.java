@@ -18,7 +18,7 @@ public class SearchDocsSorted extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal(Peekable<DocResults> peekable) throws InvalidQuery {
         return source.executeNoQueue().sort(property);
     }
 

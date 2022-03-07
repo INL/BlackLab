@@ -6,6 +6,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.
@@ -26,7 +27,7 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> peekable) throws InvalidQuery {
         return source.executeNoQueue().collocations(annotation, contextSize, sensitivity);
     }
 

@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  *
  * @param <R> the type of search result this search will yield
  */
-public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R> {
+public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, Peekable<R> {
 
     /**
      * Has this search been started?

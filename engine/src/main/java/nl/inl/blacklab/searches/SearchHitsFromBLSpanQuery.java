@@ -33,7 +33,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
      */
     @Override
-    public Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal(Peekable<Hits> peekable) throws InvalidQuery {
         return queryInfo().index().find(spanQuery, searchSettings);
     }
 

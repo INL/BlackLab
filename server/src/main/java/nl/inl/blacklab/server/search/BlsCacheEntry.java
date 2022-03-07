@@ -131,7 +131,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      */
     public void executeSearch() {
         try {
-            result = search.executeInternal();
+            result = search.executeInternal(this);
         } catch (Throwable e) {
 
             if (e instanceof InterruptedSearch) {

@@ -16,7 +16,7 @@ public class SearchDocsFromQuery extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal(Peekable<DocResults> peekable) throws InvalidQuery {
         return queryInfo().index().queryDocuments(query);
     }
     

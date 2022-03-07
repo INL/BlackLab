@@ -107,7 +107,7 @@ public class ResultsCache implements SearchCache {
                 if (runningJobs.containsKey(search)) {
                     job = runningJobs.get(search);
                 } else {
-                    job = ResultsCache.this.threadPool.submit(search::executeInternal);
+                    job = ResultsCache.this.threadPool.submit( () -> search.executeInternal(null) );
                     runningJobs.put(search, job);
                 }
                 SearchResult searchResult = job.get();
