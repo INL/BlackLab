@@ -24,7 +24,7 @@ public class ResultsStatsDelegate extends ResultsStats {
     private ResultsStats realStats;
 
     /** Used to let us wait until the stats are available. */
-    private CountDownLatch realStatsAvailable;
+    private final CountDownLatch realStatsAvailable;
 
     public void setRealStats(ResultsStats realStats) {
         this.realStats = realStats;
