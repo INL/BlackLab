@@ -45,7 +45,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.Hits.EphemeralHit;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -328,7 +327,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                             addDocResultToList(doc, hits, size);
                         }
 
-                        docHits = HitsInternal.create();
+                        // TODO: use maxHitsToStorePerDoc to determine whether or not we need huge?
+                        //       (but we do want to count the total number of hits in the doc even
+                        //       if we don't store all of them)
+                        docHits = HitsInternal.create(-1, true, false);
                     }
 
                     docHits.add(h);

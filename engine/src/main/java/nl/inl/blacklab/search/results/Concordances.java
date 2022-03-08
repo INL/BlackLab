@@ -129,10 +129,11 @@ public class Concordances {
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
         MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
+        long totalHits = hits.size();
         for (Hit key: hits) {
             HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternal.create();
+                hitsInDoc = HitsInternal.create(-1, totalHits > Integer.MAX_VALUE, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);

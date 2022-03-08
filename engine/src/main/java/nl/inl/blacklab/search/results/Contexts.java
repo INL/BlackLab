@@ -19,7 +19,6 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits.EphemeralHit;
 
 public class Contexts implements Iterable<int[]> {
 

@@ -1,21 +1,24 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.function.Consumer;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
-import java.util.function.Consumer;
-
 /**
- * An immutable implementation of HitsInternal.
+ * A HitsInternal implementation that does no locking and can handle up to Integer.MAX_VALUE hits.
+ *
+ * This means it is safe to fill this object in one thread, then
+ * use it from many threads as long as it is not modified anymore.
  */
-public class HitsInternalImmutable implements HitsInternal {
+class HitsInternalNoLock32 implements HitsInternal {
 
     private class Iterator implements HitsInternal.Iterator {
         private int pos = 0;
-        private final Hits.EphemeralHit hit = new Hits.EphemeralHit();
+        private final EphemeralHit hit = new EphemeralHit();
 
         public Iterator() {
         }
@@ -23,14 +26,14 @@ public class HitsInternalImmutable implements HitsInternal {
         @Override
         public boolean hasNext() {
             // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-            return HitsInternalImmutable.this.docs.size() > this.pos;
+            return HitsInternalNoLock32.this.docs.size() > this.pos;
         }
 
         @Override
-        public Hits.EphemeralHit next() {
-            this.hit.doc = HitsInternalImmutable.this.docs.getInt(pos);
-            this.hit.start = HitsInternalImmutable.this.starts.getInt(pos);
-            this.hit.end = HitsInternalImmutable.this.ends.getInt(pos);
+        public EphemeralHit next() {
+            this.hit.doc = HitsInternalNoLock32.this.docs.getInt(pos);
+            this.hit.start = HitsInternalNoLock32.this.starts.getInt(pos);
+            this.hit.end = HitsInternalNoLock32.this.ends.getInt(pos);
             ++this.pos;
             return this.hit;
         }
@@ -46,17 +49,28 @@ public class HitsInternalImmutable implements HitsInternal {
         }
     }
 
-    private final IntList docs;
-    private final IntList starts;
-    private final IntList ends;
+    protected final IntList docs;
+    protected final IntList starts;
+    protected final IntList ends;
 
-    public HitsInternalImmutable() {
-        this.docs = new IntArrayList(0);
-        this.starts = new IntArrayList(0);
-        this.ends = new IntArrayList(0);
+    HitsInternalNoLock32() {
+        this(-1);
     }
 
-    public HitsInternalImmutable(IntList docs, IntList starts, IntList ends) {
+    HitsInternalNoLock32(int initialCapacity) {
+        if (initialCapacity < 0) {
+            // Use default initial capacities
+            this.docs = new IntArrayList();
+            this.starts = new IntArrayList();
+            this.ends = new IntArrayList();
+        } else {
+            this.docs = new IntArrayList(initialCapacity);
+            this.starts = new IntArrayList(initialCapacity);
+            this.ends = new IntArrayList(initialCapacity);
+        }
+    }
+
+    HitsInternalNoLock32(IntList docs, IntList starts, IntList ends) {
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size())
@@ -69,34 +83,50 @@ public class HitsInternalImmutable implements HitsInternal {
 
     @Override
     public void add(int doc, int start, int end) {
-        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
+        docs.add(doc);
+        starts.add(start);
+        ends.add(end);
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
-    public void add(Hits.EphemeralHit hit) {
-        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
+    public void add(EphemeralHit hit) {
+        docs.add(hit.doc);
+        starts.add(hit.start);
+        ends.add(hit.end);
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
+        docs.add(hit.doc());
+        starts.add(hit.start());
+        ends.add(hit.end());
     }
 
-    public void addAll(HitsArrays32 hits) {
-        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
+    public void addAll(HitsInternalNoLock32 hits) {
+        docs.addAll(hits.docs);
+        starts.addAll(hits.starts);
+        ends.addAll(hits.ends);
     }
 
     public void addAll(HitsInternal hits) {
-        throw new UnsupportedOperationException("Cannot modify HitsInternalImmutable");
+        hits.withReadLock(__ -> {
+            for (EphemeralHit h: hits) {
+                docs.add(h.doc);
+                starts.add(h.start);
+                ends.add(h.end);
+            }
+        });
     }
 
     /**
      * Clear the arrays.
      */
     public void clear() {
-        throw new UnsupportedOperationException("Cannot add to immutable HitsInternal");
+        docs.clear();
+        starts.clear();
+        ends.clear();
     }
 
     @Override
@@ -124,7 +154,7 @@ public class HitsInternalImmutable implements HitsInternal {
      * </pre>
      */
     @Override
-    public void getEphemeral(long index, Hits.EphemeralHit h) {
+    public void getEphemeral(long index, EphemeralHit h) {
         h.doc = docs.getInt((int)index);
         h.start = starts.getInt((int)index);
         h.end = ends.getInt((int)index);
@@ -162,21 +192,16 @@ public class HitsInternalImmutable implements HitsInternal {
 
     @Override
     public HitsInternal sort(HitProperty p) {
-        int[] indices = new int[(int)this.size()];
+        int[] indices = new int[docs.size()];
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
         IntArrays.quickSort(indices, p::compare);
 
-        Hits.EphemeralHit eph = new Hits.EphemeralHit();
-        IntList sDocs = new IntArrayList(indices.length);
-        IntList sStarts = new IntArrayList(indices.length);
-        IntList sEnds = new IntArrayList(indices.length);
+        HitsInternal r = HitsInternal.create(docs.size(), false, false);
         for (int index : indices) {
-            sDocs.add(docs.getInt(index));
-            sStarts.add(starts.getInt(index));
-            sEnds.add(ends.getInt(index));
+            r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index));
         }
-        return new HitsInternalImmutable(sDocs, sStarts, sEnds);
+        return r;
     }
 }

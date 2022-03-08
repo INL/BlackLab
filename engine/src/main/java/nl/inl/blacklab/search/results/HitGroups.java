@@ -128,7 +128,6 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        boolean listIsHuge = hits.size() > Integer.MAX_VALUE;
         for (Hit hit: hits) {
             PropertyValue identity = criteria.get(i);
             HitsInternal group = groupLists.get(identity);
@@ -137,7 +136,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(listIsHuge);
+                group = HitsInternal.create(-1, hits.size() > Integer.MAX_VALUE, false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
