@@ -424,7 +424,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults window(long first, long number) {
-        List<DocResult> resultsWindow = Results.doWindow(this, first, number);
+        List<DocResult> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocResults.fromList(queryInfo(), resultsWindow, null, windowStats);
@@ -499,7 +499,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
-        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, null);
+        return DocResults.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), sampleParameters, null);
     }
 
     @Override

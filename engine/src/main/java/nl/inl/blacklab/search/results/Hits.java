@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * Mostly thread-safe. Deprecated method sortInPlace() is not and
  * should be avoided.
  */
-public abstract class Hits extends Results<Hit, HitProperty> {
+public abstract class Hits extends ResultsAbstract<Hit, HitProperty> {
 
 
     protected final HitsInternal hitsArrays;

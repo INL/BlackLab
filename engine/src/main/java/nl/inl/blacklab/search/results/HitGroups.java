@@ -215,7 +215,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
-        List<HitGroup> sample = Results.doSample(this, sampleParameters);
+        List<HitGroup> sample = ResultsAbstract.doSample(this, sampleParameters);
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
         return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
     }
@@ -267,7 +267,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
     @Override
     public HitGroups window(long first, long number) {
-        List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<HitGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         // Note: a window is just a subset of the total result set.
