@@ -10,7 +10,7 @@ public class HitGroupWithoutResults extends HitGroup {
     /**
      * A Hits object that only stores statistics about a set of hits, not the actual hits themselves (because we don't need them).
      */
-    private static class HitsWithoutResults extends Hits {
+    private static class HitsWithoutResults extends HitsAbstract {
         protected final boolean maxHitsProcessed;
         protected final boolean maxHitsCounted;
 

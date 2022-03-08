@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends Hits {
+public class HitsFiltered extends HitsAbstract {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -104,7 +104,7 @@ public class HitsFiltered extends Hits {
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.hitsProcessedAtLeast(indexInSource + 1)) {
+                    if (source.hitsStats().processedAtLeast(indexInSource + 1)) {
                         Hit hit = source.get(indexInSource);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit

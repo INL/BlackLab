@@ -74,7 +74,7 @@ public class Contexts implements Iterable<int[]> {
         // Get punctuation context
         int[][] punctContext = null;
         if (punctForwardIndex != null) {
-            punctContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(punctForwardIndex), List.of(fiidLookups.get(punctForwardIndex.annotation())));
+            punctContext = getContextWordsSingleDocument(hits.getInternalHitsUnsafe(), 0, hits.size(), wordsAroundHit, List.of(punctForwardIndex), List.of(fiidLookups.get(punctForwardIndex.annotation())));
         }
         Terms punctTerms = punctForwardIndex == null ? null : punctForwardIndex.terms();
 
@@ -93,13 +93,13 @@ public class Contexts implements Iterable<int[]> {
                 attrName[i] = e.getKey();
                 attrFI[i] = e.getValue();
                 attrTerms[i] = attrFI[i].terms();
-                attrContext[i] = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(attrFI[i]), List.of(fiidLookups.get(attrName[i])));
+                attrContext[i] = getContextWordsSingleDocument(hits.getInternalHitsUnsafe(), 0, hits.size(), wordsAroundHit, List.of(attrFI[i]), List.of(fiidLookups.get(attrName[i])));
                 i++;
             }
         }
 
         // Get word context
-        int[][] wordContext = getContextWordsSingleDocument(hits.hitsArrays, 0, hits.size(), wordsAroundHit, List.of(forwardIndex), List.of(fiidLookups.get(forwardIndex.annotation())));
+        int[][] wordContext = getContextWordsSingleDocument(hits.getInternalHitsUnsafe(), 0, hits.size(), wordsAroundHit, List.of(forwardIndex), List.of(fiidLookups.get(forwardIndex.annotation())));
         Terms terms = forwardIndex.terms();
 
         // Make the concordances from the context
@@ -297,7 +297,7 @@ public class Contexts implements Iterable<int[]> {
         // (required for FiidLookup to work, because it uses DocValues)
         hits = hits.withAscendingLuceneDocIds();
 
-        hits.ensureAllResultsRead(); // make sure all hits have been read
+        hits.size(); // make sure all hits have been read
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
             fis.add(hits.index().annotationForwardIndex(annotation));
@@ -307,7 +307,7 @@ public class Contexts implements Iterable<int[]> {
         // Group hits per document
 
         // setup first iteration
-        HitsInternal ha = hits.hitsArrays;
+        HitsInternal ha = hits.getInternalHitsUnsafe();
         final long size = ha.size(); // TODO ugly, might be slow because of required locking
         int prevDoc = size == 0 ? -1 : ha.doc(0);
         int firstHitInCurrentDoc = 0;

@@ -5,7 +5,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 /**
  * A basic Hits object implemented with a list.
  */
-public class HitsList extends Hits {
+public class HitsList extends HitsAbstract {
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
 

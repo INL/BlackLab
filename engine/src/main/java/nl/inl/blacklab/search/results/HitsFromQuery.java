@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends Hits {
+public class HitsFromQuery extends HitsAbstract {
 
     /** Settings such as max. hits to process/count. */
     SearchSettings searchSettings;
