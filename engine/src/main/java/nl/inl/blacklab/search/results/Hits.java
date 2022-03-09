@@ -284,6 +284,13 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     int end(long index);
 
+    /**
+     * Get the internal hits object.
+     *
+     * CAUTION: only use this if you know what you're doing!
+     *
+     * @return internal hits object.
+     */
     HitsInternal getInternalHitsUnsafe();
 
 

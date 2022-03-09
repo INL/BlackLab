@@ -111,17 +111,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
     };
 
-    /** Construct an empty, mutable Hits object.
-     *
-     * @param queryInfo query info for corresponding query
-     * @deprecated if you need an empty Hits object, use {@link #immutableEmptyList(QueryInfo)};
-     *     otherwise, use {@link #HitsAbstract(QueryInfo, HitsInternal)}
-     */
-    @Deprecated
-    public HitsAbstract(QueryInfo queryInfo) {
-        this(queryInfo, false);
-    }
-
     /** Construct an empty Hits object.
      *
      * @param queryInfo query info for corresponding query
