@@ -392,6 +392,11 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         return this.hitsArrays.get(i);
     }
 
+    public void getEphemeral(long i, EphemeralHit hit) {
+        ensureResultsRead(i + 1);
+        this.hitsArrays.getEphemeral(i, hit);
+    }
+
     /**
      * Count occurrences of context words around hit.
      *

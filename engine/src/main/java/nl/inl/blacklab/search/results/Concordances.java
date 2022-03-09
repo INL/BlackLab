@@ -88,7 +88,8 @@ public class Concordances {
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
-        for (Hit hit : hits) {
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            EphemeralHit hit = it.next();
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1;
 
@@ -112,8 +113,10 @@ public class Concordances {
 
         // Make all the concordances
         List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);
-        for (int i = 0; i < hits.size(); i++) {
-            conc.put(hits.get(i), newConcs.get(i));
+        int i = 0;
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            conc.put(it.next(), newConcs.get(i));
+            ++i;
         }
     }
 

@@ -207,6 +207,14 @@ public interface Hits extends Results<Hit, HitProperty> {
     Hit get(long i);
 
     /**
+     * Copy hit information into a temporary object.
+     *
+     * @param i index of the desired hit
+     * @param hit object to copy values to
+     */
+    void getEphemeral(long i, EphemeralHit hit);
+
+    /**
      * Did we exceed the maximum number of hits to process/count?
      * <p>
      * NOTE: this is only valid for the original Hits instance (that

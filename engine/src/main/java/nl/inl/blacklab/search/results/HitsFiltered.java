@@ -98,6 +98,7 @@ public class HitsFiltered extends HitsAbstract {
             }
             try {
                 boolean readAllHits = number < 0;
+                EphemeralHit hit = new EphemeralHit();
                 while (!doneFiltering && (readAllHits || hitsArrays.size() < number)) {
                  // Abort if asked
                     threadAborter.checkAbort();
@@ -105,7 +106,7 @@ public class HitsFiltered extends HitsAbstract {
                     // Advance to next hit
                     indexInSource++;
                     if (source.hitsStats().processedAtLeast(indexInSource + 1)) {
-                        Hit hit = source.get(indexInSource);
+                        source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
                             hitsArrays.add(hit);
