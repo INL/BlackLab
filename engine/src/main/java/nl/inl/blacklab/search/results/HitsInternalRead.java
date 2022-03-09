@@ -17,7 +17,7 @@ public interface HitsInternalRead extends Iterable<EphemeralHit> {
      *
      * @param cons operation to perform
      */
-    void withReadLock(Consumer<HitsInternal> cons);
+    void withReadLock(Consumer<HitsInternalRead> cons);
 
     /**
      * Get a Hit object.

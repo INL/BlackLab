@@ -78,7 +78,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         }
     }
 
-    public void addAll(HitsInternal hits) {
+    public void addAll(HitsInternalRead hits) {
         this.lock.writeLock().lock();
         try {
             super.addAll(hits);
@@ -100,7 +100,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     }
 
     @Override
-    public void withReadLock(Consumer<HitsInternal> cons) {
+    public void withReadLock(Consumer<HitsInternalRead> cons) {
         lock.readLock().lock();
         try {
             super.withReadLock(cons);

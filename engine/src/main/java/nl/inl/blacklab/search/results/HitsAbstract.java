@@ -245,11 +245,11 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         HitsInternal sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect > Integer.MAX_VALUE, false);
 
-        this.hitsArrays.withReadLock(__ -> {
+        this.hitsArrays.withReadLock(hr -> {
             int previousDoc = -1;
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
-                this.hitsArrays.getEphemeral(hitIndex, hit);
+                hr.getEphemeral(hitIndex, hit);
                 if (hit.doc != previousDoc) {
                     docsInSample.add(1);
                     previousDoc = hit.doc;
@@ -627,7 +627,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     }
 
     @Override
-    public HitsInternal getInternalHits() {
+    public HitsInternalRead getInternalHits() {
         ensureAllResultsRead();
         return hitsArrays;
     }

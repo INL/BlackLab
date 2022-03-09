@@ -68,7 +68,7 @@ public class Contexts implements Iterable<int[]> {
                                                ) {
         if (hits.size() == 0)
             return;
-        HitsInternal hitsInternal = hits.getInternalHits();
+        HitsInternalRead hitsInternal = hits.getInternalHits();
 
         // TODO: more efficient to get all contexts with one getContextWords() call!
 
@@ -161,7 +161,7 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      * @param fiidLookups how to find the forward index ids of documents
      */
-    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end, ContextSize contextSize,
+    private static int[][] getContextWordsSingleDocument(HitsInternalRead hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
         if (end - start > Integer.MAX_VALUE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
@@ -299,7 +299,7 @@ public class Contexts implements Iterable<int[]> {
         hits = hits.withAscendingLuceneDocIds();
 
         // Make sure all hits have been read and get access to internal hits
-        HitsInternal ha = hits.getInternalHits();
+        HitsInternalRead ha = hits.getInternalHits();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {

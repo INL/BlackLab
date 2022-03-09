@@ -39,7 +39,7 @@ public interface HitsInternal extends HitsInternalRead {
 
     void add(Hit hit);
 
-    void addAll(HitsInternal hits);
+    void addAll(HitsInternalRead hits);
 
     /**
      * Remove all hits.

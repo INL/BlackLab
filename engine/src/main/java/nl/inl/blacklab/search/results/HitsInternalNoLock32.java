@@ -116,9 +116,9 @@ class HitsInternalNoLock32 implements HitsInternal {
         ends.addAll(hits.ends);
     }
 
-    public void addAll(HitsInternal hits) {
-        hits.withReadLock(__ -> {
-            for (EphemeralHit h: hits) {
+    public void addAll(HitsInternalRead hits) {
+        hits.withReadLock(hr -> {
+            for (EphemeralHit h: hr) {
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
@@ -136,7 +136,7 @@ class HitsInternalNoLock32 implements HitsInternal {
     }
 
     @Override
-    public void withReadLock(Consumer<HitsInternal> cons) {
+    public void withReadLock(Consumer<HitsInternalRead> cons) {
         cons.accept(this);
     }
 
