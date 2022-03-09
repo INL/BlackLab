@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -128,7 +129,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        for (Hit hit: hits) {
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            EphemeralHit hit = it.next();
             PropertyValue identity = criteria.get(i);
             HitsInternal group = groupLists.get(identity);
             if (group == null) {

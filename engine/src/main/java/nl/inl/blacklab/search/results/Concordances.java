@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -130,7 +131,8 @@ public class Concordances {
         // Group hits per document
         MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
-        for (Hit key: hits) {
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            EphemeralHit key = it.next();
             HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = HitsInternal.create(-1, totalHits > Integer.MAX_VALUE, false);
