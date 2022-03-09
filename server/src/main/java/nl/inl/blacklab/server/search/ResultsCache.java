@@ -98,7 +98,7 @@ public class ResultsCache implements SearchCache {
         }
 
         @Override
-        public T peek() throws ExecutionException {
+        public T peek() {
             return results;
         }
 
@@ -150,7 +150,7 @@ public class ResultsCache implements SearchCache {
                 Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
                     ThreadContext.put("requestId", requestId);
                     final long startTime = System.currentTimeMillis();
-                    SearchResult results = search.executeInternal();
+                    SearchResult results = search.executeInternal(null);
                     ThreadContext.remove("requestId");
                     return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
                 }));

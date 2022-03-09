@@ -4,8 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.searches.SearchCacheEntry;
 
-import java.util.concurrent.ExecutionException;
-
 /**
  * Thrown in response to InterruptedException to indicate that a thread was interrupted.
  *
@@ -22,11 +20,7 @@ public class InterruptedSearch extends BlackLabRuntimeException {
         super(DEFAULT_MESSAGE);
     }
 
-    public InterruptedSearch(InterruptedException e) {
-        super(DEFAULT_MESSAGE, e);
-    }
-
-    public InterruptedSearch(ExecutionException e) {
+    public InterruptedSearch(Throwable e) {
         super(DEFAULT_MESSAGE, e);
     }
 
@@ -34,7 +28,7 @@ public class InterruptedSearch extends BlackLabRuntimeException {
         super(message);
     }
 
-    public InterruptedSearch(String message, InterruptedException e) {
+    public InterruptedSearch(String message, Throwable e) {
         super(message, e);
     }
 

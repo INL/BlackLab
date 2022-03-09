@@ -797,16 +797,22 @@ public abstract class RequestHandler {
         }
     }
 
-    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean countFailed, CorpusSize subcorpusSize) {
+    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
+
+        long hitsCounted = hitsStats == null || countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = hitsStats == null ? -1 : (waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar());
+        long docsCounted = docsStats == null || countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = docsStats == null ? -1 : (waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar());
+
         ds.entry("stillCounting", !hitsStats.done());
-        ds.entry("numberOfHits", countFailed ? -1 : hitsStats.countedSoFar())
-                .entry("numberOfHitsRetrieved", hitsStats.processedSoFar())
+        ds.entry("numberOfHits", hitsCounted)
+                .entry("numberOfHitsRetrieved", hitsProcessed)
                 .entry("stoppedCountingHits", hitsStats.maxStats().hitsCountedExceededMaximum())
                 .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
-        ds.entry("numberOfDocs", countFailed ? -1 : docsStats.countedSoFar())
-                .entry("numberOfDocsRetrieved", docsStats.processedSoFar());
+        ds.entry("numberOfDocs", docsCounted)
+                .entry("numberOfDocsRetrieved", docsProcessed);
         if (subcorpusSize != null) {
             addSubcorpusSize(ds, subcorpusSize);
         }

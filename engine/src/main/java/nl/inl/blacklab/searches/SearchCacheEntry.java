@@ -1,8 +1,8 @@
 package nl.inl.blacklab.searches;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 
 /**
@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  *
  * @param <R> the type of search result this search will yield
  */
-public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R> {
+public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, Peekable<R> {
 
     /**
      * Has this search been started?
@@ -59,8 +59,16 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
         return false;
     }
 
-    /** If possible, peek at the result even if it's not yet finished (used for running counts). */
-    public R peek() throws ExecutionException {
+    /**
+     * Peek at the result even if it's not yet finished.
+     *
+     * Used for running counts.
+     *
+     * @return the result so far, or null if not supported for this operation
+     */
+    public R peek() {
+        if (isCancelled())
+            throw new InterruptedSearch();
         return null;
     }
 
