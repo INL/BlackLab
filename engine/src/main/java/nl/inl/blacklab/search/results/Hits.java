@@ -140,14 +140,25 @@ public interface Hits extends Results<Hit, HitProperty> {
     @Override
     Hits sort(HitProperty sortProp);
 
+    /**
+     * Is this Hits object sorted by Lucene doc ids?
+     *
+     * EXPERT USE. That is, will the next hit always have a doc id that is equal to
+     * or greater than the last? This is required if you're using DocValues.
+     *
+     * See also {@link #withAscendingLuceneDocIds()}.
+     *
+     * @return true if doc ids are ascending, false if not
+     */
     boolean hasAscendingLuceneDocIds();
 
     /**
      * Return a Hits object with these hits in ascending Lucene doc id order.
-     * <p>
-     * Necessary for operations that make use of DocValues, which use sequential access.
-     * <p>
-     * If already in ascending order, returns itself.
+     *
+     * EXPERT USE. Necessary for operations that make use of DocValues,
+     * which use sequential access. If already in ascending order, returns itself.
+     *
+     * See also {@link #hasAscendingLuceneDocIds()}.
      *
      * @return hits in ascending Lucene doc id order
      */
@@ -169,9 +180,27 @@ public interface Hits extends Results<Hit, HitProperty> {
     @Override
     long numberOfResultObjects();
 
+    /**
+     * Iterate over Hit objects.
+     *
+     * This will return Hit objects that may be stored.
+     * See {@link #ephemeralIterator()} for a faster version that
+     * returns temporary Hit objects.
+     *
+     * @return iterator
+     */
     @Override
     Iterator<Hit> iterator();
 
+    /**
+     * Iterate over Hit objects.
+     *
+     * This will return temporary Hit objects that must not be stored.
+     * See {@link #iterator()} for a slower version that returns
+     * Hit objects that may be stored.
+     *
+     * @return iterator
+     */
     Iterator<EphemeralHit> ephemeralIterator();
 
     @Override
@@ -248,7 +277,12 @@ public interface Hits extends Results<Hit, HitProperty> {
     ResultsStats docsStats();
 
     /**
+     * Return a HitsWindow with a single hit.
+     *
      * Assumes this hit is within our lists.
+     *
+     * @param hit hit for the window
+     * @return hit window
      */
     Hits window(Hit hit);
 
@@ -291,7 +325,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      *
      * @return internal hits object.
      */
-    HitsInternal getInternalHitsUnsafe();
+    HitsInternal getInternalHits();
 
 
 }

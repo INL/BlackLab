@@ -622,7 +622,8 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     }
 
     @Override
-    public HitsInternal getInternalHitsUnsafe() {
+    public HitsInternal getInternalHits() {
+        ensureAllResultsRead();
         return hitsArrays;
     }
 }

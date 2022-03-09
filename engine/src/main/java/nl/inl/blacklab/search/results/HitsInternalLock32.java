@@ -10,7 +10,11 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 /**
  * A HitsInternal implementation that locks and can handle up to Integer.MAX_VALUE.
  *
- * May be faster than {@link HitsInternalLock}.
+ * A test calling {@link #add(int, int, int)} millions of times came out to be about
+ * 19% faster than {@link HitsInternalLock}. Iteration is about 10x faster.
+ *
+ * Those percentages are not representative of real-world usage of course, but on
+ * huge resultsets this will likely save a few seconds.
  */
 class HitsInternalLock32 extends HitsInternalNoLock32 {
 

@@ -7,7 +7,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * Includes mutation methods, unlike its parent interface.
  */
-interface HitsInternal extends HitsInternalRead {
+public interface HitsInternal extends HitsInternalRead {
 
     /**
      * Create an empty HitsInternal with an initial capacity.
