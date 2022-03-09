@@ -1,5 +1,6 @@
 package nl.inl.blacklab.searches;
 
+import nl.inl.blacklab.search.results.DocResults;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -19,7 +20,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     @Override
-    public SearchResult executeInternal() throws InvalidQuery {
+    public SearchResult executeInternal(Peekable<SearchResult> progressReporter) throws InvalidQuery {
         throw new UnsupportedOperationException();
     }
 

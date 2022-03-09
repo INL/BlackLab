@@ -20,7 +20,7 @@ public class SearchDocsWindow extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal() throws InvalidQuery {
+    public DocResults executeInternal(Peekable<DocResults> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().window(first, number);
     }
 

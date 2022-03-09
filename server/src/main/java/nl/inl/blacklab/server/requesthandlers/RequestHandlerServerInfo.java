@@ -41,16 +41,19 @@ public class RequestHandlerServerInfo extends RequestHandler {
         ds.startEntry("indices").startMap();
 
         for (Index index : indices) {
-            ds.startAttrEntry("index", "name", index.getId());
-            ds.startMap();
-
             try {
+
                 synchronized (index) {
                     IndexMetadata indexMetadata = index.getIndexMetadata();
+                    String displayName = indexMetadata.displayName();
+                    String description = indexMetadata.description();
                     IndexStatus status = index.getStatus();
 
-                    ds.entry("displayName", indexMetadata.displayName());
-                    ds.entry("description", indexMetadata.description());
+                    ds.startAttrEntry("index", "name", index.getId());
+                    ds.startMap();
+
+                    ds.entry("displayName", displayName);
+                    ds.entry("description", description);
                     ds.entry("status", status);
 
                     if (status.equals(IndexStatus.INDEXING)) {
@@ -70,14 +73,16 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.entry("timeModified", indexMetadata.timeModified());
                     if (indexMetadata.tokenCount() > 0)
                         ds.entry("tokenCount", indexMetadata.tokenCount());
+
+                    ds.endMap();
+                    ds.endAttrEntry();
                 }
+
             } catch (IndexTooOld e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }
 
-            ds.endMap();
-            ds.endAttrEntry();
         }
         ds.endMap().endEntry();
 

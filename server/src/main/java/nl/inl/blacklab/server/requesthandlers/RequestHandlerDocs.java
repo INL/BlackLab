@@ -125,7 +125,7 @@ public class RequestHandlerDocs extends RequestHandler {
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = 0; // TODO searchGrouped.userWaitTime();
-        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
+        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), true);
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
@@ -143,17 +143,17 @@ public class RequestHandlerDocs extends RequestHandler {
         }
 
         // If "waitfortotal=yes" was passed, block until all results have been fetched
-        boolean block = searchParam.getBoolean("waitfortotal");
-        if (block)
-            totalDocResults.size(); // fetch all
+        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
+        if (waitForTotal)
+            totalDocResults.size();
 
         docResults = totalDocResults;
         totalTime = total.threwException() ? -1 : total.timeUserWaitedMs();
 
-        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite());
+        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), waitForTotal);
     }
 
-    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList) throws BlsException, InvalidQuery {
+    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = searchParam.getBoolean("includetokencount");
@@ -169,19 +169,15 @@ public class RequestHandlerDocs extends RequestHandler {
 
         // The summary
         ds.startEntry("summary").startMap();
-        ResultsStats totalHits, docsStats;
-        try {
-            totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
-            docsStats = searchParam.docsCount().executeAsync().peek();
-        } catch (ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
+        ResultsStats hitsStats, docsStats;
+        hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
+        docsStats = searchParam.docsCount().executeAsync().peek();
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
-        if (totalHits == null)
+        if (hitsStats == null)
             addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, countFailed, null);
+            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
