@@ -76,6 +76,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -1498,7 +1499,7 @@ public class QueryTool {
                 // Just show total number of hits, no concordances
                 outprintln(hitsToShow.size() + " hits");
             } else {
-                Iterator<Hit> it = hitsToShow.iterator();
+                Iterator<EphemeralHit> it = hitsToShow.ephemeralIterator();
                 int i;
                 for (i = 0; it.hasNext() && i < resultsPerPage; i++) {
                     it.next();

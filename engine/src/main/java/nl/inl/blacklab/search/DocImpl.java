@@ -13,7 +13,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.util.XmlHighlighter;
@@ -196,11 +196,11 @@ public class DocImpl implements Doc {
             throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
-        Iterator<Hit> hitsIt = hits.iterator();
+        Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
         for (int i = 0; i < starts.length; i++) {
-            Hit hit = hitsIt.next(); // hits.get(i);
-            starts[i] = hit.start();
-            ends[i] = hit.end() - 1; // end actually points to the first word not in the hit, so
+            EphemeralHit hit = hitsIt.next(); // hits.get(i);
+            starts[i] = hit.start;
+            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
 

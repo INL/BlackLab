@@ -4,10 +4,10 @@ package nl.inl.blacklab.search.results;
  * A mutable implementation of Hit, to be used for short-lived
  * instances used while e.g. iterating through a list of hits.
  */
-class EphemeralHit implements Hit {
-    int doc = -1;
-    int start = -1;
-    int end = -1;
+public class EphemeralHit implements Hit {
+    public int doc = -1;
+    public int start = -1;
+    public int end = -1;
 
     Hit toHit() {
         return new HitImpl(doc, start, end);
