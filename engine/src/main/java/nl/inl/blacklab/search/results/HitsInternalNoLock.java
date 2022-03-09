@@ -15,14 +15,21 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
  *
- * A test calling {@link #add(int, int, int)} millions of times came out to be about 19% faster than
+ * A test calling {@link #add(int, int, int)} millions of times came out to be about 11% faster than
  * {@link HitsInternalLock}. That is not representative of real-world usage of course, but on huge
  * resultsets this will likely save a few seconds.
  */
 class HitsInternalNoLock implements HitsInternal {
 
+    /**
+     * Class to iterate over hits.
+     *
+     * NOTE: contrary to expectation, implementing this class using iterators
+     * over docs, starts and ends makes it slower.
+     */
     private class HitIterator implements Iterator {
         private int pos = 0;
+
         private final EphemeralHit hit = new EphemeralHit();
 
         public HitIterator() {

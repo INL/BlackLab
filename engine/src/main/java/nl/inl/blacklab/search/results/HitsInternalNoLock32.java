@@ -17,7 +17,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * A test calling {@link #add(int, int, int)} millions of times came out to be about 40% faster than
  * {@link HitsInternalLock32}, and also about 40% faster than {@link HitsInternalNoLock}.
  *
- * These tets are not representative of real-world usage, but on huge result sets this will
+ * These tests are not representative of real-world usage, but on huge result sets this will
  * likely save a few seconds.
  */
 class HitsInternalNoLock32 implements HitsInternal {

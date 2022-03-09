@@ -20,7 +20,10 @@ class HitsInternalLock extends HitsInternalNoLock {
     public void add(int doc, int start, int end) {
         this.lock.writeLock().lock();
         try {
-            super.add(doc, start, end);
+            // Don't call super method, this is faster (hot code)
+            docs.add(doc);
+            starts.add(start);
+            ends.add(end);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -32,7 +35,10 @@ class HitsInternalLock extends HitsInternalNoLock {
     public void add(EphemeralHit hit) {
         this.lock.writeLock().lock();
         try {
-            super.add(hit);
+            // Don't call super method, this is faster (hot code)
+            docs.add(hit.doc);
+            starts.add(hit.start);
+            ends.add(hit.end);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -44,7 +50,10 @@ class HitsInternalLock extends HitsInternalNoLock {
     public void add(Hit hit) {
         this.lock.writeLock().lock();
         try {
-            super.add(hit);
+            // Don't call super method, this is faster (hot code)
+            docs.add(hit.doc());
+            starts.add(hit.start());
+            ends.add(hit.end());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -97,7 +106,8 @@ class HitsInternalLock extends HitsInternalNoLock {
     public Hit get(long index) {
         lock.readLock().lock();
         try {
-            return super.get(index);
+            // Don't call super method, this is faster (hot code)
+            return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index));
         } finally {
             lock.readLock().unlock();
         }
@@ -120,7 +130,9 @@ class HitsInternalLock extends HitsInternalNoLock {
     public void getEphemeral(long index, EphemeralHit h) {
         lock.readLock().lock();
         try {
-            super.getEphemeral(index, h);
+            h.doc = docs.getInt(index);
+            h.start = starts.getInt(index);
+            h.end = ends.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -129,7 +141,8 @@ class HitsInternalLock extends HitsInternalNoLock {
     public int doc(long index) {
         lock.readLock().lock();
         try {
-            return super.doc(index);
+            // Don't call super method, this is faster (hot code)
+            return this.docs.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -138,7 +151,8 @@ class HitsInternalLock extends HitsInternalNoLock {
     public int start(long index) {
         lock.readLock().lock();
         try {
-            return super.start(index);
+            // Don't call super method, this is faster (hot code)
+            return this.starts.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -147,7 +161,8 @@ class HitsInternalLock extends HitsInternalNoLock {
     public int end(long index) {
         lock.readLock().lock();
         try {
-            return super.end(index);
+            // Don't call super method, this is faster (hot code)
+            return this.ends.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
