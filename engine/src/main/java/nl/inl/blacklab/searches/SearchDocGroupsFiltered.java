@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -23,7 +24,7 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal() throws InvalidQuery {
+    public DocGroups executeInternal(Peekable<DocGroups> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().filter(property, value);
     }
 

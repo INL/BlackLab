@@ -21,7 +21,7 @@ public class SearchCollocationsSorted extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal() throws InvalidQuery {
+    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().sort(property);
     }
 

@@ -21,7 +21,7 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal() throws InvalidQuery {
+    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().sample(sampleParameters);
     }
 

@@ -66,13 +66,9 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         // The summary
         ds.startEntry("summary").startMap();
         WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
-        ResultsStats totalHits, docsStats;
-        try {
-            totalHits = originalHitsSearch == null ? null : originalHitsSearch.peek();
-            docsStats = searchParam.docsCount().executeAsync().peek();
-        } catch (ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
+        ResultsStats hitsStats, docsStats;
+        hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
+        docsStats = searchParam.docsCount().executeAsync().peek();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
@@ -86,10 +82,10 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         }
 
         addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
-        if (totalHits == null)
+        if (hitsStats == null)
             addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            addNumberOfResultsSummaryTotalHits(ds, totalHits, docsStats, false, subcorpusSize);
+            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 

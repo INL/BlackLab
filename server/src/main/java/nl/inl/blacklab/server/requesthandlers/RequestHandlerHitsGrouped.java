@@ -1,21 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.*;
-import nl.inl.blacklab.searches.SearchCacheEntry;
-import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.config.DefaultMax;
-import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.util.BlockTimer;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutionException;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -24,9 +18,29 @@ import org.apache.lucene.search.Query;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.config.DefaultMax;
+import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.util.BlockTimer;
 
 /**
  * Request handler for grouped hit results.
@@ -81,7 +95,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, false, subcorpusSize);
+        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
         ds.endMap().endEntry();
 
         /* Gather group values per property:

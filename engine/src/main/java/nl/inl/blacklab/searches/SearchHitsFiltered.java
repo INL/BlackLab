@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -22,7 +23,7 @@ public class SearchHitsFiltered extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal() throws InvalidQuery {
+    public Hits executeInternal(Peekable<Hits> progressReporter) throws InvalidQuery {
         return source.executeNoQueue().filter(property, value);
     }
 

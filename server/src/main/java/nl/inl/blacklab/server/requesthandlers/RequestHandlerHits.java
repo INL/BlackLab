@@ -94,12 +94,13 @@ public class RequestHandlerHits extends RequestHandler {
         if (viewGroup == null)
             viewGroup = "";
 
-        SearchCacheEntry<?> cacheEntry;
+        SearchCacheEntry<?> cacheEntry, cacheEntryDocsCount;
         Hits hits;
-        ResultsStats hitsCount = null; // [running] hits count
-        ResultsStats docsCount = null; // [running] docs count
+        ResultsStats hitsStats = null; // [running] hits count
+        ResultsStats docsStats = null; // [running] docs count
 
         boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
+        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
         try {
             if (viewingGroup) {
                 // We're viewing a single group. Get the hits from the grouping results.
@@ -107,8 +108,8 @@ public class RequestHandlerHits extends RequestHandler {
                 cacheEntry = res.getLeft();
                 hits = res.getRight();
                 // The hits are already complete - get the stats directly.
-                hitsCount = hits.hitsStats();
-                docsCount = hits.docsStats();
+                hitsStats = hits.hitsStats();
+                docsStats = hits.docsStats();
             } else {
                 // Regular hits request.
                 // Create the search objects
@@ -120,23 +121,24 @@ public class RequestHandlerHits extends RequestHandler {
                 // - Then get the underlying hits search from the cache (this may take a while as
                 //   it will complete when the Hits object is available)
                 cacheEntry = searchHitCount.executeAsync();
+                cacheEntryDocsCount = searchDocCount.executeAsync();
                 hits = searchHits.execute();
                 try {
-                    hitsCount = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
-                    docsCount = searchDocCount.executeAsync().peek();
+                    hitsStats = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
+                    docsStats = searchDocCount.executeAsync().peek();
+                    // Wait until all hits have been counted.
+                    if (waitForTotal) {
+                        hitsStats.countedTotal();
+                        docsStats.countedTotal();
+                    }
                 } catch (InterruptedSearch e) {
                     // Our count was probably aborted.
                     logger.debug("Error getting count(s)", e);
-                    if (hitsCount == null)
-                        hitsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
-                    if (docsCount == null)
-                        docsCount = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                    if (hitsStats == null)
+                        hitsStats = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
+                    if (docsStats == null)
+                        docsStats = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
                 }
-            }
-            // Wait until all hits have been counted.
-            if (searchParam.getBoolean("waitfortotal")) {
-                hitsCount.countedTotal();
-                docsCount.countedTotal();
             }
         } catch (InterruptedException | ExecutionException | InvalidQuery e) {
             logger.debug("Searching threw an exception", e);
@@ -198,7 +200,7 @@ public class RequestHandlerHits extends RequestHandler {
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
         logger.info("Total search time is:{} ms", searchTime);
         addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsCount, docsCount, countTime < 0, null);
+        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 

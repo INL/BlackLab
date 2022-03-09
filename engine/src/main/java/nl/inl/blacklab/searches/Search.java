@@ -1,13 +1,16 @@
 package nl.inl.blacklab.searches;
 
+import java.util.concurrent.Future;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.SearchResult;
-
-import java.util.concurrent.Future;
 
 /**
  * A 'recipe' of search operations.
+ *
+ * Subclasses should be immutable.
  *
  * @param <R> results type, e.g. Hits
  */
@@ -111,21 +114,27 @@ public interface Search<R extends SearchResult> {
      * executeAsync submits this search to the cache, which then calls this method from a Runnable
      * to run the search.
      *
+     * @param progressReporter where some operations will report on their progress, for example
+     *                 to be able to monitor the running count while hits are being fetched
      * @return result of the operation
      * @throws InvalidQuery
      */
-    R executeInternal() throws InvalidQuery;
+    R executeInternal(Peekable<R> progressReporter) throws InvalidQuery;
 
     /**
-     * Peek at the result of some operations even if the operation isn't finished yet.
+     * Return the peek object, given a cache entry.
      *
-     * Used for running counts.
+     * This object will be returned when SearchCacheEntry.peek() is called while
+     * the search is executing. It might return a ResultsStats object that will return 0
+     * while there's no real count available yet, but will return the real count once
+     * it's available.
      *
-     * @return the result so far, or null if not supported for this operation
+     * Right now this exists purely to monitor counts while searching.
+     *
+     * @param future future result object
+     * @return peek object, or null if not supported for this operation
      */
-    default R peek(Future<R> task) {
-        return null;
-    }
+    default R peekObject(Future<R> future) { return null; }
 
     @Override
     boolean equals(Object obj);
@@ -137,5 +146,4 @@ public interface Search<R extends SearchResult> {
 
     @Override
     String toString();
-
 }

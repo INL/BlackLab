@@ -48,7 +48,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @throws InvalidQuery if the query is invalid
      */
     @Override
-    public HitGroups executeInternal() throws InvalidQuery {
+    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
         if (HitGroupsTokenFrequencies.canUse(mustStoreHits, source, property)) {
             // Any token query, group by hit text or doc metadata! Choose faster path that just "looks up"
             // token frequencies in the forward index(es).

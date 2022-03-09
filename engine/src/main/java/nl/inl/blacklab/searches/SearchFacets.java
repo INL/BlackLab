@@ -4,6 +4,7 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Facets;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -20,7 +21,7 @@ public class SearchFacets extends AbstractSearch<Facets> {
     }
 
     @Override
-    public Facets executeInternal() throws InvalidQuery {
+    public Facets executeInternal(Peekable<Facets> progressReporter) throws InvalidQuery {
         return new Facets(source.executeNoQueue(), properties);
     }
 
@@ -54,5 +55,4 @@ public class SearchFacets extends AbstractSearch<Facets> {
             return false;
         return true;
     }
-
 }
