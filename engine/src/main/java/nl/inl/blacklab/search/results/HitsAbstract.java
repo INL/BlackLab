@@ -23,11 +23,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 /**
  * A collection of matches.
  *
- * Mostly thread-safe. Deprecated method sortInPlace() is not and
- * should be avoided.
+ * Should be thread-safe and most methods are safe w.r.t. hits having been fetched.
  */
 public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> implements Hits {
-
 
     protected final HitsInternal hitsArrays;
 
