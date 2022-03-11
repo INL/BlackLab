@@ -69,7 +69,7 @@ public class SortedSetDocValuesCacher {
                     return cache.get(docId);
                 }
             }
-            throw new BlackLabRuntimeException("Could not fetch DocValue for document " + docId);
+            return new String[0]; // no values found; return empty array
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
