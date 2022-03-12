@@ -10,6 +10,5 @@
 		<Root level="debug">
 			<AppenderRef ref="Console" />
 		</Root>
-		<Logger name="io.netty" level="ERROR"/>
 	</Loggers>
 </Configuration>
