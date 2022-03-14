@@ -64,7 +64,8 @@ public abstract class SearchHits extends SearchForResults<Hits> {
      * {@link #groupWithStoredHits(HitProperty, int)}})
      *
      * @param groupBy what to group by
-     * @param maxResultsToGatherPerGroup how many results to gather at most per group (if hits are stored)
+     * @param maxResultsToGatherPerGroup how many results to gather at most per group (if hits are stored,
+     *                                   which they may not be)
      * @return resulting operation
      */
     public SearchHitGroups groupStats(HitProperty groupBy, long maxResultsToGatherPerGroup) {
