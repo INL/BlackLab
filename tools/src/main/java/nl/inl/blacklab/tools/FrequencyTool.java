@@ -9,15 +9,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchHitGroups;
 
 /**
@@ -29,6 +32,11 @@ public class FrequencyTool {
     /** Configuration for making frequency lists */
     static class Config {
 
+        /** Read config from file.
+         *
+         * @param f config file
+         * @return config object
+         */
         static Config fromFile(File f) {
             try {
                 ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -120,25 +128,39 @@ public class FrequencyTool {
         System.exit(1);
     }
 
-    public static void main(String[] args) {
-        if (args.length != 2) {
-            exit("Usage:\n\n  FrequencyTool INDEX_DIR CONFIG_FILE\n\n" +
+    public static void main(String[] args) throws ErrorOpeningIndex {
+        if (args.length < 2 || args.length > 3) {
+            exit("Usage:\n\n  FrequencyTool INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
                     "  INDEX_DIR    index to generate frequency lists for\n" +
-                    "  CONFIG_FILE  YAML file specifying what frequency lists to generate\n");
+                    "  CONFIG_FILE  YAML file specifying what frequency lists to generate\n" +
+                    "  OUTPUT_DIR   where to write output files (defaults to current dir)\n");
         }
+
+        // Open index
         File indexDir = new File(args[0]);
         if (!indexDir.isDirectory() || !indexDir.canRead()) {
             exit("Can't read or not a directory " + indexDir);
         }
-        BlackLabIndex index = BlackLabIndex.open(indexDir);
+        BlackLabIndex index = BlackLab.open(indexDir);
+
+        // Read config
         File configFile = new File(args[1]);
         if (!configFile.canRead()) {
             exit("Can't read config file " + configFile);
         }
         Config config = Config.fromFile(configFile);
-
         AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
 
+        // Output dir
+        File outputDir = new File(System.getProperty("user.dir")); // current dir
+        if (args.length > 2) {
+            outputDir = new File(args[2]);
+        }
+        if (!indexDir.isDirectory() || !indexDir.canWrite()) {
+            exit("Not a directory or cannot write to output dir " + outputDir);
+        }
+
+        // Generate the frequency lists
         makeFrequencyLists(index, annotatedField, config.getFrequencyLists());
     }
 
@@ -150,7 +172,8 @@ public class FrequencyTool {
     }
 
     private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList) {
-        SpanQueryAnyToken anyToken = new SpanQueryAnyToken();
+        QueryInfo queryInfo = QueryInfo.create(index);
+        SpanQueryAnyToken anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, annotatedField.name());
         HitProperty groupBy = getGroupBy(index, annotatedField, freqList);
         SearchHitGroups search = index.search().find(anyToken).groupStats(groupBy, 0);
         try {
@@ -167,8 +190,7 @@ public class FrequencyTool {
             Annotation annotation = annotatedField.annotation(name);
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
-        HitProperty groupBy = new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
-        return groupBy;
+        return new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
     }
 
     private static void writeOutput(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result) {
