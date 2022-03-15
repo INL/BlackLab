@@ -4,7 +4,7 @@ on:
   push:
     branches: [ dev ]
   pull_request:
-    # (PRs on all branches) branches: [ dev ]
+    # No branch restriction, run integration tests on all PRs
 
 jobs:
 
