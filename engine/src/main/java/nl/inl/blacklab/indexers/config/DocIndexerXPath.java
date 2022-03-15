@@ -89,6 +89,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /** The config for the annotated field we're currently processing. */
     private ConfigAnnotatedField currentAnnotatedFieldConfig;
 
+    /** Did we log a warning about a possible XPath issue? If so, don't keep warning again and again. */
+    private boolean warnedAboutXpathIssue = false;
+
     @Override
     public void close() {
         // NOP, we already closed our input after we read it
@@ -525,7 +528,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             // There is no good way to check whether this exception will occur
                             // When the exception occurs we try to evaluate the xpath as string
                             // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
-                            if (logger.isDebugEnabled()) {
+                            if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
+                                warnedAboutXpathIssue = true;
                                 logger.debug(String.format("An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
                                         "string(.//tei:availability[1]/@status='free')",
                                         "string(//tei:availability[1]/@status='free')"));
