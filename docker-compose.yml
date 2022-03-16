@@ -66,7 +66,7 @@ services:
     profiles:
       - tools
     environment:
-      - APP_URL=${APP_URL:-http://testserver:8080/blacklab}
+      - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
       - INDEX_TEST_DATA_ROOT=${INDEX_TEST_DATA_ROOT:-data}
     build: test
     depends_on:

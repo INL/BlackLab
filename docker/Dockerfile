@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
 #--------------------------------------
 FROM tomcat:9
 ARG CONFIG_ROOT=docker/config
-ARG TOMCAT_APP_NAME=blacklab
+ARG TOMCAT_APP_NAME=blacklab-server
 
 # Install custom server.xml
 # (URIEncoding=utf-8)
