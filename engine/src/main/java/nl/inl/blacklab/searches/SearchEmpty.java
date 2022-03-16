@@ -1,6 +1,5 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.search.results.DocResults;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -25,6 +24,10 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     public SearchHits find(BLSpanQuery query, SearchSettings searchSettings) {
+        if (searchSettings == null) {
+            // If no settings given, use the default
+            searchSettings = queryInfo().index().searchSettings();
+        }
         return new SearchHitsFromBLSpanQuery(queryInfo(), query, searchSettings);
     }
 
