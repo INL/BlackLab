@@ -15,7 +15,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
 # Tomcat container with the WAR file
 #--------------------------------------
 FROM tomcat:9
-ARG CONFIG_ROOT=docker
+ARG CONFIG_ROOT=docker/config
 ARG TOMCAT_APP_NAME=blacklab
 
 # Install custom server.xml

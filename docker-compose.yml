@@ -46,7 +46,7 @@ services:
         dockerfile: docker/Dockerfile
         args:
           # Allow for custom configuration of tomcat/blacklab server if necessary
-          CONFIG_ROOT: ${CONFIG_ROOT:-docker}
+          CONFIG_ROOT: ${CONFIG_ROOT:-docker/config}
     # JPDA settings, to allow remote debugging
     environment:
       - JPDA_ADDRESS=*:5005
