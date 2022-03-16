@@ -26,4 +26,7 @@ jobs:
       if: ${{ matrix.build_type == 'remote-data' && env.REMOTE_DATA_URL != '' }}
       run: test/download-data.sh
     - name: Run integration tests
+      env:
+        REMOTE_DATA_URL: ${{ secrets.REMOTE_DATA_URL }}
+      if: ${{ matrix.build_type == 'local-data' || (matrix.build_type == 'remote-data' && env.REMOTE_DATA_URL != '') }}
       run: test/run.sh
