@@ -312,7 +312,7 @@ public class DocPropertyStoredField extends DocProperty {
                 return null;
             }
         } else {
-            return new TermQuery(new Term(fieldName, StringUtil.stripAccents(value.toString().toLowerCase())));
+            return new TermQuery(new Term(fieldName, StringUtil.desensitize(value.toString())));
         }
         //return new TermQuery(new Term(fieldName, strValue));
     }
