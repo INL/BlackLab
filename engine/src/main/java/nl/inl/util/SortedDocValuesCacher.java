@@ -39,7 +39,7 @@ public class SortedDocValuesCacher {
         this.cache = new HashMap<Integer, String>();
     }
 
-    public String get(int docId) {
+    public synchronized String get(int docId) {
         try {
             // Have we been there before?
             if (sourceNexted && source.docID() > docId) {
@@ -63,7 +63,7 @@ public class SortedDocValuesCacher {
                     return cache.get(docId);
                 }
             }
-            throw new BlackLabRuntimeException("Could not fetch DocValue for document " + docId);
+            return null; // default missing value
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
