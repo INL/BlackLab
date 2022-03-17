@@ -36,7 +36,7 @@ public class NumericDocValuesCacher {
         this.cache = new IntLongHashMap();
     }
 
-    public long get(int docId) {
+    public synchronized long get(int docId) {
         try {
             // Have we been there before?
             if (sourceNexted && source.docID() > docId) {
@@ -57,7 +57,7 @@ public class NumericDocValuesCacher {
                 if (source.docID() == docId)
                     return source.longValue();
             }
-            throw new BlackLabRuntimeException("Could not fetch DocValue for document " + docId);
+            return 0L; // default missing value
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
