@@ -38,27 +38,30 @@ public class SortedSetDocValuesCacher {
     protected SortedSetDocValuesCacher(SortedSetDocValues source) {
         this.source = source;
         this.sourceNexted = false;
-        this.cache = new HashMap<Integer, String[]>();
+        this.cache = new HashMap<>();
     }
 
-    public String[] get(int docId) {
+    public synchronized String[] get(int docId) {
         try {
             // Have we been there before?
             if (sourceNexted && source.docID() > docId) {
                 // We should have seen this value already.
                 // Produce it from the cache.
-                if (cache.containsKey(docId))
+                if (cache.containsKey(docId)) {
                     return cache.get(docId);
+                }
             } else {
                 // Advance to the requested id,
                 // storing all values we encounter.
                 while (source.docID() < docId) {
                     int curDocId = source.nextDoc();
-                    if (curDocId == DocIdSetIterator.NO_MORE_DOCS)
+                    if (curDocId == DocIdSetIterator.NO_MORE_DOCS) {
                         break;
+                    }
                     sourceNexted = true;
 
                     final List<String> ret = new ArrayList<>();
+
                     for (long ord = source.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = source.nextOrd()) {
                         BytesRef val = source.lookupOrd(ord);
                         ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
