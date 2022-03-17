@@ -1,13 +1,12 @@
 package nl.inl.blacklab.search.fimatch;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.StringUtil;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * A regex, wildcard or prefix clause.
@@ -54,19 +53,11 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
         int actualToken = fiDoc.getToken(propertyNumber, pos);
         if (actualToken >= 0) {
             String tokenString = fiDoc.getTermString(propertyNumber, actualToken);
-            if (matchesPattern(desensitize(tokenString))) {
+            if (matchesPattern(sensitivity.desensitize(tokenString))) {
                 return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
             }
         }
         return false;
-    }
-
-    private String desensitize(String tokenString) {
-        if (!sensitivity.isCaseSensitive())
-            tokenString = tokenString.toLowerCase();
-        if (!sensitivity.isDiacriticsSensitive())
-            tokenString = StringUtil.stripAccents(tokenString);
-        return tokenString;
     }
 
     abstract boolean matchesPattern(String tokenString);
