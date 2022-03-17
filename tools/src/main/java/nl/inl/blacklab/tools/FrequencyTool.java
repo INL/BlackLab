@@ -2,12 +2,20 @@ package nl.inl.blacklab.tools;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -18,6 +26,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
@@ -88,22 +97,60 @@ public class FrequencyTool {
                     ", frequencyLists=" + frequencyLists +
                     '}';
         }
+
+        /**
+         * Check if this is a valid config.
+         *
+         * @param index our index
+         */
+        public void check(BlackLabIndex index) {
+            if (!index.annotatedFields().exists(annotatedField))
+                throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
+            AnnotatedField af = index.annotatedField(annotatedField);
+            Set<String> reportNames = new HashSet<>();
+            for (ConfigFreqList l: frequencyLists) {
+                String name = l.getReportName();
+                if (reportNames.contains(name))
+                    throw new IllegalArgumentException("Report occurs twice: " + name);
+                reportNames.add(name);
+
+                for (String a: l.getAnnotations()) {
+                    if (!af.annotations().exists(a))
+                        throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
+                }
+                for (String m: l.getMetadataFields()) {
+                    if (!index.metadataFields().exists(m))
+                        throw new IllegalArgumentException("Metadata field not found: " + m);
+                }
+            }
+        }
     }
 
     /** Configuration for making frequency lists */
     static class ConfigFreqList {
 
         /** A unique name that will be used as output file name */
-        String name;
+        String name = "";
 
         /** Annotations to make frequency lists for */
         private List<String> annotations;
 
         /** Metadata fields to take into account (e.g. year for frequencies per year) */
-        private List<String> metadataFields;
+        private List<String> metadataFields = Collections.emptyList();
 
         public String getName() {
             return name;
+        }
+
+        public String getReportName() {
+            return name.isEmpty() ? generateName() : name;
+        }
+
+        private String generateName() {
+            List<String> parts = new ArrayList<>();
+            parts.addAll(annotations);
+            parts.addAll(metadataFields);
+            return StringUtils.join(parts, "-");
         }
 
         public void setName(String name) {
@@ -141,60 +188,83 @@ public class FrequencyTool {
         System.exit(1);
     }
 
+    static void exitUsage(String msg) {
+        if (!StringUtils.isEmpty(msg)) {
+            System.out.println(msg + "\n");
+        }
+        exit("Usage:\n\n  FrequencyTool [--json] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
+                "  INDEX_DIR    index to generate frequency lists for\n" +
+                "  CONFIG_FILE  YAML file specifying what frequency lists to generate\n" +
+                "  OUTPUT_DIR   where to write output files (defaults to current dir)\n");
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex {
-        if (args.length < 2 || args.length > 3) {
-            exit("Usage:\n\n  FrequencyTool INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
-                    "  INDEX_DIR    index to generate frequency lists for\n" +
-                    "  CONFIG_FILE  YAML file specifying what frequency lists to generate\n" +
-                    "  OUTPUT_DIR   where to write output files (defaults to current dir)\n");
+        int numOpts = 0;
+        FreqListOutput.Format format = FreqListOutput.Format.TSV;
+        if (args.length > 0 && args[0].equals("--json")) {
+            format = FreqListOutput.Format.JSON;
+            numOpts++;
+        }
+        if (args.length > 0 && args[0].equals("--help")) {
+            exitUsage("");
+        }
+
+        int numArgs = args.length - numOpts;
+        if (numArgs < 2 || numArgs > 3) {
+            exitUsage("Incorrect number of arguments.");
         }
 
         // Open index
-        File indexDir = new File(args[0]);
+        File indexDir = new File(args[numOpts]);
         if (!indexDir.isDirectory() || !indexDir.canRead()) {
             exit("Can't read or not a directory " + indexDir);
         }
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             // Read config
-            File configFile = new File(args[1]);
+            File configFile = new File(args[numOpts + 1]);
             if (!configFile.canRead()) {
                 exit("Can't read config file " + configFile);
             }
             Config config = Config.fromFile(configFile);
             AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
+            config.check(index);
 
             // Output dir
             File outputDir = new File(System.getProperty("user.dir")); // current dir
-            if (args.length > 2) {
-                outputDir = new File(args[2]);
+            if (numArgs > 2) {
+                outputDir = new File(args[numOpts + 2]);
             }
             if (!outputDir.isDirectory() || !outputDir.canWrite()) {
                 exit("Not a directory or cannot write to output dir " + outputDir);
             }
 
             // Generate the frequency lists
-            makeFrequencyLists(index, annotatedField, config.getFrequencyLists(), outputDir);
+            makeFrequencyLists(index, annotatedField, config.getFrequencyLists(), outputDir, format);
         }
     }
 
-    private static void makeFrequencyLists(BlackLabIndex index, AnnotatedField annotatedField,
-                                           List<ConfigFreqList> freqLists, File outputDir) {
+    private static void makeFrequencyLists(BlackLabIndex index, AnnotatedField annotatedField, List<ConfigFreqList> freqLists, File outputDir, FreqListOutput.Format format) {
         for (ConfigFreqList freqList: freqLists) {
-            makeFrequencyList(index, annotatedField, freqList, outputDir);
+            makeFrequencyList(index, annotatedField, freqList, outputDir, format);
         }
     }
 
-    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField,
-                                          ConfigFreqList freqList, File outputDir) {
+    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, FreqListOutput.Format format) {
+
+        // Create our search
         QueryInfo queryInfo = QueryInfo.create(index);
         BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, annotatedField.name());
         HitProperty groupBy = getGroupBy(index, annotatedField, freqList);
-        SearchHitGroups search = index.search().find(anyToken).groupStats(groupBy, 0);
+        SearchHitGroups search = index.search()
+                .find(anyToken)
+                .groupStats(groupBy, 0)
+                .sort(new HitGroupPropertyIdentity());
         try {
-            HitGroups result = search.executeNoQueue();
-            writeOutput(index, annotatedField, freqList, result, outputDir);
+            // Execute search and write output file
+            HitGroups result = search.execute();
+            FreqListOutput.write(index, annotatedField, freqList, result, outputDir, format);
         } catch (InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating freqList " + freqList.getName(), e);
+            throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
         }
     }
 
@@ -207,7 +277,6 @@ public class FrequencyTool {
         }
         // Add metadata fields to group by
         for (String name: freqList.getMetadataFields()) {
-            Annotation annotation = annotatedField.annotation(name);
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
         return new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
@@ -220,72 +289,174 @@ public class FrequencyTool {
         return sdf.format(cal.getTime());
     }
 
-    private static void writeOutput(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                                    HitGroups result, File outputDir) {
-        File outputFile = new File(outputDir, freqList.getName() + ".json");
-        try (OutputStream stream = new FileOutputStream(outputFile)) {
-            JsonFactory jfactory = new JsonFactory();
-            try (JsonGenerator j = jfactory.createGenerator(stream, JsonEncoding.UTF8)) {
-                j.writeStartObject();
-                {
-                    j.writeStringField("generatedAt", currentDateTime());
-                    j.writeStringField("indexName", index.name());
-                    j.writeStringField("annotatedField", annotatedField.name());
-                    j.writeFieldName("config");
-                    writeOutputConfig(j, freqList);
-                    j.writeFieldName("results");
-                    writeOutputResults(j, result);
-                }
-                j.writeEndObject();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error writing output for " + freqList.getName(), e);
+    interface FreqListOutput {
+
+        enum Format {
+            JSON,
+            TSV
         }
+
+        /**
+         * Write a frequency list file.
+         *  @param index our index
+         * @param annotatedField annotated field
+         * @param freqList freq list configuration, including name to use for file
+         * @param result resulting frequencies
+         * @param outputDir directory to write output file
+         */
+        public static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, Format format) {
+            FreqListOutput f = format == Format.JSON ? new FreqListOutputJson() : new FreqListOutputTsv();
+            f.write(index, annotatedField, freqList, result, outputDir);
+        }
+
+        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir);
+
     }
 
-    private static void writeOutputResults(JsonGenerator j, HitGroups groups) throws IOException {
-        j.writeStartArray();
-        for (HitGroup group: groups) {
-            j.writeStartObject();
-            {
-                PropertyValue identity = group.identity();
-                j.writeFieldName("identity");
-                j.writeStartArray();
-                {
+    /**
+     * Writes frequency results to a TSV file.
+     */
+    static class FreqListOutputTsv implements FreqListOutput {
+
+        private BlackLabIndex index;
+        private AnnotatedField annotatedField;
+        private ConfigFreqList freqList;
+        private HitGroups result;
+
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
+                           HitGroups result, File outputDir) {
+            this.index = index;
+            this.annotatedField = annotatedField;
+            this.freqList = freqList;
+            this.result = result;
+            File outputFile = new File(outputDir, freqList.getReportName() + ".tsv");
+            try (FileWriter out = new FileWriter(outputFile);
+                 CSVPrinter printer = new CSVPrinter(out, CSVFormat.TDF)) {
+                 for (HitGroup group: result) {
+                    List<String> record = new ArrayList<>();
+                    PropertyValue identity = group.identity();
                     if (identity instanceof PropertyValueMultiple) {
                         // Grouped by multiple properties. Serialize each value separately
                         PropertyValueMultiple values = (PropertyValueMultiple) identity;
                         for (PropertyValue value: values.values()) {
-                            j.writeString(value.toString());
+                            record.add(value.toString());
                         }
                     } else {
                         // Grouped by single property. Serialize it.
-                        j.writeString(identity.toString());
+                        record.add(identity.toString());
                     }
+                    record.add(Long.toString(group.size()));
+                    printer.printRecord(record);
                 }
-                j.writeEndArray();
-                j.writeNumberField("size", group.size());
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
+            }
+        }
+    }
+
+    /**
+     * Writes frequency results to a JSON file.
+     */
+    static class FreqListOutputJson implements FreqListOutput {
+
+        private BlackLabIndex index;
+        private AnnotatedField annotatedField;
+        private ConfigFreqList freqList;
+        private HitGroups result;
+        private JsonGenerator j;
+
+        private FreqListOutputJson() {
+        }
+
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
+                          HitGroups result, File outputDir) {
+            this.index = index;
+            this.annotatedField = annotatedField;
+            this.freqList = freqList;
+            this.result = result;
+            File outputFile = new File(outputDir, freqList.getReportName() + ".json");
+            try (OutputStream stream = new FileOutputStream(outputFile)) {
+                JsonFactory jfactory = new JsonFactory();
+                try (JsonGenerator j = jfactory.createGenerator(stream, JsonEncoding.UTF8)) {
+                    this.j = j;
+                    j.writeStartObject();
+                    {
+                        j.writeStringField("generatedAt", currentDateTime());
+                        j.writeStringField("indexName", index.name());
+                        j.writeStringField("annotatedField", annotatedField.name());
+                        j.writeFieldName("config");
+                        writeConfig();
+                        j.writeFieldName("results");
+                        writeResults();
+                    }
+                    j.writeEndObject();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
+            }
+        }
+
+        /**
+         * Write results object as a JSON array.
+         *
+         * @throws IOException
+         */
+        private void writeResults() throws IOException {
+            j.writeStartArray();
+            for (HitGroup group: result) {
+                j.writeStartObject();
+                {
+                    PropertyValue identity = group.identity();
+                    j.writeFieldName("identity");
+                    j.writeStartArray();
+                    {
+                        if (identity instanceof PropertyValueMultiple) {
+                            // Grouped by multiple properties. Serialize each value separately
+                            PropertyValueMultiple values = (PropertyValueMultiple) identity;
+                            for (PropertyValue value: values.values()) {
+                                j.writeString(value.toString());
+                            }
+                        } else {
+                            // Grouped by single property. Serialize it.
+                            j.writeString(identity.toString());
+                        }
+                    }
+                    j.writeEndArray();
+                    j.writeNumberField("size", group.size());
+                }
+                j.writeEndObject();
+            }
+            j.writeEndArray();
+        }
+
+        /**
+         * Write frequency list config as a JSON object.
+         *
+         * @throws IOException
+         */
+        private void writeConfig() throws IOException {
+            j.writeStartObject();
+            {
+                j.writeStringField("name", freqList.getReportName());
+                j.writeFieldName("annotations");
+                writeList(freqList.getAnnotations());
+                j.writeFieldName("metadataFields");
+                writeList(freqList.getMetadataFields());
             }
             j.writeEndObject();
         }
-        j.writeEndArray();
-    }
 
-    private static void writeOutputConfig(JsonGenerator j, ConfigFreqList freqList) throws IOException {
-        j.writeStartObject();
-        {
-            j.writeStringField("name", freqList.getName());
-            j.writeFieldName("annotations");
-                writeOutputList(j, freqList.getAnnotations());
-            j.writeFieldName("metadataFields");
-                writeOutputList(j, freqList.getMetadataFields());
+        /**
+         * Write a List of Strings as a JSON array.
+         *
+         * @param l list to write
+         * @throws IOException
+         */
+        private void writeList(List<String> l) throws IOException {
+            String[] arr = l.toArray(new String[0]);
+            j.writeArray(arr, 0, arr.length);
         }
-        j.writeEndObject();
     }
 
-    private static void writeOutputList(JsonGenerator j, List<String> l) throws IOException {
-        String[] arr = l.toArray(new String[0]);
-        j.writeArray(arr, 0, arr.length);
-    }
 
 }

@@ -147,7 +147,8 @@ public class DocPropertyStoredField extends DocProperty {
                     SortedDocValuesCacher a = targetDocValues.getLeft();
                     SortedSetDocValuesCacher b = targetDocValues.getRight();
                     if (a != null) { // old index, only one value
-                        ret = new String[] { a.get(docId - targetDocBase) };
+                        String value = a.get(docId - targetDocBase);
+                        ret = value == null ? new String[0] : new String[] { value };
                     } else { // newer index, (possibly) multiple values.
                         ret = b.get(docId - targetDocBase);
                     }
