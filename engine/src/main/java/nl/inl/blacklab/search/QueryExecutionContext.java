@@ -5,7 +5,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.StringUtil;
 
 /**
  * Represents the current "execution context" for executing a TextPattern query.
@@ -71,22 +70,7 @@ public class QueryExecutionContext {
     }
 
     public String optDesensitize(String value) {
-        MatchSensitivity matchSensitity = sensitivity.sensitivity();
-        switch (matchSensitity) {
-        case INSENSITIVE:
-            // Fully desensitize;
-            return StringUtil.stripAccents(value).toLowerCase();
-        case CASE_INSENSITIVE:
-            // Only case-insensitive
-            return value.toLowerCase();
-        case DIACRITICS_INSENSITIVE:
-            // Only diacritics-insensitive
-            return StringUtil.stripAccents(value);
-        case SENSITIVE:
-        default:
-            // Don't desensitize
-            return value;
-        }
+        return sensitivity.sensitivity().desensitize(value);
     }
     
     /**

@@ -218,4 +218,13 @@ public final class StringUtil {
         return s.toString();
     }
 
+    /**
+     * Lowercase string and remove any diacritics.
+     *
+     * @param str string to desensitize
+     * @return desensitized string
+     */
+    public static String desensitize(String str) {
+        return stripAccents(str).toLowerCase();
+    }
 }
