@@ -25,7 +25,6 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.util.StringUtil;
 
 /**
  * A collection of tokens and their (absolute) frequencies.
@@ -84,13 +83,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         for (IntIntPair e : countPerWord.keyValuesView()) {
             int wordId = e.getOne();
             int count = e.getTwo();
-            String word = terms.get(wordId);
-            if (!sensitivity.isDiacriticsSensitive()) {
-                word = StringUtil.stripAccents(word);
-            }
-            if (!sensitivity.isCaseSensitive()) {
-                word = word.toLowerCase();
-            }
+            String word = sensitivity.desensitize(terms.get(wordId));
             // Note that multiple ids may map to the same word (because of sensitivity settings)
             // Here, those groups are merged.
             Integer mergedCount = wordFreq.get(word);
