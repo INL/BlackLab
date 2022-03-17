@@ -2,9 +2,11 @@ package nl.inl.blacklab.tools;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -12,6 +14,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -192,23 +195,36 @@ public class FrequencyTool {
         if (!StringUtils.isEmpty(msg)) {
             System.out.println(msg + "\n");
         }
-        exit("Usage:\n\n  FrequencyTool [--json] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
+        exit("Usage:\n\n  FrequencyTool [--json] [--gzip] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
                 "  INDEX_DIR    index to generate frequency lists for\n" +
                 "  CONFIG_FILE  YAML file specifying what frequency lists to generate\n" +
                 "  OUTPUT_DIR   where to write output files (defaults to current dir)\n");
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex {
+        // Check for options
         int numOpts = 0;
+        boolean gzip = false;
         FreqListOutput.Format format = FreqListOutput.Format.TSV;
-        if (args.length > 0 && args[0].equals("--json")) {
-            format = FreqListOutput.Format.JSON;
-            numOpts++;
-        }
-        if (args.length > 0 && args[0].equals("--help")) {
-            exitUsage("");
+        for (String arg: args) {
+            if (arg.startsWith("--")) {
+                numOpts++;
+                switch (arg) {
+                case "--json":
+                    format = FreqListOutput.Format.JSON;
+                    break;
+                case "--gzip":
+                    gzip = true;
+                    break;
+                case "--help":
+                    exitUsage("");
+                    break;
+                }
+            } else
+                break;
         }
 
+        // Process arguments
         int numArgs = args.length - numOpts;
         if (numArgs < 2 || numArgs > 3) {
             exitUsage("Incorrect number of arguments.");
@@ -239,17 +255,17 @@ public class FrequencyTool {
             }
 
             // Generate the frequency lists
-            makeFrequencyLists(index, annotatedField, config.getFrequencyLists(), outputDir, format);
+            makeFrequencyLists(index, annotatedField, config.getFrequencyLists(), outputDir, format, gzip);
         }
     }
 
-    private static void makeFrequencyLists(BlackLabIndex index, AnnotatedField annotatedField, List<ConfigFreqList> freqLists, File outputDir, FreqListOutput.Format format) {
+    private static void makeFrequencyLists(BlackLabIndex index, AnnotatedField annotatedField, List<ConfigFreqList> freqLists, File outputDir, FreqListOutput.Format format, boolean gzip) {
         for (ConfigFreqList freqList: freqLists) {
-            makeFrequencyList(index, annotatedField, freqList, outputDir, format);
+            makeFrequencyList(index, annotatedField, freqList, outputDir, format, gzip);
         }
     }
 
-    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, FreqListOutput.Format format) {
+    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, FreqListOutput.Format format, boolean gzip) {
 
         // Create our search
         QueryInfo queryInfo = QueryInfo.create(index);
@@ -262,7 +278,7 @@ public class FrequencyTool {
         try {
             // Execute search and write output file
             HitGroups result = search.execute();
-            FreqListOutput.write(index, annotatedField, freqList, result, outputDir, format);
+            FreqListOutput.write(index, annotatedField, freqList, result, outputDir, format, gzip);
         } catch (InvalidQuery e) {
             throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
         }
@@ -304,12 +320,12 @@ public class FrequencyTool {
          * @param result resulting frequencies
          * @param outputDir directory to write output file
          */
-        public static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, Format format) {
+        public static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, Format format, boolean gzip) {
             FreqListOutput f = format == Format.JSON ? new FreqListOutputJson() : new FreqListOutputTsv();
-            f.write(index, annotatedField, freqList, result, outputDir);
+            f.write(index, annotatedField, freqList, result, outputDir, gzip);
         }
 
-        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir);
+        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, boolean gzip);
 
     }
 
@@ -324,29 +340,34 @@ public class FrequencyTool {
         private HitGroups result;
 
         public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                           HitGroups result, File outputDir) {
+                           HitGroups result, File outputDir, boolean gzip) {
             this.index = index;
             this.annotatedField = annotatedField;
             this.freqList = freqList;
             this.result = result;
-            File outputFile = new File(outputDir, freqList.getReportName() + ".tsv");
-            try (FileWriter out = new FileWriter(outputFile);
-                 CSVPrinter printer = new CSVPrinter(out, CSVFormat.TDF)) {
-                 for (HitGroup group: result) {
-                    List<String> record = new ArrayList<>();
-                    PropertyValue identity = group.identity();
-                    if (identity instanceof PropertyValueMultiple) {
-                        // Grouped by multiple properties. Serialize each value separately
-                        PropertyValueMultiple values = (PropertyValueMultiple) identity;
-                        for (PropertyValue value: values.values()) {
-                            record.add(value.toString());
+            File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                OutputStream stream = outputStream;
+                if (gzip)
+                    stream = new GZIPOutputStream(stream);
+                try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
+                     CSVPrinter printer = new CSVPrinter(out, CSVFormat.TDF)) {
+                    for (HitGroup group : result) {
+                        List<String> record = new ArrayList<>();
+                        PropertyValue identity = group.identity();
+                        if (identity instanceof PropertyValueMultiple) {
+                            // Grouped by multiple properties. Serialize each value separately
+                            PropertyValueMultiple values = (PropertyValueMultiple) identity;
+                            for (PropertyValue value : values.values()) {
+                                record.add(value.toString());
+                            }
+                        } else {
+                            // Grouped by single property. Serialize it.
+                            record.add(identity.toString());
                         }
-                    } else {
-                        // Grouped by single property. Serialize it.
-                        record.add(identity.toString());
+                        record.add(Long.toString(group.size()));
+                        printer.printRecord(record);
                     }
-                    record.add(Long.toString(group.size()));
-                    printer.printRecord(record);
                 }
             } catch (IOException e) {
                 throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
@@ -369,13 +390,16 @@ public class FrequencyTool {
         }
 
         public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                          HitGroups result, File outputDir) {
+                          HitGroups result, File outputDir, boolean gzip) {
             this.index = index;
             this.annotatedField = annotatedField;
             this.freqList = freqList;
             this.result = result;
-            File outputFile = new File(outputDir, freqList.getReportName() + ".json");
-            try (OutputStream stream = new FileOutputStream(outputFile)) {
+            File outputFile = new File(outputDir, freqList.getReportName() + ".json" + (gzip ? ".gz" : ""));
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                OutputStream stream = outputStream;
+                if (gzip)
+                    stream = new GZIPOutputStream(stream);
                 JsonFactory jfactory = new JsonFactory();
                 try (JsonGenerator j = jfactory.createGenerator(stream, JsonEncoding.UTF8)) {
                     this.j = j;
