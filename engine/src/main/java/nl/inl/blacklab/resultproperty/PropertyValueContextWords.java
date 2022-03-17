@@ -1,12 +1,12 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Arrays;
+
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-
-import java.util.Arrays;
 
 public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueTokenId;
@@ -74,7 +74,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         if (reverseOnDisplay) {
             for (int i = valueTokenId.length - 1; i >= 0; i--) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? "-" : terms.get(v);
+                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -83,7 +83,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             }
         } else {
             for (int v : valueTokenId) {
-                String word = v < 0 ? "-" : terms.get(v);
+                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -101,7 +101,8 @@ public class PropertyValueContextWords extends PropertyValueContext {
         parts[1] = annotation.name();
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
-            parts[i + 3] = terms.serializeTerm(valueTokenId[i]);
+            String term = terms.serializeTerm(valueTokenId[i]);
+            parts[i + 3] = sensitivity.desensitize(term);
         }
         return PropertySerializeUtil.combineParts(parts);
     }
