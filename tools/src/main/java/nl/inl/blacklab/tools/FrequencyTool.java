@@ -45,6 +45,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
 
 /**
@@ -202,6 +203,8 @@ public class FrequencyTool {
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
+
         // Check for options
         int numOpts = 0;
         boolean gzip = false;
@@ -244,6 +247,7 @@ public class FrequencyTool {
             Config config = Config.fromFile(configFile);
             AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
             config.check(index);
+            index.setCache(new SearchCacheDummy()); // don't cache results
 
             // Output dir
             File outputDir = new File(System.getProperty("user.dir")); // current dir
@@ -266,6 +270,8 @@ public class FrequencyTool {
     }
 
     private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, FreqListOutput.Format format, boolean gzip) {
+
+        System.out.println("Generate frequency list: " + freqList.getReportName());
 
         // Create our search
         QueryInfo queryInfo = QueryInfo.create(index);
