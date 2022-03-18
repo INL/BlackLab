@@ -314,4 +314,7 @@ public class DocPropertyStoredField extends DocProperty {
         return !value.toString().isEmpty();
     }
 
+    public String getField() {
+        return fieldName;
+    }
 }

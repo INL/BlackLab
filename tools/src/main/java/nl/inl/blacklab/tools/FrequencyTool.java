@@ -13,7 +13,9 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -53,6 +55,9 @@ import nl.inl.blacklab.searches.SearchHitGroups;
  * metadata field(s) for the entire index.
  */
 public class FrequencyTool {
+
+    // Faster/less memory-intensive method is work-in-progress...
+    private static final boolean FASTER_METHOD = false;
 
     /** Configuration for making frequency lists */
     static class Config {
@@ -273,7 +278,24 @@ public class FrequencyTool {
 
         System.out.println("Generate frequency list: " + freqList.getReportName());
 
-        // Create our search
+        if (FASTER_METHOD) {
+            List<Annotation> annotations = freqList.getAnnotations().stream().map(name -> annotatedField.annotation(name)).collect(Collectors.toList());
+            Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences = CalculateTokenFrequenciesWholeCorpus.get(index, annotations, freqList.getMetadataFields());
+            FreqListOutput.write(index, annotatedField, freqList, occurrences, outputDir, format, gzip);
+        } else {
+            // Create our search
+            try {
+                // Execute search and write output file
+                SearchHitGroups search = getSearch(index, annotatedField, freqList);
+                HitGroups result = search.execute();
+                FreqListOutput.write(index, annotatedField, freqList, result, outputDir, format, gzip);
+            } catch (InvalidQuery e) {
+                throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
+            }
+        }
+    }
+
+    private static SearchHitGroups getSearch(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList) {
         QueryInfo queryInfo = QueryInfo.create(index);
         BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, annotatedField.name());
         HitProperty groupBy = getGroupBy(index, annotatedField, freqList);
@@ -281,13 +303,7 @@ public class FrequencyTool {
                 .find(anyToken)
                 .groupStats(groupBy, 0)
                 .sort(new HitGroupPropertyIdentity());
-        try {
-            // Execute search and write output file
-            HitGroups result = search.execute();
-            FreqListOutput.write(index, annotatedField, freqList, result, outputDir, format, gzip);
-        } catch (InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
-        }
+        return search;
     }
 
     private static HitProperty getGroupBy(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList) {
@@ -326,12 +342,32 @@ public class FrequencyTool {
          * @param result resulting frequencies
          * @param outputDir directory to write output file
          */
-        public static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, Format format, boolean gzip) {
+        static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, Format format, boolean gzip) {
             FreqListOutput f = format == Format.JSON ? new FreqListOutputJson() : new FreqListOutputTsv();
             f.write(index, annotatedField, freqList, result, outputDir, gzip);
         }
 
+        /**
+         * Write a frequency list file.
+         *  @param index our index
+         * @param annotatedField annotated field
+         * @param freqList freq list configuration, including name to use for file
+         * @param occurrences resulting frequencies
+         * @param outputDir directory to write output file
+         */
+        static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
+                          Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
+                                  CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences,
+                          File outputDir, Format format, boolean gzip) {
+            FreqListOutput f = format == Format.JSON ? new FreqListOutputJson() : new FreqListOutputTsv();
+            f.write(index, annotatedField, freqList, occurrences, outputDir, gzip);
+        }
+
         void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, boolean gzip);
+
+        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
+                CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip);
+
 
     }
 
@@ -340,17 +376,8 @@ public class FrequencyTool {
      */
     static class FreqListOutputTsv implements FreqListOutput {
 
-        private BlackLabIndex index;
-        private AnnotatedField annotatedField;
-        private ConfigFreqList freqList;
-        private HitGroups result;
-
         public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
                            HitGroups result, File outputDir, boolean gzip) {
-            this.index = index;
-            this.annotatedField = annotatedField;
-            this.freqList = freqList;
-            this.result = result;
             File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
             try (OutputStream outputStream = new FileOutputStream(outputFile)) {
                 OutputStream stream = outputStream;
@@ -372,6 +399,39 @@ public class FrequencyTool {
                             record.add(identity.toString());
                         }
                         record.add(Long.toString(group.size()));
+                        printer.printRecord(record);
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
+            }
+        }
+
+        @Override
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip) {
+            File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
+            try (OutputStream outputStream = new FileOutputStream(outputFile)) {
+                OutputStream stream = outputStream;
+                if (gzip)
+                    stream = new GZIPOutputStream(stream);
+                try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
+                     CSVPrinter printer = new CSVPrinter(out, CSVFormat.TDF)) {
+                    for (Map.Entry<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
+                            CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> e: occurrences.entrySet()) {
+                        List<String> record = new ArrayList<>();
+
+                        CalculateTokenFrequenciesWholeCorpus.GroupIdHash groupId = e.getKey();
+                        int[] tokenIds = groupId.getTokenIds();
+                        for (int tokenId: tokenIds) {
+                            // CONVERT TO STRING, BUT WE NEED THE ANNOTATION
+                            // index.annotationForwardIndex(annotation)
+                            record.add(tokenId + "");
+                        }
+                        String[] metadataValues = groupId.getMetadataValues();
+                        for (String metadataValue: metadataValues) {
+                            record.add(metadataValue);
+                        }
+                        record.add(Long.toString(e.getValue().hits));
                         printer.printRecord(record);
                     }
                 }
@@ -424,6 +484,11 @@ public class FrequencyTool {
             } catch (IOException e) {
                 throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
             }
+        }
+
+        @Override
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip) {
+            throw new UnsupportedOperationException();
         }
 
         /**
