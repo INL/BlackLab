@@ -186,7 +186,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                         docsDone.add(hit.doc());
                         ds.startAttrEntry("docInfo", "pid", pid);
                         if (!pid.equals(lastPid)) {
-                            doc = index.doc(hit.doc()).luceneDoc();
+                            doc = index.luceneDoc(hit.doc());
                             lastPid = pid;
                         }
                         dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);

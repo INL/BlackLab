@@ -1,39 +1,35 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 
 /** Property value that represents a BlackLab document */
 public class PropertyValueDoc extends PropertyValue {
-    private Doc value;
+    private BlackLabIndex index;
+
+    private int docId;
 
     @Override
-    public Doc value() {
-        return value;
+    public Integer value() {
+        return docId;
     }
     
-    public int id() {
-        return value.id();
-    }
-    
-    public Document luceneDoc() {
-        return value.luceneDoc();
-    }
+    /*public Document luceneDoc() {
+        return index.luceneDoc(docId);
+    }*/
 
-    public PropertyValueDoc(Doc doc) {
-        this.value = doc;
+    public PropertyValueDoc(BlackLabIndex index, int id) {
+        this.index = index;
+        this.docId = id;
     }
 
     @Override
     public int compareTo(Object o) {
-        return value.id() - ((PropertyValueDoc) o).value.id();
+        return docId - ((PropertyValueDoc) o).docId;
     }
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return Integer.hashCode(docId);
     }
 
     @Override
@@ -41,28 +37,28 @@ public class PropertyValueDoc extends PropertyValue {
         if (obj == this)
             return true;
         if (obj instanceof PropertyValueDoc) {
-            return value.id() == ((PropertyValueDoc) obj).value.id();
+            return docId == ((PropertyValueDoc) obj).docId;
         }
         return false;
     }
 
     public static PropertyValue deserialize(BlackLabIndex index, String info) {
-        Doc v;
+        int id;
         try {
-            v = index.doc(Integer.parseInt(info));
+            id = Integer.parseInt(info);
         } catch (NumberFormatException e) {
-            v = null;
+            id = -1;
         }
-        return new PropertyValueDoc(v);
+        return new PropertyValueDoc(index, id);
     }
 
     @Override
     public String toString() {
-        return Integer.toString(value.id());
+        return Integer.toString(docId);
     }
 
     @Override
     public String serialize() {
-        return PropertySerializeUtil.combineParts("doc", Integer.toString(value.id()));
+        return PropertySerializeUtil.combineParts("doc", Integer.toString(docId));
     }
 }

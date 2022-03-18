@@ -231,14 +231,14 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             StringBuilder sb = new StringBuilder();
 
             for (DocResult docResult : docs) {
-                Document doc = docResult.identity().luceneDoc();
+                Document doc = blIndex().luceneDoc(docResult.docId());
                 row.clear();
 
                 // Pid field, use lucene doc id if not provided
                 if (pidField != null && doc.get(pidField.name()) != null)
                     row.add(doc.get(pidField.name()));
                 else
-                    row.add(Integer.toString(docResult.identity().id()));
+                    row.add(Integer.toString(docResult.docId()));
 
                 row.add(Long.toString(docResult.size()));
 

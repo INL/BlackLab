@@ -33,7 +33,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.TermFrequency;
@@ -248,7 +247,7 @@ public class RequestHandlerHits extends RequestHandler {
                 docsDone.add(hit.doc());
                 ds.startAttrEntry("docInfo", "pid", pid);
                 if (!pid.equals(lastPid)) {
-                    doc = index.doc(hit.doc()).luceneDoc();
+                    doc = index.luceneDoc(hit.doc());
                     lastPid = pid;
                 }
                 dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
@@ -330,7 +329,7 @@ public class RequestHandlerHits extends RequestHandler {
                 tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(), new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
             } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
                 Object value = vals.get(i).value();
-                int luceneDocId = value instanceof Doc ? ((Doc) value).id(): BlsUtils.getDocIdFromPid(blIndex(), (String) value);
+                int luceneDocId = value instanceof Integer ? ((int) value): BlsUtils.getDocIdFromPid(blIndex(), (String) value);
                 fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
                 usedFilter = true;
             }

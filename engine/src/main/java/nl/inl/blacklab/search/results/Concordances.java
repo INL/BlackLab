@@ -11,7 +11,7 @@ import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.XmlHighlighter;
 
@@ -78,7 +78,7 @@ public class Concordances {
         if (hits.size() == 0)
             return;
         QueryInfo queryInfo = hits.queryInfo();
-        Doc doc = queryInfo.index().doc(hits.get(0).doc());
+        int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
         if (arrayLength > Integer.MAX_VALUE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE / 2 + " hits in a single doc");
@@ -109,10 +109,10 @@ public class Concordances {
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         AnnotatedField field = queryInfo.field();
-        doc.characterOffsets(field, startsOfWords, endsOfWords, true);
+        DocImpl.characterOffsets(hits.index(), docId, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = doc.makeConcordancesFromContentStore(field, startsOfWords, endsOfWords, hl);
+        List<Concordance> newConcs = DocImpl.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             conc.put(it.next(), newConcs.get(i));

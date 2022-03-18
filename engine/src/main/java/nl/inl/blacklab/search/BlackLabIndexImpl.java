@@ -455,7 +455,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         final Bits liveDocs = MultiBits.getLiveDocs(reader());
         for (int docId = 0; docId < maxDoc; docId++) {
             if (liveDocs == null || liveDocs.get(docId)) {
-                task.perform(doc(docId));
+                task.perform(this, docId);
             }
         }
     }
@@ -763,11 +763,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-    }
-
-    @Override
-    public Doc doc(int docId) {
-        return Doc.get(this, docId);
     }
 
     @Override

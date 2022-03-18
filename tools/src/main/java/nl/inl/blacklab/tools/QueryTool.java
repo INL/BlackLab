@@ -61,7 +61,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -729,7 +729,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(WordUtils.wrap(index.doc(docId).highlightContent(hitsInDoc), 80));
+                    outprintln(WordUtils.wrap(DocImpl.highlightContent(index, docId, hitsInDoc, -1, -1), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));
@@ -880,7 +880,7 @@ public class QueryTool {
             outprintln("Document " + docId + " was deleted.");
             return;
         }
-        Document doc = index.doc(docId).luceneDoc();
+        Document doc = index.luceneDoc(docId);
         Map<String, String> metadata = new TreeMap<>(); // sort by key
         for (IndexableField f : doc.getFields()) {
             metadata.put(f.name(), f.stringValue());
@@ -1470,13 +1470,13 @@ public class QueryTool {
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
         long hitNr = window.windowStats().first() + 1;
         for (Group<Hit> result : window) {
-            Doc doc = ((PropertyValueDoc)result.identity()).value();
-            Document d = doc.luceneDoc();
+            int docId = ((PropertyValueDoc)result.identity()).value();
+            Document d = index.luceneDoc(docId);
             String title = d.get(titleField.name());
             if (title == null)
-                title = "(doc #" + doc.id() + ", no " + titleField.name() + " given)";
+                title = "(doc #" + docId + ", no " + titleField.name() + " given)";
             else
-                title = title + " (doc #" + doc.id() + ")";
+                title = title + " (doc #" + docId + ")";
             outprintf("%4d. %s\n", hitNr, title);
             hitNr++;
         }
@@ -1571,7 +1571,7 @@ public class QueryTool {
                 if (currentDoc != -1)
                     outprintln("");
                 currentDoc = hit.doc;
-                Document d = index.doc(currentDoc).luceneDoc();
+                Document d = index.luceneDoc(currentDoc);
                 String title = d.get(titleField.name());
                 if (title == null)
                     title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";

@@ -77,7 +77,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
                 throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
             }
-            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
+            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
 
 		@Override
@@ -321,7 +321,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
-                            PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
+                            PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
@@ -343,7 +343,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocId = lastDocId;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
-                        PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
+                        PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
                         Hits hits = Hits.fromList(queryInfo(), docHits, null);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
@@ -396,7 +396,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            long docLengthTokens = fieldLengthProp.get(r.identity().value()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
