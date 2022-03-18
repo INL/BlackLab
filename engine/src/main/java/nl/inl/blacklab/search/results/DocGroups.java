@@ -150,7 +150,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     @Override
     public DocGroups window(long first, long number) {
-        List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<DocGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
@@ -182,7 +182,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
      */
     @Override
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
+        return DocGroups.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
     }
     
     @Override

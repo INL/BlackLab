@@ -1,13 +1,9 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
-import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
-import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FiidLookup;
@@ -67,15 +63,16 @@ public class Kwics {
      */
     private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
         // Group hits per document
-        MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
-        for (Hit key: hits) {
-            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
-            if (hitsInDoc == null) {
-                hitsInDoc = new ArrayList<>();
-                hitsPerDocument.put(key.doc(), hitsInDoc);
-            }
-            hitsInDoc.add(key);
-        }
+//        MutableIntObjectMap<List<Hit>> hitsPerDocument = IntObjectMaps.mutable.empty();
+//        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+//            EphemeralHit key = it.next();
+//            List<Hit> hitsInDoc = hitsPerDocument.get(key.doc());
+//            if (hitsInDoc == null) {
+//                hitsInDoc = new ArrayList<>();
+//                hitsPerDocument.put(key.doc(), hitsInDoc);
+//            }
+//            hitsInDoc.add(key);
+//        }
 
         // All FIs except word and punct are attributes
         Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();

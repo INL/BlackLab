@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -128,8 +129,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        boolean listIsHuge = hits.size() > Integer.MAX_VALUE;
-        for (Hit hit: hits) {
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            EphemeralHit hit = it.next();
             PropertyValue identity = criteria.get(i);
             HitsInternal group = groupLists.get(identity);
             if (group == null) {
@@ -137,7 +138,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(listIsHuge);
+                group = HitsInternal.create(-1, hits.size() > Integer.MAX_VALUE, false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -216,7 +217,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
-        List<HitGroup> sample = Results.doSample(this, sampleParameters);
+        List<HitGroup> sample = ResultsAbstract.doSample(this, sampleParameters);
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
         return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
     }
@@ -268,7 +269,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
     @Override
     public HitGroups window(long first, long number) {
-        List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<HitGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         // Note: a window is just a subset of the total result set.

@@ -289,7 +289,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (Hit hit : hits) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
-                    doc = blIndex().doc(hit.doc()).luceneDoc();
+                    doc = blIndex().luceneDoc(hit.doc());
                     luceneDocs.put(hit.doc(), doc);
                 }
                 writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, getDocumentPid(blIndex(), hit.doc(), doc), metadataFieldsToWrite, row);

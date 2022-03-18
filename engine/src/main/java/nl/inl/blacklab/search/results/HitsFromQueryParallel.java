@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.ThreadAborter;
 
-public class HitsFromQueryParallel extends Hits {
+public class HitsFromQueryParallel extends HitsAbstract {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     private static final int HIT_POLLING_TIME_MS = 50;
@@ -231,7 +231,7 @@ public class HitsFromQueryParallel extends Hits {
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
             final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
 
-            final HitsInternal results = HitsInternal.create();
+            final HitsInternal results = HitsInternal.create(-1, true, true);
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
             final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
@@ -357,7 +357,7 @@ public class HitsFromQueryParallel extends Hits {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo, HitsInternal.create()); // explicitly construct HitsInternal so they're writeable
+        super(queryInfo, HitsInternal.create(-1, true, true)); // explicitly construct HitsInternal so they're writeable
         this.searchSettings = searchSettings;
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();

@@ -120,25 +120,17 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         }
         
         // Not cached; find fiid by reading stored value from Document now
-        try {
-            return Long.parseLong(index.reader().document(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
     private long get(PropertyValueDoc identity) {
-        if (identity.value().isLuceneDocCached()) {
-            // if we already have the document, get the value from there
-            return Long.parseLong(identity.luceneDoc().get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
-        } else
-            return get(identity.id());
+        return get(identity.value());
     }
 
     @Override
     public PropertyValueInt get(DocResult result) {
         try {
-            long length = get(result.identity());
+            long length = get(result.identity().value());
             return new PropertyValueInt(length);
         } catch (NumberFormatException e) {
             return new PropertyValueInt(0);
@@ -154,13 +146,9 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        try {
-            int ia = Integer.parseInt(a.identity().luceneDoc().get(fieldName));
-            int ib = Integer.parseInt(b.identity().luceneDoc().get(fieldName));
-            return reverse ? ib - ia : ia - ib;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        long ia = get(a.identity().value());
+        long ib = get(b.identity().value());
+        return reverse ? Long.compare(ib, ia) : Long.compare(ia, ib);
     }
 
     @Override

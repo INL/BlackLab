@@ -45,7 +45,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.Hits.EphemeralHit;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -78,7 +77,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
                 throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
             }
-            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
+            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
 
 		@Override
@@ -322,13 +321,16 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
-                            PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
+                            PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
 
-                        docHits = HitsInternal.create();
+                        // TODO: use maxHitsToStorePerDoc to determine whether or not we need huge?
+                        //       (but we do want to count the total number of hits in the doc even
+                        //       if we don't store all of them)
+                        docHits = HitsInternal.create(-1, true, false);
                     }
 
                     docHits.add(h);
@@ -341,7 +343,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocId = lastDocId;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
-                        PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
+                        PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
                         Hits hits = Hits.fromList(queryInfo(), docHits, null);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
@@ -394,7 +396,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().id()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            long docLengthTokens = fieldLengthProp.get(r.identity().value()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -422,7 +424,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults window(long first, long number) {
-        List<DocResult> resultsWindow = Results.doWindow(this, first, number);
+        List<DocResult> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocResults.fromList(queryInfo(), resultsWindow, null, windowStats);
@@ -497,7 +499,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
-        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, null);
+        return DocResults.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), sampleParameters, null);
     }
 
     @Override

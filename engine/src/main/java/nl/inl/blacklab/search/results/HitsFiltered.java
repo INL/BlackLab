@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends Hits {
+public class HitsFiltered extends HitsAbstract {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -98,14 +98,15 @@ public class HitsFiltered extends Hits {
             }
             try {
                 boolean readAllHits = number < 0;
+                EphemeralHit hit = new EphemeralHit();
                 while (!doneFiltering && (readAllHits || hitsArrays.size() < number)) {
                  // Abort if asked
                     threadAborter.checkAbort();
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.hitsProcessedAtLeast(indexInSource + 1)) {
-                        Hit hit = source.get(indexInSource);
+                    if (source.hitsStats().processedAtLeast(indexInSource + 1)) {
+                        source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
                             hitsArrays.add(hit);

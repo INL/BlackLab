@@ -1,7 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultCount.CountType;
+import nl.inl.blacklab.search.results.ResultCount;
 import nl.inl.blacklab.search.results.Results;
 
 /** A search that yields results.
@@ -19,7 +19,7 @@ public abstract class SearchForResults<R extends Results<?, ?>> extends Abstract
      * @return resulting operation
      */
     public SearchCount count() {
-        return new SearchCountFromResults<>(queryInfo(), this, CountType.RESULTS);
+        return new SearchCountFromResults<>(queryInfo(), this, ResultCount.CountType.RESULTS);
     }
 
     /**
@@ -28,7 +28,7 @@ public abstract class SearchForResults<R extends Results<?, ?>> extends Abstract
      * @return resulting operation
      */
     public SearchCount hitCount() {
-        return new SearchCountFromResults<>(queryInfo(), this, CountType.HITS);
+        return new SearchCountFromResults<>(queryInfo(), this, ResultCount.CountType.HITS);
     }
 
     /**
@@ -37,7 +37,7 @@ public abstract class SearchForResults<R extends Results<?, ?>> extends Abstract
      * @return resulting operation
      */
     public SearchCount docCount() {
-        return new SearchCountFromResults<>(queryInfo(), this, CountType.DOCS);
+        return new SearchCountFromResults<>(queryInfo(), this, ResultCount.CountType.DOCS);
     }
 
 }

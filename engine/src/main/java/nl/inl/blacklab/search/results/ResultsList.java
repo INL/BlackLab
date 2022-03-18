@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
-public abstract class ResultsList<T, P extends ResultProperty<T>> extends Results<T, P> {
+public abstract class ResultsList<T, P extends ResultProperty<T>> extends ResultsAbstract<T, P> {
 
     /**
      * The results.

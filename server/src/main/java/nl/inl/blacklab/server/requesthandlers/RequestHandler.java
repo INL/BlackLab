@@ -983,7 +983,7 @@ public abstract class RequestHandler {
             // Find pid
             String pid = pids.get(hit.doc());
             if (pid == null) {
-                Document document = index.doc(hit.doc()).luceneDoc();
+                Document document = index.luceneDoc(hit.doc());
                 pid = getDocumentPid(index, hit.doc(), document);
                 pids.put(hit.doc(), pid);
             }
