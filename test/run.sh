@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -o errexit  # Exit on error (set -e)
 
 export DOCKER_BUILDKIT=1
 
