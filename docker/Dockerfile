@@ -15,19 +15,24 @@ RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
 # Tomcat container with the WAR file
 #--------------------------------------
 FROM tomcat:9
+ARG CONFIG_ROOT=docker/config
+ARG TOMCAT_APP_NAME=blacklab-server
 
 # Install custom server.xml
 # (URIEncoding=utf-8)
-COPY docker/server.xml /usr/local/tomcat/conf/
+COPY ${CONFIG_ROOT}/server.xml /usr/local/tomcat/conf/
 
 # Copy the configuration file
-COPY docker/blacklab-server.yaml /etc/blacklab/
+COPY ${CONFIG_ROOT}/blacklab-server.yaml /etc/blacklab/
+
+# Copy the starup script
+COPY docker/start-server.sh /etc/blacklab/start-server.sh
 
 # Create directory for formats
 RUN mkdir /etc/blacklab/formats
 
 # Copy the WAR file
-COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/blacklab-server.war
+COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/${TOMCAT_APP_NAME}.war
 
 # Copy JARs for the commandline tools
 COPY --from=builder /app/core/target/blacklab-*.jar /app/core/target/lib /usr/local/lib/blacklab-tools/
