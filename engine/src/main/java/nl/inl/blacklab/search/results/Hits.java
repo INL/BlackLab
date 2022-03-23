@@ -576,7 +576,7 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         // Copy the hits we're interested in.
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternal window = HitsInternal.createFixed(windowSize);
+        HitsInternal window = HitsInternal.createFixed(number);
 
         this.hitsArrays.withReadLock(h -> {
             int prevDoc = -1;
