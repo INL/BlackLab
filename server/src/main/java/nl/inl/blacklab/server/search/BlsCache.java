@@ -338,6 +338,8 @@ public class BlsCache implements SearchCache {
      */
     private boolean canStartAnotherSearch() {
         int runningSearches = numberOfRunningSearches();
+        if (runningSearches == 0)
+            return true;
         long freeMemory = MemoryUtil.getFree();
         int minFreeMemForSearchMegs = config.getMinFreeMemForSearchMegs();
         boolean enoughMemory = freeMemory / ONE_MB_BYTES >= minFreeMemForSearchMegs;

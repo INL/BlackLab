@@ -83,4 +83,10 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
     public void start() {
         // never queued, so not implemented
     }
+
+    @Override
+    public long timeUserWaitedMs() {
+        // TODO(eginez) fix this time
+        return 0 ;
+    }
 }
