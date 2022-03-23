@@ -9,7 +9,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A HitsInternal implementation that does no locking and can handle up to Integer.MAX_VALUE hits.
+ * A HitsInternal implementation that does no locking and can handle up to {@link HitsInternal#MAX_ARRAY_SIZE} hits.
+ *
+ * Maximum size is roughly (but not exactly) 2^31 hits.
  *
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.

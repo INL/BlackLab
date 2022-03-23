@@ -2,10 +2,12 @@ package nl.inl.blacklab.server.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import nl.inl.blacklab.search.results.HitsInternal;
+
 /**
  * Integer setting with a default and maximum value.
  * 
- * Please note that setting a max of -1 is interpreted as Integer.MAX_VALUE,
+ * Please note that setting a max of -1 is interpreted as HitsInternal.MAX_ARRAY_SIZE,
  * effectively setting no limit.
  */
 public class DefaultMax {
@@ -42,7 +44,7 @@ public class DefaultMax {
     }
 
     public void setMax(int max) {
-        this.max = max == -1 ? Integer.MAX_VALUE : max;
+        this.max = max == -1 ? HitsInternal.MAX_ARRAY_SIZE : max;
     }
     
     

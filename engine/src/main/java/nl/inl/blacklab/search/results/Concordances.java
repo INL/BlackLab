@@ -80,8 +80,8 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
-        if (arrayLength > Integer.MAX_VALUE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE / 2 + " hits in a single doc");
+        if (arrayLength > HitsInternal.MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 
@@ -138,7 +138,7 @@ public class Concordances {
             EphemeralHit key = it.next();
             HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternal.create(-1, totalHits > Integer.MAX_VALUE, false);
+                hitsInDoc = HitsInternal.create(-1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
