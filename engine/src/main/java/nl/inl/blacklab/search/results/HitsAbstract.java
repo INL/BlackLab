@@ -152,7 +152,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Hits window(long first, long windowSize) {
         // Error if first out of range
-        WindowStats windowStats;
         boolean emptyResultSet = !hitsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
             (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
@@ -170,7 +169,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // Copy the hits we're interested in.
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternal window = HitsInternal.create(windowSize, windowSize > Integer.MAX_VALUE, false);
+        HitsInternal window = HitsInternal.create(number, number > Integer.MAX_VALUE, false);
 
         this.hitsArrays.withReadLock(h -> {
             int prevDoc = -1;
@@ -192,7 +191,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         });
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
-        windowStats = new WindowStats(hasNext, first, windowSize, number);
+        WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
         return Hits.fromList(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
                 capturedGroups, hasAscendingLuceneDocIds());

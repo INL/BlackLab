@@ -454,7 +454,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
 
     @Override
     protected void ensureResultsRead(long number) {
-        final long clampedNumber = number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
+        final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
         if (allSourceSpansFullyRead || (hitsArrays.size() >= clampedNumber)) {
             return;
