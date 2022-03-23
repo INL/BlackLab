@@ -80,19 +80,35 @@ function expectHitsImpl(params, numberOfHits, numberOfDocs, expectedFirstHitJson
                 expect(hits).to.be.an("array").that.has.lengthOf(numberOfHitsInResponse);
                 const hit = hits[0];
                 if (expectedFirstHitJson) {
-                    expect(hit, 'hit').to.deep.equal(expectedFirstHitJson);
+                    if (constants.SHOULD_HAVE_CONTEXT) {
+                        expect(hit, 'hit').to.deep.equal(expectedFirstHitJson);
+                    } else {
+                        delete expectedFirstHitJson['left'];
+                        delete expectedFirstHitJson['right'];
+                        expect(hit, 'hit').to.deep.equal(expectedFirstHitJson);
+                    }
                 } else {
-                    expect(hit, 'hit').to.be.an("object").that.has.all.keys(
-                        'docPid',
-                        'start',
-                        'end',
-                        'left',
-                        'match',
-                        'right'
-                    );
-                    util.toBeContextPart(expect(hit.left, 'left'));
+                    if(constants.SHOULD_HAVE_CONTEXT) {
+                        expect(hit, 'hit').to.be.an("object").that.has.all.keys(
+                            'docPid',
+                            'start',
+                            'end',
+                            'left',
+                            'match',
+                            'right'
+                        );
+                        util.toBeContextPart(expect(hit.left, 'left'));
+                        util.toBeContextPart(expect(hit.right, 'right'));
+
+                    } else {
+                        expect(hit, 'hit').to.be.an("object").that.has.all.keys(
+                            'docPid',
+                            'start',
+                            'end',
+                            'match',
+                        );
+                    }
                     util.toBeContextPart(expect(hit.match, 'match'));
-                    util.toBeContextPart(expect(hit.right, 'right'));
                     const match = hit.match;
                     const word = match.word;
                     expect(word, 'word').to.be.an("array");
