@@ -152,7 +152,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Hits window(long first, long windowSize) {
         // Error if first out of range
-        WindowStats windowStats;
         boolean emptyResultSet = !hitsProcessedAtLeast(1);
         if (first < 0 || (emptyResultSet && first > 0) ||
             (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
@@ -170,7 +169,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // Copy the hits we're interested in.
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternal window = HitsInternal.create(windowSize, windowSize > Integer.MAX_VALUE, false);
+        HitsInternal window = HitsInternal.create(number, number, false);
 
         this.hitsArrays.withReadLock(h -> {
             int prevDoc = -1;
@@ -192,7 +191,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         });
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
-        windowStats = new WindowStats(hasNext, first, windowSize, number);
+        WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
         return Hits.fromList(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
                 capturedGroups, hasAscendingLuceneDocIds());
@@ -209,12 +208,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Determine total number of hits (fetching all of them)
         long totalNumberOfHits = size();
-        if (totalNumberOfHits > Integer.MAX_VALUE) {
+        if (totalNumberOfHits > HitsInternal.MAX_ARRAY_SIZE) {
             // TODO: we might want to enable this, because the whole point of sampling is to make sense
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + Integer.MAX_VALUE + " hits");
+            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternal.MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
@@ -233,7 +232,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    hitIndex = random.nextInt((int)Math.min(Integer.MAX_VALUE, size()));
+                    hitIndex = random.nextInt((int)Math.min(HitsInternal.MAX_ARRAY_SIZE, size()));
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
@@ -241,7 +240,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         MutableInt docsInSample = new MutableInt(0);
         CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
-        HitsInternal sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect > Integer.MAX_VALUE, false);
+        HitsInternal sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect, false);
 
         this.hitsArrays.withReadLock(hr -> {
             int previousDoc = -1;
@@ -469,7 +468,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Hits getHitsInDoc(int docid) {
         ensureAllResultsRead();
-        HitsInternal r = HitsInternal.create(-1, size() > Integer.MAX_VALUE, false);
+        HitsInternal r = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsArrays) {
             if (h.doc == docid)

@@ -8,7 +8,9 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A HitsInternal implementation that locks and can handle up to Integer.MAX_VALUE.
+ * A HitsInternal implementation that locks and can handle up to {@link HitsInternal#MAX_ARRAY_SIZE} hits.
+ *
+ * Maximum size is roughly (but not exactly) 2^31 hits.
  *
  * A test calling {@link #add(int, int, int)} millions of times came out to be about
  * 19% faster than {@link HitsInternalLock}. Iteration is about 10x faster.

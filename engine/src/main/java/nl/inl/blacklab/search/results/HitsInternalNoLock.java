@@ -196,7 +196,7 @@ class HitsInternalNoLock implements HitsInternal {
     public HitsInternal sort(HitProperty p) {
         HitsInternal r;
         long size = docs.size64();
-        if (size > Integer.MAX_VALUE) {
+        if (size > MAX_ARRAY_SIZE) {
             // Fill an indices BigArray with 0 ... size
             long[][] indices = LongBigArrays.newBigArray(size);
             int i = 0;

@@ -368,7 +368,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
         long configuredMaxHitsToCount = searchSettings.maxHitsToCount();
         long configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
         if (configuredMaxHitsToCount < 0)
-            configuredMaxHitsToCount = Integer.MAX_VALUE;
+            configuredMaxHitsToCount = HitsInternal.MAX_ARRAY_SIZE;
         if (configuredMaxHitsToProcess < 0 || configuredMaxHitsToProcess > configuredMaxHitsToCount)
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;
@@ -454,7 +454,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
 
     @Override
     protected void ensureResultsRead(long number) {
-        final long clampedNumber = number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
+        final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
         if (allSourceSpansFullyRead || (hitsArrays.size() >= clampedNumber)) {
             return;

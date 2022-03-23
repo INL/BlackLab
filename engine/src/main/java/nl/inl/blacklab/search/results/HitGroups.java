@@ -81,7 +81,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = HitsInternal.MAX_ARRAY_SIZE / 2;
 
     /**
      * Total number of results in the source set of hits. 
@@ -138,7 +138,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(-1, hits.size() > Integer.MAX_VALUE, false);
+                group = HitsInternal.create(-1, hits.size(), false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -292,7 +292,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

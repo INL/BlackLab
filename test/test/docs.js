@@ -1,5 +1,6 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
+const path = require('path');
 const expect = chai.expect;
 const should = chai.should();
 chai.use(chaiHttp);
@@ -98,6 +99,12 @@ function expectDocs(pattern, filter, numberOfHits, numberOfDocs, firstDocJsonInc
                 }
                 if (firstDocJsonIncludes) {
                     // Check that all the required JSON is there
+                    if ('docInfo' in firstDocJsonIncludes && 'fromInputFile' in firstDocJsonIncludes.docInfo) {
+                        var expectedInputFile = path.basename(firstDocJsonIncludes.docInfo.fromInputFile[0]);
+                        var inputFile = path.basename(doc.docInfo.fromInputFile[0]);
+                        doc.docInfo.fromInputFile = [inputFile];
+                        firstDocJsonIncludes.docInfo.fromInputFile = [expectedInputFile];
+                    }
                     expect(doc, 'doc').to.deep.include(firstDocJsonIncludes);
                 }
 

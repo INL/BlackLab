@@ -163,8 +163,8 @@ public class Contexts implements Iterable<int[]> {
      */
     private static int[][] getContextWordsSingleDocument(HitsInternalRead hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
-        if (end - start > Integer.MAX_VALUE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
+        if (end - start > HitsInternal.MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];

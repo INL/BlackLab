@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsInternal;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
@@ -104,9 +105,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
-        if (wordFreq.size() >= Integer.MAX_VALUE) {
+        if (wordFreq.size() >= HitsInternal.MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " termfrequencies");
         }
         results = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
@@ -120,9 +121,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
         super(queryInfo);
-        if (list.size() >= Integer.MAX_VALUE) {
+        if (list.size() >= HitsInternal.MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " termfrequencies");
         }
         this.results = list;
         calculateTotalFrequency();
