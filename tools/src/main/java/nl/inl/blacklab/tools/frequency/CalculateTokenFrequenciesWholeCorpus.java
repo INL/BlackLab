@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools;
+package nl.inl.blacklab.tools.frequency;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -16,7 +16,6 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -28,89 +27,16 @@ import nl.inl.util.BlockTimer;
  *
  * Takes shortcuts to be able to process huge corpora without
  * running out of memory, at the expense of genericity.
+ *
+ * Major changes:
+ * - store metadata values as strings, not PropertyValue
+ * - always group on annotations first, then metadata fields
+ * - don't create HitGroups, return Map with counts directly
+ * - don't check if we exceed maxhitstocount
+ * - always process all documents (no document filter query)
  */
-@SuppressWarnings("DuplicatedCode")
-public class CalculateTokenFrequenciesWholeCorpus {
-
-    /** Precalculated hashcode for group id, to save time while grouping and sorting. */
-    static class GroupIdHash {
-        private final int[] tokenIds;
-        private final int[] tokenSortPositions;
-        private final String[] metadataValues;
-        private final int hash;
-
-        /**
-         *  @param tokenSortPositions sort position for each token in the group id
-         * @param metadataValues relevant metadatavalues
-         * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
-         */
-        public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, String[] metadataValues, int metadataValuesHash) {
-            this.tokenIds = tokenIds;
-            this.tokenSortPositions = tokenSortPositions;
-            this.metadataValues = metadataValues;
-            hash = Arrays.hashCode(tokenSortPositions) ^ metadataValuesHash;
-        }
-
-        public int[] getTokenIds() {
-            return tokenIds;
-        }
-
-        public String[] getMetadataValues() {
-            return metadataValues;
-        }
-
-        @Override
-        public int hashCode() {
-            return hash;
-        }
-
-        // Assume only called with other instances of IdHash (faster for large groupings)
-        @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
-        @Override
-        public boolean equals(Object obj) {
-            return ((GroupIdHash) obj).hash == this.hash &&
-                   Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions) &&
-                   Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues);
-        }
-    }
-
-    /** Counts of hits and docs while grouping. */
-    static final class OccurranceCounts {
-        public int hits;
-        public int docs;
-
-        public OccurranceCounts(int hits, int docs) {
-            this.hits = hits;
-            this.docs = docs;
-        }
-    }
-
-    /** Info about an annotation we're grouping on. */
-    private static final class AnnotInfo {
-        private final AnnotationForwardIndex annotationForwardIndex;
-
-        private final MatchSensitivity matchSensitivity;
-
-        private final Terms terms;
-
-        public AnnotationForwardIndex getAnnotationForwardIndex() {
-            return annotationForwardIndex;
-        }
-
-        public MatchSensitivity getMatchSensitivity() {
-            return matchSensitivity;
-        }
-
-        public Terms getTerms() {
-            return terms;
-        }
-
-        public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
-            this.annotationForwardIndex = annotationForwardIndex;
-            this.matchSensitivity = matchSensitivity;
-            this.terms = annotationForwardIndex.terms();
-        }
-    }
+@SuppressWarnings("DuplicatedCode") // see above
+class CalculateTokenFrequenciesWholeCorpus {
 
     /**
      * Get the token frequencies for the given query and hit property.
@@ -120,7 +46,8 @@ public class CalculateTokenFrequenciesWholeCorpus {
      * @param metadataFields metadata fields to group on
      * @return token frequencies
      */
-    public static Map<GroupIdHash, OccurranceCounts> get(BlackLabIndex index, List<Annotation> annotations, List<String> metadataFields) {
+    public static Map<GroupIdHash, OccurranceCounts> get(BlackLabIndex index, List<Annotation> annotations,
+                                                         List<String> metadataFields, List<Integer> docIds) {
 
         // This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits and number of docs
         final ConcurrentHashMap<GroupIdHash, OccurranceCounts> occurances = new ConcurrentHashMap<>();
@@ -140,12 +67,6 @@ public class CalculateTokenFrequenciesWholeCorpus {
         final int numAnnotations = hitProperties.size();
 
         try (final BlockTimer c = BlockTimer.create("Top Level")) {
-
-            // Collect all doc ids that match the given filter (or all docs if no filter specified)
-            final List<Integer> docIds = new ArrayList<>();
-            try (BlockTimer ignored = c.child("Gathering documents")) {
-                index.forEachDocument((index1, id) -> docIds.add(id));
-            }
 
             // Start actually calculating the requests frequencies.
 

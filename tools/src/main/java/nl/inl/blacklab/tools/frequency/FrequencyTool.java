@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools;
+package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -11,10 +11,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPOutputStream;
 
@@ -25,12 +23,11 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
@@ -57,140 +54,7 @@ import nl.inl.blacklab.searches.SearchHitGroups;
 public class FrequencyTool {
 
     // Faster/less memory-intensive method is work-in-progress...
-    private static final boolean FASTER_METHOD = false;
-
-    /** Configuration for making frequency lists */
-    static class Config {
-
-        /** Read config from file.
-         *
-         * @param f config file
-         * @return config object
-         */
-        static Config fromFile(File f) {
-            try {
-                ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-                return mapper.readValue(f, Config.class);
-            } catch (IOException e) {
-                throw new BlackLabRuntimeException("Error reading config file " + f, e);
-            }
-        }
-
-        /** Annotated field to analyze */
-        private String annotatedField;
-
-        /** Frequency lists to make */
-        private List<ConfigFreqList> frequencyLists;
-
-        public String getAnnotatedField() {
-            return annotatedField;
-        }
-
-        public void setAnnotatedField(String annotatedField) {
-            this.annotatedField = annotatedField;
-        }
-
-        public List<ConfigFreqList> getFrequencyLists() {
-            return frequencyLists;
-        }
-
-        @SuppressWarnings("unused")
-        public void setFrequencyLists(List<ConfigFreqList> frequencyLists) {
-            this.frequencyLists = frequencyLists;
-        }
-
-        @Override
-        public String toString() {
-            return "Config{" +
-                    "annotatedField='" + annotatedField + '\'' +
-                    ", frequencyLists=" + frequencyLists +
-                    '}';
-        }
-
-        /**
-         * Check if this is a valid config.
-         *
-         * @param index our index
-         */
-        public void check(BlackLabIndex index) {
-            if (!index.annotatedFields().exists(annotatedField))
-                throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
-            AnnotatedField af = index.annotatedField(annotatedField);
-            Set<String> reportNames = new HashSet<>();
-            for (ConfigFreqList l: frequencyLists) {
-                String name = l.getReportName();
-                if (reportNames.contains(name))
-                    throw new IllegalArgumentException("Report occurs twice: " + name);
-                reportNames.add(name);
-
-                for (String a: l.getAnnotations()) {
-                    if (!af.annotations().exists(a))
-                        throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
-                }
-                for (String m: l.getMetadataFields()) {
-                    if (!index.metadataFields().exists(m))
-                        throw new IllegalArgumentException("Metadata field not found: " + m);
-                }
-            }
-        }
-    }
-
-    /** Configuration for making frequency lists */
-    static class ConfigFreqList {
-
-        /** A unique name that will be used as output file name */
-        String name = "";
-
-        /** Annotations to make frequency lists for */
-        private List<String> annotations;
-
-        /** Metadata fields to take into account (e.g. year for frequencies per year) */
-        private List<String> metadataFields = Collections.emptyList();
-
-        public String getName() {
-            return name;
-        }
-
-        public String getReportName() {
-            return name.isEmpty() ? generateName() : name;
-        }
-
-        private String generateName() {
-            List<String> parts = new ArrayList<>();
-            parts.addAll(annotations);
-            parts.addAll(metadataFields);
-            return StringUtils.join(parts, "-");
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public List<String> getAnnotations() {
-            return annotations;
-        }
-
-        public void setAnnotations(List<String> annotations) {
-            this.annotations = annotations;
-        }
-
-        public List<String> getMetadataFields() {
-            return metadataFields;
-        }
-
-        public void setMetadataFields(List<String> metadataFields) {
-            this.metadataFields = metadataFields;
-        }
-
-        @Override
-        public String toString() {
-            return "ConfigFreqList{" +
-                    "name='" + name + '\'' +
-                    ", annotations=" + annotations +
-                    ", metadataFields=" + metadataFields +
-                    '}';
-        }
-    }
+    private static final boolean FASTER_METHOD = true;
 
     static void exit(String msg) {
         System.out.println(msg);
@@ -279,8 +143,14 @@ public class FrequencyTool {
         System.out.println("Generate frequency list: " + freqList.getReportName());
 
         if (FASTER_METHOD) {
-            List<Annotation> annotations = freqList.getAnnotations().stream().map(name -> annotatedField.annotation(name)).collect(Collectors.toList());
-            Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences = CalculateTokenFrequenciesWholeCorpus.get(index, annotations, freqList.getMetadataFields());
+            List<Annotation> annotations = freqList.getAnnotations().stream().map(annotatedField::annotation).collect(Collectors.toList());
+
+            // Collect all doc ids
+            final List<Integer> docIds = new ArrayList<>();
+            index.forEachDocument((index1, id) -> docIds.add(id));
+
+            Map<GroupIdHash, OccurranceCounts> occurrences =
+                    CalculateTokenFrequenciesWholeCorpus.get(index, annotations, freqList.getMetadataFields(), docIds);
             FreqListOutput.write(index, annotatedField, freqList, occurrences, outputDir, format, gzip);
         } else {
             // Create our search
@@ -299,11 +169,10 @@ public class FrequencyTool {
         QueryInfo queryInfo = QueryInfo.create(index);
         BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, annotatedField.name());
         HitProperty groupBy = getGroupBy(index, annotatedField, freqList);
-        SearchHitGroups search = index.search()
+        return index.search()
                 .find(anyToken)
                 .groupStats(groupBy, 0)
                 .sort(new HitGroupPropertyIdentity());
-        return search;
     }
 
     private static HitProperty getGroupBy(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList) {
@@ -356,8 +225,8 @@ public class FrequencyTool {
          * @param outputDir directory to write output file
          */
         static void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                          Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
-                                  CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences,
+                          Map<GroupIdHash,
+                                  OccurranceCounts> occurrences,
                           File outputDir, Format format, boolean gzip) {
             FreqListOutput f = format == Format.JSON ? new FreqListOutputJson() : new FreqListOutputTsv();
             f.write(index, annotatedField, freqList, occurrences, outputDir, gzip);
@@ -365,8 +234,8 @@ public class FrequencyTool {
 
         void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, HitGroups result, File outputDir, boolean gzip);
 
-        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
-                CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip);
+        void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<GroupIdHash,
+                OccurranceCounts> occurrences, File outputDir, boolean gzip);
 
 
     }
@@ -376,6 +245,17 @@ public class FrequencyTool {
      */
     static class FreqListOutputTsv implements FreqListOutput {
 
+        /**
+         * Write HitGroups result.
+         *
+         * @param index index
+         * @param annotatedField annotated field
+         * @param freqList configuration
+         * @param result grouping result
+         * @param outputDir where to write output file
+         * @param gzip whether or not to gzip output file
+         */
+        @Override
         public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
                            HitGroups result, File outputDir, boolean gzip) {
             File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
@@ -407,8 +287,19 @@ public class FrequencyTool {
             }
         }
 
+        /**
+         * Write Map result.
+         *
+         * @param index index
+         * @param annotatedField annotated field
+         * @param freqList configuration
+         * @param occurrences grouping result
+         * @param outputDir where to write output file
+         * @param gzip whether or not to gzip output file
+         */
         @Override
-        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip) {
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
+                          Map<GroupIdHash, OccurranceCounts> occurrences, File outputDir, boolean gzip) {
             File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
             try (OutputStream outputStream = new FileOutputStream(outputFile)) {
                 OutputStream stream = outputStream;
@@ -416,21 +307,21 @@ public class FrequencyTool {
                     stream = new GZIPOutputStream(stream);
                 try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
                      CSVPrinter printer = new CSVPrinter(out, CSVFormat.TDF)) {
-                    for (Map.Entry<CalculateTokenFrequenciesWholeCorpus.GroupIdHash,
-                            CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> e: occurrences.entrySet()) {
+                    Terms[] terms = freqList.getAnnotations().stream()
+                            .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                            .toArray(Terms[]::new);
+                    for (Map.Entry<GroupIdHash,
+                            OccurranceCounts> e: occurrences.entrySet()) {
                         List<String> record = new ArrayList<>();
 
-                        CalculateTokenFrequenciesWholeCorpus.GroupIdHash groupId = e.getKey();
+                        GroupIdHash groupId = e.getKey();
                         int[] tokenIds = groupId.getTokenIds();
-                        for (int tokenId: tokenIds) {
-                            // CONVERT TO STRING, BUT WE NEED THE ANNOTATION
-                            // index.annotationForwardIndex(annotation)
-                            record.add(tokenId + "");
+                        for (int i = 0; i < tokenIds.length; i++) {
+                            String token = terms[i].get(tokenIds[i]);
+                            record.add(token);
                         }
                         String[] metadataValues = groupId.getMetadataValues();
-                        for (String metadataValue: metadataValues) {
-                            record.add(metadataValue);
-                        }
+                        Collections.addAll(record, metadataValues);
                         record.add(Long.toString(e.getValue().hits));
                         printer.printRecord(record);
                     }
@@ -446,8 +337,6 @@ public class FrequencyTool {
      */
     static class FreqListOutputJson implements FreqListOutput {
 
-        private BlackLabIndex index;
-        private AnnotatedField annotatedField;
         private ConfigFreqList freqList;
         private HitGroups result;
         private JsonGenerator j;
@@ -457,8 +346,6 @@ public class FrequencyTool {
 
         public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
                           HitGroups result, File outputDir, boolean gzip) {
-            this.index = index;
-            this.annotatedField = annotatedField;
             this.freqList = freqList;
             this.result = result;
             File outputFile = new File(outputDir, freqList.getReportName() + ".json" + (gzip ? ".gz" : ""));
@@ -487,14 +374,12 @@ public class FrequencyTool {
         }
 
         @Override
-        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<CalculateTokenFrequenciesWholeCorpus.GroupIdHash, CalculateTokenFrequenciesWholeCorpus.OccurranceCounts> occurrences, File outputDir, boolean gzip) {
+        public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Map<GroupIdHash, OccurranceCounts> occurrences, File outputDir, boolean gzip) {
             throw new UnsupportedOperationException();
         }
 
         /**
          * Write results object as a JSON array.
-         *
-         * @throws IOException
          */
         private void writeResults() throws IOException {
             j.writeStartArray();
@@ -526,8 +411,6 @@ public class FrequencyTool {
 
         /**
          * Write frequency list config as a JSON object.
-         *
-         * @throws IOException
          */
         private void writeConfig() throws IOException {
             j.writeStartObject();
@@ -545,7 +428,6 @@ public class FrequencyTool {
          * Write a List of Strings as a JSON array.
          *
          * @param l list to write
-         * @throws IOException
          */
         private void writeList(List<String> l) throws IOException {
             String[] arr = l.toArray(new String[0]);
