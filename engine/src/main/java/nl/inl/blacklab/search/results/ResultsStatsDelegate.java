@@ -94,7 +94,7 @@ public class ResultsStatsDelegate extends ResultsStats {
 
     @Override
     public boolean processedAtLeast(long lowerBound) {
-        return stats().processedAtLeast(lowerBound);
+        return realStats().processedAtLeast(lowerBound);
     }
 
     @Override
