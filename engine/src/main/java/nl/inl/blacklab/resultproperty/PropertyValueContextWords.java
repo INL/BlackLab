@@ -74,7 +74,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         if (reverseOnDisplay) {
             for (int i = valueTokenId.length - 1; i >= 0; i--) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? "-" : terms.get(v);
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -83,7 +83,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             }
         } else {
             for (int v : valueTokenId) {
-                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
+                String word = v < 0 ? "-" : terms.get(v);
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -102,7 +102,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
             String term = terms.serializeTerm(valueTokenId[i]);
-            parts[i + 3] = sensitivity.desensitize(term);
+            parts[i + 3] = term;
         }
         return PropertySerializeUtil.combineParts(parts);
     }
