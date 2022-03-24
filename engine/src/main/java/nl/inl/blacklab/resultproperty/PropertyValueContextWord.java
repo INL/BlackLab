@@ -53,12 +53,12 @@ public class PropertyValueContextWord extends PropertyValueContext {
 
     @Override
     public String toString() {
-        return valueTokenId < 0 ? "-" : sensitivity.desensitize(terms.get(valueTokenId));
+        return valueTokenId < 0 ? "-" : terms.get(valueTokenId);
     }
 
     @Override
     public String serialize() {
-        String token = sensitivity.desensitize(terms.serializeTerm(valueTokenId));
+        String token = terms.serializeTerm(valueTokenId);
         return PropertySerializeUtil.combineParts(
                 "cwo", annotation.name(),
                 sensitivity.luceneFieldSuffix(),
