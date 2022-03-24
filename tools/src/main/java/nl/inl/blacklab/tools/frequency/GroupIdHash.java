@@ -1,11 +1,12 @@
 package nl.inl.blacklab.tools.frequency;
 
+import java.io.Serializable;
 import java.util.Arrays;
 
 /**
  * Precalculated hashcode for group id, to save time while grouping and sorting.
  */
-class GroupIdHash {
+class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
     private final String[] metadataValues;
@@ -42,6 +43,16 @@ class GroupIdHash {
     public boolean equals(Object obj) {
         return ((GroupIdHash) obj).hash == this.hash &&
                 Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions) &&
-                Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues);
+                Arrays.equals(((GroupIdHash) obj).metadataValues, this.metadataValues);
+    }
+
+    @Override
+    public int compareTo(GroupIdHash other) {
+        int cmp = Integer.compare(hash, other.hash);
+        if (cmp == 0)
+            cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
+        if (cmp == 0)
+            cmp = Arrays.compare(metadataValues, other.metadataValues);
+        return cmp;
     }
 }

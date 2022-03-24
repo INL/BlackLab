@@ -104,11 +104,11 @@ public class HitGroupsTokenFrequencies {
     }
 
     /** Counts of hits and docs while grouping. */
-    private static final class OccurranceCounts {
+    private static final class OccurrenceCounts {
         public int hits;
         public int docs;
 
-        public OccurranceCounts(int hits, int docs) {
+        public OccurrenceCounts(int hits, int docs) {
             this.hits = hits;
             this.docs = docs;
         }
@@ -185,7 +185,7 @@ public class HitGroupsTokenFrequencies {
 
         try {
             // This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits and number of docs
-            final ConcurrentHashMap<GroupIdHash, OccurranceCounts> occurances = new ConcurrentHashMap<>();
+            final ConcurrentHashMap<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentHashMap<>();
 
             final BlackLabIndex index = queryInfo.index();
 
@@ -292,13 +292,13 @@ public class HitGroupsTokenFrequencies {
 
                             // Add all tokens in document to the group.
                             final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray, emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
-                            occurances.compute(groupId, (__, groupSizes) -> {
+                            occurrences.compute(groupId, (__, groupSizes) -> {
                                 if (groupSizes != null) {
                                     groupSizes.hits += docLength;
                                     groupSizes.docs += 1;
                                     return groupSizes;
                                 } else {
-                                    return new OccurranceCounts(docLength, 1);
+                                    return new OccurrenceCounts(docLength, 1);
                                 }
                             });
                         });
@@ -372,7 +372,7 @@ public class HitGroupsTokenFrequencies {
                             // iterate again and pair up the nth entries for all annotations, then store that as a group.
 
                             // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-                            Map<GroupIdHash, OccurranceCounts> occsInDoc = new HashMap<>();
+                            Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                             try (BlockTimer ignored = c.child("Group tokens")) {
 
@@ -394,9 +394,9 @@ public class HitGroupsTokenFrequencies {
                                     final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
                                     // Count occurrence in this doc
-                                    OccurranceCounts occ = occsInDoc.get(groupId);
+                                    OccurrenceCounts occ = occsInDoc.get(groupId);
                                     if (occ == null) {
-                                        occ = new OccurranceCounts(1, 1);
+                                        occ = new OccurrenceCounts(1, 1);
                                         occsInDoc.put(groupId, occ);
                                     } else {
                                         occ.hits++;
@@ -407,7 +407,7 @@ public class HitGroupsTokenFrequencies {
 
                                 // Merge occurrences in this doc with global occurrences
                                 occsInDoc.forEach((groupId, occ) -> {
-                                    occurances.compute(groupId, (__, groupSize) -> {
+                                    occurrences.compute(groupId, (__, groupSize) -> {
                                         if (groupSize != null) {
                                             // Group existed already
                                             // Count hits and doc
@@ -444,7 +444,7 @@ public class HitGroupsTokenFrequencies {
             List<HitGroup> groups;
             try (final BlockTimer ignored = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
-                groups = occurances.entrySet().parallelStream().map(e -> {
+                groups = occurrences.entrySet().parallelStream().map(e -> {
                     final int groupSizeHits = e.getValue().hits;
                     final int groupSizeDocs = e.getValue().docs;
                     final int[] annotationValues = e.getKey().tokenIds;

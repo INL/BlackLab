@@ -8,7 +8,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.SortedMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
@@ -32,11 +33,12 @@ import nl.inl.util.BlockTimer;
  * - store metadata values as strings, not PropertyValue
  * - always group on annotations first, then metadata fields
  * - don't create HitGroups, return Map with counts directly
- * - don't check if we exceed maxhitstocount
+ * - don't check if we exceed maxHitsToCount
  * - always process all documents (no document filter query)
+ * - return sorted map, so we can perform sub-groupings and merge them later
  */
 @SuppressWarnings("DuplicatedCode") // see above
-class CalculateTokenFrequenciesWholeCorpus {
+class CalcTokenFrequencies {
 
     /**
      * Get the token frequencies for the given query and hit property.
@@ -46,11 +48,16 @@ class CalculateTokenFrequenciesWholeCorpus {
      * @param metadataFields metadata fields to group on
      * @return token frequencies
      */
-    public static Map<GroupIdHash, OccurranceCounts> get(BlackLabIndex index, List<Annotation> annotations,
-                                                         List<String> metadataFields, List<Integer> docIds) {
+    public static SortedMap<GroupIdHash, OccurrenceCounts> get(BlackLabIndex index, List<Annotation> annotations,
+                                                               List<String> metadataFields, List<Integer> docIds) {
 
-        // This is where we store our groups while we're computing/gathering them. Maps from group Id to number of hits and number of docs
-        final ConcurrentHashMap<GroupIdHash, OccurranceCounts> occurances = new ConcurrentHashMap<>();
+        // This is where we store our groups while we're computing/gathering them.
+        // Maps from group Id to number of hits and number of docs
+        // ConcurrentMap because we're counted in parallel.
+        // We use a ConcurrentSkipListMap instead of ConcurrentHashMap because we need the results in key-sorted order
+        // (so we can merge several sub-results later).
+        final SortedMap<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentSkipListMap<>();
+        //final Map<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentHashMap<>();
 
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
@@ -81,6 +88,7 @@ class CalculateTokenFrequenciesWholeCorpus {
             final Set<String> fieldsToLoad = new HashSet<>();
             fieldsToLoad.add(lengthTokensFieldName);
             fieldsToLoad.addAll(annotationFINames);
+            fieldsToLoad.addAll(metadataFields);
 
             final IndexReader reader = index.reader();
 
@@ -122,14 +130,14 @@ class CalculateTokenFrequenciesWholeCorpus {
                     //final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), docId), 0, docLength);
                     final String[] metadataValuesForGroup = !docProperties.isEmpty() ? new String[docProperties.size()] : null;
                     for (int i = 0; i < docProperties.size(); ++i)
-                    metadataValuesForGroup[i] = doc.get(docProperties.get(i));
+                        metadataValuesForGroup[i] = doc.get(docProperties.get(i));
                     final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
 
                     // now we have all values for all relevant annotations for this document
                     // iterate again and pair up the nth entries for all annotations, then store that as a group.
 
                     // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-                    Map<GroupIdHash, OccurranceCounts> occsInDoc = new HashMap<>();
+                    Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                     try (BlockTimer ignored = c.child("Group tokens")) {
 
@@ -151,9 +159,9 @@ class CalculateTokenFrequenciesWholeCorpus {
                             final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
                             // Count occurrence in this doc
-                            OccurranceCounts occ = occsInDoc.get(groupId);
+                            OccurrenceCounts occ = occsInDoc.get(groupId);
                             if (occ == null) {
-                                occ = new OccurranceCounts(1, 1);
+                                occ = new OccurrenceCounts(1, 1);
                                 occsInDoc.put(groupId, occ);
                             } else {
                                 occ.hits++;
@@ -164,7 +172,7 @@ class CalculateTokenFrequenciesWholeCorpus {
 
                         // Merge occurrences in this doc with global occurrences
                         occsInDoc.forEach((groupId, occ) -> {
-                            occurances.compute(groupId, (__, groupSize) -> {
+                            occurrences.compute(groupId, (__, groupSize) -> {
                                 if (groupSize != null) {
                                     // Group existed already
                                     // Count hits and doc
@@ -185,6 +193,7 @@ class CalculateTokenFrequenciesWholeCorpus {
             });
         }
 
-        return occurances;
+        return occurrences;
+        //return new TreeMap<>(occurrences); // (if we use concurrenthashmap, we need to sort now)
     }
 }

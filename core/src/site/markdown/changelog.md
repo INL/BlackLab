@@ -140,7 +140,7 @@
 * You can now set isInternal to true on annotations to prevent searching and grouping on it in corpus-frontend
 * Added annotation option allowDuplicateValues (defaults to true). If multipleValues is true and allowDuplicateValues 
   is false, duplicates encountered will not be indexed twice, preventing double hits.
-* Add support for retrieving occurances of a list of terms, /blacklab-server/INDEX_NAME/termfreq
+* Add support for retrieving occurrences of a list of terms, /blacklab-server/INDEX_NAME/termfreq
 
 ### Changed
 * Speeded up searches by allowing hits to be fetched in parallel
