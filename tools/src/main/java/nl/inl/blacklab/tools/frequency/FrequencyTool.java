@@ -45,8 +45,8 @@ import nl.inl.blacklab.searches.SearchHitGroups;
  */
 public class FrequencyTool {
 
-    // Faster/less memory-intensive method is work-in-progress...
-    private static final boolean FASTER_METHOD = true;
+    // Use the standard or less memory-intensive method?
+    private static final boolean USE_LESS_MEMORY_METHOD = true;
 
     static void exit(String msg) {
         System.out.println(msg);
@@ -131,7 +131,7 @@ public class FrequencyTool {
     private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, boolean gzip) {
         String reportName = freqList.getReportName();
         System.out.println("Generate frequency list: " + reportName);
-        if (!FASTER_METHOD) {
+        if (!USE_LESS_MEMORY_METHOD) {
             makeFrequencyListUnoptimized(index, annotatedField, freqList, outputDir, gzip);
             return;
         }
@@ -277,6 +277,7 @@ public class FrequencyTool {
         }
     }
 
+    // Non memory-optimized version
     private static void makeFrequencyListUnoptimized(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, boolean gzip) {
         // Create our search
         try {

@@ -23,7 +23,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 
@@ -42,7 +41,7 @@ class FreqListOutputTsv implements FreqListOutput {
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
         for (int i = 0; i < tokenIds.length; i++) {
-            String token = MatchSensitivity.INSENSITIVE.desensitize(terms[i].get(tokenIds[i]));
+            String token = terms[i].get(tokenIds[i]);
             record.add(token);
         }
         // - metadata values
