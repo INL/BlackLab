@@ -51,9 +51,10 @@ public class PropertyValueContextWord extends PropertyValueContext {
         return new PropertyValueContextWord(index, annotation, sensitivity, termId);
     }
 
+    // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
-        return valueTokenId < 0 ? "-" : terms.get(valueTokenId);
+        return valueTokenId < 0 ? "-" : sensitivity.desensitize(terms.get(valueTokenId));
     }
 
     @Override
