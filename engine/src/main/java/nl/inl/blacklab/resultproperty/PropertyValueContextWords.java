@@ -68,13 +68,14 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
     }
 
+    // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
         if (reverseOnDisplay) {
             for (int i = valueTokenId.length - 1; i >= 0; i--) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? "-" : terms.get(v);
+                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
@@ -83,7 +84,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             }
         } else {
             for (int v : valueTokenId) {
-                String word = v < 0 ? "-" : terms.get(v);
+                String word = v < 0 ? "-" : sensitivity.desensitize(terms.get(v));
                 if (word.length() > 0) {
                     if (b.length() > 0)
                         b.append(" ");
