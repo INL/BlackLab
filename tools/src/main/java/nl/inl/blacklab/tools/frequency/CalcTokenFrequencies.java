@@ -36,6 +36,8 @@ import nl.inl.util.BlockTimer;
  * - don't check if we exceed maxHitsToCount
  * - always process all documents (no document filter query)
  * - return sorted map, so we can perform sub-groupings and merge them later
+ *   (uses ConcurrentSkipListMap, or alternatively wraps a TreeMap at the end;
+ *    note that using ConcurrentSkipListMap has consequences for the compute() method, see there)
  */
 @SuppressWarnings("DuplicatedCode") // see above
 class CalcTokenFrequencies {
@@ -57,7 +59,7 @@ class CalcTokenFrequencies {
         // We use a ConcurrentSkipListMap instead of ConcurrentHashMap because we need the results in key-sorted order
         // (so we can merge several sub-results later).
         final SortedMap<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentSkipListMap<>();
-        //final Map<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentHashMap<>();
+        //final Map<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentHashMap<>(); // must wrap in TreeMap at end
 
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
@@ -92,6 +94,7 @@ class CalcTokenFrequencies {
 
             final IndexReader reader = index.reader();
 
+            //docIds.stream().forEach(docId -> {
             docIds.parallelStream().forEach(docId -> {
 
                 try {
@@ -170,19 +173,17 @@ class CalcTokenFrequencies {
 
                         }
 
+
                         // Merge occurrences in this doc with global occurrences
                         occsInDoc.forEach((groupId, occ) -> {
                             occurrences.compute(groupId, (__, groupSize) -> {
-                                if (groupSize != null) {
-                                    // Group existed already
-                                    // Count hits and doc
-                                    groupSize.hits += occ.hits;
-                                    groupSize.docs += 1;
-                                    return groupSize;
-                                } else {
-                                    // New group. Count hits and doc.
-                                    return occ;
-                                }
+                                // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                                //       because we use ConcurrentSkipListMap, which may call the remapping function
+                                //       multiple times if there's potential concurrency issues.
+                                if (groupSize == null)
+                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                                else
+                                    return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
                             });
                         });
 

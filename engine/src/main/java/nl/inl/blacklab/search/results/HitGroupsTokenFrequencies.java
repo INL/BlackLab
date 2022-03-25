@@ -411,13 +411,10 @@ public class HitGroupsTokenFrequencies {
                                         if (groupSize != null) {
                                             // Group existed already
                                             // Count hits and doc
-                                            groupSize.hits += occ.hits;
-                                            groupSize.docs += 1;
-                                            return groupSize;
-                                        } else {
-                                            // New group. Count hits and doc.
-                                            return occ;
+                                            occ.hits += groupSize.hits;
+                                            occ.docs += groupSize.docs;
                                         }
+                                        return occ;
                                     });
                                 });
 

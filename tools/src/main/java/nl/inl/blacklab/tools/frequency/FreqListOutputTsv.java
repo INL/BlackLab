@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +24,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 
@@ -36,12 +38,12 @@ class FreqListOutputTsv implements FreqListOutput {
                     .withEscape('\\')
                     .withQuoteMode(QuoteMode.NONE);
 
-    static void writeGroupRecord(Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits, int docs) throws IOException {
+    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits, int docs) throws IOException {
         List<String> record = new ArrayList<>();
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
         for (int i = 0; i < tokenIds.length; i++) {
-            String token = terms[i].get(tokenIds[i]);
+            String token = sensitivity[i].desensitize(terms[i].get(tokenIds[i]));
             record.add(token);
         }
         // - metadata values
@@ -121,10 +123,12 @@ class FreqListOutputTsv implements FreqListOutput {
                 Terms[] terms = annotationNames.stream()
                         .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                         .toArray(Terms[]::new);
+                MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
+                Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
                 for (Map.Entry<GroupIdHash,
                         OccurrenceCounts> e : occurrences.entrySet()) {
                     OccurrenceCounts occ = e.getValue();
-                    writeGroupRecord(terms, printer, e.getKey(), occ.hits, occ.docs);
+                    writeGroupRecord(sensitivity, terms, printer, e.getKey(), occ.hits, occ.docs);
                 }
             }
             return outputFile;

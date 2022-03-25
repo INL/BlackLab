@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
@@ -32,6 +33,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -143,13 +145,15 @@ public class FrequencyTool {
         final List<Integer> docIds = new ArrayList<>();
         index.forEachDocument((__, id) -> docIds.add(id));
 
+        // Create tmp dir for the chunk files
+        File tmpDir = new File(outputDir, "tmp");
+        if (!tmpDir.exists() && !tmpDir.mkdir())
+            throw new RuntimeException("Could not create tmp dir: " + tmpDir);
+
         // Process chunks of the documents, saving a sorted chunk for each. At the end we will merge all the chunks
         // to get the final result.
         final int DOCS_PER_CHUNK = 1_000_000;
         final int numberOfChunks = (docIds.size() + DOCS_PER_CHUNK - 1) / DOCS_PER_CHUNK;
-        File tmpDir = new File(outputDir, "tmp");
-        if (!tmpDir.exists() && !tmpDir.mkdir())
-            throw new RuntimeException("Could not create tmp dir: " + tmpDir);
         List<File> chunkFiles = new ArrayList<>();
         for (int i = 0; i < numberOfChunks; i++) {
             int chunkStart = i * DOCS_PER_CHUNK;
@@ -164,11 +168,16 @@ public class FrequencyTool {
             chunkFiles.add(chunkFile);
         }
 
-        // Now merge all the chunk files
+        // Now merge all the chunk files. Because they are sorted, this will consume very little memory,
+        // even if the final output file is huge.
         Terms[] terms = annotationNames.stream()
                 .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                 .toArray(Terms[]::new);
-        mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms);
+        MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
+        Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
+        mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms, sensitivity);
+
+        // Remove chunk files
         for (File chunkFile: chunkFiles) {
             chunkFile.delete();
         }
@@ -194,7 +203,9 @@ public class FrequencyTool {
         }
     }
 
-    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip, Terms[] terms) {
+    // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
+    // This takes very little memory even if the final output file is huge.
+    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip, Terms[] terms, MatchSensitivity[] sensitivity) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         try (OutputStream outputStream = new FileOutputStream(outputFile)) {
             OutputStream stream = outputStream;
@@ -233,9 +244,9 @@ public class FrequencyTool {
                     // until we run out of groups.
                     while (chunksExhausted < n) {
                         // Find lowest key value; we will merge that group next
-                        GroupIdHash nextGroupToMerge = key[0];
-                        for (int j = 1; j < n; j++) {
-                            if (key[j] != null && key[j].compareTo(nextGroupToMerge) < 0)
+                        GroupIdHash nextGroupToMerge = null;
+                        for (int j = 0; j < n; j++) {
+                            if (nextGroupToMerge == null || key[j] != null && key[j].compareTo(nextGroupToMerge) < 0)
                                 nextGroupToMerge = key[j];
                         }
 
@@ -258,7 +269,7 @@ public class FrequencyTool {
                         }
 
                         // Finally, write the merged group to the output file.
-                        FreqListOutputTsv.writeGroupRecord(terms, csv, nextGroupToMerge, hits, docs);
+                        FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, docs);
                     }
 
                 } catch (ClassNotFoundException e) {

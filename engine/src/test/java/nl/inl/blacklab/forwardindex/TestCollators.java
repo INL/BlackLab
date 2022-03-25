@@ -15,6 +15,10 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestCollators {
 
+    private static final char CHAR_SOFT_HYPHEN = '\u00ad';
+
+    private static final char CHAR_GENERAL_PUNCTUATION = '\u2003';
+
     /** A "Zalgo" text string, containing lots of combining diacritics marks. */
     private String zalgo1;
 
@@ -66,5 +70,16 @@ public class TestCollators {
     public void testZalgoTextWithDefaultCollator() {
         // This should succeed, even on Java 8, but is here just for completeness.
         Assert.assertEquals(1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));
+    }
+
+    @Test
+    public void testInsensitiveCompare() {
+        String testWithShy = "test" + CHAR_SOFT_HYPHEN;
+        Assert.assertEquals(0, getBlackLabCollator().compare(testWithShy, "test"));
+        Assert.assertEquals(MatchSensitivity.INSENSITIVE.desensitize(testWithShy), "test");
+
+        String testWithGP = "test" + CHAR_GENERAL_PUNCTUATION;
+        Assert.assertEquals(0, getBlackLabCollator().compare(testWithGP, "test"));
+        Assert.assertEquals(MatchSensitivity.INSENSITIVE.desensitize(testWithGP), "test");
     }
 }
