@@ -43,6 +43,13 @@ class Config {
      */
     private List<ConfigFreqList> frequencyLists;
 
+    /**
+     * How many docs to process until writing the intermediate result to disk.
+     *
+     * Higher values decrease processing overhead but increase memory requirements.
+     */
+    private int docsPerChunk = 100_000;
+
     public String getAnnotatedField() {
         return annotatedField;
     }
@@ -58,6 +65,15 @@ class Config {
     @SuppressWarnings("unused")
     public void setFrequencyLists(List<ConfigFreqList> frequencyLists) {
         this.frequencyLists = frequencyLists;
+    }
+
+    @SuppressWarnings("unused")
+    public void setDocsPerChunk(int docsPerChunk) {
+        this.docsPerChunk = docsPerChunk;
+    }
+
+    public int getDocsPerChunk() {
+        return this.docsPerChunk;
     }
 
     @Override

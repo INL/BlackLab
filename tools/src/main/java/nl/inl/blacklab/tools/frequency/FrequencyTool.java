@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.SortedMap;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVPrinter;
@@ -106,9 +107,6 @@ public class FrequencyTool {
                 exit("Can't read config file " + configFile);
             }
             Config config = Config.fromFile(configFile);
-            AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
-            config.check(index);
-            index.setCache(new SearchCacheDummy()); // don't cache results
 
             // Output dir
             File outputDir = new File(System.getProperty("user.dir")); // current dir
@@ -120,17 +118,21 @@ public class FrequencyTool {
             }
 
             // Generate the frequency lists
-            makeFrequencyLists(index, annotatedField, config.getFrequencyLists(), outputDir, gzip);
+            makeFrequencyLists(index, config, outputDir, gzip);
         }
     }
 
-    private static void makeFrequencyLists(BlackLabIndex index, AnnotatedField annotatedField, List<ConfigFreqList> freqLists, File outputDir, boolean gzip) {
-        for (ConfigFreqList freqList: freqLists) {
-            makeFrequencyList(index, annotatedField, freqList, outputDir, gzip);
+    private static void makeFrequencyLists(BlackLabIndex index, Config config, File outputDir, boolean gzip) {
+        AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
+        config.check(index);
+        index.setCache(new SearchCacheDummy()); // don't cache results
+        for (ConfigFreqList freqList: config.getFrequencyLists()) {
+            makeFrequencyList(index, annotatedField, freqList, outputDir, gzip, config.getDocsPerChunk());
         }
     }
 
-    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, boolean gzip) {
+    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
+                                          File outputDir, boolean gzip, int docsPerChunk) {
         String reportName = freqList.getReportName();
         System.out.println("Generate frequency list: " + reportName);
         if (!USE_LESS_MEMORY_METHOD) {
@@ -152,12 +154,11 @@ public class FrequencyTool {
 
         // Process chunks of the documents, saving a sorted chunk for each. At the end we will merge all the chunks
         // to get the final result.
-        final int DOCS_PER_CHUNK = 1_000_000;
-        final int numberOfChunks = (docIds.size() + DOCS_PER_CHUNK - 1) / DOCS_PER_CHUNK;
+        final int numberOfChunks = (docIds.size() + docsPerChunk - 1) / docsPerChunk;
         List<File> chunkFiles = new ArrayList<>();
         for (int i = 0; i < numberOfChunks; i++) {
-            int chunkStart = i * DOCS_PER_CHUNK;
-            int chunkEnd = Math.min(docIds.size(), chunkStart + DOCS_PER_CHUNK);
+            int chunkStart = i * docsPerChunk;
+            int chunkEnd = Math.min(docIds.size(), chunkStart + docsPerChunk);
             List<Integer> docIdsInChunk = docIds.subList(chunkStart, chunkEnd);
             SortedMap<GroupIdHash, OccurrenceCounts> occurrences =
                     CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk);
@@ -179,25 +180,29 @@ public class FrequencyTool {
 
         // Remove chunk files
         for (File chunkFile: chunkFiles) {
-            chunkFile.delete();
+            if (!chunkFile.delete())
+                System.err.println("Could not delete: " + chunkFile);
         }
-        tmpDir.delete();
+        if (!tmpDir.delete())
+            System.err.println("Could not delete: " + tmpDir);
     }
 
     private static void writeChunkFile(File chunkFile, SortedMap<GroupIdHash, OccurrenceCounts> occurrences) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile)) {
-            try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
-                // Write keys and values in sorted order, so we can merge later
-                objectOutputStream.writeInt(occurrences.size()); // start with number of groups
-                occurrences.forEach((key, value) -> {
-                    try {
-                        objectOutputStream.writeObject(key);
-                        objectOutputStream.writeObject(value);
-                    } catch (IOException e) {
-                        throw new RuntimeException();
-                    }
-                });
-            }
+        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile);
+             GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
+             ObjectOutputStream objectOutputStream = new ObjectOutputStream(gzipOutputStream)) {
+
+            // Write keys and values in sorted order, so we can merge later
+            objectOutputStream.writeInt(occurrences.size()); // start with number of groups
+            occurrences.forEach((key, value) -> {
+                try {
+                    objectOutputStream.writeObject(key);
+                    objectOutputStream.writeObject(value);
+                } catch (IOException e) {
+                    throw new RuntimeException();
+                }
+            });
+
         } catch (IOException e) {
             throw new RuntimeException();
         }
@@ -215,6 +220,7 @@ public class FrequencyTool {
                  CSVPrinter csv = new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT)) {
                 int n = chunkFiles.size();
                 FileInputStream[] inputStreams = new FileInputStream[n];
+                GZIPInputStream[] gzipInputStreams = new GZIPInputStream[n];
                 ObjectInputStream[] chunks = new ObjectInputStream[n];
                 int[] numGroups = new int[n]; // groups per chunk file
 
@@ -229,7 +235,9 @@ public class FrequencyTool {
                         File chunkFile = chunkFiles.get(i);
                         FileInputStream fis = new FileInputStream(chunkFile);
                         inputStreams[i] = fis;
-                        ObjectInputStream ois = new ObjectInputStream(fis);
+                        GZIPInputStream gis = new GZIPInputStream(fis);
+                        gzipInputStreams[i] = gis;
+                        ObjectInputStream ois = new ObjectInputStream(gis);
                         numGroups[i] = ois.readInt();
                         chunks[i] = ois;
                         // Initialize index, key and value with first group from each file
@@ -269,18 +277,19 @@ public class FrequencyTool {
                         }
 
                         // Finally, write the merged group to the output file.
-                        FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, docs);
+                        if (nextGroupToMerge != null)
+                            FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, docs);
                     }
 
                 } catch (ClassNotFoundException e) {
                     throw new RuntimeException();
                 } finally {
-                    for (ObjectInputStream chunk : chunks) {
+                    for (ObjectInputStream chunk: chunks)
                         chunk.close();
-                    }
-                    for (FileInputStream fis : inputStreams) {
+                    for (GZIPInputStream gis: gzipInputStreams)
+                        gis.close();
+                    for (FileInputStream fis: inputStreams)
                         fis.close();
-                    }
                 }
             }
         } catch (IOException e) {
