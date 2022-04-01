@@ -68,7 +68,7 @@ public class BLConfigSearch {
         int maxHitsToCount = getMaxHitsToCount();
         long fiMatchFactor = getFiMatchFactor();
         SearchSettings sett = SearchSettings.get(maxHitsToProcess, maxHitsToCount, fiMatchFactor);
-        ClauseCombinerNfa.setDefaultForwardIndexMatchingThreshold(fiMatchFactor);
+        ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
         index.setSearchSettings(sett);
     }
 }
