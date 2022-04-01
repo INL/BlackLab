@@ -8,7 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
@@ -48,18 +48,11 @@ class CalcTokenFrequencies {
      * @param index index
      * @param annotations annotations to group on
      * @param metadataFields metadata fields to group on
-     * @return token frequencies
+     * @param occurrences grouping to add to
      */
-    public static SortedMap<GroupIdHash, OccurrenceCounts> get(BlackLabIndex index, List<Annotation> annotations,
-                                                               List<String> metadataFields, List<Integer> docIds) {
-
-        // This is where we store our groups while we're computing/gathering them.
-        // Maps from group Id to number of hits and number of docs
-        // ConcurrentMap because we're counted in parallel.
-        // We use a ConcurrentSkipListMap instead of ConcurrentHashMap because we need the results in key-sorted order
-        // (so we can merge several sub-results later).
-        final SortedMap<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentSkipListMap<>();
-        //final Map<GroupIdHash, OccurrenceCounts> occurrences = new ConcurrentHashMap<>(); // must wrap in TreeMap at end
+    public static void get(BlackLabIndex index, List<Annotation> annotations,
+                                                               List<String> metadataFields, List<Integer> docIds,
+                                                               ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences) {
 
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
@@ -94,7 +87,6 @@ class CalcTokenFrequencies {
 
             final IndexReader reader = index.reader();
 
-            //docIds.stream().forEach(docId -> {
             docIds.parallelStream().forEach(docId -> {
 
                 try {
@@ -175,17 +167,36 @@ class CalcTokenFrequencies {
 
 
                         // Merge occurrences in this doc with global occurrences
-                        occsInDoc.forEach((groupId, occ) -> {
-                            occurrences.compute(groupId, (__, groupSize) -> {
-                                // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                                //       because we use ConcurrentSkipListMap, which may call the remapping function
-                                //       multiple times if there's potential concurrency issues.
-                                if (groupSize == null)
-                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                                else
-                                    return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
+                        if (occurrences instanceof ConcurrentSkipListMap) {
+                            // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                            //       because we use ConcurrentSkipListMap, which may call the remapping function
+                            //       multiple times if there's potential concurrency issues.
+                            occsInDoc.forEach((groupId, occ) -> {
+                                occurrences.compute(groupId, (__, groupSize) -> {
+                                    if (groupSize == null)
+                                        return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                                    else
+                                        return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
+                                });
                             });
-                        });
+                        } else {
+                            // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
+                            // because our remapping function will only be called once.
+                            occsInDoc.forEach((groupId, occ) -> {
+                                occurrences.compute(groupId, (__, groupSize) -> {
+                                    // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                                    //       because we use ConcurrentSkipListMap, which may call the remapping function
+                                    //       multiple times if there's potential concurrency issues.
+                                    if (groupSize != null) {
+                                        // Group existed already
+                                        // Count hits and doc
+                                        occ.hits += groupSize.hits;
+                                        occ.docs += groupSize.docs;
+                                    }
+                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                                });
+                            });
+                        }
 
                     }
                 } catch (IOException e) {
@@ -194,7 +205,5 @@ class CalcTokenFrequencies {
             });
         }
 
-        return occurrences;
-        //return new TreeMap<>(occurrences); // (if we use concurrenthashmap, we need to sort now)
     }
 }

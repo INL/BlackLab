@@ -19,6 +19,47 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 class Config {
 
     /**
+     * Number of docs to process in parallel per run. After each run,
+     * we check if we need to write to chunk file.
+     *
+     * Larger values allow more parallellism but risk overshooting the
+     * chunk file size target.
+     *
+     * Optional, for advanced performance tuning.
+     */
+    private int docsToProcessInParallel = 100_000;
+
+    /**
+     * How large to grow the grouping until we write the intermediate result to disk.
+     *
+     * Higher values decrease processing overhead but increase memory requirements.
+     *
+     * Optional, for advanced performance tuning.
+     */
+    private int groupsPerChunk = 5_000_000;
+
+    /**
+     * Use regular search instead of specifically optimized one?
+     *
+     * Optional, for debugging.
+     */
+    private boolean useRegularSearch = false;
+
+    /**
+     * Use ConcurrentHashMap instead of ConcurrentSkipList?
+     *
+     * Optional, for debugging.
+     */
+    private boolean useHashMap = false;
+
+    /**
+     * How often to count each document.
+     *
+     * Optional, for debugging.
+     */
+    private int repetitions = 1;
+
+    /**
      * Read config from file.
      *
      * @param f config file
@@ -43,13 +84,6 @@ class Config {
      */
     private List<ConfigFreqList> frequencyLists;
 
-    /**
-     * How many docs to process until writing the intermediate result to disk.
-     *
-     * Higher values decrease processing overhead but increase memory requirements.
-     */
-    private int docsPerChunk = 100_000;
-
     public String getAnnotatedField() {
         return annotatedField;
     }
@@ -68,12 +102,39 @@ class Config {
     }
 
     @SuppressWarnings("unused")
-    public void setDocsPerChunk(int docsPerChunk) {
-        this.docsPerChunk = docsPerChunk;
+    public void setGroupsPerChunk(int groupsPerChunk) {
+        this.groupsPerChunk = groupsPerChunk;
     }
 
-    public int getDocsPerChunk() {
-        return this.docsPerChunk;
+    public int getGroupsPerChunk() {
+        return this.groupsPerChunk;
+    }
+
+    public int getDocsToProcessInParallel() {
+        return this.docsToProcessInParallel;
+    }
+
+    @SuppressWarnings("unused")
+    public void setDocsToProcessInParallel(int docsToProcessInParallel) {
+        this.docsToProcessInParallel = docsToProcessInParallel;
+    }
+
+    public boolean isUseRegularSearch() {
+        return useRegularSearch;
+    }
+
+    @SuppressWarnings("unused")
+    public void setUseRegularSearch(boolean useRegularSearch) {
+        this.useRegularSearch = useRegularSearch;
+    }
+
+    public boolean isUseHashMap() {
+        return useHashMap;
+    }
+
+    @SuppressWarnings("unused")
+    public void setUseHashMap(boolean useHashMap) {
+        this.useHashMap = useHashMap;
     }
 
     @Override
@@ -109,5 +170,14 @@ class Config {
                     throw new IllegalArgumentException("Metadata field not found: " + m);
             }
         }
+    }
+
+    public int getRepetitions() {
+        return this.repetitions;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRepetitions(int repetitions) {
+        this.repetitions = repetitions;
     }
 }

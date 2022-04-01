@@ -13,7 +13,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -41,15 +46,13 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.util.Timer;
 
 /**
  * Determine frequency lists over annotation(s) and
  * metadata field(s) for the entire index.
  */
 public class FrequencyTool {
-
-    // Use the standard or less memory-intensive method?
-    private static final boolean USE_LESS_MEMORY_METHOD = true;
 
     static void exit(String msg) {
         System.out.println(msg);
@@ -69,6 +72,7 @@ public class FrequencyTool {
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex {
+
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         // Check for options
@@ -117,8 +121,12 @@ public class FrequencyTool {
                 exit("Not a directory or cannot write to output dir " + outputDir);
             }
 
+            Timer t = new Timer();
+
             // Generate the frequency lists
             makeFrequencyLists(index, config, outputDir, gzip);
+
+            System.out.println("TOTAL TIME: " + t.elapsedDescription(true));
         }
     }
 
@@ -127,16 +135,31 @@ public class FrequencyTool {
         config.check(index);
         index.setCache(new SearchCacheDummy()); // don't cache results
         for (ConfigFreqList freqList: config.getFrequencyLists()) {
-            makeFrequencyList(index, annotatedField, freqList, outputDir, gzip, config.getDocsPerChunk());
+            Timer t = new Timer();
+            makeFrequencyList(index, annotatedField, freqList, outputDir, gzip, config);
+            System.out.println("  Time: " + t.elapsedDescription());
         }
     }
 
     private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                                          File outputDir, boolean gzip, int docsPerChunk) {
+                                          File outputDir, boolean gzip, Config config) {
         String reportName = freqList.getReportName();
-        System.out.println("Generate frequency list: " + reportName);
-        if (!USE_LESS_MEMORY_METHOD) {
-            makeFrequencyListUnoptimized(index, annotatedField, freqList, outputDir, gzip);
+
+        List<String> extraInfo = new ArrayList<>();
+        if (config.getRepetitions() > 1)
+            extraInfo.add(config.getRepetitions() + " repetitions");
+        if (config.isUseRegularSearch())
+            extraInfo.add("regular search");
+        else {
+            if (config.isUseHashMap())
+                extraInfo.add("hashmap");
+        }
+        String strExtraInfo = extraInfo.isEmpty() ? "" : " (" + StringUtils.join(extraInfo, ", ") + ")";
+        System.out.println("Generate frequency list" + strExtraInfo + ": " + reportName);
+
+        if (config.isUseRegularSearch()) {
+            // Skip optimizations (debug)
+            makeFrequencyListUnoptimized(index, annotatedField, freqList, outputDir, gzip, config);
             return;
         }
 
@@ -152,31 +175,75 @@ public class FrequencyTool {
         if (!tmpDir.exists() && !tmpDir.mkdir())
             throw new RuntimeException("Could not create tmp dir: " + tmpDir);
 
-        // Process chunks of the documents, saving a sorted chunk for each. At the end we will merge all the chunks
-        // to get the final result.
-        final int numberOfChunks = (docIds.size() + docsPerChunk - 1) / docsPerChunk;
+        // Process the documents in parallel runs. After each run, check the size of the grouping,
+        // and write it as a sorted chunk file if it exceeds the configured size.
+        // At the end we will merge all the chunks to get the final result.
         List<File> chunkFiles = new ArrayList<>();
-        for (int i = 0; i < numberOfChunks; i++) {
-            int chunkStart = i * docsPerChunk;
-            int chunkEnd = Math.min(docIds.size(), chunkStart + docsPerChunk);
-            List<Integer> docIdsInChunk = docIds.subList(chunkStart, chunkEnd);
-            SortedMap<GroupIdHash, OccurrenceCounts> occurrences =
-                    CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk);
-            String chunkName = reportName + i;
+        final int docsToProcessInParallel = config.getDocsToProcessInParallel();
+        int chunkNumber = 0;
 
-            File chunkFile = new File(tmpDir, chunkName + ".chunk");
-            writeChunkFile(chunkFile, occurrences);
-            chunkFiles.add(chunkFile);
+        // This is where we store our groups while we're computing/gathering them.
+        // Maps from group Id to number of hits and number of docs
+        // ConcurrentMap because we're counting in parallel.
+        ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences = null;
+
+        for (int rep = 0; rep < config.getRepetitions(); rep++) { // FOR DEBUGGING
+
+            for (int i = 0; i < docIds.size(); i += docsToProcessInParallel) {
+                int runStart = i;
+                int runEnd = Math.min(i + docsToProcessInParallel, docIds.size());
+                List<Integer> docIdsInChunk = docIds.subList(runStart, runEnd);
+
+                // Make sure we have a map
+                if (occurrences == null) {
+                    // We use a ConcurrentSkipListMap instead of ConcurrentHashMap because we need the results in key-sorted order
+                    // (so we can merge several sub-results later).
+                    occurrences = config.isUseHashMap() ? new ConcurrentHashMap<>() : new ConcurrentSkipListMap<>();
+                }
+
+                // Process current run of documents and add to grouping
+                CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk, occurrences);
+
+                System.out.println("  Processed docs " + runStart + "-" + runEnd + ", " + occurrences.size() + " entries");
+
+                // If the grouping has gotten too large, write it to file so we don't run out of memory.
+                boolean groupingTooLarge = occurrences.size() > config.getGroupsPerChunk();
+                boolean isFinalRun = rep == config.getRepetitions() - 1 && runEnd >= docIds.size();
+                if (groupingTooLarge || isFinalRun) {
+
+                    // If we used a ConcurrentHashMap, sort it now
+                    SortedMap<GroupIdHash, OccurrenceCounts> sorted = config.isUseHashMap() ?
+                            new TreeMap<>(occurrences) :
+                            (SortedMap<GroupIdHash, OccurrenceCounts>) occurrences;
+
+                    if (isFinalRun && chunkNumber == 0) {
+                        // There's only one chunk. We can skip writing intermediate file and write result directly.
+                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, sorted, outputDir, gzip);
+                    } else if (groupingTooLarge || isFinalRun) {
+                        // Write next chunk file.
+                        chunkNumber++;
+                        String chunkName = reportName + chunkNumber;
+                        File chunkFile = new File(tmpDir, chunkName + ".chunk");
+                        System.out.println("  Writing " + chunkFile);
+                        writeChunkFile(chunkFile, sorted);
+                        occurrences = null; // free memory, allocate new on next iteration
+                        chunkFiles.add(chunkFile);
+                    }
+                }
+            }
         }
 
-        // Now merge all the chunk files. Because they are sorted, this will consume very little memory,
-        // even if the final output file is huge.
-        Terms[] terms = annotationNames.stream()
-                .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
-                .toArray(Terms[]::new);
-        MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
-        Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-        mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms, sensitivity);
+        // Did we write intermediate chunk files that have to be merged?
+        if (chunkNumber > 0) {
+            // Yes, merge all the chunk files. Because they are sorted, this will consume very little memory,
+            // even if the final output file is huge.
+            Terms[] terms = annotationNames.stream()
+                    .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                    .toArray(Terms[]::new);
+            MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
+            Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
+            mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms, sensitivity);
+        }
 
         // Remove chunk files
         for (File chunkFile: chunkFiles) {
@@ -187,7 +254,7 @@ public class FrequencyTool {
             System.err.println("Could not delete: " + tmpDir);
     }
 
-    private static void writeChunkFile(File chunkFile, SortedMap<GroupIdHash, OccurrenceCounts> occurrences) {
+    private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences) {
         try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile);
              GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(gzipOutputStream)) {
@@ -212,6 +279,7 @@ public class FrequencyTool {
     // This takes very little memory even if the final output file is huge.
     private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip, Terms[] terms, MatchSensitivity[] sensitivity) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
+        System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
         try (OutputStream outputStream = new FileOutputStream(outputFile)) {
             OutputStream stream = outputStream;
             if (gzip)
@@ -298,12 +366,16 @@ public class FrequencyTool {
     }
 
     // Non memory-optimized version
-    private static void makeFrequencyListUnoptimized(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, boolean gzip) {
+    private static void makeFrequencyListUnoptimized(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, File outputDir, boolean gzip, Config config) {
+
         // Create our search
         try {
             // Execute search and write output file
             SearchHitGroups search = getSearch(index, annotatedField, freqList);
-            HitGroups result = search.execute();
+            HitGroups result = null;
+            for (int i = 0; i < Math.max(1, config.getRepetitions()); i++) {
+                result = search.execute();
+            }
             FreqListOutput.TSV.write(index, annotatedField, freqList, result, outputDir, gzip);
         } catch (InvalidQuery e) {
             throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);

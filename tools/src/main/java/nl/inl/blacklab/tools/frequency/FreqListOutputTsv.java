@@ -114,6 +114,7 @@ class FreqListOutputTsv implements FreqListOutput {
                       List<String> annotationNames, SortedMap<GroupIdHash, OccurrenceCounts> occurrences,
                       File outputDir, boolean gzip) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
+        System.out.println("  Writing " + outputFile);
         try (OutputStream outputStream = new FileOutputStream(outputFile)) {
             OutputStream stream = outputStream;
             if (gzip)
