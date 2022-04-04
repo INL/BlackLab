@@ -154,10 +154,13 @@ public class ResultsCache implements SearchCache {
                     ThreadContext.remove("requestId");
                     return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
                 }));
-                CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
-                logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
-                runningJobs.remove(searchWrapper.getSearch());
-                return searchResult.getResults();
+                try {
+                    CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
+                    logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
+                    return searchResult.getResults();
+                } finally {
+                    runningJobs.remove(searchWrapper.getSearch());
+                }
             }
         };
 
