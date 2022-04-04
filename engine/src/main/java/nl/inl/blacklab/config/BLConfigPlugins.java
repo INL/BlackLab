@@ -21,6 +21,8 @@ public class BLConfigPlugins {
     }
 
     public void setPlugins(Map<String, Map<String, String>> plugins) {
-        this.plugins = plugins;
-    }       
+        if (plugins != null) {
+            this.plugins = plugins;
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.io.IOException;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -190,6 +191,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "strip":
                 result = opStrip(result, param);
                 break;
+             case "concatDate":
+                result = opConcatDate(param);
+                break;
             case "parsePos":
             {
                 // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
@@ -338,6 +342,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 }
                 break;
             }
+            case "concatDate":
+                String s = opConcatDate(param);
+                if (!s.isEmpty()) {
+                    result.set(0, s);
+                }
+                break;
             default:
                 // In the future, we'll support user plugins here
                 throw new UnsupportedOperationException("Unknown processing step method " + method);
@@ -380,7 +390,42 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         result = StringUtils.strip(result, stripChars);
         return result;
     }
-
+    
+    /**
+     * Concatenate 3 separate date fields into one. 
+     * E.g. 
+     * Year: 2000
+     * Month: 10
+     * Day: 19
+     * 
+     * Result: "20001019"
+     *  
+     * @param result
+     * @param param
+     * @return
+     */
+    protected String opConcatDate(Map<String, String> param) {
+        String yearField = param.get("yearField");
+        String monthField = param.get("monthField");
+        String dayField = param.get("dayField");
+        String mode = param.get("autofill");
+        if (yearField == null || monthField == null || dayField == null || mode == null || !(mode.equalsIgnoreCase("start")||mode.equalsIgnoreCase("end")))
+            throw new InvalidInputFormatConfig("concatDate needs parameters yearField, monthField, dayField, and autoFill ('start' or 'end')");
+        
+        boolean isStart = mode.equalsIgnoreCase("start");
+        Integer y, m, d;
+        try { y = Integer.parseInt(getMetadataField(yearField).get(0)); } catch (Exception e) { y = null; }
+        try { m = Integer.parseInt(getMetadataField(monthField).get(0)); } catch (Exception e) { m = null; }
+        try { d = Integer.parseInt(getMetadataField(dayField).get(0)); } catch (Exception e) { d = null; }
+        
+        if (y == null) return "";
+        if (m == null || m > 12 || m < 1) m = isStart ? 1 : 12;
+        int maxDay = YearMonth.of(y, m).lengthOfMonth();
+        if (d == null || d > maxDay || d < 1) d = isStart ? 1 : maxDay; 
+        
+        return StringUtils.leftPad(y.toString(), 4, '0') + StringUtils.leftPad(m.toString(), 2, '0') + StringUtils.leftPad(d.toString(), 2, '0'); 
+    }
+    
     protected String opChatFormatAgeToMonths(String result) {
         // 1;10.30 => 1 jaar, 10 maanden, 30 dagen => afgerond 23 maanden?
         String[] parts = result.split("[;\\.]", 3);
