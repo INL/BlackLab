@@ -12,7 +12,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -38,7 +37,7 @@ class FreqListOutputTsv implements FreqListOutput {
                     .withEscape('\\')
                     .withQuoteMode(QuoteMode.NONE);
 
-    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits, int docs) throws IOException {
+    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits) throws IOException {
         List<String> record = new ArrayList<>();
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
@@ -52,7 +51,6 @@ class FreqListOutputTsv implements FreqListOutput {
             Collections.addAll(record, metadataValues);
         // - group size (hits/docs)
         record.add(Long.toString(hits));
-        //DEBUG record.add(Long.toString(docs));
         csv.printRecord(record);
     }
 
@@ -111,7 +109,7 @@ class FreqListOutputTsv implements FreqListOutput {
      */
     @Override
     public File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
-                      List<String> annotationNames, SortedMap<GroupIdHash, OccurrenceCounts> occurrences,
+                      List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
                       File outputDir, boolean gzip) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Writing " + outputFile);
@@ -129,7 +127,7 @@ class FreqListOutputTsv implements FreqListOutput {
                 for (Map.Entry<GroupIdHash,
                         OccurrenceCounts> e : occurrences.entrySet()) {
                     OccurrenceCounts occ = e.getValue();
-                    writeGroupRecord(sensitivity, terms, printer, e.getKey(), occ.hits, occ.docs);
+                    writeGroupRecord(sensitivity, terms, printer, e.getKey(), occ.hits);
                 }
             }
             return outputFile;

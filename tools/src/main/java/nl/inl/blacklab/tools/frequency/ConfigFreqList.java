@@ -69,4 +69,10 @@ class ConfigFreqList {
                 ", metadataFields=" + metadataFields +
                 '}';
     }
+
+    public String show() {
+        return "- " + getReportName() + "\n" +
+                "  annotations: " + annotations + "\n" +
+                "  metadataFields: " + metadataFields;
+    }
 }

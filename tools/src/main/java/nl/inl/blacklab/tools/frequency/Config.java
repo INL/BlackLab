@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -27,7 +28,7 @@ class Config {
      *
      * Optional, for advanced performance tuning.
      */
-    private int docsToProcessInParallel = 100_000;
+    private int docsToProcessInParallel = 500_000;
 
     /**
      * How large to grow the grouping until we write the intermediate result to disk.
@@ -36,7 +37,15 @@ class Config {
      *
      * Optional, for advanced performance tuning.
      */
-    private int groupsPerChunk = 5_000_000;
+    private int groupsPerChunk = 10_000_000;
+
+    /**
+     * Compress temporary ("chunk") files?
+     *
+     * Optional. Takes less disk space but requires more processing time.
+     * Default: false.
+     */
+    private boolean compressTempFiles = false;
 
     /**
      * Use regular search instead of specifically optimized one?
@@ -44,13 +53,6 @@ class Config {
      * Optional, for debugging.
      */
     private boolean useRegularSearch = false;
-
-    /**
-     * Use ConcurrentHashMap instead of ConcurrentSkipList?
-     *
-     * Optional, for debugging.
-     */
-    private boolean useHashMap = false;
 
     /**
      * How often to count each document.
@@ -128,21 +130,35 @@ class Config {
         this.useRegularSearch = useRegularSearch;
     }
 
-    public boolean isUseHashMap() {
-        return useHashMap;
+    public boolean isCompressTempFiles() {
+        return compressTempFiles;
     }
 
     @SuppressWarnings("unused")
-    public void setUseHashMap(boolean useHashMap) {
-        this.useHashMap = useHashMap;
+    public void setCompressTempFiles(boolean compressTempFiles) {
+        this.compressTempFiles = compressTempFiles;
     }
 
     @Override
     public String toString() {
         return "Config{" +
-                "annotatedField='" + annotatedField + '\'' +
+                "docsToProcessInParallel=" + docsToProcessInParallel +
+                ", groupsPerChunk=" + groupsPerChunk +
+                ", useRegularSearch=" + useRegularSearch +
+                ", repetitions=" + repetitions +
+                ", annotatedField='" + annotatedField + '\'' +
                 ", frequencyLists=" + frequencyLists +
                 '}';
+    }
+
+    public String show() {
+        return "docsToProcessInParallel: " + docsToProcessInParallel + "\n" +
+                "groupsPerChunk: " + groupsPerChunk + "\n" +
+                "useRegularSearch: " + useRegularSearch + "\n" +
+                "repetitions: " + repetitions + "\n" +
+                "annotatedField: '" + annotatedField + "\n" +
+                "frequencyLists:\n" +
+                frequencyLists.stream().map(fl -> fl.show()).collect(Collectors.joining("\n"));
     }
 
     /**
@@ -180,4 +196,6 @@ class Config {
     public void setRepetitions(int repetitions) {
         this.repetitions = repetitions;
     }
+
+
 }

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
@@ -18,7 +19,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -111,6 +111,7 @@ public class FrequencyTool {
                 exit("Can't read config file " + configFile);
             }
             Config config = Config.fromFile(configFile);
+            System.out.println("CONFIGURATION:\n" + config.show());
 
             // Output dir
             File outputDir = new File(System.getProperty("user.dir")); // current dir
@@ -150,10 +151,6 @@ public class FrequencyTool {
             extraInfo.add(config.getRepetitions() + " repetitions");
         if (config.isUseRegularSearch())
             extraInfo.add("regular search");
-        else {
-            if (config.isUseHashMap())
-                extraInfo.add("hashmap");
-        }
         String strExtraInfo = extraInfo.isEmpty() ? "" : " (" + StringUtils.join(extraInfo, ", ") + ")";
         System.out.println("Generate frequency list" + strExtraInfo + ": " + reportName);
 
@@ -196,9 +193,9 @@ public class FrequencyTool {
 
                 // Make sure we have a map
                 if (occurrences == null) {
-                    // We use a ConcurrentSkipListMap instead of ConcurrentHashMap because we need the results in key-sorted order
-                    // (so we can merge several sub-results later).
-                    occurrences = config.isUseHashMap() ? new ConcurrentHashMap<>() : new ConcurrentSkipListMap<>();
+                    // NOTE: we looked at ConcurrentSkipListMap which keeps entries in sorted order,
+                    //       but it was faster to use a HashMap and sort it afterwards.
+                    occurrences = new ConcurrentHashMap<>();
                 }
 
                 // Process current run of documents and add to grouping
@@ -211,21 +208,20 @@ public class FrequencyTool {
                 boolean isFinalRun = rep == config.getRepetitions() - 1 && runEnd >= docIds.size();
                 if (groupingTooLarge || isFinalRun) {
 
-                    // If we used a ConcurrentHashMap, sort it now
-                    SortedMap<GroupIdHash, OccurrenceCounts> sorted = config.isUseHashMap() ?
-                            new TreeMap<>(occurrences) :
-                            (SortedMap<GroupIdHash, OccurrenceCounts>) occurrences;
-
                     if (isFinalRun && chunkNumber == 0) {
                         // There's only one chunk. We can skip writing intermediate file and write result directly.
-                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, sorted, outputDir, gzip);
+                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, occurrences, outputDir, gzip);
+                        occurrences = null;
                     } else if (groupingTooLarge || isFinalRun) {
+                        // Sort our map now.
+                        SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
+
                         // Write next chunk file.
                         chunkNumber++;
                         String chunkName = reportName + chunkNumber;
                         File chunkFile = new File(tmpDir, chunkName + ".chunk");
                         System.out.println("  Writing " + chunkFile);
-                        writeChunkFile(chunkFile, sorted);
+                        writeChunkFile(chunkFile, sorted, config.isCompressTempFiles());
                         occurrences = null; // free memory, allocate new on next iteration
                         chunkFiles.add(chunkFile);
                     }
@@ -242,7 +238,7 @@ public class FrequencyTool {
                     .toArray(Terms[]::new);
             MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
             Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-            mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms, sensitivity);
+            mergeChunkFiles(chunkFiles, outputDir, reportName, gzip, terms, sensitivity, config.isCompressTempFiles());
         }
 
         // Remove chunk files
@@ -254,21 +250,27 @@ public class FrequencyTool {
             System.err.println("Could not delete: " + tmpDir);
     }
 
-    private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile);
-             GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
-             ObjectOutputStream objectOutputStream = new ObjectOutputStream(gzipOutputStream)) {
+    private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, boolean compress) {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile)) {
+             OutputStream gzipOutputStream = compress ? new GZIPOutputStream(fileOutputStream) : fileOutputStream;
+             try {
+                 try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(gzipOutputStream)) {
 
-            // Write keys and values in sorted order, so we can merge later
-            objectOutputStream.writeInt(occurrences.size()); // start with number of groups
-            occurrences.forEach((key, value) -> {
-                try {
-                    objectOutputStream.writeObject(key);
-                    objectOutputStream.writeObject(value);
-                } catch (IOException e) {
-                    throw new RuntimeException();
-                }
-            });
+                     // Write keys and values in sorted order, so we can merge later
+                     objectOutputStream.writeInt(occurrences.size()); // start with number of groups
+                     occurrences.forEach((key, value) -> {
+                         try {
+                             objectOutputStream.writeObject(key);
+                             objectOutputStream.writeObject(value);
+                         } catch (IOException e) {
+                             throw new RuntimeException();
+                         }
+                     });
+                 }
+             } finally {
+                 if (compress)
+                     gzipOutputStream.close();
+             }
 
         } catch (IOException e) {
             throw new RuntimeException();
@@ -277,7 +279,7 @@ public class FrequencyTool {
 
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
-    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip, Terms[] terms, MatchSensitivity[] sensitivity) {
+    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip, Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
         try (OutputStream outputStream = new FileOutputStream(outputFile)) {
@@ -287,8 +289,8 @@ public class FrequencyTool {
             try (Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
                  CSVPrinter csv = new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT)) {
                 int n = chunkFiles.size();
-                FileInputStream[] inputStreams = new FileInputStream[n];
-                GZIPInputStream[] gzipInputStreams = new GZIPInputStream[n];
+                InputStream[] inputStreams = new InputStream[n];
+                InputStream[] gzipInputStreams = new InputStream[n];
                 ObjectInputStream[] chunks = new ObjectInputStream[n];
                 int[] numGroups = new int[n]; // groups per chunk file
 
@@ -301,9 +303,9 @@ public class FrequencyTool {
                     int chunksExhausted = 0;
                     for (int i = 0; i < n; i++) {
                         File chunkFile = chunkFiles.get(i);
-                        FileInputStream fis = new FileInputStream(chunkFile);
+                        InputStream fis = new FileInputStream(chunkFile);
                         inputStreams[i] = fis;
-                        GZIPInputStream gis = new GZIPInputStream(fis);
+                        GZIPInputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
                         gzipInputStreams[i] = gis;
                         ObjectInputStream ois = new ObjectInputStream(gis);
                         numGroups[i] = ois.readInt();
@@ -346,7 +348,7 @@ public class FrequencyTool {
 
                         // Finally, write the merged group to the output file.
                         if (nextGroupToMerge != null)
-                            FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, docs);
+                            FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
                     }
 
                 } catch (ClassNotFoundException e) {
@@ -354,9 +356,11 @@ public class FrequencyTool {
                 } finally {
                     for (ObjectInputStream chunk: chunks)
                         chunk.close();
-                    for (GZIPInputStream gis: gzipInputStreams)
-                        gis.close();
-                    for (FileInputStream fis: inputStreams)
+                    if (chunksCompressed) {
+                        for (InputStream gis : gzipInputStreams)
+                            gis.close();
+                    }
+                    for (InputStream fis: inputStreams)
                         fis.close();
                 }
             }

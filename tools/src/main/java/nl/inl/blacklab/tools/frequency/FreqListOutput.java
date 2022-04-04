@@ -1,10 +1,8 @@
 package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.List;
-import java.util.SortedMap;
+import java.util.Map;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -13,13 +11,6 @@ import nl.inl.blacklab.search.results.HitGroups;
 interface FreqListOutput {
 
     FreqListOutput TSV = new FreqListOutputTsv();
-
-    static String currentDateTime() {
-        final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-        Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW);
-        return sdf.format(cal.getTime());
-    }
 
     /**
      * Write a frequency list file.
@@ -46,7 +37,7 @@ interface FreqListOutput {
      * @param outputDir      directory to write output file
      */
     File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
-               List<String> annotationNames, SortedMap<GroupIdHash, OccurrenceCounts> occurrences,
+               List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
                File outputDir, boolean gzip);
 
 
