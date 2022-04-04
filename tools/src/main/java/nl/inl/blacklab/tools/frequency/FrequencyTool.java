@@ -305,7 +305,7 @@ public class FrequencyTool {
                         File chunkFile = chunkFiles.get(i);
                         InputStream fis = new FileInputStream(chunkFile);
                         inputStreams[i] = fis;
-                        GZIPInputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
+                        InputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
                         gzipInputStreams[i] = gis;
                         ObjectInputStream ois = new ObjectInputStream(gis);
                         numGroups[i] = ois.readInt();

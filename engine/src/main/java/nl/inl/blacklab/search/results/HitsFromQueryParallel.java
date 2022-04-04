@@ -368,7 +368,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
         long configuredMaxHitsToCount = searchSettings.maxHitsToCount();
         long configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
         if (configuredMaxHitsToCount < 0)
-            configuredMaxHitsToCount = HitsInternal.MAX_ARRAY_SIZE;
+            configuredMaxHitsToCount = Long.MAX_VALUE;
         if (configuredMaxHitsToProcess < 0 || configuredMaxHitsToProcess > configuredMaxHitsToCount)
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;

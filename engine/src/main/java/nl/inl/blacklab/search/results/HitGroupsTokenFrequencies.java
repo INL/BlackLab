@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
@@ -105,10 +105,10 @@ public class HitGroupsTokenFrequencies {
 
     /** Counts of hits and docs while grouping. */
     private static final class OccurrenceCounts {
-        public int hits;
+        public long hits;
         public int docs;
 
-        public OccurrenceCounts(int hits, int docs) {
+        public OccurrenceCounts(long hits, int docs) {
             this.hits = hits;
             this.docs = docs;
         }
@@ -239,7 +239,7 @@ public class HitGroupsTokenFrequencies {
 
             final int numAnnotations = hitProperties.size();
             long numberOfDocsProcessed;
-            final AtomicInteger numberOfHitsProcessed = new AtomicInteger();
+            final AtomicLong numberOfHitsProcessed = new AtomicLong();
             final AtomicBoolean hitMaxHitsToCount = new AtomicBoolean(false);
 
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
@@ -310,7 +310,7 @@ public class HitGroupsTokenFrequencies {
                     //       code is that it can perform this operation faster and using less memory, and the setting
                     //       exists to manage server load, so maybe we can ignore it here? I guess then we might need
                     //       another setting that can limit this operation as well.
-                    final long maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : HitsInternal.MAX_ARRAY_SIZE;
+                    final long maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : Long.MAX_VALUE;
                     //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
                     final String fieldName = index.mainAnnotatedField().name(); // FIXME: could be another annotated field!
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
@@ -442,7 +442,7 @@ public class HitGroupsTokenFrequencies {
             try (final BlockTimer ignored = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
                 groups = occurrences.entrySet().parallelStream().map(e -> {
-                    final int groupSizeHits = e.getValue().hits;
+                    final long groupSizeHits = e.getValue().hits;
                     final int groupSizeDocs = e.getValue().docs;
                     final int[] annotationValues = e.getKey().tokenIds;
                     final PropertyValue[] metadataValues = e.getKey().metadataValues;
