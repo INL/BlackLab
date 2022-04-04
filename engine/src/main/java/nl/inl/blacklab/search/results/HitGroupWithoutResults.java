@@ -45,7 +45,7 @@ public class HitGroupWithoutResults extends HitGroup {
         }
     }
 
-    public HitGroupWithoutResults(QueryInfo queryInfo, PropertyValue groupIdentity, int totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
+    public HitGroupWithoutResults(QueryInfo queryInfo, PropertyValue groupIdentity, long totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
         super(groupIdentity, new HitsWithoutResults(queryInfo, totalHits, totalDocuments, maxHitsCounted, maxHitsProcessed), totalHits);
     }
 }
