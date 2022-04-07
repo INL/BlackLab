@@ -245,7 +245,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             case IGNORE:
                                 break;
                             case WARN:
-                                docWriter.listener()
+                                getDocWriter().listener()
                                         .warning("Link path " + xpath + " not found in document " + documentName);
                                 break;
                             case FAIL:

@@ -150,8 +150,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                         getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
             }
-            if (docWriter != null) {
-                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadata();
+            if (getDocWriter() != null) {
+                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();
                 indexMetadata.registerAnnotatedField(fieldWriter);
             }
 
@@ -235,7 +235,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         case IGNORE:
                             break;
                         case WARN:
-                            docWriter.listener()
+                            getDocWriter().listener()
                                     .warning("Link path " + valuePath + " not found in document " + documentName);
                             break;
                         case FAIL:
@@ -277,7 +277,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             switch (ld.getIfLinkPathMissing()) {
                 case IGNORE:
                 case WARN:
-                    docWriter.listener().warning("Could not find or parse linked document for " + documentName + moreInfo
+                    getDocWriter().listener().warning("Could not find or parse linked document for " + documentName + moreInfo
                             + ": " + e.getMessage());
                     break;
                 case FAIL:
