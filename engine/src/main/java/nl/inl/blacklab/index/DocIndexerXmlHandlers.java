@@ -95,7 +95,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             }
             addMetadataField("fromInputFile", documentName);
             addMetadataFieldsFromParameters();
-            docWriter.listener().documentStarted(documentName);
+            getDocWriter().listener().documentStarted(documentName);
         }
 
         /** Open tag: end indexing the document */
@@ -162,7 +162,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
 
             try {
                 // Add Lucene doc to indexer
-                docWriter.add(currentLuceneDoc);
+                getDocWriter().add(currentLuceneDoc);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -178,7 +178,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
             currentLuceneDoc = null;
 
             // Stop if required
-            if (!docWriter.continueIndexing())
+            if (!getDocWriter().continueIndexing())
                 throw new MaxDocsReached();
         }
     }
@@ -421,7 +421,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     }
 
     public void registerContentsField() {
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) docWriter.indexWriter().metadata();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) getDocWriter().indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 
