@@ -168,7 +168,9 @@ public class TagPluginDutchTagger implements TagPlugin {
         try (InputStream is = loader.getResourceAsStream("META-INF/MANIFEST.MF")) {
             Manifest manifest = new Manifest(is);
             String version = manifest.getMainAttributes().getValue("Specification-Version");
-            if (!version.equals(VERSION))
+            if (version == null)
+                System.err.println ("No Specification-Version found in referenced jarFile");
+            else if (!version.equals(VERSION))
                 throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
         } catch (IOException e) {
             throw new PluginException("Could not read manifest: " + e.getMessage(), e);

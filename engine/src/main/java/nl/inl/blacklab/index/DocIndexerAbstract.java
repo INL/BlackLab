@@ -70,7 +70,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         captureContent = false;
         int id = -1;
         if (!skippingCurrentDocument) {
-            ContentStore contentStore = docWriter.contentStore(captureContentFieldName);
+            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
             id = contentStore.store(content.toString());
         }
         content.setLength(0);
@@ -81,7 +81,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     public void storePartCapturedContent() {
         charsContentAlreadyStored += content.length();
         if (!skippingCurrentDocument) {
-            ContentStore contentStore = docWriter.contentStore(captureContentFieldName);
+            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
             contentStore.storePart(content.toString());
         }
         content.setLength(0);
@@ -165,7 +165,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     @Override
     public final void reportCharsProcessed() {
         long charsProcessed = reader.getCharsReadSinceLastCall();
-        docWriter.listener().charsDone(charsProcessed);
+        getDocWriter().listener().charsDone(charsProcessed);
     }
 
     /**
