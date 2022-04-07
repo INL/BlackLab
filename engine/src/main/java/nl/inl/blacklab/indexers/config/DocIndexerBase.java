@@ -262,7 +262,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         // Index the data
-        try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, docWriter, completePath, data,
+        try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, getDocWriter(), completePath, data,
                 Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
                 @SuppressWarnings("resource")
@@ -307,7 +307,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
         if (inputFile.startsWith("file://"))
             inputFile = inputFile.substring(7);
-        File f = docWriter.linkedFile(inputFile);
+        File f = getDocWriter().linkedFile(inputFile);
         if (f == null)
             throw new FileNotFoundException("Referenced file not found: " + inputFile);
         if (!f.canRead())
@@ -357,8 +357,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             addMetadataField("fromInputFile", documentName);
             addMetadataFieldsFromParameters(); // DEPRECATED for these types of indexer, but still supported for now
         }
-        if (docWriter != null && !indexingIntoExistingLuceneDoc)
-            docWriter.listener().documentStarted(documentName);
+        if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
+            getDocWriter().listener().documentStarted(documentName);
     }
 
     protected void endDocument() {
@@ -408,7 +408,7 @@ public abstract class DocIndexerBase extends DocIndexer {
             storeDocument();
         }
 
-        if (docWriter != null) {
+        if (getDocWriter() != null) {
             // If there's an external metadata fetcher, call it now so it can
             // add the metadata for this document and (optionally) store the
             // metadata
@@ -425,8 +425,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             addMetadataToDocument();
         try {
             // Add Lucene doc to indexer, if not existing already
-            if (docWriter != null && !indexingIntoExistingLuceneDoc)
-                docWriter.add(currentLuceneDoc);
+            if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
+                getDocWriter().add(currentLuceneDoc);
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -438,18 +438,18 @@ public abstract class DocIndexerBase extends DocIndexer {
         }
 
         // Report progress
-        if (docWriter != null) {
+        if (getDocWriter() != null) {
             reportCharsProcessed();
             reportTokensProcessed();
         }
-        if (docWriter != null && !indexingIntoExistingLuceneDoc)
+        if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
             documentDone(documentName);
 
         currentLuceneDoc = null;
 
         // Stop if required
-        if (docWriter != null) {
-            if (!docWriter.continueIndexing())
+        if (getDocWriter() != null) {
+            if (!getDocWriter().continueIndexing())
                 throw new MaxDocsReached();
         }
 
@@ -484,8 +484,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             contentIdFieldName = contentStoreName + "Cid";
         }
         int contentId = -1;
-        if (docWriter != null) {
-            ContentStore contentStore = docWriter.contentStore(contentStoreName);
+        if (getDocWriter() != null) {
+            ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
             contentId = contentStore.store(document);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
@@ -511,8 +511,8 @@ public abstract class DocIndexerBase extends DocIndexer {
             contentIdFieldName = contentStoreName + "Cid";
         }
         int contentId = -1;
-        if (docWriter != null) {
-            ContentStore contentStore = docWriter.contentStore(contentStoreName);
+        if (getDocWriter() != null) {
+            ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
             contentId = contentStore.store(content, offset, length, cs);
         }
         currentLuceneDoc.add(new IntField(contentIdFieldName, contentId, Store.YES));
@@ -659,7 +659,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         else
             charsDoneSinceLastReport = charsDone - charsDoneAtLastReport;
 
-        docWriter.listener().charsDone(charsDoneSinceLastReport);
+        getDocWriter().listener().charsDone(charsDoneSinceLastReport);
         charsDoneAtLastReport = charsDone;
     }
 

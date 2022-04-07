@@ -134,7 +134,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
         currentLuceneDoc = new Document();
         addMetadataField("fromInputFile", documentName);
         addMetadataFieldsFromParameters();
-        docWriter.listener().documentStarted(documentName);
+        getDocWriter().listener().documentStarted(documentName);
 
         while (true) {
             // For each line, split on whitespace and index each word.
@@ -229,7 +229,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
             try {
                 // Add Lucene doc to indexer
-                docWriter.add(currentLuceneDoc);
+                getDocWriter().add(currentLuceneDoc);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -245,7 +245,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             currentLuceneDoc = null;
 
             // Stop if required
-            if (!docWriter.continueIndexing())
+            if (!getDocWriter().continueIndexing())
                 throw new MaxDocsReached();
 
         }

@@ -69,7 +69,7 @@ public abstract class DocIndexer implements AutoCloseable {
 
     public static final int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
-    protected DocWriter docWriter;
+    private DocWriter docWriter;
 
     /** Do we want to omit norms? (Default: yes) */
     protected boolean omitNorms = true;
@@ -341,9 +341,9 @@ public abstract class DocIndexer implements AutoCloseable {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
         case TOKENIZED:
-            return docWriter.metadataFieldType(true);
+            return getDocWriter().metadataFieldType(true);
         case UNTOKENIZED:
-            return docWriter.metadataFieldType(false);
+            return getDocWriter().metadataFieldType(false);
         default:
             throw new IllegalArgumentException("Unknown field type: " + type);
         }
@@ -366,11 +366,11 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     boolean continueIndexing() {
-        return docWriter.continueIndexing();
+        return getDocWriter().continueIndexing();
     }
 
     protected void warn(String msg) {
-        docWriter.listener().warning(msg);
+        getDocWriter().listener().warning(msg);
     }
 
     public List<String> getMetadataField(String name) {
@@ -390,7 +390,7 @@ public abstract class DocIndexer implements AutoCloseable {
         value = value.trim();
         if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
-            IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
+            IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
             indexMetadata.registerMetadataField(name);
         }
     }
@@ -417,7 +417,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public void addMetadataToDocument() {
         // See what metadatafields are missing or empty and add unknown value if desired.
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)docWriter.indexWriter().metadata();
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
         for (int i = 0; i < fields.size(); i++) {
@@ -466,7 +466,7 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     private void addMetadataFieldToDocument(String name, List<String> values) {
-        IndexMetadataWriter indexMetadata = docWriter.indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
         //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl)indexMetadata.metadataFields().get(name);
@@ -553,7 +553,7 @@ public abstract class DocIndexer implements AutoCloseable {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
-                currentLuceneDoc.add(new Field(fieldName, fieldValue, docWriter.metadataFieldType(false)));
+                currentLuceneDoc.add(new Field(fieldName, fieldValue, getDocWriter().metadataFieldType(false)));
             }
         }
     }
@@ -599,7 +599,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * @param field field to add to the forward index
      */
     protected void addToForwardIndex(AnnotatedFieldWriter field) {
-        docWriter.addToForwardIndex(field, currentLuceneDoc);
+        getDocWriter().addToForwardIndex(field, currentLuceneDoc);
     }
 
     protected abstract int getCharacterPosition();
@@ -619,7 +619,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public void documentDone(String documentName) {
         numberOfDocsDone++;
-        docWriter.listener().documentDone(documentName);
+        getDocWriter().listener().documentDone(documentName);
     }
 
     /**
@@ -627,7 +627,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     public void tokensDone(int n) {
         numberOfTokensDone += n;
-        docWriter.listener().tokensDone(n);
+        getDocWriter().listener().tokensDone(n);
     }
 
     public int numberOfDocsDone() {

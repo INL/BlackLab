@@ -90,7 +90,11 @@ class IndexerImpl implements DocWriter, Indexer {
             } catch (Exception e) { 
                 logger.trace("Could not determine charset for input file {}, using default ({})", path,  DEFAULT_INPUT_ENCODING.name()); 
             }
-            impl(DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs), path);
+            DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path, contents, cs);
+            if (docIndexer == null) {
+                throw new PluginException("Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + path);
+            }
+            impl(docIndexer, path);
         }
 
         @Override
