@@ -4,13 +4,21 @@ BlackLab Server is a REST web service for accessing [BlackLab](../) indices. Thi
 
 This page explains how to set up and use BlackLab Server. See the [BlackLab homepage](../) for more information on the underlying corpus search engine.
 
-* [Features](#features)
-* [Overview](#overview)
-* [Requests](#requests)
-* [Sorting, grouping, filtering & faceting](#sorting-grouping-filtering-faceting)
-* [Examples](#examples): searches, retrieving documents, information about indices
-* [Installation](#installation)
-* [Error and status responses](#error-and-status-responses) 
+- [BlackLab Server overview](#blacklab-server-overview)
+	- [Features](#features)
+	- [Overview](#overview)
+	- [Requests](#requests)
+	- [Sorting, grouping, filtering & faceting](#sorting-grouping-filtering--faceting)
+		- [Grouping/sorting on context words](#groupingsorting-on-context-words)
+	- [Examples](#examples)
+			- [Searches](#searches)
+			- [Information about a document](#information-about-a-document)
+			- [Information about indices](#information-about-indices)
+		- [Indexing via BlackLab Server (EXPERIMENTAL)](#indexing-via-blacklab-server-experimental)
+			- [Adding/removing user formats](#addingremoving-user-formats)
+			- [Share private index with a list of users](#share-private-index-with-a-list-of-users)
+	- [Installation](#installation)
+	- [Error and status responses](#error-and-status-responses)
 
 <a id="features"></a>
 
@@ -349,7 +357,7 @@ A few more examples:
 
 ## Examples
 
-There's code examples of using BlackLab Server from [a number of different programming languages](from-different-languages.html).
+There's code examples of using BlackLab Server from [a number of different programming languages](blacklab-server-different-languages.html).
 
 Below are examples of individual requests to BlackLab Server. NOTE: for clarity, double quotes have not been URL-encoded.
 
