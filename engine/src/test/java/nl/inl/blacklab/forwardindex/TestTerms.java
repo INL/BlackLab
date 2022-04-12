@@ -15,9 +15,10 @@
  *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.UtilsForTesting;
+import java.io.File;
+import java.text.Collator;
+import java.util.Locale;
+
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.After;
@@ -25,9 +26,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.text.Collator;
-import java.util.Locale;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
     private Terms t;
@@ -48,7 +49,7 @@ public class TestTerms {
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
-        t = Terms.openForWriting(colls, null);
+        t = Terms.openForWriting(colls, null, true);
         if (t instanceof TermsWriter)
             ((TermsWriter) t).setMaxBlockSize(18);
         for (int i = 0; i < str.length; i++) {
@@ -58,7 +59,7 @@ public class TestTerms {
         t.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
-        t = Terms.openForReading(colls, f, true);
+        t = Terms.openForReading(colls, f, true, true);
     }
 
     @After

@@ -78,8 +78,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     /** Deleted TOC entries. Always sorted by size. */
     List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create) {
-        super(annotation, dir, collators);
+    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create, boolean largeTermsFileSupport) {
+        super(annotation, dir, collators, largeTermsFileSupport);
 
         if (!dir.exists()) {
             if (!create)
@@ -99,13 +99,14 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
         try {
             if (tocFile.exists()) {
                 readToc();
-                terms = Terms.openForWriting(collators, termsFile);
+                terms = Terms.openForWriting(collators, termsFile, useBlockBasedTermsFile);
                 tocModified = false;
             } else {
-                terms = Terms.openForWriting(collators, null);
+                terms = Terms.openForWriting(collators, null, true);
                 if (!tokensFile.createNewFile())
                     throw new BlackLabRuntimeException("Could not create file: " + tokensFile);
                 tocModified = true;
+                terms.setBlockBasedFile(useBlockBasedTermsFile);
             }
             // Tricks to speed up reading
             // Index mode. Open for writing.

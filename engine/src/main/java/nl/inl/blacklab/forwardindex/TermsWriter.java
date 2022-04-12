@@ -1,4 +1,18 @@
-
+/*******************************************************************************
+ * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
@@ -59,7 +73,7 @@ class TermsWriter extends Terms {
      */
     private int maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
 
-    TermsWriter(Collators collators, File termsFile) {
+    TermsWriter(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
 
@@ -67,6 +81,7 @@ class TermsWriter extends Terms {
         // (used later to get the terms in sort order)
         this.termIndex = new TreeMap<>();
 
+        setBlockBasedFile(useBlockBasedTermsFile);
         if (termsFile != null && termsFile.exists())
             read(termsFile);
 
@@ -141,95 +156,124 @@ class TermsWriter extends Terms {
                     // Calculate the file length and map the file
                     MappedByteBuffer buf;
                     IntBuffer ib;
+                    if (!useBlockBasedTermsFile) {
+                        // Old version of terms file (that can't grow larger than 2 GB)
+                        long fileLength = 2 * BYTES_PER_INT + (n + 1) * BYTES_PER_INT + termStringsByteSize
+                                + NUM_SORT_BUFFERS * BYTES_PER_INT * n;
+                        fc.truncate(fileLength); // truncate if necessary
+                        buf = fc.map(MapMode.READ_WRITE, 0, fileLength);
+                        buf.putInt(n); // Start with the number of terms
+                        ib = buf.asIntBuffer();
 
-                    // "block-based" version of terms file that can grow larger than 2 GB.
-                    // (this is now the only supported version)
-
-                    long fileMapStart = 0, fileMapLength = maxMapSize;
-                    buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
-                    buf.putInt(n); // Start with the number of terms      //@4
-                    ib = buf.asIntBuffer();
-                    long fileLength = BYTES_PER_INT;
-
-                    // Terms file is too large to fit in a single byte array.
-                    // Use the new code.
-                    int currentTerm = 0;
-                    long bytesLeftToWrite = termStringsByteSize;
-                    int[] termStringOffsets = new int[n];
-                    while (currentTerm < n) {
-                        int firstTermInBlock = currentTerm;
-                        int blockSize = (int) Math.min(bytesLeftToWrite, maxBlockSize);
+                        // Terms file is small enough to fit in a single byte array.
+                        // Use the old code.
 
                         // Calculate byte offsets for all the terms and fill data array
                         int currentOffset = 0;
-                        byte[] termStrings = new byte[blockSize];
-                        long blockSizeBytes = 2 * BYTES_PER_INT;
-                        while (currentTerm < n) {
-                            termStringOffsets[currentTerm] = currentOffset;
-                            byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
-                            long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
-                            if (newBlockSizeBytes > maxBlockSize) {
-                                // Block is full. Write it and continue with next block.
-                                break;
-                            }
+                        int[] termStringOffsets = new int[n + 1];
+                        byte[] termStrings = new byte[(int) termStringsByteSize];
+                        for (int i = 0; i < n; i++) {
+                            termStringOffsets[i] = currentOffset;
+                            byte[] termBytes = terms[i].getBytes(DEFAULT_CHARSET);
                             System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
                             currentOffset += termBytes.length;
-                            currentTerm++;
-                            bytesLeftToWrite -= termBytes.length;
-                            blockSizeBytes = newBlockSizeBytes;
                         }
-
-                        int numTermsThisBlock = currentTerm - firstTermInBlock;
+                        termStringOffsets[n] = currentOffset;
 
                         // Write offset and data arrays to file
-                        if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
-                            logger.error("***** blockSizeBytes < 0 !!!");
-                            logger.error("blockSizeBytes = " + blockSizeBytes);
-                            logger.error("n = " + n);
-                            logger.error("numTermsThisBlock = " + numTermsThisBlock);
-                            logger.error("  currentTerm = " + currentTerm);
-                            logger.error("  firstTermInBlock = " + firstTermInBlock);
-                            logger.error("currentOffset = " + currentOffset);
-                        }
+                        ib.put(termStringOffsets);
+                        ib.put((int) termStringsByteSize); // size of the data block to follow
+                        ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length); // advance past offsets array
+                        buf.put(termStrings);
+                        ib = buf.asIntBuffer();
+                    } else {
+                        // Newer, "block-based" version of terms file that can grow larger than 2 GB.
+                        long fileMapStart = 0, fileMapLength = maxMapSize;
+                        buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+                        buf.putInt(n); // Start with the number of terms      //@4
+                        ib = buf.asIntBuffer();
+                        long fileLength = BYTES_PER_INT;
 
-                        ib.put(numTermsThisBlock); //@4
-                        ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
-                        ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
-                                               // (doubles as the size of the data block to follow) //@4
-                        int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
-                        ((Buffer)buf).position(newPosition); // advance past offsets array
-                        if (fileMapLength - buf.position() < blockSize) {
-                            //throw new RuntimeException("Not enough space in file mapping to write term strings!");
+                        // Terms file is too large to fit in a single byte array.
+                        // Use the new code.
+                        int currentTerm = 0;
+                        long bytesLeftToWrite = termStringsByteSize;
+                        int[] termStringOffsets = new int[n];
+                        while (currentTerm < n) {
+                            int firstTermInBlock = currentTerm;
+                            int blockSize = (int) Math.min(bytesLeftToWrite, maxBlockSize);
 
-                            // Re-map a new part of the file before we write the term strings
+                            // Calculate byte offsets for all the terms and fill data array
+                            int currentOffset = 0;
+                            byte[] termStrings = new byte[blockSize];
+                            long blockSizeBytes = 2 * BYTES_PER_INT;
+                            while (currentTerm < n) {
+                                termStringOffsets[currentTerm] = currentOffset;
+                                byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
+                                long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
+                                if (newBlockSizeBytes > maxBlockSize) {
+                                    // Block is full. Write it and continue with next block.
+                                    break;
+                                }
+                                System.arraycopy(termBytes, 0, termStrings, currentOffset, termBytes.length);
+                                currentOffset += termBytes.length;
+                                currentTerm++;
+                                bytesLeftToWrite -= termBytes.length;
+                                blockSizeBytes = newBlockSizeBytes;
+                            }
+
+                            int numTermsThisBlock = currentTerm - firstTermInBlock;
+
+                            // Write offset and data arrays to file
+                            if (blockSizeBytes < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                                logger.error("***** blockSizeBytes < 0 !!!");
+                                logger.error("blockSizeBytes = " + blockSizeBytes);
+                                logger.error("n = " + n);
+                                logger.error("numTermsThisBlock = " + numTermsThisBlock);
+                                logger.error("  currentTerm = " + currentTerm);
+                                logger.error("  firstTermInBlock = " + firstTermInBlock);
+                                logger.error("currentOffset = " + currentOffset);
+                            }
+
+                            ib.put(numTermsThisBlock); //@4
+                            ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
+                            ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
+                                                   // (doubles as the size of the data block to follow) //@4
+                            int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
+                            ((Buffer)buf).position(newPosition); // advance past offsets array
+                            if (fileMapLength - buf.position() < blockSize) {
+                                //throw new RuntimeException("Not enough space in file mapping to write term strings!");
+
+                                // Re-map a new part of the file before we write the term strings
+                                fileMapStart += buf.position();
+                                buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+                            }
+                            buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
+                            ib = buf.asIntBuffer();
+                            fileLength += blockSizeBytes;
+
+                            // Re-map a new part of the file before we write the next block.
+                            // (and eventually, the sort buffers, see below)
                             fileMapStart += buf.position();
                             buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
+                            ib = buf.asIntBuffer();
                         }
-                        buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
-                        ib = buf.asIntBuffer();
-                        fileLength += blockSizeBytes;
 
-                        // Re-map a new part of the file before we write the next block.
-                        // (and eventually, the sort buffers, see below)
-                        fileMapStart += buf.position();
-                        buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
-                        ib = buf.asIntBuffer();
+                        // Determine total file length (by adding the sort buffer byte length to the
+                        // running total) and truncate the file if necessary
+                        // (we can do this now, even though we still have to write the sort buffers,
+                        // because we know how large the file will eventually be)
+                        fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * (long)n;
+
+                        if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
+                            logger.error("***** fileLength < 0 !!!");
+                            logger.error("fileLength = " + fileLength);
+                            logger.error("n = " + n);
+                        }
+
+                        if (File.separatorChar != '\\') // causes problems on Windows
+                            fc.truncate(fileLength);
                     }
-
-                    // Determine total file length (by adding the sort buffer byte length to the
-                    // running total) and truncate the file if necessary
-                    // (we can do this now, even though we still have to write the sort buffers,
-                    // because we know how large the file will eventually be)
-                    fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * (long)n;
-
-                    if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
-                        logger.error("***** fileLength < 0 !!!");
-                        logger.error("fileLength = " + fileLength);
-                        logger.error("n = " + n);
-                    }
-
-                    if (File.separatorChar != '\\') // causes problems on Windows
-                        fc.truncate(fileLength);
 
                     // Write the case-sensitive sort order
                     // Because termIndex is a SortedMap, values are returned in key-sorted order.
@@ -300,6 +344,11 @@ class TermsWriter extends Terms {
     @Override
     public int idToSortPosition(int id, MatchSensitivity sensitivity) {
         throw new UnsupportedOperationException("Not available during indexing");
+    }
+
+    @Override
+    protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
+        this.useBlockBasedTermsFile = useBlockBasedTermsFile;
     }
 
     public void setMaxBlockSize(int maxBlockSize) {

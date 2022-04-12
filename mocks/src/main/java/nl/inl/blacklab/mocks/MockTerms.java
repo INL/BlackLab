@@ -66,6 +66,12 @@ public class MockTerms extends Terms {
     }
 
     @Override
+    protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
+        //
+
+    }
+
+    @Override
     public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
         throw new UnsupportedOperationException();
     }

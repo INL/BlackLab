@@ -15,13 +15,14 @@
  */
 package nl.inl.blacklab.index;
 
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import java.io.File;
+import java.io.IOException;
+
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.File;
-import java.io.IOException;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /**
  *
