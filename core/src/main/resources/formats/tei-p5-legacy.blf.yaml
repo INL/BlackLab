@@ -1,10 +1,10 @@
 # For displaying in user interface (optional)
-displayName: "TEI P4, contents in text, @type as PoS"
+displayName: "TEI P5, contents in text, @type as PoS"
 
 # For describing input format in user interface (optional)
-description: A TEI P4 variant. The text element will be indexed as annotated contents. PoS tags should be in the pos attribute.
+description: A TEI P5 variant where part of speech is expected to be in the type attribute. Deprecated, will be removed eventually.
 
-helpUrl: http://www.tei-c.org/Vault/P4/
+helpUrl: http://www.tei-c.org/Guidelines/P5/
 
 # (Optional, informational)
 # content, metadata or mixed?
@@ -13,7 +13,7 @@ type: content
 
 # What element starts a new document?
 # (the only absolute XPath; the rest is relative)
-documentPath: //TEI.2
+documentPath: //TEI
 
 # Annotated, CQL-searchable fields.
 # We usually have just one, named "contents".
@@ -38,7 +38,6 @@ annotatedFields:
     punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
 
     # What annotation can each word have? How do we index them?
-    # (annotations are also called "(word) properties" in BlackLab)
     # (valuePaths relative to word path)
     # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
     #       and with forEachPath you could run in to an unknown new annotation mid-way through.
@@ -51,13 +50,13 @@ annotatedFields:
       valuePath: "@lemma"
     - name: pos
       displayName: PoS
-      valuePath: "@pos"
+      valuePath: "@type"
 
     # XML tags within the content we'd like to index
     # (relative to container)
     inlineTags:
-    - path: .//s   # Sentence
     - path: .//p   # Paragraph
+    - path: .//s   # Sentence
     - path: .//pb  # Page beginning
     - path: .//lb  # Line beginning
 
@@ -66,5 +65,5 @@ metadata:
   containerPath: .//listBibl[@id='inlMetadata']
   fields:
   - forEachPath: bibl/interpGrp/interp
-    namePath: ../@type                   # interpGrp/@type
-    valuePath: "@value"                  # interp/@value (TEI P4)
+    namePath: ../@type                  # interpGrp/@type
+    valuePath: .                        # interp (text value of element, TEI P5)
