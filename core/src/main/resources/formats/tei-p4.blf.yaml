@@ -1,5 +1,5 @@
 # For displaying in user interface (optional)
-displayName: "TEI P4, contents in text, @type as PoS"
+displayName: "TEI P4, contents in text, @pos as PoS"
 
 # For describing input format in user interface (optional)
 description: A TEI P4 variant. The text element will be indexed as annotated contents. PoS tags should be in the pos attribute.

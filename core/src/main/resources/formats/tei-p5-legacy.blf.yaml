@@ -1,5 +1,5 @@
 # For displaying in user interface (optional)
-displayName: "TEI P5, contents in text, @type as PoS"
+displayName: "legacy TEI P5, contents in text, @type as PoS"
 
 # For describing input format in user interface (optional)
 description: A TEI P5 variant where part of speech is expected to be in the type attribute. Deprecated, will be removed eventually.
