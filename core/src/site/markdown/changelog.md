@@ -41,7 +41,7 @@
 ### New
 
 - Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be
-  faster in high-throughput scenario's. Note that this implementation currently does not
+  faster in high-throughput scenarios. Note that this implementation currently does not
   support queueing or aborting searches or getting a running totals count.
 - Add processing step to concatenate separate date fields into one.
 - Added format configuration `tei-p5.blf.yaml` that uses more standard `pos` attribute.
