@@ -1022,4 +1022,5 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         ensureResultsRead(index + 1);
         return hitsArrays.end(index);
     }
+
 }

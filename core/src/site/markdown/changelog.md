@@ -40,13 +40,8 @@
 
 ### New
 
-<<<<<<< HEAD
 - Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be
-  faster in high-throughput scenario's. Note that this implementation currently does not
-=======
-- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be 
-  faster in high-throughput scenario's. Note that this implementation currently does not 
->>>>>>> dev
+  faster in high-throughput scenarios. Note that this implementation currently does not
   support queueing or aborting searches or getting a running totals count.
 - Add processing step to concatenate separate date fields into one.
 - Added format configuration `tei-p5.blf.yaml` that uses more standard `pos` attribute.
@@ -56,11 +51,7 @@
 
 - Gracefully shut down ExecutorServices to avoid hanging on application exit.
 - Fixed intermittent crashes using synchronization.
-<<<<<<< HEAD
-- Fixed count hanging if underlying search was aborted due to timeout.
-=======
 - Fixed count hanging if underlying search was aborted due to timeout. 
->>>>>>> dev
 - Ensure all BLSpans are startpoint-sorted.
 - Lowercase (desensitize) display values when grouping case-insensitively.
 - Always run at least one search (don't queue if no searches are running)
@@ -75,11 +66,7 @@
 ### Removed
 
 - empty module `interfaces`
-<<<<<<< HEAD
-- SQLite logging. Was never fully realized, and the new approach using Prometheus (see
-=======
 - SQLite logging. Was never fully realized, and the new approach using Prometheus (see 
->>>>>>> dev
   `instrumentation` modules) is better.
 - `checkAgainMs` (from BLS response).
 - several long-deprecated methods.
