@@ -1,33 +1,88 @@
 # Change Log
 
-## Improvements in future Lucene 8 version
+## Improvements in 3.0.0-SNAPSHOT
 
-- Update to the new DocValues API (sequential instead of random-access) 
-  See https://sbdevel.wordpress.com/2019/03/12/docvalues-jump-tables-in-lucene-solr-8/
+### Changed
 
-## Improvements in 2.3.0-SNAPSHOT
+- Based on Lucene 8. Thanks to @zhyongwei for the initial version update. Further
+  changes were made to how DocValues are used, as this API is now sequential instead
+  of random-access.
+
+### Fixed
+
+- Corpora larger than 2^31 tokens are now properly supported.
+
+### Removed
+
+- support for previous BlackLab indexes (because Lucene 8 cannot read Lucene 5 indexes);
+  you must reindex your data to use this version. If this is impractical, please keep 
+  using v2.3.0 for now. We would like to provide a conversion tool at some point.
+- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
+  fi version 3; these were all replaced with newer versions six years ago. older indexes
+  will need to be re-indexed)
+
+
+## Improvements in 2.3.0
 
 ### Changed
 
 - Language level set to Java 9, so we can use `Arrays.compare()` among other things
   (and stay on a supported Java version).
+- GitHub Action to automatically build and run integration tests on push
+
+### Documentation
+
+- Added to blacklab-internals page.
+- Update roadmap, who uses blacklab.
 - Documentation, comments and code now use the terms "annotated field" and "annotation"
-  everywhere (some lingering occurrences of the older terms "complex field" and 
+  everywhere (some lingering occurrences of the older terms "complex field" and
   "property" were removed).
 
 ### New
 
-- 
+<<<<<<< HEAD
+- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be
+  faster in high-throughput scenario's. Note that this implementation currently does not
+=======
+- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be 
+  faster in high-throughput scenario's. Note that this implementation currently does not 
+>>>>>>> dev
+  support queueing or aborting searches or getting a running totals count.
+- Add processing step to concatenate separate date fields into one.
+- Added format configuration `tei-p5.blf.yaml` that uses more standard `pos` attribute.
+  Renamed existing TEI format configurations to `-legacy`.
+
+### Fixed
+
+- Gracefully shut down ExecutorServices to avoid hanging on application exit.
+- Fixed intermittent crashes using synchronization.
+<<<<<<< HEAD
+- Fixed count hanging if underlying search was aborted due to timeout.
+=======
+- Fixed count hanging if underlying search was aborted due to timeout. 
+>>>>>>> dev
+- Ensure all BLSpans are startpoint-sorted.
+- Lowercase (desensitize) display values when grouping case-insensitively.
+- Always run at least one search (don't queue if no searches are running)
+- Fix convert and tag plugin functionality.
+- Various smaller bugfixes.
+
+### Performance
+
+- Only load document fields we actually need
+- Some more optimizations for hit frequencies
 
 ### Removed
 
 - empty module `interfaces`
-- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
-  fi version 3; these were all replaced with newer versions six years ago. older indexes 
-  will need to be re-indexed)
+<<<<<<< HEAD
+- SQLite logging. Was never fully realized, and the new approach using Prometheus (see
+=======
 - SQLite logging. Was never fully realized, and the new approach using Prometheus (see 
+>>>>>>> dev
   `instrumentation` modules) is better.
-- several long-deprecated methods were removed.
+- `checkAgainMs` (from BLS response).
+- several long-deprecated methods.
 
 ## Improvements in 2.2.0
 
