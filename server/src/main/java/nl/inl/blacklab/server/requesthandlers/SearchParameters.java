@@ -394,8 +394,8 @@ public class SearchParameters {
     }
 
     WindowSettings getWindowSettings() {
-        int first = getInteger("first");
-        int size = Math.min(Math.max(0, getInteger("number")), searchManager.config().getParameters().getPageSize().getMax());
+        long first = getLong("first");
+        long size = Math.min(Math.max(0, getLong("number")), searchManager.config().getParameters().getPageSize().getMax());
         return new WindowSettings(first, size);
     }
 

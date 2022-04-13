@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Objects;
 import java.util.Random;
 
 /**
@@ -29,13 +30,13 @@ public class SampleParameters {
     
     private double percentageOfHits;
     
-    private int numberOfHitsSet;
+    private long numberOfHitsSet;
     
     private boolean isFixedSeed;
     
     private long seedValueSet;
     
-    SampleParameters(boolean isPercentage, double percentageOfHits, int numberOfHitsSet, boolean isFixedSeed, long seedValueSet) {
+    SampleParameters(boolean isPercentage, double percentageOfHits, long numberOfHitsSet, boolean isFixedSeed, long seedValueSet) {
         this.isPercentage = isPercentage;
         this.percentageOfHits = percentageOfHits;
         this.numberOfHitsSet = numberOfHitsSet;
@@ -71,7 +72,7 @@ public class SampleParameters {
      * @param totalNumberOfHits the total number of hits
      * @return number to sample
      */
-    public int numberOfHits(int totalNumberOfHits) {
+    public long numberOfHits(long totalNumberOfHits) {
         return isPercentage() ? Math.round((float)percentageOfHits() * totalNumberOfHits) : numberOfHitsSet();
     }
     
@@ -112,7 +113,7 @@ public class SampleParameters {
      * 
      * @return desired number
      */
-    public int numberOfHitsSet() {
+    public long numberOfHitsSet() {
         return numberOfHitsSet;
     }
     
@@ -131,22 +132,13 @@ public class SampleParameters {
     
     @Override
     public String toString() {
-        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Integer.toString(numberOfHitsSet)) + 
-                ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED)" : " (RANDOM)");
+        return "sample=" + (isPercentage ? String.format("%.1f%%", percentageOfHits) : Long.toString(numberOfHitsSet)) +
+                ", seed=" + seedValueSet + (isFixedSeed ? " (FIXED SEED)" : " (RANDOM SEED)");
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (isFixedSeed ? 1231 : 1237);
-        result = prime * result + (isPercentage ? 1231 : 1237);
-        result = prime * result + numberOfHitsSet;
-        long temp;
-        temp = Double.doubleToLongBits(percentageOfHits);
-        result = prime * result + (int) (temp ^ (temp >>> 32));
-        result = prime * result + (int) (seedValueSet ^ (seedValueSet >>> 32));
-        return result;
+        return Objects.hash(isPercentage, percentageOfHits, numberOfHitsSet, isFixedSeed, seedValueSet);
     }
 
     @Override

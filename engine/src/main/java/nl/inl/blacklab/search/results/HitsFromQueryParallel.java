@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
@@ -32,7 +32,6 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.Hits.HitsArrays.HitIterator;
 import nl.inl.util.ThreadAborter;
 
 public class HitsFromQueryParallel extends Hits {
@@ -61,16 +60,16 @@ public class HitsFromQueryParallel extends Hits {
         LeafReaderContext leafReaderContext;
 
         // Global counters, shared between instances of SpansReader in order to coordinate progress
-        final AtomicInteger globalDocsProcessed;
-        final AtomicInteger globalDocsCounted;
-        final AtomicInteger globalHitsProcessed;
-        final AtomicInteger globalHitsCounted;
+        final AtomicLong globalDocsProcessed;
+        final AtomicLong globalDocsCounted;
+        final AtomicLong globalHitsProcessed;
+        final AtomicLong globalHitsCounted;
         /** Target number of hits to store in the {@link #globalResults} list */
-        final AtomicInteger globalHitsToProcess;
+        final AtomicLong globalHitsToProcess;
         /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
-        final AtomicInteger globalHitsToCount;
+        final AtomicLong globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-        private final HitsArrays globalResults;
+        private final HitsInternal globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
         private CapturedGroups globalCapturedGroups;
 
@@ -135,14 +134,14 @@ public class HitsFromQueryParallel extends Hits {
             LeafReaderContext leafReaderContext,
             HitQueryContext sourceHitQueryContext,
 
-            HitsArrays globalResults,
+            HitsInternal globalResults,
             CapturedGroups globalCapturedGroups,
-            AtomicInteger globalDocsProcessed,
-            AtomicInteger globalDocsCounted,
-            AtomicInteger globalHitsProcessed,
-            AtomicInteger globalHitsCounted,
-            AtomicInteger globalHitsToProcess,
-            AtomicInteger globalHitsToCount
+            AtomicLong globalDocsProcessed,
+            AtomicLong globalDocsCounted,
+            AtomicLong globalHitsProcessed,
+            AtomicLong globalHitsCounted,
+            AtomicLong globalHitsToProcess,
+            AtomicLong globalHitsToCount
         ) {
             this.spans = null; // inverted for uninitialized version
             this.weight = weight;
@@ -232,10 +231,10 @@ public class HitsFromQueryParallel extends Hits {
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
             final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
 
-            final HitsArrays results = new HitsArrays();
+            final HitsInternal results = HitsInternal.create();
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
-            final IntUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
-            final IntUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
+            final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
+            final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
 
             try {
                 // Try to set the spans to a valid hit.
@@ -308,12 +307,12 @@ public class HitsFromQueryParallel extends Hits {
             this.leafReaderContext = null;
         }
 
-        void addToGlobalResults(HitsArrays hits, List<Span[]> capturedGroups) {
+        void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
             globalResults.addAll(hits);
 
             if (globalCapturedGroups != null) {
                 synchronized (globalCapturedGroups) {
-                    HitIterator it = hits.iterator();
+                    HitsInternal.Iterator it = hits.iterator();
                     int i = 0;
                     while (it.hasNext()) {
                         Hit h = it.next().toHit();
@@ -324,11 +323,7 @@ public class HitsFromQueryParallel extends Hits {
                 }
             }
 
-            hits.withWriteLock(__ -> {
-                hits.docs().clear();
-                hits.starts().clear();
-                hits.ends().clear();
-            });
+            hits.clear();
         }
 
         public HitQueryContext getHitContext() {
@@ -342,18 +337,18 @@ public class HitsFromQueryParallel extends Hits {
 
     // hit count tracking
     protected final SearchSettings searchSettings;
-    protected final AtomicInteger globalDocsProcessed = new AtomicInteger();
-    protected final AtomicInteger globalDocsCounted = new AtomicInteger();
-    protected final AtomicInteger globalHitsProcessed = new AtomicInteger();
-    protected final AtomicInteger globalHitsCounted = new AtomicInteger();
+    protected final AtomicLong globalDocsProcessed = new AtomicLong();
+    protected final AtomicLong globalDocsCounted = new AtomicLong();
+    protected final AtomicLong globalHitsProcessed = new AtomicLong();
+    protected final AtomicLong globalHitsCounted = new AtomicLong();
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
-    protected final AtomicInteger requestedHitsToProcess = new AtomicInteger();
+    protected final AtomicLong requestedHitsToProcess = new AtomicLong();
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
-    protected final AtomicInteger requestedHitsToCount = new AtomicInteger();
+    protected final AtomicLong requestedHitsToCount = new AtomicLong();
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
-    protected final int maxHitsToProcess;
+    protected final long maxHitsToProcess;
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
-    protected final int maxHitsToCount;
+    protected final long maxHitsToCount;
 
     // state
     protected final HitQueryContext hitQueryContext = new HitQueryContext();
@@ -362,7 +357,7 @@ public class HitsFromQueryParallel extends Hits {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo, new HitsArrays()); // explicitly construct HitsArrays so they're writeable
+        super(queryInfo, HitsInternal.create()); // explicitly construct HitsInternal so they're writeable
         this.searchSettings = searchSettings;
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
@@ -370,10 +365,10 @@ public class HitsFromQueryParallel extends Hits {
 
         // Ensure maxcount >= maxprocess >= 0
         // After this both will be above 0 and process will never exceed count
-        int configuredMaxHitsToCount = searchSettings.maxHitsToCount();
-        int configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
+        long configuredMaxHitsToCount = searchSettings.maxHitsToCount();
+        long configuredMaxHitsToProcess = searchSettings.maxHitsToProcess();
         if (configuredMaxHitsToCount < 0)
-            configuredMaxHitsToCount = Integer.MAX_VALUE;
+            configuredMaxHitsToCount = Long.MAX_VALUE;
         if (configuredMaxHitsToProcess < 0 || configuredMaxHitsToProcess > configuredMaxHitsToCount)
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;
@@ -458,8 +453,8 @@ public class HitsFromQueryParallel extends Hits {
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
-        final int clampedNumber = number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
+    protected void ensureResultsRead(long number) {
+        final long clampedNumber = number = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
         if (allSourceSpansFullyRead || (hitsArrays.size() >= clampedNumber)) {
             return;
@@ -488,7 +483,7 @@ public class HitsFromQueryParallel extends Hits {
             try {
                 final ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
 
-                final AtomicInteger i = new AtomicInteger();
+                final AtomicLong i = new AtomicLong();
                 final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
                 List<Future<?>> pendingResults = spansReaders
                     .stream()
@@ -549,66 +544,66 @@ public class HitsFromQueryParallel extends Hits {
     }
 
     @Override
-    protected int docsCountedSoFar() {
+    protected long docsCountedSoFar() {
         return this.globalDocsCounted.get();
     }
 
     @Override
-    protected int docsCountedTotal() {
+    protected long docsCountedTotal() {
         ensureAllResultsRead();
         return this.globalDocsCounted.get();
     }
 
     @Override
-    protected int docsProcessedSoFar() {
+    protected long docsProcessedSoFar() {
         return this.globalDocsProcessed.get();
     }
 
     @Override
-    protected int docsProcessedTotal() {
+    protected long docsProcessedTotal() {
         ensureAllResultsRead();
         return this.globalDocsProcessed.get();
     }
 
     @Override
-    protected int hitsCountedSoFar() {
+    protected long hitsCountedSoFar() {
         return this.globalHitsCounted.get();
     }
 
     @Override
-    protected int hitsCountedTotal() {
+    protected long hitsCountedTotal() {
         ensureAllResultsRead();
         return this.globalHitsCounted.get();
     }
 
     @Override
-    protected int hitsProcessedSoFar() {
+    protected long hitsProcessedSoFar() {
         return this.globalHitsProcessed.get();
     }
 
     @Override
-    protected int hitsProcessedTotal() {
+    protected long hitsProcessedTotal() {
         ensureAllResultsRead();
         return this.globalHitsProcessed.get();
     }
 
     @Override
-    protected int resultsCountedSoFar() {
+    protected long resultsCountedSoFar() {
         return hitsCountedSoFar();
     }
 
     @Override
-    protected int resultsCountedTotal() {
+    protected long resultsCountedTotal() {
         return hitsCountedTotal();
     }
 
     @Override
-    protected int resultsProcessedSoFar() {
+    protected long resultsProcessedSoFar() {
         return hitsProcessedSoFar();
     }
 
     @Override
-    protected int resultsProcessedTotal() {
+    protected long resultsProcessedTotal() {
         return hitsProcessedTotal();
     }
 

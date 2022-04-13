@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import org.eclipse.collections.api.iterator.MutableIntIterator;
+import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /**
  * A basic Hits object implemented with a list.
@@ -23,16 +23,16 @@ public class HitsList extends Hits {
      * @param hits the list of hits to wrap, or null for a new list
      * @param capturedGroups the list of hits to wrap, or null for no captured groups
      */
-    protected HitsList(QueryInfo queryInfo, HitsArrays hits, CapturedGroups capturedGroups) {
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
         super(queryInfo, hits);
         this.capturedGroups = capturedGroups;
 
         hitsCounted = this.hitsArrays.size();
         int prevDoc = -1;
-        MutableIntIterator it = this.hitsArrays.docs().intIterator();
+        IntIterator it = this.hitsArrays.docsIterator();
         ascendingLuceneDocIds = true;
         while (it.hasNext()) {
-            int docId = it.next();
+            int docId = it.nextInt();
             if (docId != prevDoc) {
                 if (docId < prevDoc)
                     ascendingLuceneDocIds = false;
@@ -50,12 +50,12 @@ public class HitsList extends Hits {
      */
     protected HitsList(
                        QueryInfo queryInfo,
-                       HitsArrays hits,
+                       HitsInternal hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
-                       int hitsCounted,
-                       int docsRetrieved,
-                       int docsCounted,
+                       long hitsCounted,
+                       long docsRetrieved,
+                       long docsCounted,
                        CapturedGroups capturedGroups,
                        boolean ascendingLuceneDocIds
                        ) {
@@ -82,7 +82,7 @@ public class HitsList extends Hits {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // subclasses may override
     }
 

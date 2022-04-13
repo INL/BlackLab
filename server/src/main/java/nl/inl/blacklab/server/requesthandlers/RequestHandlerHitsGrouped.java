@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -70,13 +69,13 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.startMap();
         ds.startEntry("summary").startMap();
         WindowSettings windowSettings = searchParam.getWindowSettings();
-        final int first = Math.max(windowSettings.first(), 0);
+        final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
-        final int requestedWindowSize = windowSettings.size() < 0
+        final long requestedWindowSize = windowSettings.size() < 0
                 || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
                         : windowSettings.size();
-        int totalResults = groups.size();
-        final int actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
+        long totalResults = groups.size();
+        final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
@@ -103,18 +102,18 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : Collections.singletonList(groups.groupCriteria());
+        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : List.of(groups.groupCriteria());
 
         Map<Integer, String> pids = new HashMap<>();
 
         ds.startEntry("hitGroups").startList();
-        int last = Math.min(first + requestedWindowSize, groups.size());
+        long last = Math.min(first + requestedWindowSize, groups.size());
 
         try (BlockTimer ignored = BlockTimer.create("Serializing groups to JSON")) {
-            for (int i = first; i < last; ++i) {
+            for (long i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 PropertyValue id = group.identity();
-                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : Collections.singletonList(id);
+                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : List.of(id);
 
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
@@ -123,7 +122,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 //                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
-                int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                 ds.startItem("hitgroup").startMap();
                 ds
@@ -168,7 +167,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         return HTTP_OK;
     }
 
-    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, int first, int requestedWindowSize) throws BlsException {
+    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, long first, long requestedWindowSize) throws BlsException {
         BlackLabIndex index = hitGroups.index();
         ds.startEntry("docInfos").startMap();
         MutableIntSet docsDone = new IntHashSet();

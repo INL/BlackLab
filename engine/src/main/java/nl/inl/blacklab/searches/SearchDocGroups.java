@@ -53,7 +53,7 @@ public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
      * @param number number of hits to select
      * @return resulting operation
      */
-    public SearchDocGroups window(int first, int number) {
+    public SearchDocGroups window(long first, long number) {
         return new SearchDocGroupsWindow(queryInfo(), this, first, number);
     }
     

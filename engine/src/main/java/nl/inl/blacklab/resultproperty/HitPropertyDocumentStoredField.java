@@ -56,14 +56,14 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public PropertyValueString get(int result) {
-        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.hitsArrays().doc(result)));
+    public PropertyValueString get(long result) {
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.doc(result)));
     }
 
     @Override
-    public int compare(int a, int b) {
-        final int docA = hits.hitsArrays().doc(a);
-        final int docB = hits.hitsArrays().doc(b);
+    public int compare(long a, long b) {
+        final int docA = hits.doc(a);
+        final int docB = hits.doc(b);
         int result = docPropStoredField.compare(docA, docB);
         return reverse ? -result : result;
     }

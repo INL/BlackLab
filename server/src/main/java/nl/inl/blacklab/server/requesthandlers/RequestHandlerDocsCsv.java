@@ -120,13 +120,13 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
-            int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
+            long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
             if (!docs.docsProcessedAtLeast(first))
                 first = 0;
 
-            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
             if (searchParam.containsKey("number")) {
-                int requested = searchParam.getInteger("number");
+                long requested = searchParam.getLong("number");
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -179,7 +179,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             for (DocGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Integer.toString(group.size()));
+                row.add(Long.toString(group.size()));
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
                     row.add(Long.toString(group.totalTokens()));
 
@@ -187,10 +187,10 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                         PropertyValue docPropValues = group.identity();
                         CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues, true);
                         row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
-                        row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
+                        row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
                     } else {
                         row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
-                        row.add(Integer.toString(group.storedResults().subcorpusSize().getDocuments()));
+                        row.add(Long.toString(group.storedResults().subcorpusSize().getDocuments()));
                     }
                 }
 
@@ -240,7 +240,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
                 else
                     row.add(Integer.toString(docResult.identity().id()));
 
-                row.add(Integer.toString(docResult.size()));
+                row.add(Long.toString(docResult.size()));
 
                 // Length field, if applicable
                 if (tokenLengthField != null)

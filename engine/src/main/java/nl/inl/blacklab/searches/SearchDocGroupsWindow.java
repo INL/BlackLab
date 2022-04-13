@@ -1,5 +1,7 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -8,10 +10,10 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class SearchDocGroupsWindow extends SearchDocGroups {
 
     private SearchDocGroups source;
-    private int first;
-    private int number;
+    private long first;
+    private long number;
 
-    public SearchDocGroupsWindow(QueryInfo queryInfo, SearchDocGroups source, int first, int number) {
+    public SearchDocGroupsWindow(QueryInfo queryInfo, SearchDocGroups source, long first, long number) {
         super(queryInfo);
         this.source = source;
         this.first = first;
@@ -25,12 +27,7 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + first;
-        result = prime * result + number;
-        result = prime * result + ((source == null) ? 0 : source.hashCode());
-        return result;
+        return Objects.hash(super.hashCode(), source, first, number);
     }
 
     @Override

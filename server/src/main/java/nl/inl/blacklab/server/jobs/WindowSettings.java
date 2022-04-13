@@ -2,21 +2,21 @@ package nl.inl.blacklab.server.jobs;
 
 public class WindowSettings {
 
-    private int first;
+    private long first;
 
-    private int size;
+    private long size;
 
-    public WindowSettings(int first, int size) {
+    public WindowSettings(long first, long size) {
         super();
         this.first = first;
         this.size = size;
     }
 
-    public int first() {
+    public long first() {
         return first;
     }
 
-    public int size() {
+    public long size() {
         return size;
     }
 

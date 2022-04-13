@@ -19,7 +19,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A hit property for grouping per document.
@@ -48,8 +47,8 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public PropertyValueDoc get(int hitIndex) {
-        return new PropertyValueDoc(index.doc(hits.hitsArrays().doc(hitIndex)));
+    public PropertyValueDoc get(long hitIndex) {
+        return new PropertyValueDoc(index.doc(hits.doc(hitIndex)));
     }
 
     @Override
@@ -58,10 +57,9 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
-        HitsArrays ha = hits.hitsArrays();
-        int docA = ha.doc(indexA);
-        int docB = ha.doc(indexB);
+    public int compare(long indexA, long indexB) {
+        int docA = hits.doc(indexA);
+        int docB = hits.doc(indexB);
         return reverse ? docB - docA : docA - docB;
     }
 

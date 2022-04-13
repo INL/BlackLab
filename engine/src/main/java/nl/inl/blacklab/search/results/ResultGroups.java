@@ -25,21 +25,21 @@ public interface ResultGroups<T> {
      *
      * @return the number of results that were grouped
      */
-    int sumOfGroupSizes();
+    long sumOfGroupSizes();
 
     /**
      * Return the size of the largest group
      *
      * @return size of the largest group
      */
-    int largestGroupSize();
+    long largestGroupSize();
 
     /**
      * Return the number of groups
      *
      * @return number of groups
      */
-    int size();
+    long size();
     
     /**
      * Get our original query info.
@@ -71,7 +71,7 @@ public interface ResultGroups<T> {
     
     Group<T> get(PropertyValue prop);
     
-    Group<T> get(int i);
+    Group<T> get(long i);
     
     /**
      * Get an instance of this grouping with fewer stored results per group.

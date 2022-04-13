@@ -1,13 +1,15 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Objects;
+
 /** Settings for our initial search, including how many hits we want to process/count at most. */
 public final class SearchSettings {
     
-    public static SearchSettings get(int maxHitsToProcess, int maxHitsToCount, long fiMatchFactor) {
+    public static SearchSettings get(long maxHitsToProcess, long maxHitsToCount, long fiMatchFactor) {
         return new SearchSettings(maxHitsToProcess, maxHitsToCount, fiMatchFactor);
     }
 
-    public static SearchSettings get(int maxHitsToProcess, int maxHitsToCount) {
+    public static SearchSettings get(long maxHitsToProcess, long maxHitsToCount) {
         return new SearchSettings(maxHitsToProcess, maxHitsToCount, -1);
     }
 
@@ -27,12 +29,12 @@ public final class SearchSettings {
      * 
      * Even if we stop processing, we can still keep counting.
      */
-    private int maxHitsToProcess;
+    private long maxHitsToProcess;
 
     /**
      * Stop counting hits after this number. (ResultsNO_LIMIT = don't stop counting)
      */
-    private int maxHitsToCount;
+    private long maxHitsToCount;
     
     /** Override FI match NFA factor, or -1 for default */
     private long fiMatchFactor;
@@ -42,31 +44,31 @@ public final class SearchSettings {
      * @param maxHitsToProcess how many hits to process at most
      * @param maxHitsToCount how many hits to count at most
      */
-    private SearchSettings(int maxHitsToProcess, int maxHitsToCount, long fiMatchFactor) {
+    private SearchSettings(long maxHitsToProcess, long maxHitsToCount, long fiMatchFactor) {
         this.maxHitsToProcess = maxHitsToProcess;
         this.maxHitsToCount = maxHitsToCount;
         this.fiMatchFactor = fiMatchFactor;
     }
     
-    public SearchSettings withMaxHitsToProcess(int n) {
+    public SearchSettings withMaxHitsToProcess(long n) {
         return get(n, maxHitsToCount, fiMatchFactor);
     }
 
-    public SearchSettings withMaxHitsToCount(int n) {
+    public SearchSettings withMaxHitsToCount(long n) {
         return get(maxHitsToProcess, n, fiMatchFactor);
     }
 
-    public SearchSettings withFiMatchFactor(int n) {
+    public SearchSettings withFiMatchFactor(long n) {
         return get(maxHitsToProcess, maxHitsToCount, n);
     }
 
     /** @return the maximum number of hits to retrieve. */
-    public int maxHitsToProcess() {
+    public long maxHitsToProcess() {
         return maxHitsToProcess;
     }
 
     /** @return the maximum number of hits to count. */
-    public int maxHitsToCount() {
+    public long maxHitsToCount() {
         return maxHitsToCount;
     }
 
@@ -80,33 +82,15 @@ public final class SearchSettings {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int)fiMatchFactor;
-        result = prime * result + maxHitsToCount;
-        result = prime * result + maxHitsToProcess;
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        SearchSettings that = (SearchSettings) o;
+        return maxHitsToProcess == that.maxHitsToProcess && maxHitsToCount == that.maxHitsToCount && fiMatchFactor == that.fiMatchFactor;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SearchSettings other = (SearchSettings) obj;
-        if (fiMatchFactor != other.fiMatchFactor)
-            return false;
-        if (maxHitsToCount != other.maxHitsToCount)
-            return false;
-        if (maxHitsToProcess != other.maxHitsToProcess)
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(maxHitsToProcess, maxHitsToCount, fiMatchFactor);
     }
-    
-    
-
 }

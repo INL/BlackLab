@@ -26,29 +26,29 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  */
 public class DocGroup extends Group<DocResult> {
     
-    public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalDocuments, long totalTokens) {
+    public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
         return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);
     }
-    
+
     private long totalTokens;
 
     private int storedHits;
-    
-    protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, int totalDocuments, long totalTokens) {
-        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters)null, (WindowStats)null), totalDocuments);
+
+    protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
+        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters) null, (WindowStats) null), totalDocuments);
         this.totalTokens = totalTokens;
         storedHits = 0;
         for (DocResult result: storedResults) {
             storedHits += result.numberOfStoredResults();
         }
     }
-    
+
     @Override
     public DocResults storedResults() {
         return (DocResults) super.storedResults();
     }
 
-    public int numberOfStoredHits() {
+    public long numberOfStoredHits() {
         return storedHits;
     }
 

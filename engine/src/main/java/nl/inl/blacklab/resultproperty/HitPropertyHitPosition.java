@@ -19,7 +19,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -45,8 +44,8 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public PropertyValueInt get(int hitIndex) {
-        return new PropertyValueInt(hits.hitsArrays().start(hitIndex));
+    public PropertyValueInt get(long hitIndex) {
+        return new PropertyValueInt(hits.start(hitIndex));
     }
 
     @Override
@@ -55,12 +54,11 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
-        HitsArrays ha = hits.hitsArrays();
-        int startA = ha.start(indexA);
-        int startB = ha.start(indexB);
-        int endA = ha.end(indexA);
-        int endB = ha.end(indexB);
+    public int compare(long indexA, long indexB) {
+        int startA = hits.start(indexA);
+        int startB = hits.start(indexB);
+        int endA = hits.end(indexA);
+        int endB = hits.end(indexB);
         
         if (startA == startB)
             return reverse ? endB - endA : endA - endB;

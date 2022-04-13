@@ -279,7 +279,7 @@ public final class LuceneUtil {
      * @param maxResults maximum number to return (or -1 for no limit)
      * @return the matching terms
      */
-    public static List<String> getFieldTerms(IndexReader index, String fieldName, int maxResults) {
+    public static List<String> getFieldTerms(IndexReader index, String fieldName, long maxResults) {
         return findTermsByPrefix(index, fieldName, null, true, maxResults);
     }
 
@@ -374,7 +374,7 @@ public final class LuceneUtil {
      * @return the matching terms
      */
     public static List<String> findTermsByPrefix(IndexReader index, String fieldName,
-            String prefix, boolean sensitive, int maxResults) {
+            String prefix, boolean sensitive, long maxResults) {
         boolean allTerms = prefix == null || prefix.length() == 0;
         if (allTerms) {
             prefix = "";

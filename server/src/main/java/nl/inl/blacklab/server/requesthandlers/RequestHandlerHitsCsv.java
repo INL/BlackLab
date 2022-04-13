@@ -132,14 +132,14 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
-            int first = Math.max(0, searchParam.getInteger("first")); // Defaults to 0
+            long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
 
-            int number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
             if (searchParam.containsKey("number")) {
-                int requested = searchParam.getInteger("number");
+                long requested = searchParam.getLong("number");
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -179,16 +179,16 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Integer.toString(group.storedResults().hitsStats().countedSoFar()));
+                row.add(Long.toString(group.storedResults().hitsStats().countedSoFar()));
 
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), metadataGroupProperties, docPropValues, true);
-                    int numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
-                    row.add(Integer.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Integer.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
+                    row.add(Long.toString(numberOfDocsInGroup));
+                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize .getDocuments()) : "[unknown]");
                     row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize .getTokens()) : "[unknown]");
                 }
 

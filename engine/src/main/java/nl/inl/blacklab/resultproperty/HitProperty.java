@@ -16,12 +16,13 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntComparator;
+import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -37,7 +38,7 @@ import nl.inl.blacklab.search.results.Results;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitProperty implements ResultProperty<Hit>, IntComparator {
+public abstract class HitProperty implements ResultProperty<Hit>, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
     public static HitProperty deserialize(Results<Hit, HitProperty> hits, String serialized) {
@@ -183,18 +184,17 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
      * 
      * @param contexts contexts to use, or null for none
      */
-    protected HitProperty setContexts(Contexts contexts) {
+    protected void setContexts(Contexts contexts) {
         if (needsContext() != null) {
             this.contexts = contexts;
     
             // Unless the client sets different context indices, assume we got the ones we wanted in the correct order
             if (contexts != null) {
-                int count = contexts.size();
-                this.contextIndices = new IntArrayList(count);
-                for (int i = 0; i < count; ++i) this.contextIndices.add(i, i);
+                int numberOfAnnotations = contexts.annotations().size();
+                this.contextIndices = new IntArrayList(numberOfAnnotations);
+                for (int i = 0; i < numberOfAnnotations; ++i) this.contextIndices.add(i, i);
             }
         }
-        return this;
     }
 
     /**
@@ -217,19 +217,15 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
         this.contextIndices.addAll(contextIndices);
     }
 
-//    @Override
-    public abstract PropertyValue get(int hitIndex);
+    public abstract PropertyValue get(long hitIndex);
 
     // A default implementation is nice, but slow.
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         PropertyValue hitPropValueA = get(indexA);
         PropertyValue hitPropValueB = get(indexB);
         return hitPropValueA.compareTo(hitPropValueB);
     }
-    
-//    @Override
-//    public abstract int compare(int a, int b);
 
     /**
      * Retrieve context from which field(s) prior to sorting/grouping on this
@@ -314,25 +310,16 @@ public abstract class HitProperty implements ResultProperty<Hit>, IntComparator 
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (reverse ? 1231 : 1237);
-        return result;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HitProperty that = (HitProperty) o;
+        return reverse == that.reverse;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        HitProperty other = (HitProperty) obj;
-        if (reverse != other.reverse)
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(reverse);
     }
 
     @Override

@@ -83,27 +83,27 @@ public class ResultsStatsDelegate extends ResultsStats {
     }
 
     @Override
-    public int processedTotal() {
+    public long processedTotal() {
         return realStats().processedTotal();
     }
 
     @Override
-    public int countedTotal() {
+    public long countedTotal() {
         return realStats().countedTotal();
     }
 
     @Override
-    public boolean processedAtLeast(int lowerBound) {
+    public boolean processedAtLeast(long lowerBound) {
         return realStats().processedAtLeast(lowerBound);
     }
 
     @Override
-    public int processedSoFar() {
+    public long processedSoFar() {
         return stats().processedSoFar();
     }
 
     @Override
-    public int countedSoFar() {
+    public long countedSoFar() {
         return stats().countedSoFar();
     }
 

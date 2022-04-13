@@ -24,12 +24,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -64,16 +64,23 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @param maxResultsToStorePerGroup max results to store
      * @return grouped hits
      */
-    public static HitGroups fromHits(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+    public static HitGroups fromHits(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
         return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
     }
 
-    private HitProperty criteria;
+    private final HitProperty criteria;
 
     /**
      * The groups.
+     * Note that we keep the groups both in the ResultsList.results object for
+     * the ordering and access by index as well as in this map to access by group
+     * identity. Ideally this wouldn't be necessary, but we need direct access to
+     * the ordering for e.g. paging.
      */
-    private Map<PropertyValue, HitGroup> groups = new HashMap<>();
+    private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
+
+    /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
+    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
 
     /**
      * Total number of results in the source set of hits. 
@@ -91,7 +98,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     /**
      * Size of the largest group.
      */
-    private int largestGroupSize = 0;
+    private long largestGroupSize = 0;
 
     private WindowStats windowStats = null;
 
@@ -106,7 +113,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @param criteria the criteria to group on
      * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    protected HitGroups(Hits hits, HitProperty criteria, int maxResultsToStorePerGroup) {
+    protected HitGroups(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
         super(hits.queryInfo());
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
@@ -117,15 +124,20 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, HitsArrays> groupLists = new HashMap<>();
+        Map<PropertyValue, HitsInternal> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
+        boolean listIsHuge = hits.size() > Integer.MAX_VALUE;
         for (Hit hit: hits) {
             PropertyValue identity = criteria.get(i);
-            HitsArrays group = groupLists.get(identity);
+            HitsInternal group = groupLists.get(identity);
             if (group == null) {
-                group = new HitsArrays();
+
+                if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
+                    throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+
+                group = HitsInternal.create(listIsHuge);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -143,9 +155,9 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             ++i;
         }
         resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, HitsArrays> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsInternal> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
-            HitsArrays hitList = e.getValue();
+            HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
@@ -183,17 +195,17 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // NOP
     }
 
     @Override
     public HitGroups sort(GroupProperty<Hit, HitGroup> sortProp) {
         ensureAllResultsRead();
-        List<HitGroup> sorted = new ArrayList<HitGroup>(this.results);
+        List<HitGroup> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         // Sorted contains the same hits as us, so we can pass on our result statistics.
-        return HitGroups.fromList(queryInfo(), sorted, criteria, (SampleParameters)null, (WindowStats)null, hitsStats, docsStats);
+        return HitGroups.fromList(queryInfo(), sorted, criteria, null, null, hitsStats, docsStats);
     }
     
     /**
@@ -206,7 +218,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     public HitGroups sample(SampleParameters sampleParameters) {
         List<HitGroup> sample = Results.doSample(this, sampleParameters);
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, (WindowStats)null, stats.getLeft(), stats.getRight());
+        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
     }
 
     /**
@@ -215,7 +227,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return the number of hits
      */
     @Override
-    public int sumOfGroupSizes() {
+    public long sumOfGroupSizes() {
         return hitsStats.countedTotal();
     }
 
@@ -225,7 +237,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return size of the largest group
      */
     @Override
-    public int largestGroupSize() {
+    public long largestGroupSize() {
         return largestGroupSize;
     }
 
@@ -240,7 +252,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public int size() {
+    public long size() {
         return groups.size();
     }
 
@@ -255,24 +267,24 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public HitGroups window(int first, int number) {
+    public HitGroups window(long first, long number) {
         List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         // Note: a window is just a subset of the total result set.
         // We shouldn't recalculate the totals, as windows are "transparent"
-        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, (SampleParameters)null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
+        return HitGroups.fromList(queryInfo(), resultsWindow, criteria, null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
     }
 
     @Override
     public HitGroups filter(GroupProperty<Hit, HitGroup> property, PropertyValue value) {
-        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()); 
+        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList());
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), list, groupCriteria(), (SampleParameters)null, (WindowStats)null, stats.getLeft(), stats.getRight());
+        return HitGroups.fromList(queryInfo(), list, groupCriteria(), null, null, stats.getLeft(), stats.getRight());
     }
 
     @Override
-    public ResultGroups<HitGroup> group(GroupProperty<Hit, HitGroup> criteria, int maxResultsToStorePerGroup) {
+    public ResultGroups<HitGroup> group(GroupProperty<Hit, HitGroup> criteria, long maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException("Cannot group HitGroups");
     }
 
@@ -294,7 +306,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         // So we need to copy back in the original docs count.
         ResultsStats hitsStats = new ResultsStatsStatic(stats.getLeft().processedTotal(), this.hitsStats.countedTotal(), this.hitsStats.maxStats());
         ResultsStats docsStats = new ResultsStatsStatic(stats.getRight().processedTotal(), this.docsStats.countedTotal(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, (SampleParameters)null, windowStats, hitsStats, docsStats);
+        return HitGroups.fromList(queryInfo(), truncatedGroups, criteria, null, windowStats, hitsStats, docsStats);
     }
 
     @Override
@@ -308,7 +320,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 
@@ -336,9 +348,9 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      * @return hitsStats in left, docsStats in right
      */
     private static Pair<ResultsStats, ResultsStats> getStatsOfSample(List<HitGroup> sample, MaxStats maxHitsStatsOfSource, MaxStats maxDocsStatsOfSource) {
-        int hitsCounted = 0;
-        int hitsRetrieved = 0;
-        int docsRetrieved = 0;
+        long hitsCounted = 0;
+        long hitsRetrieved = 0;
+        long docsRetrieved = 0;
         
         IntHashSet docs = new IntHashSet();
         for (HitGroup h : sample) {

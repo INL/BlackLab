@@ -7,11 +7,11 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 import nl.inl.util.XmlHighlighter;
 
 /** Concordances for a list of hits. */
@@ -78,9 +78,11 @@ public class Concordances {
             return;
         QueryInfo queryInfo = hits.queryInfo();
         Doc doc = queryInfo.index().doc(hits.get(0).doc());
-        int arrayLength = hits.size() * 2;
-        int[] startsOfWords = new int[arrayLength];
-        int[] endsOfWords = new int[arrayLength];
+        long arrayLength = hits.size() * 2;
+        if (arrayLength > Integer.MAX_VALUE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE / 2 + " hits in a single doc");
+        int[] startsOfWords = new int[(int)arrayLength];
+        int[] endsOfWords = new int[(int)arrayLength];
 
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
@@ -126,17 +128,17 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<HitsArrays> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
         for (Hit key: hits) {
-            HitsArrays hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = new HitsArrays();
+                hitsInDoc = HitsInternal.create();
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (HitsArrays l : hitsPerDocument.values()) {
+        for (HitsInternal l : hitsPerDocument.values()) {
             Hits hitsInThisDoc = Hits.fromList(queryInfo, l, null);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }

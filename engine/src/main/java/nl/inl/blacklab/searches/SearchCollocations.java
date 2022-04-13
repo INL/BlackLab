@@ -54,7 +54,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @param number number of hits to select
      * @return resulting operation
      */
-    public SearchCollocations window(int first, int number) {
+    public SearchCollocations window(long first, long number) {
         return new SearchCollocationsWindow(queryInfo(), this, first, number);
     }
 }

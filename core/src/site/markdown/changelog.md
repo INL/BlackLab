@@ -8,6 +8,10 @@
   changes were made to how DocValues are used, as this API is now sequential instead
   of random-access.
 
+### Fixed
+
+- Corpora larger than 2^31 tokens are now properly supported.
+
 ### Removed
 
 - support for previous BlackLab indexes (because Lucene 8 cannot read Lucene 5 indexes);
@@ -36,8 +40,8 @@
 
 ### New
 
-- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be 
-  faster in high-throughput scenarios. Note that this implementation currently does not 
+- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be
+  faster in high-throughput scenarios. Note that this implementation currently does not
   support queueing or aborting searches or getting a running totals count.
 - Add processing step to concatenate separate date fields into one.
 - Added format configuration `tei-p5.blf.yaml` that uses more standard `pos` attribute.

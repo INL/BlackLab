@@ -30,10 +30,10 @@ public class ResultCount extends ResultsStats implements SearchResult {
             if (count instanceof Hits) {
                 this.count = ((Hits) count).hitsStats();
             } else if (count instanceof HitGroups) {
-                int n = ((HitGroups) count).sumOfGroupSizes();
+                long n = ((HitGroups) count).sumOfGroupSizes();
                 this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
             } else if (count instanceof DocResults) {
-                int n = ((DocResults) count).sumOfGroupSizes();
+                long n = ((DocResults) count).sumOfGroupSizes();
                 this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
             } else if (count instanceof DocGroups) {
                 throw new UnsupportedOperationException("Cannot get hits count from DocGroups");
@@ -47,7 +47,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
             } else if (count instanceof DocResults) {
                 this.count = count.resultsStats();
             } else if (count instanceof DocGroups) {
-                int n = ((DocGroups) count).sumOfGroupSizes();
+                long n = ((DocGroups) count).sumOfGroupSizes();
                 this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
             }
             break;
@@ -65,7 +65,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int processedSoFar() {
+    public long processedSoFar() {
         update();
         try {
             return count.processedSoFar();
@@ -76,7 +76,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int processedTotal() {
+    public long processedTotal() {
         update();
         try {
             return count.processedTotal();
@@ -87,10 +87,10 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public boolean processedAtLeast(int n) {
+    public boolean processedAtLeast(long lowerBound) {
         update();
         try {
-            return count.processedAtLeast(n);
+            return count.processedAtLeast(lowerBound);
         } catch(InterruptedSearch e) {
             wasInterrupted = true;
             throw e;
@@ -98,7 +98,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int countedSoFar() {
+    public long countedSoFar() {
         update();
         try {
             return count.countedSoFar();
@@ -109,7 +109,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public int countedTotal() {
+    public long countedTotal() {
         update();
         try {
             return count.countedTotal();

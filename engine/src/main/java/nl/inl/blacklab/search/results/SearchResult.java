@@ -18,7 +18,7 @@ public interface SearchResult {
      * 
      * @return how many hits are stored in this result object
      */
-    int numberOfResultObjects();
+    long numberOfResultObjects();
 
     /**
      * Return debug info.

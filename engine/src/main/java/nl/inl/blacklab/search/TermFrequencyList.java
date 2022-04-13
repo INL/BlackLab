@@ -12,6 +12,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -99,42 +100,54 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
     }
 
-    List<TermFrequency> list;
-
-    long totalFrequency = 0;
+    long totalFrequency;
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
-        list = new ArrayList<>(wordFreq.size());
-        for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
-            list.add(new TermFrequency(e.getKey(), e.getValue()));
+        if (wordFreq.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
         }
-        if (sort)
-            list.sort(Comparator.naturalOrder());
+        results = new ArrayList<>(wordFreq.size());
+        for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
+            results.add(new TermFrequency(e.getKey(), e.getValue()));
+        }
+        if (sort) {
+            results.sort(Comparator.naturalOrder());
+        }
+        calculateTotalFrequency();
     }
 
     TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
         super(queryInfo);
-        this.list = list;
+        if (list.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+        }
+        this.results = list;
+        calculateTotalFrequency();
+    }
+
+    private void calculateTotalFrequency() {
         totalFrequency = 0;
-        for (TermFrequency fr: list) {
+        for (TermFrequency fr: results) {
             totalFrequency += fr.frequency;
         }
     }
 
     @Override
-    public int size() {
-        return list.size();
+    public long size() {
+        return results.size();
     }
 
     @Override
     public Iterator<TermFrequency> iterator() {
-        return list.iterator();
+        return results.iterator();
     }
 
     @Override
-    public TermFrequency get(int index) {
-        return list.get(index);
+    public TermFrequency get(long index) {
+        return results.get((int)index);
     }
 
     /**
@@ -145,7 +158,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
      */
     public long frequency(String token) {
         // TODO: maybe speed this up by keeping a map of tokens and frequencies?
-        for (TermFrequency tf : list) {
+        //       (or if sorted by freq, use binary search)
+        for (TermFrequency tf : results) {
             if (tf.term.equals(token))
                 return tf.frequency;
         }
@@ -156,18 +170,20 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return totalFrequency;
     }
 
-    public TermFrequencyList subList(int fromIndex, int toIndex) {
-        return new TermFrequencyList(queryInfo(), list.subList(fromIndex, toIndex));
+    public TermFrequencyList subList(long fromIndex, long toIndex) {
+        if (fromIndex < 0 || toIndex < 0 || fromIndex > results.size() || toIndex > results.size())
+            throw new BlackLabRuntimeException("index out of range");
+        return new TermFrequencyList(queryInfo(), results.subList((int)fromIndex, (int)toIndex));
     }
 
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         // NOP
     }
 
     @Override
     public ResultGroups<TermFrequency> group(ResultProperty<TermFrequency> criteria,
-            int maxResultsToStorePerGroup) {
+                                             long maxResultsToStorePerGroup) {
         throw new UnsupportedOperationException();
     }
 
@@ -182,7 +198,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public TermFrequencyList window(int first, int windowSize) {
+    public TermFrequencyList window(long first, long windowSize) {
         throw new UnsupportedOperationException();
     }
 
@@ -197,7 +213,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return results.size();
     }
 

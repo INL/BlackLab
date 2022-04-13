@@ -25,8 +25,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
@@ -48,7 +46,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.Hits.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits.HitsArrays;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -56,8 +53,6 @@ import nl.inl.blacklab.search.results.Hits.HitsArrays;
  * This class is thread-safe.
  */
 public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
-
-    static final Logger logger = LogManager.getLogger(DocResults.class);
 
     private static final class SimpleDocCollector extends SimpleCollector {
         private final List<DocResult> results;
@@ -79,6 +74,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
+            if (results.size() >= Integer.MAX_VALUE) {
+                // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+                throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+            }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
         }
 
@@ -119,7 +118,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
+    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
     }
 
@@ -144,7 +143,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private HitsArrays partialDocHits;
+    private HitsInternal partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -157,17 +156,17 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     Lock ensureResultsReadLock;
 
     /** Largest number of hits in a single document */
-    private int mostHitsInDocument = 0;
+    private long mostHitsInDocument = 0;
 
-    private int totalHits = 0;
+    private long totalHits = 0;
 
-    private int resultObjects = 0;
+    private long resultObjects = 0;
 
     private WindowStats windowStats;
 
     private SampleParameters sampleParameters;
 
-    private int maxHitsToStorePerDoc = 0;
+    private long maxHitsToStorePerDoc = 0;
 
     /** The Query this was created from, or null if it wasn't created from a Query.
      *
@@ -182,7 +181,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     /**
      * Construct an empty DocResults.
-     * @param queryInfo
+     * @param queryInfo query info
      */
     protected DocResults(QueryInfo queryInfo) {
         super(queryInfo);
@@ -195,7 +194,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, Hits hits, int maxHitsToStorePerDoc) {
+    protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
         this.sourceHitsIterator = hits.ephemeralIterator();
@@ -217,6 +216,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
+        if (results.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+        }
         this.results = results;
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
@@ -248,9 +251,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocResults sort(DocProperty sortProp) {
         ensureAllResultsRead();
-        List<DocResult> sorted = new ArrayList<DocResult>(this.results);
+        List<DocResult> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
-        return DocResults.fromList(queryInfo(), sorted, (SampleParameters)null, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), sorted, null, null);
     }
 
     /**
@@ -264,11 +267,11 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      *
      * @return true if the size of this set is at least lowerBound, false otherwise.
      */
-    public boolean docsProcessedAtLeast(int lowerBound) {
+    public boolean docsProcessedAtLeast(long lowerBound) {
         return resultsProcessedAtLeast(lowerBound);
     }
 
-    public int docsProcessedSoFar() {
+    public long docsProcessedSoFar() {
         return resultsProcessedSoFar();
     }
 
@@ -281,7 +284,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      *
      * @return the number of documents.
      */
-    protected int docsProcessedTotal() {
+    protected long docsProcessedTotal() {
         return size();
     }
 
@@ -289,13 +292,13 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * If we still have only partially read our Hits object, read some more of it
      * and add the hits.
      *
-     * @param index the number of results we want to ensure have been read, or
+     * @param number the number of results we want to ensure have been read, or
      *            negative for all results
      */
     @Override
-    protected void ensureResultsRead(int index) {
+    protected void ensureResultsRead(long number) {
         try {
-            if (doneProcessingAndCounting() || (index >= 0 && results.size() > index))
+            if (doneProcessingAndCounting() || (number >= 0 && results.size() > number))
                 return;
 
             while (!ensureResultsReadLock.tryLock()) {
@@ -305,27 +308,27 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 Thread.sleep(50);
-                if (doneProcessingAndCounting() || (index >= 0 && results.size() >= index))
+                if (doneProcessingAndCounting() || (number >= 0 && results.size() >= number))
                     return;
             }
 
             try {
                 // Fill list of document results
-                HitsArrays docHits = partialDocHits;
+                HitsInternal docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
-                while (sourceHitsIterator.hasNext() && (index < 0 || index > results.size())) {
+                while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
                     EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc;
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                             Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                            int size = docHits.size();
+                            long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
 
-                        docHits = new HitsArrays();
+                        docHits = HitsInternal.create();
                     }
 
                     docHits.add(h);
@@ -340,8 +343,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index().doc(lastDocId));
                         Hits hits = Hits.fromList(queryInfo(), docHits, null);
-                        int size = docHits.size();
-                        addDocResultToList(doc, hits, size);
+                        addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
                     }
@@ -354,7 +356,12 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         }
     }
 
-    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, int totalNumberOfHits) {
+    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
+        if (results.size() >= Integer.MAX_VALUE) {
+            // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " doc results");
+        }
+
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
             docResult = DocResult.fromHits(doc, Hits.immutableEmptyList(queryInfo()), totalNumberOfHits);
@@ -370,7 +377,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public DocGroups group(DocProperty groupBy, int maxResultsToStorePerGroup) {
+    public DocGroups group(DocProperty groupBy, long maxResultsToStorePerGroup) {
         ensureAllResultsRead();
 
         Map<PropertyValue, List<DocResult>> groupLists = new HashMap<>();
@@ -382,11 +389,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
         for (DocResult r : this) {
             PropertyValue groupId = groupBy.get(r);
-            List<DocResult> group = groupLists.get(groupId);
-            if (group == null) {
-                group = new ArrayList<>();
-                groupLists.put(groupId, group);
-            }
+            List<DocResult> group = groupLists.computeIfAbsent(groupId, k -> new ArrayList<>());
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup)
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
@@ -407,7 +410,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, groupBy, (SampleParameters)null, (WindowStats)null);
+        return DocGroups.fromList(queryInfo(), results, groupBy, null, null);
     }
 
     /**
@@ -418,11 +421,11 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @return the window
      */
     @Override
-    public DocResults window(int first, int number) {
+    public DocResults window(long first, long number) {
         List<DocResult> resultsWindow = Results.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return DocResults.fromList(queryInfo(), resultsWindow, (SampleParameters)null, windowStats);
+        return DocResults.fromList(queryInfo(), resultsWindow, null, windowStats);
     }
 
     /**
@@ -447,12 +450,12 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public int sumOfGroupSizes() {
+    public long sumOfGroupSizes() {
         return totalHits;
     }
 
     @Override
-    public int largestGroupSize() {
+    public long largestGroupSize() {
         ensureAllResultsRead();
         return mostHitsInDocument;
     }
@@ -477,13 +480,13 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());
             truncatedGroups.add(newGroup);
         }
-        return DocResults.fromList(queryInfo(), truncatedGroups, (SampleParameters)null, windowStats);
+        return DocResults.fromList(queryInfo(), truncatedGroups, null, windowStats);
     }
 
     @Override
     public DocResults filter(DocProperty property, PropertyValue value) {
         List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
-        return DocResults.fromList(queryInfo(), list, (SampleParameters)null, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), list, null, null);
     }
 
     /**
@@ -494,7 +497,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     @Override
     public DocResults sample(SampleParameters sampleParameters) {
-        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, (WindowStats)null);
+        return DocResults.fromList(queryInfo(), Results.doSample(this, sampleParameters), sampleParameters, null);
     }
 
     @Override
@@ -508,7 +511,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     @Override
-    public int numberOfResultObjects() {
+    public long numberOfResultObjects() {
         return resultObjects;
     }
 
@@ -540,7 +543,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     public CorpusSize subcorpusSize(boolean countTokens) {
         if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
             long numberOfTokens;
-            int numberOfDocuments;
+            long numberOfDocuments;
             if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
                 // Fast approach: use the DocValues for the token length field
 //                logger.debug("## DocResults.tokensInMatchingDocs: fast path");

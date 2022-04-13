@@ -171,7 +171,7 @@ public class HitsFromQuery extends Hits {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(int number) {
+    protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
             if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() > number))
@@ -194,8 +194,8 @@ public class HitsFromQuery extends Hits {
             }
             try {
                 boolean readAllHits = number < 0;
-                int maxHitsToCount = searchSettings.maxHitsToCount();
-                int maxHitsToProcess = searchSettings.maxHitsToProcess();
+                long maxHitsToCount = searchSettings.maxHitsToCount();
+                long maxHitsToProcess = searchSettings.maxHitsToProcess();
                 while (readAllHits || hitsArrays.size() < number) {
 
                     // Abort if asked

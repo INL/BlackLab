@@ -43,7 +43,7 @@ class TocEntry implements Comparable<TocEntry> {
      */
     @Override
     public int compareTo(TocEntry o) {
-        return (int) (offset - o.offset);
+        return Long.compare(offset, o.offset);
     }
 
     @Override

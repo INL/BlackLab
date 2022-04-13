@@ -15,12 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
-import org.apache.lucene.index.IndexReader;
 
 /**
  * A hit property for grouping on by decade based on a stored field in the
@@ -65,15 +66,15 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public PropertyValueDecade get(int hitIndex) {
-        return docPropertyDocumentDecade.get(hits.hitsArrays().doc(hitIndex));
+    public PropertyValueDecade get(long hitIndex) {
+        return docPropertyDocumentDecade.get(hits.doc(hitIndex));
     }
 
     @Override
-    public int compare(int indexA, int indexB) {
+    public int compare(long indexA, long indexB) {
         return docPropertyDocumentDecade.compare(
-            hits.hitsArrays().doc(indexA),
-            hits.hitsArrays().doc(indexB)
+            hits.doc(indexA),
+            hits.doc(indexB)
         ) * (reverse ? -1 : 1);
     }
 
