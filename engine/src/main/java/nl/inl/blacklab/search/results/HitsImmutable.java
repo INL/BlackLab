@@ -3,9 +3,10 @@ package nl.inl.blacklab.search.results;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /**
- * A basic Hits object implemented with a list.
+ * An immutable Hits object.
  */
-public class HitsList extends HitsAbstract {
+public class HitsImmutable extends HitsAbstract {
+
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
 
@@ -23,11 +24,13 @@ public class HitsList extends HitsAbstract {
      * @param hits the list of hits to wrap, or null for a new list
      * @param capturedGroups the list of hits to wrap, or null for no captured groups
      */
-    protected HitsList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
+    protected HitsImmutable(QueryInfo queryInfo, HitsInternalRead hits, CapturedGroups capturedGroups) {
         super(queryInfo, hits);
         this.capturedGroups = capturedGroups;
 
         hitsCounted = this.hitsArrays.size();
+
+        // Count docs and check if doc ids are ascending
         int prevDoc = -1;
         IntIterator it = this.hitsArrays.docsIterator();
         ascendingLuceneDocIds = true;
@@ -44,13 +47,13 @@ public class HitsList extends HitsAbstract {
     }
 
     /**
-     * Construct a HitsList from all its components.
+     * Construct a HitsImmutable from all its components.
      *
      * Should only be used internally.
      */
-    protected HitsList(
+    protected HitsImmutable(
                        QueryInfo queryInfo,
-                       HitsInternal hits,
+                       HitsInternalRead hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
                        long hitsCounted,
@@ -71,7 +74,7 @@ public class HitsList extends HitsAbstract {
 
     @Override
     public String toString() {
-        return "HitsList#" + hitsObjId + " (hits.size()=" + this.size() + "; isWindow=" + isWindow() + ")";
+        return "HitsImmutable#" + hitsObjId + " (hits.size()=" + size() + ")";
     }
 
     /**
@@ -82,8 +85,8 @@ public class HitsList extends HitsAbstract {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(long number) {
-        // subclasses may override
+    protected final void ensureResultsRead(long number) {
+        // immutable, results have always been read
     }
 
     @Override

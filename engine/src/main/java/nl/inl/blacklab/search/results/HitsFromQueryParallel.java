@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.ThreadAborter;
 
-public class HitsFromQueryParallel extends HitsAbstract {
+public class HitsFromQueryParallel extends HitsAbstractMutable {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     private static final int HIT_POLLING_TIME_MS = 50;
@@ -269,6 +269,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
                             //           master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
                             //           require these properties to hold.]
                             addToGlobalResults(results, capturedGroups);
+                            results.clear();
                         }
                     }
 
@@ -295,8 +296,10 @@ public class HitsFromQueryParallel extends HitsAbstract {
                 throw BlackLabRuntimeException.wrap(e);
             } finally {
                 // write out leftover hits in last document/aborted document
-                if (results.size() > 0)
+                if (results.size() > 0) {
                     addToGlobalResults(results, capturedGroups);
+                    results.clear();
+                }
             }
 
             // If we're here, the loop reached its natural end - we're done.
@@ -307,7 +310,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
             this.leafReaderContext = null;
         }
 
-        void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
+        void addToGlobalResults(HitsInternalRead hits, List<Span[]> capturedGroups) {
             globalResults.addAll(hits);
 
             if (globalCapturedGroups != null) {
@@ -322,8 +325,6 @@ public class HitsFromQueryParallel extends HitsAbstract {
                     capturedGroups.clear();
                 }
             }
-
-            hits.clear();
         }
 
         public HitQueryContext getHitContext() {
@@ -412,7 +413,7 @@ public class HitsFromQueryParallel extends HitsAbstract {
                     weight,
                     leafReaderContext,
                     this.hitQueryContext,
-                    this.hitsArrays,
+                    this.hitsInternalWritable,
                     this.capturedGroups,
                     this.globalDocsProcessed,
                     this.globalDocsCounted,

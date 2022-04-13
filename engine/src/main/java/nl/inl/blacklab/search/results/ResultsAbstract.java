@@ -188,16 +188,6 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
     }
 
     /**
-     * Is this a hits window?
-     *
-     * @return true if it's a window, false if not
-     */
-    @Override
-    public boolean isWindow() {
-        return windowStats() != null;
-    }
-
-    /**
      * If this is a hits window, return the window stats.
      *
      * @return window stats, or null if this is not a hits window

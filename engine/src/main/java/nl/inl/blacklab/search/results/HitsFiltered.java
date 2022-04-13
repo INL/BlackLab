@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsAbstract {
+public class HitsFiltered extends HitsAbstractMutable {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -42,7 +42,7 @@ public class HitsFiltered extends HitsAbstract {
      * @param value value to filter with
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo(), false);
+        super(hits.queryInfo());
         this.source = hits;
         ascendingLuceneDocIds = source.hasAscendingLuceneDocIds();
 
@@ -109,7 +109,7 @@ public class HitsFiltered extends HitsAbstract {
                         source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
-                            hitsArrays.add(hit);
+                            hitsInternalWritable.add(hit);
                             hitsCounted++;
                             if (hit.doc() != previousHitDoc) {
                                 docsCounted++;

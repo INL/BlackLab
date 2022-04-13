@@ -43,7 +43,7 @@ public interface HitsInternal extends HitsInternalRead {
         return new HitsInternalNoLock32((int)initialCapacity);
     }
 
-    HitsInternal EMPTY_SINGLETON = new HitsInternalNoLock32();
+    HitsInternalRead EMPTY_SINGLETON = new HitsInternalNoLock32();
 
     void add(int doc, int start, int end);
 
