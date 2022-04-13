@@ -8,6 +8,10 @@
   changes were made to how DocValues are used, as this API is now sequential instead
   of random-access.
 
+### Fixed
+
+- Corpora larger than 2^31 tokens are now properly supported.
+
 ### Removed
 
 - support for previous BlackLab indexes (because Lucene 8 cannot read Lucene 5 indexes);
