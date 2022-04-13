@@ -1,28 +1,62 @@
 # Change Log
 
-## Improvements in 2.3.0-SNAPSHOT
+## Improvements in 3.0.0-SNAPSHOT
+
+### Removed
+
+- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
+  fi version 3; these were all replaced with newer versions six years ago. older indexes
+  will need to be re-indexed)
+
+
+## Improvements in 2.3.0
 
 ### Changed
 
 - Language level set to Java 9, so we can use `Arrays.compare()` among other things
   (and stay on a supported Java version).
+- GitHub Action to automatically build and run integration tests on push
+
+### Documentation
+
+- Added to blacklab-internals page.
+- Update roadmap, who uses blacklab.
 - Documentation, comments and code now use the terms "annotated field" and "annotation"
-  everywhere (some lingering occurrences of the older terms "complex field" and 
+  everywhere (some lingering occurrences of the older terms "complex field" and
   "property" were removed).
 
 ### New
 
-- 
+- Alternative cache implementation (`ResultsCache` by `@eginez` of Lexion) that may be 
+  faster in high-throughput scenario's. Note that this implementation currently does not 
+  support queueing or aborting searches or getting a running totals count.
+- Add processing step to concatenate separate date fields into one.
+- Added format configuration `tei-p5.blf.yaml` that uses more standard `pos` attribute.
+  Renamed existing TEI format configurations to `-legacy`.
+
+### Fixed
+
+- Gracefully shut down ExecutorServices to avoid hanging on application exit.
+- Fixed intermittent crashes using synchronization.
+- Fixed count hanging if underlying search was aborted due to timeout. 
+- Ensure all BLSpans are startpoint-sorted.
+- Lowercase (desensitize) display values when grouping case-insensitively.
+- Always run at least one search (don't queue if no searches are running)
+- Fix convert and tag plugin functionality.
+- Various smaller bugfixes.
+
+### Performance
+
+- Only load document fields we actually need
+- Some more optimizations for hit frequencies
 
 ### Removed
 
 - empty module `interfaces`
-- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
-  fi version 3; these were all replaced with newer versions six years ago. older indexes 
-  will need to be re-indexed)
 - SQLite logging. Was never fully realized, and the new approach using Prometheus (see 
   `instrumentation` modules) is better.
-- several long-deprecated methods were removed.
+- `checkAgainMs` (from BLS response).
+- several long-deprecated methods.
 
 ## Improvements in 2.2.0
 
