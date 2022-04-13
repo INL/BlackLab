@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
- * A collection of matches.
+ * A collection of matches being fetched as they are needed.
  *
  * Should be thread-safe and most methods are safe w.r.t. hits having been fetched.
  */
@@ -218,8 +218,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        Random random = new Random(sampleParameters.seed());
-        Set<Long> chosenHitIndices = new TreeSet<>();
+        Set<Long> chosenHitIndices = new TreeSet<>(); // we need indexes sorted (see below)
         long numberOfHitsToSelect = sampleParameters.numberOfHits(totalNumberOfHits);
         if (numberOfHitsToSelect >= size()) {
             numberOfHitsToSelect = size(); // default to all hits in this case
@@ -228,6 +227,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         } else {
             // Choose the hits
+            Random random = new Random(sampleParameters.seed());
             for (int i = 0; i < numberOfHitsToSelect; i++) {
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
@@ -247,7 +247,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
                 hr.getEphemeral(hitIndex, hit);
-                if (hit.doc != previousDoc) {
+                if (hit.doc != previousDoc) { // this works because indexes are sorted (TreeSet)
                     docsInSample.add(1);
                     previousDoc = hit.doc;
                 }
