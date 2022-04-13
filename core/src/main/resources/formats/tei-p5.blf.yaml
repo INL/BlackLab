@@ -1,8 +1,8 @@
 # For displaying in user interface (optional)
-displayName: "TEI P5, contents in text, @type as PoS"
+displayName: "TEI P5, contents in text, @pos as PoS"
 
 # For describing input format in user interface (optional)
-description: A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.
+description: A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the pos attribute.
 
 helpUrl: http://www.tei-c.org/Guidelines/P5/
 
@@ -50,7 +50,7 @@ annotatedFields:
       valuePath: "@lemma"
     - name: pos
       displayName: PoS
-      valuePath: "@type"
+      valuePath: "@pos"
 
     # XML tags within the content we'd like to index
     # (relative to container)
