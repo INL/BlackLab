@@ -43,13 +43,6 @@ public interface Results<T, P extends ResultProperty<T>> extends SearchResult, I
     ThreadAborter threadAborter();
 
     /**
-     * Is this a hits window?
-     *
-     * @return true if it's a window, false if not
-     */
-    boolean isWindow();
-
-    /**
      * If this is a hits window, return the window stats.
      *
      * @return window stats, or null if this is not a hits window

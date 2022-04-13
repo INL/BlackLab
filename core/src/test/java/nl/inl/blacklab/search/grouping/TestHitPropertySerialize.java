@@ -36,7 +36,7 @@ public class TestHitPropertySerialize {
 
     private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private Hits hits = Hits.immutableEmptyList(mockIndex.createDefaultQueryInfo());
+    private Hits hits = Hits.immutableEmpty(mockIndex.createDefaultQueryInfo());
 
     private Annotation lemmaAnnotation;
 

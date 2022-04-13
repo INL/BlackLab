@@ -21,13 +21,13 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
- * A collection of matches.
+ * A collection of matches being fetched as they are needed.
  *
  * Should be thread-safe and most methods are safe w.r.t. hits having been fetched.
  */
 public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> implements Hits {
 
-    protected final HitsInternal hitsArrays;
+    protected final HitsInternalRead hitsArrays;
 
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
@@ -127,7 +127,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits) {
+    public HitsAbstract(QueryInfo queryInfo, HitsInternalRead hits) {
         super(queryInfo);
         this.hitsArrays = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }
@@ -156,7 +156,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         if (first < 0 || (emptyResultSet && first > 0) ||
             (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
             //throw new IllegalArgumentException("First hit out of range");
-            return Hits.immutableEmptyList(queryInfo());
+            return Hits.immutableEmpty(queryInfo());
         }
 
         // Auto-clamp number
@@ -192,7 +192,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         });
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
-        return Hits.fromList(queryInfo(), window, windowStats, null,
+        return Hits.immutable(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
                 capturedGroups, hasAscendingLuceneDocIds());
     }
@@ -218,8 +218,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
-        Random random = new Random(sampleParameters.seed());
-        Set<Long> chosenHitIndices = new TreeSet<>();
+        Set<Long> chosenHitIndices = new TreeSet<>(); // we need indexes sorted (see below)
         long numberOfHitsToSelect = sampleParameters.numberOfHits(totalNumberOfHits);
         if (numberOfHitsToSelect >= size()) {
             numberOfHitsToSelect = size(); // default to all hits in this case
@@ -228,6 +227,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         } else {
             // Choose the hits
+            Random random = new Random(sampleParameters.seed());
             for (int i = 0; i < numberOfHitsToSelect; i++) {
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
@@ -247,7 +247,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
                 hr.getEphemeral(hitIndex, hit);
-                if (hit.doc != previousDoc) {
+                if (hit.doc != previousDoc) { // this works because indexes are sorted (TreeSet)
                     docsInSample.add(1);
                     previousDoc = hit.doc;
                 }
@@ -260,7 +260,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         });
 
-        return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(),
+        return Hits.immutable(queryInfo(), sample, null, sampleParameters, sample.size(),
                 docsInSample.getValue(), docsInSample.getValue(), capturedGroups,
                 hasAscendingLuceneDocIds());
     }
@@ -285,14 +285,14 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
-        HitsInternal sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
+        HitsInternalRead sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
 
         CapturedGroups capturedGroups = capturedGroups();
         long hitsCounted = hitsCountedSoFar();
         long docsRetrieved = docsProcessedSoFar();
         long docsCounted = docsCountedSoFar();
         boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId;
-        return Hits.fromList(queryInfo(), sorted, null, null,
+        return Hits.immutable(queryInfo(), sorted, null, null,
                 hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
     }
 
@@ -474,7 +474,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             if (h.doc == docid)
                 r.add(h);
         }
-        return new HitsList(queryInfo(), r, null);
+        return new HitsImmutable(queryInfo(), r, null);
     }
 
     // Stats
@@ -546,7 +546,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         HitsInternal r = HitsInternal.create(1, false, false);
         r.add(hit);
 
-        return Hits.fromList(
+        return Hits.immutable(
             this.queryInfo(),
             r,
             new WindowStats(false, 1, 1, 1),

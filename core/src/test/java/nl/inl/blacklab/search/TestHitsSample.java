@@ -31,7 +31,7 @@ public class TestHitsSample {
 
     private static void assertSample(int[] expected, SampleParameters param) {
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
+            Hits hits = Hits.immutable(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
             int i = 0;
             Assert.assertEquals(expected.length, hits.size());
             for (Hit hit : hits) {

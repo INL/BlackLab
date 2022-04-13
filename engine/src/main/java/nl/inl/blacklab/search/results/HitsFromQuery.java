@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends HitsAbstract {
+public class HitsFromQuery extends HitsAbstractMutable {
 
     /** Settings such as max. hits to process/count. */
     SearchSettings searchSettings;
@@ -99,7 +99,7 @@ public class HitsFromQuery extends HitsAbstract {
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        super(queryInfo, false);
+        super(queryInfo);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;
@@ -288,7 +288,7 @@ public class HitsFromQuery extends HitsAbstract {
                             hitQueryContext.getCapturedGroups(groups);
                             capturedGroups.put(hit, groups);
                         }
-                        hitsArrays.add(hit);
+                        hitsInternalWritable.add(hit);
                         if (maxHitsToProcess >= 0 && hitsArrays.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }

@@ -158,7 +158,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         resultObjects += groupLists.size();
         for (Map.Entry<PropertyValue, HitsInternal> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
-            HitsInternal hitList = e.getValue();
+            HitsInternalRead hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);

@@ -320,7 +320,7 @@ public class Contexts implements Iterable<int[]> {
                 final int curDoc = ha.doc(i);
                 if (curDoc != prevDoc) {
                     try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
-                    // process hits in this document:
+                    // Process hits in preceding document:
                     int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, fiidLookups);
                     Collections.addAll(contexts, docContextArray);
                     // start a new document
@@ -328,7 +328,7 @@ public class Contexts implements Iterable<int[]> {
                     firstHitInCurrentDoc = i;
                 }
             }
-            // Process trailing hits
+            // Process hits in final document
             int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, fiidLookups);
             Collections.addAll(contexts, docContextArray);
         }

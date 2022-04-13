@@ -36,7 +36,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #fromList(QueryInfo, HitsInternal, CapturedGroups)} }
+     * Prefer using @link { {@link #immutable(QueryInfo, HitsInternalRead, CapturedGroups)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids
@@ -44,22 +44,22 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @param ends      hit ends
      * @return hits found
      */
-    static Hits fromArrays(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
+    static Hits immutable(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
 
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
+        return new HitsImmutable(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
     }
 
-    static Hits fromList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
-        return new HitsList(queryInfo, hits, capturedGroups);
+    static Hits immutable(QueryInfo queryInfo, HitsInternalRead hits, CapturedGroups capturedGroups) {
+        return new HitsImmutable(queryInfo, hits, capturedGroups);
     }
 
-    static Hits fromList(
+    static Hits immutable(
             QueryInfo queryInfo,
-            HitsInternal hits,
+            HitsInternalRead hits,
             WindowStats windowStats,
             SampleParameters sampleParameters,
             long hitsCounted,
@@ -67,7 +67,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long docsCounted,
             CapturedGroups capturedGroups,
             boolean ascendingLuceneDocIds) {
-        return new HitsList(
+        return new HitsImmutable(
                 queryInfo,
                 hits,
                 windowStats,
@@ -89,7 +89,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits object
      */
     static Hits singleton(QueryInfo queryInfo, int luceneDocId, int start, int end) {
-        return fromArrays(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
+        return immutable(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
     }
 
     /**
@@ -98,8 +98,8 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @param queryInfo query info
      * @return hits found
      */
-    static Hits immutableEmptyList(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
+    static Hits immutableEmpty(QueryInfo queryInfo) {
+        return new HitsImmutable(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
     }
 
     /**
