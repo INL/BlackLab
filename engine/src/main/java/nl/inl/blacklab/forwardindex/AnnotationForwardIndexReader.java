@@ -73,8 +73,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     /** Build term indexes right away or lazily? */
     private boolean buildTermIndexesOnInit;
 
-    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean largeTermsFileSupport, boolean buildTermIndexesOnInit) {
-        super(annotation, dir, collators, largeTermsFileSupport);
+    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean buildTermIndexesOnInit) {
+        super(annotation, dir, collators);
 
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -99,7 +99,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
         //logger.debug("  END   read TOC " + tocFile);
 
         //logger.debug("  START read Terms " + tocFile);
-        terms = Terms.openForReading(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
+        terms = Terms.openForReading(collators, termsFile, buildTermIndexesOnInit);
         //logger.debug("  END   read Terms " + tocFile);
         //logger.debug("  START Terms.initialize() " + tocFile);
         terms.initialize();

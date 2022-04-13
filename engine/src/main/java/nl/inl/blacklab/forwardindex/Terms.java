@@ -50,9 +50,6 @@ public abstract class Terms {
      */
     Collator collatorInsensitive;
 
-    /** Use new blocks-based terms file, that can grow larger than 2 GB? */
-    boolean useBlockBasedTermsFile = true;
-
     /**
      * The maximum block size to use while writing the terms file. Usually around
      * the limit of 2GB, but for testing, we can set this to a lower value. Note
@@ -104,102 +101,47 @@ public abstract class Terms {
         long fileMapLength = Math.min(maxMapSize, fileLength);
         MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 
-        /*
-        Below is some code from the old termv3 branch that attempted to:
-        - do away with useBlockBasedTermsFile,
-        - detect version 1 and 2 of the terms file
-        - implement a v3+ that includes a version number in the file and might have other advantages
-          (such as better mappability, faster startup times, etc.); this wasn't finished though.
-
-        We should probably do something like this eventually to simplify the code and make it easier to
-        change file format versions. We'll probably drop support for v1.
-
-        numberOfTerms = buf.getInt();
-        if (numberOfTerms == -1) {
-            // V3 and later: first int is -1, second int is version, third int is number of terms
-            version = buf.getInt();
-            numberOfTerms = buf.getInt();
-        }
-        terms = new String[numberOfTerms];
-
-        if (version == 0) {
-            // Not version 3+; is it version 1 or 2?
-            // Version 1 always has a 0 as the second int, while version 2 always has nonzero.
-            int secondIntInFile = buf.getInt(0);
-            version = secondIntInFile == 0 ? 1 : 2;
-        }
-        */
-
         int n = buf.getInt();
         IntBuffer ib = buf.asIntBuffer();
         numberOfTerms = n;
         int[] termStringOffsets = new int[n + 1];
         terms = new String[n];
 
-        if (useBlockBasedTermsFile) {
-            // New format, multiple blocks of term strings if necessary,
-            // so term strings may total over 2 GB.
+        // "New" format, multiple blocks of term strings if necessary, so term strings may total over 2 GB.
+        // This is the only supported format now.
 
-            // Read the term string offsets and string data block
-            int currentTerm = 0;
-            while (currentTerm < n) {
+        // Read the term string offsets and string data block
+        int currentTerm = 0;
+        while (currentTerm < n) {
 
-                int numTermsThisBlock = ib.get();
-                ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term
-                                                                           // string
-                                                                           // offsets
+            int numTermsThisBlock = ib.get();
+            ib.get(termStringOffsets, currentTerm, numTermsThisBlock); // term string offsets
 
-                // Read term strings data
-                int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-                ((Buffer)buf).position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
-                byte[] termStringsThisBlock = new byte[dataBlockSize];
-                buf.get(termStringsThisBlock);
-
-                // Now instantiate String objects from the offsets and byte data
-                int firstTermInBlock = currentTerm;
-                for (; currentTerm < firstTermInBlock + numTermsThisBlock; currentTerm++) {
-                    int offset = termStringOffsets[currentTerm];
-                    int length = termStringOffsets[currentTerm + 1] - offset;
-                    String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
-
-                    // We need to find term for id while searching
-                    terms[currentTerm] = str;
-                }
-
-                // Re-map a new part of the file before we read the next block.
-                // (and before we read the sort buffers)
-                long bytesRead = buf.position();
-                fileMapStart += bytesRead;
-                fileMapLength = Math.min(maxMapSize, fileLength - fileMapStart);
-                if (fileMapLength > 0) {
-                    buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
-                    ib = buf.asIntBuffer();
-                }
-            }
-
-        } else {
-            // Old format, single term strings block.
-            // Causes problems when term strings total over 2 GB.
-
-            ib.get(termStringOffsets); // term string offsets
-            int termStringsByteSize = ib.get(); // data block size
-
-            // termStringByteSize fits in an int, and terms
-            // fits in a single byte array. Use the old code.
-            ((Buffer)buf).position(buf.position() + BYTES_PER_INT + BYTES_PER_INT * termStringOffsets.length);
-            byte[] termStrings = new byte[termStringsByteSize];
-            buf.get(termStrings);
-            ib = buf.asIntBuffer();
+            // Read term strings data
+            int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
+            ((Buffer)buf).position(buf.position() + BYTES_PER_INT * (numTermsThisBlock + 2));
+            byte[] termStringsThisBlock = new byte[dataBlockSize];
+            buf.get(termStringsThisBlock);
 
             // Now instantiate String objects from the offsets and byte data
-            terms = new String[n];
-            for (int id = 0; id < n; id++) {
-                int offset = termStringOffsets[id];
-                int length = termStringOffsets[id + 1] - offset;
-                String str = new String(termStrings, offset, length, DEFAULT_CHARSET);
+            int firstTermInBlock = currentTerm;
+            for (; currentTerm < firstTermInBlock + numTermsThisBlock; currentTerm++) {
+                int offset = termStringOffsets[currentTerm];
+                int length = termStringOffsets[currentTerm + 1] - offset;
+                String str = new String(termStringsThisBlock, offset, length, DEFAULT_CHARSET);
 
                 // We need to find term for id while searching
-                terms[id] = str;
+                terms[currentTerm] = str;
+            }
+
+            // Re-map a new part of the file before we read the next block.
+            // (and before we read the sort buffers)
+            long bytesRead = buf.position();
+            fileMapStart += bytesRead;
+            fileMapLength = Math.min(maxMapSize, fileLength - fileMapStart);
+            if (fileMapLength > 0) {
+                buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
+                ib = buf.asIntBuffer();
             }
         }
         return ib;
@@ -261,15 +203,12 @@ public abstract class Terms {
         return idToSortPosition(termId1, sensitivity) - idToSortPosition(termId2, sensitivity);
     }
 
-    protected void setBlockBasedFile(boolean useBlockBasedTermsFile) {
-        this.useBlockBasedTermsFile = useBlockBasedTermsFile;
-    }
-    public static Terms openForReading(Collators collators, File termsFile, boolean useBlockBasedTermsFile, boolean buildTermIndexesOnInit) {
-        return new TermsReader(collators, termsFile, useBlockBasedTermsFile, buildTermIndexesOnInit);
+    public static Terms openForReading(Collators collators, File termsFile, boolean buildTermIndexesOnInit) {
+        return new TermsReader(collators, termsFile, buildTermIndexesOnInit);
     }
 
-    public static Terms openForWriting(Collators collators, File termsFile, boolean useBlockBasedTermsFile) {
-        return new TermsWriter(collators, termsFile, useBlockBasedTermsFile);
+    public static Terms openForWriting(Collators collators, File termsFile) {
+        return new TermsWriter(collators, termsFile);
     }
 
     public abstract boolean termsEqual(int[] termId, MatchSensitivity sensitivity);

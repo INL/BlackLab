@@ -1,15 +1,15 @@
 package nl.inl.blacklab.testutil;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.FileUtil;
+import nl.inl.util.Timer;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreDirZip;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.util.FileUtil;
-import nl.inl.util.Timer;
 
 /**
  * Executes a batch of fetch operations on a content store.
@@ -18,7 +18,7 @@ public class BatchContentStore {
 
     private static final int SNIPPET_LENGTH_CHARS = 100;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws ErrorOpeningIndex {
 
         int fileArgNumber = 0;
         File indexDir = null;
@@ -66,7 +66,7 @@ public class BatchContentStore {
         }
 
         System.err.print("Opening content store... ");
-        ContentStore cs = new ContentStoreDirZip(indexDir);
+        ContentStore cs = ContentStore.open(indexDir, false, false);
         System.err.println("done. [#docs: " + cs.idSet().size() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");

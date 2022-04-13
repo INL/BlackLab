@@ -15,13 +15,13 @@
  *******************************************************************************/
 package nl.inl.blacklab.contentstore;
 
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.VersionFile;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Set;
-
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.VersionFile;
 
 /**
  * Store string content by integer id. Quickly retrieve (parts of) the string
@@ -45,15 +45,9 @@ public abstract class ContentStore {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode");
             return new ContentStoreFixedBlockReader(indexXmlDir);
+        } else {
+            throw new UnsupportedOperationException("Content store of type '" + type + "' is unknown (or no longer supported). Please re-index your data.");
         }
-        if (type.equals("utf8zip"))
-            return new ContentStoreDirZip(indexXmlDir, create);
-        if (type.equals("utf8"))
-            return new ContentStoreDirUtf8(indexXmlDir, create);
-        if (type.equals("utf16")) {
-            throw new UnsupportedOperationException("UTF-16 content store is deprecated. Please re-index your data.");
-        }
-        throw new UnsupportedOperationException("Unknown content store type " + type);
     }
 
     /** A task to perform on a document in the content store. */
