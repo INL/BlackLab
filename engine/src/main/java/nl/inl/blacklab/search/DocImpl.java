@@ -24,7 +24,7 @@ import nl.inl.util.XmlHighlighter.HitCharSpan;
  * Several utility methods related to documents and highlighting.
  */
 public class DocImpl {
-    
+
     private DocImpl() {
     }
 
