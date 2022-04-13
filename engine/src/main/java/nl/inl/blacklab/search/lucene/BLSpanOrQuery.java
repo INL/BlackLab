@@ -17,22 +17,38 @@ package nl.inl.blacklab.search.lucene;
  * limitations under the License.
  */
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.DisiPriorityQueue;
+import org.apache.lucene.search.DisiWrapper;
+import org.apache.lucene.search.DisjunctionDISIApproximation;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.search.spans.SpanOrQuery;
+import org.apache.lucene.search.spans.SpanQuery;
+import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.util.PriorityQueue;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
-import org.apache.lucene.search.*;
-import org.apache.lucene.search.spans.*;
-import org.apache.lucene.util.PriorityQueue;
-
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Matches the union of its clauses.
@@ -331,22 +347,22 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         List<BLSpanWeight> subWeights = new ArrayList<>(inner.getClauses().length);
         for (SpanQuery q : inner.getClauses()) {
-            BLSpanWeight weight = ((BLSpanQuery) q).createWeight(searcher, false);
+            BLSpanWeight weight = ((BLSpanQuery) q).createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, boost);
             subWeights.add(weight);
         }
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(subWeights.toArray(new SpanWeight[0])) : null;
-        return new SpanOrWeight(searcher, contexts, subWeights);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(subWeights.toArray(new SpanWeight[0])) : null;
+        return new SpanOrWeight(searcher, contexts, subWeights, boost);
     }
 
     public class SpanOrWeight extends BLSpanWeight {
         final List<BLSpanWeight> subWeights;
 
-        public SpanOrWeight(IndexSearcher searcher, Map<Term, TermContext> terms, List<BLSpanWeight> subWeights)
+        public SpanOrWeight(IndexSearcher searcher, Map<Term, TermStates> terms, List<BLSpanWeight> subWeights, float boost)
                 throws IOException {
-            super(BLSpanOrQuery.this, searcher, terms);
+            super(BLSpanOrQuery.this, searcher, terms, boost);
             this.subWeights = subWeights;
         }
 
@@ -358,15 +374,15 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
+        public void extractTermStates(Map<Term, TermStates> contexts) {
             for (BLSpanWeight w : subWeights) {
-                w.extractTermContexts(contexts);
+                w.extractTermStates(contexts);
             }
         }
 
         class SpanPositionQueue extends PriorityQueue<Spans> {
             SpanPositionQueue(int maxSize) {
-                super(maxSize, false); // do not prepopulate
+                super(maxSize);// equals to super(maxSize, false);? , do not prepopulate
             }
 
             @Override

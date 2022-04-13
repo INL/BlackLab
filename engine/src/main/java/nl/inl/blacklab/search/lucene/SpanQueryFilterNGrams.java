@@ -23,8 +23,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 /**
  * Return n-grams containing or within the hits from the source spans.
@@ -81,18 +82,18 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
-        return new SpanWeightFilterNGrams(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight weight = clauses.get(0).createWeight(searcher, scoreMode, boost);
+        return new SpanWeightFilterNGrams(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
     class SpanWeightFilterNGrams extends BLSpanWeight {
 
         final BLSpanWeight weight;
 
-        public SpanWeightFilterNGrams(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightFilterNGrams(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryFilterNGrams.this, searcher, terms);
+            super(SpanQueryFilterNGrams.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -102,8 +103,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            weight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            weight.extractTermStates(contexts);
         }
 
         @Override

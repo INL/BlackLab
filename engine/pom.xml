@@ -83,6 +83,11 @@
             <artifactId>lucene-backward-codecs</artifactId>
             <version>${blacklab.luceneVersion}</version>
         </dependency>
+		<dependency>
+		    <groupId>org.apache.solr</groupId>
+		    <artifactId>solr-core</artifactId>
+		    <version>${blacklab.luceneVersion}</version>
+		</dependency>
 
         <!-- Specific more efficient collection types -->
         <dependency>

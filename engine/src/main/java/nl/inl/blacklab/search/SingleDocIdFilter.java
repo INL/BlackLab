@@ -10,6 +10,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
@@ -29,7 +30,7 @@ public class SingleDocIdFilter extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new Weight((Query) null) {
             @Override
             public void extractTerms(Set<Term> terms) {
@@ -41,7 +42,7 @@ public class SingleDocIdFilter extends Query {
                 return null;
             }
 
-            @Override
+            /*zyw @Override
             public float getValueForNormalization() throws IOException {
                 return 1.0f;
             }
@@ -49,7 +50,7 @@ public class SingleDocIdFilter extends Query {
             @Override
             public void normalize(float norm, float boost) {
                 // NOP
-            }
+            }*/
 
             @Override
             public Scorer scorer(final LeafReaderContext ctx) throws IOException {
@@ -64,10 +65,10 @@ public class SingleDocIdFilter extends Query {
                         return 1.0f;
                     }
 
-                    @Override
+                    /*zyw @Override
                     public int freq() throws IOException {
                         return 1;
-                    }
+                    }*/
 
                     @Override
                     public DocIdSetIterator iterator() {
@@ -82,8 +83,21 @@ public class SingleDocIdFilter extends Query {
                             throw BlackLabRuntimeException.wrap(e);
                         }
                     }
+
+					@Override
+					public float getMaxScore(int upTo) throws IOException {
+						// TODO Auto-generated method stub
+						return 0;
+					}
                 };
             }
+
+			@Override
+			public boolean isCacheable(LeafReaderContext ctx) {
+				// TODO Auto-generated method stub
+				return false;
+			}
+
         };
     }
 
@@ -93,7 +107,24 @@ public class SingleDocIdFilter extends Query {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj) && luceneDocId == ((SingleDocIdFilter)obj).luceneDocId;
-    }
+  	public int hashCode() {
+  		final int prime = 31;
+  		int result = 1;
+  		result = prime * result + luceneDocId;
+  		return result;
+  	}
+
+  	@Override
+  	public boolean equals(Object obj) {
+  		if (this == obj)
+  			return true;
+  		if (obj == null)
+  			return false;
+  		if (getClass() != obj.getClass())
+  			return false;
+  		SingleDocIdFilter other = (SingleDocIdFilter) obj;
+  		if (luceneDocId != other.luceneDocId)
+  			return false;
+  		return true;
+  	}
 }

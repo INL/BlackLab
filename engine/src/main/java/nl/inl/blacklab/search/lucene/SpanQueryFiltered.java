@@ -23,11 +23,12 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchNoDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.Weight;
 
@@ -112,8 +113,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight weight = clauses.get(0).createWeight(searcher, needsScores);
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight weight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Query rewrite = filter.rewrite(searcher.getIndexReader());
         if (rewrite instanceof MultiTermQuery) {
             // Wrap it so it is rewritten to a BooleanQuery and we avoid the
@@ -122,8 +123,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
-        Weight filterWeight = rewrite.createWeight(searcher, false);
-        return new SpanWeightFiltered(weight, filterWeight, searcher, needsScores ? getTermContexts(weight) : null);
+        Weight filterWeight = rewrite.createWeight(searcher, scoreMode.COMPLETE_NO_SCORES, boost);
+        return new SpanWeightFiltered(weight, filterWeight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
     class SpanWeightFiltered extends BLSpanWeight {
@@ -133,8 +134,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         final Weight filterWeight;
 
         public SpanWeightFiltered(BLSpanWeight weight, Weight filterWeight, IndexSearcher searcher,
-                Map<Term, TermContext> terms) throws IOException {
-            super(SpanQueryFiltered.this, searcher, terms);
+                Map<Term, TermStates> terms, float boost) throws IOException {
+            super(SpanQueryFiltered.this, searcher, terms, boost);
             this.weight = weight;
             this.filterWeight = filterWeight;
         }
@@ -145,8 +146,8 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            weight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            weight.extractTermStates(contexts);
         }
 
         @Override

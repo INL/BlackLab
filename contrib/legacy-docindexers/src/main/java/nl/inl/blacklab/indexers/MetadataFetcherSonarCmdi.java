@@ -21,7 +21,8 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field.Store;
-import org.apache.lucene.document.IntField;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.StoredField;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -153,7 +154,8 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
             // Store metadata XML in content store and corresponding id in Lucene document
             ContentStore cs = docIndexer.getDocWriter().contentStore("metadata");
             int id = cs.store(cmdiBuffer.toString(Indexer.DEFAULT_INPUT_ENCODING.name()));
-            luceneDoc.add(new IntField("metadataCid", id, Store.YES));
+            luceneDoc.add(new IntPoint("metadataCid", id));
+            luceneDoc.add(new StoredField("metadataCid", id));
 
             if (metadataZipFile == null)
                 is.close();

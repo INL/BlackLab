@@ -22,8 +22,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -64,18 +65,18 @@ class SpanQueryUnique extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight weight = src.createWeight(searcher, needsScores);
-        return new SpanWeightUnique(weight, searcher, needsScores ? getTermContexts(weight) : null);
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight weight = src.createWeight(searcher, scoreMode, boost);
+        return new SpanWeightUnique(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
     class SpanWeightUnique extends BLSpanWeight {
 
         final BLSpanWeight weight;
 
-        public SpanWeightUnique(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightUnique(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryUnique.this, searcher, terms);
+            super(SpanQueryUnique.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -85,8 +86,8 @@ class SpanQueryUnique extends BLSpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            weight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            weight.extractTermStates(contexts);
         }
 
         @Override

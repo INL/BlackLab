@@ -20,6 +20,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -260,10 +261,11 @@ public class HitGroupsTokenFrequencies {
                             docIds.add(globalDocId);
                         }
 
-                        @Override
-                        public boolean needsScores() {
-                            return false;
-                        }
+						@Override
+						public ScoreMode scoreMode() {
+							// TODO Auto-generated method stub
+							return ScoreMode.COMPLETE_NO_SCORES;
+						}
                     });
                 }
 

@@ -17,23 +17,29 @@ package nl.inl.blacklab.search.lucene;
  * limitations under the License.
  */
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.IndexReaderContext;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.spans.SpanTermQuery;
+import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
+import org.apache.lucene.search.spans.Spans;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
-import org.apache.lucene.index.*;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
-import org.apache.lucene.search.spans.Spans;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * BL-specific subclass of SpanTermQuery that changes what getField() returns
@@ -52,7 +58,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     SpanTermQuery query;
 
-    private TermContext termContext;
+    private TermStates termStates;
 
     private boolean hasForwardIndex = false;
 
@@ -66,7 +72,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
     public BLSpanTermQuery(QueryInfo queryInfo, Term term) {
         super(queryInfo);
         query = new SpanTermQuery(term);
-        termContext = null;
+        termStates = null;
     }
 
     BLSpanTermQuery(QueryInfo queryInfo, SpanTermQuery termQuery) {
@@ -75,15 +81,15 @@ public class BLSpanTermQuery extends BLSpanQuery {
 
     /**
      * Expert: Construct a SpanTermQuery matching the named term's spans, using the
-     * provided TermContext.
+     * provided TermStates.
      *
      * @param term term to search
-     * @param context TermContext to use to search the term
+     * @param termStates TermStates to use to search the term
      */
-    public BLSpanTermQuery(Term term, TermContext context, QueryInfo queryInfo) {
+    public BLSpanTermQuery(Term term, TermStates termStates, QueryInfo queryInfo) {
         super(queryInfo);
-        query = new SpanTermQuery(term, context);
-        termContext = context;
+        query = new SpanTermQuery(term, termStates);
+        termStates = termStates;
     }
 
     @Override
@@ -96,20 +102,21 @@ public class BLSpanTermQuery extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        final TermContext context;
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        final TermStates context;
         final IndexReaderContext topContext = searcher.getTopReaderContext();
-        if (termContext == null || !termContext.wasBuiltFor(topContext)) {
-            context = TermContext.build(topContext, query.getTerm());
+        if (termStates == null || !termStates.wasBuiltFor(topContext)) {
+        	boolean needsStats=true;
+            context = TermStates.build(topContext, query.getTerm(),needsStats);
         } else {
-            context = termContext;
+            context = termStates;
         }
-        Map<Term, TermContext> contexts = needsScores ? Collections.singletonMap(query.getTerm(), context) : null;
-        final SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts);
-        return new BLSpanWeight(this, searcher, contexts) {
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? Collections.singletonMap(query.getTerm(), context) : null;
+        final SpanTermWeight weight = query.new SpanTermWeight(context, searcher, contexts, boost);
+        return new BLSpanWeight(this, searcher, contexts, boost) {
             @Override
-            public void extractTermContexts(Map<Term, TermContext> contexts) {
-                weight.extractTermContexts(contexts);
+            public void extractTermStates(Map<Term, TermStates> contexts) {
+                weight.extractTermStates(contexts);
             }
 
             @Override

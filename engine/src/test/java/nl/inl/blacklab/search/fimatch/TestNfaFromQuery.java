@@ -85,7 +85,7 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader(reader) {
 
                 @Override
-                public ForwardIndexDocument getForwardIndexDoc(int docId) {
+                public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
                     if (docId != 0)
                         throw new IllegalArgumentException("Unknown document " + docId);
                     return new ForwardIndexDocumentIntArray(termIds);
@@ -105,11 +105,6 @@ public class TestNfaFromQuery {
                     if (docId != 0)
                         throw new IllegalArgumentException("Unknown document " + docId);
                     return Arrays.copyOfRange(termIds, start, end);
-                }
-
-                @Override
-                public int getFiid(int annotIndex, int docId) {
-                    return 0;
                 }
 
             };
@@ -174,7 +169,7 @@ public class TestNfaFromQuery {
         //System.err.println(frag);
         NfaState start = frag.getStartingState(); //finish();
 
-        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
+        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).advanceForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {
             Assert.assertEquals("Test " + i, matches.contains(i),
                     start.matches(fiDoc, startPos + direction * i, direction));

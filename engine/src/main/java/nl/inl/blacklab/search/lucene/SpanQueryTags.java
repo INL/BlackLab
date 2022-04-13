@@ -21,8 +21,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -85,20 +86,20 @@ public class SpanQueryTags extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (attr != null)
             throw new BlackLabRuntimeException("Query should've been rewritten! (attr != null)");
-        BLSpanWeight weight = clause.createWeight(searcher, needsScores);
-        return new SpanWeightTags(weight, searcher, needsScores ? getTermContexts(weight) : null);
+        BLSpanWeight weight = clause.createWeight(searcher, scoreMode, boost);
+        return new SpanWeightTags(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
     class SpanWeightTags extends BLSpanWeight {
 
         final BLSpanWeight weight;
 
-        public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryTags.this, searcher, terms);
+            super(SpanQueryTags.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -108,8 +109,8 @@ public class SpanQueryTags extends BLSpanQuery {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            weight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            weight.extractTermStates(contexts);
         }
 
         @Override
@@ -119,6 +120,7 @@ public class SpanQueryTags extends BLSpanQuery {
                 return null;
             return new SpansTags(startTags);
         }
+
     }
 
     @Override

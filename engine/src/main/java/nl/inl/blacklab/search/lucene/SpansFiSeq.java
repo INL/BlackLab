@@ -119,7 +119,7 @@ class SpansFiSeq extends BLSpans {
             currentFiDoc = null;
             return NO_MORE_DOCS; // no more containers; we're done.
         }
-        currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
+        currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
 
         // Find first matching anchor span from here
         return findDocWithMatch();
@@ -197,7 +197,7 @@ class SpansFiSeq extends BLSpans {
             // Advance to the next container.
             anchorDoc = anchor.nextDoc();
             if (anchorDoc != NO_MORE_DOCS) {
-                currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
+                currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
             } else {
                 currentFiDoc = null;
             }
@@ -252,7 +252,7 @@ class SpansFiSeq extends BLSpans {
             currentFiDoc = null;
             return NO_MORE_DOCS;
         }
-        currentFiDoc = fiAccessor.getForwardIndexDoc(anchorDoc);
+        currentFiDoc = fiAccessor.advanceForwardIndexDoc(anchorDoc);
 
         // Find first matching anchor span from here
         return findDocWithMatch();

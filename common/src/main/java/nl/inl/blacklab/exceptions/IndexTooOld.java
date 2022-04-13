@@ -6,4 +6,12 @@ public class IndexTooOld extends ErrorOpeningIndex {
         super(message);
     }
 
+    public IndexTooOld(String message, Throwable e) {
+        super(message, e);
+    }
+
+    public IndexTooOld(Throwable e) {
+        super(e);
+    }
+
 }

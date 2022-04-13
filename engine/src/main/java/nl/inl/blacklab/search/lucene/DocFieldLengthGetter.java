@@ -11,7 +11,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.uninverting.UninvertingReader;
+import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.Indexer;
@@ -76,21 +76,27 @@ class DocFieldLengthGetter implements Closeable {
                 if (cachedFieldLengths == null) {
                     // Use UninvertingReader to simulate DocValues (slower)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                    fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER);
+                    fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER_POINT);
                     @SuppressWarnings("resource")
-                    UninvertingReader uninv = new UninvertingReader(reader, fields);
+                    LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                     cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName);
                 }
 
                 // Check if the cache was retrieved OK
                 boolean allZeroes = true;
                 int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
+                //DocIdSetIterator docIdIterator = cachedFieldLengths.all(numToCheck);
                 for (int i = 0; i < numToCheck; i++) {
                     // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
-                    if (cachedFieldLengths.get(i) != 0) {
-                        allZeroes = false;
-                        break;
-                    }
+                	try {
+                        if (cachedFieldLengths.advanceExact(i) && cachedFieldLengths.longValue() != 0) {
+                            allZeroes = false;
+                            break;
+                        }
+        			} catch (IOException e) {
+        				BlackLabRuntimeException.wrap(e);
+        			}
+
                 }
                 if (allZeroes) {
                     // Tokens lengths weren't saved in the index, skip cache
@@ -143,7 +149,13 @@ class DocFieldLengthGetter implements Closeable {
             return 6; // while testing, all documents have same length
 
         if (cachedFieldLengths != null) {
-            return (int) cachedFieldLengths.get(doc);
+        	try {
+        		if (cachedFieldLengths.advanceExact(doc)){
+        			return (int)cachedFieldLengths.longValue(); 
+        		}
+			} catch (IOException e) {
+				BlackLabRuntimeException.wrap(e);
+			}
         }
 
         if (!lookedForLengthField || lengthFieldIsStored) {

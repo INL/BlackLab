@@ -45,8 +45,11 @@ public class Contexts implements Iterable<int[]> {
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
      * context) for a number of hits in the same document from the ContentStore.
      *
+     * Used by Kwics.retrieveKwics().
+     *
      * NOTE: this destroys any existing contexts!
      *
+     * @param hits hits in this one document
      * @param forwardIndex Forward index for the words
      * @param punctForwardIndex Forward index for the punctuation
      * @param attrForwardIndices Forward indices for the attributes, or null if none
@@ -180,7 +183,7 @@ public class Contexts implements Iterable<int[]> {
             List<int[]> words;
             if (forwardIndex != null) {
                 // We have a forward index for this field. Use it.
-                int fiid = fiidLookup.get(doc);
+                int fiid = fiidLookup.advance(doc);
                 words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
@@ -287,6 +290,10 @@ public class Contexts implements Iterable<int[]> {
     public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize, List<FiidLookup> fiidLookups) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
+
+        // If our hits weren't sorted by Lucene id, get a copy that is
+        // (required for FiidLookup to work, because it uses DocValues)
+        hits = hits.withAscendingLuceneDocIds();
 
         hits.ensureAllResultsRead(); // make sure all hits have been read
         List<AnnotationForwardIndex> fis = new ArrayList<>();

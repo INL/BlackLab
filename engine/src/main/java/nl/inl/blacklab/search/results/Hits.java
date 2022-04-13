@@ -19,6 +19,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -418,7 +419,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                                 int hitsCounted,
                                 int docsRetrieved,
                                 int docsCounted,
-                                CapturedGroups capturedGroups) {
+                                CapturedGroups capturedGroups,
+                                boolean ascendingLuceneDocIds) {
         return new HitsList(
                             queryInfo,
                             hits,
@@ -427,7 +429,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
                             hitsCounted,
                             docsRetrieved,
                             docsCounted,
-                            capturedGroups);
+                            capturedGroups,
+                            ascendingLuceneDocIds);
     }
 
     /**
@@ -636,7 +639,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         });
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
         windowStats = new WindowStats(hasNext, first, windowSize, number);
-        return Hits.fromList(queryInfo(), window, windowStats, null, hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(), capturedGroups);
+        return Hits.fromList(queryInfo(), window, windowStats, null,
+                hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
+                capturedGroups, hasAscendingLuceneDocIds());
     }
 
     /**
@@ -691,7 +696,9 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             }
         });
 
-        return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(), docsInSample.getValue(), docsInSample.getValue(), capturedGroups);
+        return Hits.fromList(queryInfo(), sample, null, sampleParameters, sample.size(),
+                docsInSample.getValue(), docsInSample.getValue(), capturedGroups,
+                hasAscendingLuceneDocIds());
     }
 
     /**
@@ -720,7 +727,24 @@ public abstract class Hits extends Results<Hit, HitProperty> {
         int hitsCounted = hitsCountedSoFar();
         int docsRetrieved = docsProcessedSoFar();
         int docsCounted = docsCountedSoFar();
-        return Hits.fromList(queryInfo(), sorted, null, null, hitsCounted, docsRetrieved, docsCounted, capturedGroups);
+        boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId;
+        return Hits.fromList(queryInfo(), sorted, null, null,
+                hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
+    }
+
+    public abstract boolean hasAscendingLuceneDocIds();
+
+    /**
+     * Return a Hits object with these hits in ascending Lucene doc id order.
+     *
+     * Necessary for operations that make use of DocValues, which use sequential access.
+     *
+     * If already in ascending order, returns itself.
+     *
+     * @return hits in ascending Lucene doc id order
+     */
+    public Hits withAscendingLuceneDocIds() {
+        return hasAscendingLuceneDocIds() ? this : sort(new HitPropertyDocumentId());
     }
 
     @Override
@@ -970,7 +994,8 @@ public abstract class Hits extends Results<Hit, HitProperty> {
             1,
             1,
             1,
-            capturedGroups);
+            capturedGroups,
+            true);
     }
 
     // Captured groups
@@ -1004,4 +1029,5 @@ public abstract class Hits extends Results<Hit, HitProperty> {
     public HitsArrays hitsArrays() {
         return hitsArrays;
     }
+
 }

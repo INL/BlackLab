@@ -8,7 +8,7 @@ import java.util.TreeMap;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.uninverting.UninvertingReader;
+import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -17,9 +17,9 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * This is used by SpanQueryFiSeq to get the forward index id (fiid).
  *
- * This class is thread-safe.
- * (using synchronization on DocValues instance; DocValues are stored for each LeafReader,
- *  and each of those should only be used from one thread at a time)
+ * Not thread-safe (because of DocValues; but only used from Spans).
+ *
+ * CAUTION: the advance() method can only be called with ascending doc ids!
  */
 public class DocIntFieldGetter implements Closeable {
 
@@ -42,9 +42,9 @@ public class DocIntFieldGetter implements Closeable {
             if (docValues == null) {
                 // Use UninvertingReader to simulate DocValues (slower)
                 Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                fields.put(intFieldName, UninvertingReader.Type.INTEGER);
+                fields.put(intFieldName, UninvertingReader.Type.INTEGER_POINT);
                 @SuppressWarnings("resource")
-                UninvertingReader uninv = new UninvertingReader(reader, fields);
+                LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                 docValues = uninv.getNumericDocValues(intFieldName);
             }
         } catch (IOException e) {
@@ -63,13 +63,16 @@ public class DocIntFieldGetter implements Closeable {
      * @param doc the document
      * @return value of the int field
      */
-    public synchronized int getFieldValue(int doc) {
+    public synchronized int advance(int doc) {
 
         // Cached doc values?
         if (docValues != null) {
-            synchronized (docValues) {
-                return (int) docValues.get(doc);
-            }
+        	try {
+        		docValues.advanceExact(doc);
+				return (int)docValues.longValue();
+			} catch (IOException e) {
+				BlackLabRuntimeException.wrap(e);
+			}
         }
 
         // No; get the field value from the Document object.

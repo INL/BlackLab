@@ -106,7 +106,9 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     /**
      * Forward index accessor for a single LeafReader.
      *
-     * Thread-safe.
+     * Not thread-safe (only used from Spans).
+     *
+     * CAUTION: the getDocLength() and getChunk() methods can only be called with ascending doc ids!
      */
     class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
@@ -137,12 +139,12 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
          * @return the token source
          */
         @Override
-        public ForwardIndexDocument getForwardIndexDoc(int id) {
+        public ForwardIndexDocument advanceForwardIndexDoc(int id) {
             return new ForwardIndexDocumentImpl(this, id);
         }
 
         @Override
-        public int getDocLength(int docId) {
+        protected int getDocLength(int docId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
             return fis.get(0).docLength(getFiid(0, docId)) - 1;
@@ -152,16 +154,15 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         int[] ends = { 0 };
 
         @Override
-        public int[] getChunk(int annotIndex, int docId, int start, int end) {
+        protected int[] getChunk(int annotIndex, int docId, int start, int end) {
             starts[0] = start;
             ends[0] = end;
-            int fiid = fiidGetter(annotIndex).getFieldValue(docId);
+            int fiid = getFiid(annotIndex, docId);
             return fis.get(annotIndex).retrievePartsInt(fiid, starts, ends).get(0);
         }
 
-        @Override
-        public int getFiid(int annotIndex, int docId) {
-            return fiidGetter(annotIndex).getFieldValue(docId);
+        private int getFiid(int annotIndex, int docId) {
+            return fiidGetter(annotIndex).advance(docId);
         }
 
         @Override

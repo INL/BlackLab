@@ -15,20 +15,21 @@
  *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits.HitsArrays;
-import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Groups results on the basis of a list of criteria.

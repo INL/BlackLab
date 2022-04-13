@@ -12,6 +12,8 @@ public class HitsList extends Hits {
     /** Our sample parameters, if any. null if not a sample of a larger result set */
     private SampleParameters sampleParameters;
 
+    private boolean ascendingLuceneDocIds;
+
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
@@ -28,9 +30,12 @@ public class HitsList extends Hits {
         hitsCounted = this.hitsArrays.size();
         int prevDoc = -1;
         MutableIntIterator it = this.hitsArrays.docs().intIterator();
+        ascendingLuceneDocIds = true;
         while (it.hasNext()) {
             int docId = it.next();
             if (docId != prevDoc) {
+                if (docId < prevDoc)
+                    ascendingLuceneDocIds = false;
                 docsRetrieved++;
                 docsCounted++;
                 prevDoc = docId;
@@ -51,7 +56,8 @@ public class HitsList extends Hits {
                        int hitsCounted,
                        int docsRetrieved,
                        int docsCounted,
-                       CapturedGroups capturedGroups
+                       CapturedGroups capturedGroups,
+                       boolean ascendingLuceneDocIds
                        ) {
         super(queryInfo, hits);
         this.windowStats = windowStats;
@@ -60,6 +66,7 @@ public class HitsList extends Hits {
         this.docsRetrieved = docsRetrieved;
         this.docsCounted = docsCounted;
         this.capturedGroups = capturedGroups;
+        this.ascendingLuceneDocIds = ascendingLuceneDocIds;
     }
 
     @Override
@@ -97,5 +104,10 @@ public class HitsList extends Hits {
     @Override
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
+    }
+
+    @Override
+    public boolean hasAscendingLuceneDocIds() {
+        return ascendingLuceneDocIds;
     }
 }

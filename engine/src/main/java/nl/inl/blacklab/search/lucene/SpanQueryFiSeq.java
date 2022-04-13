@@ -23,8 +23,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -90,15 +91,15 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
 
         // Finalize our NFA, so it looks up annotation numbers for its annotation names.
         nfa.finish();
         nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
 
-        BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, needsScores);
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(anchorWeight) : null;
-        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, !hitsStartPointSorted());
+        BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;
+        return new SpanWeightFiSeq(anchorWeight, searcher, contexts, boost, !hitsStartPointSorted());
     }
 
     class SpanWeightFiSeq extends BLSpanWeight {
@@ -107,9 +108,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         private final boolean mustSort;
 
-        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermContext> terms, boolean mustSort)
+        public SpanWeightFiSeq(BLSpanWeight anchorWeight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost, boolean mustSort)
                 throws IOException {
-            super(SpanQueryFiSeq.this, searcher, terms);
+            super(SpanQueryFiSeq.this, searcher, terms, boost);
             this.anchorWeight = anchorWeight;
             this.mustSort = mustSort;
         }
@@ -120,8 +121,8 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            anchorWeight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            anchorWeight.extractTermStates(contexts);
         }
 
         @Override

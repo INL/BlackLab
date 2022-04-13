@@ -22,8 +22,9 @@ import java.util.Set;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -109,11 +110,11 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
-        BLSpanWeight filterWeight = clauses.get(1).createWeight(searcher, needsScores);
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight, filterWeight) : null;
-        return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts);
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
+        BLSpanWeight filterWeight = clauses.get(1).createWeight(searcher, scoreMode, boost);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(prodWeight, filterWeight) : null;
+        return new SpanWeightPositionFilter(prodWeight, filterWeight, searcher, contexts, boost);
     }
 
     class SpanWeightPositionFilter extends BLSpanWeight {
@@ -121,8 +122,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         final BLSpanWeight prodWeight, filterWeight;
 
         public SpanWeightPositionFilter(BLSpanWeight prodWeight, BLSpanWeight filterWeight, IndexSearcher searcher,
-                Map<Term, TermContext> terms) throws IOException {
-            super(SpanQueryPositionFilter.this, searcher, terms);
+                Map<Term, TermStates> terms, float boost) throws IOException {
+            super(SpanQueryPositionFilter.this, searcher, terms, boost);
             this.prodWeight = prodWeight;
             this.filterWeight = filterWeight;
         }
@@ -134,9 +135,9 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            prodWeight.extractTermContexts(contexts);
-            filterWeight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            prodWeight.extractTermStates(contexts);
+            filterWeight.extractTermStates(contexts);
         }
 
         @Override

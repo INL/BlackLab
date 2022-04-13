@@ -5,8 +5,9 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,11 +50,11 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
-        BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, needsScores);
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(prodWeight) : null;
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanWeight prodWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(prodWeight) : null;
         constraint.lookupAnnotationIndices(fiAccessor);
-        return new SpanWeightConstrained(prodWeight, constraint, searcher, contexts);
+        return new SpanWeightConstrained(prodWeight, constraint, searcher, contexts, boost);
     }
 
     class SpanWeightConstrained extends BLSpanWeight {
@@ -63,8 +64,8 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
         private MatchFilter constraint;
 
         public SpanWeightConstrained(BLSpanWeight prodWeight2, MatchFilter constraint, IndexSearcher searcher,
-                Map<Term, TermContext> contexts) throws IOException {
-            super(SpanQueryConstrained.this, searcher, contexts);
+                Map<Term, TermStates> contexts, float boost) throws IOException {
+            super(SpanQueryConstrained.this, searcher, contexts, boost);
             this.prodWeight = prodWeight2;
             this.constraint = constraint;
         }
@@ -75,8 +76,8 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
-            prodWeight.extractTermContexts(contexts);
+        public void extractTermStates(Map<Term, TermStates> contexts) {
+            prodWeight.extractTermStates(contexts);
         }
 
         @Override

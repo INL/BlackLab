@@ -67,10 +67,9 @@ public class Concordances {
      * document!
      * 
      * @param hits hits to make concordance for
-     * @param field field to make conc for
      * @param wordsAroundHit number of words left and right of hit to fetch
      * @param conc where to add the concordances
-     * @param hl
+     * @param hl highlighter
      */
     private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize wordsAroundHit,
             Map<Hit, Concordance> conc,

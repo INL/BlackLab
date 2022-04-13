@@ -42,7 +42,7 @@ public class TestResultsGrouper {
         MockBlackLabIndex index = new MockBlackLabIndex();
         
         IndexSearcher indexSearcher = Mockito.mock(IndexSearcher.class);
-        Mockito.when(indexSearcher.getSimilarity(ArgumentMatchers.anyBoolean())).thenReturn(new BM25Similarity());
+        Mockito.when(indexSearcher.getSimilarity()).thenReturn(new BM25Similarity());
 
         index.setIndexSearcher(indexSearcher);
         Hits hits = Hits.fromArrays(QueryInfo.create(index), doc, start, end);

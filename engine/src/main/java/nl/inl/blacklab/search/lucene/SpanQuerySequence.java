@@ -28,8 +28,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.index.TermContext;
+import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -532,22 +533,22 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         List<BLSpanWeight> weights = new ArrayList<>();
         for (BLSpanQuery clause : clauses) {
-            weights.add(clause.createWeight(searcher, needsScores));
+            weights.add(clause.createWeight(searcher, scoreMode, boost));
         }
-        Map<Term, TermContext> contexts = needsScores ? getTermContexts(weights.toArray(new SpanWeight[0])) : null;
-        return new SpanWeightSequence(weights, searcher, contexts);
+        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(weights.toArray(new SpanWeight[0])) : null;
+        return new SpanWeightSequence(weights, searcher, contexts, boost);
     }
 
     class SpanWeightSequence extends BLSpanWeight {
 
         final List<BLSpanWeight> weights;
 
-        public SpanWeightSequence(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermContext> terms)
+        public SpanWeightSequence(List<BLSpanWeight> weights, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQuerySequence.this, searcher, terms);
+            super(SpanQuerySequence.this, searcher, terms, boost);
             this.weights = weights;
         }
 
@@ -559,9 +560,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTermContexts(Map<Term, TermContext> contexts) {
+        public void extractTermStates(Map<Term, TermStates> contexts) {
             for (SpanWeight weight : weights) {
-                weight.extractTermContexts(contexts);
+                weight.extractTermStates(contexts);
             }
         }
 

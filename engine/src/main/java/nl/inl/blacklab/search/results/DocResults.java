@@ -32,6 +32,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
@@ -81,15 +82,11 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index().doc(globalDocId)), 0.0f, 0));
         }
 
-        @Override
-        public void setScorer(Scorer scorer) {
-            // (ignore)
-        }
-
-        @Override
-        public boolean needsScores() {
-            return false;
-        }
+		@Override
+		public ScoreMode scoreMode() {
+			// TODO Auto-generated method stub
+			return ScoreMode.COMPLETE_NO_SCORES;//no scores
+		}
     }
 
     /**
@@ -550,7 +547,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createNormalizedWeight(query, false);
+                    Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
@@ -561,8 +558,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                                     break;
                                 numberOfDocuments++;
-                                if (countTokens)
-                                    numberOfTokens += tokenLengthValues.get(docId) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                                if (countTokens){
+                                	tokenLengthValues.advanceExact(docId);
+                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                                }
                             }
                         }
                     }

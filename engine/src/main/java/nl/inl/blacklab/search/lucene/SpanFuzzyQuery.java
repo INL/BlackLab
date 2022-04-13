@@ -18,13 +18,20 @@
  */
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.results.QueryInfo;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.*;
-
 import java.io.IOException;
 import java.util.List;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.FuzzyQuery;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.TermQuery;
+
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /*
  * This is my SpanFuzzyQuery. It is released under the Apache licensence. Just paste it in. (Karl
@@ -102,7 +109,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, boolean needsScores) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         throw new UnsupportedOperationException("Query should have been rewritten");
     }
 
