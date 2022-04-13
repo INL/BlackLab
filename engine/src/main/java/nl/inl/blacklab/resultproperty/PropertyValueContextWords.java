@@ -68,6 +68,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
     }
 
+    // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
         StringBuilder b = new StringBuilder();
@@ -102,7 +103,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
             String term = terms.serializeTerm(valueTokenId[i]);
-            parts[i + 3] = sensitivity.desensitize(term);
+            parts[i + 3] = term;
         }
         return PropertySerializeUtil.combineParts(parts);
     }

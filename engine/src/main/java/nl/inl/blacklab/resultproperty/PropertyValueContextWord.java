@@ -51,6 +51,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
         return new PropertyValueContextWord(index, annotation, sensitivity, termId);
     }
 
+    // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
         return valueTokenId < 0 ? "-" : sensitivity.desensitize(terms.get(valueTokenId));
@@ -58,7 +59,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
 
     @Override
     public String serialize() {
-        String token = sensitivity.desensitize(terms.serializeTerm(valueTokenId));
+        String token = terms.serializeTerm(valueTokenId);
         return PropertySerializeUtil.combineParts(
                 "cwo", annotation.name(),
                 sensitivity.luceneFieldSuffix(),

@@ -135,7 +135,8 @@ public abstract class RequestHandler {
         User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
         String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
         if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
-            if (request.getHeader("X-BlackLabAccessToken").equals(debugHttpHeaderToken)) {
+            String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
+            if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
                 user = User.loggedIn(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
             }
         }
