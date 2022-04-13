@@ -35,9 +35,19 @@ public class CompareHitsInternalImpls {
         }
     }
 
+    static void testIterateGet(HitsInternal hits) {
+        long n = -1;
+        for (int i = 0; i < hits.size(); i++) {
+            int d = hits.doc(i);
+            if (d > n)
+                n = d;
+        }
+    }
+
     static void test(String msg, HitsInternal hits) {
         time(msg == null ? null : msg + " FILL", () -> { testFill(hits); });
         time(msg == null ? null : msg + " ITERATE", () -> { testIterate(hits); });
+        time(msg == null ? null : msg + " ITERATE-GET", () -> { testIterateGet(hits); });
     }
 
     public static void main(String[] args) {
