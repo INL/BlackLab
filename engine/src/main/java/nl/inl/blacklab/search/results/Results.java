@@ -106,7 +106,7 @@ public abstract class Results<T, P extends ResultProperty<T>> implements SearchR
     private QueryInfo queryInfo;
 
     /**
-     * Helper object for pausing threads (making sure queries
+     * Helper object for aborting threads (making sure queries
      * don't hog the CPU for way too long).
      */
     protected ThreadAborter threadAborter;

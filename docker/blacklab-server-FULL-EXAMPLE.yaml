@@ -119,11 +119,6 @@ cache:
     clientCacheTimeSec: 3600
 
     # [DEPRECATED, NO LONGER USED]
-    # Use targetFreeMemMegs to set a "free memory goal" as that can be measured
-    # accurately.
-    maxSizeMegs: 500
-
-    # [DEPRECATED, NO LONGER USED]
     # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
     # "cache cleanup goal".
     maxNumberOfJobs: 100
