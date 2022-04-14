@@ -55,11 +55,11 @@ public interface Hits extends Results<Hit, HitProperty> {
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsImmutable(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
+        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
     }
 
     static Hits list(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
-        return new HitsImmutable(queryInfo, hits, capturedGroups);
+        return new HitsList(queryInfo, hits, capturedGroups);
     }
 
     static Hits list(
@@ -72,7 +72,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long docsCounted,
             CapturedGroups capturedGroups,
             boolean ascendingLuceneDocIds) {
-        return new HitsImmutable(
+        return new HitsList(
                 queryInfo,
                 hits,
                 windowStats,
@@ -104,7 +104,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsImmutable(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
+        return new HitsList(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
     }
 
     /**

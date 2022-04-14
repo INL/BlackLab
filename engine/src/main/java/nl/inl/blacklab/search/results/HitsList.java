@@ -3,9 +3,9 @@ package nl.inl.blacklab.search.results;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /**
- * An immutable Hits object.
+ * An immutable list of hits.
  */
-public class HitsImmutable extends HitsAbstract {
+public class HitsList extends HitsAbstract {
 
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
@@ -24,7 +24,7 @@ public class HitsImmutable extends HitsAbstract {
      * @param hits the list of hits to wrap, or null for a new list
      * @param capturedGroups the list of hits to wrap, or null for no captured groups
      */
-    protected HitsImmutable(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
         super(queryInfo, hits);
         this.capturedGroups = capturedGroups;
 
@@ -51,7 +51,7 @@ public class HitsImmutable extends HitsAbstract {
      *
      * Should only be used internally.
      */
-    protected HitsImmutable(
+    protected HitsList(
                        QueryInfo queryInfo,
                        HitsInternal hits,
                        WindowStats windowStats,

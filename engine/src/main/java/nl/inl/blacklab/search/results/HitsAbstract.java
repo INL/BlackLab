@@ -475,7 +475,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             if (h.doc == docid)
                 r.add(h);
         }
-        return new HitsImmutable(queryInfo(), r, null);
+        return new HitsList(queryInfo(), r, null);
     }
 
     // Stats
