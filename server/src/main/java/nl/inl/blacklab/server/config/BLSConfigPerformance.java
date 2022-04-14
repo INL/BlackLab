@@ -5,35 +5,62 @@ import org.apache.logging.log4j.Logger;
 
 public class BLSConfigPerformance {
 
-    static final int MAX_CONCURRENT_SEARCHES_AT_LEAST = 4;
-
     private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
 
-    boolean autodetectMaxConcurrent = false;
+    /** Minimum for maxConcurrentSearches when autodetecting. */
+    private static final int CONCURRENT_SEARCHES_AUTO_MIN = 4;
 
-    int maxConcurrentSearches = 4;
+    /** When autodetecting maxThreadsPerSearch, divide #CPUs by this number */
+    private static final int THREADS_PER_SEARCH_AUTO_DIVIDER = 4;
 
-    int maxThreadsPerSearch = 2;
+    /** Minimum for maxThreadsPerSearch when autodetecting. */
+    private static final int THREADS_PER_SEARCH_AUTO_MIN = 2;
 
+    /** Maximum for maxThreadsPerSearch when autodetecting. */
+    private static final int THREADS_PER_SEARCH_AUTO_MAX = 6;
+
+    /** How many search jobs may be running at the same time. */
+    int maxConcurrentSearches = -1;
+
+    /** How many threads a single search job may use. */
+    int maxThreadsPerSearch = -1;
+
+    /** When to abort a count that no client has asked for (seconds). */
     int abandonedCountAbortTimeSec = 30;
 
+    /** How many running jobs one logged-in user may have. */
     int maxRunningJobsPerUser = 10;
 
     public int getMaxConcurrentSearches() {
+        if (maxConcurrentSearches < 0)
+            setDefaultMaxConcurrentSearches();
         return maxConcurrentSearches;
+    }
+
+    private void setDefaultMaxConcurrentSearches() {
+        int n = Math.max(Runtime.getRuntime().availableProcessors() - 1, CONCURRENT_SEARCHES_AUTO_MIN);
+        logger.debug("performance.maxConcurrentSearches not configured, setting it to max(CPUS - 1, " +
+                CONCURRENT_SEARCHES_AUTO_MIN + ") == " + n + " ");
+        maxConcurrentSearches = n;
     }
 
     public void setMaxConcurrentSearches(int maxConcurrentSearches) {
         this.maxConcurrentSearches = maxConcurrentSearches;
-        if (maxConcurrentSearches <= 0) {
-            int n = Math.max(Runtime.getRuntime().availableProcessors(), MAX_CONCURRENT_SEARCHES_AT_LEAST);
-            logger.debug("maxConcurrentSearches autodetect: setting to " + n);
-            maxConcurrentSearches = n;
-        }
     }
 
     public int getMaxThreadsPerSearch() {
+        if (maxThreadsPerSearch < 0)
+            setDefaultMaxThreadsPerSearch();
         return maxThreadsPerSearch;
+    }
+
+    private void setDefaultMaxThreadsPerSearch() {
+        int n = Runtime.getRuntime().availableProcessors() / THREADS_PER_SEARCH_AUTO_DIVIDER;
+        n = Math.max(Math.min(n, THREADS_PER_SEARCH_AUTO_MAX), THREADS_PER_SEARCH_AUTO_MIN);
+        logger.debug("performance.maxThreadsPerSearch not configured, setting it to clamp(CPUS / " +
+                THREADS_PER_SEARCH_AUTO_DIVIDER + ", " + THREADS_PER_SEARCH_AUTO_MIN + ", " +
+                THREADS_PER_SEARCH_AUTO_MAX + ") == " + n);
+        maxThreadsPerSearch = n;
     }
 
     public void setMaxThreadsPerSearch(int maxThreadsPerSearch) {
@@ -41,13 +68,8 @@ public class BLSConfigPerformance {
     }
 
     @Deprecated
-    public int getMaxPausedSearches() {
-        return 0; //maxPausedSearches;
-    }
-
-    @Deprecated
     public void setMaxPausedSearches(int maxPausedSearches) {
-        //this.maxPausedSearches = maxPausedSearches;
+        logger.warn("Ignoring deprecated configuration option: performance.maxPausedSearches");
     }
 
     public int getMaxRunningJobsPerUser() {
@@ -59,36 +81,13 @@ public class BLSConfigPerformance {
     }
 
     @Deprecated
-    public boolean isPausingEnabled() {
-        return false; //pausingEnabled;
-    }
-
-    @Deprecated
     public void setPausingEnabled(boolean pausingEnabled) {
-        //this.pausingEnabled = pausingEnabled;
-    }
-
-    public boolean isAutodetectMaxConcurrent() {
-        return autodetectMaxConcurrent;
-    }
-
-    public void setAutodetectMaxConcurrent(boolean autodetectMaxConcurrent) {
-        this.autodetectMaxConcurrent = autodetectMaxConcurrent;
-        if (autodetectMaxConcurrent) {
-            int n = Math.max(Runtime.getRuntime().availableProcessors(), MAX_CONCURRENT_SEARCHES_AT_LEAST);
-            logger.debug("maxConcurrentSearches autodetect: setting to " + n);
-            maxConcurrentSearches = n;
-        }
-    }
-
-    @Deprecated
-    public int getAbandonedCountPauseTimeSec() {
-        return -1; //abandonedCountPauseTimeSec;
+        logger.warn("Ignoring deprecated configuration option: performance.pausingEnabled");
     }
 
     @Deprecated
     public void setAbandonedCountPauseTimeSec(int abandonedCountPauseTimeSec) {
-        //this.abandonedCountPauseTimeSec = abandonedCountPauseTimeSec;
+        logger.warn("Ignoring deprecated configuration option: performance.abandonedCountPauseTimeSec");
     }
 
     public int getAbandonedCountAbortTimeSec() {

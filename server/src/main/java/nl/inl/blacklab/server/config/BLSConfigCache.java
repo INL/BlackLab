@@ -1,6 +1,26 @@
 package nl.inl.blacklab.server.config;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BLSConfigCache {
+
+    private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
+
+    /** Divide max heap size by how much to autodetect a value for targetFreeMemMegs? */
+    private static final int TARGET_FREE_MEM_AUTO_DIVIDER = 10;
+
+    /** Default autodetect value for targetFreeMemMegs if no max heap size set */
+    private static final int TARGET_FREE_MEM_STATIC_DEFAULT = 100;
+
+    /** Divide max heap size by how much to autodetect a value for minFreeMemForSearchMegs? */
+    public static final int FREE_MEM_SEARCH_AUTO_DIVIDER = 200;
+
+    /** Minimum autodetect value for minFreeMemForSearchMegs. Also default if not heap size set. */
+    public static final int FREE_MEM_SEARCH_AUTO_MIN = 50;
+
+    /** Maximum autodetect value for minFreeMemForSearchMegs */
+    public static final int FREE_MEM_SEARCH_AUTO_MAX = 500;
 
     @Deprecated
     int maxSizeMegs = 100;
@@ -8,30 +28,33 @@ public class BLSConfigCache {
     @Deprecated
     int maxNumberOfJobs = 100;
 
+    /** When to abort a search (seconds). */
     int maxSearchTimeSec = 300;
 
+    /** When to remove search from cache (seconds). */
     int maxJobAgeSec = 3600;
 
-    int targetFreeMemMegs = 100;
+    /** How much memory to target when removing jobs from the cache (megabytes). */
+    int targetFreeMemMegs = -1;
 
-    int minFreeMemForSearchMegs = 50;
+    /** How much memory must be available to start a search (megabytes). */
+    int minFreeMemForSearchMegs = -1;
 
+    /** How long should the client cache a result? (seconds). */
     int clientCacheTimeSec = 3600;
 
+    /** Maximum number of searches to queue. After this, new searches will fail. */
     int maxQueuedSearches = 20;
 
+    /** How long to forbid resubmitting an aborted search for (seconds). */
     private int denyAbortedSearchSec = 600;
 
+    /** Cache implementation to use. */
     private String implementation = "";
 
     @Deprecated
-    public int getMaxSizeMegs() {
-        return maxSizeMegs;
-    }
-
-    @Deprecated
     public void setMaxSizeMegs(int maxSizeMegs) {
-        this.maxSizeMegs = maxSizeMegs;
+        logger.warn("Ignoring deprecated configuration option: cache.maxSizeMegs (use targetFreeMemMegs instead)");
     }
 
     @Deprecated
@@ -41,6 +64,7 @@ public class BLSConfigCache {
 
     @Deprecated
     public void setMaxNumberOfJobs(int maxNumberOfJobs) {
+        logger.warn("Configuration option cache.maxNumberOfJobs is deprecated (use targetFreeMemMegs instead)");
         this.maxNumberOfJobs = maxNumberOfJobs;
     }
 
@@ -53,7 +77,24 @@ public class BLSConfigCache {
     }
 
     public int getTargetFreeMemMegs() {
+        if (targetFreeMemMegs < 0)
+            setDefaultTargetFreeMemMegs();
         return targetFreeMemMegs;
+    }
+
+    private void setDefaultTargetFreeMemMegs() {
+        long heapMaxSize = Runtime.getRuntime().maxMemory();
+        if (heapMaxSize < Long.MAX_VALUE) {
+            // Set to 10% of max. heap size
+            targetFreeMemMegs = (int)(heapMaxSize / 1_000_000) / TARGET_FREE_MEM_AUTO_DIVIDER;
+            logger.debug("cache.targetFreeMemMegs not configured, setting it to " +
+                    "MAX_HEAP_MB / " + TARGET_FREE_MEM_AUTO_DIVIDER + " == " + targetFreeMemMegs);
+        } else {
+            // Unknown max heap size; use static default value.
+            targetFreeMemMegs = TARGET_FREE_MEM_STATIC_DEFAULT;
+            logger.debug("cache.targetFreeMemMegs not configured and no max heap size, " +
+                    "setting it to " + targetFreeMemMegs);
+        }
     }
 
     public void setTargetFreeMemMegs(int targetFreeMemMegs) {
@@ -61,7 +102,28 @@ public class BLSConfigCache {
     }
 
     public int getMinFreeMemForSearchMegs() {
+        if (minFreeMemForSearchMegs < 0)
+            setDefaultMinFreeMemForSearchMegs();
         return minFreeMemForSearchMegs;
+    }
+
+    private void setDefaultMinFreeMemForSearchMegs() {
+        long heapMaxSize = Runtime.getRuntime().maxMemory();
+        if (heapMaxSize < Long.MAX_VALUE) {
+            // Set to percentage of max. heap size, clamped to a reasonable range.
+            minFreeMemForSearchMegs = (int)(heapMaxSize / 1_000_000) / FREE_MEM_SEARCH_AUTO_DIVIDER;
+            minFreeMemForSearchMegs = Math.min(Math.max(minFreeMemForSearchMegs,
+                    FREE_MEM_SEARCH_AUTO_MIN), FREE_MEM_SEARCH_AUTO_MAX);
+            logger.debug("cache.minFreeMemForSearchMegs not configured, setting it to " +
+                    "clamp(MAX_HEAP_MB / " + FREE_MEM_SEARCH_AUTO_DIVIDER + ", " +
+                    FREE_MEM_SEARCH_AUTO_MIN + ", " + FREE_MEM_SEARCH_AUTO_MAX + ") == " +
+                    minFreeMemForSearchMegs);
+        } else {
+            // Unknown max heap size; use static default value.
+            minFreeMemForSearchMegs = FREE_MEM_SEARCH_AUTO_MIN;
+            logger.debug("cache.minFreeMemForSearchMegs not configured and no max heap size, " +
+                    "setting it to " + minFreeMemForSearchMegs);
+        }
     }
 
     public void setMinFreeMemForSearchMegs(int minFreeMemForSearchMegs) {

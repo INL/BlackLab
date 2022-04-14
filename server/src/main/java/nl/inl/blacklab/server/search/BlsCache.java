@@ -99,13 +99,12 @@ public class BlsCache implements SearchCache {
 
     private String previousCacheStatsMessage = "";
 
-    @SuppressWarnings("deprecation")
     public BlsCache(BLSConfig blsConfig, @SuppressWarnings("unused") ExecutorService executorService) {
         this.config = blsConfig.getCache();
         this.maxConcurrentSearches = blsConfig.getPerformance().getMaxConcurrentSearches();
         this.abandonedCountAbortTimeSec = blsConfig.getPerformance().getAbandonedCountAbortTimeSec();
         this.trace = blsConfig.getLog().getTrace().isCache();
-        cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0 || config.getMaxSizeMegs() == 0;
+        cacheDisabled = config.getMaxJobAgeSec() == 0;
 
         if (!cacheDisabled) {
             worthinessComparator = (o1, o2) -> {
