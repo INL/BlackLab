@@ -75,7 +75,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
             if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
-                // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
+                // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
                 throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
@@ -218,7 +218,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
         if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
-            // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
+            // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
             throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
         }
@@ -363,7 +363,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
         if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
-            // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
+            // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
             throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
         }

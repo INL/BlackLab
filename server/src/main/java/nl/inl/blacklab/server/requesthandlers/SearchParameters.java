@@ -401,7 +401,7 @@ public class SearchParameters {
 
     public ContextSettings getContextSettings() {
         ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
-        int maxContextSize = (int)searchManager.config().getParameters().getContextSize().getMax();
+        int maxContextSize = searchManager.config().getParameters().getContextSize().getMaxInt();
         if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);

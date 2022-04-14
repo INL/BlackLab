@@ -7,7 +7,8 @@ import nl.inl.blacklab.search.BlackLab;
 /**
  * Integer setting with a default and maximum value.
  * 
- * Please note that setting a max of -1 is interpreted as HitsInternal.MAX_ARRAY_SIZE,
+ * Please note that setting a max of -1 is interpreted as
+ * {@link BlackLab#JAVA_MAX_ARRAY_SIZE} or {@link Long#MAX_VALUE},
  * effectively setting no limit.
  */
 public class DefaultMax {
@@ -39,11 +40,31 @@ public class DefaultMax {
         this.defaultValue = defaultValue;
     }
 
+    /**
+     * Get maximum value.
+     *
+     * If max was set to -1, return {@link Long#MAX_VALUE}.
+     *
+     * @return maximum value
+     */
     public long getMax() {
-        return max;
+        return max == -1 ? Long.MAX_VALUE : max;
+    }
+
+    /**
+     * Get maximum value as an integer.
+     *
+     * If max was set to -1, or exceeds {@link BlackLab#JAVA_MAX_ARRAY_SIZE},
+     * return that value instead.
+     *
+     * @return maximum value
+     */
+    public int getMaxInt() {
+        return max == -1 || max > BlackLab.JAVA_MAX_ARRAY_SIZE ?
+                BlackLab.JAVA_MAX_ARRAY_SIZE : (int)max;
     }
 
     public void setMax(long max) {
-        this.max = max == -1 ? BlackLab.JAVA_MAX_ARRAY_SIZE : max;
+        this.max = max;
     }
 }

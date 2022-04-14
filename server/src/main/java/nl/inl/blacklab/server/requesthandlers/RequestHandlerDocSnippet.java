@@ -72,7 +72,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         // Clamp snippet to max size
         int snippetStart = Math.max(0, start - wordsAroundHit.left());
         int snippetEnd = end + wordsAroundHit.right();
-        int maxContextSize = (int)searchMan.config().getParameters().getContextSize().getMax();
+        int maxContextSize = searchMan.config().getParameters().getContextSize().getMaxInt();
         if (snippetEnd - snippetStart > maxContextSize) {
             int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
             snippetStart = Math.max(0, start - clampedWindow);
