@@ -188,11 +188,6 @@ cache:
     clientCacheTimeSec: 3600
     
     # [DEPRECATED, NO LONGER USED]
-    # Use targetFreeMemMegs to set a "free memory goal" as that can be measured
-    # accurately.
-    maxSizeMegs: 500
-
-    # [DEPRECATED, NO LONGER USED]
     # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
     # "cache cleanup goal".
     maxNumberOfJobs: 100
@@ -327,6 +322,11 @@ search:
     # [if you want to disable forward index matching, which may be beneficial
     #  if you indexes are small and your query volume is high, set this to 0]
     fiMatchFactor: 900
+    
+    # Enable result sets larger than 2^31?
+    # If you don't need this, you can disable it for slightly better performance.
+    # (defaults to true)
+    enableHugeResultSets: true
 
 
 # Options for indexing operations, if enabled

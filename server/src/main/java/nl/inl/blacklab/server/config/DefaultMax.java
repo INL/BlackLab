@@ -2,50 +2,69 @@ package nl.inl.blacklab.server.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * Integer setting with a default and maximum value.
  * 
- * Please note that setting a max of -1 is interpreted as HitsInternal.MAX_ARRAY_SIZE,
+ * Please note that setting a max of -1 is interpreted as
+ * {@link BlackLab#JAVA_MAX_ARRAY_SIZE} or {@link Long#MAX_VALUE},
  * effectively setting no limit.
  */
 public class DefaultMax {
     
-    public static DefaultMax get(int def, int max) {
+    public static DefaultMax get(long def, long max) {
         return new DefaultMax(def, max);
     }
     
     @JsonProperty("default")
-    int defaultValue;
-    
-    int max;
+    long defaultValue;
+
+    long max;
 
     DefaultMax() {
         defaultValue = 0;
         max = 0;
     }
     
-    DefaultMax(int def, int max) {
+    DefaultMax(long def, long max) {
         this.defaultValue = def;
         setMax(max);
     }
 
-    public int getDefaultValue() {
+    public long getDefaultValue() {
         return defaultValue;
     }
 
-    public void setDefaultValue(int defaultValue) {
+    public void setDefaultValue(long defaultValue) {
         this.defaultValue = defaultValue;
     }
 
-    public int getMax() {
-        return max;
+    /**
+     * Get maximum value.
+     *
+     * If max was set to -1, return {@link Long#MAX_VALUE}.
+     *
+     * @return maximum value
+     */
+    public long getMax() {
+        return max == -1 ? Long.MAX_VALUE : max;
     }
 
-    public void setMax(int max) {
-        this.max = max == -1 ? HitsInternal.MAX_ARRAY_SIZE : max;
+    /**
+     * Get maximum value as an integer.
+     *
+     * If max was set to -1, or exceeds {@link BlackLab#JAVA_MAX_ARRAY_SIZE},
+     * return that value instead.
+     *
+     * @return maximum value
+     */
+    public int getMaxInt() {
+        return max == -1 || max > BlackLab.JAVA_MAX_ARRAY_SIZE ?
+                BlackLab.JAVA_MAX_ARRAY_SIZE : (int)max;
     }
-    
-    
+
+    public void setMax(long max) {
+        this.max = max;
+    }
 }

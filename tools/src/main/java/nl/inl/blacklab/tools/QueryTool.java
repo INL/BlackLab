@@ -61,7 +61,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.DocImpl;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -729,7 +729,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(WordUtils.wrap(DocImpl.highlightContent(index, docId, hitsInDoc, -1, -1), 80));
+                    outprintln(WordUtils.wrap(DocUtil.highlightContent(index, docId, hitsInDoc, -1, -1), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));

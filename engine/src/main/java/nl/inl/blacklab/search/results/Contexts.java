@@ -16,10 +16,16 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
+/**
+ * Some annotation context(s) belonging to a list of hits.
+ *
+ * This interface is read-only.
+ */
 public class Contexts implements Iterable<int[]> {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
@@ -68,7 +74,7 @@ public class Contexts implements Iterable<int[]> {
                                                ) {
         if (hits.size() == 0)
             return;
-        HitsInternalRead hitsInternal = hits.getInternalHits();
+        HitsInternal hitsInternal = hits.getInternalHits();
 
         // TODO: more efficient to get all contexts with one getContextWords() call!
 
@@ -107,10 +113,11 @@ public class Contexts implements Iterable<int[]> {
         AnnotatedField field = forwardIndex.annotation().field();
         Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
         Annotation concWordFI = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
-        for (int i = 0; i < hits.size(); i++) {
-            Hit h = hits.get(i);
+        int hitIndex = -1;
+        for (Hit h: hits) {
+            hitIndex++;
             List<String> tokens = new ArrayList<>();
-            int[] context = wordContext[i];
+            int[] context = wordContext[hitIndex];
             int contextLength = context[Contexts.LENGTH_INDEX];
             int contextRightStart = context[Contexts.RIGHT_START_INDEX];
             int contextHitStart = context[Contexts.HIT_START_INDEX];
@@ -124,12 +131,12 @@ public class Contexts implements Iterable<int[]> {
                     // between every word.
                     tokens.add(" ");
                 } else
-                    tokens.add(punctTerms.get(punctContext[i][indexInContext]));
+                    tokens.add(punctTerms.get(punctContext[hitIndex][indexInContext]));
 
                 // Add extra attributes (e.g. lemma, pos)
                 if (attrContext != null) {
                     for (int k = 0; k < attrContext.length; k++) {
-                        tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
+                        tokens.add(attrTerms[k].get(attrContext[k][hitIndex][indexInContext]));
                     }
                 }
 
@@ -161,10 +168,10 @@ public class Contexts implements Iterable<int[]> {
      * @param contextSources forward indices to get context from
      * @param fiidLookups how to find the forward index ids of documents
      */
-    private static int[][] getContextWordsSingleDocument(HitsInternalRead hits, long start, long end, ContextSize contextSize,
-            List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
-        if (end - start > HitsInternal.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " hits in a single doc");
+    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end, ContextSize contextSize,
+                                                         List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
+        if (end - start > BlackLab.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
@@ -299,7 +306,7 @@ public class Contexts implements Iterable<int[]> {
         hits = hits.withAscendingLuceneDocIds();
 
         // Make sure all hits have been read and get access to internal hits
-        HitsInternalRead ha = hits.getInternalHits();
+        HitsInternal ha = hits.getInternalHits();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {

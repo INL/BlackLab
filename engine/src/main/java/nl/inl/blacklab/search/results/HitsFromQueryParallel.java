@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.ThreadAborter;
 
-public class HitsFromQueryParallel extends HitsAbstractMutable {
+public class HitsFromQueryParallel extends HitsMutable {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     private static final int HIT_POLLING_TIME_MS = 50;
@@ -69,9 +69,9 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
         /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
         final AtomicLong globalHitsToCount;
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-        private final HitsInternal globalResults;
+        private final HitsInternalMutable globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
-        private CapturedGroups globalCapturedGroups;
+        private CapturedGroupsImpl globalCapturedGroups;
 
         // Internal state
         private boolean isDone = false;
@@ -134,8 +134,8 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             LeafReaderContext leafReaderContext,
             HitQueryContext sourceHitQueryContext,
 
-            HitsInternal globalResults,
-            CapturedGroups globalCapturedGroups,
+            HitsInternalMutable globalResults,
+            CapturedGroupsImpl globalCapturedGroups,
             AtomicLong globalDocsProcessed,
             AtomicLong globalDocsCounted,
             AtomicLong globalHitsProcessed,
@@ -231,7 +231,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
             final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<Span[]>() : null;
 
-            final HitsInternal results = HitsInternal.create(-1, true, true);
+            final HitsInternalMutable results = HitsInternal.create(-1, true, true);
             final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
             final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
             final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
@@ -310,7 +310,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             this.leafReaderContext = null;
         }
 
-        void addToGlobalResults(HitsInternalRead hits, List<Span[]> capturedGroups) {
+        void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
             globalResults.addAll(hits);
 
             if (globalCapturedGroups != null) {
@@ -331,7 +331,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             return hitQueryContext;
         }
 
-        public void setCapturedGroups(CapturedGroups capturedGroups) {
+        public void setCapturedGroups(CapturedGroupsImpl capturedGroups) {
             globalCapturedGroups = capturedGroups;
         }
     }
@@ -413,8 +413,8 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
                     weight,
                     leafReaderContext,
                     this.hitQueryContext,
-                    this.hitsInternalWritable,
-                    this.capturedGroups,
+                    this.hitsInternalMutable,
+                    this.capturedGroupsMutable,
                     this.globalDocsProcessed,
                     this.globalDocsCounted,
                     this.globalHitsProcessed,
@@ -438,8 +438,8 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
                     if (hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0) {
-                        capturedGroups = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
-                        spansReader.setCapturedGroups(capturedGroups);
+                        capturedGroups = capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
+                        spansReader.setCapturedGroups(capturedGroupsMutable);
                     }
 
                     hasInitialized = true;
@@ -457,7 +457,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
     protected void ensureResultsRead(long number) {
         final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
 
-        if (allSourceSpansFullyRead || (hitsArrays.size() >= clampedNumber)) {
+        if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
             return;
         }
 
@@ -473,7 +473,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
              * So instead poll our own state, then if we're still missing results after that just count them ourselves
              */
             while (!ensureHitsReadLock.tryLock()) {
-                if (allSourceSpansFullyRead || (hitsArrays.size() >= clampedNumber)) {
+                if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
                     return;
                 }
 

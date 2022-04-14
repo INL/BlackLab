@@ -9,13 +9,17 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.DocImpl;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.XmlHighlighter;
 
-/** Concordances for a list of hits. */
+/** Concordances for a list of hits.
+ *
+ * Instances of this class are immutable.
+ */
 public class Concordances {
 
     /**
@@ -80,8 +84,8 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
-        if (arrayLength > HitsInternal.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+        if (arrayLength > BlackLab.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 
@@ -109,10 +113,10 @@ public class Concordances {
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         AnnotatedField field = queryInfo.field();
-        DocImpl.characterOffsets(hits.index(), docId, field, startsOfWords, endsOfWords, true);
+        DocUtil.characterOffsets(hits.index(), docId, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = DocImpl.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
+        List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             conc.put(it.next(), newConcs.get(i));
@@ -132,11 +136,11 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsInternalMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit key = it.next();
-            HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = HitsInternal.create(-1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
@@ -144,8 +148,8 @@ public class Concordances {
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (HitsInternalRead l : hitsPerDocument.values()) {
-            Hits hitsInThisDoc = Hits.immutable(queryInfo, l, null);
+        for (HitsInternal l : hitsPerDocument.values()) {
+            Hits hitsInThisDoc = Hits.list(queryInfo, l, null);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }
         return conc;

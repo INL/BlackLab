@@ -378,14 +378,14 @@ public class SearchParameters {
 
     public SearchSettings getSearchSettings() {
         int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
-        int maxRetrieve = getInteger("maxretrieve");
-        int maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
+        long maxRetrieve = getLong("maxretrieve");
+        long maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
         if (maxHitsToProcessAllowed >= 0
                 && maxRetrieve > maxHitsToProcessAllowed) {
             maxRetrieve = maxHitsToProcessAllowed;
         }
-        int maxCount = getInteger("maxcount");
-        int maxHitsToCountAllowed = searchManager.config().getParameters().getCountHits().getMax();
+        long maxCount = getLong("maxcount");
+        long maxHitsToCountAllowed = searchManager.config().getParameters().getCountHits().getMax();
         if (maxHitsToCountAllowed >= 0
                 && maxCount > maxHitsToCountAllowed) {
             maxCount = maxHitsToCountAllowed;
@@ -401,7 +401,7 @@ public class SearchParameters {
 
     public ContextSettings getContextSettings() {
         ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
-        int maxContextSize = searchManager.config().getParameters().getContextSize().getMax();
+        int maxContextSize = searchManager.config().getParameters().getContextSize().getMaxInt();
         if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
             //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
             contextSize = ContextSize.get(maxContextSize);

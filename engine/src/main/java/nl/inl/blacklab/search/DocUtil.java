@@ -15,7 +15,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsInternal;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
@@ -23,9 +22,9 @@ import nl.inl.util.XmlHighlighter.HitCharSpan;
 /**
  * Several utility methods related to documents and highlighting.
  */
-public class DocImpl {
+public class DocUtil {
 
-    private DocImpl() {
+    private DocUtil() {
     }
 
     public static void characterOffsets(BlackLabIndex index, int id, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
@@ -146,8 +145,8 @@ public class DocImpl {
     }
 
     private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int id, Hits hits) {
-        if (hits.size() > HitsInternal.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " hits in a single doc");
+        if (hits.size() > BlackLab.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
         Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();

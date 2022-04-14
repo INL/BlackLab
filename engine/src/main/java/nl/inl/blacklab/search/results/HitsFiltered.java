@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsAbstractMutable {
+public class HitsFiltered extends HitsMutable {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -78,13 +78,13 @@ public class HitsFiltered extends HitsAbstractMutable {
     protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (doneFiltering || number >= 0 && hitsArrays.size() > number)
+            if (doneFiltering || number >= 0 && hitsInternalMutable.size() > number)
                 return;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
-                number = hitsArrays.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsInternalMutable.size() < FETCH_HITS_MIN)
+                number = hitsInternalMutable.size() + FETCH_HITS_MIN;
 
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -93,13 +93,13 @@ public class HitsFiltered extends HitsAbstractMutable {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (doneFiltering || number >= 0 && hitsArrays.size() >= number)
+                if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
                 EphemeralHit hit = new EphemeralHit();
-                while (!doneFiltering && (readAllHits || hitsArrays.size() < number)) {
+                while (!doneFiltering && (readAllHits || hitsInternalMutable.size() < number)) {
                  // Abort if asked
                     threadAborter.checkAbort();
 
@@ -109,7 +109,7 @@ public class HitsFiltered extends HitsAbstractMutable {
                         source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
-                            hitsInternalWritable.add(hit);
+                            hitsInternalMutable.add(hit);
                             hitsCounted++;
                             if (hit.doc() != previousHitDoc) {
                                 docsCounted++;

@@ -2,6 +2,7 @@ package nl.inl.blacklab.performance;
 
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsInternalMutable;
 import nl.inl.util.Timer;
 
 /**
@@ -21,7 +22,7 @@ public class CompareHitsInternalImpls {
             System.out.println(message + ": " + t.elapsed() + "ms");
     }
 
-    static void testFill(HitsInternal hits) {
+    static void testFill(HitsInternalMutable hits) {
         for (int i = 0; i < ITERATIONS; i++) {
             hits.add(1, 2, 3);
         }
@@ -44,7 +45,7 @@ public class CompareHitsInternalImpls {
         }
     }
 
-    static void test(String msg, HitsInternal hits) {
+    static void test(String msg, HitsInternalMutable hits) {
         time(msg == null ? null : msg + " FILL", () -> { testFill(hits); });
         time(msg == null ? null : msg + " ITERATE", () -> { testIterate(hits); });
         time(msg == null ? null : msg + " ITERATE-GET", () -> { testIterateGet(hits); });

@@ -13,6 +13,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
+/**
+ * A list of hits, optionally with captured groups.
+ *
+ * This interface is read-only.
+ */
 public interface Hits extends Results<Hit, HitProperty> {
     /**
      * Construct a Hits object from a SpanQuery.
@@ -36,7 +41,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #immutable(QueryInfo, HitsInternalRead, CapturedGroups)} }
+     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, CapturedGroups)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids
@@ -44,22 +49,22 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @param ends      hit ends
      * @return hits found
      */
-    static Hits immutable(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
+    static Hits list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
 
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsImmutable(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
+        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
     }
 
-    static Hits immutable(QueryInfo queryInfo, HitsInternalRead hits, CapturedGroups capturedGroups) {
-        return new HitsImmutable(queryInfo, hits, capturedGroups);
+    static Hits list(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
+        return new HitsList(queryInfo, hits, capturedGroups);
     }
 
-    static Hits immutable(
+    static Hits list(
             QueryInfo queryInfo,
-            HitsInternalRead hits,
+            HitsInternal hits,
             WindowStats windowStats,
             SampleParameters sampleParameters,
             long hitsCounted,
@@ -67,7 +72,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long docsCounted,
             CapturedGroups capturedGroups,
             boolean ascendingLuceneDocIds) {
-        return new HitsImmutable(
+        return new HitsList(
                 queryInfo,
                 hits,
                 windowStats,
@@ -89,7 +94,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits object
      */
     static Hits singleton(QueryInfo queryInfo, int luceneDocId, int start, int end) {
-        return immutable(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
+        return list(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
     }
 
     /**
@@ -98,8 +103,8 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @param queryInfo query info
      * @return hits found
      */
-    static Hits immutableEmpty(QueryInfo queryInfo) {
-        return new HitsImmutable(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
+    static Hits empty(QueryInfo queryInfo) {
+        return new HitsList(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
     }
 
     /**
@@ -333,7 +338,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      *
      * @return internal hits object.
      */
-    HitsInternalRead getInternalHits();
+    HitsInternal getInternalHits();
 
 
 }

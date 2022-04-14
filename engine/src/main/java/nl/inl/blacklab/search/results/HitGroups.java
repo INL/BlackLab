@@ -30,6 +30,7 @@ import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -81,7 +82,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = HitsInternal.MAX_ARRAY_SIZE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = BlackLab.JAVA_MAX_HASHMAP_SIZE;
 
     /**
      * Total number of results in the source set of hits. 
@@ -125,14 +126,14 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, HitsInternal> groupLists = new HashMap<>();
+        Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             PropertyValue identity = criteria.get(i);
-            HitsInternal group = groupLists.get(identity);
+            HitsInternalMutable group = groupLists.get(identity);
             if (group == null) {
 
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
@@ -156,9 +157,9 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             ++i;
         }
         resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, HitsInternal> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsInternalMutable> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
-            HitsInternalRead hitList = e.getValue();
+            HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
             HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.capturedGroups(), groupSize);
             groups.put(groupId, group);
@@ -292,7 +293,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

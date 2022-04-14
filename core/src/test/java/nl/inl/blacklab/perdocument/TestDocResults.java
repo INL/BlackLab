@@ -33,7 +33,7 @@ public class TestDocResults {
         int[] aEnd = { 2, 3, 4, 5, 6 };
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.immutable(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
             DocResults drs = hits.perDocResults(Results.NO_LIMIT);
     
             int[] expDoc = { 1, 2, 3 };

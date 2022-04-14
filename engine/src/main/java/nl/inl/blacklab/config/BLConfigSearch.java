@@ -6,15 +6,21 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.SearchSettings;
 
 public class BLConfigSearch {
-    BLConfigCollator collator = new BLConfigCollator();
-    
-    int contextSize = 5;
-    
-    long maxHitsToRetrieve = 5_000_000;
+    private BLConfigCollator collator = new BLConfigCollator();
 
-    long maxHitsToCount = 10_000_000;
-    
-    long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
+    private int contextSize = 5;
+
+    private long maxHitsToRetrieve = 5_000_000;
+
+    private long maxHitsToCount = 10_000_000;
+
+    private long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
+
+    /** Should result sets larger than the maximum array size (roughly 2^31) be supported?
+     *
+     * If you don't need this, you can disable it for slightly better performance.
+     */
+    private boolean enableHugeResultSets = true;
 
     public BLConfigCollator getCollator() {
         return collator;
@@ -54,6 +60,14 @@ public class BLConfigSearch {
 
     public void setFiMatchFactor(int fiMatchFactor) {
         this.fiMatchFactor = fiMatchFactor;
+    }
+
+    public boolean isEnableHugeResultSets() {
+        return enableHugeResultSets;
+    }
+
+    public void setEnableHugeResultSets(boolean enableHugeResultSets) {
+        this.enableHugeResultSets = enableHugeResultSets;
     }
 
     /**
