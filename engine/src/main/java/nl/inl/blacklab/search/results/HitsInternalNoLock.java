@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
@@ -196,7 +197,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     public HitsInternal sort(HitProperty p) {
         HitsInternalMutable r;
         long size = docs.size64();
-        if (size > MAX_ARRAY_SIZE) {
+        if (size > BlackLab.JAVA_MAX_ARRAY_SIZE) {
             // Fill an indices BigArray with 0 ... size
             long[][] indices = LongBigArrays.newBigArray(size);
             int i = 0;

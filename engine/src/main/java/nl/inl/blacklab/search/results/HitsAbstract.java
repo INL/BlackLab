@@ -15,6 +15,7 @@ import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -209,12 +210,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Determine total number of hits (fetching all of them)
         long totalNumberOfHits = size();
-        if (totalNumberOfHits > HitsInternal.MAX_ARRAY_SIZE) {
+        if (totalNumberOfHits > BlackLab.JAVA_MAX_ARRAY_SIZE) {
             // TODO: we might want to enable this, because the whole point of sampling is to make sense
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternal.MAX_ARRAY_SIZE + " hits");
+            throw new BlackLabRuntimeException("Cannot sample from more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
@@ -233,7 +234,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    hitIndex = random.nextInt((int)Math.min(HitsInternal.MAX_ARRAY_SIZE, size()));
+                    hitIndex = random.nextInt((int)Math.min(BlackLab.JAVA_MAX_ARRAY_SIZE, size()));
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
