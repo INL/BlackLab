@@ -324,7 +324,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                            Hits hits = Hits.immutable(queryInfo(), docHits, null);
+                            Hits hits = Hits.list(queryInfo(), docHits, null);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
@@ -346,7 +346,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);
-                        Hits hits = Hits.immutable(queryInfo(), docHits, null);
+                        Hits hits = Hits.list(queryInfo(), docHits, null);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
@@ -369,7 +369,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
-            docResult = DocResult.fromHits(doc, Hits.immutableEmpty(queryInfo()), totalNumberOfHits);
+            docResult = DocResult.fromHits(doc, Hits.empty(queryInfo()), totalNumberOfHits);
         else if (maxHitsToStorePerDoc > 0 && docHits.size() > maxHitsToStorePerDoc)
             docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
         else

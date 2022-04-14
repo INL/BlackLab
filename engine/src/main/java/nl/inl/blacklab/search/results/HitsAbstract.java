@@ -157,7 +157,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         if (first < 0 || (emptyResultSet && first > 0) ||
             (!emptyResultSet && !hitsProcessedAtLeast(first + 1))) {
             //throw new IllegalArgumentException("First hit out of range");
-            return Hits.immutableEmpty(queryInfo());
+            return Hits.empty(queryInfo());
         }
 
         // Auto-clamp number
@@ -193,7 +193,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         });
         boolean hasNext = hitsProcessedAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
-        return Hits.immutable(queryInfo(), window, windowStats, null,
+        return Hits.list(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
                 capturedGroups, hasAscendingLuceneDocIds());
     }
@@ -261,7 +261,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             }
         });
 
-        return Hits.immutable(queryInfo(), sample, null, sampleParameters, sample.size(),
+        return Hits.list(queryInfo(), sample, null, sampleParameters, sample.size(),
                 docsInSample.getValue(), docsInSample.getValue(), capturedGroups,
                 hasAscendingLuceneDocIds());
     }
@@ -293,7 +293,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         long docsRetrieved = docsProcessedSoFar();
         long docsCounted = docsCountedSoFar();
         boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId;
-        return Hits.immutable(queryInfo(), sorted, null, null,
+        return Hits.list(queryInfo(), sorted, null, null,
                 hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
     }
 
@@ -547,7 +547,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         HitsInternalMutable r = HitsInternal.create(1, false, false);
         r.add(hit);
 
-        return Hits.immutable(
+        return Hits.list(
             this.queryInfo(),
             r,
             new WindowStats(false, 1, 1, 1),

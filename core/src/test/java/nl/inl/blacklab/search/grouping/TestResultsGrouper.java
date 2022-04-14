@@ -44,7 +44,7 @@ public class TestResultsGrouper {
         Mockito.when(indexSearcher.getSimilarity()).thenReturn(new BM25Similarity());
 
         index.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.immutable(QueryInfo.create(index), doc, start, end);
+        Hits hits = Hits.list(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
         HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
 

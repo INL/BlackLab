@@ -35,7 +35,7 @@ public class HitGroup extends Group<Hit> {
     }
 
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, long totalSize) {
-        this(groupIdentity, Hits.immutableEmpty(queryInfo), totalSize);
+        this(groupIdentity, Hits.empty(queryInfo), totalSize);
     }
 
     /**
@@ -49,7 +49,7 @@ public class HitGroup extends Group<Hit> {
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults, CapturedGroups capturedGroups, long totalSize) {
-        super(groupIdentity, Hits.immutable(queryInfo, storedResults, capturedGroups), totalSize);
+        super(groupIdentity, Hits.list(queryInfo, storedResults, capturedGroups), totalSize);
     }
 
     /**

@@ -107,7 +107,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
         if (hits == null) {
-            hitsInDoc = Hits.immutableEmpty(QueryInfo.create(blIndex));
+            hitsInDoc = Hits.empty(QueryInfo.create(blIndex));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
