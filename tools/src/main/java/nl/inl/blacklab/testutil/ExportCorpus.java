@@ -12,8 +12,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 
@@ -83,7 +83,7 @@ public class ExportCorpus implements AutoCloseable {
                 String fromInputFile = doc.get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = DocImpl.contents(index, id, doc);
+                    String xml = DocUtil.contents(index, id, doc);
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {

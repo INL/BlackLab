@@ -23,9 +23,9 @@ import nl.inl.util.XmlHighlighter.HitCharSpan;
 /**
  * Several utility methods related to documents and highlighting.
  */
-public class DocImpl {
+public class DocUtil {
 
-    private DocImpl() {
+    private DocUtil() {
     }
 
     public static void characterOffsets(BlackLabIndex index, int id, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
