@@ -112,10 +112,11 @@ public class Contexts implements Iterable<int[]> {
         AnnotatedField field = forwardIndex.annotation().field();
         Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
         Annotation concWordFI = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
-        for (int i = 0; i < hits.size(); i++) {
-            Hit h = hits.get(i);
+        int hitIndex = -1;
+        for (Hit h: hits) {
+            hitIndex++;
             List<String> tokens = new ArrayList<>();
-            int[] context = wordContext[i];
+            int[] context = wordContext[hitIndex];
             int contextLength = context[Contexts.LENGTH_INDEX];
             int contextRightStart = context[Contexts.RIGHT_START_INDEX];
             int contextHitStart = context[Contexts.HIT_START_INDEX];
@@ -129,12 +130,12 @@ public class Contexts implements Iterable<int[]> {
                     // between every word.
                     tokens.add(" ");
                 } else
-                    tokens.add(punctTerms.get(punctContext[i][indexInContext]));
+                    tokens.add(punctTerms.get(punctContext[hitIndex][indexInContext]));
 
                 // Add extra attributes (e.g. lemma, pos)
                 if (attrContext != null) {
                     for (int k = 0; k < attrContext.length; k++) {
-                        tokens.add(attrTerms[k].get(attrContext[k][i][indexInContext]));
+                        tokens.add(attrTerms[k].get(attrContext[k][hitIndex][indexInContext]));
                     }
                 }
 
