@@ -8,10 +8,10 @@ package nl.inl.blacklab.search.results;
 public abstract class HitsAbstractMutable extends HitsAbstract {
 
     /** Writable version of our HitsInternal object */
-    protected HitsInternal hitsInternalWritable;
+    protected HitsInternalMutable hitsInternalMutable;
 
     /** Writable version of our CapturedGroups object */
-    protected CapturedGroupsImpl capturedGroupsWritable;
+    protected CapturedGroupsImpl capturedGroupsMutable;
 
     /** Construct an empty Hits object.
      *
@@ -29,9 +29,9 @@ public abstract class HitsAbstractMutable extends HitsAbstract {
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstractMutable(QueryInfo queryInfo, HitsInternal hits) {
+    public HitsAbstractMutable(QueryInfo queryInfo, HitsInternalMutable hits) {
         super(queryInfo, hits);
-        hitsInternalWritable = hits == null ? HitsInternal.create(-1, true, true) : hits;
+        hitsInternalMutable = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }
 
 }

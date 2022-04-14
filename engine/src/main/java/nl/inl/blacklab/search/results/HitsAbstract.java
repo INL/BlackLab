@@ -39,7 +39,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     protected static final int FETCH_HITS_MIN = 20;
 
     /** Our internal list of simple hits. */
-    protected final HitsInternalRead hitsArrays;
+    protected final HitsInternal hitsInternal;
 
     /**
      * Our captured groups, or null if we have none.
@@ -68,7 +68,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         @Override
         public boolean processedAtLeast(long lowerBound) {
             while (!doneProcessingAndCounting() && docsProcessedSoFar() < lowerBound) {
-                ensureResultsRead(hitsArrays.size() + FETCH_HITS_MIN);
+                ensureResultsRead(hitsInternal.size() + FETCH_HITS_MIN);
             }
             return docsProcessedSoFar() >= lowerBound;
         }
@@ -116,7 +116,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
     public HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? HitsInternalRead.EMPTY_SINGLETON : HitsInternal.create(-1, true, true));
+        this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true));
     }
 
     /**
@@ -128,9 +128,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternalRead hits) {
+    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits) {
         super(queryInfo);
-        this.hitsArrays = hits == null ? HitsInternal.create(-1, true, true) : hits;
+        this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }
 
     // Inherited from Results
@@ -170,9 +170,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // Copy the hits we're interested in.
         CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternal window = HitsInternal.create(number, number, false);
+        HitsInternalMutable window = HitsInternal.create(number, number, false);
 
-        this.hitsArrays.withReadLock(h -> {
+        this.hitsInternal.withReadLock(h -> {
             int prevDoc = -1;
             EphemeralHit hit = new EphemeralHit();
             for (long i = first; i < first + number; i++) {
@@ -209,12 +209,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Determine total number of hits (fetching all of them)
         long totalNumberOfHits = size();
-        if (totalNumberOfHits > HitsInternalRead.MAX_ARRAY_SIZE) {
+        if (totalNumberOfHits > HitsInternal.MAX_ARRAY_SIZE) {
             // TODO: we might want to enable this, because the whole point of sampling is to make sense
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternalRead.MAX_ARRAY_SIZE + " hits");
+            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternal.MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
@@ -233,7 +233,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    hitIndex = random.nextInt((int)Math.min(HitsInternalRead.MAX_ARRAY_SIZE, size()));
+                    hitIndex = random.nextInt((int)Math.min(HitsInternal.MAX_ARRAY_SIZE, size()));
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
@@ -241,9 +241,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         MutableInt docsInSample = new MutableInt(0);
         CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
-        HitsInternal sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect, false);
+        HitsInternalMutable sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect, false);
 
-        this.hitsArrays.withReadLock(hr -> {
+        this.hitsInternal.withReadLock(hr -> {
             int previousDoc = -1;
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
@@ -286,7 +286,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Perform the actual sort.
         this.ensureAllResultsRead();
-        HitsInternalRead sorted = this.hitsArrays.sort(sortProp); // TODO use wrapper objects
+        HitsInternal sorted = this.hitsInternal.sort(sortProp); // TODO use wrapper objects
 
         CapturedGroups capturedGroups = capturedGroups();
         long hitsCounted = hitsCountedSoFar();
@@ -341,13 +341,13 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
     @Override
     protected boolean resultsProcessedAtLeast(long lowerBound) {
-        return this.hitsArrays.size() >= lowerBound;
+        return this.hitsInternal.size() >= lowerBound;
     }
 
     @Override
     protected long resultsProcessedTotal() {
         ensureAllResultsRead();
-        return this.hitsArrays.size();
+        return this.hitsInternal.size();
     }
 
     @Override
@@ -357,7 +357,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
     @Override
     public long numberOfResultObjects() {
-        return this.hitsArrays.size();
+        return this.hitsInternal.size();
     }
 
     @Override
@@ -381,18 +381,18 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Iterator<EphemeralHit> ephemeralIterator() {
         ensureAllResultsRead();
-        return hitsArrays.iterator();
+        return hitsInternal.iterator();
     }
 
     @Override
     public Hit get(long i) {
         ensureResultsRead(i + 1);
-        return this.hitsArrays.get(i);
+        return this.hitsInternal.get(i);
     }
 
     public void getEphemeral(long i, EphemeralHit hit) {
         ensureResultsRead(i + 1);
-        this.hitsArrays.getEphemeral(i, hit);
+        this.hitsInternal.getEphemeral(i, hit);
     }
 
     /**
@@ -469,9 +469,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public Hits getHitsInDoc(int docid) {
         ensureAllResultsRead();
-        HitsInternal r = HitsInternal.create(-1, size(), false);
+        HitsInternalMutable r = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
-        for (EphemeralHit h : this.hitsArrays) {
+        for (EphemeralHit h : this.hitsInternal) {
             if (h.doc == docid)
                 r.add(h);
         }
@@ -487,16 +487,16 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     }
 
     protected boolean hitsProcessedAtLeast(long lowerBound) {
-        return this.hitsArrays.size() >= lowerBound;
+        return this.hitsInternal.size() >= lowerBound;
     }
 
     protected long hitsProcessedTotal() {
         ensureAllResultsRead();
-        return this.hitsArrays.size();
+        return this.hitsInternal.size();
     }
 
     protected long hitsProcessedSoFar() {
-        return this.hitsArrays.size();
+        return this.hitsInternal.size();
     }
 
     protected long hitsCountedTotal() {
@@ -544,7 +544,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             capturedGroups.put(hit, this.capturedGroups.get(hit));
         }
 
-        HitsInternal r = HitsInternal.create(1, false, false);
+        HitsInternalMutable r = HitsInternal.create(1, false, false);
         r.add(hit);
 
         return Hits.immutable(
@@ -599,7 +599,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public int doc(long index) {
         ensureResultsRead(index + 1);
-        return hitsArrays.doc(index);
+        return hitsInternal.doc(index);
     }
 
     /**
@@ -610,7 +610,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public int start(long index) {
         ensureResultsRead(index + 1);
-        return hitsArrays.start(index);
+        return hitsInternal.start(index);
     }
 
     /**
@@ -621,12 +621,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     @Override
     public int end(long index) {
         ensureResultsRead(index + 1);
-        return hitsArrays.end(index);
+        return hitsInternal.end(index);
     }
 
     @Override
-    public HitsInternalRead getInternalHits() {
+    public HitsInternal getInternalHits() {
         ensureAllResultsRead();
-        return hitsArrays;
+        return hitsInternal;
     }
 }

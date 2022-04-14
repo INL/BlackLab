@@ -55,7 +55,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = HitsInternalRead.MAX_ARRAY_SIZE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = HitsInternal.MAX_ARRAY_SIZE / 2;
 
     private long largestGroupSize = 0;
 
@@ -164,7 +164,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     @Override
     public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = HitsInternalRead.MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
         List<DocGroup> truncatedGroups = new ArrayList<>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;

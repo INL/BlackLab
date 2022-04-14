@@ -9,7 +9,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A HitsInternal implementation that does no locking and can handle up to {@link HitsInternalRead#MAX_ARRAY_SIZE} hits.
+ * A HitsInternal implementation that does no locking and can handle up to {@link HitsInternal#MAX_ARRAY_SIZE} hits.
  *
  * Maximum size is roughly (but not exactly) 2^31 hits.
  *
@@ -22,9 +22,9 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * These tests are not representative of real-world usage, but on huge result sets this will
  * likely save a few seconds.
  */
-class HitsInternalNoLock32 implements HitsInternal {
+class HitsInternalNoLock32 implements HitsInternalMutable {
 
-    private class Iterator implements HitsInternalRead.Iterator {
+    private class Iterator implements HitsInternal.Iterator {
         private int pos = 0;
         private final EphemeralHit hit = new EphemeralHit();
 
@@ -118,7 +118,7 @@ class HitsInternalNoLock32 implements HitsInternal {
         ends.addAll(hits.ends);
     }
 
-    public void addAll(HitsInternalRead hits) {
+    public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h: hr) {
                 docs.add(h.doc);
@@ -138,7 +138,7 @@ class HitsInternalNoLock32 implements HitsInternal {
     }
 
     @Override
-    public void withReadLock(Consumer<HitsInternalRead> cons) {
+    public void withReadLock(Consumer<HitsInternal> cons) {
         cons.accept(this);
     }
 
@@ -194,19 +194,19 @@ class HitsInternalNoLock32 implements HitsInternal {
 
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
     @Override
-    public HitsInternalRead.Iterator iterator() {
+    public HitsInternal.Iterator iterator() {
         return new Iterator();
     }
 
     @Override
-    public HitsInternalRead sort(HitProperty p) {
+    public HitsInternal sort(HitProperty p) {
         int[] indices = new int[docs.size()];
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
         IntArrays.quickSort(indices, p::compare);
 
-        HitsInternal r = HitsInternal.create(docs.size(), false, false);
+        HitsInternalMutable r = HitsInternal.create(docs.size(), false, false);
         for (int index : indices) {
             r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index));
         }

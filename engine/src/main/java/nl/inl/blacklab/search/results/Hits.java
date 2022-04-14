@@ -41,7 +41,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #immutable(QueryInfo, HitsInternalRead, CapturedGroups)} }
+     * Prefer using @link { {@link #immutable(QueryInfo, HitsInternal, CapturedGroups)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids
@@ -58,13 +58,13 @@ public interface Hits extends Results<Hit, HitProperty> {
         return new HitsImmutable(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds), null);
     }
 
-    static Hits immutable(QueryInfo queryInfo, HitsInternalRead hits, CapturedGroups capturedGroups) {
+    static Hits immutable(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
         return new HitsImmutable(queryInfo, hits, capturedGroups);
     }
 
     static Hits immutable(
             QueryInfo queryInfo,
-            HitsInternalRead hits,
+            HitsInternal hits,
             WindowStats windowStats,
             SampleParameters sampleParameters,
             long hitsCounted,
@@ -104,7 +104,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     static Hits immutableEmpty(QueryInfo queryInfo) {
-        return new HitsImmutable(queryInfo, HitsInternalRead.EMPTY_SINGLETON, null);
+        return new HitsImmutable(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
     }
 
     /**
@@ -338,7 +338,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      *
      * @return internal hits object.
      */
-    HitsInternalRead getInternalHits();
+    HitsInternal getInternalHits();
 
 
 }

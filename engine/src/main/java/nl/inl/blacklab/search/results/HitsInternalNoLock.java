@@ -19,7 +19,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
  * {@link HitsInternalLock}. That is not representative of real-world usage of course, but on huge
  * resultsets this will likely save a few seconds.
  */
-class HitsInternalNoLock implements HitsInternal {
+class HitsInternalNoLock implements HitsInternalMutable {
 
     /**
      * Class to iterate over hits.
@@ -109,7 +109,7 @@ class HitsInternalNoLock implements HitsInternal {
         ends.addAll(hits.ends);
     }
 
-    public void addAll(HitsInternalRead hits) {
+    public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h : hits) {
                 docs.add(h.doc);
@@ -128,7 +128,7 @@ class HitsInternalNoLock implements HitsInternal {
         ends.clear();
     }
 
-    public void withReadLock(Consumer<HitsInternalRead> cons) {
+    public void withReadLock(Consumer<HitsInternal> cons) {
         cons.accept(this);
     }
 
@@ -194,7 +194,7 @@ class HitsInternalNoLock implements HitsInternal {
     }
 
     public HitsInternal sort(HitProperty p) {
-        HitsInternal r;
+        HitsInternalMutable r;
         long size = docs.size64();
         if (size > MAX_ARRAY_SIZE) {
             // Fill an indices BigArray with 0 ... size

@@ -73,10 +73,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
-            if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
+            if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-                throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
+                throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
             }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
@@ -143,7 +143,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private HitsInternal partialDocHits;
+    private HitsInternalMutable partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -216,10 +216,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
-        if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
+        if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
         }
         this.results = results;
         this.sampleParameters = sampleParameters;
@@ -315,7 +315,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
             try {
                 // Fill list of document results
-                HitsInternal docHits = partialDocHits;
+                HitsInternalMutable docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
@@ -361,10 +361,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
-        if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
+        if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
         }
 
         DocResult docResult;
@@ -479,7 +479,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = HitsInternalRead.MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
         List<DocResult> truncatedGroups = new ArrayList<>();
         for (DocResult group: results) {
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

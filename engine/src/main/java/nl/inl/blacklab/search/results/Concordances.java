@@ -83,8 +83,8 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
-        if (arrayLength > HitsInternalRead.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+        if (arrayLength > HitsInternal.MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 
@@ -135,11 +135,11 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         hl.setUnbalancedTagsStrategy(queryInfo.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<HitsInternal> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsInternalMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit key = it.next();
-            HitsInternal hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = HitsInternal.create(-1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
@@ -147,7 +147,7 @@ public class Concordances {
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (HitsInternalRead l : hitsPerDocument.values()) {
+        for (HitsInternal l : hitsPerDocument.values()) {
             Hits hitsInThisDoc = Hits.immutable(queryInfo, l, null);
             Concordances.makeConcordancesSingleDocContentStore(hitsInThisDoc, contextSize, conc, hl);
         }

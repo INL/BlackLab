@@ -36,12 +36,12 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
         // (this class could save memory by only storing the hits we're interested in)
 
-        if (source.size() > HitsInternalRead.MAX_ARRAY_SIZE) {
+        if (source.size() > HitsInternal.MAX_ARRAY_SIZE) {
             // TODO: we might want to enable this, because the whole point of sampling is to make sense
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternalRead.MAX_ARRAY_SIZE + " hits");
+            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternal.MAX_ARRAY_SIZE + " hits");
         }
 
         List<T> results = new ArrayList<>();
@@ -56,7 +56,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
             // Choose a hit we haven't chosen yet
             long hitIndex;
             do {
-                hitIndex = random.nextInt((int)Math.min(HitsInternalRead.MAX_ARRAY_SIZE, source.size()));
+                hitIndex = random.nextInt((int)Math.min(HitsInternal.MAX_ARRAY_SIZE, source.size()));
             } while (chosenHitIndices.contains(hitIndex));
             chosenHitIndices.add(hitIndex);
         }

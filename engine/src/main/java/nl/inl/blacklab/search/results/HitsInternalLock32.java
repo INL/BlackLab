@@ -8,7 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A HitsInternal implementation that locks and can handle up to {@link HitsInternalRead#MAX_ARRAY_SIZE} hits.
+ * A HitsInternal implementation that locks and can handle up to {@link HitsInternal#MAX_ARRAY_SIZE} hits.
  *
  * Maximum size is roughly (but not exactly) 2^31 hits.
  *
@@ -80,7 +80,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         }
     }
 
-    public void addAll(HitsInternalRead hits) {
+    public void addAll(HitsInternal hits) {
         this.lock.writeLock().lock();
         try {
             super.addAll(hits);
@@ -102,7 +102,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     }
 
     @Override
-    public void withReadLock(Consumer<HitsInternalRead> cons) {
+    public void withReadLock(Consumer<HitsInternal> cons) {
         lock.readLock().lock();
         try {
             super.withReadLock(cons);
@@ -193,7 +193,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     }
 
     @Override
-    public HitsInternalRead sort(HitProperty p) {
+    public HitsInternal sort(HitProperty p) {
         this.lock.readLock().lock();
         try {
             return super.sort(p);
