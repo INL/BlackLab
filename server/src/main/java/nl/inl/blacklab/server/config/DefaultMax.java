@@ -12,40 +12,38 @@ import nl.inl.blacklab.search.BlackLab;
  */
 public class DefaultMax {
     
-    public static DefaultMax get(int def, int max) {
+    public static DefaultMax get(long def, long max) {
         return new DefaultMax(def, max);
     }
     
     @JsonProperty("default")
-    int defaultValue;
-    
-    int max;
+    long defaultValue;
+
+    long max;
 
     DefaultMax() {
         defaultValue = 0;
         max = 0;
     }
     
-    DefaultMax(int def, int max) {
+    DefaultMax(long def, long max) {
         this.defaultValue = def;
         setMax(max);
     }
 
-    public int getDefaultValue() {
+    public long getDefaultValue() {
         return defaultValue;
     }
 
-    public void setDefaultValue(int defaultValue) {
+    public void setDefaultValue(long defaultValue) {
         this.defaultValue = defaultValue;
     }
 
-    public int getMax() {
+    public long getMax() {
         return max;
     }
 
-    public void setMax(int max) {
+    public void setMax(long max) {
         this.max = max == -1 ? BlackLab.JAVA_MAX_ARRAY_SIZE : max;
     }
-    
-    
 }
