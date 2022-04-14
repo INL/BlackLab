@@ -81,7 +81,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = HitsInternal.MAX_ARRAY_SIZE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = HitsInternalRead.MAX_ARRAY_SIZE / 2;
 
     /**
      * Total number of results in the source set of hits. 
@@ -292,7 +292,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = HitsInternalRead.MAX_ARRAY_SIZE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

@@ -71,7 +71,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
         /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
         private final HitsInternal globalResults;
         /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
-        private CapturedGroups globalCapturedGroups;
+        private CapturedGroupsImpl globalCapturedGroups;
 
         // Internal state
         private boolean isDone = false;
@@ -135,7 +135,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             HitQueryContext sourceHitQueryContext,
 
             HitsInternal globalResults,
-            CapturedGroups globalCapturedGroups,
+            CapturedGroupsImpl globalCapturedGroups,
             AtomicLong globalDocsProcessed,
             AtomicLong globalDocsCounted,
             AtomicLong globalHitsProcessed,
@@ -315,7 +315,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
 
             if (globalCapturedGroups != null) {
                 synchronized (globalCapturedGroups) {
-                    HitsInternal.Iterator it = hits.iterator();
+                    HitsInternalRead.Iterator it = hits.iterator();
                     int i = 0;
                     while (it.hasNext()) {
                         Hit h = it.next().toHit();
@@ -331,7 +331,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
             return hitQueryContext;
         }
 
-        public void setCapturedGroups(CapturedGroups capturedGroups) {
+        public void setCapturedGroups(CapturedGroupsImpl capturedGroups) {
             globalCapturedGroups = capturedGroups;
         }
     }
@@ -414,7 +414,7 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
                     leafReaderContext,
                     this.hitQueryContext,
                     this.hitsInternalWritable,
-                    this.capturedGroups,
+                    this.capturedGroupsWritable,
                     this.globalDocsProcessed,
                     this.globalDocsCounted,
                     this.globalHitsProcessed,
@@ -438,8 +438,8 @@ public class HitsFromQueryParallel extends HitsAbstractMutable {
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
                     if (hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0) {
-                        capturedGroups = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
-                        spansReader.setCapturedGroups(capturedGroups);
+                        capturedGroups = capturedGroupsWritable = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
+                        spansReader.setCapturedGroups(capturedGroupsWritable);
                     }
 
                     hasInitialized = true;

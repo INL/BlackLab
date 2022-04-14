@@ -15,7 +15,10 @@ import nl.inl.blacklab.search.DocImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.util.XmlHighlighter;
 
-/** Concordances for a list of hits. */
+/** Concordances for a list of hits.
+ *
+ * Instances of this class are immutable.
+ */
 public class Concordances {
 
     /**
@@ -80,8 +83,8 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
-        if (arrayLength > HitsInternal.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+        if (arrayLength > HitsInternalRead.MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 

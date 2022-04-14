@@ -98,7 +98,7 @@ public class HitsFromQuery extends HitsAbstractMutable {
      * @param searchSettings search settings
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
+    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         super(queryInfo);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
@@ -237,8 +237,8 @@ public class HitsFromQuery extends HitsAbstractMutable {
                                 //    and there won't be that many segments, so it's probably ok)
                                 hitQueryContext.setSpans(currentSourceSpans);
                                 currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-                                if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                                    capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+                                if (capturedGroupsWritable == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+                                    capturedGroups = capturedGroupsWritable = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
 
                                 int doc;
@@ -283,10 +283,10 @@ public class HitsFromQuery extends HitsAbstractMutable {
                     }
                     if (!maxHitsProcessed) {
                         Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
-                        if (capturedGroups != null) {
+                        if (capturedGroupsWritable != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                            capturedGroupsWritable.put(hit, groups);
                         }
                         hitsInternalWritable.add(hit);
                         if (maxHitsToProcess >= 0 && hitsArrays.size() >= maxHitsToProcess) {

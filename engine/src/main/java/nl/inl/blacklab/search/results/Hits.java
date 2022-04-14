@@ -13,6 +13,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
+/**
+ * A list of hits, optionally with captured groups.
+ *
+ * This interface is read-only.
+ */
 public interface Hits extends Results<Hit, HitProperty> {
     /**
      * Construct a Hits object from a SpanQuery.
@@ -99,7 +104,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     static Hits immutableEmpty(QueryInfo queryInfo) {
-        return new HitsImmutable(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
+        return new HitsImmutable(queryInfo, HitsInternalRead.EMPTY_SINGLETON, null);
     }
 
     /**

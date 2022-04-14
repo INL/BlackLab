@@ -17,7 +17,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsInternalRead;
 import nl.inl.util.BlockTimer;
 
 public class TermsReader extends Terms {
@@ -43,7 +43,7 @@ public class TermsReader extends Terms {
 
     /**
      * The character data for all terms. Two-dimensional array because it may be larger than
-     * the maximum array size ({@link HitsInternal#MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
+     * the maximum array size ({@link HitsInternalRead#MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
      */
     private byte[][] termCharData;
 

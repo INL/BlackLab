@@ -20,6 +20,11 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
+/**
+ * Some annotation context(s) belonging to a list of hits.
+ *
+ * This interface is read-only.
+ */
 public class Contexts implements Iterable<int[]> {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
@@ -163,8 +168,8 @@ public class Contexts implements Iterable<int[]> {
      */
     private static int[][] getContextWordsSingleDocument(HitsInternalRead hits, long start, long end, ContextSize contextSize,
             List<AnnotationForwardIndex> contextSources, List<FiidLookup> fiidLookups) {
-        if (end - start > HitsInternal.MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " hits in a single doc");
+        if (end - start > HitsInternalRead.MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];

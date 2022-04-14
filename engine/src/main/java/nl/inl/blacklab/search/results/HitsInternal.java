@@ -3,26 +3,21 @@ package nl.inl.blacklab.search.results;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
- * A list of hits, used internally.
+ * A list of simple hits, used internally.
+ *
+ * Contrary to {@link Hits}, this only contains doc, start and end
+ * for each hit, so no captured groups information, and no other
+ * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
  *
  * Includes mutation methods, unlike its parent interface.
  */
 public interface HitsInternal extends HitsInternalRead {
 
     /**
-     * Safe maximum size for a Java array.
-     *
-     * This is JVM-dependent, but the consensus seems to be that
-     * this is a safe limit. See e.g.
-     * https://stackoverflow.com/questions/3038392/do-java-arrays-have-a-maximum-size
-     */
-    int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-
-    /**
      * Create an empty HitsInternal with an initial capacity.
      *
      * @param initialCapacity initial hits capacity, or default if negative
-     * @param allowHugeLists if true, the object created can hold more than {@link #MAX_ARRAY_SIZE} hits
+     * @param allowHugeLists if true, the object created can hold more than {@link HitsInternalRead#MAX_ARRAY_SIZE} hits
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
@@ -42,8 +37,6 @@ public interface HitsInternal extends HitsInternalRead {
             return new HitsInternalLock32((int)initialCapacity);
         return new HitsInternalNoLock32((int)initialCapacity);
     }
-
-    HitsInternalRead EMPTY_SINGLETON = new HitsInternalNoLock32();
 
     void add(int doc, int start, int end);
 

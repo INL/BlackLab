@@ -2,6 +2,7 @@ package nl.inl.blacklab.performance;
 
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsInternalRead;
 import nl.inl.util.Timer;
 
 /**
@@ -27,7 +28,7 @@ public class CompareHitsInternalImpls {
         }
     }
 
-    static void testIterate(HitsInternal hits) {
+    static void testIterate(HitsInternalRead hits) {
         long n = -1;
         for (Hit h: hits) {
             if (h.doc() > n)
@@ -35,7 +36,7 @@ public class CompareHitsInternalImpls {
         }
     }
 
-    static void testIterateGet(HitsInternal hits) {
+    static void testIterateGet(HitsInternalRead hits) {
         long n = -1;
         for (int i = 0; i < hits.size(); i++) {
             int d = hits.doc(i);

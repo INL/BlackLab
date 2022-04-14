@@ -27,8 +27,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> implements Hits {
 
-    protected final HitsInternalRead hitsArrays;
-
     protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
 
     /**
@@ -39,6 +37,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * See {@link HitsFromQuery} and {@link HitsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
+
+    /** Our internal list of simple hits. */
+    protected final HitsInternalRead hitsArrays;
 
     /**
      * Our captured groups, or null if we have none.
@@ -115,7 +116,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
     public HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true));
+        this(queryInfo, readOnly ? HitsInternalRead.EMPTY_SINGLETON : HitsInternal.create(-1, true, true));
     }
 
     /**
@@ -167,7 +168,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         long number = hitsProcessedAtLeast(first + windowSize) ? windowSize : size() - first;
 
         // Copy the hits we're interested in.
-        CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
+        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         MutableInt docsRetrieved = new MutableInt(0); // Bypass warning (enclosing scope must be effectively final)
         HitsInternal window = HitsInternal.create(number, number, false);
 
@@ -208,12 +209,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
         // Determine total number of hits (fetching all of them)
         long totalNumberOfHits = size();
-        if (totalNumberOfHits > HitsInternal.MAX_ARRAY_SIZE) {
+        if (totalNumberOfHits > HitsInternalRead.MAX_ARRAY_SIZE) {
             // TODO: we might want to enable this, because the whole point of sampling is to make sense
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternal.MAX_ARRAY_SIZE + " hits");
+            throw new BlackLabRuntimeException("Cannot sample from more than " + HitsInternalRead.MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
@@ -232,14 +233,14 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 // Choose a hit we haven't chosen yet
                 long hitIndex;
                 do {
-                    hitIndex = random.nextInt((int)Math.min(HitsInternal.MAX_ARRAY_SIZE, size()));
+                    hitIndex = random.nextInt((int)Math.min(HitsInternalRead.MAX_ARRAY_SIZE, size()));
                 } while (chosenHitIndices.contains(hitIndex));
                 chosenHitIndices.add(hitIndex);
             }
         }
 
         MutableInt docsInSample = new MutableInt(0);
-        CapturedGroups capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
+        CapturedGroupsImpl capturedGroups = hasCapturedGroups() ? new CapturedGroupsImpl(capturedGroups().names()) : null;
         HitsInternal sample = HitsInternal.create(numberOfHitsToSelect, numberOfHitsToSelect, false);
 
         this.hitsArrays.withReadLock(hr -> {
@@ -536,7 +537,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     /** Assumes this hit is within our lists. */
     @Override
     public Hits window(Hit hit) {
-        CapturedGroups capturedGroups = null;
+        CapturedGroupsImpl capturedGroups = null;
         if (this.capturedGroups != null) {
             this.size(); // ensure all results read (so we know our hit's capture groups are available)
             capturedGroups = new CapturedGroupsImpl(this.capturedGroups.names());

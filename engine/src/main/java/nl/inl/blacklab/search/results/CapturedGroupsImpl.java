@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,26 +30,13 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @param hit the hit
      * @param groups groups for thishit
      */
-    @Override
     public void put(Hit hit, Span[] groups) {
         capturedGroups.put(hit, groups);
-    }
-
-    /** Copy all groups from other */
-    @Override
-    public void putAll(CapturedGroups other) {
-        this.capturedGroups.putAll(other.getAll());
     }
 
     @Override
     public Map<? extends Hit, ? extends Span[]> getAll() {
         return capturedGroups;
-    }
-
-    /** Copy all groups from other */
-    @Override
-    public void putAll(Map<Hit, Span[]> other) {
-        this.capturedGroups.putAll(other);
     }
 
     /**
@@ -94,7 +82,7 @@ public class CapturedGroupsImpl implements CapturedGroups {
         for (int i = 0; i < names.size(); i++) {
             result.put(names.get(i), groups[i]);
         }
-        return result;
+        return Collections.unmodifiableMap(result);
     }
 
     @Override

@@ -12,7 +12,10 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-/** KWICs ("key words in context") for a list of hits. */
+/** KWICs ("key words in context") for a list of hits.
+ *
+ * Instances of this class are immutable.
+ */
 public class Kwics {
     
     /**

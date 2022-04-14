@@ -73,10 +73,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) throws IOException {
             int globalDocId = docId + docBase;
-            if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
+            if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-                throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
+                throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
             }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
@@ -216,10 +216,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
-        if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
+        if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
         }
         this.results = results;
         this.sampleParameters = sampleParameters;
@@ -361,10 +361,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
-        if (results.size() >= HitsInternal.MAX_ARRAY_SIZE) {
+        if (results.size() >= HitsInternalRead.MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than HitsInternal.MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternal.MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + HitsInternalRead.MAX_ARRAY_SIZE + " doc results");
         }
 
         DocResult docResult;
@@ -479,7 +479,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = HitsInternal.MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = HitsInternalRead.MAX_ARRAY_SIZE;
         List<DocResult> truncatedGroups = new ArrayList<>();
         for (DocResult group: results) {
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

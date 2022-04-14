@@ -6,9 +6,25 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.resultproperty.HitProperty;
 
 /**
- * A read-only interface to a list of hits.
+ * A read-only interface to a list of simple hits.
+ *
+ * Contrary to {@link Hits}, this only contains doc, start and end
+ * for each hit, so no captured groups information, and no other
+ * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
  */
 public interface HitsInternalRead extends Iterable<EphemeralHit> {
+    /**
+     * Safe maximum size for a Java array.
+     *
+     * This is JVM-dependent, but the consensus seems to be that
+     * this is a safe limit. See e.g.
+     * https://stackoverflow.com/questions/3038392/do-java-arrays-have-a-maximum-size
+     */
+    int MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /** An empty HitsInternalRead object. */
+    HitsInternalRead EMPTY_SINGLETON = new HitsInternalNoLock32();
+
     /**
      * Perform an operation with read lock.
      * <p>
@@ -106,7 +122,7 @@ public interface HitsInternalRead extends Iterable<EphemeralHit> {
      * @param p sort property
      * @return sorted hits
      */
-    HitsInternal sort(HitProperty p);
+    HitsInternalRead sort(HitProperty p);
 
     /**
      * For iterating through the hits using EphemeralHit

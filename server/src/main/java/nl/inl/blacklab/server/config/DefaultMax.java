@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsInternalRead;
 
 /**
  * Integer setting with a default and maximum value.
@@ -44,7 +44,7 @@ public class DefaultMax {
     }
 
     public void setMax(int max) {
-        this.max = max == -1 ? HitsInternal.MAX_ARRAY_SIZE : max;
+        this.max = max == -1 ? HitsInternalRead.MAX_ARRAY_SIZE : max;
     }
     
     
