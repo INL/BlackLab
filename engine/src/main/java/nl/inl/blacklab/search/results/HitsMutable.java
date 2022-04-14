@@ -5,7 +5,7 @@ package nl.inl.blacklab.search.results;
  *
  * Should be thread-safe and most methods are safe w.r.t. hits having been fetched.
  */
-public abstract class HitsAbstractMutable extends HitsAbstract {
+public abstract class HitsMutable extends HitsAbstract {
 
     /** Writable version of our HitsInternal object */
     protected HitsInternalMutable hitsInternalMutable;
@@ -17,7 +17,7 @@ public abstract class HitsAbstractMutable extends HitsAbstract {
      *
      * @param queryInfo query info for corresponding query
      */
-    public HitsAbstractMutable(QueryInfo queryInfo) {
+    public HitsMutable(QueryInfo queryInfo) {
         this(queryInfo, HitsInternal.create(-1, true, true));
     }
 
@@ -29,7 +29,7 @@ public abstract class HitsAbstractMutable extends HitsAbstract {
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstractMutable(QueryInfo queryInfo, HitsInternalMutable hits) {
+    public HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits) {
         super(queryInfo, hits);
         hitsInternalMutable = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }

@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsAbstractMutable {
+public class HitsFiltered extends HitsMutable {
 
     private Lock ensureHitsReadLock = new ReentrantLock();
 
