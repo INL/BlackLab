@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * A list of simple hits.
@@ -41,7 +42,7 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
     }
 
     static HitsInternalMutable create(long initialCapacity, long maxCapacity, boolean mustLock) {
-        if (maxCapacity > MAX_ARRAY_SIZE) {
+        if (maxCapacity > MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)
                 return new HitsInternalLock(initialCapacity);
             return new HitsInternalNoLock(initialCapacity);

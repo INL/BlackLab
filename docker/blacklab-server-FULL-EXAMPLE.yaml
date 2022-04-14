@@ -252,6 +252,11 @@ search:
     # [advanced technical setting; don't worry about this unless you want to experiment]
     fiMatchFactor: 900
 
+    # Enable result sets larger than 2^31?
+    # If you don't need this, you can disable it for slightly better performance.
+    # (defaults to true)
+    enableHugeResultSets: true
+
 
 # Options for indexing operations, if enabled
 # (right now, in BLS, they're only enabled for logged-in users in
