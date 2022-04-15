@@ -77,13 +77,13 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
     private Result getHits() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
-        if (groupBy.isEmpty())
+        if (StringUtils.isEmpty(groupBy))
             groupBy = null;
         String viewGroup = searchParam.getString("viewgroup");
-        if (viewGroup.isEmpty())
+        if (StringUtils.isEmpty(viewGroup))
             viewGroup = null;
         String sortBy = searchParam.getString("sort");
-        if (sortBy.isEmpty())
+        if (StringUtils.isEmpty(sortBy))
             sortBy = null;
 
         SearchCacheEntry<?> cacheEntry;

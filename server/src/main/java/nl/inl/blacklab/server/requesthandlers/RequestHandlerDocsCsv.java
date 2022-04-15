@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -72,13 +73,13 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     private Result getDocs() throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = searchParam.getString("group");
-        if (groupBy.isEmpty())
+        if (StringUtils.isEmpty(groupBy))
             groupBy = null;
         String viewGroup = searchParam.getString("viewgroup");
-        if (viewGroup.isEmpty())
+        if (StringUtils.isEmpty(viewGroup))
             viewGroup = null;
         String sortBy = searchParam.getString("sort");
-        if (sortBy.isEmpty())
+        if (StringUtils.isEmpty(sortBy))
             sortBy = null;
 
         DocResults docs;
