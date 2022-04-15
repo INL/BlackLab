@@ -163,13 +163,9 @@ public class BlsCache implements SearchCache {
         traceInfo("Cache cleared.");
     }
 
-    @Override
-    public <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
-        return getFromCache(search, allowQueue);
-    }
-
     @SuppressWarnings("unchecked")
-    private synchronized <R extends SearchResult> BlsCacheEntry<R> getFromCache(Search<R> search, boolean allowQueue) {
+    @Override
+    public synchronized <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         //if (trace) logger.debug("getFromCache({}, allowQueue={})", search, allowQueue);
         BlsCacheEntry<R> future;
         boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
@@ -213,6 +209,9 @@ public class BlsCache implements SearchCache {
             // Already in cache.
             traceInfo("-- FOUND:    {}", search);
             future.updateLastAccess();
+            // If another running search needs this search, but it was queued, start it now.
+            if (!allowQueue && !future.wasStarted())
+                future.start();
         }
         //traceCacheStats("   CACHE AFTER GET", false);
         return future;
@@ -419,7 +418,7 @@ public class BlsCache implements SearchCache {
                 traceInfo("-- REMOVE ({}): {}", reason, search);
                 remove(search.search());
 
-                memoryToFreeUpMegs -= (long)search.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES; // NB very rough guess, but ok
+                memoryToFreeUpMegs -= search.numberOfStoredHits() * SIZE_OF_HIT / ONE_MB_BYTES; // NB very rough guess, but ok
                 searches.remove(i);
             }
         }

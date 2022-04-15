@@ -31,7 +31,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
     public abstract void start();
 
     static <S extends SearchResult> SearchCacheEntry<S> fromFuture(Future<S> future, Search<S> search) {
-        return new SearchCacheEntryFromFuture<S>(future, search);
+        return new SearchCacheEntryFromFuture<>(future, search);
     }
 
     /**
