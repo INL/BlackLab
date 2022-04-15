@@ -181,13 +181,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
-        ds.endEntry();
-
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
-        ds.endEntry();
+        datastreamMetadataFieldInfo(ds, blIndex);
 
         ds.endMap().endEntry();
 
@@ -248,7 +242,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, totalDocResults, searchParam.facets());
+            dataStreamFacets(ds, searchParam.facets());
             ds.endEntry();
         }
         ds.endMap();

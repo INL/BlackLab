@@ -45,9 +45,6 @@ public class Contexts implements Iterable<int[]> {
     /** In context arrays, what index indicates the length of the context? */
     public final static int LENGTH_INDEX = 2;
 
-    // Instance variables
-    //------------------------------------------------------------------------------
-
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
      * context) for a number of hits in the same document from the ContentStore.
@@ -246,48 +243,6 @@ public class Contexts implements Iterable<int[]> {
      * lemma, pos) the context came from. Otherwise, it is null.
      */
     private final List<Annotation> annotations;
-
-    // Methods that read data
-    //------------------------------------------------------------------------------
-
-    /**
-     * Return a new Contexts instance that only includes the specified annotations
-     * in the specified order.
-     *
-     * @param annotations annotations we want
-     */
-    @SuppressWarnings("unused")
-    private Contexts(Contexts source, List<Annotation> annotations) {
-        // Determine which contexts we want
-        List<Integer> contextsToSelect = new ArrayList<>();
-        for (int i = 0; i < source.annotations.size(); i++) {
-            if (annotations.contains(source.annotations.get(i)))
-                contextsToSelect.add(i);
-        }
-        if (contextsToSelect.size() < annotations.size())
-            throw new BlackLabRuntimeException("Not all requested contexts were present");
-
-        // Copy only the requested contexts
-        long numberOfHits = source.contexts.size64();
-        contexts = new ObjectBigArrayBigList<>(numberOfHits);
-
-        for (int[] context : source.contexts) {
-            int hitContextLength = (context.length - NUMBER_OF_BOOKKEEPING_INTS)
-                    / source.annotations.size();
-            int[] result = new int[NUMBER_OF_BOOKKEEPING_INTS + hitContextLength * annotations.size()];
-            System.arraycopy(context, 0, result, 0, NUMBER_OF_BOOKKEEPING_INTS);
-            int resultContextNumber = 0;
-            for (Integer sourceContextNumber : contextsToSelect) {
-                System.arraycopy(context,
-                        NUMBER_OF_BOOKKEEPING_INTS + sourceContextNumber * hitContextLength, result,
-                        NUMBER_OF_BOOKKEEPING_INTS + resultContextNumber * hitContextLength,
-                        NUMBER_OF_BOOKKEEPING_INTS);
-                resultContextNumber++;
-            }
-            contexts.add(result);
-        }
-        this.annotations = annotations;
-    }
 
     /**
      * Retrieve context words for the hits.

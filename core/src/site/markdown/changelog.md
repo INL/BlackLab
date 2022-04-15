@@ -18,6 +18,7 @@
   (im)mutability more explicit.
 - `Doc` and `DocImpl` classes were removed. Now that we use `DocValues` everywhere, caching
   Lucene documents doesn't make sense.
+- Searches should no longer get stuck queued even if maxConcurrentSearches is set to a low value.
 
 ### Removed
 

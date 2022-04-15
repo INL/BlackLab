@@ -43,7 +43,7 @@ import nl.inl.blacklab.server.jobs.User;
 /**
  * Request handler for hit results.
  */
-public class RequestHandlerHitsCsv extends RequestHandler {
+public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
     private static class Result {
         public final Hits hits;
         public final HitGroups groups;
@@ -72,8 +72,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
      *
      * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
      *         within a group, Groups if looking at grouped hits.
-     * @throws BlsException
-     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
     private Result getHits() throws BlsException, InvalidQuery {
@@ -88,8 +86,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        SearchCacheEntry<?> cacheEntry = null;
-        Hits hits = null;
+        SearchCacheEntry<?> cacheEntry;
+        Hits hits;
         HitGroups groups = null;
         DocResults subcorpus = searchParam.subcorpus().execute();
 
@@ -160,8 +158,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
         try {
             // Write the header
-            List<String> row = new ArrayList<>();
-            row.addAll(groups.groupCriteria().propNames());
+            List<String> row = new ArrayList<>(groups.groupCriteria().propNames());
             row.add("count");
 
             if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
@@ -205,8 +202,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     private CSVPrinter createHeader(List<String> row) throws IOException {
         // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
         CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
-        return printer;
+        return format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
     }
 
     @SuppressWarnings("static-method")
@@ -264,10 +260,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         try {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
-            ArrayList<String> row = new ArrayList<>();
 
-            row.addAll(Arrays.asList("docPid", "left_context", "context", "right_context"));
-
+            ArrayList<String> row = new ArrayList<>(Arrays.asList("docPid", "left_context", "context", "right_context"));
             for (Annotation a : annotationsToWrite) {
                 row.add(a.name());
             }
@@ -299,8 +293,6 @@ public class RequestHandlerHitsCsv extends RequestHandler {
             ds.plain(printer.getOut().toString());
         } catch (IOException e) {
             throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_HITS_CSV2");
-        } catch (BlsException e) {
-            throw e;
         }
     }
 

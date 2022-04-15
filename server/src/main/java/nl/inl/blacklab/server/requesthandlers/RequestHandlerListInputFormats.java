@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -32,7 +33,7 @@ import nl.inl.blacklab.server.jobs.User;
  */
 public class RequestHandlerListInputFormats extends RequestHandler {
 
-    private boolean isXsltRequest;
+    private final boolean isXsltRequest;
 
     public RequestHandlerListInputFormats(BlackLabServer servlet, HttpServletRequest request, User user,
             String indexName, String urlResource, String urlPathPart) {
@@ -117,8 +118,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     }
                 }
             } else if (bsplit != null && bsplit.length > 0) {
-                for (String _b : bsplit)
-                    result.add(_b);
+                Collections.addAll(result, bsplit);
             }
 
             String joined = StringUtils.join(result, "|");
@@ -147,20 +147,6 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 result = joinXpath(result, s);
 
             return result;
-        }
-
-        @SuppressWarnings("unused")
-        private static String joinIgnoreNull(String[] values, char separator) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < values.length; i++) {
-                if (values[i] == null || values[i].isEmpty())
-                    continue;
-
-                if (sb.length() > 0)
-                    sb.append(separator);
-                sb.append(values[i]);
-            }
-            return sb.toString();
         }
     }
 
@@ -196,13 +182,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
 
         ds.startMap();
-        ds.startEntry("user").startMap();
-        ds.entry("loggedIn", user.isLoggedIn());
-        if (user.isLoggedIn())
-            ds.entry("id", user.getUserId());
-        boolean canCreateIndex = user.isLoggedIn() ? indexMan.canCreateIndex(user) : false;
-        ds.entry("canCreateIndex", canCreateIndex);
-        ds.endMap().endEntry();
+        datastreamUserInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
         // List supported input formats
         // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
@@ -235,8 +215,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
      * Generate an xslt document that can transform documents into a basic html view
      * with some minor formatting for highlights.
      *
-     * @param ds
-     * @param config
+     * @param ds output stream
+     * @param config format config
      * @return http code
      * @throws NotFound if the config does not pertain to an XML-based format (tsv,
      *             plaintext, etc)
@@ -374,7 +354,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                     +
                     "so the words can't be found. " +
                     "To fix this, you will need to add the namespaces in your format and use them in the xpaths. " +
-                    "If your document contains a default namespace, you can declare it as an empty name (\"\": \"http://my-default-namespace.site/namespace\"). "
+                    "If your document contains a default namespace, you can declare it as an empty name (\"\": \"https://my-default-namespace.site/namespace\"). "
                     +
                     "This may also happen if the generated xslt is applied to a partial document, such as when using the wordstart and wordend parameters when requesting its contents from blacklab-server.";
 

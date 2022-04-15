@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -55,6 +54,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchFacets;
@@ -350,7 +350,7 @@ public abstract class RequestHandler {
             }
         }
         if (debugMode)
-            requestHandler.setDebug(debugMode);
+            requestHandler.setDebug(true);
 
         requestHandler.setInstrumentationProvider(instrumentationProvider);
         requestHandler.setRequestId(requestId);
@@ -362,7 +362,7 @@ public abstract class RequestHandler {
         String sleep = request.getParameter("sleep");
         if (sleep != null) {
             int sleepMs = Integer.parseInt(sleep);
-            if (sleepMs > 0 || sleepMs <= 3600000) {
+            if (sleepMs > 0 && sleepMs <= 3600000) {
                 try {
                     logger.debug("Debug sleep requested (" + sleepMs + "ms). Zzzzz...");
                     Thread.sleep(sleepMs);
@@ -412,8 +412,10 @@ public abstract class RequestHandler {
 
     protected IndexManager indexMan;
 
+    @SuppressWarnings("unused")
     private RequestInstrumentationProvider requestInstrumentation;
 
+    @SuppressWarnings("unused")
     private String requestId;
 
     RequestHandler(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource,
@@ -438,10 +440,48 @@ public abstract class RequestHandler {
 
     }
 
+    /**
+     * Add info about the current logged-in user (if any) to the response.
+     *
+     * @param ds output stream
+     * @param loggedIn is user logged in?
+     * @param userId user id (if logged in)
+     * @param canCreateIndex is the user allowed to create another index?
+     */
+    static void datastreamUserInfo(DataStream ds, boolean loggedIn, String userId, boolean canCreateIndex) {
+        ds.startEntry("user").startMap();
+        ds.entry("loggedIn", loggedIn);
+        if (loggedIn)
+            ds.entry("id", userId);
+        ds.entry("canCreateIndex", loggedIn && canCreateIndex);
+        ds.endMap().endEntry();
+    }
+
+    /**
+     * Add info about metadata fields to hits and docs results.
+     *
+     * Note that this information can be retrieved using different requests,
+     * and it is redundant to send it with every query response. We may want
+     * to deprecate this in the future.
+     *
+     * @param ds output stream
+     * @param index our index
+     */
+    static void datastreamMetadataFieldInfo(DataStream ds, BlackLabIndex index) {
+        ds.startEntry("docFields");
+        RequestHandler.dataStreamDocFields(ds, index.metadata());
+        ds.endEntry();
+
+        ds.startEntry("metadataFieldDisplayNames");
+        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
+        ds.endEntry();
+    }
+
     protected void setRequestId(String requestId) {
         this.requestId = requestId;
     }
 
+    @SuppressWarnings("unused")
     public RequestInstrumentationProvider getInstrumentationProvider() {
         return instrumentationProvider;
     }
@@ -562,8 +602,12 @@ public abstract class RequestHandler {
 
     protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
         MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
+        // FIXME: This synchronization is necessary because opening an index is not an atomic
+        //   operation, so it is apparently possible to get the metadata field groups object
+        //   before it's complete. We should fix the underlying problem here and make sure
+        //   index metadata is immutable.
         synchronized (metaGroups) { // concurrent requests
-            Set<MetadataField> metadataFieldsNotInGroups = new HashSet<>(index.metadata().metadataFields().stream().collect(Collectors.toSet()));
+            Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream().collect(Collectors.toSet());
             for (MetadataFieldGroup metaGroup : metaGroups) {
                 for (MetadataField field: metaGroup) {
                     metadataFieldsNotInGroups.remove(field);
@@ -582,7 +626,7 @@ public abstract class RequestHandler {
                 if (!addedRemaining && metaGroup.addRemainingFields()) {
                     addedRemaining = true;
                     List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                    rest.sort( (a, b) -> a.name().toLowerCase().compareTo(b.name().toLowerCase()) );
+                    rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
                     for (MetadataField field: rest) {
                         ds.item("field", field.name());
                     }
@@ -601,7 +645,6 @@ public abstract class RequestHandler {
      * Annotations are returned in requested order, or in their definition/display order.
      *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
-     * @throws BlsException
      */
     public List<Annotation> getAnnotationsToWrite() throws BlsException {
         AnnotatedFields fields = this.blIndex().annotatedFields();
@@ -626,7 +669,6 @@ public abstract class RequestHandler {
      * Special fields (pidField, titleField, etc...) are always returned.
      *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
-     * @throws BlsException
      */
     public Set<MetadataField> getMetadataToWrite() throws BlsException {
         MetadataFields fields = this.blIndex().metadataFields();
@@ -661,7 +703,7 @@ public abstract class RequestHandler {
         return indexMetadata.contentViewable();
     }
 
-    protected void dataStreamFacets(DataStream ds, DocResults docsToFacet, SearchFacets facetDesc) throws InvalidQuery {
+    protected void dataStreamFacets(DataStream ds, SearchFacets facetDesc) throws InvalidQuery {
 
         Facets facets = facetDesc.execute();
         Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
@@ -746,7 +788,6 @@ public abstract class RequestHandler {
      * @param countTime time the count took
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
-     * @throws BlsException
      */
     protected <T> void addSummaryCommonFields(
             DataStream ds,
@@ -802,10 +843,14 @@ public abstract class RequestHandler {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
 
-        long hitsCounted = hitsStats == null || countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
-        long hitsProcessed = hitsStats == null ? -1 : (waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar());
-        long docsCounted = docsStats == null || countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
-        long docsProcessed = docsStats == null ? -1 : (waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar());
+        if (hitsStats == null)
+            hitsStats = ResultsStatsStatic.INVALID;
+        long hitsCounted = countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar();
+        if (docsStats == null)
+            docsStats = ResultsStatsStatic.INVALID;
+        long docsCounted = countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar();
 
         ds.entry("stillCounting", !hitsStats.done());
         ds.entry("numberOfHits", hitsCounted)
@@ -860,98 +905,9 @@ public abstract class RequestHandler {
         return user;
     }
 
-    private static ArrayList<String> temp = new ArrayList<>();
-
-    private static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
-        for (Object o : values)
-            temp.add(o.toString());
-        for (int i = temp.size(); i < numColumns; ++i)
-            temp.add("");
-        try {
-            printer.printRecord(temp);
-        } catch (IOException e) {
-            throw new RuntimeException("Cannot write response");
-        }
-        temp.clear();
-    }
-
-    /**
-     * Output most of the fields of the search summary.
-     *
-     * @param numColumns number of columns to output per row, minimum 2
-     * @param printer the output printer
-     * @param searchParam original search parameters
-     * @param groups (optional) if results are grouped, the groups
-     * @param subcorpusSize global sub corpus information (i.e. inter-group)
-     */
-    // TODO tidy up csv handling
-    private static <T> void addSummaryCsvCommon(
-        CSVPrinter printer,
-        int numColumns,
-        SearchParameters searchParam,
-        ResultGroups<T> groups,
-        CorpusSize subcorpusSize
-    ) {
-        for (Entry<String, String> param : searchParam.getParameters().entrySet()) {
-            if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
-                continue;
-            writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
-        }
-
-        writeRow(printer, numColumns, "summary.subcorpusSize.documents", subcorpusSize.getDocuments());
-        writeRow(printer, numColumns, "summary.subcorpusSize.tokens", subcorpusSize.getTokens());
-
-        if (groups != null) {
-            writeRow(printer, numColumns, "summary.numberOfGroups", groups.size());
-            writeRow(printer, numColumns, "summary.largestGroupSize", groups.largestGroupSize());
-        }
-
-        SampleParameters sample = searchParam.getSampleSettings();
-        if (sample != null) {
-            writeRow(printer, numColumns, "summary.sampleSeed", sample.seed());
-            if (sample.isPercentage())
-                writeRow(printer, numColumns, "summary.samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
-            else
-                writeRow(printer, numColumns, "summary.sampleSize", sample.numberOfHitsSet());
-        }
-    }
-
-    /**
-     *
-     * @param printer
-     * @param numColumns
-     * @param hits
-     * @param groups (optional) if grouped
-     * @param subcorpusSize (optional) if available
-     */
-    protected void addSummaryCsvHits(CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
-        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
-        writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
-        writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
-    }
-
-    /**
-     * @param printer
-     * @param numColumns
-     * @param docResults all docs as the input for groups, or contents of a specific group (viewgroup)
-     * @param groups (optional) if grouped
-     */
-    protected void addSummaryCsvDocs(
-            CSVPrinter printer,
-            int numColumns,
-            DocResults docResults,
-            DocGroups groups,
-            CorpusSize subcorpusSize
-            ) {
-        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
-
-        writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
-        writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().collect(Collectors.summingLong(r -> r.size())));
-    }
-
     protected static BlsException translateSearchException(Exception e) {
         if (e instanceof InterruptedException) {
-            throw new InterruptedSearch((InterruptedException) e);
+            throw new InterruptedSearch(e);
         } else {
             try {
                 throw e.getCause();
@@ -1021,6 +977,7 @@ public abstract class RequestHandler {
             boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                 // Add concordance from original XML
+                assert concordances != null;
                 Concordance c = concordances.get(hit);
                 if (includeContext) {
                     ds.startEntry("left").plain(c.left()).endEntry()
@@ -1031,6 +988,7 @@ public abstract class RequestHandler {
                 }
             } else {
                 // Add KWIC info
+                assert kwics != null;
                 Kwic c = kwics.get(hit);
                 if (includeContext) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()

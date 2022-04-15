@@ -50,13 +50,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         dataStreamDocumentInfo(ds, blIndex, document, getMetadataToWrite());
         ds.endEntry();
 
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
-        ds.endEntry();
-        
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
-        ds.endEntry();
+        datastreamMetadataFieldInfo(ds, blIndex);
 
         ds.endMap();
         return HTTP_OK;

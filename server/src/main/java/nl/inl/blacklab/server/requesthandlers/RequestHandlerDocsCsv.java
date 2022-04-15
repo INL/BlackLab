@@ -16,6 +16,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -36,7 +37,7 @@ import nl.inl.blacklab.server.jobs.User;
 /**
  * Request handler for hit results.
  */
-public class RequestHandlerDocsCsv extends RequestHandler {
+public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     private static class Result {
         public final DocResults docs;
         public final DocGroups groups;
@@ -66,8 +67,6 @@ public class RequestHandlerDocsCsv extends RequestHandler {
      * @return Docs if looking at ungrouped results, Docs+Groups if looking at
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
-     * @throws BlsException
-     * @throws InvalidQuery
      */
     // TODO share with regular RequestHandlerHits
     private Result getDocs() throws BlsException, InvalidQuery {
@@ -82,7 +81,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         if (sortBy.isEmpty())
             sortBy = null;
 
-        DocResults docs = null;
+        DocResults docs;
         DocGroups groups = null;
         DocResults subcorpusResults = searchParam.subcorpus().execute();
 
@@ -150,16 +149,13 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     private CSVPrinter createHeader(List<String> row) throws IOException {
         // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
         CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-        CSVPrinter printer = format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
-
-        return printer;
+        return format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
     }
 
     private void writeGroups(DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
         try {
             // Write the header
-            List<String> row = new ArrayList<>();
-            row.addAll(groups.groupCriteria().propNames());
+            List<String> row = new ArrayList<>(groups.groupCriteria().propNames());
             row.add("size"); // size of the group in documents
             if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
                 row.add("numberOfTokens"); // tokens across all documents with hits in group
@@ -217,7 +213,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = this.getMetadataToWrite().stream().map(f -> f.name())
+            Collection<String> metadataFieldIds = this.getMetadataToWrite().stream().map(Field::name)
                     .collect(Collectors.toList());
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");
