@@ -81,11 +81,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
+        datastreamSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
         if (hitsStats == null)
-            addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
+            datastreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 
@@ -125,8 +125,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                 if (hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
-                    addSubcorpusSize(ds, subcorpusSize);
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
+                    datastreamSubcorpusSize(ds, subcorpusSize);
                 }
             }
             ds.endMap().endItem();

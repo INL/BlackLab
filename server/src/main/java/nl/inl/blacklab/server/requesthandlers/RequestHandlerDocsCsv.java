@@ -120,7 +120,7 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
             long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
-            if (!docs.docsProcessedAtLeast(first))
+            if (!docs.resultsStats().processedAtLeast(first))
                 first = 0;
 
             long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
@@ -181,7 +181,7 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
 
                     if (searchParam.hasPattern()) {
                         PropertyValue docPropValues = group.identity();
-                        CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues, true);
+                        CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues);
                         row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
                         row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
                     } else {

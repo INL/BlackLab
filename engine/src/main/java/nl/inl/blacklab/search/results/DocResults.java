@@ -259,38 +259,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     /**
-     * Determines if there are at least a certain number of results
-     *
-     * This may be used if we don't want to process all results (which may be a lot)
-     * but we do need to know something about the size of the result set (such as
-     * for paging).
-     *
-     * @param lowerBound the number we're testing against
-     *
-     * @return true if the size of this set is at least lowerBound, false otherwise.
-     */
-    public boolean docsProcessedAtLeast(long lowerBound) {
-        return resultsProcessedAtLeast(lowerBound);
-    }
-
-    public long docsProcessedSoFar() {
-        return resultsProcessedSoFar();
-    }
-
-    /**
-     * Get the number of documents in this results set.
-     *
-     * Note that this returns the number of document results available; if there
-     * were so many hits that not all were retrieved (call maxHitsRetrieved()), you
-     * can find the grand total of documents by calling totalSize().
-     *
-     * @return the number of documents.
-     */
-    protected long docsProcessedTotal() {
-        return size();
-    }
-
-    /**
      * If we still have only partially read our Hits object, read some more of it
      * and add the hits.
      *

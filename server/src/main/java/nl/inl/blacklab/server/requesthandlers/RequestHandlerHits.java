@@ -1,10 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -16,8 +14,6 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocValuesTermsQuery;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -38,11 +34,9 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -192,8 +186,8 @@ public class RequestHandlerHits extends RequestHandler {
         long searchTime = (cacheEntryWindow == null ? cacheEntry.timeUserWaitedMs() : cacheEntryWindow.timeUserWaitedMs()) + kwicTimeMs;
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
         logger.info("Total search time is:{} ms", searchTime);
-        addSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
-        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
+        datastreamSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
+        datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
@@ -218,31 +212,9 @@ public class RequestHandlerHits extends RequestHandler {
         }
         ds.endMap().endEntry();
 
-        Map<Integer, String> pids = new HashMap<>();
-        writeHits(ds, window, pids, searchParam.getContextSettings());
-
-        ds.startEntry("docInfos").startMap();
-        MutableIntSet docsDone = new IntHashSet();
-        Document doc = null;
-        String lastPid = "";
-        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
-
-        for (Hit hit : window) {
-            String pid = pids.get(hit.doc());
-
-            // Add document info if we didn't already
-            if (!docsDone.contains(hit.doc())) {
-                docsDone.add(hit.doc());
-                ds.startAttrEntry("docInfo", "pid", pid);
-                if (!pid.equals(lastPid)) {
-                    doc = index.luceneDoc(hit.doc());
-                    lastPid = pid;
-                }
-                dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
-                ds.endAttrEntry();
-            }
-        }
-        ds.endMap().endEntry();
+        Map<Integer, Document> luceneDocs = new HashMap<>();
+        datastreamHits(ds, window, luceneDocs, searchParam.getContextSettings());
+        datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
 
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.

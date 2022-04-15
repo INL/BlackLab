@@ -181,7 +181,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                    CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), metadataGroupProperties, docPropValues, true);
+                    CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), metadataGroupProperties, docPropValues);
                     long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));

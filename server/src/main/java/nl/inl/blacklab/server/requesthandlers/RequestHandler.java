@@ -350,7 +350,7 @@ public abstract class RequestHandler {
             }
         }
         if (debugMode)
-            requestHandler.setDebug(true);
+            requestHandler.setDebug();
 
         requestHandler.setInstrumentationProvider(instrumentationProvider);
         requestHandler.setRequestId(requestId);
@@ -522,8 +522,8 @@ public abstract class RequestHandler {
         return false;
     }
 
-    private void setDebug(boolean debugMode) {
-        this.debugMode = debugMode;
+    private void setDebug() {
+        this.debugMode = true;
     }
 
     public void debug(Logger logger, String msg) {
@@ -558,10 +558,31 @@ public abstract class RequestHandler {
      *
      * @param ds where to stream information
      * @param index our index
+     * @param luceneDocs Lucene documents to stream
+     * @param metadataFieldsToList fields to include in the document info
+     */
+    static void datastreamDocInfos(DataStream ds, BlackLabIndex index, Map<Integer, Document> luceneDocs, Set<MetadataField> metadataFieldsToList) {
+        ds.startEntry("docInfos").startMap();
+        for (Entry<Integer, Document> e: luceneDocs.entrySet()) {
+            Integer docId = e.getKey();
+            Document luceneDoc = e.getValue();
+            String pid = getDocumentPid(index, docId, luceneDoc);
+            ds.startAttrEntry("docInfo", "pid", pid);
+            dataStreamDocumentInfo(ds, index, luceneDoc, metadataFieldsToList);
+            ds.endAttrEntry();
+        }
+        ds.endMap().endEntry();
+    }
+
+    /**
+     * Stream document information (metadata, contents authorization)
+     *
+     * @param ds where to stream information
+     * @param index our index
      * @param document Lucene document
      * @param metadataFieldsToList fields to include in the document info
      */
-    public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
+    static void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
         for (MetadataField f: metadataFieldsToList) {
             if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
@@ -789,7 +810,7 @@ public abstract class RequestHandler {
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
      */
-    protected <T> void addSummaryCommonFields(
+    protected <T> void datastreamSummaryCommonFields(
             DataStream ds,
             SearchParameters searchParam,
             long searchTime,
@@ -839,7 +860,7 @@ public abstract class RequestHandler {
         }
     }
 
-    protected void addNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+    protected void datastreamNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
 
@@ -860,11 +881,11 @@ public abstract class RequestHandler {
         ds.entry("numberOfDocs", docsCounted)
                 .entry("numberOfDocsRetrieved", docsProcessed);
         if (subcorpusSize != null) {
-            addSubcorpusSize(ds, subcorpusSize);
+            datastreamSubcorpusSize(ds, subcorpusSize);
         }
     }
 
-    static void addSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
+    static void datastreamSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
         ds.startEntry("subcorpusSize").startMap()
             .entry("documents", subcorpusSize.getDocuments());
         if (subcorpusSize.hasTokenCount())
@@ -872,7 +893,7 @@ public abstract class RequestHandler {
         ds.endMap().endEntry();
     }
 
-    protected void addNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
+    protected void datastreamNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ds.entry("stillCounting", false);
         if (isViewDocGroup) {
@@ -897,7 +918,7 @@ public abstract class RequestHandler {
                     .entry("numberOfDocsRetrieved", docResults.size());
         }
         if (subcorpusSize != null) {
-            addSubcorpusSize(ds, subcorpusSize);
+            datastreamSubcorpusSize(ds, subcorpusSize);
         }
     }
 
@@ -921,8 +942,8 @@ public abstract class RequestHandler {
         }
     }
 
-    public void writeHits(DataStream ds, Hits hits, Map<Integer, String> pids,
-                                 ContextSettings contextSettings) throws BlsException {
+    public void datastreamHits(DataStream ds, Hits hits, Map<Integer, Document> luceneDocs,
+                               ContextSettings contextSettings) throws BlsException {
         BlackLabIndex index = hits.index();
 
         Concordances concordances = null;
@@ -937,13 +958,13 @@ public abstract class RequestHandler {
         for (Hit hit : hits) {
             ds.startItem("hit").startMap();
 
-            // Find pid
-            String pid = pids.get(hit.doc());
-            if (pid == null) {
-                Document document = index.luceneDoc(hit.doc());
-                pid = getDocumentPid(index, hit.doc(), document);
-                pids.put(hit.doc(), pid);
+            // Collect Lucene docs (for writing docInfos later) and find pid
+            Document document = luceneDocs.get(hit.doc());
+            if (document == null) {
+                document = index.luceneDoc(hit.doc());
+                luceneDocs.put(hit.doc(), document);
             }
+            String pid = getDocumentPid(index, hit.doc(), document);
 
             // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
 
