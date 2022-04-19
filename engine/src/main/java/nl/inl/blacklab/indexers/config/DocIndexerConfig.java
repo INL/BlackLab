@@ -5,6 +5,7 @@ import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -197,7 +198,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "parsePos":
             {
                 // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
-                String field = param.containsKey("field") ? param.get("field") : "_";
+                String field = param.getOrDefault("field", "_");
                 result = opParsePartOfSpeech(result, field);
                 break;
             }
@@ -218,8 +219,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     /**
      * process linked documents when configured. An xPath processor can be provided,
      * it will retrieve information from the document to construct a path to a linked document.
-     * @param ld
-     * @param xpathProcessor
      */
     protected void processLinkedDocument(ConfigLinkedDocument ld, Function<String, String> xpathProcessor) {
         // Resolve linkPaths to get the information needed to fetch the document
@@ -288,13 +287,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
         
-        List<String> result = Arrays.asList(input);
+        List<String> result = new ArrayList<>();
+        result.add(input);
 
         for (ConfigProcessStep step : process) {
             String method = step.getMethod();
-//            if (input.indexOf("f|m") >= 0 && method.equals("split")) {
-//                System.out.println("");
-//            }
             Map<String, String> param = step.getParam();
 
             switch (method) {
@@ -316,9 +313,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "split": {
                 ArrayList<String> r = new ArrayList<>();
                 for (String s : result) {
-                    for (String out : opSplit(s, param)) {
-                        r.add(out);
-                    }
+                    r.addAll(opSplit(s, param));
                 }
                 result = r;
                 break;
@@ -336,7 +331,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             case "parsePos":
             {
                 // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
-                String field = param.containsKey("field") ? param.get("field") : "_";
+                String field = param.getOrDefault("field", "_");
                 for (int i = 0; i < result.size(); ++i) {
                     result.set(i, opParsePartOfSpeech(result.get(i), field));
                 }
@@ -364,8 +359,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
-    static final Pattern mainPosPattern = Pattern.compile("^([^\\(]+)(\\s*\\(.*\\))?$");
-    static final Pattern featurePattern = Pattern.compile("^[^\\(]+(\\s*\\((.*)\\))?$");
+    static final Pattern mainPosPattern = Pattern.compile("^([^(]+)(\\s*\\(.*\\))?$");
+    static final Pattern featurePattern = Pattern.compile("^[^(]+(\\s*\\((.*)\\))?$");
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
         result = result.trim();
@@ -386,7 +381,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     static String opStrip(String result, Map<String, String> param) {
         // Trim character/string from beginning and end
-        String stripChars = param.containsKey("chars") ? param.get("chars") : " ";
+        String stripChars = param.getOrDefault("chars", " ");
         result = StringUtils.strip(result, stripChars);
         return result;
     }
@@ -427,7 +422,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     
     protected String opChatFormatAgeToMonths(String result) {
         // 1;10.30 => 1 jaar, 10 maanden, 30 dagen => afgerond 23 maanden?
-        String[] parts = result.split("[;\\.]", 3);
+        String[] parts = result.split("[;.]", 3);
         int years = 0;
         int months = 0;
         int days = 0;
@@ -454,7 +449,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      *      if "keep" == "all" return all parts
      *      if "keep" == "both" return both the original (unsplit) string and all parts
      * </pre>
-     * @return
      */
     private List<String> opSplit(String result, Map<String, String> param) {
         // Split on a separator regex and keep one or all parts (first part by default)
@@ -468,9 +462,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         if (keep.equals("both")) {
             ArrayList<String> r = new ArrayList<>();
             r.add(result);
-            for (String s : parts) {
-                r.add(s);
-            }
+            Collections.addAll(r, parts);
             return r;
         }
 
@@ -481,7 +473,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             i = 0;
         }
 
-        return Arrays.asList(i < parts.length ? parts[i] : "");
+        return List.of(i < parts.length ? parts[i] : "");
     }
 
     /**
@@ -494,10 +486,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      * - "field" for the metadata field whose value will be appended
      * - "value" for a constant value ("field" takes precedence if it exists)
      * </pre>
-     * @return
      */
     private String opAppend(String result, Map<String, String> param) {
-        String separator = param.containsKey("separator") ? param.get("separator") : " ";
+        String separator = param.getOrDefault("separator", " ");
         String field = param.get("field");
         String value;
         if (field != null)
@@ -522,7 +513,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      * - "separator" to join the metadata field if it contains multiple values (defaults to ;)
      * - "value" for a constant value ("field" takes precedence if it exists)
      * </pre>
-     * @return
      */
     private String opDefault(String result, Map<String, String> param) {
         if (result.length() == 0) {
@@ -542,13 +532,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     /**
      * Perform a regex replace on result. Allows group references.
      *
-     * @param result
      * @param param
      * <pre>
      * - "find" for the regex
      * - "replace" the replacement string
      * </pre>
-     * @return
      */
     private static String opReplace(String result, Map<String, String> param) {
         String find = param.get("find");
@@ -571,7 +559,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      *
      * @param name metadata field name
      * @param value metadata field value
-     * @return processed value (or orifinal value if not found / no processing steps
+     * @return processed value (or original value if not found / no processing steps
      *         defined)
      */
     protected String processMetadataValue(String name, String value) {
@@ -605,7 +593,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     private static List<String> collectionToList(Collection<String> c) {
-        return c == null ? null : c instanceof List ? (List<String>)c : new ArrayList<String>(c);
+        return c == null ? null : c instanceof List ? (List<String>)c : new ArrayList<>(c);
     }
 
     /**
