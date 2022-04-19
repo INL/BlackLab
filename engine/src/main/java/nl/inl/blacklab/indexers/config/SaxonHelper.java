@@ -73,7 +73,7 @@ class SaxonHelper {
      */
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
-    private class StartEndPos {
+    private static class StartEndPos {
         private final int startPos;
         private int endPos;
 

@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 public class RequestHandlerStaticResponse extends RequestHandler {
 
@@ -154,7 +154,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return false; // error/status should never be cached, can change
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public int handle(DataStream ds) throws BlsException {
         if (internalErrorCode != null && internalErrorCode.length() > 0) {

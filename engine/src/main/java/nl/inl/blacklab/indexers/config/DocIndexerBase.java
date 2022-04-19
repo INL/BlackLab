@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
@@ -266,7 +265,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, getDocWriter(), completePath, data,
                 Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
-                @SuppressWarnings("resource")
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;

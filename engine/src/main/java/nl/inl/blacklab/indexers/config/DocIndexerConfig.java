@@ -400,9 +400,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      * 
      * Result: "20001019"
      *  
-     * @param result
-     * @param param
-     * @return
+     * @param param operation parameters
+     * @return resulting value
      */
     protected String opConcatDate(Map<String, String> param) {
         String yearField = param.get("yearField");

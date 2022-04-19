@@ -326,7 +326,6 @@ public abstract class RequestHandler {
                         if (!availableHandlers.containsKey(handlerName))
                             return errorObj.unknownOperation(handlerName);
 
-                        @SuppressWarnings("resource")
                         Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
                         Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
                                 HttpServletRequest.class, User.class, String.class, String.class, String.class);

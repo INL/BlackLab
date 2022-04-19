@@ -43,7 +43,6 @@ public class DocIntFieldGetter implements Closeable {
                 // Use UninvertingReader to simulate DocValues (slower)
                 Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                 fields.put(intFieldName, UninvertingReader.Type.INTEGER_POINT);
-                @SuppressWarnings("resource")
                 LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                 docValues = uninv.getNumericDocValues(intFieldName);
             }

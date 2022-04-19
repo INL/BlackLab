@@ -1,20 +1,21 @@
 package nl.inl.blacklab.search.fimatch;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
 
-    final class MockFiAccessor extends ForwardIndexAccessor {
+    static final class MockFiAccessor extends ForwardIndexAccessor {
         @Override
         public int numberOfAnnotations() {
             return 1;
@@ -66,7 +67,7 @@ public class TestNfa {
         }
     }
 
-    class ForwardIndexDocumentString extends ForwardIndexDocument {
+    static class ForwardIndexDocumentString extends ForwardIndexDocument {
 
         private final String input;
 
