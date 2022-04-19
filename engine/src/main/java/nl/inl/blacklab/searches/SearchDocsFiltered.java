@@ -9,11 +9,11 @@ import nl.inl.blacklab.search.results.ResultsStats;
 
 public class SearchDocsFiltered extends SearchDocs {
 
-    private SearchDocs source;
+    private final SearchDocs source;
 
-    private DocProperty property;
+    private final DocProperty property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchDocsFiltered(QueryInfo queryInfo, SearchDocs source, DocProperty sortBy, PropertyValue value) {
         super(queryInfo);

@@ -13,7 +13,7 @@ public class CountingReader extends Reader {
     /**
      * The Reader we're decorating
      */
-    private Reader reader_;
+    private final Reader reader_;
 
     /**
      * Character count

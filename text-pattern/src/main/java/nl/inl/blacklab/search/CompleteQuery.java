@@ -18,10 +18,10 @@ import nl.inl.blacklab.search.textpattern.TextPatternOr;
 public class CompleteQuery {
 
     /** The query to find a structure in the contents */
-    private TextPattern pattern;
+    private final TextPattern pattern;
 
     /** The query that determines what documents to search for the structure */
-    private Query filter;
+    private final Query filter;
 
     /**
      * Get the query to find a structure in the contents

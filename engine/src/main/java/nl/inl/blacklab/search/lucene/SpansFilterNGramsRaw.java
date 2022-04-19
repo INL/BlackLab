@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.Span;
 class SpansFilterNGramsRaw extends BLSpans {
 
     /** The clause to expand */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** Whether or not there's more docs in the clause */
     private int currentDoc = -1;
@@ -43,19 +43,19 @@ class SpansFilterNGramsRaw extends BLSpans {
     private int srcEnd = -1;
 
     /** How to expand the hits */
-    private SpanQueryPositionFilter.Operation op;
+    private final SpanQueryPositionFilter.Operation op;
 
     /** Minimum number of tokens to expand */
-    private int min;
+    private final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    private int max;
+    private final int max;
 
     /** How to adjust the left edge of the producer hits (N-grams) while matching */
-    private int leftAdjust;
+    private final int leftAdjust;
 
     /** How to adjust the right edge of the producer hits (N-grams) while matching */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     /** Start of the current expanded hit */
     private int start = -1;

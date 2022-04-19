@@ -18,7 +18,7 @@ public class IndexListener implements ErrorHandler {
 
     private long indexTime = 0;
 
-    private long optimizeTime = 0;
+    private final long optimizeTime = 0;
 
     private long closeTime = 0;
 

@@ -43,7 +43,7 @@ public final class BlackLabEngine implements Closeable {
     private ExecutorService searchExecutorService = null;
 
     /** How many threads may a single search use? */
-    private int maxThreadsPerSearch;
+    private final int maxThreadsPerSearch;
 
     AtomicInteger threadCounter = new AtomicInteger(1);
 

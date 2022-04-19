@@ -65,7 +65,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
         }
     }
 
-    private static Logger logger = LogManager.getLogger(DocIndexerFactoryUserFormats.class);
+    private static final Logger logger = LogManager.getLogger(DocIndexerFactoryUserFormats.class);
 
     private static final String FORMATS_SUBDIR_NAME = "_input_formats";
     private static final Pattern formatNamePattern = Pattern.compile("[\\w_\\-]+");
@@ -80,7 +80,7 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
 
     private File formatDir = null;
 
-    private Set<String> loadedUsers = new HashSet<>();
+    private final Set<String> loadedUsers = new HashSet<>();
 
     /**
      * @param formatDir directory under which to place user's files (see

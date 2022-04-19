@@ -28,13 +28,13 @@ public class SampleParameters {
     
     boolean isPercentage;
     
-    private double percentageOfHits;
+    private final double percentageOfHits;
     
-    private long numberOfHitsSet;
+    private final long numberOfHitsSet;
     
-    private boolean isFixedSeed;
+    private final boolean isFixedSeed;
     
-    private long seedValueSet;
+    private final long seedValueSet;
     
     SampleParameters(boolean isPercentage, double percentageOfHits, long numberOfHitsSet, boolean isFixedSeed, long seedValueSet) {
         this.isPercentage = isPercentage;

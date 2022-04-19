@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryNoHits extends BLSpanQuery {
 
-    private String luceneField;
+    private final String luceneField;
 
     public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);

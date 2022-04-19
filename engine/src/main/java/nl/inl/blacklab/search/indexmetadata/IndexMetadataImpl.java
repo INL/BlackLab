@@ -111,7 +111,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** Where to save indexmetadata.json */
-    private File indexDir;
+    private final File indexDir;
 
     /** Index display name */
     private String displayName;
@@ -157,10 +157,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     private boolean saveAsJson = true;
 
     /** Our metadata fields */
-    private MetadataFieldsImpl metadataFields;
+    private final MetadataFieldsImpl metadataFields;
 
     /** Our annotated fields */
-    private AnnotatedFieldsImpl annotatedFields;
+    private final AnnotatedFieldsImpl annotatedFields;
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;

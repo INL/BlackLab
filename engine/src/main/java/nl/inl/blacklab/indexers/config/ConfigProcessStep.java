@@ -10,7 +10,7 @@ public class ConfigProcessStep {
     private String method;
 
     /** Extra parameters to pass */
-    private Map<String, String> param = new LinkedHashMap<>();
+    private final Map<String, String> param = new LinkedHashMap<>();
 
     public void validate() {
         String t = "processing step";

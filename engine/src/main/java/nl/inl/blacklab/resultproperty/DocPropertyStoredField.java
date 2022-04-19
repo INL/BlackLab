@@ -45,10 +45,10 @@ public class DocPropertyStoredField extends DocProperty {
     //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
 
     /** Lucene field name */
-    private String fieldName;
+    private final String fieldName;
 
     /** Display name for the field */
-    private String friendlyName;
+    private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
     private Map<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> docValues = null;
@@ -56,7 +56,7 @@ public class DocPropertyStoredField extends DocProperty {
     private Map<Integer, NumericDocValuesCacher> numericDocValues = null;
 
     /** Our index */
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
         super(prop, invert);

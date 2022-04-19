@@ -6,7 +6,7 @@ public class NfaStateOr extends NfaState {
 
     List<NfaState> nextStates;
 
-    private boolean clausesAllSameLength;
+    private final boolean clausesAllSameLength;
 
     public NfaStateOr(List<NfaState> nextStates, boolean clausesAllSameLength) {
         this.nextStates = new ArrayList<>(nextStates);

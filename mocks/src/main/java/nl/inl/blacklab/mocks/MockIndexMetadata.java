@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 public class MockIndexMetadata implements IndexMetadata {
     
-    private List<AnnotatedField> fields;
+    private final List<AnnotatedField> fields;
     
     private boolean frozen;
 

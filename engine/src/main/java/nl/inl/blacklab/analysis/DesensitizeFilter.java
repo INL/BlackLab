@@ -19,11 +19,11 @@ import nl.inl.util.StringUtil;
  */
 public class DesensitizeFilter extends TokenFilter {
 
-    private CharTermAttribute termAtt;
+    private final CharTermAttribute termAtt;
 
-    private boolean lowerCase;
+    private final boolean lowerCase;
 
-    private boolean removeAccents;
+    private final boolean removeAccents;
 
     /**
      * @param input the token stream to desensitize

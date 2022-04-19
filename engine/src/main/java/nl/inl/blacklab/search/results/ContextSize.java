@@ -24,7 +24,7 @@ public class ContextSize {
         return get(0);
     }
     
-	private int left;
+	private final int left;
 	
     ContextSize(int size) {
         this.left = size;
@@ -36,9 +36,9 @@ public class ContextSize {
         return left;
     }
 
-    private int right;
+    private final int right;
     
-    private boolean includeHit;
+    private final boolean includeHit;
     
     ContextSize(int left, int right, boolean includeHit) {
         super();

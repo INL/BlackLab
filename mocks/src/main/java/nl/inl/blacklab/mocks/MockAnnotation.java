@@ -12,11 +12,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockAnnotation implements Annotation {
     
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
     
     private AnnotatedField field;
 
-    private String name;
+    private final String name;
     
     public MockAnnotation(String name) {
         this(null, name);

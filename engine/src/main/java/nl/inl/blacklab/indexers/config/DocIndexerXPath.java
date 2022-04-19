@@ -87,7 +87,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     private FragmentPosition fragPos = FragmentPosition.BEFORE_OPEN_TAG;
 
     /** Fragment positions in ancestors */
-    private List<FragmentPosition> fragPosStack = new ArrayList<>();
+    private final List<FragmentPosition> fragPosStack = new ArrayList<>();
 
     /** The config for the annotated field we're currently processing. */
     private ConfigAnnotatedField currentAnnotatedFieldConfig;
@@ -139,13 +139,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    private Map<String, AutoPilot> compiledXPaths = new HashMap<>();
+    private final Map<String, AutoPilot> compiledXPaths = new HashMap<>();
 
     /**
      * AutoPilots that are currently being used. We need to keep track of this to be
      * able to re-add them to compiledXpath with the correct XPath expression later.
      */
-    private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
+    private final Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
      * Create AutoPilot and declare namespaces on it.
@@ -584,7 +584,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         navpop();
     }
 
-    private static Set<String> reportedSanitizedNames = new HashSet<>();
+    private static final Set<String> reportedSanitizedNames = new HashSet<>();
 
     synchronized static void warnSanitized(String origFieldName, String fieldName) {
         if (!reportedSanitizedNames.contains(origFieldName)) {

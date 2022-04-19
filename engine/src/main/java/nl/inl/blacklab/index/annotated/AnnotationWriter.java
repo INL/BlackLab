@@ -30,12 +30,12 @@ public class AnnotationWriter {
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
     /** The field type for annotations without character offsets */
-    private static FieldType tokenStreamFieldNoOffsets;
+    private static final FieldType tokenStreamFieldNoOffsets;
 
     /**
      * The field type for annotations with character offsets (on the main sensitivity variant)
      */
-    private static FieldType tokenStreamFieldWithOffsets;
+    private static final FieldType tokenStreamFieldWithOffsets;
 
     static {
         FieldType type = tokenStreamFieldNoOffsets = new FieldType();
@@ -89,7 +89,7 @@ public class AnnotationWriter {
         }
     }
 
-    private AnnotatedFieldWriter fieldWriter;
+    private final AnnotatedFieldWriter fieldWriter;
 
     protected boolean includeOffsets;
 
@@ -118,13 +118,13 @@ public class AnnotationWriter {
      * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
      */
-    private Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
+    private final Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
 
     /** The main sensitivity (the one that gets character offsets if desired) */
     private String mainSensitivity;
 
     /** The annotation name */
-    private String annotationName;
+    private final String annotationName;
 
     /** The annotation descriptor */
     private Annotation annotation;

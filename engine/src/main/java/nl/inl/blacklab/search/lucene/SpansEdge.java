@@ -14,10 +14,10 @@ import nl.inl.blacklab.search.Span;
 class SpansEdge extends BLSpans {
 
     /** query the query to determine edges from */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** if true, return the right edges; if false, the left */
-    private boolean rightEdge;
+    private final boolean rightEdge;
 
     /**
      * Constructs a SpansEdge.

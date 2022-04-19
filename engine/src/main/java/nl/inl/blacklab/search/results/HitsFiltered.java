@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class HitsFiltered extends HitsMutable {
 
-    private Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /**
      * Document the previous hit was in, so we can count separate documents.
@@ -24,15 +24,15 @@ public class HitsFiltered extends HitsMutable {
 
     private Hits source;
 
-    private HitProperty filterProperty;
+    private final HitProperty filterProperty;
 
-    private PropertyValue filterValue;
+    private final PropertyValue filterValue;
 
     private boolean doneFiltering = false;
 
     private int indexInSource = -1;
 
-    private boolean ascendingLuceneDocIds;
+    private final boolean ascendingLuceneDocIds;
 
     /**
      * Filter hits.

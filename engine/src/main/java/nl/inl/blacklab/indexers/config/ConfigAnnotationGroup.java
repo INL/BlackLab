@@ -14,7 +14,7 @@ public class ConfigAnnotationGroup {
     private String name;
 
     /** Annotations in this group */
-    private List<String> annotations = new ArrayList<>();
+    private final List<String> annotations = new ArrayList<>();
 
     /** Add any annotations not yet in any group to this one? */
     private boolean addRemainingAnnotations = false;

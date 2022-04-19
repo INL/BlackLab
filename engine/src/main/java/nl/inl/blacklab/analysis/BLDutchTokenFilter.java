@@ -30,7 +30,7 @@ public class BLDutchTokenFilter extends TokenFilter {
         return REMOVE_PATTERN.matcher(input).replaceAll("");
     }
 
-    private CharTermAttribute termAtt;
+    private final CharTermAttribute termAtt;
 
     /**
      * @param input the token stream to remove punctuation from

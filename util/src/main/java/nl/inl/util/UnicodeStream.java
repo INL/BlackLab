@@ -18,7 +18,7 @@ public class UnicodeStream extends InputStream {
     private static final int BOM_SIZE = 4;
 
     // The steam we're wrapping
-    private InputStream stream;
+    private final InputStream stream;
 
     // Encoding of the character set, either detected through the BOM or a default value.
     private Charset encoding;

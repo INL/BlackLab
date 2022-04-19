@@ -61,7 +61,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
         final BLSpanWeight prodWeight;
 
-        private MatchFilter constraint;
+        private final MatchFilter constraint;
 
         public SpanWeightConstrained(BLSpanWeight prodWeight2, MatchFilter constraint, IndexSearcher searcher,
                 Map<Term, TermStates> contexts, float boost) throws IOException {

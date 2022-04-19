@@ -18,9 +18,9 @@ import nl.inl.blacklab.search.Span;
  * The client should ensure these properties are true.
  */
 class SpansSequenceSimple extends BLSpans {
-    private BLSpans left;
+    private final BLSpans left;
 
-    private BLSpans right;
+    private final BLSpans right;
 
     int currentDoc = -1;
 

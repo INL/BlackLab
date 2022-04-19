@@ -21,13 +21,13 @@ public class HitPropertyDocumentDecade extends HitProperty {
         return new HitPropertyDocumentDecade(index, index.metadataField(PropertySerializeUtil.unescapePart(info)));
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     IndexReader reader;
 
     String fieldName;
 
-    private DocPropertyDecade docPropertyDocumentDecade;
+    private final DocPropertyDecade docPropertyDocumentDecade;
 
     HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);

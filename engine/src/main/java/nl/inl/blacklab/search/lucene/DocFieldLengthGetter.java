@@ -35,7 +35,7 @@ class DocFieldLengthGetter implements Closeable {
     private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
     /** The Lucene index reader, for querying field length */
-    private LeafReader reader;
+    private final LeafReader reader;
 
     /**
      * For testing, we don't have an IndexReader available, so we use test values
@@ -49,10 +49,10 @@ class DocFieldLengthGetter implements Closeable {
     private boolean lengthFieldIsStored = false;
 
     /** Name of the field we're searching */
-    private String fieldName;
+    private final String fieldName;
 
     /** Field name to check for the length of the field in tokens */
-    private String lengthTokensFieldName;
+    private final String lengthTokensFieldName;
 
     /** Field visitor to get the field value (without loading the entire document) */
     private final DocumentStoredFieldVisitor lengthTokensFieldVisitor;

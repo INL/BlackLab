@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 public class TextPatternFuzzy extends TextPattern {
     protected String value;
 
-    private int maxEdits;
+    private final int maxEdits;
 
-    private int prefixLength;
+    private final int prefixLength;
 
     public TextPatternFuzzy(String value, int maxEdits) {
         this(value, maxEdits, 0);

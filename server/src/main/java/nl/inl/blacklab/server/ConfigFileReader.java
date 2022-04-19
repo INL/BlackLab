@@ -38,7 +38,7 @@ class ConfigFileReader {
 
     private boolean configFileIsJson;
 
-    private JsonNode configFileJsonNode;
+    private final JsonNode configFileJsonNode;
 
     public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
         configFileIsJson = false;

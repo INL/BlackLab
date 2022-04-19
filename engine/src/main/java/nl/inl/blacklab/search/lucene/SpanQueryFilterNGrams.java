@@ -27,10 +27,10 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
     int max;
 
     /** How to adjust left n-gram border relative to the filter clause */
-    private int leftAdjust;
+    private final int leftAdjust;
 
     /** How to adjust right n-gram border relative to the filter clause */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     public SpanQueryFilterNGrams(BLSpanQuery clause, SpanQueryPositionFilter.Operation op, int min, int max, int leftAdjust, int rightAdjust) {
         super(clause);

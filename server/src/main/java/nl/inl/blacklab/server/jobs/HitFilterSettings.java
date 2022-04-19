@@ -2,9 +2,9 @@ package nl.inl.blacklab.server.jobs;
 
 public class HitFilterSettings {
 
-    private String crit;
+    private final String crit;
 
-    private String value;
+    private final String value;
 
     public String getProperty() {
         return crit;

@@ -61,13 +61,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * The values this field can have. Note that this may not be the complete list;
      * check valueListComplete.
      */
-    private Map<String, Integer> values = new HashMap<>();
+    private final Map<String, Integer> values = new HashMap<>();
 
     /** Gives the display value corresponding to a value, if any. */
-    private Map<String, String> displayValues = new HashMap<>();
+    private final Map<String, String> displayValues = new HashMap<>();
 
     /** Order in which to display values in select dropdown (if defined) */
-    private List<String> displayOrder = new ArrayList<>();
+    private final List<String> displayOrder = new ArrayList<>();
 
     /**
      * Whether or not all values are stored here.

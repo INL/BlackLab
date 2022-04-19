@@ -20,13 +20,13 @@ public final class QueryInfo {
         return new QueryInfo(index, field, useCache);
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     /** The field these hits came from (will also be used as concordance field) */
-    private AnnotatedField field;
+    private final AnnotatedField field;
 
     /** Should we use the cache for this query, or bypass it? */
-    private boolean useCache;
+    private final boolean useCache;
 
     private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
         super();

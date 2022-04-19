@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.fimatch.NfaState;
 class SpansFiSeq extends BLSpans {
 
     /** The spans we're (possibly) looking for */
-    private BLSpans anchor;
+    private final BLSpans anchor;
 
     /** What doc is the anchorSpans in? */
     private int anchorDoc = -1;
@@ -39,16 +39,16 @@ class SpansFiSeq extends BLSpans {
      * If true, match from the start of the anchor hit. Otherwise, match from the
      * end.
      */
-    private boolean startOfAnchor;
+    private final boolean startOfAnchor;
 
     /** The NFA to use to find matches in the forward index. */
-    private NfaState nfa;
+    private final NfaState nfa;
 
     /** The direction to match in (-1 / DIR_TO_LEFT = backward, 1 / DIR_TO_RIGHT = forward). */
-    private int direction;
+    private final int direction;
 
     /** Maps from term strings to term indices for each annotation. */
-    private ForwardIndexAccessorLeafReader fiAccessor;
+    private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Iterator over NFA-matched endpoints */
     private Iterator<Integer> matchEndPointIt;

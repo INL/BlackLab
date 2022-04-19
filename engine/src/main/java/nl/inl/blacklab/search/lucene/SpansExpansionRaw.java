@@ -36,7 +36,7 @@ import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 class SpansExpansionRaw extends BLSpans {
 
     /** The clause to expand */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** Whether or not there's more docs in the clause */
     private int currentDoc = -1;
@@ -45,13 +45,13 @@ class SpansExpansionRaw extends BLSpans {
     private int clauseStart = -1;
 
     /** Whether to expand to left or right */
-    private Direction direction;
+    private final Direction direction;
 
     /** Minimum number of tokens to expand */
-    private int min;
+    private final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    private int max;
+    private final int max;
 
     /** Start of the current expanded hit */
     private int start = -1;

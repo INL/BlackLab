@@ -39,13 +39,13 @@ class SpansNGrams extends BLSpans {
     private int maxDoc;
 
     /** Documents that haven't been deleted */
-    private Bits liveDocs;
+    private final Bits liveDocs;
 
     private boolean alreadyAtFirstMatch = false;
 
-    private int min;
+    private final int min;
 
-    private int max;
+    private final int max;
 
     /**
      * For testing, we don't have an IndexReader available, so we use test values.

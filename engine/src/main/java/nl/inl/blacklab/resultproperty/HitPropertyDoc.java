@@ -14,7 +14,7 @@ public class HitPropertyDoc extends HitProperty {
         return new HitPropertyDoc(index);
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
         super(prop, hits, null, invert);

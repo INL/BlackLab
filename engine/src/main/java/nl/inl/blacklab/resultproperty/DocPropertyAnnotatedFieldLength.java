@@ -34,14 +34,14 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         return new DocPropertyAnnotatedFieldLength(index, PropertySerializeUtil.unescapePart(info));
     }
 
-    private String fieldName;
+    private final String fieldName;
     
-    private String friendlyName;
+    private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
     private Map<Integer, NumericDocValuesCacher> docValues = null;
     
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, boolean invert) {
         super(prop, invert);

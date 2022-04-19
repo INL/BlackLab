@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
 
 public class SearchDocsSampled extends SearchDocs {
 
-    private SearchDocs source;
+    private final SearchDocs source;
 
-    private SampleParameters sampleParameters;
+    private final SampleParameters sampleParameters;
 
     public SearchDocsSampled(QueryInfo queryInfo, SearchDocs docsSearch, SampleParameters sampleParameters) {
         super(queryInfo);

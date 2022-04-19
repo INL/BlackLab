@@ -13,7 +13,7 @@ public class ConfigAnnotationGroups {
     private String name;
 
     /** Annotation groups */
-    private List<ConfigAnnotationGroup> groups = new ArrayList<>();
+    private final List<ConfigAnnotationGroup> groups = new ArrayList<>();
 
     public ConfigAnnotationGroups() {
     }

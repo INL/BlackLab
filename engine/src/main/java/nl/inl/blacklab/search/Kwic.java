@@ -19,11 +19,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class Kwic {
 
-    private DocContentsFromForwardIndex fragment;
+    private final DocContentsFromForwardIndex fragment;
 
-    private int hitStart;
+    private final int hitStart;
 
-    private int hitEnd;
+    private final int hitEnd;
 
     public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 

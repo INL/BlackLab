@@ -13,7 +13,7 @@ public class User {
     private String userId;
 
     /** The session id */
-    private String sessionId;
+    private final String sessionId;
     
     /** Is this the superuser? */
     private boolean superuser = false;

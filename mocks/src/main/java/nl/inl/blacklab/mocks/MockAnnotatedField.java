@@ -12,7 +12,7 @@ public class MockAnnotatedField implements AnnotatedField {
     
     String name;
     
-    private List<Annotation> annotations;
+    private final List<Annotation> annotations;
     
     public MockAnnotatedField(String name, List<Annotation> annotations) {
         this.name = name;

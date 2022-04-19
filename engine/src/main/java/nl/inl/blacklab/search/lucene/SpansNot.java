@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansNot extends BLSpans {
     /** The spans to invert, or null if we want all tokens */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     private int clauseDoc = -1;
 
@@ -49,7 +49,7 @@ class SpansNot extends BLSpans {
     private int maxDoc;
 
     /** Documents that haven't been deleted */
-    private Bits liveDocs;
+    private final Bits liveDocs;
 
     private boolean alreadyAtFirstMatch = false;
 

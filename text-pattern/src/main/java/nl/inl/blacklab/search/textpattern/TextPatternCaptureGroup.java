@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
  */
 public class TextPatternCaptureGroup extends TextPattern {
 
-    private TextPattern input;
+    private final TextPattern input;
 
-    private String groupName;
+    private final String groupName;
 
     /**
      * Indicate that we want to use a different list of alternatives for this part

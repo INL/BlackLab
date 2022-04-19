@@ -5,7 +5,7 @@ package nl.inl.blacklab.server.util;
  */
 public class MemoryUtil {
     /** Handle to interface with the Java VM environment */
-    private static Runtime runtime = Runtime.getRuntime();
+    private static final Runtime runtime = Runtime.getRuntime();
 
     private MemoryUtil() {
     }

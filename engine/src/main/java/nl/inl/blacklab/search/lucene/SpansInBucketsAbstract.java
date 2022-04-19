@@ -37,7 +37,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     protected int currentDoc = -1;
 
     /** Starts of hits in our bucket */
-    private LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
+    private final LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
      * For each hit we fetched, store the captured groups, so we don't lose this

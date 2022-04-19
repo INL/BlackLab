@@ -15,9 +15,9 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 public class TextPatternSensitive extends TextPattern {
 
-    private TextPattern input;
+    private final TextPattern input;
 
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     /**
      * Indicate that we want to use a different list of alternatives for this part

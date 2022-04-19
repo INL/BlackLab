@@ -85,7 +85,7 @@ public class Index {
 
     private final File dir;
 
-    private SearchManager searchMan;
+    private final SearchManager searchMan;
 
     /**
      * Only one of these can be set at a time. The index is closed and cleared
@@ -101,7 +101,7 @@ public class Index {
     private List<String> shareWithUsers = new ArrayList<>();
 
     /** File where the list of users to share with is stored */
-    private File shareWithUsersFile;
+    private final File shareWithUsersFile;
 
     /**
      * NOTE: Index does not support creating a new index from scratch for now,

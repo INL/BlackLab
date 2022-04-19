@@ -17,7 +17,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
         void rejectedExecution(Runnable r, MainThreadExecutorService e);
     }
 
-    private RejectedExecutionHandler handler;
+    private final RejectedExecutionHandler handler;
 
     private boolean shutdown;
 

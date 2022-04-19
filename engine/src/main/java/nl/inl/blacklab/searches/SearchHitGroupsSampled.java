@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public class SearchHitGroupsSampled extends SearchHitGroups {
 
-    private SearchHitGroups source;
+    private final SearchHitGroups source;
 
-    private SampleParameters sampleParameters;
+    private final SampleParameters sampleParameters;
 
     public SearchHitGroupsSampled(QueryInfo queryInfo, SearchHitGroups source, SampleParameters sampleParameters) {
         super(queryInfo);

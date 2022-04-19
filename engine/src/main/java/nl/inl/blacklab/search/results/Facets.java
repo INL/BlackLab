@@ -8,9 +8,9 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 
 public class Facets implements SearchResult {
     
-    private List<DocProperty> facets;
+    private final List<DocProperty> facets;
     
-    private Map<DocProperty, DocGroups> counts;
+    private final Map<DocProperty, DocGroups> counts;
     
     private int resultObjects = 0;
 

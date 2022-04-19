@@ -49,11 +49,11 @@ public enum MatchSensitivity {
         return fromLuceneFieldSuffix(value);
     }
 
-    private boolean caseSensitive;
+    private final boolean caseSensitive;
     
-    private boolean diacriticsSensitive;
+    private final boolean diacriticsSensitive;
     
-    private String luceneFieldCode;
+    private final String luceneFieldCode;
 	
     MatchSensitivity(boolean caseSensitive, boolean diacriticsSensitive, String luceneFieldCode) {
         this.caseSensitive = caseSensitive;

@@ -9,7 +9,7 @@ import java.io.IOException;
  * Hits are sorted by the given comparator.
  */
 class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
-    private boolean sortByStartPoint;
+    private final boolean sortByStartPoint;
 
     public SpansInBucketsPerDocumentSorted(BLSpans source, boolean sortByStartPoint) {
         super(source);

@@ -22,7 +22,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String refTokenPositionIdPath;
 
     /** The annotations to index at the referenced token positions. */
-    private Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+    private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
     public ConfigStandoffAnnotations() {
     }

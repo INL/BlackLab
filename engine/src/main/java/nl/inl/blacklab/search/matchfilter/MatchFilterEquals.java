@@ -10,7 +10,7 @@ public class MatchFilterEquals extends MatchFilter {
 
     MatchFilter a, b;
 
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     public MatchFilterEquals(MatchFilter a, MatchFilter b, MatchSensitivity sensitivity) {
         super();

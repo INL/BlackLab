@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.Span;
  */
 public class BLSpansWrapper extends BLSpans {
 
-    private Spans source;
+    private final Spans source;
 
     public BLSpansWrapper(Spans source) {
         if (source == null)

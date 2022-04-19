@@ -41,7 +41,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     private List<Long> tokensFileChunkOffsetBytes = null;
 
     /** Collators to use for terms file */
-    private Collators collators;
+    private final Collators collators;
 
     /** Offset of each document */
     long[] offset;
@@ -56,7 +56,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     List<Integer> deletedTocEntries = null;
 
     /** Build term indexes right away or lazily? */
-    private boolean buildTermIndexesOnInit;
+    private final boolean buildTermIndexesOnInit;
 
     AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean buildTermIndexesOnInit) {
         super(annotation, dir, collators);

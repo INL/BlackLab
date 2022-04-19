@@ -48,7 +48,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     long id;
 
     /** Our search */
-    private Search<T> search;
+    private final Search<T> search;
 
 
     // OUTCOMES
@@ -76,7 +76,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     // TIMING
 
     /** When was this entry created (ms) */
-    private long createTime;
+    private final long createTime;
 
     /** When was this entry last accessed (ms) */
     private long lastAccessTime;

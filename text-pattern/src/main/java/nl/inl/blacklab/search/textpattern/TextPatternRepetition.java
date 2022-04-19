@@ -9,11 +9,11 @@ import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
  * Repetition of a pattern.
  */
 public class TextPatternRepetition extends TextPattern {
-    private TextPattern base;
+    private final TextPattern base;
 
-    private int min;
+    private final int min;
 
-    private int max;
+    private final int max;
 
     public TextPatternRepetition(TextPattern base, int min, int max) {
         this.base = base;

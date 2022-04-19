@@ -37,7 +37,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     /** Our NFA, both in our own direction and the opposite direction. */
     NfaTwoWay nfa;
 
-    private BLSpanQuery nfaQuery;
+    private final BLSpanQuery nfaQuery;
 
     int direction;
 

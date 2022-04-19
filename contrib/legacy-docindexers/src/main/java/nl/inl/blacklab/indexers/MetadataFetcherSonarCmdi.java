@@ -169,7 +169,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
      */
     class MetadataParser extends DefaultHandler {
 
-        private StringBuilder textContent = new StringBuilder();
+        private final StringBuilder textContent = new StringBuilder();
 
         private boolean hasChild = false;
 

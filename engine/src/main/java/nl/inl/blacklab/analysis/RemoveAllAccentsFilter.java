@@ -19,7 +19,7 @@ import nl.inl.util.StringUtil;
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
 
-    private CharTermAttribute termAtt;
+    private final CharTermAttribute termAtt;
 
     /**
      * @param input the token stream from which to remove accents

@@ -15,7 +15,7 @@ public class DocGroup extends Group<DocResult> {
         return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);
     }
 
-    private long totalTokens;
+    private final long totalTokens;
 
     private int storedHits;
 

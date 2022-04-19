@@ -30,7 +30,7 @@ public class NfaStateToken extends NfaState {
     private int propertyNumber = -1;
 
     /** The tokens this state accepts. */
-    private Set<String> inputTokenStrings;
+    private final Set<String> inputTokenStrings;
 
     /**
      * The tokens this state accepts. Only valid after lookupPropertNumber() called.

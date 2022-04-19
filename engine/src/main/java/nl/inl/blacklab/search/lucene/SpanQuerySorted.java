@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * document), and optionally eliminate duplicate hits.
  */
 class SpanQuerySorted extends BLSpanQuery {
-    private BLSpanQuery src;
+    private final BLSpanQuery src;
 
     boolean sortByEndpoint;
 

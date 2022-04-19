@@ -5,11 +5,11 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
 public class StubTokenStream extends TokenStream {
-    private CharTermAttribute ta;
+    private final CharTermAttribute ta;
 
     private int i = -1;
 
-    private String[] terms;
+    private final String[] terms;
 
     public StubTokenStream(String[] terms) {
         this.terms = terms;

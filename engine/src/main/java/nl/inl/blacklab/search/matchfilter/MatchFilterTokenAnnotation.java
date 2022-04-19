@@ -7,11 +7,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterTokenAnnotation extends MatchFilter {
-    private String groupName;
+    private final String groupName;
 
     private int groupIndex;
 
-    private String annotationName;
+    private final String annotationName;
 
     private int annotationIndex = -1;
 

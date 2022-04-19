@@ -123,7 +123,7 @@ public class FileProcessor implements AutoCloseable {
      * Simple error handler that reports errors and can abort or continue.
      */
     public static class SimpleErrorHandler implements ErrorHandler {
-        private boolean continueOnError;
+        private final boolean continueOnError;
 
         public SimpleErrorHandler(boolean continueOnError) {
             this.continueOnError = continueOnError;

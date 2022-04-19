@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansUnique extends BLSpans {
 
-    private BLSpans src;
+    private final BLSpans src;
 
     private int currentDoc = -1;
 

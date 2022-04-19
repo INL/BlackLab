@@ -13,11 +13,11 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public class DocPropertyDecade extends DocProperty {
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
     
-    private String fieldName;
+    private final String fieldName;
     
-    private DocPropertyStoredField docPropStoredField;
+    private final DocPropertyStoredField docPropStoredField;
 
     DocPropertyDecade(DocPropertyDecade prop, boolean invert) {
         super(prop, invert);

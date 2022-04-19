@@ -43,7 +43,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
      */
     Charset charset;
 
-    private DocIndexerConfig outputIndexer;
+    private final DocIndexerConfig outputIndexer;
 
     public DocIndexerConvertAndTag(DocIndexerConfig actualIndexer, ConfigInputFormat config) {
         this.outputIndexer = actualIndexer;

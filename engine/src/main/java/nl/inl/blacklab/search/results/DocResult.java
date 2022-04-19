@@ -17,7 +17,7 @@ public class DocResult extends HitGroup {
         return new DocResult(doc, storedHits, totalNumberOfHits);
     }
     
-    private float score;
+    private final float score;
 
     protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score, long numberOfHits) {
         super(queryInfo, doc, numberOfHits);

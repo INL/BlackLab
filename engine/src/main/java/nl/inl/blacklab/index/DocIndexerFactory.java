@@ -42,13 +42,13 @@ public interface DocIndexerFactory {
      */
     class Format {
 
-        private String formatIdentifier;
+        private final String formatIdentifier;
 
-        private String displayName;
+        private final String displayName;
 
-        private String description;
+        private final String description;
 
-        private String helpUrl;
+        private final String helpUrl;
 
         private boolean visible = true;
 

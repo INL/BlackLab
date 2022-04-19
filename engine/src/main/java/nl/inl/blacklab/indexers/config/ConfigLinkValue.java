@@ -15,7 +15,7 @@ public class ConfigLinkValue {
     private String valueField;
 
     /** Operations to perform on this value, if any */
-    private List<ConfigProcessStep> process = new ArrayList<>();
+    private final List<ConfigProcessStep> process = new ArrayList<>();
 
     public ConfigLinkValue() {
     }

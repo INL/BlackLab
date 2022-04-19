@@ -62,7 +62,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     /** Annotated fields we're indexing. */
-    private Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
+    private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
      * A field named "contents", or, if that doesn't exist, the first annotated field
@@ -102,7 +102,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * Unique strings we store, so we avoid storing many copies of the same string
      * (e.g. punctuation).
      */
-    private Map<String, String> uniqueStrings = new HashMap<>();
+    private final Map<String, String> uniqueStrings = new HashMap<>();
 
     /**
      * If true, we're indexing into an existing Lucene document. Don't overwrite it
@@ -111,7 +111,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     private boolean indexingIntoExistingLuceneDoc = false;
 
     /** Currently opened inline tags we still need to add length payload to */
-    private List<OpenTagInfo> openInlineTags = new ArrayList<>();
+    private final List<OpenTagInfo> openInlineTags = new ArrayList<>();
 
     /**
      * Store documents? Can be set to false in ConfigInputFormat to if no content

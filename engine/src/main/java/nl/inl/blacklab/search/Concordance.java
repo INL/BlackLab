@@ -9,13 +9,13 @@ import nl.inl.util.XmlUtil;
 public class Concordance {
 
     /** Document fragment to use to create concordance */
-    private String fragment;
+    private final String fragment;
 
     /** Where in content the match starts */
-    private int matchStart;
+    private final int matchStart;
 
     /** Where in content the match ends */
-    private int matchEnd;
+    private final int matchEnd;
 
     /**
      * Construct a concordance.

@@ -71,9 +71,9 @@ class SpansSequenceWithGap extends BLSpans {
             return new Gap(minSize, maxSize);
         }
         
-        private int minSize;
+        private final int minSize;
         
-        private int maxSize;
+        private final int maxSize;
     
         public Gap(int minSize, int maxSize) {
             super();
@@ -121,13 +121,13 @@ class SpansSequenceWithGap extends BLSpans {
         
     }
 
-    private BLSpans left;
+    private final BLSpans left;
     
     /** Gap between the two clauses. */
-    private Gap gap;
+    private final Gap gap;
 
     /** Right clause matches, collected for the whole document, sorted by startpoint. */
-    private SpansInBucketsPerDocument right;
+    private final SpansInBucketsPerDocument right;
 
     /** 
      * First index in the right bucket that we could possibly match to a span with the current

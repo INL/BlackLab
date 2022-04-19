@@ -20,9 +20,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
  */
 public class TextPatternQueryFunction extends TextPattern {
 
-    private String name;
+    private final String name;
 
-    private List<TextPattern> args;
+    private final List<TextPattern> args;
 
     public TextPatternQueryFunction(String name, List<TextPattern> args) {
         this.name = name;

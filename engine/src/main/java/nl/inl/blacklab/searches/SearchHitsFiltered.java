@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public class SearchHitsFiltered extends SearchHits {
 
-    private SearchHits source;
-    private HitProperty property;
-    private PropertyValue value;
+    private final SearchHits source;
+    private final HitProperty property;
+    private final PropertyValue value;
 
     SearchHitsFiltered(QueryInfo queryInfo, SearchHits source, HitProperty property, PropertyValue value) {
         super(queryInfo);

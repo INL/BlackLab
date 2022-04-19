@@ -21,7 +21,7 @@ public class ContentStoresManager {
      *
      * Indexed by annotated field name.
      */
-    private Map<Field, ContentAccessor> contentAccessors = new HashMap<>();
+    private final Map<Field, ContentAccessor> contentAccessors = new HashMap<>();
 
     public void close() {
         // Close the content accessor(s)

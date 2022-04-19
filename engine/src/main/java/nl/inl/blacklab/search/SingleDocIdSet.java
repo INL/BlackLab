@@ -21,7 +21,7 @@ public class SingleDocIdSet extends DocIdSet {
         return new DocIdSetIterator() {
             private boolean nexted = false;
 
-            private boolean done = false;
+            private final boolean done = false;
 
             @Override
             public int nextDoc() {

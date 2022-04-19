@@ -128,7 +128,7 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    private DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
+    private final DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
     /** Our index */
     private BlackLabIndexWriter indexWriter;
@@ -137,7 +137,7 @@ class IndexerImpl implements DocWriter, Indexer {
     private int maxNumberOfDocsToIndex = -1;
 
     /** Should we terminate indexing? (e.g. because of an error) */
-    private boolean terminateIndexing = false;
+    private final boolean terminateIndexing = false;
 
     /**
      * Where to report indexing progress.
@@ -179,7 +179,7 @@ class IndexerImpl implements DocWriter, Indexer {
     private FieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
-    private List<File> linkedFileDirs = new ArrayList<>();
+    private final List<File> linkedFileDirs = new ArrayList<>();
 
     /**
      * If a file cannot be found in the linkedFileDirs, use this to retrieve it (if

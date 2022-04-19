@@ -47,17 +47,17 @@ public class AnnotatedFieldWriter {
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
 
-    private Map<String, AnnotationWriter> annotations = new HashMap<>();
+    private final Map<String, AnnotationWriter> annotations = new HashMap<>();
 
     private IntArrayList start = new IntArrayList();
 
     private IntArrayList end = new IntArrayList();
 
-    private String fieldName;
+    private final String fieldName;
 
-    private AnnotationWriter mainAnnotation;
+    private final AnnotationWriter mainAnnotation;
 
-    private Set<String> noForwardIndexAnnotations = new HashSet<>();
+    private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
     private AnnotatedField field;
 

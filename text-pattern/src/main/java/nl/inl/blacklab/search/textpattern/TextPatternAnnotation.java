@@ -15,9 +15,9 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * </code>
  */
 public class TextPatternAnnotation extends TextPattern {
-    private TextPattern input;
+    private final TextPattern input;
 
-    private String annotationName;
+    private final String annotationName;
 
     public TextPatternAnnotation(String annotationName, TextPattern input) {
         this.annotationName = annotationName == null ? "" : annotationName;

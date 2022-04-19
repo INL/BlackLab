@@ -132,7 +132,7 @@ public class ConfigInputFormat {
     private FileType fileType = FileType.XML;
 
     /** Options for the file type (i.e. separator in case of tabular, etc.) */
-    private Map<String, String> fileTypeOptions = new HashMap<>();
+    private final Map<String, String> fileTypeOptions = new HashMap<>();
 
     /** Configuration that will be added to indexmetadata when creating a corpus */
     private ConfigCorpus corpusConfig = new ConfigCorpus();
@@ -159,13 +159,13 @@ public class ConfigInputFormat {
     private String metadataDefaultUnknownValue = "unknown";
 
     /** Blocks of embedded metadata */
-    private List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
+    private final List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
 
     /** Annotated fields (usually just "contents") */
-    private Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
+    private final Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
 
     /** Linked document(s), e.g. containing our metadata */
-    private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
+    private final Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
     /** id of a {@link ConvertPlugin} to run files through prior to indexing */
     private String convertPluginId;

@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  */
 public class QueryExplanation {
 
-    private BLSpanQuery spanQuery;
+    private final BLSpanQuery spanQuery;
 
-    private BLSpanQuery rewrittenQuery;
+    private final BLSpanQuery rewrittenQuery;
 
     public QueryExplanation(BLSpanQuery spanQuery, BLSpanQuery rewrittenQuery) {
         super();

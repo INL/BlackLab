@@ -31,7 +31,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
     //protected ContentStore contentStore;
 
-    private StringBuilder content = new StringBuilder();
+    private final StringBuilder content = new StringBuilder();
 
     /** Are we capturing the content of the document for indexing? */
     private boolean captureContent = false;

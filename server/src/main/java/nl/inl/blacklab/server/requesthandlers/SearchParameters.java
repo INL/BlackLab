@@ -194,11 +194,11 @@ public class SearchParameters {
     );
 
     /** The search manager, for querying default value for missing parameters */
-    private SearchManager searchManager;
+    private final SearchManager searchManager;
 
     private boolean debugMode;
 
-    private Map<String, String> map = new TreeMap<>();
+    private final Map<String, String> map = new TreeMap<>();
 
     /** The pattern, if parsed already */
     private TextPattern pattern;
@@ -206,7 +206,7 @@ public class SearchParameters {
     /** The filter query, if parsed already */
     private Query filterQuery;
 
-    private boolean isDocsOperation;
+    private final boolean isDocsOperation;
 
     private List<DocProperty> facetProps;
 

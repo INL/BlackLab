@@ -73,7 +73,7 @@ public class ExportCorpus implements AutoCloseable {
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new DocTask() {
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             int docsDone = 0;
 

@@ -33,13 +33,13 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     private static final boolean AUTO_INIT_FORWARD_INDEXES = true;
     
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
-    private AnnotatedField field;
+    private final AnnotatedField field;
 
-    private Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
+    private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
-    private ExecutorService executorService;
+    private final ExecutorService executorService;
 
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;

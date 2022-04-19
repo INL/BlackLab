@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.jobs;
 
 public class HitGroupSettings {
-    private String groupBy;
+    private final String groupBy;
 
     public HitGroupSettings(String groupBy) {
         super();

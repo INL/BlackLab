@@ -8,7 +8,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsFromQuery extends SearchDocs {
 
-    private Query query;
+    private final Query query;
 
     public SearchDocsFromQuery(QueryInfo queryInfo, Query query) {
         super(queryInfo);

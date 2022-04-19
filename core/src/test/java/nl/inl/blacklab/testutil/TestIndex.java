@@ -102,9 +102,9 @@ public class TestIndex {
      */
     BlackLabIndex index;
 
-    private File indexDir;
+    private final File indexDir;
 
-    private Annotation word;
+    private final Annotation word;
 
     public TestIndex() {
         this(false);

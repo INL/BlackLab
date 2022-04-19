@@ -12,9 +12,9 @@ public abstract class Group<T> implements Result<Group<T>> {
     
     protected PropertyValue groupIdentity;
 
-    private Results<T, ? extends ResultProperty<T>> storedResults;
+    private final Results<T, ? extends ResultProperty<T>> storedResults;
     
-    private long totalSize;
+    private final long totalSize;
 
     protected Group(PropertyValue groupIdentity, Results<T, ? extends ResultProperty<T>> storedResults, long totalSize) {
         this.groupIdentity = groupIdentity;

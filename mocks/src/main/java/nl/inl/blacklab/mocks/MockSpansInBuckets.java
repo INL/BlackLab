@@ -18,13 +18,13 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  */
 public class MockSpansInBuckets implements SpansInBuckets {
 
-    private int[] start;
+    private final int[] start;
 
-    private int[] end;
+    private final int[] end;
 
-    private int[] bucketStart;
+    private final int[] bucketStart;
 
-    private int[] bucketDoc;
+    private final int[] bucketDoc;
 
     private int currentBucket = -1;
 

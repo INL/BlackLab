@@ -11,7 +11,7 @@ package nl.inl.blacklab.search.results;
 public final class HitImpl implements Hit {
 
     /** The Lucene doc this hits occurs in */
-    private int doc;
+    private final int doc;
 
     /**
      * End of this hit's span (in word positions).
@@ -19,10 +19,10 @@ public final class HitImpl implements Hit {
      * Note that this actually points to the first word not in the hit (just like
      * Spans).
      */
-    private int end;
+    private final int end;
 
     /** Start of this hit's span (in word positions) */
-    private int start;
+    private final int start;
 
     /**
      * Construct a hit object

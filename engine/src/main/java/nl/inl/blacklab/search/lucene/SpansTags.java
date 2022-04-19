@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansTags extends BLSpans {
 
-    private BLSpans tags;
+    private final BLSpans tags;
 
     private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 

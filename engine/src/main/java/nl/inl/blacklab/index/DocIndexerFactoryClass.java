@@ -29,8 +29,8 @@ import nl.inl.util.UnicodeStream;
  */
 public class DocIndexerFactoryClass implements DocIndexerFactory {
 
-    private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
-    private Set<String> unsupported = new HashSet<>();
+    private final Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
+    private final Set<String> unsupported = new HashSet<>();
 
     @Override
     public void init() {

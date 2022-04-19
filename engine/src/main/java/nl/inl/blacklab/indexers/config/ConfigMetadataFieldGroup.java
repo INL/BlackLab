@@ -14,7 +14,7 @@ public class ConfigMetadataFieldGroup {
     private String name;
 
     /** Fields in this group */
-    private List<String> fields = new ArrayList<>();
+    private final List<String> fields = new ArrayList<>();
 
     /** Add any fields not yet in any group to this one? */
     private boolean addRemainingFields = false;

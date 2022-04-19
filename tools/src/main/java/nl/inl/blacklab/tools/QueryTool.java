@@ -164,7 +164,7 @@ public class QueryTool {
     private int showWhichGroup = -1;
 
     /** Lists of words read from file to choose random word from (for batch mode) */
-    private Map<String, List<String>> wordLists = new HashMap<>();
+    private final Map<String, List<String>> wordLists = new HashMap<>();
 
     /** Generic command parser interface */
     abstract static class Parser {
@@ -275,12 +275,12 @@ public class QueryTool {
 
     }
 
-    private List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserContextQl());
+    private final List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserContextQl());
 
     private int currentParserIndex = 0;
 
     /** Where to read commands from */
-    private BufferedReader in;
+    private final BufferedReader in;
 
     /** For stats output (batch mode), extra info (such as # hits) */
     private String statInfo;
@@ -1501,11 +1501,13 @@ public class QueryTool {
          * the longest left context before displaying.
          */
         class HitToShow {
-            public int doc;
+            public final int doc;
 
-            public String left, hitText, right;
+            public final String left;
+            public final String hitText;
+            public final String right;
 
-            public Map<String, Span> capturedGroups;
+            public final Map<String, Span> capturedGroups;
 
             public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
                 super();

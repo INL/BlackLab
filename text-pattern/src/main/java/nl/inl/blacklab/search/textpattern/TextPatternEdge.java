@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryEdge;
  */
 public class TextPatternEdge extends TextPatternCombiner {
 
-    private boolean rightEdge;
+    private final boolean rightEdge;
 
     public TextPatternEdge(TextPattern clause, boolean rightEdge) {
         super(clause);

@@ -10,11 +10,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /** A search that yields groups of documents. */
 public class SearchDocGroupsFiltered extends SearchDocGroups {
 
-    private SearchDocGroups source;
+    private final SearchDocGroups source;
 
-    private DocGroupProperty property;
+    private final DocGroupProperty property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchDocGroupsFiltered(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
         super(queryInfo);

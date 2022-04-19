@@ -9,8 +9,8 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public class SearchHitsSorted extends SearchHits {
 
-    private SearchHits source;
-    private HitProperty property;
+    private final SearchHits source;
+    private final HitProperty property;
 
     SearchHitsSorted(QueryInfo queryInfo, SearchHits source, HitProperty sortBy) {
         super(queryInfo);

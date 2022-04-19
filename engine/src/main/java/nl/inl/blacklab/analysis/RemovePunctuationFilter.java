@@ -33,7 +33,7 @@ public class RemovePunctuationFilter extends TokenFilter {
         System.out.println(process(input));
     }
 
-    private CharTermAttribute termAtt;
+    private final CharTermAttribute termAtt;
 
     /**
      * @param input the token stream to remove punctuation from

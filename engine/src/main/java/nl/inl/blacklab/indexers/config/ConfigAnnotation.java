@@ -33,7 +33,7 @@ public class ConfigAnnotation {
     private String forEachPath;
 
     /** How to process annotation values (if at all) */
-    private List<ConfigProcessStep> process = new ArrayList<>();
+    private final List<ConfigProcessStep> process = new ArrayList<>();
 
     /**
      * What sensitivity setting to use to index this annotation (optional, default
@@ -42,17 +42,17 @@ public class ConfigAnnotation {
     private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
 
     /** XPaths to capture the value of, to substitute for $1-$9 in valuePath */
-    private List<String> captureValuePaths = new ArrayList<>();
+    private final List<String> captureValuePaths = new ArrayList<>();
 
     /**
      * Our subannotations. Note that only 1 level of subannotations is processed
      * (i.e. there's no subsubannotations), although we could process more levels if
      * desired.
      */
-    private List<ConfigAnnotation> subannotations = new ArrayList<>();
+    private final List<ConfigAnnotation> subannotations = new ArrayList<>();
 
     /** Our subannotations (except forEach's) by name. */
-    private Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
+    private final Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
 
     /** Should we create a forward index for this annotation? */
     private boolean forwardIndex = true;

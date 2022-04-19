@@ -22,7 +22,7 @@ public class AuthDebugFixed {
 
     static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
 
-    private String userId;
+    private final String userId;
     
     /**
      * 192.168.0.0 - 192.168.255.255

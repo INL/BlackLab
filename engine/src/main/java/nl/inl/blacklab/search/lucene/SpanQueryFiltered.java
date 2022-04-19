@@ -22,7 +22,7 @@ import org.apache.lucene.search.Weight;
  */
 public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
-    private Query filter;
+    private final Query filter;
 
     /**
      * Filter a SpanQuery.

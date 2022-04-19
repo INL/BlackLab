@@ -15,10 +15,10 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
 public class SpansConstrained extends BLSpans {
 
     /** The clause we're filtering */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** The constraint with which we're filtering the clause */
-    private MatchFilter constraint;
+    private final MatchFilter constraint;
 
     /** The hit query context, which contains captured group information */
     private HitQueryContext context;
@@ -27,7 +27,7 @@ public class SpansConstrained extends BLSpans {
     private Span[] capturedGroups;
 
     /** Maps from term strings to term indices for each annotation. */
-    private ForwardIndexAccessorLeafReader fiAccessor;
+    private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Where to get forward index tokens for the current doc */
     private ForwardIndexDocument currentFiDoc;

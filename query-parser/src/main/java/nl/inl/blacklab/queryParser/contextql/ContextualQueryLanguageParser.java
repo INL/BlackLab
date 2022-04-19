@@ -135,7 +135,7 @@ public class ContextualQueryLanguageParser {
         return new CompleteQuery(null, q);
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     private String defaultProperty = "contents.word";
 

@@ -6,11 +6,11 @@ package nl.inl.blacklab.server.jobs;
  */
 public class BlsSearchSettings {
 
-    private boolean debugMode;
+    private final boolean debugMode;
 
-    private int fiMatchNfaFactor;
+    private final int fiMatchNfaFactor;
 
-    private boolean useCache;
+    private final boolean useCache;
 
     public BlsSearchSettings(boolean debugMode, int fiMatchNfaFactor, boolean useCache) {
         super();

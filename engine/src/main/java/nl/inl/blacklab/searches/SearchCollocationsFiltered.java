@@ -13,11 +13,11 @@ import nl.inl.blacklab.search.results.ResultsStats;
  */
 public class SearchCollocationsFiltered extends SearchCollocations {
 
-    private SearchCollocations source;
+    private final SearchCollocations source;
 
-    private ResultProperty<TermFrequency> property;
+    private final ResultProperty<TermFrequency> property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
         super(queryInfo);

@@ -16,10 +16,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
      */
-    private Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
+    private final Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
-    private Map<String, MetadataFieldImpl> metadataFieldInfos;
+    private final Map<String, MetadataFieldImpl> metadataFieldInfos;
 
     /**
      * When a metadata field value is considered "unknown"

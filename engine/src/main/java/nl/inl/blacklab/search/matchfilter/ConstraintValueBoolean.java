@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.matchfilter;
 
 public class ConstraintValueBoolean extends ConstraintValue {
 
-    private boolean b;
+    private final boolean b;
 
     public ConstraintValueBoolean(boolean b) {
         this.b = b;

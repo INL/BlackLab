@@ -13,10 +13,10 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
  */
 class SpansPositionFilter extends BLSpans {
     /** The spans we're (possibly) looking for */
-    private BLSpans producer;
+    private final BLSpans producer;
 
     /** The spans we use to filter the producer spans */
-    private SpansInBuckets filter;
+    private final SpansInBuckets filter;
 
     /** What doc is the producer in? */
     private int producerDoc = -1;
@@ -34,13 +34,13 @@ class SpansPositionFilter extends BLSpans {
     private int filterIndex = -1;
 
     /** What filter operation to use */
-    private Operation op;
+    private final Operation op;
 
     /** How to adjust the left edge of the producer hits while matching */
-    private int leftAdjust;
+    private final int leftAdjust;
 
     /** How to adjust the right edge of the producer hits while matching */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     /**
      * Are we already at the first match in a new document, before
@@ -52,10 +52,10 @@ class SpansPositionFilter extends BLSpans {
     /**
      * If true, produce hits that DON'T match the filter instead.
      */
-    private boolean invert;
+    private final boolean invert;
 
     /** Are the filter hits guaranteed to have the same length? */
-    private boolean filterFixedLength;
+    private final boolean filterFixedLength;
 
     /**
      * Find hits from producer, filtered by the filter according to the specified op

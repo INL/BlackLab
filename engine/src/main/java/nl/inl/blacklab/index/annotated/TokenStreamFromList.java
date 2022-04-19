@@ -24,7 +24,7 @@ class TokenStreamFromList extends TokenStream {
     protected Iterator<String> iterator;
 
     /** Iterator over the position increments */
-    private IntIterator incrementIt;
+    private final IntIterator incrementIt;
 
     /** Iterator over the payloads, if any */
     private Iterator<BytesRef> payloadIt = null;

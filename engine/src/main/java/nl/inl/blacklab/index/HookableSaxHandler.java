@@ -109,7 +109,7 @@ public class HookableSaxHandler extends DefaultHandler {
         List<String> elementNames;
 
         /** Current matching status */
-        private List<ExprMatcher> matchers = new ArrayList<>();
+        private final List<ExprMatcher> matchers = new ArrayList<>();
 
         /** Current parsing depth */
         private int depth = 0;
@@ -243,7 +243,7 @@ public class HookableSaxHandler extends DefaultHandler {
      */
     public static class ContentCapturingHandler extends ElementHandler {
 
-        private StringBuilder elementContent = new StringBuilder();
+        private final StringBuilder elementContent = new StringBuilder();
 
         public String getElementContent() {
             return elementContent.toString();
@@ -266,15 +266,15 @@ public class HookableSaxHandler extends DefaultHandler {
      */
     private static class SaxParserHook {
         /** The path to check for */
-        private SaxPathExpressionChecker expression;
+        private final SaxPathExpressionChecker expression;
 
         /** The handler for this hook */
-        private ElementHandler handler;
+        private final ElementHandler handler;
 
         /**
          * Whether or not to call the handler for all descendants of the matched element
          */
-        private boolean callHandlerForDescendants;
+        private final boolean callHandlerForDescendants;
 
         /**
          * Constructs the object.
@@ -355,7 +355,7 @@ public class HookableSaxHandler extends DefaultHandler {
     }
 
     /** The list of hooks into our parser */
-    private List<SaxParserHook> hooks = new ArrayList<>();
+    private final List<SaxParserHook> hooks = new ArrayList<>();
 
     /** To keep track of the position within the document */
     protected Locator locator;

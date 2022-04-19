@@ -89,7 +89,7 @@ public class ExportMetadata implements AutoCloseable {
 
             int docsDone = 0;
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             @Override
             public void perform(BlackLabIndex index, int docId) {

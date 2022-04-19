@@ -9,15 +9,15 @@ import java.util.stream.Stream;
 /** Logical grouping of annotations */
 public class AnnotationGroup implements Iterable<Annotation> {
     
-    private AnnotatedFieldsImpl annotatedFields;
+    private final AnnotatedFieldsImpl annotatedFields;
     
-    private String fieldName;
+    private final String fieldName;
     
-    private String groupName;
+    private final String groupName;
     
-    private List<String> annotations;
+    private final List<String> annotations;
     
-    private boolean addRemainingAnnotations;
+    private final boolean addRemainingAnnotations;
 
     public AnnotationGroup(AnnotatedFieldsImpl annotatedFields, String fieldName, String groupName, List<String> annotations,
             boolean addRemainingAnnotations) {

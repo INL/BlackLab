@@ -68,7 +68,7 @@ public class TestNfa {
 
     class ForwardIndexDocumentString extends ForwardIndexDocument {
 
-        private String input;
+        private final String input;
 
         ForwardIndexDocumentString(String input) {
             this.input = input;

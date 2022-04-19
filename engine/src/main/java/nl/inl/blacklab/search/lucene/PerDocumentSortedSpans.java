@@ -37,11 +37,11 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     private int curEnd = -1;
 
-    private SpansInBuckets bucketedSpans;
+    private final SpansInBuckets bucketedSpans;
 
-    private boolean eliminateDuplicates;
+    private final boolean eliminateDuplicates;
 
-    private boolean sortByStartPoint;
+    private final boolean sortByStartPoint;
 
     private int prevStart, prevEnd;
 

@@ -29,7 +29,7 @@ public class Concordances {
      * null, because Kwics will be used internally. This is only used when making
      * concordances from the content store (the old default).
      */
-    private Map<Hit, Concordance> concordances;
+    private final Map<Hit, Concordance> concordances;
     
     Kwics kwics = null;
 

@@ -91,7 +91,7 @@ public class VersionFile {
         return f.getType().equals(type) && f.getVersion().equals(version);
     }
 
-    private File file;
+    private final File file;
 
     private String type;
 

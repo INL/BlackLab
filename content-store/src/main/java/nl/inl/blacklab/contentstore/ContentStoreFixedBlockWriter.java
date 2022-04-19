@@ -84,10 +84,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * Keeps track of the block ids we've stored parts the current file in so far
      */
-    private IntArrayList blockIndicesWhileStoring;
+    private final IntArrayList blockIndicesWhileStoring;
 
     /** Keeps track of the char offsets of the blocks of the current file so far */
-    private IntArrayList blockCharOffsetsWhileStoring;
+    private final IntArrayList blockCharOffsetsWhileStoring;
 
     /** If true, the toc file should be updated dat the end */
     private boolean tocModified = false;
@@ -102,7 +102,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096;
 
     /** Used to pad blocks that are less than BLOCK_SIZE long */
-    private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
+    private final byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
 
     SimpleResourcePool<Deflater> compresserPool;
 

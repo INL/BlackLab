@@ -50,9 +50,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      */
     private static final int MAX_CHARACTER_CONTENT_CAPTURE_LENGTH = 4000;
 
-    private HookableSaxHandler hookableHandler = new HookableSaxHandler();
+    private final HookableSaxHandler hookableHandler = new HookableSaxHandler();
 
-    private SaxParseHandler saxParseHandler = new SaxParseHandler();
+    private final SaxParseHandler saxParseHandler = new SaxParseHandler();
 
     /**
      * What namespace prefix mappings have we encountered but not output in a start
@@ -208,9 +208,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     public class MetadataNameValueAttributeHandler extends
             ContentCapturingHandler {
 
-        private String nameAttribute;
+        private final String nameAttribute;
 
-        private String valueAttribute;
+        private final String valueAttribute;
 
         public MetadataNameValueAttributeHandler(String nameAttribute,
                 String valueAttribute) {
@@ -333,7 +333,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /** Handle &lt;Word&gt; tags (word tokens). */
     public class WordInAttributeHandler extends DefaultWordHandler {
 
-        private String attName;
+        private final String attName;
 
         protected String currentWord;
 

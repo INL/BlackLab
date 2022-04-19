@@ -30,9 +30,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryAndNot extends BLSpanQuery {
 
-    private List<BLSpanQuery> include;
+    private final List<BLSpanQuery> include;
 
-    private List<BLSpanQuery> exclude;
+    private final List<BLSpanQuery> exclude;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);

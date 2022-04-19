@@ -9,15 +9,15 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import java.util.Arrays;
 
 public class MatchFilterSameTokens extends MatchFilter {
-    private String annotationName;
+    private final String annotationName;
 
     private int annotIndex = -1;
 
-    private String[] groupName;
+    private final String[] groupName;
 
     private int[] groupIndex;
 
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     public MatchFilterSameTokens(String leftGroup, String rightGroup, String annotationName, MatchSensitivity sensitivity) {
         this.groupName = new String[] { leftGroup, rightGroup };

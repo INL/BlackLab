@@ -8,9 +8,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /** A search that yields groups of documents. */
 public class SearchDocGroupsSorted extends SearchDocGroups {
 
-    private SearchDocGroups source;
+    private final SearchDocGroups source;
 
-    private DocGroupProperty property;
+    private final DocGroupProperty property;
 
     public SearchDocGroupsSorted(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property) {
         super(queryInfo);

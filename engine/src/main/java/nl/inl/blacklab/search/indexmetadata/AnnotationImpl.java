@@ -9,10 +9,10 @@ import java.util.*;
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
     
     /** The field this is an annotation for. */
-    private AnnotatedField field;
+    private final AnnotatedField field;
     
     /** The annotation name */
     private String name;
@@ -35,10 +35,10 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean isInternal;
 
     /** Reference to match sensitivities this annotation has */
-    private Set<AnnotationSensitivity> alternatives = new HashSet<>();
+    private final Set<AnnotationSensitivity> alternatives = new HashSet<>();
 
     /** Match sensitivity values this annotation has */
-    private Set<MatchSensitivity> matchSensitivities = new HashSet<>();
+    private final Set<MatchSensitivity> matchSensitivities = new HashSet<>();
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -52,7 +52,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean frozen = false;
     
     /** Names of our subannotations, if declared (new-style index) and if we have any */
-    private Set<String> subAnnotationNames = new HashSet<>();
+    private final Set<String> subAnnotationNames = new HashSet<>();
 
     /** Our subannotations (if we have an old-style index, where subannotations aren't declared).
      *  This is not actually considered state, just cache, because all 

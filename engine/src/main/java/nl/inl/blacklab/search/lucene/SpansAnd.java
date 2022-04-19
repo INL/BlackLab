@@ -12,13 +12,13 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansAnd extends BLSpans {
     /** The two sets of hits to combine */
-    private BLSpans[] spans = new BLSpans[2];
+    private final BLSpans[] spans = new BLSpans[2];
 
     /** -1 = not started, NO_MORE_DOCS = done, otherwise = docID */
-    private int[] currentDoc = new int[2];
+    private final int[] currentDoc = new int[2];
 
     /** -1 = not started, NO_MORE_POSITIONS = done, otherwise = start position */
-    private int[] currentStart = new int[2];
+    private final int[] currentStart = new int[2];
 
     private boolean alreadyAtFirstMatch = false;
 

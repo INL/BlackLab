@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 
 public final class MockMetadataField implements MetadataField {
     
-    private String name;
+    private final String name;
 
     public MockMetadataField(String name) {
         this.name = name;

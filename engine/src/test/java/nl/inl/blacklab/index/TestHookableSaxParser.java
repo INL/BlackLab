@@ -50,7 +50,7 @@ public class TestHookableSaxParser {
 
     class StringConcatenateHandler extends ElementHandler {
 
-        private StringBuilder builder = new StringBuilder();
+        private final StringBuilder builder = new StringBuilder();
 
         public StringConcatenateHandler() {
             //

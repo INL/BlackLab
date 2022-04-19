@@ -29,13 +29,13 @@ public class FiidLookup {
      * Index reader, for getting documents (for translating from Lucene doc id to
      * fiid)
      */
-    private IndexReader reader;
+    private final IndexReader reader;
 
     /**
      * fiid field name in the Lucene index (for translating from Lucene doc id to
      * fiid)
      */
-    private String fiidFieldName;
+    private final String fiidFieldName;
 
     /** The DocValues per segment (keyed by docBase) */
     private Map<Integer, NumericDocValues> cachedFiids;

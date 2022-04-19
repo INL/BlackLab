@@ -27,13 +27,13 @@ public class SpanQueryTags extends BLSpanQuery {
 
     BLSpanTermQuery clause;
 
-    private String tagName;
+    private final String tagName;
 
-    private String baseFieldName;
+    private final String baseFieldName;
 
-    private Map<String, String> attr;
+    private final Map<String, String> attr;
 
-    private String startTagFieldName;
+    private final String startTagFieldName;
 
     public SpanQueryTags(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
         super(queryInfo);

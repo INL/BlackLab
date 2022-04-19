@@ -29,7 +29,7 @@ public class HitPropertyContextWords extends HitProperty {
         HIT_TEXT_FROM_END("E"), // hit text, backwards from last matched word
         RIGHT_OF_HIT("R"); // right context of the hit
 
-        private String code;
+        private final String code;
 
         ContextStart(String code) {
             this.code = code;

@@ -12,11 +12,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsFiltered extends SearchHitGroups {
 
-    private SearchHitGroups source;
+    private final SearchHitGroups source;
 
-    private HitGroupProperty property;
+    private final HitGroupProperty property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchHitGroupsFiltered(QueryInfo queryInfo, SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
         super(queryInfo);

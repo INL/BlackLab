@@ -54,7 +54,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private Locale locale = null;
 
     /** Fallback locale in case we can't parse the date */
-    private Locale usLocale = new Locale("en", "US");
+    private final Locale usLocale = new Locale("en", "US");
 
     private ConfigAnnotatedField currentAnnotatedField;
 

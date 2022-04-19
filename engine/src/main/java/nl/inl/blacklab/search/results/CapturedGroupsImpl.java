@@ -14,10 +14,10 @@ import nl.inl.blacklab.search.Span;
 public class CapturedGroupsImpl implements CapturedGroups {
 
     /** The captured groups per hit. */
-    private Map<Hit, Span[]> capturedGroups;
+    private final Map<Hit, Span[]> capturedGroups;
 
     /** Capture group names. */
-    private List<String> capturedGroupNames;
+    private final List<String> capturedGroupNames;
 
     public CapturedGroupsImpl(List<String> capturedGroupNames) {
         this.capturedGroupNames = capturedGroupNames;

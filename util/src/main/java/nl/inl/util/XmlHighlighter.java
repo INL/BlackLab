@@ -322,7 +322,8 @@ public class XmlHighlighter {
      * content.
      */
     public static class HitCharSpan {
-        private int startChar, endChar;
+        private final int startChar;
+        private final int endChar;
 
         public int getStartChar() {
             return startChar;

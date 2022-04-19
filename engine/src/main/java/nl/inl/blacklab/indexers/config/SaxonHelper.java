@@ -173,7 +173,7 @@ class SaxonHelper {
         }
     }
 
-    private XPath xPath;
+    private final XPath xPath;
 
     /**
      * Needed to not loose our contenthandler, which would otherwise be overridden by saxon.
@@ -302,7 +302,7 @@ class SaxonHelper {
             saxonHandler.endPrefixMapping(prefix);
         }
         
-        private Deque<StartEndPos> elStack = new ArrayDeque<>();
+        private final Deque<StartEndPos> elStack = new ArrayDeque<>();
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {

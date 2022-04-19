@@ -132,9 +132,9 @@ public class MockSpans extends BLSpans {
 
     int[] end;
 
-    private MockPostingsEnum postings;
+    private final MockPostingsEnum postings;
 
-    private MyTermSpans spans;
+    private final MyTermSpans spans;
 
     private boolean noMoreDocs = false;
 

@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
 
-    private QueryInfo queryInfo;
+    private final QueryInfo queryInfo;
 
     public AbstractSearch(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;

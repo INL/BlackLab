@@ -34,15 +34,15 @@ class TokenStreamWithOffsets extends TokenStream {
     /**
      * Character offsets of the current token
      */
-    private OffsetAttribute offsetAttr;
+    private final OffsetAttribute offsetAttr;
 
     protected Iterator<String> iterator;
 
     protected IntIterator incrementIt;
 
-    private IntIterator startCharIt;
+    private final IntIterator startCharIt;
 
-    private IntIterator endCharIt;
+    private final IntIterator endCharIt;
     
     private int currentStartChar = -1;
 

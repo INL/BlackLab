@@ -29,7 +29,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     protected NfaState nextState;
 
     /** Match case-/diacritics-sensitively? */
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     public NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
         this.luceneField = luceneField;

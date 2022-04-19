@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.Span;
  * configurable (to specifically support greedy matching, etc.)
  */
 class SpansRepetition extends BLSpans {
-    private SpansInBuckets source;
+    private final SpansInBuckets source;
 
     /**
      * If -1: not started yet. If NO_MORE_DOCS: done. Otherwise: doc id.
@@ -25,15 +25,15 @@ class SpansRepetition extends BLSpans {
 
     boolean moreBuckets = false;
 
-    private int min;
+    private final int min;
 
-    private int max;
+    private final int max;
 
     private int firstToken;
 
     private int numRepetitions;
 
-    private BLSpans spansSource;
+    private final BLSpans spansSource;
 
     private boolean alreadyAtFirstMatch = false;
 

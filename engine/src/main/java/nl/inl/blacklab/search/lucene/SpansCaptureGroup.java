@@ -15,10 +15,10 @@ import nl.inl.blacklab.search.Span;
 class SpansCaptureGroup extends BLSpans {
 
     /** clause to capture as a group */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** group name */
-    private String name;
+    private final String name;
 
     /**
      * group index (where in the Spans[] to place our start/end position in
@@ -38,7 +38,7 @@ class SpansCaptureGroup extends BLSpans {
      * because we try to internalize constant-length neighbouring clauses into our
      * clause to speed up matching)
      */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     /**
      * Constructs a SpansCaptureGroup.

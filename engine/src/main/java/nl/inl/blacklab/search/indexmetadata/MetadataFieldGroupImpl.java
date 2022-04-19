@@ -17,11 +17,11 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
 
-    private MetadataFields metadataFieldsAccessor;
+    private final MetadataFields metadataFieldsAccessor;
 
-    private String name;
+    private final String name;
 
-    private List<String> fieldNamesInGroup;
+    private final List<String> fieldNamesInGroup;
 
     private List<MetadataField> fieldsInGroup = null;
 

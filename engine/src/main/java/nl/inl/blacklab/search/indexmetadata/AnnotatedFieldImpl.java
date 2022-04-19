@@ -78,13 +78,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
     
     /** This field's annotations, sorted by name */
-    private Map<String, AnnotationImpl> annots;
+    private final Map<String, AnnotationImpl> annots;
     
     /** This field's annotations, in desired display order */
-    private List<AnnotationImpl> annotationsDisplayOrder;
+    private final List<AnnotationImpl> annotationsDisplayOrder;
 
     /** The field's main annotation */
     private AnnotationImpl mainAnnotation;
@@ -108,14 +108,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
     /** Annotation display order. If not specified, use reasonable defaults. */
-    private List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
+    private final List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
 
     /** Compares annotation names by displayOrder. */
-    private Comparator<AnnotationImpl> annotationOrderComparator;
+    private final Comparator<AnnotationImpl> annotationOrderComparator;
 
     private boolean frozen;
 
-    private AnnotationsImpl annotationsImpl;
+    private final AnnotationsImpl annotationsImpl;
 
     AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);

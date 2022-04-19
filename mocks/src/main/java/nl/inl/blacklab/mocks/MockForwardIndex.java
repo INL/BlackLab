@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class MockForwardIndex extends AnnotationForwardIndex {
 
-    private Terms terms;
+    private final Terms terms;
 
     public MockForwardIndex(Terms terms) {
         super(null, null, null);

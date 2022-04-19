@@ -78,7 +78,7 @@ public class HitsFromQuery extends HitsMutable {
      */
     private boolean sourceSpansFullyRead = true;
 
-    private Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /** Context of our query; mostly used to keep track of captured groups. */
     private HitQueryContext hitQueryContext;

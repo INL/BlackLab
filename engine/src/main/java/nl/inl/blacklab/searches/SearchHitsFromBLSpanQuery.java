@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public class SearchHitsFromBLSpanQuery extends SearchHits {
 
-    private BLSpanQuery spanQuery;
+    private final BLSpanQuery spanQuery;
 
-    private SearchSettings searchSettings;
+    private final SearchSettings searchSettings;
 
     public SearchHitsFromBLSpanQuery(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings) {
         super(queryInfo);

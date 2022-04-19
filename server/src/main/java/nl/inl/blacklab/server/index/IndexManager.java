@@ -65,10 +65,10 @@ public class IndexManager {
 
     private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
-    private SearchManager searchMan;
+    private final SearchManager searchMan;
 
     /** Configured index collections directories */
-    private List<File> collectionsDirs;
+    private final List<File> collectionsDirs;
 
     /**
      * Logged-in users will have their own private collections dir. This is the
@@ -82,7 +82,7 @@ public class IndexManager {
      */
     private DocIndexerFactoryUserFormats userFormatManager;
 
-    private Map<String, Index> indices = new HashMap<>();
+    private final Map<String, Index> indices = new HashMap<>();
 
     public IndexManager(SearchManager searchMan, BLSConfig blsConfig) throws ConfigurationException {
         this.searchMan = searchMan;

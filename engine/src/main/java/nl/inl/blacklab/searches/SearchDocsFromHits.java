@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsFromHits extends SearchDocs {
 
-    private SearchHits source;
+    private final SearchHits source;
 
     private long maxHits = 0;
 

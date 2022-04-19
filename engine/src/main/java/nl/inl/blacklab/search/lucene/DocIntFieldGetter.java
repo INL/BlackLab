@@ -24,10 +24,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class DocIntFieldGetter implements Closeable {
 
     /** The Lucene index reader, for querying field length */
-    private LeafReader reader;
+    private final LeafReader reader;
 
     /** Field name to check for the length of the field in tokens */
-    private String intFieldName;
+    private final String intFieldName;
 
     /** Lengths may have been cached using FieldCache */
     private NumericDocValues docValues;
