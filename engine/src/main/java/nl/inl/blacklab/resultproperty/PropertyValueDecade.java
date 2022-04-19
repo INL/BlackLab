@@ -13,6 +13,7 @@ public class PropertyValueDecade extends PropertyValueInt {
         try {
             decade = Integer.parseInt(info);
         } catch (NumberFormatException e) {
+            logger.warn("PropertyValueDecade.deserialize(): '" + info + "' is not a valid integer.");
             decade = 0;
         }
         return new PropertyValueDecade(decade);

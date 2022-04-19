@@ -96,6 +96,7 @@ public class IndexTool {
                             numberOfThreadsToUse = Integer.parseInt(args[i + 1]);
                             i++;
                         } catch (NumberFormatException e) {
+                            System.err.println("Specify a valid integer for --threads option. Using default of 2.");
                             numberOfThreadsToUse = 2;
                         }
                     } else

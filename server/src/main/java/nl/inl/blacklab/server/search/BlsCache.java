@@ -104,7 +104,7 @@ public class BlsCache implements SearchCache {
         this.maxConcurrentSearches = blsConfig.getPerformance().getMaxConcurrentSearches();
         this.abandonedCountAbortTimeSec = blsConfig.getPerformance().getAbandonedCountAbortTimeSec();
         this.trace = blsConfig.getLog().getTrace().isCache();
-        cacheDisabled = config.getMaxJobAgeSec() == 0;
+        cacheDisabled = config.getMaxJobAgeSec() == 0 || config.getMaxNumberOfJobs() == 0;
 
         if (!cacheDisabled) {
             worthinessComparator = (o1, o2) -> {

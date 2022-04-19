@@ -47,6 +47,7 @@ public class PropertyValueDoc extends PropertyValue {
         try {
             id = Integer.parseInt(info);
         } catch (NumberFormatException e) {
+            logger.warn("PropertyValueDoc.deserialize(): '" + info + "' is not a valid integer.");
             id = -1;
         }
         return new PropertyValueDoc(index, id);

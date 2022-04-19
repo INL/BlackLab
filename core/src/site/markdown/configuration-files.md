@@ -186,10 +186,11 @@ cache:
     # Higher values make clients more responsive but could cause problems if the data (or worse,
     # the protocol) changes after an update. A value of an hour or so seems reasonable.
     clientCacheTimeSec: 3600
-    
-    # [DEPRECATED, NO LONGER USED]
-    # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
-    # "cache cleanup goal".
+
+    # Maximum number of cache entries to keep.
+    # Please note that memory use per cache entry may vary wildly,
+    # so you may prefer to use targetFreeMemMegs to set a "free memory goal"
+    # and/or maxJobAgeSec to set a maximum age for cache entries.
     maxNumberOfJobs: 100
     
     # The cache implementation to use.
