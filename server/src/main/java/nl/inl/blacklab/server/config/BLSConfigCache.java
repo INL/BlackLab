@@ -25,7 +25,10 @@ public class BLSConfigCache {
     @Deprecated
     int maxSizeMegs = 100;
 
-    @Deprecated
+    /** Maximum number of cache entries to keep.
+     *
+     * Please note that memory use per cache entry may vary wildly.
+     */
     int maxNumberOfJobs = 100;
 
     /** When to abort a search (seconds). */
@@ -57,14 +60,11 @@ public class BLSConfigCache {
         logger.warn("Ignoring deprecated configuration option: cache.maxSizeMegs (use targetFreeMemMegs instead)");
     }
 
-    @Deprecated
     public int getMaxNumberOfJobs() {
         return maxNumberOfJobs;
     }
 
-    @Deprecated
     public void setMaxNumberOfJobs(int maxNumberOfJobs) {
-        logger.warn("Configuration option cache.maxNumberOfJobs is deprecated (use targetFreeMemMegs instead)");
         this.maxNumberOfJobs = maxNumberOfJobs;
     }
 
