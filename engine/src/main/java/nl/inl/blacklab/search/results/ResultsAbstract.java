@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -26,11 +27,7 @@ import nl.inl.util.ThreadAborter;
 public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements Results<T, P> {
 
     /** Id the next Hits instance will get */
-    private static int nextHitsObjId = 0;
-
-    private static synchronized int getNextHitsObjId() {
-        return nextHitsObjId++;
-    }
+    private static AtomicInteger nextHitsObjId = new AtomicInteger();
 
     // Perform simple generic sampling operation
     protected static <T, P extends ResultProperty<T>> List<T> doSample(ResultsList<T, P> source, SampleParameters sampleParameters) {
@@ -86,7 +83,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
     }
 
     /** Unique id of this Hits instance (for debugging) */
-    protected final int hitsObjId = getNextHitsObjId();
+    protected final int hitsObjId = nextHitsObjId.getAndIncrement();
 
     /** Information about the original query: index, field, max settings, max stats. */
     private final QueryInfo queryInfo;
