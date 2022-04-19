@@ -32,8 +32,6 @@ public class DocUtil {
      *
      * The field in question must have character offsets stored.
      *
-     * The starts and ends token position arrays must be of equal length.
-     *
      * @param index our index
      * @param docId document id
      * @param field annotated or metadata field we want offsets for
@@ -47,21 +45,19 @@ public class DocUtil {
             return; // nothing to do
         try {
             // Determine lowest and highest word position we'd like to know something about.
-            // This saves a little bit of time for large result sets.
+            // This saves a bit of time for large result sets.
             int minP = -1, maxP = -1;
-            int numStarts = startsOfWords.length;
-            int numEnds = endsOfWords.length;
-            for (int i = 0; i < numStarts; i++) {
-                if (startsOfWords[i] < minP || minP == -1)
-                    minP = startsOfWords[i];
-                if (startsOfWords[i] > maxP)
-                    maxP = startsOfWords[i];
+            for (int startsOfWord : startsOfWords) {
+                if (startsOfWord < minP || minP == -1)
+                    minP = startsOfWord;
+                if (startsOfWord > maxP)
+                    maxP = startsOfWord;
             }
-            for (int i = 0; i < numEnds; i++) {
-                if (endsOfWords[i] < minP || minP == -1)
-                    minP = endsOfWords[i];
-                if (endsOfWords[i] > maxP)
-                    maxP = endsOfWords[i];
+            for (int endsOfWord : endsOfWords) {
+                if (endsOfWord < minP || minP == -1)
+                    minP = endsOfWord;
+                if (endsOfWord > maxP)
+                    maxP = endsOfWord;
             }
             if (minP < 0 || maxP < 0)
                 throw new BlackLabRuntimeException("Can't determine min and max positions");
@@ -73,11 +69,11 @@ public class DocUtil {
                 throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + docId + " has no term vector");
             if (!terms.hasPositions())
                 throw new IllegalArgumentException(
-                        "Field " + fieldPropName + " in doc " + docId + " has no character postion information");
+                        "Field " + fieldPropName + " in doc " + docId + " has no character position information");
 
             //int lowestPos = -1, highestPos = -1;
             int lowestPosFirstChar = -1, highestPosLastChar = -1;
-            int total = numStarts + numEnds;
+            int total = startsOfWords.length + endsOfWords.length;
             boolean[] done = new boolean[total]; // NOTE: array is automatically initialized to zeroes!
             int found = 0;
 
@@ -115,16 +111,16 @@ public class DocUtil {
                             continue;
                         }
 
-                        for (int m = 0; m < numStarts; m++) {
+                        for (int m = 0; m < startsOfWords.length; m++) {
                             if (!done[m] && position == startsOfWords[m]) {
                                 done[m] = true;
                                 startsOfWords[m] = startOffset;
                                 found++;
                             }
                         }
-                        for (int m = 0; m < numEnds; m++) {
-                            if (!done[numStarts + m] && position == endsOfWords[m]) {
-                                done[numStarts + m] = true;
+                        for (int m = 0; m < endsOfWords.length; m++) {
+                            if (!done[startsOfWords.length + m] && position == endsOfWords[m]) {
+                                done[startsOfWords.length + m] = true;
                                 endsOfWords[m] = endOffset;
                                 found++;
                             }
@@ -144,12 +140,12 @@ public class DocUtil {
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
                     throw new BlackLabRuntimeException("Could not find default char positions!");
 
-                for (int m = 0; m < numStarts; m++) {
+                for (int m = 0; m < startsOfWords.length; m++) {
                     if (!done[m])
                         startsOfWords[m] = lowestPosFirstChar;
                 }
-                for (int m = 0; m < numEnds; m++) {
-                    if (!done[numStarts + m])
+                for (int m = 0; m < endsOfWords.length; m++) {
+                    if (!done[startsOfWords.length + m])
                         endsOfWords[m] = highestPosLastChar;
                 }
             }
@@ -174,11 +170,11 @@ public class DocUtil {
 
         characterOffsets(index, docId, hits.field(), starts, ends, true);
 
-        List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
+        List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
-            hitspans.add(new HitCharSpan(starts[i], ends[i]));
+            hitSpans.add(new HitCharSpan(starts[i], ends[i]));
         }
-        return hitspans;
+        return hitSpans;
     }
 
     /**
@@ -267,14 +263,14 @@ public class DocUtil {
         ResultsStats hitsStats = hits.hitsStats();
         if (hitsStats.processedAtLeast(1) || mustFixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
-            List<HitCharSpan> hitspans = null;
+            List<HitCharSpan> hitSpans = null;
             if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
-                hitspans = getCharacterOffsets(index, docId, hits);
+                hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
             if (startAtChar == -1)
                 startAtChar = 0;
-            content = hl.highlight(content, hitspans, startAtChar);
+            content = hl.highlight(content, hitSpans, startAtChar);
         }
         return content;
     }
@@ -355,42 +351,27 @@ public class DocUtil {
     }
 
     /**
-     * Get part of the contents of a document.
-     *
-     * Pass -1 for start and end positions to get the whole content.
-     *
-     * @param index our indx
-     * @param docId document id
-     * @param d Lucene document if available, otherwise null
-     * @param field field to get contents for
-     * @param startAtWord token position to start at
-     * @param endAtWord token position to end at (first token not in the resulting snippet)
-     * @return contents
-     */
-    static String contents(BlackLabIndex index, int docId, Document d, Field field, int startAtWord, int endAtWord) {
-        if (d == null)
-            d = index.luceneDoc(docId);
-        if (!field.hasContentStore()) {
-            // No special content accessor set; assume a stored field
-            String content = d.get(field.contentsFieldName());
-            if (content == null)
-                throw new IllegalArgumentException("Field not found: " + field.name());
-            return BlackLabIndexImpl.getWordsFromString(content, startAtWord, endAtWord);
-        }
-
-        int[] startEnd = startEndWordToCharPos(index, docId, field, startAtWord, endAtWord);
-        return index.contentAccessor(field).getSubstringsFromDocument(d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
-    }
-
-    /**
      * Get the contents of a document.
      *
-     * @param index our indx
+     * @param index our index
      * @param docId document id
      * @param d Lucene document if available, otherwise null
      * @return contents
      */
     public static String contents(BlackLabIndex index, int docId, Document d) {
-        return contents(index, docId, d, index.mainAnnotatedField(), -1, -1);
+        Document d1 = d;
+        Field field = index.mainAnnotatedField();
+        if (d1 == null)
+            d1 = index.luceneDoc(docId);
+        if (!field.hasContentStore()) {
+            // No special content accessor set; assume a stored field
+            String content = d1.get(field.contentsFieldName());
+            if (content == null)
+                throw new IllegalArgumentException("Field not found: " + field.name());
+            return BlackLabIndexImpl.getWordsFromString(content, -1, -1);
+        }
+
+        int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
+        return index.contentAccessor(field).getSubstringsFromDocument(d1, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
     }
 }
