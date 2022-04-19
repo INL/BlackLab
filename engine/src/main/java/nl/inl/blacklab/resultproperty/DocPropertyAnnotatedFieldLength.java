@@ -129,12 +129,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        try {
-            long length = get(result.identity().value());
-            return new PropertyValueInt(length);
-        } catch (NumberFormatException e) {
-            return new PropertyValueInt(0);
-        }
+        return new PropertyValueInt(get(result.identity().value()));
     }
 
     /**

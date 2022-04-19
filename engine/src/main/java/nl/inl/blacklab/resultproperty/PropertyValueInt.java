@@ -38,6 +38,7 @@ public class PropertyValueInt extends PropertyValue {
         try {
             v = Integer.parseInt(info);
         } catch (NumberFormatException e) {
+            logger.warn("PropertyValueInt.deserialize(): '" + info + "' is not a valid integer.");
             v = 0;
         }
         return new PropertyValueInt(v);

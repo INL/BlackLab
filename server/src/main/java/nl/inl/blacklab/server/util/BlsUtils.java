@@ -62,6 +62,7 @@ public class BlsUtils {
                                 return IntPoint.newRangeQuery(field, Integer.parseInt(part1), Integer.parseInt(part2)/*, startInclusive, endInclusive*/);// both include start and end default
                             } catch (NumberFormatException e) {
                                 // there is nothing we can do here, just return the default implementation, which will likely return no results
+                                logger.warn("BlsUtil.parseFilter: range value '" + part1 + "' or " + part2 + " is not a valid integer.");
                             }
                         }
                         return super.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
