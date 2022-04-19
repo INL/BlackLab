@@ -22,7 +22,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
@@ -56,7 +55,7 @@ public class HitsFromQuery extends HitsMutable {
     /**
      * What LeafReaderContext we're querying now.
      */
-    private int atomicReaderContextIndex = -1;
+    private int atomicReaderContextIndex;
 
     /**
      * Term contexts for the terms in the query.
@@ -76,7 +75,7 @@ public class HitsFromQuery extends HitsMutable {
     /**
      * Did we completely read our Spans object?
      */
-    private boolean sourceSpansFullyRead = true;
+    private boolean sourceSpansFullyRead;
 
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -96,7 +95,6 @@ public class HitsFromQuery extends HitsMutable {
      * @param queryInfo query info
      * @param sourceQuery the query to execute to get the hits
      * @param searchSettings search settings
-     * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         super(queryInfo);
@@ -247,7 +245,7 @@ public class HitsFromQuery extends HitsMutable {
                                     doc = currentSourceSpans.nextDoc();
                                     if (doc == DocIdSetIterator.NO_MORE_DOCS)
                                         currentSourceSpans = null; // no matching docs in this segment, try next
-                                    alive = liveDocs == null ? true : liveDocs.get(doc);
+                                    alive = liveDocs == null || liveDocs.get(doc);
                                 } while(currentSourceSpans != null && !alive);
                             }
                         }
@@ -258,7 +256,7 @@ public class HitsFromQuery extends HitsMutable {
                             int doc = currentSourceSpans.nextDoc();
                             if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                                 // Go to first hit in doc
-                                start = currentSourceSpans.nextStartPosition();
+                                currentSourceSpans.nextStartPosition();
                             } else {
                                 // This one is exhausted; go to the next one.
                                 currentSourceSpans = null;

@@ -368,7 +368,7 @@ public class DocUtil {
             String content = d1.get(field.contentsFieldName());
             if (content == null)
                 throw new IllegalArgumentException("Field not found: " + field.name());
-            return BlackLabIndexImpl.getWordsFromString(content, -1, -1);
+            return content;
         }
 
         int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);

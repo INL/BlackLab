@@ -140,7 +140,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     /**
      * Get a window into this list of hits.
      *
-     * Use this if you're displaying part of the resultset, like in a paging
+     * Use this if you're displaying part of the result set, like in a paging
      * interface. It makes sure BlackLab only works with the hits you want to
      * display and doesn't do any unnecessary processing on the other hits.
      *
@@ -218,7 +218,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             throw new BlackLabRuntimeException("Cannot sample from more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits");
         }
 
-        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
+        // We can later provide an optimized version that uses a HitsSampleCopy or some such
         // (this class could save memory by only storing the hits we're interested in)
         Set<Long> chosenHitIndices = new TreeSet<>(); // we need indexes sorted (see below)
         long numberOfHitsToSelect = sampleParameters.numberOfHits(totalNumberOfHits);
@@ -271,7 +271,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * Return a new Hits object with these hits sorted by the given property.
      *
      * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset.
+     * different sorts of the same result set.
      *
      * @param sortProp the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
@@ -468,12 +468,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     //--------------------------------------------------------------------
 
     @Override
-    public Hits getHitsInDoc(int docid) {
+    public Hits getHitsInDoc(int docId) {
         ensureAllResultsRead();
         HitsInternalMutable r = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsInternal) {
-            if (h.doc == docid)
+            if (h.doc == docId)
                 r.add(h);
         }
         return new HitsList(queryInfo(), r, null);

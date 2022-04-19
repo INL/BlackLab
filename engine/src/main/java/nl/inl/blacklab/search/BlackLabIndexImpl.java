@@ -117,38 +117,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     // Static methods
     //---------------------------------------------------------------
 
-    /**
-     * Cut a few words from a string.
-     *
-     * Note, this just splits on whitespace and glues words back with space. Might
-     * not work very well in all cases, but it's not likely to be used anyway (we
-     * generally don't cut a few words from a metadata field).
-     *
-     * @param content the string to cut from
-     * @param startAtWord first word to include
-     * @param endAtWord first word not to include
-     * @return the cut string
-     */
-    static String getWordsFromString(String content, int startAtWord,
-            int endAtWord) {
-        if (startAtWord == -1 && endAtWord == -1)
-            return content;
-        // We want specific words from the field; quick-n-dirty way to do this
-        // (will probably never be used, but let's try to be generic)
-        String[] words = content.split("\\s+");
-        if (startAtWord == -1)
-            startAtWord = 0;
-        if (endAtWord == -1)
-            endAtWord = words.length;
-        StringBuilder b = new StringBuilder();
-        for (int i = startAtWord; i < endAtWord; i++) {
-            if (b.length() > 0)
-                b.append(" ");
-            b.append(words[i]);
-        }
-        return b.toString();
-    }
-
     public static Collator defaultCollator() {
         return defaultCollator;
     }

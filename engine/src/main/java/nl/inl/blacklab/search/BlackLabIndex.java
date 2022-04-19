@@ -15,6 +15,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -58,8 +59,7 @@ public interface BlackLabIndex extends Closeable {
             if (VersionFile.exists(indexDir)) {
                 VersionFile vf = VersionFile.read(indexDir);
                 String version = vf.getVersion();
-                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
-                    return true;
+                return vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2"));
             }
             return false;
         } catch (FileNotFoundException e) {
@@ -73,7 +73,7 @@ public interface BlackLabIndex extends Closeable {
      * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @return index object
-     * @throw IndexTooOld if the index format is no longer supported
+     * @throws IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
     static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {
@@ -132,7 +132,7 @@ public interface BlackLabIndex extends Closeable {
      *             is overly broad
      */
     default Hits find(BLSpanQuery query) throws WildcardTermTooBroad {
-        return find(query, (SearchSettings)null);
+        return find(query, null);
     }
 
     /**
@@ -157,7 +157,7 @@ public interface BlackLabIndex extends Closeable {
     /**
      * Determine the term frequencies for an annotation sensitivity.
      * 
-     * @param annotSensitivity the annation + sensitivity indexing we want the term frequency for
+     * @param annotSensitivity the annotation + sensitivity indexing we want the term frequency for
      * @param filterQuery document filter, or null for all documents
      * @param terms a list of terms to retrieve frequencies for, or null/empty to retrieve frequencies for all terms
      * @return term frequencies
@@ -227,7 +227,7 @@ public interface BlackLabIndex extends Closeable {
     ContentAccessor contentAccessor(Field field);
 
     /**
-     * Tries to get the ForwardIndex object for the specified fieldname.
+     * Tries to get the ForwardIndex object for the specified field name.
      *
      * Looks for an already-opened forward index first. If none is found, and if
      * we're in "create index" mode, may create a new forward index. Otherwise,
