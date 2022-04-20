@@ -38,12 +38,10 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
-    private final ExecutorService executorService;
-
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
-        executorService = index.blackLab().initializationExecutorService();
+        ExecutorService executorService = index.blackLab().initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;

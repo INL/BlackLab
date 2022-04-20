@@ -18,8 +18,6 @@ import nl.inl.util.UtilsForTesting;
 public class TestTerms {
     private Terms t;
 
-    private File dir;
-
     String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
     @Before
@@ -29,7 +27,7 @@ public class TestTerms {
         UtilsForTesting.removeBlackLabTestDirs();
 
         // Create new test dir
-        dir = UtilsForTesting.createBlackLabTestDir("Terms");
+        File dir = UtilsForTesting.createBlackLabTestDir("Terms");
 
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));

@@ -162,6 +162,7 @@ class SaxonHelper {
         // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
+            NSCTX namespaces = new NSCTX();
             namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e : blConfig.getNamespaces().entrySet()) {
                 namespaces.add(e.getKey(), e.getValue());
@@ -354,8 +355,6 @@ class SaxonHelper {
      * Compiled XPaths for use in one thread.
      */
     private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
-
-    private final NSCTX namespaces = new NSCTX();
 
     private static class NSCTX implements NamespaceContext {
         private final Map<String, String> ns = new HashMap<>(3);

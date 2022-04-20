@@ -33,8 +33,6 @@ class SpansRepetition extends BLSpans {
 
     private int numRepetitions;
 
-    private final BLSpans spansSource;
-
     private boolean alreadyAtFirstMatch = false;
 
     /**
@@ -48,8 +46,7 @@ class SpansRepetition extends BLSpans {
      */
     public SpansRepetition(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        spansSource = source;
-        this.source = new SpansInBucketsConsecutive(spansSource);
+        this.source = new SpansInBucketsConsecutive(source);
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)

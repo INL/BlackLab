@@ -14,8 +14,6 @@ import nl.inl.util.UtilsForTesting;
 public class TestForwardIndexDelete {
     private AnnotationForwardIndex fi;
 
-    private File dir;
-
     @Before
     public void setUpForwardIndex() {
 
@@ -29,7 +27,7 @@ public class TestForwardIndexDelete {
         UtilsForTesting.removeBlackLabTestDirs();
 
         // Create new test dir
-        dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
+        File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
         fi = new AnnotationForwardIndexWriter(null, dir, Collators.defaultCollator(), true);
         // Store strings

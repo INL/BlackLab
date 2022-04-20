@@ -83,17 +83,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
         static XPathExpression xpathAuthor;
         static XPathExpression xpathDate;
 
-        /**
-         * Apache HTTP components classes, ctors and methods (we use reflection to avoid
-         * static dependency on these libs)
-         */
-        private static Class<?> clsDefaultHttpClient;
-        private static Class<?> clsHttpUriRequest;
-        private static Class<?> clsHttpGet;
-        private static Class<?> clsHttpResponse;
-        private static Class<?> clsStatusLine;
-        private static Class<?> clsHttpEntity;
-        private static Class<?> clsEntityUtils;
         private static Constructor<?> ctorHttpGetUrl;
         private static Method methHttpClientExecute;
         private static Method methHttpResponseGetStatusLine;
@@ -157,13 +146,17 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
             try {
                 // Use reflection to get handle to classes, ctors and methods
                 // (so we avoid static dependencies on the Apache HTTP libraries)
-                clsDefaultHttpClient = Class.forName("org.apache.http.impl.client.DefaultHttpClient");
-                clsHttpUriRequest = Class.forName("org.apache.http.client.methods.HttpUriRequest");
-                clsHttpGet = Class.forName("org.apache.http.client.methods.HttpGet");
-                clsHttpResponse = Class.forName("org.apache.http.HttpResponse");
-                clsStatusLine = Class.forName("org.apache.http.StatusLine");
-                clsHttpEntity = Class.forName("org.apache.http.HttpEntity");
-                clsEntityUtils = Class.forName("org.apache.http.util.EntityUtils");
+                /**
+                 * Apache HTTP components classes, ctors and methods (we use reflection to avoid
+                 * static dependency on these libs)
+                 */
+                Class<?> clsDefaultHttpClient = Class.forName("org.apache.http.impl.client.DefaultHttpClient");
+                Class<?> clsHttpUriRequest = Class.forName("org.apache.http.client.methods.HttpUriRequest");
+                Class<?> clsHttpGet = Class.forName("org.apache.http.client.methods.HttpGet");
+                Class<?> clsHttpResponse = Class.forName("org.apache.http.HttpResponse");
+                Class<?> clsStatusLine = Class.forName("org.apache.http.StatusLine");
+                Class<?> clsHttpEntity = Class.forName("org.apache.http.HttpEntity");
+                Class<?> clsEntityUtils = Class.forName("org.apache.http.util.EntityUtils");
                 ctorHttpGetUrl = clsHttpGet.getConstructor(String.class);
                 methHttpClientExecute = clsDefaultHttpClient.getMethod("execute", clsHttpUriRequest);
                 methHttpResponseGetStatusLine = clsHttpResponse.getMethod("getStatusLine");

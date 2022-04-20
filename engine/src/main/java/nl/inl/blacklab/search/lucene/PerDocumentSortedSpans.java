@@ -43,8 +43,6 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     private final boolean sortByStartPoint;
 
-    private int prevStart, prevEnd;
-
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
     private PerDocumentSortedSpans(BLSpans src, boolean sortByStartPoint, boolean eliminateDuplicates) {
@@ -104,6 +102,8 @@ final class PerDocumentSortedSpans extends BLSpans {
             curEnd = bucketedSpans.endPosition(indexInBucket);
         } else {
             // Eliminate any duplicates
+            int prevEnd;
+            int prevStart;
             do {
                 if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
                     // Bucket exhausted or no bucket yet; get one

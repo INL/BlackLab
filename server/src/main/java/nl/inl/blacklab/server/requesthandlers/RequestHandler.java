@@ -414,9 +414,6 @@ public abstract class RequestHandler {
     @SuppressWarnings("unused")
     private RequestInstrumentationProvider requestInstrumentation;
 
-    @SuppressWarnings("unused")
-    private String requestId;
-
     RequestHandler(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource,
             String urlPathInfo) {
         this.servlet = servlet;
@@ -477,7 +474,6 @@ public abstract class RequestHandler {
     }
 
     protected void setRequestId(String requestId) {
-        this.requestId = requestId;
     }
 
     @SuppressWarnings("unused")

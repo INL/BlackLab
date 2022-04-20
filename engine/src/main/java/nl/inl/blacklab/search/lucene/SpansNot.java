@@ -37,11 +37,6 @@ class SpansNot extends BLSpans {
     /** Current hit end position, or -1 if we're not at a hit, or NO_MORE_POSITIONS if no more hits. */
     private int currentEnd = -1;
 
-    /**
-     * For testing, we don't have an IndexReader available, so we use test values
-     */
-    private boolean useTestValues = false;
-
     /** Used to get the field length in tokens for a document */
     DocFieldLengthGetter lengthGetter;
 
@@ -63,8 +58,10 @@ class SpansNot extends BLSpans {
      * @param maxDoc number of docs in the (mock) test set
      */
     void setTest(boolean test, int maxDoc) {
-        useTestValues = test;
-        if (useTestValues)
+        /**
+         * For testing, we don't have an IndexReader available, so we use test values
+         */
+        if (test)
             this.maxDoc = maxDoc;
         lengthGetter.setTest(test);
     }

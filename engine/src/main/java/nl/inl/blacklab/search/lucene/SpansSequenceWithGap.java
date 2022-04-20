@@ -162,10 +162,6 @@ class SpansSequenceWithGap extends BLSpans {
      */
     private boolean alreadyAtFirstMatch = false;
 
-    private int leftStartFirst;
-
-    private int rightStartFirst;
-
     private int rightStartLast;
 
     /**
@@ -336,8 +332,8 @@ class SpansSequenceWithGap extends BLSpans {
             }
             
             // Where should the right clause start?
-            leftStartFirst = leftStart + gap.minSize();
-            rightStartFirst = left.endPosition() + gap.minSize();
+            int leftStartFirst = leftStart + gap.minSize();
+            int rightStartFirst = left.endPosition() + gap.minSize();
             rightStartLast = gap.maxSize() == MAX_UNLIMITED ? MAX_UNLIMITED : left.endPosition() + gap.maxSize();
             
             // Do we need to advance the starting point in the right bucket?
