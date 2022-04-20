@@ -47,7 +47,6 @@ public class MetadataFetcherCsv extends MetadataFetcher {
                         .withTrim())) {
 
             metadata = csvParser.getRecords();
-            reader.close();
         } catch (FileNotFoundException ex) {
             System.err.println("Metadata file \"" + metadataFileName + "\" not found. Not adding metadata.");
         } catch (IOException ex) {
