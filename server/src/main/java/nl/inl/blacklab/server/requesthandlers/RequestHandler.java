@@ -145,8 +145,8 @@ public abstract class RequestHandler {
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         String[] parts = servletPath.split("/", 3);
         String indexName = parts.length >= 1 ? parts[0] : "";
-        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName,
-                null, null);
+        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName
+        );
         if (indexName.startsWith(":")) {
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access your private index.");

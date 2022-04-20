@@ -13,7 +13,7 @@ public class TestSpansNGrams {
     private static SpansNGrams getSpans() {
         // NOTE: in doc 1, all tokens except 0-1 match; in doc 3, all tokens match
         SpansNGrams spans = new SpansNGrams(null, "test", 2, 3);
-        spans.setTest(true, 1); // no IndexReader available
+        spans.setTest(1); // no IndexReader available
         return spans;
     }
 

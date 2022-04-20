@@ -232,7 +232,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             ObjectNode annotated = fieldInfo.putObject("complexFields");
 
             addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
-            extractFromJson(jsonRoot, null, true, false);
+            extractFromJson(jsonRoot, null, true);
             save();
         } else {
             // Read existing metadata or create empty new one
@@ -699,12 +699,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * @param usedTemplate whether the JSON structure was read from a indextemplate
      *            file. If so, clear certain parts of it that aren't relevant
      *            anymore.
-     * @param initTimestamps whether or not to update blacklab build time, version,
-     *            and index creation/modification time
      * @throws IndexTooOld if the index is too old to open with this BlackLab version
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate,
-            boolean initTimestamps) throws IndexTooOld {
+    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexTooOld {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -719,16 +716,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
-        if (initTimestamps) {
-            blackLabBuildTime = BlackLabIndexImpl.blackLabBuildTime();
-            blackLabVersion = BlackLabIndexImpl.blackLabVersion();
-            timeModified = timeCreated = IndexMetadataImpl.timestamp();
-        } else {
-            blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
-            blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
-            timeCreated = Json.getString(versionInfo, "timeCreated", "");
-            timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
-        }
+        blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
+        blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
+        timeCreated = Json.getString(versionInfo, "timeCreated", "");
+        timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
             throw new IndexTooOld(
@@ -1058,14 +1049,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
             fieldInfo.putObject("metadataFields");
             fieldInfo.putObject("complexFields");
-            extractFromJson(jsonRoot, reader, false, false);
+            extractFromJson(jsonRoot, reader, false);
         } else {
             // Read the metadata file
             try {
                 boolean isJson = metadataFile.getName().endsWith(".json");
                 ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
                 ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
-                extractFromJson(jsonRoot, reader, usedTemplate, false);
+                extractFromJson(jsonRoot, reader, usedTemplate);
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }

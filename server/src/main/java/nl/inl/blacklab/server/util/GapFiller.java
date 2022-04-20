@@ -51,9 +51,9 @@ public class GapFiller {
     public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
             // Fill in the gaps
-            Iterable<CSVRecord> values = parseTsv(new BufferedReader(new StringReader(tsvValues)), VALUE_SEPARATOR,
-                    VALUE_LINE_SEPARATOR);
-            return parseGapQuery(queryTemplate, GAP_REGEX, values, OUTPUT_SEPARATOR);
+            Iterable<CSVRecord> values = parseTsv(new BufferedReader(new StringReader(tsvValues))
+            );
+            return parseGapQuery(queryTemplate, values);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -63,20 +63,18 @@ public class GapFiller {
      * Parse TSV format into lists of row values.
      *
      * @param in the TSV data
-     * @param separator value separator
-     * @param lineSeparator line separator
      * @return the row values lists
      * @throws IOException on error
      */
-    private static Iterable<CSVRecord> parseTsv(BufferedReader in, char separator, String lineSeparator)
+    private static Iterable<CSVRecord> parseTsv(BufferedReader in)
             throws IOException {
         String data = StringUtils.join(IOUtils.readLines(in), '\n');
-        if (!lineSeparator.equals("\n")) {
+        if (!GapFiller.VALUE_LINE_SEPARATOR.equals("\n")) {
             // Commons CSV can only parse lines
             data = data.replaceAll("\n", "\\n"); // escape any \n's in data
-            data = data.replaceAll(lineSeparator, "\n"); // replace our line separator with \n's
+            data = data.replaceAll(GapFiller.VALUE_LINE_SEPARATOR, "\n"); // replace our line separator with \n's
         }
-        CSVFormat ourFormat = CSVFormat.TDF.withDelimiter(separator);
+        CSVFormat ourFormat = CSVFormat.TDF.withDelimiter(GapFiller.VALUE_SEPARATOR);
         return ourFormat.parse(new StringReader(data));
     }
 
@@ -84,16 +82,12 @@ public class GapFiller {
      * Fill the data values in in the template.
      *
      * @param template the template with gaps to fill in values
-     * @param gapRegex pattern to find gaps with
      * @param values values to fill in, one list of strings per gap
-     * @param valueSeparator separator to use when filling in multiple values into a
-     *            gap
      * @return the filled-in template
      * @throws InvalidQuery if the resulting CQL contains an error
      */
-    private static TextPattern parseGapQuery(String template, String gapRegex, Iterable<CSVRecord> values,
-            String valueSeparator) throws InvalidQuery {
-        String[] parts = template.split(gapRegex, -1);
+    private static TextPattern parseGapQuery(String template, Iterable<CSVRecord> values) throws InvalidQuery {
+        String[] parts = template.split(GapFiller.GAP_REGEX, -1);
 
         List<TextPattern> results = new ArrayList<>();
         for (CSVRecord valueRow : values) {

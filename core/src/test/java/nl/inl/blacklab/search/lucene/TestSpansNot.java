@@ -19,7 +19,7 @@ public class TestSpansNot {
                 new int[] { 0, 1, 2, 3, 1, 2, 3, 4, 1, 3, 0, 1, 2, 3, 4, 0 },
                 new int[] { 1, 2, 3, 4, 2, 3, 4, 5, 2, 4, 1, 2, 3, 4, 5, 5 });
         SpansNot spans = new SpansNot(null, "test", a);
-        spans.setTest(true, 6); // no IndexReader available
+        spans.setTest(6); // no IndexReader available
         return spans;
     }
 

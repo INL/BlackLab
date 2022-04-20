@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -491,7 +491,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
     }
 
-    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
+    protected void storeWholeDocument(byte[] content, int offset, int length) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
         // (Note that we do this after adding the "extra closing token", so the character
@@ -513,7 +513,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         int contentId = -1;
         if (getDocWriter() != null) {
             ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
-            contentId = contentStore.store(content, offset, length, cs);
+            contentId = contentStore.store(content, offset, length, StandardCharsets.UTF_8);
         }
         currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));

@@ -18,12 +18,8 @@ public abstract class FieldImpl implements Field {
     protected boolean contentStore;
 
     FieldImpl(String fieldName) {
-        this(fieldName, null);
-    }
-
-    FieldImpl(String fieldName, String displayName) {
         this.fieldName = fieldName;
-        this.displayName = StringUtils.defaultIfEmpty(displayName, "");
+        this.displayName = "";
     }
 
     /**

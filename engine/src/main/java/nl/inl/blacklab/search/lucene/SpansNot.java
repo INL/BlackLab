@@ -54,16 +54,14 @@ class SpansNot extends BLSpans {
      * The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens
      * long.
      *
-     * @param test whether or not we want to use test values
      * @param maxDoc number of docs in the (mock) test set
      */
-    void setTest(boolean test, int maxDoc) {
+    void setTest(int maxDoc) {
         /**
          * For testing, we don't have an IndexReader available, so we use test values
          */
-        if (test)
-            this.maxDoc = maxDoc;
-        lengthGetter.setTest(test);
+        this.maxDoc = maxDoc;
+        lengthGetter.setTest(true);
     }
 
     /**

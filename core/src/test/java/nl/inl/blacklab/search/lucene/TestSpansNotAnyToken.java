@@ -17,7 +17,7 @@ public class TestSpansNotAnyToken {
 
     private static SpansNot getSpans() {
         SpansNot spans = new SpansNot(null, "test", null);
-        spans.setTest(true, 3); // no IndexReader available
+        spans.setTest(3); // no IndexReader available
         return spans;
     }
 
