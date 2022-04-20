@@ -129,7 +129,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             int bi = displayOrder.indexOf(b.name());
             if (bi < 0)
                 bi = Integer.MAX_VALUE;
-            return ai == bi ? 0 : (ai > bi ? 1 : -1);
+            return Integer.compare(ai, bi);
         };
         
         contentStore = false;

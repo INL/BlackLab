@@ -23,7 +23,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
     @Override
     public int compareTo(Object o) {
         int a = valueSortOrder, b = ((PropertyValueContextWord) o).valueSortOrder;
-        return a == b ? 0 : (a < b ? -1 : 1);
+        return Integer.compare(a, b);
     }
 
     @Override
