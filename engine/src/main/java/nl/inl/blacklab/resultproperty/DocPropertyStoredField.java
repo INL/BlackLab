@@ -124,7 +124,7 @@ public class DocPropertyStoredField extends DocProperty {
 
             String[] ret = new String[0];
             if (target != null) {
-                final Integer targetDocBase = target.getKey();
+                final int targetDocBase = target.getKey();
                 final Pair<SortedDocValuesCacher, SortedSetDocValuesCacher> targetDocValues = target.getValue();
                 if (targetDocValues != null) {
                     SortedDocValuesCacher a = targetDocValues.getLeft();

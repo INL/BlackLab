@@ -98,9 +98,9 @@ public class User {
             byte[] hashBytes = md5.digest();
             BigInteger hashInt = new BigInteger(1, hashBytes);
             String hashHex = hashInt.toString(16);
-            String zeroes = "";
+            StringBuilder zeroes = new StringBuilder();
             for (int i = 0; i < 32 - hashHex.length(); i++) {
-                zeroes += "0";
+                zeroes.append("0");
             }
             return stripped + "_" + zeroes + hashHex;
         } catch (NoSuchAlgorithmException e) {
