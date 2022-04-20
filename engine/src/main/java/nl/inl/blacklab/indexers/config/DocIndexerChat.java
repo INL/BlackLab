@@ -878,8 +878,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             "time start", "time duration", "tape location", "room layout",
             "recording quality", "number", "media");
     private static final List<String> SIMPLE_INT_HEADERNAMES = Arrays.asList("g", "page");
-    private static final List<String> SIMPLE_COUNTER_HEADERS = Arrays.asList("new episode");
-    private static final List<String> SKIP_HEADER_NAMES = Arrays.asList("exceptions");
+    private static final List<String> SIMPLE_COUNTER_HEADERS = List.of("new episode");
+    private static final List<String> SKIP_HEADER_NAMES = List.of("exceptions");
     private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of",
             "age of");
     private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker",

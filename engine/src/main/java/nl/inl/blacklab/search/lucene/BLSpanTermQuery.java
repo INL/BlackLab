@@ -20,6 +20,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -207,7 +208,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
         Term term = query.getTerm();
         String propertyValue = term.text();
         NfaState state = NfaState.token(term.field(), propertyValue, null);
-        return new Nfa(state, Arrays.asList(state));
+        return new Nfa(state, List.of(state));
     }
 
     @Override

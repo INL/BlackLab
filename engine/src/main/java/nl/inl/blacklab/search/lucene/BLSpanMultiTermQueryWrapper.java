@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -151,7 +152,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         NfaState state = NfaState.regex(getRealField(), getRegex(), null);
-        return new Nfa(state, Arrays.asList(state));
+        return new Nfa(state, List.of(state));
     }
 
     protected String getRegex() {

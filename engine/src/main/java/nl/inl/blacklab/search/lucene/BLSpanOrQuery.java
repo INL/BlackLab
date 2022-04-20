@@ -650,7 +650,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         if (canBeTokenState) {
             // Yep. Rewrite to a large NfaStateToken.
             NfaState tokenState = NfaState.token(luceneField, terms, null);
-            return new Nfa(tokenState, Arrays.asList(tokenState));
+            return new Nfa(tokenState, List.of(tokenState));
         }
 
         List<NfaState> states = new ArrayList<>();
@@ -662,7 +662,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 //			dangling.addAll(frag.getDanglingArrows());
         }
         NfaState orAcyclic = NfaState.or(false, states, hitsAllSameLength());
-        return new Nfa(orAcyclic, Arrays.asList(orAcyclic));
+        return new Nfa(orAcyclic, List.of(orAcyclic));
     }
 
     /**

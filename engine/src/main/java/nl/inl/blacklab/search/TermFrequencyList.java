@@ -56,7 +56,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
-        List<Annotation> annotations = Arrays.asList(annotation);
+        List<Annotation> annotations = List.of(annotation);
         List<FiidLookup> fiidLookups = FiidLookup.getList(annotations, hits.queryInfo().index().reader());
         Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
         MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();

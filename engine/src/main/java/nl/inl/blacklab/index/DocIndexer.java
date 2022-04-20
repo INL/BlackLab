@@ -440,7 +440,7 @@ public abstract class DocIndexer implements AutoCloseable {
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.put(e.getKey(), Arrays.asList(e.getValue()));
+            metadataFieldValues.put(e.getKey(), List.of(e.getValue()));
         }
         for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());

@@ -191,7 +191,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
                 Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
@@ -258,7 +258,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
                 Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index

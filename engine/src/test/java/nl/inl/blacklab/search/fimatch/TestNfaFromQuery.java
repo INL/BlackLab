@@ -216,8 +216,8 @@ public class TestNfaFromQuery {
         // The query: "test"
         BLSpanQuery q = term("test");
 
-        test(q, fiAccessor, 0, 1, 4, Arrays.asList(3));
-        test(q, fiAccessor, 3, -1, 4, Arrays.asList(0));
+        test(q, fiAccessor, 0, 1, 4, List.of(3));
+        test(q, fiAccessor, 3, -1, 4, List.of(0));
     }
 
     @Test
@@ -228,8 +228,8 @@ public class TestNfaFromQuery {
         // The query: "a" "test"
         BLSpanQuery q = seq(term("a"), term("test"));
 
-        test(q, fiAccessor, 0, 1, 4, Arrays.asList(2));
-        test(q, fiAccessor, 3, -1, 4, Arrays.asList(0));
+        test(q, fiAccessor, 0, 1, 4, List.of(2));
+        test(q, fiAccessor, 3, -1, 4, List.of(0));
     }
 
     @Test
@@ -252,7 +252,7 @@ public class TestNfaFromQuery {
         // The query: "is" "very"{1,2}
         BLSpanQuery q = seq(term("is"), rep(term("very"), 1, 2));
 
-        test(q, fiAccessor, 0, 1, 6, Arrays.asList(1));
+        test(q, fiAccessor, 0, 1, 6, List.of(1));
         test(q, fiAccessor, 5, -1, 6, Arrays.asList(2, 3));
     }
 
@@ -288,8 +288,8 @@ public class TestNfaFromQuery {
         // The query: ("very" "very" []) & ([] "very" "very")
         BLSpanQuery q = and(seq(term("very"), term("very"), any(1, 1)), seq(any(1, 1), term("very"), term("very")));
 
-        test(q, fiAccessor, 0, 1, 6, Arrays.asList(2));
-        test(q, fiAccessor, 5, -1, 6, Arrays.asList(1));
+        test(q, fiAccessor, 0, 1, 6, List.of(2));
+        test(q, fiAccessor, 5, -1, 6, List.of(1));
     }
 
     @Test
@@ -312,7 +312,7 @@ public class TestNfaFromQuery {
         // The query: "is" []{0,3}
         BLSpanQuery q = exp(term("is"), Direction.RIGHT, 0, 3);
 
-        test(q, fiAccessor, 0, 1, 6, Arrays.asList(1));
+        test(q, fiAccessor, 0, 1, 6, List.of(1));
         test(q, fiAccessor, 5, -1, 6, Arrays.asList(1, 2, 3, 4));
     }
 
@@ -366,7 +366,7 @@ public class TestNfaFromQuery {
                 term("of"));
 
         test(q, fiAccessor, 0, 1, 9, Arrays.asList(0, 1));
-        test(q, fiAccessor, 8, -1, 9, Arrays.asList(1));
+        test(q, fiAccessor, 8, -1, 9, List.of(1));
     }
 
     @Test
@@ -378,7 +378,7 @@ public class TestNfaFromQuery {
         // The query: "and" [word != "of"]{2}
         BLSpanQuery q = seq(term("and"), rep(not(term("of")), 2, 2));
 
-        test(q, fiAccessor, 0, 1, 9, Arrays.asList(3));
-        test(q, fiAccessor, 8, -1, 9, Arrays.asList(3));
+        test(q, fiAccessor, 0, 1, 9, List.of(3));
+        test(q, fiAccessor, 8, -1, 9, List.of(3));
     }
 }

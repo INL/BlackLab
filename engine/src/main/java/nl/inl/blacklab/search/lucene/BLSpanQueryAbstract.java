@@ -40,7 +40,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
     public BLSpanQueryAbstract(BLSpanQuery clause) {
         super(clause != null ? clause.queryInfo : null);
-        clauses = Arrays.asList(clause);
+        clauses = List.of(clause);
         determineBaseFieldName();
     }
 

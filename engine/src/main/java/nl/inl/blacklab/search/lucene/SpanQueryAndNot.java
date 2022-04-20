@@ -405,7 +405,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 //			dangling.addAll(nfa.getDanglingArrows());
         }
         NfaState andAcyclic = NfaState.and(false, nfaClauses);
-        return new Nfa(andAcyclic, Arrays.asList(andAcyclic));
+        return new Nfa(andAcyclic, List.of(andAcyclic));
     }
 
     @Override

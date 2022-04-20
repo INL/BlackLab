@@ -331,12 +331,12 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public List<Annotation> needsContext() {
-        return Arrays.asList(annotation);
+        return List.of(annotation);
     }
     
     @Override
     public List<MatchSensitivity> getSensitivities() {
-        return Arrays.asList(sensitivity);
+        return List.of(sensitivity);
     }
 
     @Override

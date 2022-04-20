@@ -460,7 +460,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Last clause in the sequence; just return it
             // (noEmpty() version because we will build alternatives
             // in the caller if the input matched the empty sequence)
-            return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
+            return List.of(List.of(parts.get(0).noEmpty().rewrite(reader)));
         }
 
         // Recursively determine the query for the "tail" of the list,
@@ -497,7 +497,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         // If tail can be empty, also add the head separately
         if (tailMatchesEmpty)
-            results.add(Arrays.asList(headNoEmpty));
+            results.add(List.of(headNoEmpty));
         return results;
     }
 

@@ -219,7 +219,7 @@ public class IndexTool {
             dirs.add(2, inputDirParent);
         if (indexDirParent != null && !dirs.contains(indexDirParent))
             dirs.add(indexDirParent);
-        propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
+        propFile = FileUtil.findFile(dirs, "indexer", List.of("properties"));
         if (propFile != null && propFile.canRead())
             readParametersFromPropertiesFile(propFile);
 

@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -172,7 +173,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
         NfaState state = NfaState.anyToken(luceneField, null);
-        Nfa frag = new Nfa(state, Arrays.asList(state));
+        Nfa frag = new Nfa(state, List.of(state));
         if (realMin != 1 || max != 1) {
             frag.repeat(realMin, max);
         }

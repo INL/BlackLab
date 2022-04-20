@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -159,7 +160,7 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         //nfa.finish();
         nfa.invert();
         NfaState not = nfa.getStartingState();
-        return new Nfa(not, Arrays.asList(not)); // ignore the dangling arrows in the clause we've inverted
+        return new Nfa(not, List.of(not)); // ignore the dangling arrows in the clause we've inverted
     }
 
     @Override

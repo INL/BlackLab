@@ -22,7 +22,7 @@ public class MockIndexMetadata implements IndexMetadata {
     public MockIndexMetadata() {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
         MockAnnotatedField contents = new MockAnnotatedField("contents", annot);
-        fields = Arrays.asList(contents);
+        fields = List.of(contents);
     }
 
     @Override

@@ -94,13 +94,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
-        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : List.of(groups.groupCriteria());
 
         ds.startEntry("docGroups").startList();
         long last = Math.min(first + number, groups.size());
         for (long i = first; i < last; ++i) {
             DocGroup group = groups.get(i);
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : Arrays.asList(group.identity());
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : List.of(group.identity());
 
             ds.startItem("docgroup").startMap()
                     .entry("identity", group.identity().serialize())
