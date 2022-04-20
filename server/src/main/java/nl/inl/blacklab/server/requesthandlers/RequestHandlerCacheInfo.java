@@ -23,7 +23,7 @@ public class RequestHandlerCacheInfo extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) {
         String strDebugInfo = request.getParameter("debug");
         boolean debugInfo = strDebugInfo != null && strDebugInfo.matches("true|yes|1");
         ds.startMap()

@@ -32,7 +32,7 @@ public class ExportMetadata implements AutoCloseable {
         return str.replaceAll("\t", "\\t");
     }
 
-    public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -134,7 +134,7 @@ public class ExportMetadata implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (index != null)
             index.close();
     }

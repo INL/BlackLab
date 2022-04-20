@@ -110,10 +110,8 @@ class ConfigFileReader {
      * Read JSON or YAML from config file, depending on type.
      *
      * @return config structure read
-     * @throws JsonProcessingException on Json error
-     * @throws IOException on any I/O error
      */
-    public JsonNode getJsonConfig() throws JsonProcessingException, IOException {
+    public JsonNode getJsonConfig() {
         return configFileJsonNode;
     }
 

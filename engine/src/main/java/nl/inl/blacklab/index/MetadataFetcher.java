@@ -23,11 +23,10 @@ abstract public class MetadataFetcher implements Closeable {
 
     /**
      * Close the fetcher, releasing any resources it holds
-     * 
-     * @throws IOException if closing caused an error
+     *
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
         // Nothing, by default
     }
 

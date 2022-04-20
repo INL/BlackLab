@@ -32,7 +32,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int nextDoc() throws IOException {
+        public int nextDoc() {
             if (currentDoc != NO_MORE_DOCS) {
                 alreadyAtFirstMatch = false;
                 while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc)) {
@@ -70,7 +70,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int startOffset() throws IOException {
+        public int startOffset() {
             if (currentHit < 0 || alreadyAtFirstMatch)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
@@ -96,7 +96,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public BytesRef getPayload() throws IOException {
+        public BytesRef getPayload() {
             if (payloads == null)
                 return null;
             if (currentHit < 0 || alreadyAtFirstMatch)
@@ -107,7 +107,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int freq() throws IOException {
+        public int freq() {
             // Find start of next document
             int i;
             for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
@@ -117,7 +117,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int endOffset() throws IOException {
+        public int endOffset() {
             if (currentHit < 0 || alreadyAtFirstMatch)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)

@@ -155,7 +155,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) {
         if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
                 ds.internalError(exception, debugMode, internalErrorCode);

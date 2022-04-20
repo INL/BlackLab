@@ -87,12 +87,12 @@ public class ResultsCache implements SearchCache {
         }
 
         @Override
-        public T get() throws InterruptedException, ExecutionException {
+        public T get() {
             return results;
         }
 
         @Override
-        public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        public T get(long timeout, TimeUnit unit) {
             return results;
         }
 

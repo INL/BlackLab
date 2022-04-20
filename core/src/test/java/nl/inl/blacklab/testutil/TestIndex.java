@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
@@ -243,11 +242,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(BLSpanQuery query) {
-        try {
-            return getConcordances(index.find(query, null), word);
-        } catch (WildcardTermTooBroad e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return getConcordances(index.find(query, null), word);
     }
 
     /**

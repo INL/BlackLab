@@ -160,7 +160,7 @@ final class PerDocumentSortedSpans extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // BucketedSpans should collect payload as well, but for now, we don't use
         // payload beyond a "simple" SpanQuery like SpanQueryTags.
         // bucketedSpans.collect(collector);

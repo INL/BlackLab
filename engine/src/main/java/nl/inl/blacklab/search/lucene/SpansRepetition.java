@@ -238,7 +238,7 @@ class SpansRepetition extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // Should be  source.collect(collector); but not currently supported and we don't use
         // payloads except in simple queries like SpanQueryTags.
     }

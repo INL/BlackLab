@@ -141,10 +141,8 @@ public interface BlackLabIndex extends Closeable {
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad;
+    Hits find(BLSpanQuery query, SearchSettings settings);
 
     /**
      * Perform a document query only (no hits)
@@ -170,10 +168,8 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param query the query to explain
      * @return the explanation
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
+    QueryExplanation explain(BLSpanQuery query);
     
     /**
      * Start building a Search.

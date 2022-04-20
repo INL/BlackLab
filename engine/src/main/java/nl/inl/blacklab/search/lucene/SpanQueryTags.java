@@ -46,7 +46,7 @@ public class SpanQueryTags extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+    public BLSpanQuery rewrite(IndexReader reader) {
         if (attr == null)
             return this;
 

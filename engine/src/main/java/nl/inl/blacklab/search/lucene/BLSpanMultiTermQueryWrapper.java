@@ -79,8 +79,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
-            throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         throw new IllegalArgumentException("Rewrite first!");
     }
 

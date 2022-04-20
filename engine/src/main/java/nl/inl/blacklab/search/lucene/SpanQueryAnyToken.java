@@ -96,7 +96,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
             }
 
             @Override
-            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) {
                 return new SpansNGrams(context.reader(), getField(), realMin, max);
             }
         };
@@ -208,7 +208,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+    public BLSpanQuery rewrite(IndexReader reader) {
         return this;
     }
 

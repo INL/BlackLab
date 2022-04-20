@@ -66,10 +66,9 @@ public class Example {
      * The main program
      * 
      * @param args command line arguments
-     * @throws ErrorOpeningIndex 
-     * @throws InvalidQuery 
+     * @throws ErrorOpeningIndex
      */
-    public static void main(String[] args) throws ErrorOpeningIndex, InvalidQuery {
+    public static void main(String[] args) throws ErrorOpeningIndex {
 
         // Get a temporary directory for our test index, and make sure it doesn't exist
         File indexDir = new File(System.getProperty("java.io.tmpdir"), "BlackLabExample");

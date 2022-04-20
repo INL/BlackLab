@@ -57,7 +57,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         }
 
         @Override
-        public void collect(int docId) throws IOException {
+        public void collect(int docId) {
             int globalDocId = docId + docBase;
             if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,

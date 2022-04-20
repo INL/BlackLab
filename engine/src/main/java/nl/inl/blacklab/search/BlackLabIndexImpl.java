@@ -429,13 +429,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
+    public Hits find(BLSpanQuery query, SearchSettings settings) {
         QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true);
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
+    public QueryExplanation explain(BLSpanQuery query) {
         try {
             IndexReader indexReader = reader();
             query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));

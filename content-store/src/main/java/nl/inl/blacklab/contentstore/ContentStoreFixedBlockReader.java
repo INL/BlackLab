@@ -239,7 +239,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
-    public void clear() throws IOException {
+    public void clear() {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 

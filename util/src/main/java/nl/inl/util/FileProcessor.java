@@ -148,7 +148,7 @@ public class FileProcessor implements AutoCloseable {
                 byte[] file;
 
                 @Override
-                public void directory(File dir) throws Exception {
+                public void directory(File dir) {
                     //
                 }
 

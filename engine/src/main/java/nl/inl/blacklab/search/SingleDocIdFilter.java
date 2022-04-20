@@ -30,7 +30,7 @@ public class SingleDocIdFilter extends Query {
     }
 
     @Override
-    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+    public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         return new Weight((Query) null) {
             @Override
             public void extractTerms(Set<Term> terms) {
@@ -38,7 +38,7 @@ public class SingleDocIdFilter extends Query {
             }
 
             @Override
-            public Explanation explain(LeafReaderContext context, int doc) throws IOException {
+            public Explanation explain(LeafReaderContext context, int doc) {
                 return null;
             }
 
@@ -53,7 +53,7 @@ public class SingleDocIdFilter extends Query {
             }*/
 
             @Override
-            public Scorer scorer(final LeafReaderContext ctx) throws IOException {
+            public Scorer scorer(final LeafReaderContext ctx) {
                 return new Scorer(this) {
                     @Override
                     public int docID() {
@@ -61,7 +61,7 @@ public class SingleDocIdFilter extends Query {
                     }
 
                     @Override
-                    public float score() throws IOException {
+                    public float score() {
                         return 1.0f;
                     }
 
@@ -85,7 +85,7 @@ public class SingleDocIdFilter extends Query {
                     }
 
 					@Override
-					public float getMaxScore(int upTo) throws IOException {
+					public float getMaxScore(int upTo) {
 						// TODO Auto-generated method stub
 						return 0;
 					}

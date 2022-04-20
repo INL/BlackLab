@@ -473,10 +473,8 @@ public class QueryTool {
      * @param in where to read commands from
      * @param out where to write output to
      * @param err where to write errors to
-     * @throws CorruptIndexException
      */
-    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err)
-            throws CorruptIndexException {
+    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err) {
         this.index = index;
         this.contentsField = index.mainAnnotatedField();
         shouldCloseIndex = false; // caller is responsible

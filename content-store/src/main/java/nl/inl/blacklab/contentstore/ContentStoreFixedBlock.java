@@ -116,9 +116,8 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
          * Store TOC entry in the TOC file
          *
          * @param buf where to serialize to
-         * @throws IOException on error
          */
-        public void serialize(ByteBuffer buf) throws IOException {
+        public void serialize(ByteBuffer buf) {
             buf.putInt(id);
             buf.putInt(entryLengthBytes);
             buf.putInt(deleted ? -1 : entryLengthCharacters);
@@ -134,9 +133,8 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
          *
          * @param buf the buffer to read from
          * @return new TocEntry
-         * @throws IOException on error
          */
-        public static TocEntry deserialize(ByteBuffer buf) throws IOException {
+        public static TocEntry deserialize(ByteBuffer buf) {
             int id = buf.getInt();
             int length = buf.getInt();
             int charLength = buf.getInt();

@@ -3,7 +3,6 @@ package nl.inl.blacklab.indexers.config;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +35,6 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
@@ -95,7 +93,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
+    public void setDocument(File file, Charset defaultCharset) {
         try {
             setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
         } catch (IOException e) {
@@ -236,23 +234,23 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 String result = null;
                 try {
                     apLinkPath = acquireAutoPilot(xpath);
-                    result = apLinkPath.evalXPathToString();
-                    if (result == null || result.isEmpty()) {
-                        switch (ld.getIfLinkPathMissing()) {
-                            case IGNORE:
-                                break;
-                            case WARN:
-                                getDocWriter().listener()
-                                        .warning("Link path " + xpath + " not found in document " + documentName);
-                                break;
-                            case FAIL:
-                                throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
-                        }
-                    }
-                    releaseAutoPilot(apLinkPath);
                 } catch (XPathParseException e) {
-                    throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
+                    throw new BlackLabRuntimeException(e);
                 }
+                result = apLinkPath.evalXPathToString();
+                if (result == null || result.isEmpty()) {
+                    switch (ld.getIfLinkPathMissing()) {
+                        case IGNORE:
+                            break;
+                        case WARN:
+                            getDocWriter().listener()
+                                    .warning("Link path " + xpath + " not found in document " + documentName);
+                            break;
+                        case FAIL:
+                            throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
+                    }
+                }
+                releaseAutoPilot(apLinkPath);
                 return result;
             };
             processLinkedDocument(ld, xpathProcessor);
@@ -843,9 +841,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
      *
      * @param inlineObjects list to add the punct object to
      * @param text
-     * @throws NavException
      */
-    private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
+    private void collectPunct(List<InlineObject> inlineObjects, String text) {
         int i = nav.getCurrentIndex();
         int offset = nav.getTokenOffset(i);
 //		int length = nav.getTokenLength(i);

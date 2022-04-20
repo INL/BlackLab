@@ -63,7 +63,7 @@ public class MockSpansInBuckets implements SpansInBuckets {
     }
 
     @Override
-    public int nextBucket() throws IOException {
+    public int nextBucket() {
         if (alreadyAtFirstBucket) {
             alreadyAtFirstBucket = false;
             return docID();
@@ -94,7 +94,7 @@ public class MockSpansInBuckets implements SpansInBuckets {
     }
 
     @Override
-    public int advance(int target) throws IOException {
+    public int advance(int target) {
         alreadyAtFirstBucket = false;
         int doc;
         do {

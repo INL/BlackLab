@@ -202,10 +202,6 @@ public class RequestHandlerHits extends RequestHandler {
                         .entry("originalQuery", explanation.originalQuery())
                         .entry("rewrittenQuery", explanation.rewrittenQuery())
                         .endMap().endEntry();
-            } catch (RegexpTooLarge e) {
-                throw new BadRequest("REGEXP_TOO_LARGE", "Regular expression too large.");
-            } catch (WildcardTermTooBroad e) {
-                throw BlsException.wildcardTermTooBroad(e);
             } catch (InvalidQuery e) {
                 throw new BadRequest("INVALID_QUERY", e.getMessage());
             }

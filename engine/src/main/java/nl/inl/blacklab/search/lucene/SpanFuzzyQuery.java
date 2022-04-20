@@ -93,7 +93,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         throw new UnsupportedOperationException("Query should have been rewritten");
     }
 

@@ -127,10 +127,9 @@ class SpansNGrams extends BLSpans {
      * Go to next span.
      *
      * @return true if we're at the next span, false if we're done
-     * @throws IOException
      */
     @Override
-    public int nextStartPosition() throws IOException {
+    public int nextStartPosition() {
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             return currentStart;
@@ -236,7 +235,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // nothing to collect
     }
 

@@ -299,7 +299,7 @@ class SpansNot extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // nothing to collect
     }
 

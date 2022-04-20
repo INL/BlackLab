@@ -152,30 +152,27 @@ public class BlackLabServer extends HttpServlet {
     /**
      * Process POST requests (add data to index)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
     /**
      * Process PUT requests (create index)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
     /**
      * Process DELETE requests (create a index, add data to one)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
