@@ -279,11 +279,6 @@ public abstract class AnnotationForwardIndex {
      */
     public abstract long freeSpace();
 
-    /**
-     * @return the number of free blocks in the forward index.
-     */
-    public abstract int freeBlocks();
-
 
     /**
      * @return total size in bytes of the tokens file.

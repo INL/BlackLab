@@ -460,19 +460,6 @@ public class Index {
     }
 
     /**
-     * A version of {@link Index#getIndexName(String)} that doesn't throw, as the id
-     * cannot be invalid.
-     *
-     * @return the name of this index, never null.
-     */
-    public String getIndexName() {
-        Matcher m = PATT_INDEXID.matcher(this.getId());
-        if (!m.matches())
-            throw new RuntimeException();
-        return m.group(2);
-    }
-
-    /**
      * Given the base name for an index and a userId, get the corresponding unique
      * indexId for the index with that name for that user.
      *

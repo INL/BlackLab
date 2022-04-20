@@ -185,10 +185,9 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      * Note that there may not be such an alternative.
      *
      * @param reader the index reader
-     * @param fieldName the field this annotation belongs under
      * @return true if found, false if not
      */
-    public boolean detectOffsetsSensitivity(IndexReader reader, String fieldName) {
+    public boolean detectOffsetsSensitivity(IndexReader reader) {
         ensureNotFrozen();
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main annotation.

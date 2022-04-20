@@ -131,10 +131,6 @@ public final class AnnotatedFieldNameUtil {
         return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
     }
 
-    public static String tagAnnotationField(String fieldName) {
-        return annotationField(fieldName, TAGS_ANNOT_NAME);
-    }
-
     /**
      * Construct Lucene field name for annotated field bookkeeping subfield.
      *

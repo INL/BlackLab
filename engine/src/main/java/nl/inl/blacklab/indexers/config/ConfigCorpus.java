@@ -53,10 +53,6 @@ public class ConfigCorpus {
         return Collections.unmodifiableMap(specialFields);
     }
 
-    public void addSpecialField(String type, String fieldName) {
-        specialFields.put(type, fieldName);
-    }
-
     public Map<String, ConfigMetadataFieldGroup> getMetadataFieldGroups() {
         return Collections.unmodifiableMap(metadataFieldGroups);
     }

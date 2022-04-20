@@ -28,7 +28,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
@@ -222,15 +221,6 @@ public class BlsUtils {
                 }
         }
         root.delete();
-    }
-
-    static void debugWait() throws BlsException {
-        // Fake extra search time
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            throw new ServiceUnavailable("Debug wait interrupted");
-        }
     }
 
     /**

@@ -14,6 +14,7 @@ public class BLConfigTrace {
         return indexOpening;
     }
 
+    @SuppressWarnings("unused")
     public void setIndexOpening(boolean traceIndexOpening) {
         this.indexOpening = traceIndexOpening;
     }
@@ -26,10 +27,12 @@ public class BLConfigTrace {
         return queryExecution;
     }
 
+    @SuppressWarnings("unused")
     public void setQueryExecution(boolean queryExecution) {
         this.queryExecution = queryExecution;
     }
 
+    @SuppressWarnings("unused")
     public void setOptimization(boolean optimization) {
         this.optimization = optimization;
     }
@@ -38,6 +41,7 @@ public class BLConfigTrace {
         return cache;
     }
 
+    @SuppressWarnings("unused")
     public void setCache(boolean cache) {
         this.cache = cache;
     }

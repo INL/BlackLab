@@ -12,6 +12,7 @@ public class BLConfigPlugins {
         return delayInitialization;
     }
 
+    @SuppressWarnings("unused")
     public void setDelayInitialization(boolean delayInitialization) {
         this.delayInitialization = delayInitialization;
     }
@@ -20,6 +21,7 @@ public class BLConfigPlugins {
         return plugins;
     }
 
+    @SuppressWarnings("unused")
     public void setPlugins(Map<String, Map<String, String>> plugins) {
         if (plugins != null) {
             this.plugins = plugins;

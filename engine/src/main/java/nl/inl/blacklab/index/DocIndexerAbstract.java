@@ -90,11 +90,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         }
     }
 
-    public void processContent(char[] buffer, int start, int length) {
-        if (captureContent)
-            appendContent(buffer, start, length);
-    }
-
     public void processContent(String contentToProcess) {
         if (captureContent)
             appendContent(contentToProcess);
@@ -108,17 +103,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     @Override
     protected int getCharacterPosition() {
         return charsContentAlreadyStored + content.length();
-    }
-
-    /**
-     * NOTE: newer DocIndexers should only have a default constructor, and provide
-     * methods to set the Indexer object and the document being indexed (which are
-     * called by the Indexer). This allows us more flexibility in how we supply the
-     * document to this object (e.g. as a file, a byte array, an inputstream, a
-     * reader, ...), which helps if we want to use e.g. VTD-XML and could allow us
-     * to re-use DocIndexers in the future.
-     */
-    public DocIndexerAbstract() {
     }
 
     public DocIndexerAbstract(DocWriter indexer, String fileName, Reader reader) {

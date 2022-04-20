@@ -91,10 +91,6 @@ public class ConfigAnnotation {
     public ConfigAnnotation() {
     }
 
-    public ConfigAnnotation(String name, String valuePath) {
-        this(name, valuePath, null);
-    }
-
     public ConfigAnnotation(String name, String valuePath, String forEachPath) {
         setName(name);
         setValuePath(valuePath);

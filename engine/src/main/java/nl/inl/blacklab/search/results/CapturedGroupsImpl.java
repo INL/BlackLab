@@ -34,11 +34,6 @@ public class CapturedGroupsImpl implements CapturedGroups {
         capturedGroups.put(hit, groups);
     }
 
-    @Override
-    public Map<? extends Hit, ? extends Span[]> getAll() {
-        return capturedGroups;
-    }
-
     /**
      * Get the group names
      *

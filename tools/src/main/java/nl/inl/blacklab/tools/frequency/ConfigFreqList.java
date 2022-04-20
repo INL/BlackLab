@@ -26,10 +26,6 @@ class ConfigFreqList {
      */
     private List<String> metadataFields = Collections.emptyList();
 
-    public String getName() {
-        return name;
-    }
-
     public String getReportName() {
         return name.isEmpty() ? generateName() : name;
     }
@@ -41,6 +37,7 @@ class ConfigFreqList {
         return StringUtils.join(parts, "-");
     }
 
+    @SuppressWarnings("unused")
     public void setName(String name) {
         this.name = name;
     }
@@ -49,6 +46,7 @@ class ConfigFreqList {
         return annotations;
     }
 
+    @SuppressWarnings("unused")
     public void setAnnotations(List<String> annotations) {
         this.annotations = annotations;
     }
@@ -57,6 +55,7 @@ class ConfigFreqList {
         return metadataFields;
     }
 
+    @SuppressWarnings("unused")
     public void setMetadataFields(List<String> metadataFields) {
         this.metadataFields = metadataFields;
     }

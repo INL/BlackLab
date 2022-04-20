@@ -1,14 +1,8 @@
 package nl.inl.blacklab.search;
 
-import java.io.File;
-import java.io.IOException;
-
-import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
@@ -27,9 +21,6 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     @Override
     IndexMetadataWriter metadata();
-    
-    IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
-            throws IOException;
 
     IndexWriter writer();
 
@@ -42,15 +33,6 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param q the query
      */
     void delete(Query q);
-
-    /**
-     * Get existing annotation or create new one.
-     * 
-     * @param field field for which this annotation is
-     * @param annotName annotation name
-     * @return annotation
-     */
-    Annotation getOrCreateAnnotation(AnnotatedField field, String annotName);
 
     /**
      * Is the indexer still open?

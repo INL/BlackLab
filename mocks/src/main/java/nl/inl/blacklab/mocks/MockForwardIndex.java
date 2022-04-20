@@ -59,12 +59,6 @@ public class MockForwardIndex extends AnnotationForwardIndex {
     }
 
     @Override
-    public int freeBlocks() {
-        //
-        return 0;
-    }
-
-    @Override
     public long totalSize() {
         //
         return 0;

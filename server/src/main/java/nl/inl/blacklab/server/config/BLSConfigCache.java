@@ -64,6 +64,7 @@ public class BLSConfigCache {
         return maxNumberOfJobs;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxNumberOfJobs(int maxNumberOfJobs) {
         this.maxNumberOfJobs = maxNumberOfJobs;
     }
@@ -72,6 +73,7 @@ public class BLSConfigCache {
         return maxJobAgeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxJobAgeSec(int maxJobAgeSec) {
         this.maxJobAgeSec = maxJobAgeSec;
     }
@@ -97,6 +99,7 @@ public class BLSConfigCache {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setTargetFreeMemMegs(int targetFreeMemMegs) {
         this.targetFreeMemMegs = targetFreeMemMegs;
     }
@@ -126,6 +129,7 @@ public class BLSConfigCache {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setMinFreeMemForSearchMegs(int minFreeMemForSearchMegs) {
         this.minFreeMemForSearchMegs = minFreeMemForSearchMegs;
     }
@@ -134,6 +138,7 @@ public class BLSConfigCache {
         return clientCacheTimeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setClientCacheTimeSec(int clientCacheTimeSec) {
         this.clientCacheTimeSec = clientCacheTimeSec;
     }
@@ -142,6 +147,7 @@ public class BLSConfigCache {
         return maxSearchTimeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxSearchTimeSec(int maxSearchTimeSec) {
         this.maxSearchTimeSec = maxSearchTimeSec;
     }
@@ -150,6 +156,7 @@ public class BLSConfigCache {
         return maxQueuedSearches;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxQueuedSearches(int maxQueuedSearches) {
         this.maxQueuedSearches = maxQueuedSearches;
     }
@@ -158,6 +165,7 @@ public class BLSConfigCache {
         return denyAbortedSearchSec;
     }
 
+    @SuppressWarnings("unused")
     public void setDenyAbortedSearchSec(int denyAbortedSearchSec) {
         this.denyAbortedSearchSec = denyAbortedSearchSec;
     }
@@ -166,6 +174,7 @@ public class BLSConfigCache {
         return implementation;
     }
 
+    @SuppressWarnings("unused")
     public void setImplementation(String implementation) {
         this.implementation = implementation;
     }

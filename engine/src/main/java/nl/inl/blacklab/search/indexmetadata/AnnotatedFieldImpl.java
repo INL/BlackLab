@@ -170,20 +170,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return xmlTags;
     }
 
-    /**
-     * Checks if this field has a "punctuation" forward index, storing all the
-     * intra-word characters (whitespace and punctuation) so we can build
-     * concordances directly from the forward indices.
-     * 
-     * @return true iff there's a punctuation forward index.
-     */
-    @Override
-    public boolean hasPunctuationForwardIndex() {
-        AnnotationImpl pd = annots.get(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        return pd != null && pd.hasForwardIndex();
-    }
-
-    // (public because used in AnnotatedFieldWriter while indexing) 
+    // (public because used in AnnotatedFieldWriter while indexing)
     public Set<String> getNoForwardIndexAnnotations() {
         return noForwardIndexAnnotations;
     }
@@ -288,7 +275,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         for (AnnotationImpl pr : annots.values()) {
             if (firstAnnotation == null)
                 firstAnnotation = pr;
-            if (pr.detectOffsetsSensitivity(reader, fieldName)) {
+            if (pr.detectOffsetsSensitivity(reader)) {
                 // This field has offsets stored. Must be the main annotation field.
                 if (mainAnnotation == null) {
                     mainAnnotation = pr;

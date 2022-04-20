@@ -45,10 +45,6 @@ public class ConfigAnnotationGroup {
         return annotations;
     }
 
-    public void addAnnotation(String field) {
-        this.annotations.add(field);
-    }
-
     public void addAnnotations(List<String> fields) {
         this.annotations.addAll(fields);
     }

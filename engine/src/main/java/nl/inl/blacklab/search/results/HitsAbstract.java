@@ -491,11 +491,6 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         return this.hitsInternal.size() >= lowerBound;
     }
 
-    protected long hitsProcessedTotal() {
-        ensureAllResultsRead();
-        return this.hitsInternal.size();
-    }
-
     protected long hitsProcessedSoFar() {
         return this.hitsInternal.size();
     }

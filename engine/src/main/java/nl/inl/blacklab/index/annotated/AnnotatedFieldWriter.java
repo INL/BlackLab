@@ -158,7 +158,7 @@ public class AnnotatedFieldWriter {
 //        }
 
         for (AnnotationWriter p : annotations.values()) {
-            p.clear(reuseBuffers);
+            p.clear();
         }
     }
 

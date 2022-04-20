@@ -15,9 +15,6 @@ public class ConfigAnnotationGroups {
     /** Annotation groups */
     private final List<ConfigAnnotationGroup> groups = new ArrayList<>();
 
-    public ConfigAnnotationGroups() {
-    }
-
     public ConfigAnnotationGroups(String name) {
         setName(name);
     }
@@ -44,10 +41,6 @@ public class ConfigAnnotationGroups {
 
     public void addGroup(ConfigAnnotationGroup group) {
         this.groups.add(group);
-    }
-
-    public void addGroups(List<ConfigAnnotationGroup> groups) {
-        this.groups.addAll(groups);
     }
 
     @Override

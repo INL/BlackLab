@@ -211,10 +211,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         return annotStartTag;
     }
 
-    protected AnnotationWriter propMain() {
-        return annotMain;
-    }
-
     protected AnnotationWriter propPunct() {
         return annotPunct;
     }
@@ -570,10 +566,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected void setAddDefaultPunctuation(boolean addDefaultPunctuation) {
         this.addDefaultPunctuation = addDefaultPunctuation;
-    }
-
-    public boolean shouldAddDefaultPunctuation() {
-        return addDefaultPunctuation;
     }
 
     /**

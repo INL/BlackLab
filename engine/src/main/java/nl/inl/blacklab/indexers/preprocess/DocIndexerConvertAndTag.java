@@ -171,10 +171,5 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         outputIndexer.setOmitNorms(b);
     }
 
-    @Override
-    public boolean shouldAddDefaultPunctuation() {
-        return outputIndexer.shouldAddDefaultPunctuation();
-    }
-
     // do not override setDocumentName
 }

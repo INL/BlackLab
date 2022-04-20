@@ -92,11 +92,6 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasPunctuationForwardIndex() {
-        return false;
-    }
-
-    @Override
     public String tokenLengthField() {
         return null;
     }

@@ -44,6 +44,7 @@ public class BLSConfigPerformance {
         maxConcurrentSearches = n;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxConcurrentSearches(int maxConcurrentSearches) {
         this.maxConcurrentSearches = maxConcurrentSearches;
     }
@@ -63,6 +64,7 @@ public class BLSConfigPerformance {
         maxThreadsPerSearch = n;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxThreadsPerSearch(int maxThreadsPerSearch) {
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
@@ -76,6 +78,7 @@ public class BLSConfigPerformance {
         return maxRunningJobsPerUser;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxRunningJobsPerUser(int maxRunningJobsPerUser) {
         this.maxRunningJobsPerUser = maxRunningJobsPerUser;
     }
@@ -94,6 +97,7 @@ public class BLSConfigPerformance {
         return abandonedCountAbortTimeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setAbandonedCountAbortTimeSec(int abandonedCountAbortTimeSec) {
         this.abandonedCountAbortTimeSec = abandonedCountAbortTimeSec;
     }

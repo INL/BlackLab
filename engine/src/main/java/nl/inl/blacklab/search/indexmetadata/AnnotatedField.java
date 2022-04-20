@@ -25,9 +25,7 @@ public interface AnnotatedField extends Field {
 
 	boolean hasXmlTags();
 
-    boolean hasPunctuationForwardIndex();
-
-    String tokenLengthField();
+	String tokenLengthField();
 
     @Override
     default String contentsFieldName() {

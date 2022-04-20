@@ -529,16 +529,6 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     /**
-     * @return the number of free blocks in the forward index.
-     */
-    @Override
-    public int freeBlocks() {
-        if (!initialized)
-            initialize();
-        return deletedTocEntries.size();
-    }
-
-    /**
      * Gets the length (in tokens) of a document
      *
      * NOTE: this INCLUDES the extra closing token at the end.

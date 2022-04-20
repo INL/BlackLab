@@ -27,10 +27,6 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
     protected String luceneFieldName = "";
 
     protected List<BLSpanQuery> clauses;
-    
-    public BLSpanQueryAbstract(QueryInfo queryInfo) {
-        super(queryInfo);
-    }
 
     public BLSpanQueryAbstract(BLSpanQuery first, BLSpanQuery second) {
         super(first != null ? first.queryInfo : second != null ? second.queryInfo : null);

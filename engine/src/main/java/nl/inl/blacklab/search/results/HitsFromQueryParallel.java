@@ -335,8 +335,6 @@ public class HitsFromQueryParallel extends HitsMutable {
         }
     }
 
-    // hit count tracking
-    protected final SearchSettings searchSettings;
     protected final AtomicLong globalDocsProcessed = new AtomicLong();
     protected final AtomicLong globalDocsCounted = new AtomicLong();
     protected final AtomicLong globalHitsProcessed = new AtomicLong();
@@ -358,7 +356,6 @@ public class HitsFromQueryParallel extends HitsMutable {
 
     protected HitsFromQueryParallel(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         super(queryInfo, HitsInternal.create(-1, true, true)); // explicitly construct HitsInternal so they're writeable
-        this.searchSettings = searchSettings;
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
         BLSpanQuery optimizedQuery;
@@ -577,8 +574,7 @@ public class HitsFromQueryParallel extends HitsMutable {
         return this.globalHitsProcessed.get();
     }
 
-    @Override
-    protected long hitsProcessedTotal() {
+    private long hitsProcessedTotal() {
         ensureAllResultsRead();
         return this.globalHitsProcessed.get();
     }

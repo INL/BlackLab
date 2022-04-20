@@ -90,6 +90,7 @@ class Config {
         return annotatedField;
     }
 
+    @SuppressWarnings("unused")
     public void setAnnotatedField(String annotatedField) {
         this.annotatedField = annotatedField;
     }

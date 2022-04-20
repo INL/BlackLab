@@ -52,7 +52,6 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -502,10 +501,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         return forwardIndex(annotation.field()).get(annotation);
     }
 
-    protected void addForwardIndex(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        forwardIndex(annotation.field()).put(annotation, forwardIndex);
-    }
-
     @Override
     public MatchSensitivity defaultMatchSensitivity() {
         return defaultMatchSensitivity;
@@ -766,8 +761,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     // Methods for mutating the index
     //----------------------------------------------------------------
 
-    @Override
-    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
+    private IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
                 throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
@@ -815,14 +809,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                     fi.get(annotation).deleteDocumentByLuceneDoc(d);
             }
         }
-    }
-
-    @Override
-    public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
-        if (field.annotations().exists(annotName))
-            return field.annotation(annotName);
-        AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
-        return fld.getOrCreateAnnotation(annotName);
     }
 
     @Override

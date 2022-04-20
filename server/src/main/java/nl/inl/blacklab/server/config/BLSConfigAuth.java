@@ -21,6 +21,7 @@ public class BLSConfigAuth {
         return system;
     }
 
+    @SuppressWarnings("unused")
     public void setSystem(Map<String, String> system) {
         this.system = system;
     }
@@ -29,6 +30,7 @@ public class BLSConfigAuth {
         return overrideUserIdIps;
     }
 
+    @SuppressWarnings("unused")
     public void setOverrideUserIdIps(List<String> overrideUserIdIps) {
         this.overrideUserIdIps = overrideUserIdIps;
     }

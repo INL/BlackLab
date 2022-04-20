@@ -41,33 +41,10 @@ public class ContentStoresManager {
         return contentAccessors.get(field);
     }
 
-    public ContentStore contentStore(Field field) {
-        ContentAccessor contentAccessor = contentAccessor(field);
-        return contentAccessor == null ? null : contentAccessor.getContentStore();
-    }
-
     public void deleteDocument(Document d) {
         for (ContentAccessor ca : contentAccessors.values()) {
             ca.delete(d);
         }
-    }
-
-    public boolean exists(Field field) {
-        return contentAccessors.containsKey(field);
-    }
-
-    public String[] getSubstrings(Field field, Document d, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(field);
-        if (contentAccessor == null)
-            return null;
-        return contentAccessor.getSubstringsFromDocument(d, start, end);
-    }
-
-    public String[] getSubstrings(Field field, int contentId, int[] start, int[] end) {
-        ContentAccessor contentAccessor = contentAccessors.get(field);
-        if (contentAccessor == null)
-            return null;
-        return contentAccessor.getSubstringsFromDocument(contentId, start, end);
     }
 
 }
