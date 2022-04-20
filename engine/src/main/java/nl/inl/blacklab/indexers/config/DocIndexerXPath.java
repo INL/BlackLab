@@ -340,7 +340,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 b.setCursorPosition();
                 wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
             }
-            wordPositions.sort(Comparator.comparing(Pair::getKey));
+            wordPositions.sort(Entry.comparingByKey());
 
             for (Pair<Integer, BookMark> wordPosition : wordPositions) {
                 wordPosition.getValue().setCursorPosition();
