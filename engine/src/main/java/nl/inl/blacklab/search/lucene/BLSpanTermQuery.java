@@ -89,7 +89,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
     public BLSpanTermQuery(Term term, TermStates termStates, QueryInfo queryInfo) {
         super(queryInfo);
         query = new SpanTermQuery(term, termStates);
-        termStates = termStates;
+        this.termStates = termStates;
     }
 
     @Override
