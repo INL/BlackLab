@@ -419,10 +419,10 @@ public class DocIndexerChat extends DocIndexerConfig {
     private Date normalizeDate(String str) {
         Date date;
         try {
-            date = DateUtils.parseDate(str, locale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
+            date = DateUtils.parseDate(str, locale, "d-M-Y", "dd-MMM-yyyy");
         } catch (ParseException e) {
             try {
-                date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
+                date = DateUtils.parseDate(str, usLocale, "d-M-Y", "dd-MMM-yyyy");
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
                 throw BlackLabRuntimeException.wrap(e1);
