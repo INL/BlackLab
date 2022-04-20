@@ -36,9 +36,9 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     public void init() {
         try {
             // If the legacy docindexers JAR is included on the classpath, register them
-            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegacyDocIndexerRegisterer");
+            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegaDocIndexerRegisterer");
             Method m = cls.getMethod("register", DocIndexerFactoryClass.class);
-            m.invoke(this);
+            m.invoke(null, this);
         } catch (ClassNotFoundException e) {
             // OK, JAR not on classpath
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
