@@ -160,7 +160,7 @@ public class DocPropertyStoredField extends DocProperty {
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.
             }
-            return ret.toArray(new String[ret.size()]);
+            return ret.toArray(new String[0]);
         }
 
         // We don't have DocValues; just get the property from the document.
