@@ -20,7 +20,7 @@ public class DocGroup extends Group<DocResult> {
     private int storedHits;
 
     protected DocGroup(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
-        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, (SampleParameters) null, (WindowStats) null), totalDocuments);
+        super(groupIdentity, DocResults.fromList(queryInfo, storedResults, null, null), totalDocuments);
         this.totalTokens = totalTokens;
         storedHits = 0;
         for (DocResult result: storedResults) {

@@ -24,7 +24,7 @@ public class BLStandardAnalyzer extends Analyzer {
 
     @Override
     protected TokenStreamComponents createComponents(String fieldName) {
-        Tokenizer source = new StandardTokenizerFactory(Collections.<String, String>emptyMap()).create();
+        Tokenizer source = new StandardTokenizerFactory(Collections.emptyMap()).create();
         TokenStream filter = source;
         MatchSensitivity sensitivity = MatchSensitivity.INSENSITIVE;
         if (AnnotatedFieldNameUtil.isAnnotatedField(fieldName))

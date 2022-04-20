@@ -208,7 +208,7 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     IndexerImpl(File directory, boolean create)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        this(directory, create, (String) null, null);
+        this(directory, create, null, null);
     }
 
     /**

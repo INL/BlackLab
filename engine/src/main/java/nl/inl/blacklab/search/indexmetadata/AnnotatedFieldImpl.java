@@ -57,7 +57,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
         @Override
         public Stream<Annotation> stream() {
-            return annotationsDisplayOrder.stream().map(a -> (Annotation)a);
+            return annotationsDisplayOrder.stream().map(a -> a);
         }
 
         @Override

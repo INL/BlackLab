@@ -76,7 +76,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public Stream<MetadataField> stream() {
-        return metadataFieldInfos.values().stream().map(f -> (MetadataField)f);
+        return metadataFieldInfos.values().stream().map(f -> f);
     }
 
     @Override
@@ -117,7 +117,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
             @Override
             public Stream<MetadataFieldGroup> stream() {
-                return metadataGroups.values().stream().map(g -> (MetadataFieldGroup)g);
+                return metadataGroups.values().stream().map(g -> g);
             }
 
             @Override

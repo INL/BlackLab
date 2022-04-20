@@ -114,7 +114,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         List<BLSpanQuery> rewritten = new ArrayList<>(clauses.size());
         boolean someRewritten = false;
         for (BLSpanQuery c : clauses) {
-            BLSpanQuery query = c == null ? null : (BLSpanQuery) c.rewrite(reader);
+            BLSpanQuery query = c == null ? null : c.rewrite(reader);
             rewritten.add(query);
             if (query != c)
                 someRewritten = true;

@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, (AnnotatedField)null, true);
+        return create(index, null, true);
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {

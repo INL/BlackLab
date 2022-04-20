@@ -817,7 +817,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 for (String f: fields) {
-                    ((MetadataFieldsImpl)metadataFields()).ensureFieldExists(f);
+                    metadataFields().ensureFieldExists(f);
                 }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,

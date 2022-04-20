@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -94,7 +93,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
-        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : List.of(groups.groupCriteria());
+        List<DocProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
 
         ds.startEntry("docGroups").startList();
         long last = Math.min(first + number, groups.size());

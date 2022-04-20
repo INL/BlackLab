@@ -48,7 +48,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @Override
     public Stream<AnnotatedField> stream() {
-        return annotatedFields.values().stream().map(f -> (AnnotatedField)f);
+        return annotatedFields.values().stream().map(f -> f);
     }
 
     @Override
