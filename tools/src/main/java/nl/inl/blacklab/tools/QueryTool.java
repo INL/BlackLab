@@ -1046,7 +1046,7 @@ public class QueryTool {
 
             // See if we want to choose any random words
             if (query.contains("@@")) {
-                StringBuffer resultString = new StringBuffer();
+                StringBuilder resultString = new StringBuilder();
                 Pattern regex = Pattern.compile("@@[A-Za-z0-9_\\-]+");
                 Matcher regexMatcher = regex.matcher(query);
                 while (regexMatcher.find()) {

@@ -167,7 +167,7 @@ public final class StringUtil {
      * @return equivalent regex pattern
      */
     public static String wildcardToRegex(String wildcard) {
-        StringBuffer s = new StringBuffer(wildcard.length());
+        StringBuilder s = new StringBuilder(wildcard.length());
         s.append('^');
         for (int i = 0, is = wildcard.length(); i < is; i++) {
             char c = wildcard.charAt(i);
