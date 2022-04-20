@@ -608,8 +608,6 @@ public class SearchParameters {
             return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
-        } catch (BlsException e) {
-            throw e;
         }
     }
 
