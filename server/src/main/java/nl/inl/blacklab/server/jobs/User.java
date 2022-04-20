@@ -110,14 +110,14 @@ public class User {
     }
 
     public static boolean isValidUserId(String userId) {
-        return userId.matches("^[a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]+$");
+        return userId.matches("^[a-zA-Z0-9\\-._!$&'()*+,;=@]+$");
     }
 
     public static String sanitize(String originalUserId) {
         if (originalUserId == null || originalUserId.isEmpty())
             return null;
 
-        return originalUserId.replaceAll("[^a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]", "_");
+        return originalUserId.replaceAll("[^a-zA-Z0-9\\-._!$&'()*+,;=@]", "_");
     }
 
     public boolean isSuperuser() {

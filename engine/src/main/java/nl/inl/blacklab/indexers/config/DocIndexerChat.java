@@ -143,7 +143,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             log("processing " + documentName + "...");
 
             metadata = new HashMap<>();
-            currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^\\.]+$", "");
+            currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^.]+$", "");
 
             int lineNumber = 0;
             int uttId = 0;
@@ -986,33 +986,33 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final Pattern ZERO_STR = Pattern.compile("0(\\w+)");
     static final Pattern BARE_ZERO = Pattern.compile("0");
     static final Pattern PLUS_DOT_DOT = Pattern.compile("\\+\\.\\.");
-    static final String LT_STR = "\\[<\\]";
+    static final String LT_STR = "\\[<]";
     static final Pattern LT_REGEX = Pattern.compile(LT_STR);
 
     // ltre1 = Pattern.compile(scoped(ltstr))
     // ltre2 = Pattern.compile(ltstr)
-    static final String DOUBLE_SLASH_STR = "\\[//\\]";
+    static final String DOUBLE_SLASH_STR = "\\[//]";
     static final Pattern DOUBLE_SLASH_SCOPED = Pattern.compile(scoped(DOUBLE_SLASH_STR));
     static final Pattern DOUBLE_SLASH_UNSCOPED = Pattern.compile(DOUBLE_SLASH_STR);
-    static final Pattern EXCLAM2 = Pattern.compile("\\[!\\]");
-    static final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!\\]");
-    static final String SLASH_STR = "\\[/\\]";
+    static final Pattern EXCLAM2 = Pattern.compile("\\[!]");
+    static final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!]");
+    static final String SLASH_STR = "\\[/]";
     static final Pattern SLASH_SCOPED = Pattern.compile(scoped(SLASH_STR));
     static final Pattern SLASH_UNSCOPED = Pattern.compile(SLASH_STR);
-    static final String GT_STR = "\\[>\\]";
+    static final String GT_STR = "\\[>]";
     static final Pattern GT_REGEX = Pattern.compile(GT_STR);
     // gtre1 = Pattern.compile(scoped(gtstr))
     // gtre2 = Pattern.compile(gtstr)
-    static final String Q_STR = "\\[\\?\\]";
+    static final String Q_STR = "\\[\\?]";
     static final Pattern Q_REGEX_SCOPED = Pattern.compile(scoped(Q_STR));
     static final Pattern Q_REGEX_UNSCOPED = Pattern.compile(Q_STR);
-    static final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^\\]]*\\]");
-    static final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^\\]]*\\]");
-    static final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^\\]]*\\]");
-    static final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^\\]]*)\\]");
-    static final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!\\]");
-    static final Pattern PLUS3 = Pattern.compile("\\+\\/(\\/)?[\\.\\?]");
-    static final Pattern PLUS2 = Pattern.compile("\\+[\\.\\^<,\\+\"]");
+    static final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^]]*]");
+    static final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^]]*]");
+    static final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^]]*]");
+    static final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^]]*)]");
+    static final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!]");
+    static final Pattern PLUS3 = Pattern.compile("\\+/(/)?[.?]");
+    static final Pattern PLUS2 = Pattern.compile("\\+[.^<,+\"]");
     static final Pattern PLUS_QUOTE = Pattern.compile("\\+(\\+\"\\.|!\\?)");
     // nesting = Pattern.compile(r"<([^<>]*(<[^<>]*>(\[>\]|\[<\]|[^<>])*)+)>")
     // nesting = Pattern.compile(r"<(([^<>]|\[<\]|\[>\])*)>")
@@ -1038,7 +1038,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // JN fixed(?)
     private final Pattern CHECK_PATTERN = Pattern.compile(
-            "[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E" +
+            "[]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E" +
                     "\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9" +
                     "\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
 
@@ -1063,25 +1063,25 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final String NEST_STR = "(<" + regexStar(OTHER) + EMBED + regexStar(EMBED_OR_OTHER) + ">)";
     private static final Pattern NESTING = Pattern.compile(NEST_STR);
 
-    private static final String TIMES_STR = "\\[x[^\\]]*\\]";
+    private static final String TIMES_STR = "\\[x[^]]*]";
     private static final Pattern TIMES_UNSCOPED = Pattern.compile(TIMES_STR);
     private static final Pattern TIMES_SCOPED = Pattern.compile(scoped(TIMES_STR));
-    private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[\\% [^\\]]*\\]");
-    private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[\\% [^\\]]*\\]");
-    private static final String TRIPLE_SLASH = "\\[///\\]";
+    private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[% [^]]*]");
+    private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[% [^]]*]");
+    private static final String TRIPLE_SLASH = "\\[///]";
     private static final Pattern REFORMUL_UNSCOPED = Pattern.compile(TRIPLE_SLASH);
     private static final Pattern REFORMUL_SCOPED = Pattern.compile(scoped(TRIPLE_SLASH));
     private static final Pattern END_QUOTE = Pattern.compile("\\+\"/\\.");
-    private static final String ERROR_MARK_STR = "\\[\\*\\]";
+    private static final String ERROR_MARK_STR = "\\[\\*]";
     private static final Pattern ERROR_MARK_UNSCOPED = Pattern.compile(ERROR_MARK_STR);
     private static final Pattern ERROR_MARK_SCOPED = Pattern.compile(scoped(ERROR_MARK_STR));
-    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN fixed(?)
-    private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*\\]");
-    private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*\\]");
-    private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch\\]");
-    private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn\\]");
+    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^]]*]"); // JN fixed(?)
+    private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*]");
+    private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*]");
+    private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch]");
+    private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn]");
     private static final Pattern SYLLABLE_PAUSE = Pattern.compile("(\\w)\\^");
-    private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^\\]]*\\]");
+    private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^]]*]");
     private static final Pattern CLITIC_LINK = Pattern.compile("~");
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
     private static final Pattern CHAT_CA_SYMS = Pattern.compile(

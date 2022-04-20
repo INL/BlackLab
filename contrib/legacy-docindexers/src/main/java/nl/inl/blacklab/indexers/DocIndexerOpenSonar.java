@@ -243,9 +243,9 @@ public class DocIndexerOpenSonar extends DocIndexerXmlHandlers {
     }
 
     public static void main(String[] args) {
-        System.out.println("NL B".replaceAll("[\\s\\./]", "_"));
-        System.out.println("NL/B".replaceAll("[\\s\\./]", "_"));
-        System.out.println("a.b.c.d".replaceAll("[\\s\\./]", "_"));
+        System.out.println("NL B".replaceAll("[\\s./]", "_"));
+        System.out.println("NL/B".replaceAll("[\\s./]", "_"));
+        System.out.println("a.b.c.d".replaceAll("[\\s./]", "_"));
     }
 
 }

@@ -23,7 +23,7 @@ public final class StringUtil {
     /** Whitespace and/or punctuation at start */
     private static final Pattern PATT_WS_PUNCT_AT_START = Pattern.compile("^[\\p{P}\\s]+");
 
-    private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
+    private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([|\\\\?*+()\\[\\]\\-^${}.])");
 
     /** Diacritical marks as well as "soft hyphen" U+00AD and "general punctuation" U+2003
         (which are also a pain when trying to compare insensitively, and ignored by collators) */

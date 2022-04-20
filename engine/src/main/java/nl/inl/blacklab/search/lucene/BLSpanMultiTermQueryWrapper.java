@@ -186,7 +186,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         if (wrapped instanceof RegexpQuery) {
             numberOfChars = countRegexWordCharacters(pattern);
         } else if (wrapped instanceof WildcardQuery) {
-            numberOfChars = pattern.replaceAll("[\\*\\?]", "").length();
+            numberOfChars = pattern.replaceAll("[*?]", "").length();
         } else if (wrapped instanceof PrefixQuery) {
             numberOfChars = pattern.length();
         } else {
@@ -233,7 +233,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
      * @return number of word characters in the pattern
      */
     public static int countRegexWordCharacters(String pattern) {
-        String trimmed = pattern.replaceAll("^\\^(\\(\\?\\-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
+        String trimmed = pattern.replaceAll("^\\^(\\(\\?-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
         // only retain word characters
         return trimmed.replaceAll("\\W", "").length();
         //trimmed.replaceAll("^(\\w*)(\\W(|.*\\W))(\\w*)$", "$1$4"); // only retain prefix and suffix

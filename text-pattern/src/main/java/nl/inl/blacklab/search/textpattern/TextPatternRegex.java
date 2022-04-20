@@ -69,7 +69,7 @@ public class TextPatternRegex extends TextPatternTerm {
         // If there's a case-sensitivity toggle flag after a
         // start-of-string match, put the flag first so we can
         // easily detect it below.
-        String newValue = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
+        String newValue = value.replaceAll("^\\^(\\(\\?-?\\w+\\))", "$1^");
 
         // Do we want to force an (in)sensitive search?
         boolean forceSensitive = false;

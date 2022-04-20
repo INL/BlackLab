@@ -154,7 +154,7 @@ public class HitPropertyContextWords extends HitProperty {
             if (part.length() > 1) {
                 if (part.contains("-")) {
                     // Two numbers, or a number followed by a dash ("until end of part")
-                    String[] numbers = part.substring(1).split("\\-");
+                    String[] numbers = part.substring(1).split("-");
                     try {
                         firstWord = Integer.parseInt(numbers[0]) - 1;
                         if (numbers.length > 1)

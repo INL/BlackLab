@@ -186,7 +186,7 @@ public class DownloadCache {
             if (urlSize > maxDownloadedFileSize)
                 throw new UnsupportedOperationException(
                         "File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
-            String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
+            String ext = inputFile.replaceAll("^.+(\\.[^.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
             File tempFile = File.createTempFile("BlackLab_download_", ext, getDownloadTempDir());
