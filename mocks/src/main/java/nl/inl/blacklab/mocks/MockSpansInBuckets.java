@@ -3,8 +3,6 @@
  */
 package nl.inl.blacklab.mocks;
 
-import java.io.IOException;
-
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 

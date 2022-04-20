@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;

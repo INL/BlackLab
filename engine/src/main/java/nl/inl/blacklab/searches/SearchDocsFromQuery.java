@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 

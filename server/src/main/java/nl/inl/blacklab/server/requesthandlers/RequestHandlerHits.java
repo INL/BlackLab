@@ -17,8 +17,6 @@ import org.apache.lucene.search.DocValuesTermsQuery;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;

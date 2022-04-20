@@ -1,7 +1,6 @@
 package nl.inl.blacklab.index;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * A metadata fetcher can fetch the metadata for a document from some external
