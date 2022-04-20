@@ -131,15 +131,9 @@ public class CompareCollectionsLibs {
             base[i] = new Hit(random.nextInt(), random.nextInt(), random.nextInt());
         }
         
-        time("Fill Java list", () -> {
-            javaList.addAll(Arrays.asList(base));
-        });
-        time("Fill Eclipse list", () -> {
-            ecList.addAll(Arrays.asList(base));
-        });
-        time("Fill fastutil list", () -> {
-            fuList.addAll(Arrays.asList(base));
-        });
+        time("Fill Java list", () -> javaList.addAll(Arrays.asList(base)));
+        time("Fill Eclipse list", () -> ecList.addAll(Arrays.asList(base)));
+        time("Fill fastutil list", () -> fuList.addAll(Arrays.asList(base)));
         
         Comparator<Hit> comp = (a, b) -> {
             int c = Integer.compare(a.doc, b.doc);
