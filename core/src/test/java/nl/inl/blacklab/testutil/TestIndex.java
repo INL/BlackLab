@@ -163,7 +163,7 @@ public class TestIndex {
     }
 
     private static void deleteTree(File dir) {
-        for (File f : dir.listFiles()) {
+        for (File f: dir.listFiles()) {
             if (f.isFile())
                 f.delete();
             else if (f.isDirectory())

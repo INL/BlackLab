@@ -472,9 +472,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             // For each configured metadata field...
             List<ConfigMetadataField> fields = b.getFields();
-            for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
-                ConfigMetadataField f = fields.get(i);
-
+            for (ConfigMetadataField f : fields) { // NOTE: fields may be added during loop, so can't iterate
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
                 // such as extra processing steps
@@ -555,7 +553,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 addMetadataField(f.getName(), value);
                             }
                         }
-                    } catch(XPathEvalException e) {
+                    } catch (XPathEvalException e) {
                         // An xpath like string(@value) will make evalXPath() fail.
                         // There is no good way to check whether this exception will occur
                         // When the exception occurs we try to evaluate the xpath as string

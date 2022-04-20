@@ -147,14 +147,14 @@ public class HookableSaxHandler extends DefaultHandler {
                 throw new IllegalArgumentException("Cannot match on attribute");
             }
             elementNames = new ArrayList<>();
-            for (int i = 0; i < numberOfElementParts; i++) {
-                if (parts[i].length() == 0) {
+            for (String part : parts) {
+                if (part.length() == 0) {
                     throw new IllegalArgumentException("Double slash in simple-xpath expression");
                 }
-                if (parts[i].charAt(0) == '@') {
+                if (part.charAt(0) == '@') {
                     throw new IllegalArgumentException("Cannot match on attribute");
                 }
-                elementNames.add(parts[i]);
+                elementNames.add(part);
             }
         }
 

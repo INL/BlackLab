@@ -599,8 +599,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             List<CombiPart> parts = new ArrayList<>();
-            for (int i = 0; i < weights.size(); i++) {
-                CombiPart part = new CombiPart(weights.get(i), context, requiredPostings);
+            for (BLSpanWeight weight : weights) {
+                CombiPart part = new CombiPart(weight, context, requiredPostings);
                 if (part.spans == null)
                     return null;
                 parts.add(part);

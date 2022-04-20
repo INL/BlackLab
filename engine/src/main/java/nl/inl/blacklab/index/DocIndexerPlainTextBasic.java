@@ -127,7 +127,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             if (line == null)
                 break;
             String[] words = line.trim().split("\\s+");
-            for (int i = 0; i < words.length; i++) {
+            for (String word : words) {
                 // Handle space and punctuation between words. Instead of always using a hardcoded
                 // space,
                 // you would want to use smarter tokenization and actually capture the space and
@@ -144,9 +144,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
                 // Handle the word itself, including character positions.
                 contentsField.addStartChar(getCharacterPosition());
-                processContent(words[i]); // add word to content store
+                processContent(word); // add word to content store
                 contentsField.addEndChar(getCharacterPosition());
-                annotMain.addValue(words[i]); // add word to index
+                annotMain.addValue(word); // add word to index
 
                 // Report progress regularly but not too often
                 wordsDone++;

@@ -405,8 +405,8 @@ public abstract class DocIndexer implements AutoCloseable {
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
-        for (int i = 0; i < fields.size(); i++) {
-            MetadataField fd = indexMetadata.metadataField(fields.get(i));
+        for (String field: fields) {
+            MetadataField fd = indexMetadata.metadataField(field);
             if (fd.type() == FieldType.NUMERIC)
                 continue;
             boolean missing = false, empty = false;
@@ -435,7 +435,7 @@ public abstract class DocIndexer implements AutoCloseable {
                 if (empty) {
                     // Don't count this as a value, count the unknown value
                     for (String value : currentValue) {
-                        ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(value);
+                        ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
                     }
                 }
                 unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());

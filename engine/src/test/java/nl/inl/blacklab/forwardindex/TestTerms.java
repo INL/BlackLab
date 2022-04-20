@@ -37,8 +37,8 @@ public class TestTerms {
         t = Terms.openForWriting(colls, null);
         if (t instanceof TermsWriter)
             ((TermsWriter) t).setMaxBlockSize(18);
-        for (int i = 0; i < str.length; i++) {
-            t.indexOf(str[i]);
+        for (String s : str) {
+            t.indexOf(s);
         }
         File f = new File(dir, "terms.dat");
         t.write(f); // close so everything is guaranteed to be written
