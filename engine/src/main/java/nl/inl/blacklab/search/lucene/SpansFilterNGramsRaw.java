@@ -251,7 +251,6 @@ class SpansFilterNGramsRaw extends BLSpans {
      *
      * @return the start position if we're at a valid hit and have reset the
      *         expansion, NO_MORE_POSITIONS if we're done
-     * @throws IOException
      */
     private int goToNextClauseSpan() throws IOException {
         srcStart = clause.nextStartPosition();

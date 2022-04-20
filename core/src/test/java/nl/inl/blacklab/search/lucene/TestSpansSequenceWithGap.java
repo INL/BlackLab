@@ -124,7 +124,6 @@ public class TestSpansSequenceWithGap {
      * another document than right, potentially skipping hits or even generating
      * false hits.
      *
-     * @throws IOException
      */
     @Test
     public void testAdvanceBeyondDocError() throws IOException {

@@ -113,7 +113,6 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
      * Load all user formats already present in this user's directory, if this
      * user's formats haven't been loaded already.
      *
-     * @param userId
      */
     public synchronized void loadUserFormats(String userId) {
         if (loadedUsers.contains(userId) || !User.isValidUserId(userId))
@@ -201,7 +200,6 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
      * locate unknown formats before deleting, allowing you to delete formats that
      * have not been loaded yet.
      * 
-     * @param user
      * @param formatIdentifier a valid identifier encoding the user and format
      * @throws NotAuthorized if the format is a builtin format, or is not owned by
      *             the user
@@ -288,7 +286,6 @@ public class DocIndexerFactoryUserFormats extends DocIndexerFactoryConfig {
      * Extract the userId portion of a formatIdentifier as created by
      * {@link DocIndexerFactoryUserFormats#getFormatIdentifier(String, String)}
      *
-     * @param formatIdentifier
      * @param getFormatName return the formatName instead of the userId
      * @return the userId or formatName
      * @throws IllegalUserFormatIdentifier when the formatIdentifier does not follow

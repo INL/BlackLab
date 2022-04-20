@@ -57,7 +57,6 @@ public interface MetadataFields extends Iterable<MetadataField> {
 	/**
 	 * Does the specified field exist?
 	 * 
-	 * @param name
 	 * @return true if it exists, false if not
 	 */
     boolean exists(String name);

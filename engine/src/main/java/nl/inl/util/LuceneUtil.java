@@ -329,7 +329,6 @@ public final class LuceneUtil {
      * @param fieldName the field to find terms for
      * @param startFrom (prefix of a) term to start iterating from, or null to start at the beginning
      * @param handler called to handle terms found, until it returns false (or we run out of terms)
-     * @return the matching terms
      */
     public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
     	boolean allTerms = startFrom == null || startFrom.length() == 0;
@@ -426,7 +425,6 @@ public final class LuceneUtil {
     /**
      * Get term frequencies for an annotation in a subset of documents.
      *
-     * @param indexSearcher
      * @param documentFilterQuery document filter, or null for all documents
      * @param annotSensitivity field to get frequencies for
      * @param searchTerms list of terms to get frequencies for, or null for all terms
@@ -486,7 +484,6 @@ public final class LuceneUtil {
      * @param it the terms in the (set of) documents or a leaf
      * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
      * @param freq map containing existing frequencies to add on to or merge in to
-     * @throws IOException
      */
     private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
         if (searchTerms != null && !searchTerms.isEmpty()) {

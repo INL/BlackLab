@@ -39,7 +39,6 @@ public class XmlUtil {
      *
      * @param reader where to read the XML document from
      * @return the DOM representation of the document
-     * @throws SAXException
      */
     public static Document parseXml(Reader reader) throws SAXException {
         try {

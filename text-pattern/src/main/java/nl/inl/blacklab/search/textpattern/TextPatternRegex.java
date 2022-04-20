@@ -20,7 +20,6 @@ public class TextPatternRegex extends TextPatternTerm {
     /**
      * Instantiate a regex TextPattern.
      *
-     * @param value
      */
     public TextPatternRegex(String value) {
         super(value);

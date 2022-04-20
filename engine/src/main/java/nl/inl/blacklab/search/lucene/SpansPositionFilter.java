@@ -161,7 +161,6 @@ class SpansPositionFilter extends BLSpans {
      *
      * @return docID if found, NO_MORE_DOCS if no such producer span exists (i.e.
      *         we're done)
-     * @throws IOException
      */
     private int findDocWithMatch() throws IOException {
         // Find the next "valid" container, if there is one.
@@ -216,7 +215,6 @@ class SpansPositionFilter extends BLSpans {
      *
      * @return start position if found, NO_MORE_POSITIONS if no such container
      *         exists (i.e. we're done)
-     * @throws IOException
      */
     private int synchronizePos() throws IOException {
         // Find the next "valid" producer spans, if there is one.

@@ -45,8 +45,6 @@ class SpansCaptureGroup extends BLSpans {
      * 
      * @param clause the clause to capture
      * @param name group name
-     * @param rightAdjust
-     * @param leftAdjust
      */
     public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
         this.clause = clause;
@@ -100,7 +98,6 @@ class SpansCaptureGroup extends BLSpans {
      *
      * @param doc the doc number to skip to (or past)
      * @return true if we're still pointing to a valid hit, false if we're done
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {

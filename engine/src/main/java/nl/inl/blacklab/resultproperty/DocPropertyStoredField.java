@@ -112,8 +112,6 @@ public class DocPropertyStoredField extends DocProperty {
      * Get the raw values straight from lucene.
      * The returned array is in whichever order the values were originally added to the document.
      *
-     * @param docId
-     * @return
      */
     public String[] get(int docId) {
         if  (docValues != null) {

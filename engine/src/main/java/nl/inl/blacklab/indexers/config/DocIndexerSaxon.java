@@ -202,10 +202,6 @@ public class DocIndexerSaxon extends DocIndexerConfig {
 
     /**
      * return punctuations and inlines occurring before a word
-     * @param puncts
-     * @param inlines
-     * @param word
-     * @return
      */
     private static List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word, List<NodeInfo> precedingPuncts) {
         List<NodeInfo> preceding = new ArrayList<>();

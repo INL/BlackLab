@@ -26,7 +26,6 @@ public class Kwics {
     Map<Hit, Kwic> kwics;
 
     /**
-     * @param hits
      */
     protected Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.left() < 0 || contextSize.right() < 0)

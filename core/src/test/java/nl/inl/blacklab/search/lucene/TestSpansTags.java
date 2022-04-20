@@ -46,7 +46,6 @@ public class TestSpansTags {
      *
      * E.g.: <code>quick &lt;b&gt;&lt;/b&gt; brown</code>
      *
-     * @throws IOException
      */
     @Test
     public void testEmptyTag() throws IOException {

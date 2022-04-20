@@ -92,7 +92,6 @@ class SpansRepetition extends BLSpans {
      * Go to the next matching bucket, not necessarily in the current doc.
      * 
      * @return the doc id, or NO_MORE_DOCS if there's no more buckets.
-     * @throws IOException
      */
     private int findDocWithMatchingBucket() throws IOException {
         while (currentDoc != NO_MORE_DOCS) {
@@ -116,7 +115,6 @@ class SpansRepetition extends BLSpans {
      *
      * @return the start position of the bucket, or NO_MORE_BUCKETS if there's no
      *         more matching buckets
-     * @throws IOException
      */
     private int nextBucket() throws IOException {
         moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
@@ -139,7 +137,6 @@ class SpansRepetition extends BLSpans {
      * Go to the next match.
      *
      * @return true if we're on a valid match, false if we're done.
-     * @throws IOException
      */
     @Override
     public int nextStartPosition() throws IOException {
@@ -185,7 +182,6 @@ class SpansRepetition extends BLSpans {
      *
      * @param doc the document number to skip to / over
      * @return true if we're at a valid hit, false if not
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {

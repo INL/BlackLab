@@ -120,7 +120,6 @@ public abstract class ContentStore {
 
     /**
      * Clear the entire content store.
-     * @throws IOException 
      */
     public abstract void clear() throws IOException;
 

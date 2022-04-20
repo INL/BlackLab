@@ -186,7 +186,6 @@ public class IndexManager {
      *
      * @param indexId the index we want to check for
      * @return true iff the index exists
-     * @throws BlsException
      */
     public synchronized boolean indexExists(String indexId) throws BlsException {
         try {
@@ -210,7 +209,6 @@ public class IndexManager {
      *
      * @param user the logged-in user
      * @param indexId the index name, including user prefix
-     * @param displayName
      * @param formatIdentifier the document format identifier (e.g. tei, folia, ..).
      *            See {@link DocumentFormats}
      * @throws BlsException if we're not allowed to create the index for whatever
@@ -302,7 +300,6 @@ public class IndexManager {
      * @throws NotAuthorized if this is not a user index
      * @throws IndexNotFound if no such index exists
      * @throws InternalServerError if the index is in an invalid state
-     * @throws IllegalIndexName
      */
     public synchronized void deleteUserIndex(String indexId)
             throws NotAuthorized, IndexNotFound, InternalServerError, IllegalIndexName {
@@ -369,7 +366,6 @@ public class IndexManager {
      * Get the Index with this id. Attempts to load public indices (if this index is
      * a user index, additionally tries to load the user's indices).
      *
-     * @param indexId
      * @return the Index, never null
      * @throws IndexNotFound when the index could not be found
      */
@@ -570,7 +566,6 @@ public class IndexManager {
      * @param directories to monitor
      * @param pollingIntervalInMs how ofter to monitor the directories
      * @return the monitor
-     * @throws Exception
      */
     public FileAlterationMonitor startRemovedIndicesMonitor(List<File> directories, long pollingIntervalInMs) throws Exception {
         logger.info("Installing index removal watcher on: {}", directories);

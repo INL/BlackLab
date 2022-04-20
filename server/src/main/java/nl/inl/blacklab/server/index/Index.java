@@ -108,8 +108,6 @@ public class Index {
      *            index
      * @param dir directory of this index
      * @param searchMan search manager
-     * @throws IllegalIndexName
-     * @throws FileNotFoundException
      */
     public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, FileNotFoundException {
         if (!isValidIndexName(indexId))
@@ -294,7 +292,6 @@ public class Index {
      * is not currently Indexing.
      *
      * @return the listener, or null when there is no ongoing indexing.
-     * @throws BlsException
      */
     public synchronized IndexListener getIndexerListener() throws BlsException {
         // Don't return inderListener for an Indexer that has been closed
@@ -369,9 +366,7 @@ public class Index {
     /**
      * Check if this indexId is owned by a user
      *
-     * @param indexId
      * @return true if this index is owned by a user
-     * @throws IllegalIndexName
      */
     public static boolean isUserIndex(String indexId) throws IllegalIndexName {
         return getUserId(indexId) != null;
@@ -391,9 +386,7 @@ public class Index {
     /**
      * Get the user that owns this index. Returns null if this is not a user index.
      *
-     * @param indexId
      * @return the username, or null if this is not a user index
-     * @throws IllegalIndexName
      */
     public static String getUserId(String indexId) throws IllegalIndexName {
         Matcher m = PATT_INDEXID.matcher(indexId);
@@ -448,9 +441,7 @@ public class Index {
     /**
      * Get the name portion of the indexId.
      *
-     * @param indexId
      * @return the indexname, never null
-     * @throws IllegalIndexName
      */
     public static String getIndexName(String indexId) throws IllegalIndexName {
         Matcher m = PATT_INDEXID.matcher(indexId);

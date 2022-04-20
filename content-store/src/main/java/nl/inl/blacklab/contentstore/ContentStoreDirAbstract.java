@@ -28,7 +28,6 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
      * 
      * @param dir directory of the content store
      * @return the contents of the store's version file
-     * @throws ErrorOpeningIndex 
      */
     public static VersionFile getStoreTypeVersion(File dir) throws ErrorOpeningIndex {
         VersionFile vf = new VersionFile(dir);

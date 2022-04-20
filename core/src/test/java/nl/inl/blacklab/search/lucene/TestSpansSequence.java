@@ -61,7 +61,6 @@ public class TestSpansSequence {
      * another document than right, potentially skipping hits or even generating
      * false hits.
      *
-     * @throws IOException
      */
     @Test
     public void testSequenceSpansAdvanceBeyondDocError() throws IOException {

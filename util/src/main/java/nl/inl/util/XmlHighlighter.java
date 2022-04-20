@@ -579,7 +579,6 @@ public class XmlHighlighter {
      * non-well-formed document well-formed, it just works for cutting out part of a
      * well-formed document.
      *
-     * @param xmlFragment
      * @return a well-formed fragment
      */
     public String makeWellFormed(String xmlFragment) {

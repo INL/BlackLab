@@ -327,7 +327,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /**
      * Cancel the search, including fetching all hits (if that's being done).
      *
-     * @param interrupt
      * @return true if the search was cancelled, false if it could not be cancelled (because it wasn't running anymore)
      */
     @Override

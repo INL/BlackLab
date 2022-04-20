@@ -345,7 +345,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * @param createNewIndex if true, delete existing index in this location if it
      *            exists.
      * @param indexTemplateFile index template file to use to create index
-     * @throws ErrorOpeningIndex
      */
     BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
         this.blackLab = blackLab;

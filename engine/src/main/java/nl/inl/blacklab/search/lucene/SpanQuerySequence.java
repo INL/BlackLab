@@ -452,7 +452,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
      * @param parts translation results for each of the clauses so far
      * @param reader the index reader
      * @return several alternatives combined with or
-     * @throws IOException
      */
     List<List<BLSpanQuery>> makeAlternatives(List<BLSpanQuery> parts, IndexReader reader) throws IOException {
         if (parts.size() == 1) {

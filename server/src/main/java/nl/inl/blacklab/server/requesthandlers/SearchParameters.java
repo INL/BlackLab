@@ -561,7 +561,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted then sampled then windowed
-     * @throws BlsException
      */
     public SearchHits hitsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
@@ -572,7 +571,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted then sampled
-     * @throws BlsException
      */
     public SearchHits hitsSample() throws BlsException {
         SampleParameters sampleSettings = getSampleSettings();
@@ -583,7 +581,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted
-     * @throws BlsException
      */
     private SearchHits hitsSorted() throws BlsException {
         HitSortSettings hitsSortSettings = hitsSortSettings();
@@ -650,7 +647,6 @@ public class SearchParameters {
      * If no metadata query is given, the subcorpus is all documents in the corpus.
      *
      * @return subcorpus
-     * @throws BlsException
      */
     public SearchDocs subcorpus() throws BlsException {
         Query docFilterQuery = getFilterQuery();

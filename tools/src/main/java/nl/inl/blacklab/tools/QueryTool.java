@@ -377,7 +377,6 @@ public class QueryTool {
      *
      * @param indexDir the index to search
      * @param commandFile the command file to execute
-     * @throws ErrorOpeningIndex
      */
     public static void runBatch(File indexDir, File commandFile) throws ErrorOpeningIndex {
         run(indexDir, commandFile, Charset.defaultCharset().name());
@@ -411,9 +410,6 @@ public class QueryTool {
      * @param inputFile if specified, run in batch mode. If null, run in interactive
      *            mode
      * @param encoding the output encoding to use
-     * @throws UnsupportedEncodingException
-     * @throws CorruptIndexException
-     * @throws ErrorOpeningIndex
      */
     private static void run(File indexDir, File inputFile, String encoding) throws ErrorOpeningIndex {
         if (!indexDir.exists() || !indexDir.isDirectory()) {

@@ -232,8 +232,6 @@ class IndexerImpl implements DocWriter, Indexer {
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
-     * @throws IOException
-     * @throws ErrorOpeningIndex
      */
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
@@ -482,7 +480,6 @@ class IndexerImpl implements DocWriter, Indexer {
      * Add a Lucene document to the index
      *
      * @param document the document to add
-     * @throws IOException
      */
     @Override
     public void add(Document document) throws IOException {

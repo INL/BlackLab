@@ -121,9 +121,6 @@ public class TermsReader extends Terms {
      * - {@link #sensitivePosition2GroupId}
      * - {@link #insensitivePosition2GroupId}
      *
-     * @param termId2SortPositionSensitive
-     * @param termId2SortPositionInsensitive
-     * @param insensitiveSortPosition2TermIds
      * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
      */
     private void fillTermDataGroups(int[] termId2SortPositionSensitive, int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntArrayList> insensitiveSortPosition2TermIds, int numGroupsThatAreNotSizeOne) {
@@ -337,7 +334,6 @@ public class TermsReader extends Terms {
      * index 0 contains the char array
      * index 1 contains the offset within the char array
      * index 2 contains the length
-     * @param termId
      * @return the
      */
     private int[] getOffsetAndLength(int termId) {

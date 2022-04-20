@@ -184,7 +184,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
      * config A refers to config B, then the directory where config B is located
      * must also be present in the dirs list.
      * 
-     * @param dirs
      * @throws InvalidInputFormatConfig when one of the formats could not be
      *             loaded
      */

@@ -35,7 +35,6 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
 
     /**
      * @param dir content store dir
-     * @throws ErrorOpeningIndex 
      */
     public ContentStoreFixedBlockReader(File dir) throws ErrorOpeningIndex {
         super(dir);

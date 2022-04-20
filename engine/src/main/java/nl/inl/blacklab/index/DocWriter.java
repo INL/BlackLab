@@ -32,7 +32,6 @@ public interface DocWriter {
      *
      * @param document
      *            the document to add
-     * @throws IOException
      */
     void add(Document document) throws IOException;
 

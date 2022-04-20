@@ -146,7 +146,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      *
      * @param targetPos the target start point
      * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
-     * @throws IOException
      */
     public int advanceBucket(int targetPos) throws IOException {
         if (source.startPosition() >= targetPos)
@@ -165,7 +164,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * doesn't fit in the bucket (or beyond the last hit, i.e.
      * Spans.NO_MORE_POSITIONS).
      *
-     * @throws IOException
      */
     protected abstract void gatherHits() throws IOException;
 

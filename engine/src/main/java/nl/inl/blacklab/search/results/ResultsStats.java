@@ -116,7 +116,6 @@ public abstract class ResultsStats implements SearchResult {
 
     /**
      * How many result objects are stored here?
-     * @return
      */
     @Override
     public long numberOfResultObjects() {

@@ -19,7 +19,6 @@ public class VersionFile {
      *
      * @param dir the directory containing the version file
      * @return the VersionFile object
-     * @throws FileNotFoundException
      */
     public static VersionFile read(File dir) throws FileNotFoundException {
         VersionFile f = new VersionFile(dir);

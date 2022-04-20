@@ -173,8 +173,6 @@ public class DownloadCache {
      *
      * @param inputFile URL of the file
      * @return temp file
-     * @throws IOException
-     * @throws MalformedURLException
      */
     public synchronized static File downloadFile(String inputFile) throws IOException, MalformedURLException {
         if (!isFileDownloadAllowed())

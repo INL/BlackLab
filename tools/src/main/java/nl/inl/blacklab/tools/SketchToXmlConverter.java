@@ -44,7 +44,6 @@ public class SketchToXmlConverter {
      * @param resourcePath file path, relative to the classpath, where the
      *            properties file is
      * @return the Properties read
-     * @throws IOException
      */
     public static Properties getPropertiesFromResource(String resourcePath) throws IOException {
         Properties properties;
@@ -284,9 +283,6 @@ public class SketchToXmlConverter {
      *            basedir)
      * @param inDir basedir for the files to index
      * @param outDir where to write output files
-     * @throws IOException 
-     * @throws FileNotFoundException 
-     * @throws Exception
      */
     private static void convertList(File listFile, File inDir, File outDir) throws FileNotFoundException, IOException {
         SketchToXmlConverter converter = new SketchToXmlConverter();

@@ -34,7 +34,6 @@ public class Concordances {
     Kwics kwics = null;
 
     /**
-     * @param hits
      */
     public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
         if (contextSize.left() < 0 || contextSize.right() < 0)

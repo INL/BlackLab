@@ -98,7 +98,6 @@ class SpansSequenceSimple extends BLSpans {
      * in it.
      *
      * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     * @throws IOException
      */
     private int realignDoc() throws IOException {
         while (true) {

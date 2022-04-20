@@ -189,7 +189,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      * A DocIndexer can be hidden by implementing a a static function named
      * isVisible, returning false.
      *
-     * @param docIndexerClass
      * @return true if the format should be listed, false if it should be omitted.
      *         Defaults to true when the DocIndexer does not implement the method.
      */

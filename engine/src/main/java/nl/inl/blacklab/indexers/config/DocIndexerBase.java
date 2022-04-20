@@ -294,7 +294,6 @@ public abstract class DocIndexerBase extends DocIndexer {
      *
      * @param inputFile URL or (relative) file reference
      * @return the file
-     * @throws IOException
      */
     protected File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {

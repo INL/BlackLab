@@ -24,7 +24,6 @@ public class TextPatternSensitive extends TextPattern {
      * of the query.
      * 
      * @param sensitivity search case-/diacritics-sensitively?
-     * @param input
      */
     public TextPatternSensitive(MatchSensitivity sensitivity, TextPattern input) {
         this.sensitivity = sensitivity;

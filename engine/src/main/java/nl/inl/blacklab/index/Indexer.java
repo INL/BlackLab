@@ -127,7 +127,6 @@ public interface Indexer {
      *
      * @param term how to find the document to update
      * @param document the updated document
-     * @throws IOException
      */
     void update(Term term, Document document) throws IOException;
 
@@ -163,8 +162,6 @@ public interface Indexer {
      * 
      * Catches and reports any errors that occur to the IndexListener.  
      *
-     * @param fileName
-     * @param input
      * @param fileNameGlob
      * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
@@ -188,8 +185,7 @@ public interface Indexer {
      * {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally
      * recursively if set by {@link #setRecurseSubdirs(boolean)}
      *
-     * @param file
-     * @param fileNameGlob 
+     * @param fileNameGlob
      * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
      */
     void index(File file, String fileNameGlob);

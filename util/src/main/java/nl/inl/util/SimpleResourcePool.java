@@ -104,7 +104,6 @@ public abstract class SimpleResourcePool<T> {
     /**
      * Returns a resource object to the free pool.
      *
-     * @param resource
      */
     public synchronized void release(T resource) {
         if (neverPool)

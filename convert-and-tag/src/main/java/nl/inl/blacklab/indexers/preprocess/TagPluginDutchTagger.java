@@ -161,8 +161,6 @@ public class TagPluginDutchTagger implements TagPlugin {
     /**
      * Ensure that the maven artifact version matches VERSION
      *
-     * @param loader
-     * @throws PluginException
      */
     private static void assertVersion(ClassLoader loader) throws PluginException {
         try (InputStream is = loader.getResourceAsStream("META-INF/MANIFEST.MF")) {

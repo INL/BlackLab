@@ -24,7 +24,6 @@ public interface Search<R extends SearchResult> {
      * deadlock situations because of it), use {@link #executeNoQueue()} or {@link #execute(boolean)}.
      *
      * @return result of the operation
-     * @throws InvalidQuery
      */
     default R execute() throws InvalidQuery {
         return execute(true);
@@ -39,7 +38,6 @@ public interface Search<R extends SearchResult> {
      * For more control, use {@link #execute(boolean)}.
      *
      * @return result of the operation
-     * @throws InvalidQuery
      */
     default R executeNoQueue() throws InvalidQuery {
         return execute(false);
@@ -55,7 +53,6 @@ public interface Search<R extends SearchResult> {
      * to prevent deadlock,
      * or true (for user-initiated searches) to allow load management to happen.
      * @return result of the operation
-     * @throws InvalidQuery
      */
     R execute(boolean allowQueue) throws InvalidQuery;
 
@@ -116,7 +113,6 @@ public interface Search<R extends SearchResult> {
      * @param progressReporter where some operations will report on their progress, for example
      *                 to be able to monitor the running count while hits are being fetched
      * @return result of the operation
-     * @throws InvalidQuery
      */
     R executeInternal(Peekable<R> progressReporter) throws InvalidQuery;
 

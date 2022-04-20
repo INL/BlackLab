@@ -25,8 +25,7 @@ public class RemovePunctuationFilter extends TokenFilter {
 
     /**
      * Test program
-     * 
-     * @param args
+     *
      */
     public static void main(String[] args) {
         String input = "Hé, jij daar!";

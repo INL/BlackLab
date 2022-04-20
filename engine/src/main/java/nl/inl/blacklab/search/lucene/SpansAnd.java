@@ -146,7 +146,6 @@ class SpansAnd extends BLSpans {
      * Put both spans in the same doc.
      * 
      * @return the doc id if succesful, or NO_MORE_DOCS if we're done
-     * @throws IOException
      */
     private int synchronizeDoc() throws IOException {
         while (true) {

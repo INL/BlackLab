@@ -88,7 +88,6 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
      *
      * @param targetPos the target start point
      * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
-     * @throws IOException
      */
     public int advanceBucket(int targetPos) throws IOException {
         if (currentSpansStart >= targetPos)

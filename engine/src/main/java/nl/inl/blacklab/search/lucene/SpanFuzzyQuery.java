@@ -114,7 +114,6 @@ public class SpanFuzzyQuery extends BLSpanQuery {
      * representation that can be parsed by QueryParser.</li>
      * </ul>
      *
-     * @param field
      * @return the string representation
      */
     @Override

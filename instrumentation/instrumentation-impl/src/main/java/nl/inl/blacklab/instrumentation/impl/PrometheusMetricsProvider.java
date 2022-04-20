@@ -56,9 +56,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     /**
      * A simple request handler that responds to prometheus  metrics scrapping requests
      * @param registry must be of type {@link PrometheusMeterRegistry}
-     * @param request
-     * @param responseObject
-     * @param charEncoding
      * @return true if the request was handled, false otherwise
      */
     public static boolean handlePrometheus(MeterRegistry registry, HttpServletRequest request, HttpServletResponse responseObject, String charEncoding) {

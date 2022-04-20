@@ -66,7 +66,6 @@ public class Example {
      * The main program
      * 
      * @param args command line arguments
-     * @throws ErrorOpeningIndex
      */
     public static void main(String[] args) throws ErrorOpeningIndex {
 
@@ -166,7 +165,6 @@ public class Example {
      *
      * @param tp the text pattern to search for
      * @throws WildcardTermTooBroad if a wildcard term matched too many terms in the index
-     * @throws InvalidQuery 
      */
     static void findPattern(TextPattern tp) throws InvalidQuery {
         // Execute the search

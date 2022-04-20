@@ -260,7 +260,6 @@ class SpansSequenceWithGap extends BLSpans {
      * in it.
      *
      * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     * @throws IOException
      */
     private int realignDoc() throws IOException {
         while (true) {
@@ -322,7 +321,6 @@ class SpansSequenceWithGap extends BLSpans {
      * After this function, we're on the first valid match found, or we're out of
      * matches for this document.
      *
-     * @throws IOException
      */
     private void realignPos() throws IOException {
         while (true) {

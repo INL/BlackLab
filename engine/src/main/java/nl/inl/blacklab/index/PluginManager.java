@@ -214,7 +214,6 @@ public class PluginManager {
      * Used to initialize all plugins in one go when
      * {@link #PROP_DELAY_INITIALIZATION} is false.
      *
-     * @param plugins
      */
     private static <T extends Plugin> void initializePlugins(Map<String, PluginData<T>> plugins) {
         plugins.values().forEach(pd -> {

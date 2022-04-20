@@ -50,7 +50,6 @@ public interface Plugin {
      * Initializes the plugin, called once after the initial loading of the class.
      *
      * @param config the config settings for this plugin
-     * @throws PluginException
      */
     void init(Map<String, String> config) throws PluginException;
     

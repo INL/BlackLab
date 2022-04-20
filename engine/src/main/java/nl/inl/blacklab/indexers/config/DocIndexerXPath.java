@@ -797,7 +797,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add open and close InlineObject objects for the current element to the list.
      *
      * @param inlineObject list to add the new open/close tag objects to
-     * @throws NavException
      */
     private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
         // Get the element and content fragments
@@ -835,7 +834,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add InlineObject for a punctuation text node.
      *
      * @param inlineObjects list to add the punct object to
-     * @param text
      */
     private void collectPunct(List<InlineObject> inlineObjects, String text) {
         int i = nav.getCurrentIndex();
@@ -934,8 +932,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         return contOffset;
     }
 
-    /** Get the raw xml from the document at the current position
-     * @throws NavException */
+    /** Get the raw xml from the document at the current position   */
     private static String getXml(AutoPilot ap) throws NavException {
         long frag = ap.getNav().getContentFragment();
         if (frag == -1) {

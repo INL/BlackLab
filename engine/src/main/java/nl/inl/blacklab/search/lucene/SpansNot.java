@@ -134,7 +134,6 @@ class SpansNot extends BLSpans {
      * Go to next span.
      *
      * @return true if we're at the next span, false if we're done
-     * @throws IOException
      */
     @Override
     public int nextStartPosition() throws IOException {
@@ -228,7 +227,6 @@ class SpansNot extends BLSpans {
      *
      * @param doc the doc number to skip to (or past)
      * @return true if we're still pointing to a valid hit, false if we're done
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {

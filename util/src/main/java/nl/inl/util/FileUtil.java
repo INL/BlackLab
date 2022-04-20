@@ -53,7 +53,6 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return write interface into the file
-     * @throws FileNotFoundException 
      */
     public static PrintWriter openForWriting(File file) throws FileNotFoundException {
         return openForWriting(file, DEFAULT_ENCODING);
@@ -68,7 +67,6 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return write interface into the file
-     * @throws FileNotFoundException 
      */
     public static PrintWriter openForWriting(File file, Charset encoding) throws FileNotFoundException {
         return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding)));
@@ -81,7 +79,6 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return read interface into the file
-     * @throws FileNotFoundException 
      */
     public static BufferedReader openForReading(File file) throws FileNotFoundException {
         return openForReading(file, DEFAULT_ENCODING);
@@ -95,7 +92,6 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return read interface into the file
-     * @throws FileNotFoundException 
      */
     public static BufferedReader openForReading(File file, Charset encoding) throws FileNotFoundException {
         return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));

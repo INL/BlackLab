@@ -91,7 +91,6 @@ public class SpansConstrained extends BLSpans {
      * advance until we find a document with at least one valid match.
      *
      * @return the current doc id, or NO_MORE_DOCS if there are no more valid docs
-     * @throws IOException
      */
     private int ensureValidDoc() throws IOException {
         int currentDocId = clause.docID();
@@ -137,7 +136,6 @@ public class SpansConstrained extends BLSpans {
      *
      * @return current hit start position if valid, NO_MORE_POSITIONS if we're done
      *         in this document
-     * @throws IOException
      */
     protected int ensureValidHit() throws IOException {
         int startPos = clause.startPosition();

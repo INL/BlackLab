@@ -68,7 +68,6 @@ public interface SpansInBuckets {
      * You still have to call nextBucket() to get to the first valid bucket.
      *
      * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
-     * @throws IOException
      */
     int nextDoc() throws IOException;
 
@@ -77,7 +76,6 @@ public interface SpansInBuckets {
      *
      * @return docID if we're at the next valid bucket, NO_MORE_BUCKETS if we're
      *         done
-     * @throws IOException
      */
     int nextBucket() throws IOException;
 
@@ -88,7 +86,6 @@ public interface SpansInBuckets {
      *
      * @param target document id to skip to
      * @return docID if we're at a valid document, NO_MORE_DOCS if we're done
-     * @throws IOException
      */
     int advance(int target) throws IOException;
 

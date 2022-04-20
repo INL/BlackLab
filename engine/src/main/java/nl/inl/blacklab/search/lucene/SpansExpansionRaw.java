@@ -236,7 +236,6 @@ class SpansExpansionRaw extends BLSpans {
      * Updates clauseStart to the start position if we're at a valid hit and have
      * reset the expansion, or to NO_MORE_POSITIONS if we're done.
      *
-     * @throws IOException
      */
     private void resetExpand() throws IOException {
         if (clauseStart == NO_MORE_POSITIONS) {

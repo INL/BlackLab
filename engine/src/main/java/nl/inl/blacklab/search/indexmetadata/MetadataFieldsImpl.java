@@ -232,7 +232,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /**
      * Check if field exists, or create a default (tokenized) field for it if not.
      *
-     * @param name
      */
     @Override
     public void ensureFieldExists(String name) {

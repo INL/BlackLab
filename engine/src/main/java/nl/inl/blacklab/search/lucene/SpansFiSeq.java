@@ -162,7 +162,6 @@ class SpansFiSeq extends BLSpans {
      *
      * @return docID if found, NO_MORE_DOCS if no such anchor span exists (i.e.
      *         we're done)
-     * @throws IOException
      */
     private int findDocWithMatch() throws IOException {
         // Find the next "valid" container, if there is one.
@@ -197,7 +196,6 @@ class SpansFiSeq extends BLSpans {
      *
      * @return start position if found, NO_MORE_POSITIONS if no such anchor spans
      *         exists (i.e. we're done)
-     * @throws IOException
      */
     private int synchronizePos() throws IOException {
         // Find the next "valid" anchor spans, if there is one.

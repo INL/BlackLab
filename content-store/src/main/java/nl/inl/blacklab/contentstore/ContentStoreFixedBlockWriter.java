@@ -108,7 +108,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * @param dir content store dir
      * @param create if true, create a new content store
-     * @throws ErrorOpeningIndex
      */
     public ContentStoreFixedBlockWriter(File dir, boolean create) throws ErrorOpeningIndex {
         super(dir);
@@ -164,7 +163,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /**
      * Delete all content in the document store
-     * @throws IOException
      */
     @Override
     public void clear() throws IOException {

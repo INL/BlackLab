@@ -60,7 +60,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
      * @param direction direction for the expansion
      * @param min minimum number of tokens to expand
      * @param max maximum number of tokens to expand
-     * @return resulting query object
      */
     public SpanQueryExpansion(BLSpanQuery clause, Direction direction, int min, int max) {
         super(clause);
