@@ -38,7 +38,7 @@ public class RequestHandlerSharing extends RequestHandler {
             String[] users = request.getParameterValues("users[]");
             if (users == null)
                 users = new String[0];
-            List<String> shareWithUsers = Arrays.asList(users).stream().map(String::trim).collect(Collectors.toList());
+            List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
             index.setShareWithUsers(shareWithUsers);
             return Response.success(ds, "Index shared with specified user(s).");
         }

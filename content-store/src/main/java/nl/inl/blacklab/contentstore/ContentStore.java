@@ -154,7 +154,7 @@ public abstract class ContentStore {
      * @param task the task to perform
      */
     public void forEachDocument(DocTask task) {
-        idSet().stream().forEach(cid -> task.perform(cid, retrieve(cid)));
+        idSet().forEach(cid -> task.perform(cid, retrieve(cid)));
     }
 
     public abstract void initialize();
