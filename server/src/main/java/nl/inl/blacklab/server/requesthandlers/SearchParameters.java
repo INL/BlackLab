@@ -223,10 +223,10 @@ public class SearchParameters {
         return map.put(key, value);
     }
 
-    public String getString(Object key) {
+    public String getString(String key) {
         String value = map.get(key);
         if (value == null || value.length() == 0) {
-            value = getDefault(key.toString());
+            value = getDefault(key);
         }
         return value;
     }
