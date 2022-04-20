@@ -96,7 +96,7 @@ class IndexerImpl implements DocWriter, Indexer {
             try (
                     UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
-                            inputStream, inputStream.getEncoding());) {
+                            inputStream, inputStream.getEncoding())) {
                 impl(docIndexer, path);
             }
         }

@@ -44,7 +44,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
-                        .withTrim());) {
+                        .withTrim())) {
 
             metadata = csvParser.getRecords();
             reader.close();

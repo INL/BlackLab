@@ -44,7 +44,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         public String toString() {
             return this == LEFT ? "L" : "R";
         }
-    };
+    }
 
     /** Whether to expand to left or right */
     Direction direction;
