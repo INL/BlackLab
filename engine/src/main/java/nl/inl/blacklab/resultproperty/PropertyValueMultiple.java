@@ -98,7 +98,7 @@ public class PropertyValueMultiple extends PropertyValue {
      * @return 0 if equal, negative if a &lt; b, positive if a &gt; b
      */
     private static int compareHitPropValueArrays(PropertyValue[] a, PropertyValue[] b) {
-        int n = a.length < b.length ? a.length : b.length; // min
+        int n = Math.min(a.length, b.length); // min
         for (int i = 0; i < n; i++) {
             // Does this element decide the comparison?
             int cmp = a[i].compareTo(b[i]);

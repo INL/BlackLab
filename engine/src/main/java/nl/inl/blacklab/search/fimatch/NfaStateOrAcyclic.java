@@ -180,9 +180,7 @@ public class NfaStateOrAcyclic extends NfaState {
         if (hitLengthMax >= 0 && nextState != null) {
             hitLengthMax += nextState.hitsLengthMax(statesVisited);
         }
-        if (hitLengthMax < 0)
-            return 0;
-        return hitLengthMax;
+        return Math.max(hitLengthMax, 0);
     }
 
     @Override
