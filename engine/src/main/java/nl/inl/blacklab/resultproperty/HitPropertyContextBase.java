@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -82,7 +82,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     @Override
     public List<Annotation> needsContext() {
-        return List.of(annotation);
+        return annotation == null ? Collections.emptyList() : List.of(annotation);
     }
     
     @Override

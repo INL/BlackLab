@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
@@ -331,7 +331,7 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public List<Annotation> needsContext() {
-        return List.of(annotation);
+        return annotation == null ? Collections.emptyList() : List.of(annotation);
     }
     
     @Override
