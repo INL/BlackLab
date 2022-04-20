@@ -72,6 +72,10 @@ public class BLConfigIndexing {
         return numberOfThreads;
     }
 
+    public void setNumberOfThreads(int numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
+    }
+
     public int getMaxNumberOfIndicesPerUser() {
         return maxNumberOfIndicesPerUser;
     }

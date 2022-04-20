@@ -262,7 +262,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     protected void processAnnotatedField(ConfigAnnotatedField annotatedField)
-            throws XPathParseException, XPathEvalException, NavException, VTDException {
+            throws VTDException {
         Map<String, Integer> tokenPositionsMap = new HashMap<>();
 
         // Determine some useful stuff about the field we're processing

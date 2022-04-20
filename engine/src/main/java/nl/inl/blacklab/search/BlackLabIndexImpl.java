@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexReader;
@@ -37,7 +36,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
@@ -539,7 +537,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
-            throws IOException, CorruptIndexException, LockObtainFailedException {
+            throws IOException {
         if (!indexMode && createNewIndex)
             throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
 
@@ -583,7 +581,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
-            throws IOException, CorruptIndexException, LockObtainFailedException, ErrorOpeningIndex {
+            throws IOException, ErrorOpeningIndex {
         isEmptyIndex = indexMetadata.isNewIndex();
 
         // TODO: we need to create the analyzer before opening the index, because
@@ -772,8 +770,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     //----------------------------------------------------------------
 
     @Override
-    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
-            CorruptIndexException, LockObtainFailedException {
+    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
                 throw new BlackLabRuntimeException("Could not create dir: " + indexDir);

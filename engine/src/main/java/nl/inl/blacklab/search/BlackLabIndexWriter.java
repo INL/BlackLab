@@ -4,10 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.store.LockObtainFailedException;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -31,7 +29,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
     IndexMetadataWriter metadata();
     
     IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer)
-            throws IOException, CorruptIndexException, LockObtainFailedException;
+            throws IOException;
 
     IndexWriter writer();
 

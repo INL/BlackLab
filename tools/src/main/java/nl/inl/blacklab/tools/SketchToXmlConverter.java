@@ -299,7 +299,7 @@ public class SketchToXmlConverter {
     }
 
     private static void convertFile(SketchToXmlConverter converter, File inFile, File outDir)
-            throws FileNotFoundException, IOException {
+            throws IOException {
         try (Reader in = new InputStreamReader(new FileInputStream(inFile), Indexer.DEFAULT_INPUT_ENCODING)) {
             String fn = inFile.getName();
             String outFn = fn.substring(0, fn.lastIndexOf('.')) + ".xml";
