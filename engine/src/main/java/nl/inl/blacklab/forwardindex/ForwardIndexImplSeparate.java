@@ -49,13 +49,10 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
                 continue;
             AnnotationForwardIndex afi = get(annotation);
             if (AUTO_INIT_FORWARD_INDEXES) {
-                executorService.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        //logger.debug("START initialize AFI: " + annotation.name());
-                        afi.initialize();
-                        //logger.debug("END   initialize AFI: " + annotation.name());
-                    }
+                executorService.execute(() -> {
+                    //logger.debug("START initialize AFI: " + annotation.name());
+                    afi.initialize();
+                    //logger.debug("END   initialize AFI: " + annotation.name());
                 });
             }
         }

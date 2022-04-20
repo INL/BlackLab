@@ -152,12 +152,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort(new Comparator<>() {
-            @Override
-            public int compare(TocEntry o1, TocEntry o2) {
-                return o1.length - o2.length;
-            }
-        });
+        deletedTocEntries.sort((o1, o2) -> o1.length - o2.length);
     }
 
 

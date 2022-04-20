@@ -141,25 +141,22 @@ public class ResultsCache implements SearchCache {
     public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
         this.threadPool = threadPool;
 
-        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = new CacheLoader<>() {
-            @Override
-            public SearchResult load(final SearchInfoWrapper searchWrapper) throws Exception {
-                final String requestId = searchWrapper.getRequestId();
+        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = searchWrapper -> {
+            final String requestId = searchWrapper.getRequestId();
+            ThreadContext.put("requestId", requestId);
+            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
                 ThreadContext.put("requestId", requestId);
-                Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
-                    ThreadContext.put("requestId", requestId);
-                    final long startTime = System.currentTimeMillis();
-                    SearchResult results = search.executeInternal(null);
-                    ThreadContext.remove("requestId");
-                    return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
-                }));
-                try {
-                    CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
-                    logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
-                    return searchResult.getResults();
-                } finally {
-                    runningJobs.remove(searchWrapper.getSearch());
-                }
+                final long startTime = System.currentTimeMillis();
+                SearchResult results = search.executeInternal(null);
+                ThreadContext.remove("requestId");
+                return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
+            }));
+            try {
+                CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
+                logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
+                return searchResult.getResults();
+            } finally {
+                runningJobs.remove(searchWrapper.getSearch());
             }
         };
 

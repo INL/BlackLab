@@ -2,7 +2,6 @@ package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
@@ -126,12 +125,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 throw new ErrorOpeningIndex("Could not delete contents file: " + contentsFile);
 
             // Also delete old content store format files if present
-            File[] dataFiles = dir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir1, String name) {
-                    return name.matches("data\\d+.dat");
-                }
-            });
+            File[] dataFiles = dir.listFiles((dir1, name) -> name.matches("data\\d+.dat"));
             if (dataFiles == null)
                 throw new ErrorOpeningIndex("Error finding old data files in content store dir: " + dir);
             for (File f : dataFiles) {

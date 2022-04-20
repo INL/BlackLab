@@ -132,18 +132,15 @@ public class CompareCollectionsLibs {
         time("Fill Eclipse list", () -> { for (Hit item: base) ecList.add(item); });
         time("Fill fastutil list", () -> { for (Hit item: base) fuList.add(item); });
         
-        Comparator<Hit> comp = new Comparator<>() {
-            @Override
-            public int compare(Hit a, Hit b) {
-                int c = Integer.compare(a.doc, b.doc);
+        Comparator<Hit> comp = (a, b) -> {
+            int c = Integer.compare(a.doc, b.doc);
+            if (c == 0) {
+                c = Integer.compare(a.start, b.start);
                 if (c == 0) {
-                    c = Integer.compare(a.start, b.start);
-                    if (c == 0) {
-                        c = Integer.compare(a.end, b.end);
-                    }
+                    c = Integer.compare(a.end, b.end);
                 }
-                return c;
             }
+            return c;
         };
         time("Sort Java list", () -> { javaList.sort(comp); });
         time("Sort Eclipse list", () -> { ecList.sort(comp); });

@@ -74,16 +74,13 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         bucketSize++;
     }
     
-    static final LongComparator longCmpEndPoint = new LongComparator() {
-        @Override
-        public int compare(long k1, long k2) {
-            int a = (int)k1;
-            int b = (int)k2;
-            if (a == b)
-                return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
-            else
-                return a - b; // compare endpoints
-        }
+    static final LongComparator longCmpEndPoint = (k1, k2) -> {
+        int a = (int)k1;
+        int b = (int)k2;
+        if (a == b)
+            return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
+        else
+            return a - b; // compare endpoints
     };
     
     protected void sortHits(boolean sortByStartPoint) {

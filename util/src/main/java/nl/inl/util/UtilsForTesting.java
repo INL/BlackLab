@@ -1,7 +1,6 @@
 package nl.inl.util;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.UUID;
 
 import nl.inl.util.FileUtil.FileTask;
@@ -27,12 +26,7 @@ public final class UtilsForTesting {
         // Remove old ContentStore test dirs from temp dir, if possible
         // (may not be possible because of memory mapping lock on Windows;
         //  in this case we just leave the files and continue)
-        for (File testDir : tempDir.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File parentDir, String name) {
-                return name.startsWith("BlackLabTest_");
-            }
-        })) {
+        for (File testDir : tempDir.listFiles((parentDir, name) -> name.startsWith("BlackLabTest_"))) {
 
             // Recursively delete this temp dir
             FileUtil.processTree(testDir, new FileTask() {

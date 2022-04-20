@@ -485,13 +485,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
-        blackLab.initializationExecutorService().execute(new Runnable() {
-            @Override
-            public void run() {
-                //logger.debug("START initialize CS: " + field.name());
-                contentStore.initialize();
-                //logger.debug("END   initialize CS: " + field.name());
-            }
+        blackLab.initializationExecutorService().execute(() -> {
+            //logger.debug("START initialize CS: " + field.name());
+            contentStore.initialize();
+            //logger.debug("END   initialize CS: " + field.name());
         });
     }
 

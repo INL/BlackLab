@@ -238,12 +238,7 @@ public class BlsUtils {
      * A file filter that returns readable directories only; used for scanning
      * collections dirs
      */
-    public static FileFilter readableDirFilter = new FileFilter() {
-        @Override
-        public boolean accept(File f) {
-            return f.isDirectory() && f.canRead();
-        }
-    };
+    public static FileFilter readableDirFilter = f -> f.isDirectory() && f.canRead();
 
     /**
      * Convert a number of seconds to a M:SS string.

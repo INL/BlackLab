@@ -67,18 +67,15 @@ public class Index {
      * Sort all public indices first, then sort alphabetically within all public and
      * private indices.
      */
-    public static final Comparator<Index> COMPARATOR = new Comparator<>() {
-        @Override
-        public int compare(Index o1, Index o2) {
-            // Sort public before private
-            boolean o1priv = o1.isUserIndex();
-            boolean o2priv = o2.isUserIndex();
-            if (o1priv != o2priv)
-                return o1priv ? 1 : -1;
+    public static final Comparator<Index> COMPARATOR = (o1, o2) -> {
+        // Sort public before private
+        boolean o1priv = o1.isUserIndex();
+        boolean o2priv = o2.isUserIndex();
+        if (o1priv != o2priv)
+            return o1priv ? 1 : -1;
 
-            // Sort rest case-insensitively
-            return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
-        }
+        // Sort rest case-insensitively
+        return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
     };
 
     private final String id;

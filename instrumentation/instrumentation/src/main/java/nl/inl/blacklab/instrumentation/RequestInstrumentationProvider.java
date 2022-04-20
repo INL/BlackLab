@@ -21,12 +21,7 @@ public interface RequestInstrumentationProvider {
      * A RequestIdProvider that does not create a request id
      */
     static RequestInstrumentationProvider noOpProvider() {
-        return new RequestInstrumentationProvider() {
-            @Override
-            public Optional<String> getRequestID(HttpServletRequest request) {
-                return Optional.empty();
-            }
-        };
+        return request -> Optional.empty();
     }
 }
 

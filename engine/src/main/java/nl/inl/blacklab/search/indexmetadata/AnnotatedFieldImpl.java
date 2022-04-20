@@ -122,17 +122,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         this.indexMetadata = indexMetadata;
         annots = new TreeMap<>();
         annotationsDisplayOrder = new ArrayList<>();
-        annotationOrderComparator = new Comparator<>() {
-            @Override
-            public int compare(AnnotationImpl a, AnnotationImpl b) {
-                int ai = displayOrder.indexOf(a.name());
-                if (ai < 0)
-                    ai = Integer.MAX_VALUE;
-                int bi = displayOrder.indexOf(b.name());
-                if (bi < 0)
-                    bi = Integer.MAX_VALUE;
-                return ai == bi ? 0 : (ai > bi ? 1 : -1);
-            }
+        annotationOrderComparator = (a, b) -> {
+            int ai = displayOrder.indexOf(a.name());
+            if (ai < 0)
+                ai = Integer.MAX_VALUE;
+            int bi = displayOrder.indexOf(b.name());
+            if (bi < 0)
+                bi = Integer.MAX_VALUE;
+            return ai == bi ? 0 : (ai > bi ? 1 : -1);
         };
         
         contentStore = false;
