@@ -1,23 +1,5 @@
 package nl.inl.blacklab.tools;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeMap;
-
-import org.apache.commons.text.WordUtils;
-import org.apache.lucene.queryparser.classic.ParseException;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -32,6 +14,12 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
+import org.apache.commons.text.WordUtils;
+import org.apache.lucene.queryparser.classic.ParseException;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -391,7 +379,7 @@ public class IndexTool {
                         + " does not exist or is not a regular file!");
             }
 
-            try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"))) {
+            try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1))) {
                 Properties properties = new Properties();
                 properties.load(in);
                 return properties;

@@ -1,8 +1,16 @@
 package nl.inl.blacklab.server.util;
 
+import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -10,19 +18,10 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
-
 public class ServletUtil {
     private static final Logger logger = LogManager.getLogger(ServletUtil.class);
 
-    static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
+    static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
 
     /**
      * Returns the value of a servlet parameter

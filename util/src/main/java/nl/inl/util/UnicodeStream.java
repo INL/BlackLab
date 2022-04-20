@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PushbackInputStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * InputStream that detects and skips BOM in UTF-8 (and other Unicode encodings)
@@ -53,13 +54,13 @@ public class UnicodeStream extends InputStream {
 
         // Read ahead four bytes and check for BOM marks.
         if ((bom[0] == (byte) 0xEF) && (bom[1] == (byte) 0xBB) && (bom[2] == (byte) 0xBF)) {
-            encoding = Charset.forName("UTF-8");
+            encoding = StandardCharsets.UTF_8;
             unread = n - 3;
         } else if ((bom[0] == (byte) 0xFE) && (bom[1] == (byte) 0xFF)) {
-            encoding = Charset.forName("UTF-16BE");
+            encoding = StandardCharsets.UTF_16BE;
             unread = n - 2;
         } else if ((bom[0] == (byte) 0xFF) && (bom[1] == (byte) 0xFE)) {
-            encoding = Charset.forName("UTF-16LE");
+            encoding = StandardCharsets.UTF_16LE;
             unread = n - 2;
         } else if ((bom[0] == (byte) 0x00) && (bom[1] == (byte) 0x00) && (bom[2] == (byte) 0xFE)
                 && (bom[3] == (byte) 0xFF)) {

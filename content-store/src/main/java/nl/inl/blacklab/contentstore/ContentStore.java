@@ -6,6 +6,7 @@ import nl.inl.util.VersionFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Set;
  */
 public abstract class ContentStore {
 
-    static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+    static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     public static ContentStore open(File indexXmlDir, boolean indexMode, boolean create) throws ErrorOpeningIndex {
         String type;

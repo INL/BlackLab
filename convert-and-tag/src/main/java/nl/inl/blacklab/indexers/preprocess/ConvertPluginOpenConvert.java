@@ -28,10 +28,9 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 
     private ClassLoader loader;
 
-    private Class<?> OpenConvert;
-    private Method OpenConvert_GetConverter;
+    private Class<?> clsOpenConvert;
+    private Method methodOpenConvert_GetConverter;
 
-    private Class<?> SimpleInputOutputProcess;
     private Method SimpleInputOutputProcess_handleStream;
     
     @Override
@@ -57,11 +56,11 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
             loader = new URLClassLoader(new URL[] { jarUrl }, null);
             assertVersion(loader);
 
-            OpenConvert = loader.loadClass("org.ivdnt.openconvert.converters.OpenConvert");
-            OpenConvert_GetConverter = OpenConvert.getMethod("getConverter", String.class, String.class);
+            clsOpenConvert = loader.loadClass("org.ivdnt.openconvert.converters.OpenConvert");
+            methodOpenConvert_GetConverter = clsOpenConvert.getMethod("getConverter", String.class, String.class);
 
-            SimpleInputOutputProcess = loader.loadClass("org.ivdnt.openconvert.filehandling.SimpleInputOutputProcess");
-            SimpleInputOutputProcess_handleStream = SimpleInputOutputProcess.getMethod("handleStream",
+            Class<?> simpleInputOutputProcess = loader.loadClass("org.ivdnt.openconvert.filehandling.SimpleInputOutputProcess");
+            SimpleInputOutputProcess_handleStream = simpleInputOutputProcess.getMethod("handleStream",
                     InputStream.class, Charset.class, OutputStream.class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | MalformedURLException e) {
             throw new PluginException("Error loading the OpenConvert jar: " + e.getMessage(), e);
@@ -93,8 +92,8 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
                 throw new PluginException("The OpenConvert plugin does not support conversion from '" + inputFormat
                         + "' to '" + getOutputFormat() + "'");
 
-            Object openConvertInstance = OpenConvert.getConstructor().newInstance();
-            Object simpleInputOutputProcessInstance = OpenConvert_GetConverter.invoke(openConvertInstance,
+            Object openConvertInstance = clsOpenConvert.getConstructor().newInstance();
+            Object simpleInputOutputProcessInstance = methodOpenConvert_GetConverter.invoke(openConvertInstance,
                     getOutputFormat(), inputFormat);
 
             SimpleInputOutputProcess_handleStream.invoke(simpleInputOutputProcessInstance, pbIn, inputCharset, out);

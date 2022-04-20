@@ -18,8 +18,6 @@ public class IndexListener implements ErrorHandler {
 
     private long indexTime = 0;
 
-    private final long optimizeTime = 0;
-
     private long closeTime = 0;
 
     /** How many documents have been processed? */
@@ -157,10 +155,6 @@ public class IndexListener implements ErrorHandler {
 
     public long getIndexTime() {
         return indexTime;
-    }
-
-    public long getOptimizeTime() {
-        return optimizeTime;
     }
 
     public long getCloseTime() {

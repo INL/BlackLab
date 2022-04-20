@@ -136,9 +136,6 @@ class IndexerImpl implements DocWriter, Indexer {
     /** Stop after indexing this number of docs. -1 if we shouldn't stop. */
     private int maxNumberOfDocsToIndex = -1;
 
-    /** Should we terminate indexing? (e.g. because of an error) */
-    private final boolean terminateIndexing = false;
-
     /**
      * Where to report indexing progress.
      */
@@ -582,8 +579,6 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public synchronized boolean continueIndexing() {
         if (!indexWriter.isOpen())
-            return false;
-        if (terminateIndexing)
             return false;
         if (maxNumberOfDocsToIndex >= 0) {
             return docsToDoLeft() > 0;

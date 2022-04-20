@@ -89,9 +89,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /** Fragment positions in ancestors */
     private final List<FragmentPosition> fragPosStack = new ArrayList<>();
 
-    /** The config for the annotated field we're currently processing. */
-    private ConfigAnnotatedField currentAnnotatedFieldConfig;
-
     @Override
     public void close() {
         // NOP, we already closed our input after we read it
@@ -270,7 +267,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
-        setCurrentAnnotatedField(annotatedField);
+        setCurrentAnnotatedFieldName(annotatedField.getName());
 
         // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
         AutoPilot words = acquireAutoPilot(annotatedField.getWordsPath());
@@ -946,11 +943,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
             return contOffset + contLength;
         }
         return contOffset;
-    }
-
-    protected void setCurrentAnnotatedField(ConfigAnnotatedField annotatedField) {
-        currentAnnotatedFieldConfig = annotatedField;
-        setCurrentAnnotatedFieldName(currentAnnotatedFieldConfig.getName());
     }
 
     /** Get the raw xml from the document at the current position
