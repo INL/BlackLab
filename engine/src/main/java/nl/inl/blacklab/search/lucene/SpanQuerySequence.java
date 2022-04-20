@@ -75,6 +75,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             if (child instanceof SpanQuerySequence) {
                 clauses.remove(i);
                 clauses.addAll(i, ((SpanQuerySequence) child).getClauses());
+                --i;
                 anyRewritten = true;
             }
         }
