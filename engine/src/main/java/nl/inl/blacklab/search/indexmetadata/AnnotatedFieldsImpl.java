@@ -33,7 +33,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     @Override
     public Iterator<AnnotatedField> iterator() {
         Iterator<AnnotatedFieldImpl> it = annotatedFields.values().iterator();
-        return new Iterator<AnnotatedField>() {
+        return new Iterator<>() {
             @Override
             public boolean hasNext() {
                 return it.hasNext();

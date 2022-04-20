@@ -246,7 +246,7 @@ public abstract class NfaState {
     public abstract int hitsLengthMax(Set<NfaState> statesVisited);
 
     public static Set<NfaState> emptySet() {
-        return Collections.newSetFromMap(new IdentityHashMap<NfaState, Boolean>());
+        return Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
     public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {

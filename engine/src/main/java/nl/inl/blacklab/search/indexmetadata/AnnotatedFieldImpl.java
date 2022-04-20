@@ -41,7 +41,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         @Override
         public Iterator<Annotation> iterator() {
             Iterator<AnnotationImpl> it = annotationsDisplayOrder.iterator();
-            return new Iterator<Annotation>() {
+            return new Iterator<>() {
                 @Override
                 public boolean hasNext() {
                     return it.hasNext();
@@ -51,7 +51,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 public Annotation next() {
                     return it.next();
                 }
-                
+
             };
         }
 
@@ -122,7 +122,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         this.indexMetadata = indexMetadata;
         annots = new TreeMap<>();
         annotationsDisplayOrder = new ArrayList<>();
-        annotationOrderComparator = new Comparator<AnnotationImpl>() {
+        annotationOrderComparator = new Comparator<>() {
             @Override
             public int compare(AnnotationImpl a, AnnotationImpl b) {
                 int ai = displayOrder.indexOf(a.name());

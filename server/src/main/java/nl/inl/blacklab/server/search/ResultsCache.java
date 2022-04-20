@@ -141,7 +141,7 @@ public class ResultsCache implements SearchCache {
     public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
         this.threadPool = threadPool;
 
-        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = new CacheLoader<SearchInfoWrapper, SearchResult>() {
+        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = new CacheLoader<>() {
             @Override
             public SearchResult load(final SearchInfoWrapper searchWrapper) throws Exception {
                 final String requestId = searchWrapper.getRequestId();

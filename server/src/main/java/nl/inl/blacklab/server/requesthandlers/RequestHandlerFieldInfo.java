@@ -142,7 +142,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             }
             List<String> sortedLeft = new ArrayList<>(valuesLeft);
             final Collator defaultCollator = getValueSortCollator();
-            sortedLeft.sort(new Comparator<String>() {
+            sortedLeft.sort(new Comparator<>() {
                 @Override
                 public int compare(String o1, String o2) {
                     String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;

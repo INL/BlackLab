@@ -67,7 +67,7 @@ public class Index {
      * Sort all public indices first, then sort alphabetically within all public and
      * private indices.
      */
-    public static final Comparator<Index> COMPARATOR = new Comparator<Index>() {
+    public static final Comparator<Index> COMPARATOR = new Comparator<>() {
         @Override
         public int compare(Index o1, Index o2) {
             // Sort public before private

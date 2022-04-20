@@ -420,10 +420,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public Set<Integer> idSet() {
         if (!initialized)
             initialize();
-        return new AbstractSet<Integer>() {
+        return new AbstractSet<>() {
             @Override
             public boolean contains(Object o) {
-                return deleted[(Integer)o] == 0;
+                return deleted[(Integer) o] == 0;
             }
 
             @Override
@@ -433,7 +433,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
             @Override
             public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
+                return new Iterator<>() {
                     int current = -1;
                     int next = -1;
 

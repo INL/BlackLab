@@ -12,11 +12,11 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 public class CollUtil {
 
     public static AbstractSet<Integer> toJavaSet(final MutableIntSet keySet) {
-        return new AbstractSet<Integer>() {
+        return new AbstractSet<>() {
             @Override
             public Iterator<Integer> iterator() {
                 final IntIterator it = keySet.intIterator();
-                return new Iterator<Integer>() {
+                return new Iterator<>() {
                     @Override
                     public boolean hasNext() {
                         return it.hasNext();
@@ -43,7 +43,7 @@ public class CollUtil {
     }
 
     public static List<Integer> toJavaList(final IntArrayList increments) {
-        return new AbstractList<Integer>() {
+        return new AbstractList<>() {
             @Override
             public Integer get(int index) {
                 return increments.get(index);

@@ -36,7 +36,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 
         // Create empty lists of chunks for each annotation
         for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
-            allAnnotChunks.add(new ArrayList<int[]>());
+            allAnnotChunks.add(new ArrayList<>());
         }
     }
 

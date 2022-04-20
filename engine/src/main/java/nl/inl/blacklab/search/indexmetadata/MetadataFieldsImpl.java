@@ -60,7 +60,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @Override
     public Iterator<MetadataField> iterator() {
         final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
-        return new Iterator<MetadataField>() {
+        return new Iterator<>() {
             @Override
             public boolean hasNext() {
                 return it.hasNext();
@@ -101,7 +101,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             @Override
             public Iterator<MetadataFieldGroup> iterator() {
                 Iterator<MetadataFieldGroupImpl> it = metadataGroups.values().iterator();
-                return new Iterator<MetadataFieldGroup>() {
+                return new Iterator<>() {
                     @Override
                     public boolean hasNext() {
                         return it.hasNext();

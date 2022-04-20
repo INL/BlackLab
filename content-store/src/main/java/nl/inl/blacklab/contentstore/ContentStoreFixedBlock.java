@@ -217,7 +217,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
         tocFile = new File(dir, TOC_FILE_NAME);
         contentsFile = new File(dir, CONTENTS_FILE_NAME);
         toc = IntObjectMaps.mutable.empty();
-        zipbufPool = new SimpleResourcePool<byte[]>(POOL_SIZE) {
+        zipbufPool = new SimpleResourcePool<>(POOL_SIZE) {
             @Override
             public byte[] createResource() {
                 return new byte[MAX_BLOCK_SIZE_BYTES + 1]; // one larger to detect when buffer space was insufficient

@@ -155,7 +155,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         blockIndicesWhileStoring = new IntArrayList();
         blockCharOffsetsWhileStoring = new IntArrayList();
 
-        compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE) {
+        compresserPool = new SimpleResourcePool<>(POOL_SIZE) {
             @Override
             public Deflater createResource() {
                 return new Deflater();

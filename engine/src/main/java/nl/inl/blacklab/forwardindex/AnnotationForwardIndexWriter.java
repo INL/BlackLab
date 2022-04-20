@@ -152,7 +152,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort(new Comparator<TocEntry>() {
+        deletedTocEntries.sort(new Comparator<>() {
             @Override
             public int compare(TocEntry o1, TocEntry o2) {
                 return o1.length - o2.length;
@@ -563,7 +563,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     public Set<Integer> idSet() {
         if (!initialized)
             initialize();
-        return new AbstractSet<Integer>() {
+        return new AbstractSet<>() {
             @Override
             public boolean contains(Object o) {
                 return !toc.get((Integer) o).deleted;
@@ -576,7 +576,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
             @Override
             public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
+                return new Iterator<>() {
                     int current = -1;
                     int next = -1;
 

@@ -80,7 +80,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         // Finalize our NFA, so it looks up annotation numbers for its annotation names.
         nfa.finish();
-        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
+        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;

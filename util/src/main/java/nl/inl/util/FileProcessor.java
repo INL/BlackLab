@@ -276,16 +276,16 @@ public class FileProcessor implements AutoCloseable {
             executor = new ThreadPoolExecutor(actualThreadsToUse, actualThreadsToUse, Integer.MAX_VALUE, TimeUnit.DAYS,
                 // We don't need a long queue at all
                 // Every queued job holds a full document in memory, and documents can be *very* large (100Meg+)
-                new LinkedBlockingDeque<Runnable>(Math.max(1, actualThreadsToUse / 2)) {
-                    @Override
-                    public boolean offer(Runnable r) {
-                        try {
-                            return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
-                        } catch (InterruptedException e) {
-                            return false;
+                    new LinkedBlockingDeque<>(Math.max(1, actualThreadsToUse / 2)) {
+                        @Override
+                        public boolean offer(Runnable r) {
+                            try {
+                                return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
+                            } catch (InterruptedException e) {
+                                return false;
+                            }
                         }
                     }
-                }
             );
 
             // Never throw RejectedExecutionException in the main thread

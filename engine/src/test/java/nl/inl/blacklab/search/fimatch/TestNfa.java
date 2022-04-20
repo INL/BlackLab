@@ -114,8 +114,8 @@ public class TestNfa {
         NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
         NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
         NfaState start = NfaState.or(false, Arrays.asList(ab, ba), true);
-        start.finish(new HashSet<NfaState>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
+        start.finish(new HashSet<>());
+        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
 
         ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
         Assert.assertTrue(start.matches(fiDoc, 0, 1));
@@ -131,8 +131,8 @@ public class TestNfa {
         NfaState split = NfaState.or(true, Arrays.asList(c, NfaState.token("contents%word@i", "e", null)), false);
         NfaState start = NfaState.token("contents%word@i", "a", split);
         c.setNextState(0, split); // loopback
-        start.finish(new HashSet<NfaState>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
+        start.finish(new HashSet<>());
+        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
 
         // Forward matching
         Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));

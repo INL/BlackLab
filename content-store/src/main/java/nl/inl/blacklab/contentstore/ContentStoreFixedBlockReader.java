@@ -44,7 +44,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         if (!tocFile.exists())
             throw new ErrorOpeningIndex("Toc file doesn't exist: " + tocFile);
 
-        decompresserPool = new SimpleResourcePool<Inflater>(POOL_SIZE) {
+        decompresserPool = new SimpleResourcePool<>(POOL_SIZE) {
             @Override
             public Inflater createResource() {
                 return new Inflater();

@@ -20,7 +20,7 @@ public class NfaStateAndAcyclic extends NfaState {
 
     public NfaStateAndAcyclic(List<NfaState> andClauses) {
         for (NfaState clause : andClauses) {
-            clause.finish(new HashSet<NfaState>());
+            clause.finish(new HashSet<>());
         }
         this.clauses = new ArrayList<>(andClauses);
         this.nextState = null;

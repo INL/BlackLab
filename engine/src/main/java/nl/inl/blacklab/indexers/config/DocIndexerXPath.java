@@ -701,7 +701,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         boolean evalXml = annotation.isCaptureXml();
 
         if (reuseValueFromParentAnnot == null) {
-            reuseValueFromParentAnnot = new ArrayList<String>();
+            reuseValueFromParentAnnot = new ArrayList<>();
             navpush();
 
             AutoPilot apValuePath = acquireAutoPilot(valuePath);

@@ -36,7 +36,7 @@ public class SortedDocValuesCacher {
     protected SortedDocValuesCacher(SortedDocValues source) {
         this.source = source;
         this.sourceNexted = false;
-        this.cache = new HashMap<Integer, String>();
+        this.cache = new HashMap<>();
     }
 
     public synchronized String get(int docId) {

@@ -132,7 +132,7 @@ public class CompareCollectionsLibs {
         time("Fill Eclipse list", () -> { for (Hit item: base) ecList.add(item); });
         time("Fill fastutil list", () -> { for (Hit item: base) fuList.add(item); });
         
-        Comparator<Hit> comp = new Comparator<Hit>() {
+        Comparator<Hit> comp = new Comparator<>() {
             @Override
             public int compare(Hit a, Hit b) {
                 int c = Integer.compare(a.doc, b.doc);

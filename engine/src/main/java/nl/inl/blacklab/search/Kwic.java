@@ -136,7 +136,7 @@ public class Kwic {
         final int startIndex = start * nProp + annotIndex;
         if (annotIndex == -1)
             return null;
-        return new AbstractList<String>() {
+        return new AbstractList<>() {
             @Override
             public String get(int index) {
                 if (index >= size)

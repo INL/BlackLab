@@ -39,7 +39,7 @@ public class FileUtil {
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
      * Used by listFilesSorted().
      */
-    final public static Comparator<File> LIST_FILES_COMPARATOR = new Comparator<File>() {
+    final public static Comparator<File> LIST_FILES_COMPARATOR = new Comparator<>() {
         @Override
         public int compare(File a, File b) {
             int ad = a.isDirectory() ? 0 : 1;

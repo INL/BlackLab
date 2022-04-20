@@ -26,7 +26,7 @@ public class NfaStateOrAcyclic extends NfaState {
 
     public NfaStateOrAcyclic(List<NfaState> clauses, boolean clausesAllSameLength) {
         for (NfaState clause : clauses) {
-            clause.finish(new HashSet<NfaState>());
+            clause.finish(new HashSet<>());
         }
         this.clauses = new ArrayList<>(clauses);
         this.nextState = null;

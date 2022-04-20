@@ -165,7 +165,7 @@ public class TestNfaFromQuery {
         // The NFA
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
-        frag.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
+        frag.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
         //System.err.println(frag);
         NfaState start = frag.getStartingState(); //finish();
 

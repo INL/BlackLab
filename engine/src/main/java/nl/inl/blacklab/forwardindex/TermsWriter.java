@@ -247,7 +247,7 @@ class TermsWriter extends Terms {
                     ib.put(sortPositionPerId);
 
                     // Now, sort case-insensitively and write those arrays as well
-                    Arrays.sort(insensitive, new Comparator<Integer>() {
+                    Arrays.sort(insensitive, new Comparator<>() {
                         @Override
                         public int compare(Integer a, Integer b) {
                             return collatorInsensitive.compare(terms[a], terms[b]);

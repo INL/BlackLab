@@ -107,7 +107,7 @@ public class DocContentsFromForwardIndex extends DocContents {
         final int annotIndex = annotations.indexOf(annotation);
         if (annotIndex == -1)
             return null;
-        return new AbstractList<String>() {
+        return new AbstractList<>() {
             @Override
             public String get(int index) {
                 return tokens.get(annotIndex + nProp * index);

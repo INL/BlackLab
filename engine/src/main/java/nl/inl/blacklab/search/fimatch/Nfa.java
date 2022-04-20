@@ -153,7 +153,7 @@ public class Nfa {
     }
 
     public void finish() {
-        startingState.finish(new HashSet<NfaState>());
+        startingState.finish(new HashSet<>());
     }
 
 }
