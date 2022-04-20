@@ -199,9 +199,9 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
             System.err.println("No DPO/page found: " + imageFileName);
         }
         return new String[] {
-                titles.containsKey(dpo) ? titles.get(dpo) : "?",
-                authors.containsKey(dpo) ? authors.get(dpo) : "?",
-                dates.containsKey(dpo) ? dates.get(dpo) : "?",
+                titles.getOrDefault(dpo, "?"),
+                authors.getOrDefault(dpo, "?"),
+                dates.getOrDefault(dpo, "?"),
                 page
         };
     }

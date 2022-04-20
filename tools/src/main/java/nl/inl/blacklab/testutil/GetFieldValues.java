@@ -54,11 +54,8 @@ public class GetFieldValues {
                     String value = d.get(fieldName);
                     if (value != null) {
                         Set<String> uniq;
-                        uniq = fieldValues.get(fieldName);
-                        if (uniq == null) {
-                            uniq = new TreeSet<>(); // TreeSet auto-sorts
-                            fieldValues.put(fieldName, uniq);
-                        }
+                        uniq = fieldValues.computeIfAbsent(fieldName, k -> new TreeSet<>());
+                        // TreeSet auto-sorts
                         uniq.add(value);
                     }
                 }

@@ -579,11 +579,7 @@ public final class LuceneUtil {
                         termText = StringUtil.stripAccents(termText).toLowerCase();
                         String[] parts = termText.split(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
                         String subpropName = parts[1];
-                        Set<String> resultList = results.get(subpropName);
-                        if (resultList == null) {
-                            resultList = new TreeSet<>();
-                            results.put(subpropName, resultList);
-                        }
+                        Set<String> resultList = results.computeIfAbsent(subpropName, k -> new TreeSet<>());
                         String subpropValue = parts[2];
                         resultList.add(subpropValue);
                     }
