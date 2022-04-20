@@ -1480,6 +1480,31 @@ public class QueryTool {
     }
 
     /**
+     * A hit we're about to show.
+     *
+     * We need a separate structure because we filter out XML tags and need to know
+     * the longest left context before displaying.
+     */
+    static class HitToShow {
+        public final int doc;
+
+        public final String left;
+        public final String hitText;
+        public final String right;
+
+        public final Map<String, Span> capturedGroups;
+
+        public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
+            super();
+            this.doc = doc;
+            this.left = left;
+            this.hitText = hitText;
+            this.right = right;
+            this.capturedGroups = capturedGroups;
+        }
+    }
+
+    /**
      * Show the current page of hits.
      */
     private void showHitsPage() {
@@ -1498,31 +1523,6 @@ public class QueryTool {
                 outprintln((i == resultsPerPage ? "At least " : "") + i + " hits (total not determined)");
             }
             return;
-        }
-
-        /**
-         * A hit we're about to show.
-         *
-         * We need a separate structure because we filter out XML tags and need to know
-         * the longest left context before displaying.
-         */
-        class HitToShow {
-            public final int doc;
-
-            public final String left;
-            public final String hitText;
-            public final String right;
-
-            public final Map<String, Span> capturedGroups;
-
-            public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
-                super();
-                this.doc = doc;
-                this.left = left;
-                this.hitText = hitText;
-                this.right = right;
-                this.capturedGroups = capturedGroups;
-            }
         }
 
         if (hitsToShow == null)

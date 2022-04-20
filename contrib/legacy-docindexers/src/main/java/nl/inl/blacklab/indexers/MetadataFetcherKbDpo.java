@@ -146,10 +146,8 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
             try {
                 // Use reflection to get handle to classes, ctors and methods
                 // (so we avoid static dependencies on the Apache HTTP libraries)
-                /**
-                 * Apache HTTP components classes, ctors and methods (we use reflection to avoid
-                 * static dependency on these libs)
-                 */
+                // Apache HTTP components classes, ctors and methods (we use reflection to avoid
+                // static dependency on these libs)
                 Class<?> clsDefaultHttpClient = Class.forName("org.apache.http.impl.client.DefaultHttpClient");
                 Class<?> clsHttpUriRequest = Class.forName("org.apache.http.client.methods.HttpUriRequest");
                 Class<?> clsHttpGet = Class.forName("org.apache.http.client.methods.HttpGet");
