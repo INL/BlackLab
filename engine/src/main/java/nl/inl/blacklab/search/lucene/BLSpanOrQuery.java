@@ -737,7 +737,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             clausesCalculated++;
             i += skip;
         }
-        return cost * clauses.length / clausesCalculated;
+        return (long) cost * clauses.length / clausesCalculated;
     }
 
     /**

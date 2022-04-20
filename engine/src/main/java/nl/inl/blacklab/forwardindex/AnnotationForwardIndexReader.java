@@ -248,8 +248,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
-                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
+                if (offsetBytes <= entryOffsetBytes + (long) start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + (long) end
                                 * SIZEOF_INT) {
                     // This one!
                     whichChunk = buffer;
@@ -331,8 +331,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
-                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
+                if (offsetBytes <= entryOffsetBytes + (long) start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + (long) end
                                 * SIZEOF_INT) {
                     // This one!
                     whichChunk = buffer;

@@ -208,7 +208,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             }
             try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
                     FileChannel fc = raf.getChannel()) {
-                long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+                long fileSize = SIZEOF_INT + (long) (SIZEOF_LONG + SIZEOF_INT + 1) * n;
                 fc.truncate(fileSize);
                 MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
                 buf.putInt(n);
@@ -351,7 +351,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                 // No, remap it
                 writeBufOffset = newDocumentOffset;
                 ByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-                        writeBufOffset * SIZEOF_INT, (numberOfTokens + mapReserve)
+                        writeBufOffset * SIZEOF_INT, (long) (numberOfTokens + mapReserve)
                                 * SIZEOF_INT);
                 writeBuffer = byteBuffer.asIntBuffer();
             }
