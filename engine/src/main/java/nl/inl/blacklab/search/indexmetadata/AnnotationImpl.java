@@ -214,23 +214,20 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         matchSensitivities.add(matchSensitivity);
     }
 
-    AnnotationImpl setForwardIndex(boolean b) {
+    void setForwardIndex(boolean b) {
         ensureNotFrozen();
         forwardIndex = b;
-        return this;
     }
 
-    public AnnotationImpl setName(String annotationName) {
+    public void setName(String annotationName) {
         ensureNotFrozen();
         this.name = annotationName;
         this.isInternal |= nameImpliesInternal();
-        return this;
     }
     
-    public AnnotationImpl setInternal() {
+    public void setInternal() {
         ensureNotFrozen();
         this.isInternal = true;
-        return this;
     }
 
     private boolean nameImpliesInternal() {
@@ -238,22 +235,19 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
     }
 
-    public AnnotationImpl setUiType(String uiType) {
+    public void setUiType(String uiType) {
         ensureNotFrozen();
         this.uiType = uiType;
-        return this;
     }
 
-    public AnnotationImpl setDescription(String description) {
+    public void setDescription(String description) {
         ensureNotFrozen();
         this.description = description;
-        return this;
     }
     
     @Override
-    public AnnotationImpl freeze() {
+    public void freeze() {
         this.frozen = true;
-        return this;
     }
     
     @Override

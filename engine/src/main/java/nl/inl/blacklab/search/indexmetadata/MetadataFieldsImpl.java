@@ -305,12 +305,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public MetadataFieldsImpl freeze() {
+    public void freeze() {
         this.frozen = true;
         for (MetadataFieldImpl field: metadataFieldInfos.values()) {
             field.freeze();
         }
-        return this;
     }
 
     @Override

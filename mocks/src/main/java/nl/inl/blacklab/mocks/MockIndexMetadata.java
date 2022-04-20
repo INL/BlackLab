@@ -127,9 +127,8 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public IndexMetadata freeze() {
+    public void freeze() {
         this.frozen = true;
-        return this;
     }
 
     @Override

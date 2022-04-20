@@ -486,10 +486,9 @@ public final class LuceneUtil {
      * @param it the terms in the (set of) documents or a leaf
      * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
      * @param freq map containing existing frequencies to add on to or merge in to
-     * @return the freq map, for ease of use
      * @throws IOException
      */
-    private static Map<String, Integer> getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
+    private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
         if (searchTerms != null && !searchTerms.isEmpty()) {
             for (String term : searchTerms) {
                 if (it.seekExact(new BytesRef(term))) {
@@ -515,7 +514,6 @@ public final class LuceneUtil {
                 }
             }
         }
-        return freq;
     }
 
     public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {

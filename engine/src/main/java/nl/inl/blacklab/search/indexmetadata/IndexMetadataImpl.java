@@ -1365,11 +1365,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     }
 
     @Override
-    public IndexMetadata freeze() {
+    public void freeze() {
         this.frozen = true;
         annotatedFields.freeze();
         metadataFields.freeze();
-        return this;
     }
 
     @Override
