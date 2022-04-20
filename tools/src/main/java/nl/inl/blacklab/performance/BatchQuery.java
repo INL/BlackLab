@@ -73,7 +73,7 @@ public class BatchQuery {
             if (determineTotalHits) {
                 System.out.print("\t# Hits\tTotal Time");
             }
-            System.out.println("");
+            System.out.println();
     
             for (String query : FileUtil.readLines(inputFile)) {
                 query = query.trim();
@@ -87,7 +87,7 @@ public class BatchQuery {
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());
                     }
-                    System.out.println("");
+                    System.out.println();
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                     System.err.println("Error with query " + query + "; skipping...");

@@ -195,7 +195,7 @@ public class RunTermQuery {
         });
         if (!docsFound)
             System.out.println("  (no matching docs)");
-        System.out.println("");
+        System.out.println();
     }
 
     private static void doSpanQuery(Term term, IndexReader reader) throws IOException {
@@ -223,7 +223,7 @@ public class RunTermQuery {
         }
         if (!hitsFound)
             System.out.println("  (no hits)");
-        System.out.println("");
+        System.out.println();
 
         System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
         LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
@@ -238,7 +238,7 @@ public class RunTermQuery {
         }
         if (!hitsFound)
             System.out.println("  (no hits)");
-        System.out.println("");
+        System.out.println();
     }
 
     private static void usage() {

@@ -100,7 +100,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
 
                     // For each annotation
                     String word = m.group();
-                    punct.append(line.substring(i, m.start()));
+                    punct.append(line, i, m.start());
                     i = m.end();
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
                         String processedWord = processString(word, annotation.getProcess(), null);
@@ -116,7 +116,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                 }
                 if (line.length() > i) {
                     // Capture last bit of "punctuation" on this line and add it to first word on next line.
-                    punct.append(line.substring(i, line.length()));
+                    punct.append(line.substring(i));
                 }
             }
             punctuation(punct.toString()); // Put the last bit of punctuation (on the "extra closing token" at the end)

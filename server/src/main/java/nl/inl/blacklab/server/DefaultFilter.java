@@ -23,7 +23,7 @@ public class DefaultFilter implements Filter {
 
         if (request instanceof HttpServletRequest) {
             HttpServletRequest req = (HttpServletRequest) request;
-            String url = req.getPathInfo().toString();
+            String url = req.getPathInfo();
             if (url.equals("/search-test/")) {
                 if (response instanceof HttpServletResponse) {
                     HttpServletResponse resp = (HttpServletResponse)response;
