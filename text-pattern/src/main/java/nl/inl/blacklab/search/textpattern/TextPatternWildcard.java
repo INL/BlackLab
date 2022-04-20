@@ -46,7 +46,7 @@ public class TextPatternWildcard extends TextPatternTerm {
      */
     public TextPattern rewrite() {
         // Hey, maybe it doesn't even contain wildcards?
-        if (value.indexOf("*") < 0 && value.indexOf("?") < 0) {
+        if (!value.contains("*") && !value.contains("?")) {
             // Woot!
             return new TextPatternTerm(value);
         }

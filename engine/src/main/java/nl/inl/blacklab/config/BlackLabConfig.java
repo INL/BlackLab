@@ -13,7 +13,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -46,12 +45,10 @@ public class BlackLabConfig {
      * Attempting to set another configuration when one is already loaded will throw
      * an UnsupportedOperationException.
      *
-     * @param file
-     * @return configuration
-     * @throws FileNotFoundException
-     * @throws IOException
+     * @param file file to read
+     * @return configuration configuration from file
      */
-    public synchronized static BlackLabConfig readConfigFile(File file) throws FileNotFoundException, IOException {
+    public synchronized static BlackLabConfig readConfigFile(File file) throws IOException {
         if (file == null || !file.canRead())
             throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -67,9 +64,7 @@ public class BlackLabConfig {
      *
      * @param fileName config file name
      * @param fileContents contents of the config file
-     * @param isJson
-     * @throws JsonProcessingException
-     * @throws IOException
+     * @param isJson if true, reads JSON. Otherwise, reads YAML.
      */
     private synchronized static BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
