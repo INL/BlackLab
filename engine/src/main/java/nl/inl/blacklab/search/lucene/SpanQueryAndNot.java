@@ -14,7 +14,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -435,8 +434,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
     public int forwardMatchingCost() {
         // Add the costs of our clauses.
         int cost = 1;
-        for (SpanQuery cl : include) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
+        for (BLSpanQuery cl : include) {
+            BLSpanQuery clause = cl;
             cost += clause.forwardMatchingCost();
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases
