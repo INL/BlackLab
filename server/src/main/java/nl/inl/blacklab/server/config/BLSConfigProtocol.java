@@ -1,6 +1,11 @@
 package nl.inl.blacklab.server.config;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class BLSConfigProtocol {
+
+    private static final Logger logger = LogManager.getLogger(BLSConfigProtocol.class);
 
     @Deprecated
     private boolean useOldElementNames = false;
@@ -36,13 +41,8 @@ public class BLSConfigProtocol {
     }
 
     @Deprecated
-    public boolean isUseOldElementNames() {
-        return useOldElementNames;
-    }
-
-    @Deprecated
     public void setUseOldElementNames(boolean useOldElementNames) {
-        this.useOldElementNames = useOldElementNames;
+        logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
     }
 
 }

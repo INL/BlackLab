@@ -92,8 +92,6 @@ public class BlackLabServer extends HttpServlet {
             // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
             BlackLab.setConfig(config.getBLConfig());
 
-            if (config.getProtocol().isUseOldElementNames())
-                logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
             searchManager = new SearchManager(config);
 
             // Set default parameter settings from config

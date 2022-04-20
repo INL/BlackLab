@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 public class BLSConfigCache {
 
-    private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
+    private static final Logger logger = LogManager.getLogger(BLSConfigCache.class);
 
     /** Divide max heap size by how much to autodetect a value for targetFreeMemMegs? */
     private static final int TARGET_FREE_MEM_AUTO_DIVIDER = 10;
