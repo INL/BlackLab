@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -174,7 +175,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             return null;
 
         // Sort (so we always return the same field if more than one matches
-        fieldsFound.sort( (a, b) -> a.name().compareTo(b.name()) );
+        fieldsFound.sort(Comparator.comparing(Field::name));
         return fieldsFound.get(0);
     }
 

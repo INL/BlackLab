@@ -12,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -185,7 +186,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort( (o1, o2) -> length[o1] - length[o2] );
+        deletedTocEntries.sort(Comparator.comparingInt(o -> length[o]));
     }
 
 
