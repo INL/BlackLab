@@ -48,7 +48,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -481,11 +480,9 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
-        blackLab.initializationExecutorService().execute(() -> {
-            //logger.debug("START initialize CS: " + field.name());
-            contentStore.initialize();
-            //logger.debug("END   initialize CS: " + field.name());
-        });
+        //logger.debug("START initialize CS: " + field.name());
+        //logger.debug("END   initialize CS: " + field.name());
+        blackLab.initializationExecutorService().execute(contentStore::initialize);
     }
 
     @Override

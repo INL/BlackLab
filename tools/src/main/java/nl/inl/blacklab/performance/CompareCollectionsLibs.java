@@ -174,7 +174,7 @@ public class CompareCollectionsLibs {
         time("Fill fastutil list", () -> { for (int item: base) fuList.add(item); });
         
         time("Sort Java list", () -> { javaList.sort(Comparator.naturalOrder()); });
-        time("Sort Eclipse list", () -> { ecList.sortThis(); });
+        time("Sort Eclipse list", ecList::sortThis);
         time("Sort fastutil list", () -> { IntArrays.quickSort(fuList.elements(), 0, numberOfItems); });
     }
     

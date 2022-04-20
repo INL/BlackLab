@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -38,7 +39,7 @@ public class AnnotationGroup implements Iterable<Annotation> {
 
     public List<Annotation> annotations() {
         AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(name -> f.annotation(name)).filter(a -> a != null).collect(Collectors.toList());
+        return annotations.stream().map(f::annotation).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     public boolean addRemainingAnnotations() {
@@ -48,12 +49,12 @@ public class AnnotationGroup implements Iterable<Annotation> {
     @Override
     public Iterator<Annotation> iterator() {
         AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(name -> f.annotation(name)).iterator();
+        return annotations.stream().map(f::annotation).iterator();
     }
 
     public Stream<Annotation> stream() {
         AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(name -> f.annotation(name));
+        return annotations.stream().map(f::annotation);
     }
 
 }

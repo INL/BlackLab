@@ -192,7 +192,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
         ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
-        annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
+        annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
         ds.startEntry("annotations").startMap();

@@ -336,7 +336,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     @Override
     synchronized public AnnotatedFieldImpl freeze() {
         this.frozen = true;
-        this.annots.values().forEach(annotation -> annotation.freeze());
+        this.annots.values().forEach(AnnotationImpl::freeze);
         return this;
     }
     

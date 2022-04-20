@@ -377,7 +377,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             if (g.addRemainingFields())
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.stream().map(f -> f.name()).collect(Collectors.toList()));
+            Json.arrayOfStrings(arr, g.stream().map(Field::name).collect(Collectors.toList()));
         }
         // Add annotation group info
         for (AnnotatedField f: annotatedFields()) {
@@ -390,7 +390,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (g.addRemainingAnnotations())
                         jsonGroup.put("addRemainingAnnotations", true);
                     ArrayNode arr = jsonGroup.putArray("annotations");
-                    Json.arrayOfStrings(arr, g.annotations().stream().map(ann -> ann.name()).collect(Collectors.toList()));
+                    Json.arrayOfStrings(arr, g.annotations().stream().map(Annotation::name).collect(Collectors.toList()));
                 }
             }
         }

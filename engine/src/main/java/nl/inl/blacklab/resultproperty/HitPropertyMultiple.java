@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -188,7 +189,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
         // Get ContextSize that's large enough for all our properties
-        return properties.stream().map(p -> p.needsContextSize(index)).filter(s -> s != null).reduce( (a, b) -> ContextSize.union(a, b) ).orElse(null);
+        return properties.stream().map(p -> p.needsContextSize(index)).filter(Objects::nonNull).reduce(ContextSize::union).orElse(null);
     }
 
     @Override
@@ -244,7 +245,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public DocProperty docPropsOnly() {
-        List<DocProperty> crit = properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList());
+        List<DocProperty> crit = properties.stream().map(HitProperty::docPropsOnly).filter(Objects::nonNull).collect(Collectors.toList());
         if (crit.isEmpty())
             return null;
         if (crit.size() == 1) {

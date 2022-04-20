@@ -64,7 +64,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     }
 
     public void freeze() {
-        annotatedFields.values().forEach(f -> f.freeze());
+        annotatedFields.values().forEach(AnnotatedFieldImpl::freeze);
     }
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {

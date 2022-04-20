@@ -162,7 +162,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
    @Override
     public boolean isSingleAnyToken() {
-        return clauses.stream().allMatch(c -> c.isSingleAnyToken());
+        return clauses.stream().allMatch(BLSpanQuery::isSingleAnyToken);
     }
 
     @Override

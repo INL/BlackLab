@@ -47,11 +47,9 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
                 continue;
             AnnotationForwardIndex afi = get(annotation);
             if (AUTO_INIT_FORWARD_INDEXES) {
-                executorService.execute(() -> {
-                    //logger.debug("START initialize AFI: " + annotation.name());
-                    afi.initialize();
-                    //logger.debug("END   initialize AFI: " + annotation.name());
-                });
+                //logger.debug("START initialize AFI: " + annotation.name());
+                //logger.debug("END   initialize AFI: " + annotation.name());
+                executorService.execute(afi::initialize);
             }
         }
     }
@@ -150,7 +148,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.freeSpace()).sum();
+            return fis.values().stream().mapToLong(AnnotationForwardIndex::freeSpace).sum();
         }
     }
 
@@ -159,7 +157,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.totalSize()).sum();
+            return fis.values().stream().mapToLong(AnnotationForwardIndex::totalSize).sum();
         }
     }
 

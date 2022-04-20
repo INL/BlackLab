@@ -158,7 +158,7 @@ class Config {
                 "repetitions: " + repetitions + "\n" +
                 "annotatedField: '" + annotatedField + "\n" +
                 "frequencyLists:\n" +
-                frequencyLists.stream().map(fl -> fl.show()).collect(Collectors.joining("\n"));
+                frequencyLists.stream().map(ConfigFreqList::show).collect(Collectors.joining("\n"));
     }
 
     /**
