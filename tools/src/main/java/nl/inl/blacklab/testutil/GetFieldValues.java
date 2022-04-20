@@ -37,9 +37,7 @@ public class GetFieldValues {
             IndexReader r = index.reader();
 
             Set<String> fieldsToLoad = new HashSet<>();
-            for (String fieldToLoad : fieldNames) {
-                fieldsToLoad.add(fieldToLoad);
-            }
+            fieldsToLoad.addAll(fieldNames);
             /* OLD:
             HashSet<String> lazyFieldsToLoad = new HashSet<String>();
             FieldSelector fieldSelector = new SetBasedFieldSelector(fieldsToLoad, lazyFieldsToLoad);

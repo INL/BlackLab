@@ -1,6 +1,7 @@
 package nl.inl.blacklab.performance;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -128,9 +129,15 @@ public class CompareCollectionsLibs {
             base[i] = new Hit(random.nextInt(), random.nextInt(), random.nextInt());
         }
         
-        time("Fill Java list", () -> { for (Hit item: base) javaList.add(item); });
-        time("Fill Eclipse list", () -> { for (Hit item: base) ecList.add(item); });
-        time("Fill fastutil list", () -> { for (Hit item: base) fuList.add(item); });
+        time("Fill Java list", () -> {
+            javaList.addAll(Arrays.asList(base));
+        });
+        time("Fill Eclipse list", () -> {
+            ecList.addAll(Arrays.asList(base));
+        });
+        time("Fill fastutil list", () -> {
+            fuList.addAll(Arrays.asList(base));
+        });
         
         Comparator<Hit> comp = (a, b) -> {
             int c = Integer.compare(a.doc, b.doc);

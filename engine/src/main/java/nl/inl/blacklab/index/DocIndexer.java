@@ -229,9 +229,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     @Deprecated
     public void setParameters(Map<String, String> param) {
-        for (Map.Entry<String, String> e : param.entrySet()) {
-            parameters.put(e.getKey(), e.getValue());
-        }
+        parameters.putAll(param);
     }
 
     /**

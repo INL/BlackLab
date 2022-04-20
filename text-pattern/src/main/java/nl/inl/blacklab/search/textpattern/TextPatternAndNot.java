@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.textpattern;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -24,9 +25,7 @@ public class TextPatternAndNot extends TextPattern {
     protected List<TextPattern> exclude = new ArrayList<>();
 
     public TextPatternAndNot(TextPattern... clauses) {
-        for (TextPattern clause : clauses) {
-            this.include.add(clause);
-        }
+        this.include.addAll(Arrays.asList(clauses));
     }
 
     public TextPatternAndNot(List<TextPattern> includeClauses, List<TextPattern> excludeClauses) {
