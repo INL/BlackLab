@@ -104,7 +104,7 @@ public class DocPropertyStoredField extends DocProperty {
                 }
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

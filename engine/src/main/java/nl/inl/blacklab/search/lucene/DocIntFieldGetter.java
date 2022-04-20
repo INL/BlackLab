@@ -70,7 +70,7 @@ public class DocIntFieldGetter implements Closeable {
         		docValues.advanceExact(doc);
 				return (int)docValues.longValue();
 			} catch (IOException e) {
-				BlackLabRuntimeException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
 			}
         }
 

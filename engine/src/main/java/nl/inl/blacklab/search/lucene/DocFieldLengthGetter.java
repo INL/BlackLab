@@ -93,7 +93,7 @@ class DocFieldLengthGetter implements Closeable {
                             break;
                         }
         			} catch (IOException e) {
-        				BlackLabRuntimeException.wrap(e);
+                        throw BlackLabRuntimeException.wrap(e);
         			}
 
                 }
@@ -153,7 +153,7 @@ class DocFieldLengthGetter implements Closeable {
         			return (int)cachedFieldLengths.longValue(); 
         		}
 			} catch (IOException e) {
-				BlackLabRuntimeException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
 			}
         }
 

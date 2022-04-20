@@ -253,7 +253,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

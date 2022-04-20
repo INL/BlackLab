@@ -64,7 +64,7 @@ public class FiidLookup {
                 cachedFiids = null;
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

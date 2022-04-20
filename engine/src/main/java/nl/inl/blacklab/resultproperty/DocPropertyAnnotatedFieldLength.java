@@ -75,7 +75,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                 docValues = null;
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
