@@ -6,6 +6,7 @@ import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
 import java.text.Collator;
+import java.util.Arrays;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -140,7 +141,8 @@ public class TermsReader extends Terms {
         this.groupId2TermIds = new int[terms.length * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne + numTermsInGroupsAboveSizeOne];
         this.insensitivePosition2GroupId = new int[this.numberOfTerms]; // NOTE: since not every insensitive sort position exists, this will have empty spots
         this.sensitivePosition2GroupId = new int[this.numberOfTerms];
-        fill(this.insensitivePosition2GroupId, -1);
+
+        Arrays.fill(this.insensitivePosition2GroupId, -1);
 
         // First create all sensitive entries
         int offset = 0;
@@ -400,19 +402,5 @@ public class TermsReader extends Terms {
     private int getSortPositionInsensitive(int termId) {
         if (termId < 0 || termId >= numberOfTerms) { return -1; }
         return this.termId2InsensitivePosition[termId];
-    }
-
-    // https://stackoverflow.com/a/25508988
-    private static void fill(int[] array, int value) {
-      int len = array.length;
-
-      if (len > 0){
-        array[0] = value;
-      }
-
-      //Value of i will be [1, 2, 4, 8, 16, 32, ..., len]
-      for (int i = 1; i < len; i += i) {
-        System.arraycopy(array, 0, array, i, Math.min((len - i), i));
-      }
     }
 }
