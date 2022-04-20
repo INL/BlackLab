@@ -61,7 +61,7 @@ public class TestXmlUtil {
         ObjectNode readJsonRoot = (ObjectNode) readMapper.readTree(swriter.toString());
         Assert.assertEquals("valstring", Json.getString(readJsonRoot, keys[0], ""));
         Assert.assertEquals(20, Json.getInt(readJsonRoot, keys[1], 0));
-        Assert.assertEquals(true, Json.getBoolean(readJsonRoot, keys[2], false));
+        Assert.assertTrue(Json.getBoolean(readJsonRoot, keys[2], false));
         Assert.assertEquals("simple", Json.getString(readJsonRoot, keys[3], ""));
     }
 

@@ -41,7 +41,7 @@ public class TestUtil {
                 if (first) {
                     // .nextDoc() should always place us in a document with at least 1 hit
                     first = false;
-                    Assert.assertFalse(actualStartPos == Spans.NO_MORE_POSITIONS);
+                    Assert.assertNotEquals(Spans.NO_MORE_POSITIONS, actualStartPos);
                 }
                 hitNumber++;
                 Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": start pos", expected.nextStartPosition(),
@@ -82,12 +82,12 @@ public class TestUtil {
                 if (first) {
                     // .nextDoc() should always place us in a document with at least 1 bucket
                     first = false;
-                    Assert.assertFalse(nextBucketRv == SpansInBuckets.NO_MORE_BUCKETS);
+                    Assert.assertNotEquals(SpansInBuckets.NO_MORE_BUCKETS, nextBucketRv);
                 }
                 Assert.assertEquals(expected.nextBucket(), nextBucketRv);
                 if (nextBucketRv == SpansInBuckets.NO_MORE_BUCKETS)
                     break;
-                Assert.assertFalse(actual.bucketSize() == 0); // no empty buckets
+                Assert.assertNotEquals(0, actual.bucketSize()); // no empty buckets
                 Assert.assertEquals(expected.bucketSize(), actual.bucketSize());
                 for (int i = 0; i < actual.bucketSize(); i++) {
                     Assert.assertEquals(expected.startPosition(i), actual.startPosition(i));
