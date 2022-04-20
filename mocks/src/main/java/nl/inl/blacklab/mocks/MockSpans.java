@@ -59,7 +59,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int advance(int target) throws IOException {
+        public int advance(int target) {
             if (currentDoc != NO_MORE_DOCS) {
                 alreadyAtFirstMatch = false;
                 do {
@@ -79,7 +79,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int nextPosition() throws IOException {
+        public int nextPosition() {
             if (currentDoc == NO_MORE_DOCS)
                 return NO_MORE_POSITIONS;
             if (alreadyAtFirstMatch) {

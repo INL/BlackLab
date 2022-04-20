@@ -2,9 +2,6 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.RegexpTooLarge;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -29,11 +26,9 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      * Execute the search operation, returning the final response.
      *
      * @return result of the operation
-     * @throws RegexpTooLarge if a regular expression was too large
-     * @throws WildcardTermTooBroad if a wildcard term or regex matched too many terms
      */
     @Override
-    public Hits executeInternal(Peekable<Hits> progressReporter) throws InvalidQuery {
+    public Hits executeInternal(Peekable<Hits> progressReporter) {
         return queryInfo().index().find(spanQuery, searchSettings);
     }
 

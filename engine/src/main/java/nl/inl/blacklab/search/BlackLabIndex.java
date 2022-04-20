@@ -16,7 +16,6 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -128,10 +127,8 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param query the pattern to find
      * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    default Hits find(BLSpanQuery query) throws WildcardTermTooBroad {
+    default Hits find(BLSpanQuery query) {
         return find(query, null);
     }
 

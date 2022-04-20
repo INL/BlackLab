@@ -147,9 +147,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
      *
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
-     * @throws XPathParseException
      */
-    private AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
+    private AutoPilot acquireAutoPilot(String xpathExpr) {
         AutoPilot ap = compiledXPaths.remove(xpathExpr);
         if (ap == null) {
             ap = new AutoPilot(nav);
@@ -232,11 +231,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // Resolve value using XPath
                 AutoPilot apLinkPath = null;
                 String result = null;
-                try {
-                    apLinkPath = acquireAutoPilot(xpath);
-                } catch (XPathParseException e) {
-                    throw new BlackLabRuntimeException(e);
-                }
+                apLinkPath = acquireAutoPilot(xpath);
                 result = apLinkPath.evalXPathToString();
                 if (result == null || result.isEmpty()) {
                     switch (ld.getIfLinkPathMissing()) {

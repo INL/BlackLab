@@ -93,7 +93,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public int nextDoc() throws IOException {
+    public int nextDoc() {
         alreadyAtFirstMatch = false;
         do {
             if (currentDoc >= maxDoc) {
@@ -155,7 +155,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public int advanceStartPosition(int target) throws IOException {
+    public int advanceStartPosition(int target) {
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             if (currentStart >= target)
