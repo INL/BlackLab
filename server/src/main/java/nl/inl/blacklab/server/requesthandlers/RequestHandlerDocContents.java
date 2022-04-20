@@ -45,7 +45,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         int startAtWord = searchParam.getInteger("wordstart");
         int endAtWord = searchParam.getInteger("wordend");
-        if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord)) {
+        if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             // Illegal value. Error will be thrown, so we'll need a root element.
             surroundWithRootElement = true;
         } else {
@@ -99,7 +99,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         String content;
         int startAtWord = searchParam.getInteger("wordstart");
         int endAtWord = searchParam.getInteger("wordend");
-        if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord)) {
+        if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
