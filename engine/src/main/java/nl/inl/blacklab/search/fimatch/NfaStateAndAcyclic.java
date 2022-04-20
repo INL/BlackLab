@@ -173,7 +173,7 @@ public class NfaStateAndAcyclic extends NfaState {
                 b.append(",");
             b.append(dump(s, stateNrs));
         }
-        return "AND(" + b.toString() + ", " + dump(nextState, stateNrs) + ")";
+        return "AND(" + b + ", " + dump(nextState, stateNrs) + ")";
     }
 
     @Override

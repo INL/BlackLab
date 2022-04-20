@@ -151,7 +151,7 @@ public class NfaStateAnd extends NfaState {
                 b.append(",");
             b.append(dump(s, stateNrs));
         }
-        return "AND(" + b.toString() + ")";
+        return "AND(" + b + ")";
     }
 
     @Override

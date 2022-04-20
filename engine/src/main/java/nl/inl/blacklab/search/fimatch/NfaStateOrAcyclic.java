@@ -193,7 +193,7 @@ public class NfaStateOrAcyclic extends NfaState {
                 b.append(",");
             b.append(dump(clause, stateNrs));
         }
-        return "OR(" + b.toString() + ", " + dump(nextState, stateNrs) + ")";
+        return "OR(" + b + ", " + dump(nextState, stateNrs) + ")";
     }
 
     @Override

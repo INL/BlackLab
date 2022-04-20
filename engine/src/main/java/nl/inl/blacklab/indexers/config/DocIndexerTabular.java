@@ -240,7 +240,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             } else if (hasGlueTags && tagName.equals(GLUE_TAG_NAME)) {
                                 // Glue tag. Don't add default punctuation when adding next word.
                                 if (!attributes.isEmpty())
-                                    warn("Glue tag has attributes: " + attributes.toString());
+                                    warn("Glue tag has attributes: " + attributes);
                                 setPreventNextDefaultPunctuation();
                             } else {
                                 inlineTag(tagName, isOpenTag, attributes);

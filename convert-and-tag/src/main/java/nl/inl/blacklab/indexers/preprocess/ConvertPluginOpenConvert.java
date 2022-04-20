@@ -47,9 +47,9 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 
     private void initJar(File jar) throws PluginException {
         if (!jar.exists())
-            throw new PluginException("Could not find the openConvert jar at location " + jar.toString());
+            throw new PluginException("Could not find the openConvert jar at location " + jar);
         if (!jar.canRead())
-            throw new PluginException("Could not read the openConvert jar at location " + jar.toString());
+            throw new PluginException("Could not read the openConvert jar at location " + jar);
 
         try {
             URL jarUrl = jar.toURI().toURL();

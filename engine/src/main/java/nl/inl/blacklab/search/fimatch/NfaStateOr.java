@@ -152,7 +152,7 @@ public class NfaStateOr extends NfaState {
                 b.append(",");
             b.append(dump(s, stateNrs));
         }
-        return "OR(" + b.toString() + ")";
+        return "OR(" + b + ")";
     }
 
     @Override

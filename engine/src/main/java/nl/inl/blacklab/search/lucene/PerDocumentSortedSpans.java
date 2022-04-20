@@ -139,7 +139,7 @@ final class PerDocumentSortedSpans extends BLSpans {
     @Override
     public String toString() {
         String name = "sort" + (sortByStartPoint ? "Start" : "End") + (eliminateDuplicates ? "Uniq" : "");
-        return name + "(" + bucketedSpans.toString() + ")";
+        return name + "(" + bucketedSpans + ")";
     }
 
     @Override

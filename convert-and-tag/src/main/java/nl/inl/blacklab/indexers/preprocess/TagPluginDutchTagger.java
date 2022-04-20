@@ -64,9 +64,9 @@ public class TagPluginDutchTagger implements TagPlugin {
             throws PluginException {
         try {
             if (!jar.exists())
-                throw new PluginException("Could not find the dutchTagger jar at location " + jar.toString());
+                throw new PluginException("Could not find the dutchTagger jar at location " + jar);
             if (!jar.canRead())
-            throw new PluginException("Could not read the dutchTagger jar at location " + jar.toString());
+            throw new PluginException("Could not read the dutchTagger jar at location " + jar);
             URL jarUrl = jar.toURI().toURL();
             loader = new URLClassLoader(new URL[] { jarUrl }, null);
             assertVersion(loader);

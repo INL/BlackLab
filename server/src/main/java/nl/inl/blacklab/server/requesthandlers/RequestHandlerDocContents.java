@@ -139,7 +139,7 @@ public class RequestHandlerDocContents extends RequestHandler {
             }
             // see if a prefix isn't bound
             if (prefixes.stream().noneMatch(s -> namespaces.stream().anyMatch(s1 -> s1.startsWith(" xmlns:" + s)))) {
-                String msg = String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.",prefixes.toString(),docPid, namespaces.toString());
+                String msg = String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.", prefixes,docPid, namespaces);
                 logger.warn(msg);
                 //throw new InternalServerError(msg);
             }

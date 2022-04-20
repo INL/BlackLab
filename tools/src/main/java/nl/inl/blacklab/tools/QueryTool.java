@@ -1072,7 +1072,7 @@ public class QueryTool {
             }
             //pattern = pattern.rewrite();
             if (verbose)
-                outprintln("TextPattern: " + pattern.toString());
+                outprintln("TextPattern: " + pattern);
 
             // If the query included filter clauses, use those. Otherwise use the global filter, if any.
             Query filter = parser.getIncludedFilterQuery();
@@ -1572,7 +1572,7 @@ public class QueryTool {
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
             if (hit.capturedGroups != null)
-                outprintln("CAP: " + hit.capturedGroups.toString());
+                outprintln("CAP: " + hit.capturedGroups);
         }
 
         // Summarize

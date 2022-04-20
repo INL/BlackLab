@@ -51,7 +51,7 @@ public final class UtilsForTesting {
      */
     public static File createBlackLabTestDir(String name) {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File file = new File(tempDir, "BlackLabTest_" + name + "_" + UUID.randomUUID().toString());
+        File file = new File(tempDir, "BlackLabTest_" + name + "_" + UUID.randomUUID());
         file.mkdir();
         return file;
     }
