@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
@@ -137,8 +136,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
                 tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
                 mappedBytes = startOfNextMappingBytes + sizeBytes;
             }
-        } catch (FileNotFoundException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
         } catch (IOException e1) {
             throw BlackLabRuntimeException.wrap(e1);
         }

@@ -2,7 +2,6 @@ package nl.inl.blacklab.indexers;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
@@ -164,8 +163,6 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
                 dates.put(fields[0].trim(), fields[3].trim());
                 authors.put(fields[0].trim(), fields[4].trim());
             }
-        } catch (FileNotFoundException e) {
-            throw BlackLabRuntimeException.wrap(e);
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

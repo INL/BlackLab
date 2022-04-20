@@ -12,6 +12,7 @@ import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -81,11 +82,7 @@ public class BlsUtils {
                 parser.setAllowLeadingWildcard(true);
                 Query query = parser.parse(filter);
                 return query;
-            } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-                throw new BadRequest("FILTER_SYNTAX_ERROR",
-                        "Error parsing LuceneQL filter query: "
-                                + e.getMessage());
-            } catch (org.apache.lucene.queryparser.classic.TokenMgrError e) {
+            } catch (ParseException | TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing LuceneQL filter query: "
                                 + e.getMessage());
