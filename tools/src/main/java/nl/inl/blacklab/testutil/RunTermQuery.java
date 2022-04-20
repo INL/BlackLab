@@ -183,7 +183,7 @@ public class RunTermQuery {
             @Override
             public void collect(int doc) {
                 bits.set(doc + docBase);
-                System.out.println(String.format("  doc %7d", doc + docBase));
+                System.out.printf("  doc %7d%n", doc + docBase);
                 matchingDoc = doc + docBase;
                 docsFound = true;
             }
@@ -215,8 +215,7 @@ public class RunTermQuery {
             while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
                     int doc = arc.docBase + spans.docID();
-                    System.out.println(
-                            String.format("  doc %7d, pos %4d-%4d", doc, spans.startPosition(), spans.endPosition()));
+                    System.out.printf("  doc %7d, pos %4d-%4d%n", doc, spans.startPosition(), spans.endPosition());
                     hitsFound = true;
                 }
             }
@@ -231,8 +230,8 @@ public class RunTermQuery {
         hitsFound = false;
         while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
             while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-                System.out.println(String.format("  doc %7d, pos %4d-%4d", spans.docID(), spans.startPosition(),
-                        spans.endPosition()));
+                System.out.printf("  doc %7d, pos %4d-%4d%n", spans.docID(), spans.startPosition(),
+                        spans.endPosition());
                 hitsFound = true;
             }
         }

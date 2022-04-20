@@ -80,8 +80,8 @@ public class BatchForwardIndex {
                 int skip = numbers.length > 2 ? numbers[2] : 0;
                 int snippets = numbers.length > 3 ? numbers[3] : 5;
                 long time = doPerformanceTest(fi, first, number, skip, snippets);
-                System.out.println(String.format("%d\t%d\t%d\t%d\t%d", first, number, skip, snippets,
-                        time));
+                System.out.printf("%d\t%d\t%d\t%d\t%d%n", first, number, skip, snippets,
+                        time);
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);
