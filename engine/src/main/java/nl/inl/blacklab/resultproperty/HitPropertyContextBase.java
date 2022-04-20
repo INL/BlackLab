@@ -27,8 +27,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
                 : MatchSensitivity.SENSITIVE;
-//        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
-//                : index.defaultContextSize();
         Annotation annotation = field.annotation(propName);
         try {
             Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class);
@@ -90,11 +88,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return List.of(sensitivity);
     }
 
-//    @Override
-//    public ContextSize needsContextSize(BlackLabIndex index) {
-//        return contextSize;
-//    }
-
     @Override
     public String name() {
         return name + ": " + annotation.name();
@@ -131,11 +124,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 return false;
         } else if (!annotation.equals(other.annotation))
             return false;
-//        if (contextSize == null) {
-//            if (other.contextSize != null)
-//                return false;
-//        } else if (!contextSize.equals(other.contextSize))
-//            return false;
         if (index == null) {
             if (other.index != null)
                 return false;

@@ -299,21 +299,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         return null; // (fixed tov origineel)
     }
 
-    // Find name of corpus in metadata structure.
-    // Used to determine parseFile
-//	private String getCorpus(Map<String, Object> metadata) {
-//        String spkr;
-//        if (metadata.containsKey("speaker"))
-//            spkr = metadata.get("speaker").toString();
-//        else
-//            spkr = "";
-//        @SuppressWarnings("unchecked")
-//        Map<String, Map<String, String>> mdid = (Map<String, Map<String, String>>)metadata.get("id");
-//        if (mdid != null && mdid.containsKey(spkr) && mdid.get(spkr).containsKey("corpus"))
-//            return mdid.get(spkr).get("corpus");
-//        return "Unknown_corpus";
-//    }
-
     // Convert date string to month number
     private int getMonths(String age) {
         // input format is 3;6.14 (y;m.d)
@@ -355,46 +340,6 @@ public class DocIndexerChat extends DocIndexerConfig {
             log("Warning: Illegal age syntax for " + cleanAge + ". Syntax must be y;m.d");
         return result;
     }
-
-    /*
-    public String[] getoutpaths(String fullname, String inpath, String outpath) {
-        String absinpath = new File(inpath).getAbsolutePath();    //absinpath = os.path.abspath(inpath)
-        String absoutpath = new File(outpath).getAbsolutePath();  //absoutpath = os.path.abspath(outpath)
-        String fullinpath = new File(fullname).getAbsoluteFile().getParentFile().getAbsolutePath();  //os.path.dirname(fullname);
-        reloutpath = os.path.relpath(fullinpath, start = absinpath);
-        fulloutpath = os.path.join(absoutpath, reloutpath);
-        return reloutpath, fulloutpath;
-    }
-    */
-
-    // Determine parsefile
-//	private String getParseFile(String corpus, String base, int uttid) {
-//        String uttidstr = String.format("u%011d", uttid); //"u{:011d}".format(uttid);
-//        String newbase = StringUtils.join(Arrays.asList(corpus, base, uttidstr), UNDERSCORE);
-//        String result = newbase + PARSE_EXT;
-//        return result;
-//    }
-
-//	private boolean isNotEmpty(String str) {
-//        return str != null && !str.isEmpty();
-//    }
-
-//	private String metaDate(String el, Map<String, Object> metadata) {
-//        Date d = (Date)metadata.get(el);
-//        String normalizeddate = toIsoFormat(d);
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "date", uel, "=", normalizeddate), SPACE);
-//    }
-//
-//	private String metaInt(String el, Map<String, Object> metadata) {
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "int", uel, "=", metadata.get(el).toString()), SPACE);
-//    }
-//
-//	private String metaTxt(String el, Map<String, Object> metadata) {
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "text", uel, "=", metadata.get(el).toString()), SPACE);
-//    }
 
     private void addMetaDate(String el, Map<String, Object> metadata) {
         Date d = (Date) metadata.get(el);
@@ -450,69 +395,6 @@ public class DocIndexerChat extends DocIndexerConfig {
             }
         }
     }
-
-//	private void printHeaderMetadata(Map<String, Object> metadata) {
-//        for (String el: metadata.keySet()) {
-//            if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
-//                // (pass)
-//            } else if (ALL_HEADERS.contains(el)) {
-//                Object curval = metadata.get(el);
-//                if (curval instanceof String) {
-//                    output(metaTxt(el, metadata));
-//                } else if (curval instanceof Date) {
-//                	output(metaDate(el, metadata));
-//                } else if (curval instanceof Integer) {
-//                	output(metaInt(el, metadata));
-//                }
-//                if (!PRINT_IN_HEADERS.contains(el))
-//                    log("unknown metadata element encountered: "  + el);
-//            }
-//        }
-//    }
-
-//    @SuppressWarnings("unchecked")
-//    private void printUttMetadata(Map<String, Object> metadata) {
-//        String uttidline = metaInt("uttid", metadata);
-//        String spkrline = metaTxt("speaker", metadata);
-//        // parsefileline = metatxt("parsefile", metadata)
-//        String origuttline = metaTxt("origutt", metadata);
-//        output(uttidline);
-//        output(spkrline);
-//        // printToOutfile(parsefileline);
-//        output(origuttline);
-//        Object curcode = metadata.get("speaker");
-//        Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
-//        if (participants.containsKey(curcode)) {
-//            Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
-//            for (String el: codeMap.keySet()) {
-//                String theline = metaTxt(el, codeMap);
-//                output(theline);
-//            }
-//        }
-//        if (metadata.containsKey("id")) {
-//            Map<String, Object> mdid = (Map<String, Object>)metadata.get("id");
-//            if (mdid != null) {
-//                Map<String, Object> curcodeMap = (Map<String, Object>)mdid.get(curcode);
-//                if (curcodeMap != null) {
-//                    for (String el: curcodeMap.keySet()) {
-//                        Object curval = curcodeMap.get(el);
-//                        if (curval instanceof String) {
-//                            String theline = metaTxt(el, curcodeMap);
-//                            output(theline);
-//                        } else if (curval instanceof Integer) {
-//                            String theline = metaInt(el, curcodeMap);
-//                            output(theline);
-//                        } else if (curval instanceof Date) {
-//                            String theline = metaDate(el, curcodeMap);
-//                            output(theline);
-//                        } else {
-//                            log("print_uttmd: unknown type for " + el + " = " + curval);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
 
     /**
      * Are we inside a "block"? Blocks have their own set of metadata, and are
@@ -826,16 +708,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         metadata.put("speaker", code);
         metadata.put("origutt", line.substring(endSpk + 1, line.length() - 1));
     }
-
-//    private void updateCharMap(String str, Map<Character, Integer> charmap) {
-//        for (int i = 0; i < str.length(); i++) {
-//            char curchar = str.charAt(i);
-//            if (charmap.containsKey(curchar))
-//                charmap.put(curchar, charmap.get(curchar) + 1);
-//            else
-//                charmap.put(curchar, 1);
-//        }
-//    }
 
     private void writeToCleanFile(String entry, String cleanEntry) {
         if (!entry.equals(cleanEntry)) {

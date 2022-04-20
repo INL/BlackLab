@@ -240,11 +240,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
         return cache;
     }
 
-//    @Override
-//    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
-//        throw new UnsupportedOperationException();
-//    }
-
     @Override
     public String toString() {
         return this.getClass().getSimpleName() + "()";

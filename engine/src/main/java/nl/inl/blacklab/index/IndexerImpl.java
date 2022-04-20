@@ -315,9 +315,6 @@ class IndexerImpl implements DocWriter, Indexer {
                         formatError = "format not found";
                     throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                             formatError);
-//                    throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
-//                            + "' not found (or format config contains an error) when creating new index in "
-//                            + directory);
                 }
             } else if (DocumentFormats.isSupported(formatIdentifier)) {
                 this.formatIdentifier = formatIdentifier;
@@ -349,8 +346,6 @@ class IndexerImpl implements DocWriter, Indexer {
                     formatError = "format not found";
                 throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                         formatError);
-//                throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
-//                        + "' not found (or format config contains an error) when creating new index in " + directory);
             }
         } else { // opening an existing index
 

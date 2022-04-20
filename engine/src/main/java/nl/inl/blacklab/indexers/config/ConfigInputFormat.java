@@ -316,14 +316,6 @@ public class ConfigInputFormat {
         this.visible = listed;
     }
 
-//    public ConfigTabularOptions getTabularOptions() {
-//        return tabularOptions;
-//    }
-//
-//    public void setTabularOptions(ConfigTabularOptions tabularOptions) {
-//        this.tabularOptions = tabularOptions;
-//    }
-
     public void addNamespace(String name, String uri) {
         namespaces.put(name, uri);
     }

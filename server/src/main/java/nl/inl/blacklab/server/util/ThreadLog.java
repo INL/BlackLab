@@ -95,25 +95,4 @@ public class ThreadLog {
         n += delta;
         counters.put(name, n);
     }
-//
-//	/**
-//	 * Dump the ThreadLog in DataObject format, so we can return it as JSON or XML.
-//	 * @return the DataObject representation
-//	 */
-//	public DataObject dump() {
-//		DataObjectMapElement result = new DataObjectMapElement();
-//
-//		DataObjectList m = new DataObjectList("message");
-//		for (String msg: messages) {
-//			m.add(msg);
-//		}
-//		result.put("messages", m);
-//
-//		DataObjectMapAttribute c = new DataObjectMapAttribute("counter", "name");
-//		for (Map.Entry<String, Integer> counter: counters.entrySet()) {
-//			c.put(counter.getKey(), counter.getValue());
-//		}
-//
-//		return result;
-//	}
 }

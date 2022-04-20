@@ -28,10 +28,6 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         super("hit text", "hit", index, annotation, sensitivity/*, contextSize*/);
     }
 
-//    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-//        this(index, annotation, sensitivity/*, null*/);
-//    }
-
     public HitPropertyHitText(BlackLabIndex index, MatchSensitivity sensitivity) {
         this(index, null, sensitivity/*, null*/);
     }

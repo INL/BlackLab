@@ -121,24 +121,6 @@ public class NfaStateOrAcyclic extends NfaState {
     @Override
     public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
         return clausesAllSameLength && (nextState == null || nextState.hitsAllSameLength(statesVisited));
-        /*
-        if (statesVisited.contains(this)) {
-        	// We've found a cycle. Stop processing, and just return the
-        	// "safest" (least-guarantee) answer. In this case: we can't
-        	// guarantee that hits are all the same length.
-        	return false;
-        }
-        statesVisited.add(this);
-        int hitLength = -1;
-        for (NfaState clause: clauses) {
-        	if (!clause.hitsAllSameLength(statesVisited))
-        		return false;
-        	if (hitLength != -1 && hitLength != clause.hitsLengthMin(statesVisited))
-        		return false;
-        	hitLength = clause.hitsLengthMin(statesVisited);
-        }
-        return nextState == null || nextState.hitsAllSameLength(statesVisited);
-        */
     }
 
     @Override
