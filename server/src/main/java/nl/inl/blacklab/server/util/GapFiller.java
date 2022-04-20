@@ -77,8 +77,7 @@ public class GapFiller {
             data = data.replaceAll(lineSeparator, "\n"); // replace our line separator with \n's
         }
         CSVFormat ourFormat = CSVFormat.TDF.withDelimiter(separator);
-        Iterable<CSVRecord> records = ourFormat.parse(new StringReader(data));
-        return records;
+        return ourFormat.parse(new StringReader(data));
     }
 
     /**

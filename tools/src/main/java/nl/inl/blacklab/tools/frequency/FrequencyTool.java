@@ -187,9 +187,8 @@ public class FrequencyTool {
         for (int rep = 0; rep < config.getRepetitions(); rep++) { // FOR DEBUGGING
 
             for (int i = 0; i < docIds.size(); i += docsToProcessInParallel) {
-                int runStart = i;
                 int runEnd = Math.min(i + docsToProcessInParallel, docIds.size());
-                List<Integer> docIdsInChunk = docIds.subList(runStart, runEnd);
+                List<Integer> docIdsInChunk = docIds.subList(i, runEnd);
 
                 // Make sure we have a map
                 if (occurrences == null) {
@@ -201,7 +200,7 @@ public class FrequencyTool {
                 // Process current run of documents and add to grouping
                 CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk, occurrences);
 
-                System.out.println("  Processed docs " + runStart + "-" + runEnd + ", " + occurrences.size() + " entries");
+                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries");
 
                 // If the grouping has gotten too large, write it to file so we don't run out of memory.
                 boolean groupingTooLarge = occurrences.size() > config.getGroupsPerChunk();

@@ -118,15 +118,14 @@ public abstract class BLSpans extends Spans {
     public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
         if (spans == null)
             return null;
-        BLSpans result = spans;
         if (!sort && removeDuplicates) {
             // Make already-sorted spans unique. 
-            return new SpansUnique(result);
+            return new SpansUnique(spans);
         }
         if (sort) {
             // Sort spans by document and start point, then optionally make them unique too.
-            return PerDocumentSortedSpans.startPoint(result, removeDuplicates);
+            return PerDocumentSortedSpans.startPoint(spans, removeDuplicates);
         }
-        return result;
+        return spans;
     }
 }

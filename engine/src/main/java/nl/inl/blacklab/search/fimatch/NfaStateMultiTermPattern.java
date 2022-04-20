@@ -72,8 +72,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
         NfaStateMultiTermPattern copy = copyNoNextState();
         copiesMade.put(this, copy);
-        NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
-        copy.nextState = nextStateCopy;
+        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade);
         if (nextState == null && dangling != null)
             dangling.add(copy);
         return copy;

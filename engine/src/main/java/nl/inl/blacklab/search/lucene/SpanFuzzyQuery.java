@@ -88,8 +88,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         }
 
         // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-        BLSpanQuery r = new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
-        return r;
+        return new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
 
     }
 

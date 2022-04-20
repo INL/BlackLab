@@ -166,8 +166,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             // All-negative; node should be rewritten to OR.
             if (rewrNotCl.size() == 1)
                 return rewrCl.get(0).inverted().rewrite(reader);
-            BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
-            return r;
+            return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
         }
 
         if (rewrCl.size() > 1) {

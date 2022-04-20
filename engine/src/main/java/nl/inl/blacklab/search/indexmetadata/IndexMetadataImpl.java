@@ -754,8 +754,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 logger.error("non-default namingScheme setting found, but this is no longer supported");
         } else {
             // Not specified; detect it.
-            boolean hasNoFieldsYet = fis == null || fis.size() == 0;
-            boolean usingSpecialCharsAsSeparators = hasNoFieldsYet;
+            boolean usingSpecialCharsAsSeparators = fis == null || fis.size() == 0;
             boolean usingCharacterCodesAsSeparators = false;
             if (fis != null) {
                 for (int i1 = 0; i1 < fis.size(); i1++) {

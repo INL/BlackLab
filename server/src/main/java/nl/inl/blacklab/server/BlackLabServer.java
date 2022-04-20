@@ -140,9 +140,8 @@ public class BlackLabServer extends HttpServlet {
             : String.format("nl.inl.blacklab.instrumentation.impl.%s", provider);
 
         try {
-            RequestInstrumentationProvider instrumentationProvider = (RequestInstrumentationProvider)
+            return (RequestInstrumentationProvider)
                 Class.forName(fqClassName).getDeclaredConstructor().newInstance();
-            return instrumentationProvider;
 
         } catch (Exception ex) {
             throw new ConfigurationException("Can not create request instrumentation provider with class" + fqClassName);

@@ -80,8 +80,7 @@ public class BlsUtils {
                     }
                 };
                 parser.setAllowLeadingWildcard(true);
-                Query query = parser.parse(filter);
-                return query;
+                return parser.parse(filter);
             } catch (ParseException | TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing LuceneQL filter query: "

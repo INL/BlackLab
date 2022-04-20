@@ -268,8 +268,7 @@ public class TermsReader extends Terms {
     public int indexOf(String term) {
         final int groupId = getGroupId(term, MatchSensitivity.SENSITIVE);
         if (groupId == -1) return -1;
-        final int termId = this.groupId2TermIds[groupId + 1];
-        return termId;
+        return this.groupId2TermIds[groupId + 1];
     }
 
     @Override

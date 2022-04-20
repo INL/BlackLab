@@ -821,8 +821,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Regular element with separate open and close tags.
             int contentOffset = (int) contentFragment;
             int contentLength = (int) (contentFragment >> 32);
-            int contentEnd = contentOffset + contentLength;
-            endTagOffset = contentEnd;
+            endTagOffset = contentOffset + contentLength;
         }
 
         // Find element name

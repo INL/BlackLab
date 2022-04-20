@@ -78,8 +78,7 @@ public class AuthManager {
     public User determineCurrentUser(BlackLabServer servlet, HttpServletRequest request) {
         // If no auth system is configured, all users are anonymous
         if (authObj == null) {
-            User user = User.anonymous(request.getSession().getId());
-            return user;
+            return User.anonymous(request.getSession().getId());
         }
 
         // Is client on debug IP and is there a userid parameter?
@@ -90,8 +89,7 @@ public class AuthManager {
 
         // Let auth system determine the current user.
         try {
-            User user = (User) authMethodDetermineCurrentUser.invoke(authObj, servlet, request);
-            return user;
+            return (User) authMethodDetermineCurrentUser.invoke(authObj, servlet, request);
         } catch (Exception e) {
             throw new RuntimeException("Error determining current user", e);
         }

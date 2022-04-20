@@ -48,13 +48,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
-                return r;
+                return new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
-                return r;
+                return new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
             }
         } else if (baseRewritten.isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it

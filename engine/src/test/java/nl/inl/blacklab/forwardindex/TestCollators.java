@@ -45,8 +45,7 @@ public class TestCollators {
         Collator coll = getDefaultEnglishCollator();
         //Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
-        Collator blacklabCollator = colls.get(MatchSensitivity.INSENSITIVE);
-        return blacklabCollator;
+        return colls.get(MatchSensitivity.INSENSITIVE);
     }
 
     @Before

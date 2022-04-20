@@ -114,8 +114,7 @@ public class XmlUtil {
     public static String xmlToPlainText(String conc, boolean makeNonBreaking) {
         // Allocate buffer.
         int inputLength = conc.length();
-        int bufferLength = inputLength;
-        char[] src = new char[bufferLength];
+        char[] src = new char[inputLength];
 
         // Get character array
         conc.getChars(0, inputLength, src, 0);
