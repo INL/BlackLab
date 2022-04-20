@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -82,7 +81,7 @@ public class PropertyValueMultiple extends PropertyValue {
 
     @Override
     public List<PropertyValue> values() {
-        return Collections.unmodifiableList(Arrays.asList(value));
+        return List.of(value);
     }
 
     /**
