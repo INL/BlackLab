@@ -410,7 +410,6 @@ public class FileProcessor implements AutoCloseable {
                 processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
             } catch (IOException e) {
                 reportAndAbort(e, file.getAbsolutePath(), file);
-                return;
             }
         }
     }

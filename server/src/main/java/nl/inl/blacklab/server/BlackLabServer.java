@@ -337,7 +337,6 @@ public class BlackLabServer extends HttpServlet {
             // Client cancelled the request midway through.
             // This is okay, don't raise the alarm.
             logger.debug("(couldn't send response, client probably cancelled the request)");
-            return;
         }
     }
 

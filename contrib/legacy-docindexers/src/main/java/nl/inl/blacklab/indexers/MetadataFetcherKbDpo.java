@@ -337,7 +337,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
             docIndexer.addMetadataField("ppn", metadata.ppn);
         } else {
             System.err.println("DPO number not found for imageFileName " + fileName);
-            return;
         }
 
     }
