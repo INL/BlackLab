@@ -752,14 +752,22 @@ public class QueryTool {
             } else if (lcased.startsWith("sensitive ")) {
                 String v = lcased.substring(10);
                 MatchSensitivity sensitivity;
-                if (v.equals("on") || v.equals("yes") || v.equals("true")) {
+                switch (v) {
+                case "on":
+                case "yes":
+                case "true":
                     sensitivity = MatchSensitivity.SENSITIVE;
-                } else if (v.equals("case")) {
+                    break;
+                case "case":
                     sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
-                } else if (v.equals("diac") || v.equals("diacritics")) {
+                    break;
+                case "diac":
+                case "diacritics":
                     sensitivity = MatchSensitivity.CASE_INSENSITIVE;
-                } else {
+                    break;
+                default:
                     sensitivity = MatchSensitivity.INSENSITIVE;
+                    break;
                 }
                 index.setDefaultMatchSensitivity(sensitivity);
                 outprintln("Search defaults to "

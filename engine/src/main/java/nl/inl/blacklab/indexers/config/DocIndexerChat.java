@@ -657,16 +657,18 @@ public class DocIndexerChat extends DocIndexerConfig {
         int headerNameEnd = headerLine.indexOf(HEADERLINE_END_SYMB);
         if (headerNameEnd < 0) {
             String cleanHeaderLine = headerLine.trim().toLowerCase();
-            if (cleanHeaderLine.equals("@utf8")) {
+            switch (cleanHeaderLine) {
+            case "@utf8":
                 metadata.put("charencoding", "UTF8");
-            } else if (cleanHeaderLine.equals("@begin")) {
+                break;
+            case "@begin":
+            case "@end":
+            case "@blank":
                 // (pass)
-            } else if (cleanHeaderLine.equals("@end")) {
-                // (pass)
-            } else if (cleanHeaderLine.equals("@blank")) {
-                // (pass)
-            } else {
+                break;
+            default:
                 log("Warning: unknown header " + headerLine + " encountered in line " + lineNumber);
+                break;
             }
 
         } else {
