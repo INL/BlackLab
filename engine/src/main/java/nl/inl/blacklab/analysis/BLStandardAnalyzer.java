@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.analysis;
 
 import java.util.Collections;

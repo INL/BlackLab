@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.util;
 
 import java.io.IOException;

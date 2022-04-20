@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.index.annotated;
 
 import org.apache.lucene.analysis.TokenStream;

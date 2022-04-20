@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;

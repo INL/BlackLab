@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.index.annotated;
 
 import java.util.Iterator;

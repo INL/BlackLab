@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.analysis;
 
 import org.apache.lucene.analysis.Analyzer;

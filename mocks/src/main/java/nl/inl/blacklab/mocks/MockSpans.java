@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
