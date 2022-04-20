@@ -23,9 +23,9 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     private final BlackLabIndex index;
 
-    IndexReader reader;
+    final IndexReader reader;
 
-    String fieldName;
+    final String fieldName;
 
     private final DocPropertyDecade docPropertyDocumentDecade;
 

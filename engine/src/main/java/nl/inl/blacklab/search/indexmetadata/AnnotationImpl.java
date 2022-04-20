@@ -65,7 +65,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      *  This is not actually considered state, just cache, because all 
      *  subannotations are valid (we don't know which ones were indexed).
      */
-    Map<String, Subannotation> cachedSubs = new HashMap<>();
+    final Map<String, Subannotation> cachedSubs = new HashMap<>();
     
     /**
      * If this is a subannotation, what is its parent annotation?

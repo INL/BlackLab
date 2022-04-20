@@ -90,7 +90,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     boolean inited = false;
 
-    protected Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
+    protected final Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
 
     public void setConfigInputFormat(ConfigInputFormat config) {
         this.config = config;

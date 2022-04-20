@@ -18,13 +18,13 @@ public class BlsException extends Exception {
     /**
      * The HTTP error code to send.
      */
-    protected int httpStatusCode;
+    protected final int httpStatusCode;
 
     /**
      * A symbolic error code that the client can recognize and show a custom message
      * for.
      */
-    protected String errorCode;
+    protected final String errorCode;
 
     public BlsException(int httpStatusCode, String errorCode, String msg, Throwable cause) {
         super(msg, cause);

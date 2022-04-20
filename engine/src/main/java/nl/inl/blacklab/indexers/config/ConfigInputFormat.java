@@ -139,7 +139,7 @@ public class ConfigInputFormat {
     private ConfigCorpus corpusConfig = new ConfigCorpus();
 
     /** XML namespace declarations */
-    Map<String, String> namespaces = new LinkedHashMap<>();
+    final Map<String, String> namespaces = new LinkedHashMap<>();
 
     /** How to find our documents */
     private String documentPath = "/";
@@ -150,7 +150,7 @@ public class ConfigInputFormat {
     /**
      * Before adding metadata fields to the document, this name mapping is applied.
      */
-    Map<String, String> indexFieldAs = new LinkedHashMap<>();
+    final Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
     /** What default analyzer to use if not overridden */
     private String metadataDefaultAnalyzer = "default";

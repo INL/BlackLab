@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.results.HitGroup;
  */
 public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
-    static HitGroupPropertyIdentity propIdentity = new HitGroupPropertyIdentity();
+    static final HitGroupPropertyIdentity propIdentity = new HitGroupPropertyIdentity();
 
-    static HitGroupPropertySize propSize = new HitGroupPropertySize();
+    static final HitGroupPropertySize propSize = new HitGroupPropertySize();
 
     public static HitGroupPropertyIdentity identity() {
         return propIdentity;

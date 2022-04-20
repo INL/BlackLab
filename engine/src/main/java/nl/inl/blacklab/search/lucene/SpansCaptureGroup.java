@@ -31,7 +31,7 @@ class SpansCaptureGroup extends BLSpans {
      * because we try to internalize constant-length neighbouring clauses into our
      * clause to speed up matching)
      */
-    int leftAdjust;
+    final int leftAdjust;
 
     /**
      * How to adjust the right edge of the captured hits while matching. (necessary

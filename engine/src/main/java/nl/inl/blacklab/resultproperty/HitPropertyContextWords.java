@@ -64,16 +64,16 @@ public class HitPropertyContextWords extends HitProperty {
             return new ContextPart(startFrom, firstWord, direction, maxLength);
         }
 
-        protected ContextStart startFrom;
+        protected final ContextStart startFrom;
 
-        protected int firstWord;
+        protected final int firstWord;
 
         /**
          * Direction: 1 = default direction, -1 = reverse direction. Default direction
          * is right for ContextStart.HIT_TEXT_FROM_START and ContextStart.RIGHT_OF_HIT,
          * left for ContextStart.HIT_TEXT_FROM_END and ContextStart.LEFT_OF_HIT.
          */
-        protected int direction;
+        protected final int direction;
 
         protected int maxLength;
 

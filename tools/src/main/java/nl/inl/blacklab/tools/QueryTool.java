@@ -87,7 +87,7 @@ public class QueryTool {
     static final Charset INPUT_FILE_ENCODING = StandardCharsets.UTF_8;
 
     /** Our output writer. */
-    public PrintWriter out;
+    public final PrintWriter out;
 
     /** Our error writer (if null, output errors to out as well) */
     public PrintWriter err;
@@ -140,7 +140,7 @@ public class QueryTool {
      * If true, describes time in minutes and seconds. If false, just gives the
      * number of milliseconds.
      */
-    boolean timeDisplayHumanFriendly = false;
+    final boolean timeDisplayHumanFriendly = false;
 
     /** The filter query, if any. */
     private Query filterQuery = null;

@@ -80,9 +80,9 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Parameters passed to this indexer
      */
-    protected Map<String, String> parameters = new HashMap<>();
+    protected final Map<String, String> parameters = new HashMap<>();
 
-    Set<String> numericFields = new HashSet<>();
+    final Set<String> numericFields = new HashSet<>();
 
     /** How many documents we've processed */
     private int numberOfDocsDone = 0;

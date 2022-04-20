@@ -57,7 +57,7 @@ public abstract class Terms {
      * that this should be significantly larger than maxBlockSize, because we also
      * need to store offsets.
      */
-    int maxMapSize = DEFAULT_MAX_MAP_SIZE;
+    final int maxMapSize = DEFAULT_MAX_MAP_SIZE;
 
     public void initialize() {
         // NOP

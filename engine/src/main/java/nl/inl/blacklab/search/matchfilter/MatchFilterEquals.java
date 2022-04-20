@@ -8,7 +8,8 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterEquals extends MatchFilter {
 
-    MatchFilter a, b;
+    final MatchFilter a;
+    final MatchFilter b;
 
     private final MatchSensitivity sensitivity;
 

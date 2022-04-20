@@ -26,7 +26,7 @@ public class SampleParameters {
         return new SampleParameters(false, 0, numberOfHitsSet, false, 0);
     }
     
-    boolean isPercentage;
+    final boolean isPercentage;
     
     private final double percentageOfHits;
     

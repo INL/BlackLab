@@ -7,7 +7,8 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterAnd extends MatchFilter {
 
-    MatchFilter a, b;
+    final MatchFilter a;
+    final MatchFilter b;
 
     public MatchFilterAnd(MatchFilter a, MatchFilter b) {
         super();

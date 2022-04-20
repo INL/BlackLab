@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class MockTerms extends Terms {
 
-    String[] words;
+    final String[] words;
 
     public MockTerms(String... words) {
         this.words = words;

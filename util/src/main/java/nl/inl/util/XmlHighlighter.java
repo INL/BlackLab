@@ -52,14 +52,14 @@ public class XmlHighlighter {
         TagType type;
 
         /** Start position of tag in original content */
-        int start;
+        final int start;
 
         /**
          * End position of tag in original content. NOTE: this only differs from start
          * if type == EXISTING_TAG. Highlight tags are not in the original content, so
          * there start always equals end.
          */
-        int end;
+        final int end;
 
         /**
          * Start position of matching tag (the close to this open tag, or vice versa) in

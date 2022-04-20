@@ -27,13 +27,13 @@ public class ConfigCorpus {
     private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
     /** Special field roles, such as pidField, titleField, etc. */
-    Map<String, String> specialFields = new LinkedHashMap<>();
+    final Map<String, String> specialFields = new LinkedHashMap<>();
 
     /** How to group metadata fields */
-    Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
+    final Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
 
     /** How to group annotated fields' annotations */
-    Map<String, ConfigAnnotationGroups> annotationGroups = new LinkedHashMap<>();
+    final Map<String, ConfigAnnotationGroups> annotationGroups = new LinkedHashMap<>();
 
     public ConfigCorpus copy() {
         ConfigCorpus result = new ConfigCorpus();

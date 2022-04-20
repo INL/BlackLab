@@ -20,9 +20,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 class SpanQuerySorted extends BLSpanQuery {
     private final BLSpanQuery src;
 
-    boolean sortByEndpoint;
+    final boolean sortByEndpoint;
 
-    boolean eliminateDuplicates;
+    final boolean eliminateDuplicates;
 
     public SpanQuerySorted(BLSpanQuery src, boolean sortByEndpoint, boolean eliminateDuplicates) {
         super(src.queryInfo);

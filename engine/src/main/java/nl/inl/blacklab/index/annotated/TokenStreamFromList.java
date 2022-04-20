@@ -21,7 +21,7 @@ import org.eclipse.collections.api.iterator.IntIterator;
 class TokenStreamFromList extends TokenStream {
 
     /** Iterator over the terms */
-    protected Iterator<String> iterator;
+    protected final Iterator<String> iterator;
 
     /** Iterator over the position increments */
     private final IntIterator incrementIt;
@@ -32,12 +32,12 @@ class TokenStreamFromList extends TokenStream {
     /**
      * Term text of the current token
      */
-    protected CharTermAttribute termAttr;
+    protected final CharTermAttribute termAttr;
 
     /**
      * Position increment of the current token
      */
-    protected PositionIncrementAttribute positionIncrementAttr;
+    protected final PositionIncrementAttribute positionIncrementAttr;
 
     /**
      * Payload of the current token

@@ -15,13 +15,13 @@ import nl.inl.blacklab.search.Span;
  * certain domain) when executing our query.
  */
 class SpansFiltered extends BLSpans {
-    BLSpans spans;
+    final BLSpans spans;
 
     /**
      * Set of accepted docs. NOTE: this is not segment-based, but for the whole
      * index!
      */
-    DocIdSetIterator docIdSetIter;
+    final DocIdSetIterator docIdSetIter;
 
     boolean more;
 

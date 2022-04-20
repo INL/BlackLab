@@ -74,7 +74,7 @@ public abstract class ForwardIndexAccessor {
      */
     public abstract class ForwardIndexAccessorLeafReader {
 
-        protected LeafReader reader;
+        protected final LeafReader reader;
 
         ForwardIndexAccessorLeafReader(LeafReader reader) {
             this.reader = reader;

@@ -55,7 +55,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public final class BLSpanOrQuery extends BLSpanQuery {
 
-    SpanOrQuery inner;
+    final SpanOrQuery inner;
 
     String field;
 

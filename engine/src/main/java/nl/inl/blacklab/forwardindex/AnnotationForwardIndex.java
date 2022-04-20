@@ -47,7 +47,7 @@ public abstract class AnnotationForwardIndex {
      * NOTE: using MAX_DIRECT_BUFFER_SIZE (2GB) failed on Linux 64 bit, so we're
      * using 1GB for now.
      */
-    static int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
+    static final int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
 
     /** Size of a long in bytes. */
     static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
@@ -140,13 +140,13 @@ public abstract class AnnotationForwardIndex {
     }
 
     /** The table of contents (TOC) file, docs.dat */
-    File tocFile;
+    final File tocFile;
 
     /** The tokens file (stores indexes into terms.dat) */
-    File tokensFile;
+    final File tokensFile;
 
     /** The terms file (stores unique terms) */
-    File termsFile;
+    final File termsFile;
 
     /** The unique terms in our index */
     Terms terms = null;
@@ -161,10 +161,10 @@ public abstract class AnnotationForwardIndex {
      * If true, our Terms can be used for NFA matching (Collator is consistent with
      * other comparisons)
      */
-    boolean canDoNfaMatching;
+    final boolean canDoNfaMatching;
 
     /** The annotation for which we're the forward index */
-    Annotation annotation;
+    final Annotation annotation;
 
     /** Has the tokens file been mapped? */
     protected boolean initialized = false;

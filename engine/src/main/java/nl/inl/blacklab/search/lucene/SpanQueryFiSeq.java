@@ -31,16 +31,16 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     public static final boolean END_OF_ANCHOR = false;
 
-    boolean startOfAnchor;
+    final boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
-    NfaTwoWay nfa;
+    final NfaTwoWay nfa;
 
     private final BLSpanQuery nfaQuery;
 
-    int direction;
+    final int direction;
 
-    ForwardIndexAccessor fiAccessor;
+    final ForwardIndexAccessor fiAccessor;
 
     /**
      *

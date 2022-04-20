@@ -28,13 +28,13 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
      * Annotated field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    AnnotatedFieldWriter contentsField;
+    final AnnotatedFieldWriter contentsField;
 
     /** The main annotation (usually "word") */
-    AnnotationWriter annotMain;
+    final AnnotationWriter annotMain;
 
     /** The punctuation annotation */
-    AnnotationWriter annotPunct;
+    final AnnotationWriter annotPunct;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 public class PropertyValueInt extends PropertyValue {
-    long value;
+    final long value;
 
     @Override
     public Long value() {

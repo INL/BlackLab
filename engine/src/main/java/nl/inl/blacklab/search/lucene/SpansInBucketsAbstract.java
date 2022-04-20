@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.Span;
  */
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
     
-    protected BLSpans source;
+    protected final BLSpans source;
 
     protected int currentDoc = -1;
 

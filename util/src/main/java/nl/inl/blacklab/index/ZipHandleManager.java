@@ -35,9 +35,9 @@ public class ZipHandleManager {
 
     static class ZipHandle implements Comparable<ZipHandle> {
 
-        public File key;
+        public final File key;
 
-        public ZipFile zipFile;
+        public final ZipFile zipFile;
 
         public long lastUsed;
 

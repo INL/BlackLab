@@ -163,9 +163,9 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
 
         private boolean hasChild = false;
 
-        Map<String, String> indexFieldAs = new HashMap<>();
+        final Map<String, String> indexFieldAs = new HashMap<>();
 
-        List<String> elementStack = new ArrayList<>();
+        final List<String> elementStack = new ArrayList<>();
 
         /**
          * Push the current element name onto the element stack

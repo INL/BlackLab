@@ -45,15 +45,15 @@ public class DownloadCache {
     private static File downloadTempDir;
 
     /** Files we've downloaded to a temp dir. Will be deleted on exit. */
-    static Map<String, Download> downloadedFiles = new HashMap<>();
+    static final Map<String, Download> downloadedFiles = new HashMap<>();
 
     static long downloadFolderSize = 0;
 
     static class Download implements Comparable<Download> {
 
-        public String key;
+        public final String key;
 
-        public File file;
+        public final File file;
 
         public long lastUsed;
 

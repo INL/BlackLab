@@ -36,10 +36,10 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 public class HitsFromQuery extends HitsMutable {
 
     /** Settings such as max. hits to process/count. */
-    SearchSettings searchSettings;
+    final SearchSettings searchSettings;
 
     /** Did we exceed the maximums? */
-    MaxStats maxStats;
+    final MaxStats maxStats;
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when

@@ -8,7 +8,7 @@ package nl.inl.blacklab.search.results;
 public abstract class HitsMutable extends HitsAbstract {
 
     /** Writable version of our HitsInternal object */
-    protected HitsInternalMutable hitsInternalMutable;
+    protected final HitsInternalMutable hitsInternalMutable;
 
     /** Writable version of our CapturedGroups object */
     protected CapturedGroupsImpl capturedGroupsMutable;

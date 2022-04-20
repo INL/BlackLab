@@ -15,9 +15,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class TextPatternTags extends TextPattern {
 
-    protected String elementName;
+    protected final String elementName;
 
-    Map<String, String> attr;
+    final Map<String, String> attr;
 
     public TextPatternTags(String elementName, Map<String, String> attr) {
         this.elementName = elementName;

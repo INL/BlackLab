@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 public class PropertyValueMultiple extends PropertyValue {
-    PropertyValue[] value;
+    final PropertyValue[] value;
 
     public PropertyValueMultiple(PropertyValue[] value) {
         this.value = value;

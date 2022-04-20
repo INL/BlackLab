@@ -23,9 +23,9 @@ import nl.inl.blacklab.search.fimatch.Nfa;
  * configurable (to specifically support greedy/reluctant matching, etc.)
  */
 public class SpanQueryRepetition extends BLSpanQueryAbstract {
-    int min;
+    final int min;
 
-    int max;
+    final int max;
 
     public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
         super(clause);

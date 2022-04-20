@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
  */
 public class TextPatternConstrained extends TextPatternCombiner {
 
-    MatchFilter constraint;
+    final MatchFilter constraint;
 
     public TextPatternConstrained(TextPattern clause, MatchFilter constraint) {
         super(clause);

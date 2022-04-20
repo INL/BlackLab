@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A TextPattern matching a word with fuzzy matching.
  */
 public class TextPatternFuzzy extends TextPattern {
-    protected String value;
+    protected final String value;
 
     private final int maxEdits;
 

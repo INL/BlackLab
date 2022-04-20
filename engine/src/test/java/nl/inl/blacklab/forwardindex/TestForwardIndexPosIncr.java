@@ -14,11 +14,11 @@ public class TestForwardIndexPosIncr {
     private AnnotationForwardIndex fi;
 
     // The tokens to add
-    String[][] str = { { "How", "much", "many", "lots", "wood" } };
+    final String[][] str = { { "How", "much", "many", "lots", "wood" } };
 
     // The tokens' position increments: multiple tokens at one position
     // (only the first should be stored) and a gap (empty tokens should be added)
-    Integer[][] pi = { { 1, 1, 0, 0, 3 } };
+    final Integer[][] pi = { { 1, 1, 0, 0, 3 } };
 
     private void setUpForwardIndex() {
         // Remove any previously left over temp test dirs

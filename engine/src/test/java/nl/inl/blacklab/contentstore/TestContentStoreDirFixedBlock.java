@@ -29,7 +29,7 @@ public class TestContentStoreDirFixedBlock {
 
     String[] str = { "The quick brown fox ", "jumps over the lazy ", "dog.      ", "Leentje leerde Lotje lopen lan" };
 
-    String[] doc = new String[4];
+    final String[] doc = new String[4];
 
     private boolean currentlyWriteMode;
 

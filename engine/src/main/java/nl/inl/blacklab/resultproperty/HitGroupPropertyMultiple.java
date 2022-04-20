@@ -24,7 +24,7 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
         return new HitGroupPropertyMultiple(values);
     }
 
-    List<HitGroupProperty> criteria;
+    final List<HitGroupProperty> criteria;
 
     HitGroupPropertyMultiple(HitGroupPropertyMultiple mprop, boolean invert) {
         super(mprop, invert);

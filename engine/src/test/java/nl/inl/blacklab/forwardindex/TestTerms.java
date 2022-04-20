@@ -18,7 +18,7 @@ import nl.inl.util.UtilsForTesting;
 public class TestTerms {
     private Terms t;
 
-    String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
+    final String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
     @Before
     public void setUp() {

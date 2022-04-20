@@ -45,7 +45,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     /** Unique entry id */
-    long id;
+    final long id;
 
     /** Our search */
     private final Search<T> search;

@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
  * compound TextPattern
  */
 public abstract class TextPatternCombiner extends TextPattern {
-    protected List<TextPattern> clauses = new ArrayList<>();
+    protected final List<TextPattern> clauses = new ArrayList<>();
 
     public TextPatternCombiner(TextPattern... clauses) {
         for (TextPattern clause : clauses) {

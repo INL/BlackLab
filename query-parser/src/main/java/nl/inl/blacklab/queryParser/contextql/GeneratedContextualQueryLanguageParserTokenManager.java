@@ -465,7 +465,7 @@ protected Token jjFillToken()
 }
 
 int curLexState = 0;
-int defaultLexState = 0;
+final int defaultLexState = 0;
 int jjnewStateCnt;
 int jjround;
 int jjmatchedPos;

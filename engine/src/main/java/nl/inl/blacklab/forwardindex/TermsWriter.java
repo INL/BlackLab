@@ -50,7 +50,7 @@ class TermsWriter extends Terms {
      * Mapping from term to its unique index number. We use a SortedMap because we
      * wish to store the sorted index numbers later (to speed up sorting).
      */
-    Map<CollationKey, Integer> termIndex;
+    final Map<CollationKey, Integer> termIndex;
 
     /**
      * The maximum block size to use while writing the terms file. Usually around

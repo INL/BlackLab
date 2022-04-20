@@ -64,11 +64,11 @@ public class ExportMetadata implements AutoCloseable {
         }
     }
 
-    Set<String> fieldNames = new HashSet<>();
+    final Set<String> fieldNames = new HashSet<>();
 
     BlackLabIndex index;
 
-    List<Map<String, String>> values = new ArrayList<>();
+    final List<Map<String, String>> values = new ArrayList<>();
 
     public ExportMetadata(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");

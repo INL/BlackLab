@@ -119,7 +119,7 @@ public final class StringUtil {
     /**
      * A lowercase letter followed by an uppercase one, both matched in groups.
      */
-    static Pattern lcaseUcase = Pattern.compile("(\\p{Ll})(\\p{Lu})");
+    static final Pattern lcaseUcase = Pattern.compile("(\\p{Ll})(\\p{Lu})");
 
 
     /**

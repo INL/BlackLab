@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.matchfilter;
 
 public class ConstraintValueInt extends ConstraintValue {
 
-    int i;
+    final int i;
 
     ConstraintValueInt(int i) {
         this.i = i;

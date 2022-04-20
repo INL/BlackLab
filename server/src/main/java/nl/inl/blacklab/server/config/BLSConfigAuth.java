@@ -15,7 +15,7 @@ public class BLSConfigAuth {
      * An insecure way of authenticating a user via HTTP headers
      * X-BlackLabAccessToken / X-BlackLabUserId, only to be used for testing.
      */
-    String debugHttpHeaderAuthToken = "";
+    final String debugHttpHeaderAuthToken = "";
     
     public Map<String, String> getSystem() {
         return system;

@@ -8,7 +8,7 @@ import java.util.Set;
 
 public class NfaStateOr extends NfaState {
 
-    List<NfaState> nextStates;
+    final List<NfaState> nextStates;
 
     private final boolean clausesAllSameLength;
 

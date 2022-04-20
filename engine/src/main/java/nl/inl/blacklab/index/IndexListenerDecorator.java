@@ -7,7 +7,7 @@ import java.io.File;
  */
 public abstract class IndexListenerDecorator extends IndexListener {
 
-    IndexListener subject;
+    final IndexListener subject;
 
     public IndexListenerDecorator(IndexListener subject) {
         this.subject = subject;

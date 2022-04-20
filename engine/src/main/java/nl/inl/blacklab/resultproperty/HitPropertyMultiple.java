@@ -36,16 +36,16 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     /** The properties we're combining */
-    List<HitProperty> properties;
+    final List<HitProperty> properties;
 
     /** All the contexts needed by the criteria */
-    List<Annotation> contextNeeded;
+    final List<Annotation> contextNeeded;
     
     /** Sensitivities needed for the criteria in contextNeeded (same order) */
-    List<MatchSensitivity> sensitivities; 
+    final List<MatchSensitivity> sensitivities;
     
     /** Which of the contexts do the individual properties need? */
-    Map<HitProperty, IntArrayList> contextIndicesPerProperty;
+    final Map<HitProperty, IntArrayList> contextIndicesPerProperty;
     
     HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
         super(mprop, null, null, invert);

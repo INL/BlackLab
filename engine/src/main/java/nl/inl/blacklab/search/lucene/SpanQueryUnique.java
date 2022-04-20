@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * These may arise when e.g. combining multiple SpanFuzzyQueries with OR.
  */
 class SpanQueryUnique extends BLSpanQuery {
-    BLSpanQuery src;
+    final BLSpanQuery src;
 
     public SpanQueryUnique(BLSpanQuery src) {
         super(src.queryInfo);

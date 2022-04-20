@@ -10,7 +10,7 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  */
 public abstract class Group<T> implements Result<Group<T>> {
     
-    protected PropertyValue groupIdentity;
+    protected final PropertyValue groupIdentity;
 
     private final Results<T, ? extends ResultProperty<T>> storedResults;
     

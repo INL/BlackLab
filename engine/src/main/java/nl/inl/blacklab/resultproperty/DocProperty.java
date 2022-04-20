@@ -25,7 +25,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */
-    protected boolean reverse;
+    protected final boolean reverse;
 
     protected DocProperty(DocProperty prop, boolean invert) {
         reverse = invert ? !prop.reverse : prop.reverse;

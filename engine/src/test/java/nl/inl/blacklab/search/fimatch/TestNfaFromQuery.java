@@ -31,7 +31,7 @@ public class TestNfaFromQuery {
 
     static class MockForwardIndexAccessor extends ForwardIndexAccessor {
 
-        int[] termIds;
+        final int[] termIds;
 
         private final Map<String, Integer> terms = new HashMap<>();
 

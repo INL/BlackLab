@@ -400,9 +400,9 @@ public class DocIndexerChat extends DocIndexerConfig {
      * Are we inside a "block"? Blocks have their own set of metadata, and are
      * indexed just like inline XML tags.
      */
-    boolean inBlock = false;
+    final boolean inBlock = false;
 
-    String blockTagName = "block";
+    final String blockTagName = "block";
 
     @SuppressWarnings("unchecked")
     private void startBlock() {

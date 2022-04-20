@@ -126,11 +126,11 @@ public class MockSpans extends BLSpans {
         }
     }
 
-    int[] doc;
+    final int[] doc;
 
-    int[] start;
+    final int[] start;
 
-    int[] end;
+    final int[] end;
 
     private final MockPostingsEnum postings;
 

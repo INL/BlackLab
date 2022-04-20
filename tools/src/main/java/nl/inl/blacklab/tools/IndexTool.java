@@ -39,7 +39,7 @@ import nl.inl.util.LuceneUtil;
  */
 public class IndexTool {
 
-    static Map<String, String> indexerParam = new TreeMap<>();
+    static final Map<String, String> indexerParam = new TreeMap<>();
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that

@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public abstract class NfaStateMultiTermPattern extends NfaState {
 
     /** What annotation we're trying to match */
-    protected String luceneField;
+    protected final String luceneField;
 
     /**
      * Index of the annotation we're trying to match. Only valid after
@@ -23,7 +23,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     private int propertyNumber = -1;
 
     /** The pattern this state accepts. */
-    protected String pattern;
+    protected final String pattern;
 
     /** The next state if a matching token was found. */
     protected NfaState nextState;

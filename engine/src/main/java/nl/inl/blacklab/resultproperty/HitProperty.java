@@ -113,7 +113,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     }
 
     /** The Hits object we're looking at */
-    protected Hits hits;
+    protected final Hits hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse;

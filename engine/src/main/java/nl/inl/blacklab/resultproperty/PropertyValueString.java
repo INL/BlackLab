@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 public class PropertyValueString extends PropertyValue {
-    String value;
+    final String value;
 
     public PropertyValueString(String value) {
         this.value = value == null ? "" : value;

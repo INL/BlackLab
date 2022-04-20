@@ -20,9 +20,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
  */
 public class TextPatternAndNot extends TextPattern {
 
-    protected List<TextPattern> include = new ArrayList<>();
+    protected final List<TextPattern> include = new ArrayList<>();
 
-    protected List<TextPattern> exclude = new ArrayList<>();
+    protected final List<TextPattern> exclude = new ArrayList<>();
 
     public TextPatternAndNot(TextPattern... clauses) {
         this.include.addAll(Arrays.asList(clauses));

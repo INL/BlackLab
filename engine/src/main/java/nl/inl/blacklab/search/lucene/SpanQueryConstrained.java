@@ -24,9 +24,9 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
  */
 public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
-    MatchFilter constraint;
+    final MatchFilter constraint;
 
-    ForwardIndexAccessor fiAccessor;
+    final ForwardIndexAccessor fiAccessor;
 
     public SpanQueryConstrained(BLSpanQuery clause, MatchFilter constraint, ForwardIndexAccessor fiAccessor) {
         super(BLSpanQuery.ensureSortedUnique(clause));

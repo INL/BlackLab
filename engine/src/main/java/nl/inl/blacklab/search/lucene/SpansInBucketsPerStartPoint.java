@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.Span;
  * spans is normally startpoint-sorted already).
  */
 class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuckets {
-    protected BLSpans source;
+    protected final BLSpans source;
 
     protected int currentDoc = -1;
 

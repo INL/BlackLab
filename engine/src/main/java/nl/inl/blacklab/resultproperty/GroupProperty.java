@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.results.Group;
 public abstract class GroupProperty<T, G extends Group<T>> implements ResultProperty<G>, Comparator<G> {
 
     /** Reverse comparison result or not? */
-    protected boolean reverse;
+    protected final boolean reverse;
     
     GroupProperty(GroupProperty<T, G> prop, boolean invert) {
         this.reverse = invert ? !prop.reverse : prop.reverse;

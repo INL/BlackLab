@@ -180,7 +180,7 @@ public class ServletUtil {
     }
 
     /** The HTTP date format, to use for the cache header */
-    static DateFormat httpDateFormat;
+    static final DateFormat httpDateFormat;
 
     // Initialize the HTTP date format
     static {

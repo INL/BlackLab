@@ -35,7 +35,7 @@ public class ConfigLinkedDocument {
      * Where in the document to find the information we need to locate the linked
      * document.
      */
-    List<ConfigLinkValue> linkValues = new ArrayList<>();
+    final List<ConfigLinkValue> linkValues = new ArrayList<>();
 
     /**
      * What to do if we can't find the link information: ignore, warn or fail

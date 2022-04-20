@@ -24,21 +24,21 @@ class TokenStreamWithOffsets extends TokenStream {
     /**
      * Term text of the current token
      */
-    protected CharTermAttribute termAttr;
+    protected final CharTermAttribute termAttr;
 
     /**
      * Position increment of the current token
      */
-    protected PositionIncrementAttribute positionIncrementAttr;
+    protected final PositionIncrementAttribute positionIncrementAttr;
 
     /**
      * Character offsets of the current token
      */
     private final OffsetAttribute offsetAttr;
 
-    protected Iterator<String> iterator;
+    protected final Iterator<String> iterator;
 
-    protected IntIterator incrementIt;
+    protected final IntIterator incrementIt;
 
     private final IntIterator startCharIt;
 

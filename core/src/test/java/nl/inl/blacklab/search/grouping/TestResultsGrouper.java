@@ -17,9 +17,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 
 public class TestResultsGrouper {
-    int[] doc   = { 1, 2, 1, 3, 2, 1 };
-    int[] start = { 1, 2, 3, 4, 5, 6 };
-    int[] end   = { 7, 8, 9, 10, 11, 12 };
+    final int[] doc   = { 1, 2, 1, 3, 2, 1 };
+    final int[] start = { 1, 2, 3, 4, 5, 6 };
+    final int[] end   = { 7, 8, 9, 10, 11, 12 };
 
     @Test
     public void testGrouper() {

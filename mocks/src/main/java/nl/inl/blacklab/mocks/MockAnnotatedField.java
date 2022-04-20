@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 
 public class MockAnnotatedField implements AnnotatedField {
     
-    String name;
+    final String name;
     
     private final List<Annotation> annotations;
     

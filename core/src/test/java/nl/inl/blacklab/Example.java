@@ -39,7 +39,7 @@ public class Example {
     /**
      * Some test XML data to index.
      */
-    static String[] testData = {
+    static final String[] testData = {
             "<doc>" +
                     "<w l='the'   p='art' >The</w> " +
                     "<w l='quick' p='adj'>quick</w> " +

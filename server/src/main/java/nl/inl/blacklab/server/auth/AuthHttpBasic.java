@@ -23,7 +23,7 @@ public class AuthHttpBasic {
 
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
-    Decoder base64Decoder = Base64.getDecoder();
+    final Decoder base64Decoder = Base64.getDecoder();
 
     public AuthHttpBasic(Map<String, Object> param) {
         // doesn't take any parameters

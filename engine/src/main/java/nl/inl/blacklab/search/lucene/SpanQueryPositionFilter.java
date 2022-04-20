@@ -24,10 +24,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
 
     /** Filter operation to apply */
-    SpanQueryPositionFilter.Operation op;
+    final SpanQueryPositionFilter.Operation op;
 
     /** Return producer spans that DON'T match the filter instead? */
-    boolean invert;
+    final boolean invert;
 
     /** How to adjust the left edge of the producer hits while matching */
     int leftAdjust;

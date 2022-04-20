@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public class NfaStateAndAcyclic extends NfaState {
 
-    List<NfaState> clauses;
+    final List<NfaState> clauses;
 
     NfaState nextState;
 

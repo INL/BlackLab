@@ -6,7 +6,7 @@ import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
     /** Field's name */
-    protected String fieldName;
+    protected final String fieldName;
 
     /** Field's name */
     protected String displayName;

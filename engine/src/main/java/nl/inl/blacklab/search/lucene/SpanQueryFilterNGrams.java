@@ -18,13 +18,13 @@ import org.apache.lucene.search.ScoreMode;
 public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
 
     /** How to expand the hits */
-    SpanQueryPositionFilter.Operation op;
+    final SpanQueryPositionFilter.Operation op;
 
     /** Minimum number of tokens to expand */
-    int min;
+    final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    int max;
+    final int max;
 
     /** How to adjust left n-gram border relative to the filter clause */
     private final int leftAdjust;

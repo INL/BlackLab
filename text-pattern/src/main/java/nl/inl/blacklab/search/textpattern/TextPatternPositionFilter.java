@@ -13,10 +13,10 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 public class TextPatternPositionFilter extends TextPatternCombiner {
 
     /** The hits we're (possibly) looking for */
-    SpanQueryPositionFilter.Operation op;
+    final SpanQueryPositionFilter.Operation op;
 
     /** Whether to invert the filter operation */
-    boolean invert;
+    final boolean invert;
 
     /** How to adjust the left edge of the producer hits while matching */
     int leftAdjust = 0;

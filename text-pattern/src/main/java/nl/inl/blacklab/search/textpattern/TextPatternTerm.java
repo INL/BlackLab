@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * A TextPattern matching a word.
  */
 public class TextPatternTerm extends TextPattern {
-    protected String value;
+    protected final String value;
 
     public String getValue() {
         return value;

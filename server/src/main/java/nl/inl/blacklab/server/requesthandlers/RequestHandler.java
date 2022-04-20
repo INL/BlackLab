@@ -88,7 +88,7 @@ public abstract class RequestHandler {
     protected RequestInstrumentationProvider instrumentationProvider;
 
     /** The available request handlers by name */
-    static Map<String, Class<? extends RequestHandler>> availableHandlers;
+    static final Map<String, Class<? extends RequestHandler>> availableHandlers;
 
     // Fill the map with all the handler classes
     static {

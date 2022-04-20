@@ -25,19 +25,19 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
     /** Value of the type attribute of the interpGrp we're in (or null) */
     String interpGrpType;
 
-    boolean hasLemma;
+    final boolean hasLemma;
 
-    String indexLemmaAs;
+    final String indexLemmaAs;
 
-    boolean hasType;
+    final boolean hasType;
 
-    String indexTypeAs;
+    final String indexTypeAs;
 
-    boolean hasFunction;
+    final boolean hasFunction;
 
-    String indexFunctionAs;
+    final String indexFunctionAs;
 
-    String contentElement;
+    final String contentElement;
 
     @SuppressWarnings("deprecation")
     public DocIndexerTeiBase(DocWriter indexer, String fileName, Reader reader, String contentElement,

@@ -29,16 +29,16 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     private final BlackLabIndex index;
 
     /** Field name, e.g. "contents" */
-    AnnotatedField annotatedField;
+    final AnnotatedField annotatedField;
 
     /** The annotation index for each annotation name */
     private final Map<Annotation, Integer> annotationNumbers = new HashMap<>();
 
     /** The annotation names for each annotation */
-    List<Annotation> annotationNames = new ArrayList<>();
+    final List<Annotation> annotationNames = new ArrayList<>();
 
     /** The forward index for each annotation */
-    List<AnnotationForwardIndex> fis = new ArrayList<>();
+    final List<AnnotationForwardIndex> fis = new ArrayList<>();
 
     /** The terms object for each annotation */
     private final List<Terms> terms = new ArrayList<>();
@@ -150,8 +150,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             return fis.get(0).docLength(getFiid(0, docId)) - 1;
         }
 
-        int[] starts = { 0 };
-        int[] ends = { 0 };
+        final int[] starts = { 0 };
+        final int[] ends = { 0 };
 
         @Override
         protected int[] getChunk(int annotIndex, int docId, int start, int end) {

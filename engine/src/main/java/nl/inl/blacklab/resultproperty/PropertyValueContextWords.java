@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public class PropertyValueContextWords extends PropertyValueContext {
     int[] valueTokenId;
 
-    int[] valueSortOrder;
+    final int[] valueSortOrder;
 
     private MatchSensitivity sensitivity;
 

@@ -20,7 +20,7 @@ import org.apache.lucene.search.ScoreMode;
 public class SpanQueryEdge extends BLSpanQueryAbstract {
 
     /** if true, return the right edges; if false, the left */
-    boolean rightEdge;
+    final boolean rightEdge;
 
     /**
      * Construct SpanQueryEdge object.

@@ -38,7 +38,7 @@ class SpansNot extends BLSpans {
     private int currentEnd = -1;
 
     /** Used to get the field length in tokens for a document */
-    DocFieldLengthGetter lengthGetter;
+    final DocFieldLengthGetter lengthGetter;
 
     /** Highest document id plus one */
     private int maxDoc;

@@ -73,7 +73,7 @@ public class DocIndexerWhiteLab2 extends DocIndexerXmlHandlers {
     /**
      * The features inside the current pos element, to be indexed as subproperties
      */
-    Map<String, String> posFeatures = new HashMap<>();
+    final Map<String, String> posFeatures = new HashMap<>();
 
     public DocIndexerWhiteLab2(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);

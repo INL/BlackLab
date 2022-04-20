@@ -13,7 +13,7 @@ public abstract class ContentStoreDirAbstract extends ContentStore {
     /**
      * Dir to store the content and TOC
      */
-    protected File dir;
+    protected final File dir;
     
     protected ContentStoreDirAbstract(File dir) {
         this.dir = dir;

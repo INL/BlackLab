@@ -34,13 +34,13 @@ public class DocContentsFromForwardIndex extends DocContents {
      * What annotations are stored in what order for this Kwic (e.g. word, lemma,
      * pos)
      */
-    List<Annotation> annotations;
+    final List<Annotation> annotations;
 
     /**
      * Word annotations for context left of match (annotations.size() values per word;
      * e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.)
      */
-    List<String> tokens;
+    final List<String> tokens;
 
     /**
      * Construct DocContentsFromForwardIndex object.

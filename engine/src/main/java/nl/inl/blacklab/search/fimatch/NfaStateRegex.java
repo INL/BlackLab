@@ -4,7 +4,7 @@ import java.util.regex.Pattern;
 
 public class NfaStateRegex extends NfaStateMultiTermPattern {
 
-    Pattern p;
+    final Pattern p;
 
     public NfaStateRegex(String luceneField, String pattern, NfaState nextState) {
         super(luceneField, pattern, nextState);

@@ -9,7 +9,7 @@ import java.io.IOException;
  */
 abstract public class MetadataFetcher implements Closeable {
 
-    public DocIndexer docIndexer;
+    public final DocIndexer docIndexer;
 
     public MetadataFetcher(DocIndexer docIndexer) {
         this.docIndexer = docIndexer;

@@ -2,9 +2,9 @@ package nl.inl.blacklab.search.indexmetadata;
 
 public class AnnotationSensitivityImpl implements AnnotationSensitivity {
     
-    Annotation annotation;
+    final Annotation annotation;
     
-    MatchSensitivity sensitivity;
+    final MatchSensitivity sensitivity;
 
     @Override
     public Annotation annotation() {

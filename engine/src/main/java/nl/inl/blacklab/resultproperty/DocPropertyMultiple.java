@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.DocResult;
  * A collection of GroupProperty's identifying a particular group.
  */
 public class DocPropertyMultiple extends DocProperty implements Iterable<DocProperty> {
-    List<DocProperty> criteria;
+    final List<DocProperty> criteria;
 
     DocPropertyMultiple(DocPropertyMultiple mprop, boolean invert) {
         super(mprop, invert);

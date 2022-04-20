@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.SearchResult;
 
 public class SearchCacheDebug implements SearchCache {
 
-    Map<Search<?>, SearchCacheEntry<? extends SearchResult>> searches = new HashMap<>();
+    final Map<Search<?>, SearchCacheEntry<? extends SearchResult>> searches = new HashMap<>();
 
     @SuppressWarnings("unchecked")
     @Override

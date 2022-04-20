@@ -47,13 +47,13 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
     }
 
     /** Whether to expand to left or right */
-    Direction direction;
+    final Direction direction;
 
     /** Minimum number of tokens to expand */
-    int min;
+    final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    int max;
+    final int max;
 
     /** Construct a startpoint-sorted SpanQueryExpansion query.
      *

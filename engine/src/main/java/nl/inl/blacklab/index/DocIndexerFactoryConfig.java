@@ -43,11 +43,11 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     protected boolean isInitialized = false;
 
     // Entries here are short-lived, the list should be clean as long as there is no scanDirectories call running
-    protected Map<String, File> unloaded = new HashMap<>();
+    protected final Map<String, File> unloaded = new HashMap<>();
 
-    protected Map<String, ConfigInputFormat> supported = new HashMap<>();
+    protected final Map<String, ConfigInputFormat> supported = new HashMap<>();
 
-    protected Map<String, String> formatErrors = new HashMap<>();
+    protected final Map<String, String> formatErrors = new HashMap<>();
     
     /**
      * Return a config from the supported list, or load it if it's in the unloaded
@@ -60,7 +60,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
      * them. Those found config files are kept in the
      * {@link DocIndexerFactoryConfig#unloaded} map until they are loaded
      */
-    protected Function<String, Optional<ConfigInputFormat>> finder = formatIdentifier -> {
+    protected final Function<String, Optional<ConfigInputFormat>> finder = formatIdentifier -> {
         // Give our wrapping DocIndexerFactory a chance to load a new format (in case it's a derived class)
         if (!isSupported(formatIdentifier))
             return Optional.empty();

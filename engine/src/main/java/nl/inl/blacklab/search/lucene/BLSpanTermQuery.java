@@ -57,9 +57,9 @@ public class BLSpanTermQuery extends BLSpanQuery {
         return new BLSpanTermQuery(queryInfo, q);
     }
 
-    SpanTermQuery query;
+    final SpanTermQuery query;
 
-    private TermStates termStates;
+    private final TermStates termStates;
 
     private boolean hasForwardIndex = false;
 

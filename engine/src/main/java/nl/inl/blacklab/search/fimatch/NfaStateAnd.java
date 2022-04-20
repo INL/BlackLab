@@ -9,7 +9,7 @@ import java.util.Set;
 
 public class NfaStateAnd extends NfaState {
 
-    List<NfaState> nextStates;
+    final List<NfaState> nextStates;
 
     public NfaStateAnd(List<NfaState> nextStates) {
         this.nextStates = new ArrayList<>(nextStates);

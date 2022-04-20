@@ -57,13 +57,13 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     public static class GetKbMetadata {
 
         public static class Metadata {
-            public String title;
+            public final String title;
 
-            public String author;
+            public final String author;
 
-            public String date;
+            public final String date;
 
-            public String ppn;
+            public final String ppn;
 
             public Metadata(String title, String author, String date, String ppn) {
                 super();
@@ -96,7 +96,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
         static Object defaultHttpClient;
 
         /** Cached metadata (saves URL requests) */
-        static Map<String, Metadata> cached = new HashMap<>();
+        static final Map<String, Metadata> cached = new HashMap<>();
 
         private static void init() {
 

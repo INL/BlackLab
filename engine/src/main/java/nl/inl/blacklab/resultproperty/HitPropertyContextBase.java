@@ -36,9 +36,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    protected Terms terms;
+    protected final Terms terms;
 
-    protected Annotation annotation;
+    protected final Annotation annotation;
 
     protected MatchSensitivity sensitivity;
 

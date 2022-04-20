@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyHitText extends HitPropertyContextBase {
 
-    protected static ContextSize contextSize = ContextSize.get(0,0,true);
+    protected static final ContextSize contextSize = ContextSize.get(0,0,true);
     
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyHitText.class, index, field, info);

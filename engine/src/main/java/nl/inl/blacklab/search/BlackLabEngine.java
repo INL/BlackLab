@@ -44,7 +44,7 @@ public final class BlackLabEngine implements Closeable {
     /** How many threads may a single search use? */
     private final int maxThreadsPerSearch;
 
-    AtomicInteger threadCounter = new AtomicInteger(1);
+    final AtomicInteger threadCounter = new AtomicInteger(1);
 
     BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();

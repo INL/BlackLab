@@ -7,11 +7,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class PropertyValueContextWord extends PropertyValueContext {
-    int valueTokenId;
+    final int valueTokenId;
 
-    int valueSortOrder;
+    final int valueSortOrder;
 
-    MatchSensitivity sensitivity;
+    final MatchSensitivity sensitivity;
 
     public PropertyValueContextWord(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int value) {
         super(index, annotation);

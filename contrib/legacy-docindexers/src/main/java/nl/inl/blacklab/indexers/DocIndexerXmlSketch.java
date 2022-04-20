@@ -34,7 +34,7 @@ public class DocIndexerXmlSketch extends DocIndexerXmlHandlers {
     }
 
     /** Captures the punctuation so we can add it to the next word. */
-    StringBuilder punctuation = new StringBuilder();
+    final StringBuilder punctuation = new StringBuilder();
 
     public DocIndexerXmlSketch(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);

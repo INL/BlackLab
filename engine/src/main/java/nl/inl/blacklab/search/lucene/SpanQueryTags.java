@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryTags extends BLSpanQuery {
 
-    BLSpanTermQuery clause;
+    final BLSpanTermQuery clause;
 
     private final String tagName;
 

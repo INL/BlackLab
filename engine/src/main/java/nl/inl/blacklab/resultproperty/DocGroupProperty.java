@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup> {
 
-    static DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
+    static final DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
 
-    static DocGroupPropertySize propSize = new DocGroupPropertySize();
+    static final DocGroupPropertySize propSize = new DocGroupPropertySize();
 
     public static DocGroupPropertyIdentity identity() {
         return propIdentity;

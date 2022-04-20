@@ -32,7 +32,9 @@ public class CompareCollectionsLibs {
     }
     
     static class Hit implements Comparable<Hit> {
-        public int doc, start, end;
+        public final int doc;
+        public final int start;
+        public final int end;
         
         public Hit(int doc, int start, int end) {
             this.doc = doc;

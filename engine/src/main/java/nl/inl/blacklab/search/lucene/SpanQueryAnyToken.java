@@ -25,12 +25,12 @@ import nl.inl.util.LuceneUtil;
 public class SpanQueryAnyToken extends BLSpanQuery {
 
     /** The minimum number of tokens in this stretch. */
-    protected int min;
+    protected final int min;
 
     /** The maximum number of tokens in this stretch. */
-    protected int max;
+    protected final int max;
 
-    String luceneField;
+    final String luceneField;
 
     public SpanQueryAnyToken(QueryInfo queryInfo, int min, int max, String luceneField) {
         super(queryInfo);

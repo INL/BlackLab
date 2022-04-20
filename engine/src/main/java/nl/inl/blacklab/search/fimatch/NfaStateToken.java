@@ -22,7 +22,7 @@ public class NfaStateToken extends NfaState {
     static final String ANY_TOKEN = null;
 
     /** What annotation we're trying to match */
-    protected String luceneField;
+    protected final String luceneField;
 
     /**
      * Index of the annotation we're trying to match. Only valid after

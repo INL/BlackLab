@@ -18,7 +18,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      */
     private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
 
-    protected boolean skippingCurrentDocument = false;
+    protected final boolean skippingCurrentDocument = false;
 
     protected CountingReader reader;
 
@@ -41,7 +41,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
     private int charsContentAlreadyStored = 0;
 
-    protected int nDocumentsSkipped = 0;
+    protected final int nDocumentsSkipped = 0;
 
     public void startCaptureContent(String fieldName) {
         captureContent = true;

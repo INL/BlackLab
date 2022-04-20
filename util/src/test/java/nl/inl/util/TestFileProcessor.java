@@ -197,8 +197,8 @@ public class TestFileProcessor {
     private static class LoggingFileHandler implements FileProcessor.FileHandler {
         private final boolean triggerException;
 
-        public List<File> dirsReceived = new ArrayList<>();
-        public List<String> filesReceived = new ArrayList<>();
+        public final List<File> dirsReceived = new ArrayList<>();
+        public final List<String> filesReceived = new ArrayList<>();
 
         public LoggingFileHandler(boolean triggerException) {
             this.triggerException = triggerException;

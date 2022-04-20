@@ -233,7 +233,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
     }
 
-    List<Integer> openTagIndexes = new ArrayList<>();
+    final List<Integer> openTagIndexes = new ArrayList<>();
 
     /** Handle tags. */
     public class InlineTagHandler extends ElementHandler {
@@ -412,7 +412,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /**
      * StringBuffer re-used for building start/end tags and processing instructions.
      */
-    StringBuilder elementBuilder = new StringBuilder();
+    final StringBuilder elementBuilder = new StringBuilder();
 
     public void startElement(String uri, String localName, String qName,
             Attributes attributes) {
@@ -447,7 +447,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * Character content encountered in the XML document since the last call to
      * consumeCharacterContent().
      */
-    StringBuilder characterContent = new StringBuilder();
+    final StringBuilder characterContent = new StringBuilder();
 
     /**
      * Returns and resets the character content captured since the last call to this
@@ -477,16 +477,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * Annotated field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    AnnotatedFieldWriter contentsField;
+    final AnnotatedFieldWriter contentsField;
 
     /** The main annotation (usually "word") */
-    AnnotationWriter propMain;
+    final AnnotationWriter propMain;
 
     /** The punctuation annotation */
-    AnnotationWriter propPunct;
+    final AnnotationWriter propPunct;
 
     /** The start tag annotation. Also contains tag length in payload. */
-    AnnotationWriter propTags;
+    final AnnotationWriter propTags;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the

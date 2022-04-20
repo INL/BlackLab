@@ -50,9 +50,9 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     static final class OpenTagInfo {
 
-        public String name;
+        public final String name;
 
-        public int index;
+        public final int index;
 
         public OpenTagInfo(String name, int index) {
             this.name = name;
@@ -146,7 +146,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     /**
      * What annotations where skipped because they were not declared?
      */
-    Set<String> skippedAnnotations = new HashSet<>();
+    final Set<String> skippedAnnotations = new HashSet<>();
 
     protected String getContentStoreName() {
         return contentStoreName;

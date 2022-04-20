@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class DataStreamXml extends DataStream {
 
-    List<String> tagStack = new ArrayList<>();
+    final List<String> tagStack = new ArrayList<>();
 
     public DataStreamXml(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
