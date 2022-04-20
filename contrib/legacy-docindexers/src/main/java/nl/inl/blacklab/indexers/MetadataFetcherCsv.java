@@ -1,16 +1,21 @@
 package nl.inl.blacklab.indexers;
 
-import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.MetadataFetcher;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.lucene.document.Document;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.MetadataFetcher;
 
 /**
  * Metadata fetcher for csv files. The path to the csv file is read from

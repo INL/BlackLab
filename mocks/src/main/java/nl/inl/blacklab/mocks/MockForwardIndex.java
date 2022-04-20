@@ -1,11 +1,11 @@
 package nl.inl.blacklab.mocks;
 
+import java.util.List;
+import java.util.Set;
+
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-
-import java.util.List;
-import java.util.Set;
 
 public class MockForwardIndex extends AnnotationForwardIndex {
 

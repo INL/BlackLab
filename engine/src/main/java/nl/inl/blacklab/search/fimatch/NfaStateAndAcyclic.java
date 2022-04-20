@@ -1,6 +1,11 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An AND-node where none of the clauses cycle back to an earlier node. This can

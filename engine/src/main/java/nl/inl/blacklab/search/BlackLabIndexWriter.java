@@ -1,16 +1,17 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import java.io.File;
+import java.io.IOException;
+
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.LockObtainFailedException;
 
-import java.io.File;
-import java.io.IOException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
 

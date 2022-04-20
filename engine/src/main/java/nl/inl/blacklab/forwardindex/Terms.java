@@ -1,8 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.Buffer;
@@ -13,6 +10,10 @@ import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.Collator;
+
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Keeps a list of unique terms and their sort positions.

@@ -15,7 +15,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;

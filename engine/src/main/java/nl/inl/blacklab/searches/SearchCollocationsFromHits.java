@@ -6,7 +6,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.

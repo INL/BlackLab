@@ -3,6 +3,7 @@ package nl.inl.blacklab;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;

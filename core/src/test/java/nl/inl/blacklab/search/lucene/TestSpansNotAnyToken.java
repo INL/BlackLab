@@ -1,13 +1,14 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.TestUtil;
-import nl.inl.blacklab.mocks.MockSpans;
+import java.io.IOException;
+
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
+import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.mocks.MockSpans;
 
 /**
  * Test SpansNot without a clause ("all tokens")

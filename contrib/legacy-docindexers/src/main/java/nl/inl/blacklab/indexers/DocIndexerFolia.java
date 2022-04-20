@@ -1,13 +1,14 @@
 package nl.inl.blacklab.indexers;
 
+import java.io.Reader;
+
+import org.xml.sax.Attributes;
+
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import org.xml.sax.Attributes;
-
-import java.io.Reader;
 
 /**
  * Index a FoLiA file. For information about FoLiA, see

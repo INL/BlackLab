@@ -1,10 +1,17 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import java.util.*;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {

@@ -1,14 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.util.UtilsForTesting;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
     private AnnotationForwardIndex fi;

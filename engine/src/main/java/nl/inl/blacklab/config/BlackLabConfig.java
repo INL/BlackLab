@@ -1,19 +1,25 @@
 package nl.inl.blacklab.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.util.Json;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.util.Json;
 
 public class BlackLabConfig {
 

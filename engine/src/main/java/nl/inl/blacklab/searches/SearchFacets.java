@@ -4,7 +4,6 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Facets;
 import nl.inl.blacklab.search.results.QueryInfo;
 

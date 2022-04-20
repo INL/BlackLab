@@ -20,7 +20,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.xml.sax.Attributes;

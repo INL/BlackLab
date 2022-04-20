@@ -6,7 +6,6 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.

@@ -1,14 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.util.VersionFile;
-import org.apache.lucene.document.Document;
-
 import java.io.File;
 import java.text.Collator;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.lucene.document.Document;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.util.VersionFile;
 
 /**
  * A component that can quickly tell you what word occurs at a specific position

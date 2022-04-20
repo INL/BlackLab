@@ -1,6 +1,13 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the

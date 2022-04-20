@@ -1,13 +1,13 @@
 package nl.inl.blacklab.contentstore;
 
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.VersionFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
+
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.VersionFile;
 
 /**
  * Store string content by integer id. Quickly retrieve (parts of) the string

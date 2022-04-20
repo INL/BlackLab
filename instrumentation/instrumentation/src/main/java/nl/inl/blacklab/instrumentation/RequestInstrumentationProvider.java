@@ -1,9 +1,8 @@
 package nl.inl.blacklab.instrumentation;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * RequestInstrumentationProvider provides information used

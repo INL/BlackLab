@@ -1,12 +1,12 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.Arrays;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-
-import java.util.Arrays;
 
 public class MatchFilterSameTokens extends MatchFilter {
     private final String annotationName;

@@ -1,7 +1,31 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.*;
+import nl.inl.blacklab.resultproperty.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
+import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
@@ -11,26 +35,32 @@ import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.searches.*;
+import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.searches.SearchDocGroups;
+import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchEmpty;
+import nl.inl.blacklab.searches.SearchFacets;
+import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.jobs.*;
+import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.jobs.DocGroupSettings;
+import nl.inl.blacklab.server.jobs.DocGroupSortSettings;
+import nl.inl.blacklab.server.jobs.DocSortSettings;
+import nl.inl.blacklab.server.jobs.HitFilterSettings;
+import nl.inl.blacklab.server.jobs.HitGroupSettings;
+import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
+import nl.inl.blacklab.server.jobs.HitSortSettings;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
 import nl.inl.blacklab.server.util.ParseUtil;
 import nl.inl.blacklab.server.util.ServletUtil;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.Query;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.*;
 
 /**
  * The parameters passed in the request.

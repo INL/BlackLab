@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import javax.servlet.http.HttpServletRequest;
+
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
-
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Display the contents of the cache.

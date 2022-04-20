@@ -1,16 +1,17 @@
 package nl.inl.blacklab.index;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 /**
  * Interface the DocIndexer gets to store documents.

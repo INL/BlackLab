@@ -1,9 +1,9 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
-
-import java.util.List;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

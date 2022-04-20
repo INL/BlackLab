@@ -1,12 +1,13 @@
 package nl.inl.blacklab.server.datastream;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class to stream out XML data.

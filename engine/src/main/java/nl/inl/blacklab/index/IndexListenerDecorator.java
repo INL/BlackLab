@@ -84,11 +84,6 @@ public abstract class IndexListenerDecorator extends IndexListener {
     }
 
     @Override
-    public long getOptimizeTime() {
-        return subject.getOptimizeTime();
-    }
-
-    @Override
     public long getCloseTime() {
         return subject.getCloseTime();
     }

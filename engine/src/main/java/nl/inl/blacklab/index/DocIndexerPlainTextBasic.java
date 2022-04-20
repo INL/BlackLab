@@ -6,7 +6,6 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 

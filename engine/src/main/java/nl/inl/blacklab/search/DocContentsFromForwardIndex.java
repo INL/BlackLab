@@ -1,11 +1,12 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * (Part of) the contents of a document, in separate annotations read from the

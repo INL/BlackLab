@@ -1,7 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -9,10 +12,8 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
 
 /**
  * Apply a global constraint (or "match filter") to our matches.

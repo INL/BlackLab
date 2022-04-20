@@ -1,9 +1,9 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.Group;
-
 import java.util.Comparator;
 import java.util.List;
+
+import nl.inl.blacklab.search.results.Group;
 
 /**
  * Abstract base class for a property of a group op results.
