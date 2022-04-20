@@ -49,7 +49,7 @@ public class AuthManager {
         init(authClass, authParam);
     }
 
-    private void init(String authClass, Map<String, ? extends Object> authParam) throws ConfigurationException {
+    private void init(String authClass, Map<String, ?> authParam) throws ConfigurationException {
         if (authClass.length() > 0) {
             try {
                 if (!authClass.contains(".")) {
