@@ -207,7 +207,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
-                    while (true) {
+                    // We're at the next hit.
+                    do {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.
 
@@ -246,7 +247,7 @@ public class HitsFromQuery extends HitsMutable {
                                     if (doc == DocIdSetIterator.NO_MORE_DOCS)
                                         currentSourceSpans = null; // no matching docs in this segment, try next
                                     alive = liveDocs == null || liveDocs.get(doc);
-                                } while(currentSourceSpans != null && !alive);
+                                } while (currentSourceSpans != null && !alive);
                             }
                         }
 
@@ -262,11 +263,7 @@ public class HitsFromQuery extends HitsMutable {
                                 currentSourceSpans = null;
                             }
                         }
-                        if (currentSourceSpans != null) {
-                            // We're at the next hit.
-                            break;
-                        }
-                    }
+                    } while (currentSourceSpans == null); // until at next hit
 
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)

@@ -789,7 +789,7 @@ public class QueryTool {
                     groupBy(parts[0], parts.length > 1 ? parts[1] : null);
                 }
             } else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("docs")
-                    || lcased.startsWith("colloc") || lcased.startsWith("group ")) {
+                    || lcased.startsWith("colloc")) {
                 changeShowSettings(cmd);
             } else if (lcased.equals("switch") || lcased.equals("sw")) {
                 currentParserIndex++;
