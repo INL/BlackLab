@@ -46,9 +46,9 @@ public class CompareHitsInternalImpls {
     }
 
     static void test(String msg, HitsInternalMutable hits) {
-        time(msg == null ? null : msg + " FILL", () -> { testFill(hits); });
-        time(msg == null ? null : msg + " ITERATE", () -> { testIterate(hits); });
-        time(msg == null ? null : msg + " ITERATE-GET", () -> { testIterateGet(hits); });
+        time(msg == null ? null : msg + " FILL", () -> testFill(hits));
+        time(msg == null ? null : msg + " ITERATE", () -> testIterate(hits));
+        time(msg == null ? null : msg + " ITERATE-GET", () -> testIterateGet(hits));
     }
 
     public static void main(String[] args) {

@@ -142,9 +142,9 @@ public class CompareCollectionsLibs {
             }
             return c;
         };
-        time("Sort Java list", () -> { javaList.sort(comp); });
-        time("Sort Eclipse list", () -> { ecList.sort(comp); });
-        time("Sort fastutil list", () -> { fuList.sort(comp); });
+        time("Sort Java list", () -> javaList.sort(comp));
+        time("Sort Eclipse list", () -> ecList.sort(comp));
+        time("Sort fastutil list", () -> fuList.sort(comp));
     }
     
     private static void testIntegerLists() {
@@ -173,9 +173,9 @@ public class CompareCollectionsLibs {
         time("Fill Eclipse list", () -> { for (int item: base) ecList.add(item); });
         time("Fill fastutil list", () -> { for (int item: base) fuList.add(item); });
         
-        time("Sort Java list", () -> { javaList.sort(Comparator.naturalOrder()); });
+        time("Sort Java list", () -> javaList.sort(Comparator.naturalOrder()));
         time("Sort Eclipse list", ecList::sortThis);
-        time("Sort fastutil list", () -> { IntArrays.quickSort(fuList.elements(), 0, numberOfItems); });
+        time("Sort fastutil list", () -> IntArrays.quickSort(fuList.elements(), 0, numberOfItems));
     }
     
     interface Task {

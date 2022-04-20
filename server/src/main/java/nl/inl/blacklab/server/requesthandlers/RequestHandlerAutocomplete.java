@@ -101,9 +101,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
     public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader,
             boolean sensitive) {
         ds.startList();
-        LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitive, MAX_VALUES).forEach((v) -> {
-            ds.item("term", v);
-        });
+        LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitive, MAX_VALUES).forEach((v) -> ds.item("term", v));
         ds.endList();
     }
 

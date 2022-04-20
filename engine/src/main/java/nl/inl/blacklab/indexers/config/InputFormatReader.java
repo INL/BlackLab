@@ -387,9 +387,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "captureValuePaths":
                 ArrayNode paths = (ArrayNode) e.getValue();
-                paths.iterator().forEachRemaining((t) -> {
-                    annot.addCaptureValuePath(t.asText());
-                });
+                paths.iterator().forEachRemaining((t) -> annot.addCaptureValuePath(t.asText()));
                 break;
             case "forEachPath":
                 if (!isSubannotation)
