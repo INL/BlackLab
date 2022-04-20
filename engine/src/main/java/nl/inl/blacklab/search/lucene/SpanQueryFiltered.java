@@ -108,7 +108,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
-        Weight filterWeight = rewrite.createWeight(searcher, scoreMode.COMPLETE_NO_SCORES, boost);
+        Weight filterWeight = rewrite.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, boost);
         return new SpanWeightFiltered(weight, filterWeight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
