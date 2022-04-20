@@ -127,7 +127,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
                 if (groups != null) {
                     // LinkedHashSet - preserve order!
-                    Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
+                    @SuppressWarnings("FuseStreamOperations") Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
                     for (AnnotationGroup group : groups) {
                         for (Annotation annotation: group) {
                             annotationsNotInGroups.remove(annotation);
