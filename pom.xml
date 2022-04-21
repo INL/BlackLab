@@ -272,8 +272,12 @@
                         <artifactId>wagon-ssh-external</artifactId>
                         <version>2.9</version>
                     </dependency>
-
                 </dependencies>
+                <configuration>
+                    <!-- Skip all except core, see there -->
+                    <skip>true</skip>
+                    <skipDeploy>true</skipDeploy>
+                </configuration>
             </plugin>
 
             <!-- Linkable source code -->
@@ -494,7 +498,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.4.0</version>
+            <version>4.5.0</version>
             <scope>test</scope>
         </dependency>
 

@@ -5,4 +5,18 @@
     <artifactId>build-tools</artifactId>
     <version>3.0.0-SNAPSHOT</version>
     <name>Build Tools</name>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                    <skipDeploy>true</skipDeploy>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
