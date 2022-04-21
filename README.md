@@ -27,6 +27,20 @@ git remote set-head origin -a
 Please note that _dev_, not _main_, is the default branch. This is the development
 branch, which should be considered unstable.
 
+## Building the site
+
+Here's how to build the BlackLab site:
+
+```bash
+# Contains the configurations for various checking plugins shared by multiple modules
+cd build-tools
+mvn install
+
+# Build the actual site (result will be in core/target/site)
+cd ..
+mvn site
+```
+
 ## Using BlackLab with Docker
 
 An experimental Docker setup is provided now. It will likely change in the future.
