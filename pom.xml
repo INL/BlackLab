@@ -13,6 +13,11 @@
     <url>https://github.com/INL/BlackLab</url>
 
     <modules>
+
+        <!-- Contains config for checkstyle, PMD and findbugs. -->
+        <module>build-tools</module>
+
+        <!-- Smaller modules used by Java lib and webservice -->
         <module>util</module>
         <module>common</module>
         <module>content-store</module>
@@ -23,12 +28,16 @@
         <module>mocks</module>
         <module>convert-and-tag</module>
 
+        <!-- Java lib and webservice -->
         <module>core</module>
         <module>server</module>
 
-        <module>contrib/legacy-docindexers</module>
+        <!-- Optional instrumentation modules -->
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
+
+        <!-- Older DocIndexers -->
+        <module>contrib/legacy-docindexers</module>
     </modules>
 
     <properties>
@@ -36,7 +45,7 @@
         <doclint>none</doclint>
         <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
         <blacklab.version>${project.version}</blacklab.version>
-        <log4j.version>2.17.1</log4j.version>
+        <log4j.version>2.17.2</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
         <maven.compiler.source>9</maven.compiler.source>
@@ -142,7 +151,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -279,9 +288,41 @@
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <version>3.0.5</version>
-                <configuration>
-                    <excludeFilterFile>${project.basedir}/findbugs-exclude.xml</excludeFilterFile>
-                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Report on possible bugs/style problems -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.12.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Report on style problems -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.0.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
             <!-- Project info -->
@@ -394,6 +435,7 @@
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
+
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
@@ -446,13 +488,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.20.1</version>
+            <version>4.4.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -489,7 +531,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.7</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -499,18 +541,18 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.4</version>
+            <version>1.9</version>
         </dependency>
         <!-- For indexing from tabular files: csv, tsv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.4</version>
+            <version>1.9.0</version>
         </dependency>
 
 
@@ -568,6 +610,16 @@
                 </reportSets>
             </plugin>
 
+            <!-- Report on (possible) bugs -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.5</version>
+                <configuration>
+                    <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
+
             <!-- Report on possible bugs/style problems -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -575,9 +627,8 @@
                 <version>3.12.0</version>
                 <configuration>
                     <rulesets>
-                        <ruleset>${project.basedir}/pmd-rules.xml</ruleset>
+                        <ruleset>pmd-rules.xml</ruleset>
                     </rulesets>
-                    <!-- <linkXref>true</linkXref>-->
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
                     <targetJdk>1.8</targetJdk>
@@ -593,7 +644,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
-                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                    <configLocation>checkstyle.xml</configLocation>
                     <excludes>**/queryParser/**/*,**/util/json/**/*</excludes>
                 </configuration>
                 <reportSets>
