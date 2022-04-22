@@ -1,4 +1,4 @@
-package nl.inl.blacklab.testutil;
+package nl.inl.blacklab.performance;
 
 import java.util.ArrayList;
 import java.util.Comparator;

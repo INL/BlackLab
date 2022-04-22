@@ -25,6 +25,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * Applies grouping to the results in a DocResults object.
@@ -55,7 +56,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = BlackLab.JAVA_MAX_HASHMAP_SIZE;
 
     private long largestGroupSize = 0;
 
@@ -150,7 +151,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     @Override
     public DocGroups window(long first, long number) {
-        List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<DocGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
@@ -164,7 +165,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     @Override
     public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
         List<DocGroup> truncatedGroups = new ArrayList<>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;
@@ -182,7 +183,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
      */
     @Override
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
+        return DocGroups.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
     }
     
     @Override

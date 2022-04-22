@@ -35,12 +35,17 @@ public class TermsReader extends Terms {
     /**
      * Contains a leading int specifying how many ids for a given group, followed by the list of ids.
      * For a group of size 2 containing the ids 4 and 8, contains [...2, 4, 9, ...]
-     * insensitivePosition2GroupId and sensitivePosition2GroupId contain the index of the leading int
+     * {@link #insensitivePosition2GroupId} and {@link #sensitivePosition2GroupId} contain the index of the leading int
      * in this array for all sensitive/insensitive sorting positions respectively.
      */
     private int[] groupId2TermIds;
 
+    /**
+     * The character data for all terms. Two-dimensional array because it may be larger than
+     * the maximum array size ({@link BlackLab#JAVA_MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
+     */
     private byte[][] termCharData;
+
     /**
      * Lower 32 bits indicate the array, upper 32 bits indicate the index within the {@link #termCharData} array.
      * This is needed to allow more than 2gb of term character data
@@ -68,7 +73,7 @@ public class TermsReader extends Terms {
             final long start = System.nanoTime();
 
             long fileLength = termsFile.length();
-            IntBuffer ib = readFromFileChannel(fc, fileLength);
+            IntBuffer ib = readFromFileChannel(fc, fileLength); // will allocate and fill this.terms
 
             int[] termId2SensitivePosition = new int[numberOfTerms];
             int[] termId2InsensitivePosition = new int[numberOfTerms];
@@ -210,15 +215,21 @@ public class TermsReader extends Terms {
         byte[][] termCharData = new byte[0][];
         byte[] curArray;
         for (int termIndex = 0; termIndex < numberOfTerms; ++termIndex) {
+
             // allocate new term bytes array, subtract what will fit
             final int curArrayLength = (int) Long.min(bytesRemainingToBeWritten, Integer.MAX_VALUE);
             curArray = new byte[curArrayLength];
 
             // now write terms until the array runs out of space or we have written all remaining terms
+            // FIXME this code breaks when char term data total more than 2 GB
+            //       (because offset will overflow)
             int offset = termCharData.length * Integer.MAX_VALUE; // set to beginning of current array
             while (termIndex < numberOfTerms) {
                 final byte[] termBytes = bytes[termIndex];
-                if ((offset + termBytes.length) > curArrayLength) { --termIndex; /* note we didn't write this term yet, so re-process it next iteration */ break; }
+                if ((offset + termBytes.length) > curArrayLength) {
+                    --termIndex; /* note we didn't write this term yet, so re-process it next iteration */
+                    break;
+                }
                 bytes[termIndex] = null;  // free original byte[], only do after we verify it can be copied!
 
                 this.termId2CharDataOffset[termIndex] = offset;

@@ -59,5 +59,9 @@ public class DocResult extends HitGroup {
     public PropertyValueDoc identity() {
         return (PropertyValueDoc)super.identity();
     }
+
+    public int docId() {
+        return identity().value();
+    }
     
 }

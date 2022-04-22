@@ -15,21 +15,22 @@
  *******************************************************************************/
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * A "keyword in context" for a hit (left context, hit text, right context).
  *
- * The Hits class matches this to the Hit.
+ * This object may be converted to a {@link Concordance} object (with XML strings) by
+ * calling {@link #toConcordance()}.
  *
- * This object may be converted to a Concordance object (with XML strings) by
- * calling Kwic.toConcordance().
+ * Instances of this class are immutable.
  */
 public class Kwic {
 

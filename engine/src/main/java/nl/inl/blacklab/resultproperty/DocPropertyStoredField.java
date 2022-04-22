@@ -178,11 +178,7 @@ public class DocPropertyStoredField extends DocProperty {
         }
 
         // We don't have DocValues; just get the property from the document.
-        try {
-            return index.reader().document(docId).getValues(fieldName);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException("Could not fetch document " + docId, e);
-        }
+        return index.luceneDoc(docId).getValues(fieldName);
     }
 
     /**
@@ -193,11 +189,7 @@ public class DocPropertyStoredField extends DocProperty {
      * @return metadata value(s)
      */
     public String[] get(PropertyValueDoc doc) {
-        // We have the Document already, get the property from there
-        if (doc.value().isLuceneDocCached()) {
-            return doc.luceneDoc().getValues(fieldName);
-        }
-        return get(doc.id());
+        return get(doc.value());
     }
 
     /** Get the values as PropertyValue. */
@@ -214,7 +206,7 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** Get the first value. The empty string is returned if there are no values for this document */
     public String getFirstValue(PropertyValueDoc doc) {
-        return getFirstValue(doc.id());
+        return getFirstValue(doc.value());
     }
 
     /** Get the first value. The empty string is returned if there are no values for this document */

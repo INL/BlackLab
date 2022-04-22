@@ -1,5 +1,17 @@
 package nl.inl.blacklab.search;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BLConfigLog;
 import nl.inl.blacklab.config.BlackLabConfig;
@@ -9,13 +21,6 @@ import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.util.FileUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.IndexReader;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
 
 /**
  * Main BlackLab class, from which indexes can be opened.
@@ -39,8 +44,28 @@ import java.util.*;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
+    /**
+     * Safe maximum size for a Java array.
+     *
+     * This is JVM-dependent, but the consensus seems to be that
+     * this is a safe limit. See e.g.
+     * https://stackoverflow.com/questions/3038392/do-java-arrays-have-a-maximum-size
+     */
+    public static final int JAVA_MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
+
+    /**
+     * Safe maximum size for a Java HashMap.
+     *
+     * This is JVM dependent, but the consensus seems to be that
+     * this is a safe limit. See e.g.
+     * https://stackoverflow.com/questions/25609840/java-hashmap-max-size-of-5770/25610054
+     */
+    public static final int JAVA_MAX_HASHMAP_SIZE = Integer.MAX_VALUE / 4;
+
+    /** If no explicit BlackLab instance is created, how many search threads should we use? */
     private static final int DEFAULT_NUM_SEARCH_THREADS = 4;
-    
+
+    /** If no explicit BlackLab instance is created, how many threads per search should we use? */
     private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 2;
 
     /**

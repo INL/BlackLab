@@ -17,6 +17,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -80,7 +82,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = BlackLab.JAVA_MAX_HASHMAP_SIZE;
 
     /**
      * Total number of results in the source set of hits. 
@@ -124,20 +126,20 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();
-        Map<PropertyValue, HitsInternal> groupLists = new HashMap<>();
+        Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        boolean listIsHuge = hits.size() > Integer.MAX_VALUE;
-        for (Hit hit: hits) {
+        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
+            EphemeralHit hit = it.next();
             PropertyValue identity = criteria.get(i);
-            HitsInternal group = groupLists.get(identity);
+            HitsInternalMutable group = groupLists.get(identity);
             if (group == null) {
 
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(listIsHuge);
+                group = HitsInternal.create(-1, hits.size(), false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
@@ -155,7 +157,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             ++i;
         }
         resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, HitsInternal> e : groupLists.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsInternalMutable> e : groupLists.entrySet()) {
             PropertyValue groupId = e.getKey();
             HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
@@ -216,7 +218,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
      */
     @Override
     public HitGroups sample(SampleParameters sampleParameters) {
-        List<HitGroup> sample = Results.doSample(this, sampleParameters);
+        List<HitGroup> sample = ResultsAbstract.doSample(this, sampleParameters);
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
         return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
     }
@@ -268,7 +270,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
     @Override
     public HitGroups window(long first, long number) {
-        List<HitGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<HitGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         // Note: a window is just a subset of the total result set.
@@ -291,7 +293,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

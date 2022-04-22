@@ -1,138 +1,154 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Iterator;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.BlackLab;
 
-public interface HitsInternal extends Iterable<Hits.EphemeralHit> {
+/**
+ * A list of simple hits.
+ *
+ * Contrary to {@link Hits}, this only contains doc, start and end
+ * for each hit, so no captured groups information, and no other
+ * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
+ *
+ * This is a read-only interface.
+ */
+public interface HitsInternal extends Iterable<EphemeralHit> {
 
-    interface Iterator extends java.util.Iterator<Hits.EphemeralHit> {
-
-    }
-
-    /**
-     * Create a HitsInternal with an initial and maximum capacity.
-     *
-     * Maximum capacity is only used to decide which implementation to use
-     * and the actual maximum capacity may be greater.
-     *
-     * @param initialCapacity initial hits capacity
-     * @param maxCapacity maximum number of hits
-     * @return HitsInternal object
-     */
-    static HitsInternal create(long initialCapacity, long maxCapacity) {
-        return create(initialCapacity, maxCapacity > Integer.MAX_VALUE);
-    }
-
-    /**
-     * Create a HitsInternal with a fixed capacity.
-     *
-     * Capacity is not actually fixed, it is the initial capacity and it
-     * is also used to decide which implementation to use.
-     *
-     * It is good practice to only use createFixed if you know it really
-     * is a fixed size. Otherwise use {@link #create(long, boolean)}.
-     *
-     * @param capacity fixed capacity
-     * @return HitsInternal object
-     */
-    static HitsInternal createFixed(long capacity) {
-        return create(capacity, capacity > Integer.MAX_VALUE);
-    }
-
-    /**
-     * Create an empty HitsInternal that can hold up to Long.MAX_VALUE items.
-     *
-     * Use this if you know for sure you have more than Integer.MAX_VALUE hits.
-     * If you don't know how many hits you'll have, use {@link #create()} instead.
-     *
-     * @return HitsInternal object
-     */
-    static HitsInternal createHuge() {
-        return create(true);
-    }
-
-    /**
-     * Create an empty HitsInternal that can hold up to Integer.MAX_VALUE items.
-     *
-     * @return HitsInternal object
-     */
-    static HitsInternal createSmall() {
-        return create(false);
-    }
-
-    /**
-     * Create an empty HitsInternal.
-     *
-     * @param allowHugeLists if true, the object created can hold more than Integer.MAX_VALUE hits
-     * @return HitsInternal object
-     */
-    static HitsInternal create(boolean allowHugeLists) {
-        return create(-1, allowHugeLists);
-    }
-
-    /**
-     * Create an empty HitsInternal.
-     *
-     * This does the same as {@link #createHuge()}, but should be used
-     * in cases where you simply don't know how many hits there are going to
-     * be. Use {@link #createHuge()} if you know for sure you need it.
-     *
-     * @return HitsInternal object
-     */
-    static HitsInternal create() {
-        return create(true);
-    }
+    /** An empty HitsInternalRead object. */
+    HitsInternal EMPTY_SINGLETON = new HitsInternalNoLock32();
 
     /**
      * Create an empty HitsInternal with an initial capacity.
      *
      * @param initialCapacity initial hits capacity, or default if negative
-     * @param allowHugeLists if true, the object created can hold more than Integer.MAX_VALUE hits
+     * @param allowHugeLists if true, the object created can hold more than {@link BlackLab#JAVA_MAX_ARRAY_SIZE} hits
+     * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsInternal create(long initialCapacity, boolean allowHugeLists) {
-        if (initialCapacity < 0)
-            return allowHugeLists ? new Hits.HitsArrays() : new HitsArrays32();
-        if (initialCapacity > Integer.MAX_VALUE && !allowHugeLists)
-            throw new BlackLabRuntimeException("initialCapacity > Integer.MAX_VALUE && !allowHugeLists");
-        return allowHugeLists ? new Hits.HitsArrays(initialCapacity) : new HitsArrays32((int)initialCapacity);
+    static HitsInternalMutable create(long initialCapacity, boolean allowHugeLists, boolean mustLock) {
+        return create(initialCapacity, allowHugeLists ? Long.MAX_VALUE : BlackLab.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
 
-    HitsInternal EMPTY_SINGLETON = new HitsInternalImmutable();
+    static HitsInternalMutable create(long initialCapacity, long maxCapacity, boolean mustLock) {
+        if (maxCapacity > BlackLab.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
+            if (mustLock)
+                return new HitsInternalLock(initialCapacity);
+            return new HitsInternalNoLock(initialCapacity);
+        }
+        if (initialCapacity > BlackLab.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("initialCapacity=" + initialCapacity + " > " + BlackLab.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
+        if (mustLock)
+            return new HitsInternalLock32((int)initialCapacity);
+        return new HitsInternalNoLock32((int)initialCapacity);
+    }
 
-    void add(int doc, int start, int end);
-
-    void add(Hits.EphemeralHit hit);
-
-    void add(Hit hit);
-
-    void addAll(HitsInternal hits);
-
+    /**
+     * Perform an operation with read lock.
+     * <p>
+     * If the implementation doesn't support locking, it will simply
+     * perform the operation without it.
+     *
+     * @param cons operation to perform
+     */
     void withReadLock(Consumer<HitsInternal> cons);
 
+    /**
+     * Get a Hit object.
+     * <p>
+     * Avoid this method if possible, as it instantiates an object.
+     *
+     * @param index hit index
+     * @return hit object
+     */
     Hit get(long index);
 
-    void getEphemeral(long index, Hits.EphemeralHit h);
+    /**
+     * Get an ephemeral Hit object.
+     * <p>
+     * Writes the doc, start and end values to the specified mutable
+     * hit object.
+     * <p>
+     * Useful in a hot loop or somesuch.
+     * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
+     * Example:
+     *
+     * <pre>
+     * EphemeralHitImpl h = new EphemeralHitImpl();
+     * int size = hits.size();
+     * for (int i = 0; i < size; ++i) {
+     *     hits.getEphemeral(i, h);
+     *     // use h now
+     * }
+     * </pre>
+     *
+     * @param index hit index
+     * @param h     hit object
+     */
+    void getEphemeral(long index, EphemeralHit h);
 
+    /**
+     * Get the doc id for a hit.
+     *
+     * @param index hit index
+     * @return doc id
+     */
     int doc(long index);
 
+    /**
+     * Get the start position for a hit.
+     *
+     * @param index hit index
+     * @return start position
+     */
     int start(long index);
 
+    /**
+     * Get the end position for a hit.
+     *
+     * @param index hit index
+     * @return end position
+     */
     int end(long index);
 
     long size();
 
+    /**
+     * Iterate over the doc ids of the hits.
+     * <p>
+     * NOTE: iterating does not lock the arrays, to do that,
+     * it should be performed in a {@link #withReadLock} callback.
+     *
+     * @return iterator over the doc ids
+     */
     IntIterator docsIterator();
 
+    /**
+     * Iterate over the hits.
+     * <p>
+     * NOTE: iterating does not lock the arrays, to do that,
+     * it should be performed in a {@link #withReadLock} callback.
+     *
+     * @return iterator
+     */
     @Override
-    HitsInternal.Iterator iterator();
+    Iterator iterator();
 
+    /**
+     * Return a new object with sorted hits.
+     *
+     * @param p sort property
+     * @return sorted hits
+     */
     HitsInternal sort(HitProperty p);
 
-    void clear();
+    /**
+     * For iterating through the hits using EphemeralHit
+     */
+    interface Iterator extends java.util.Iterator<EphemeralHit> {
 
+    }
 }

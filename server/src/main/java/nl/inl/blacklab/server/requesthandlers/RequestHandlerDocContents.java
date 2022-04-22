@@ -11,7 +11,7 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -82,8 +82,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         int docId = BlsUtils.getDocIdFromPid(blIndex, docPid);
         if (!blIndex.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-        Doc doc = blIndex.doc(docId);
-        Document document = doc.luceneDoc(); //searchMan.getDocumentFromPid(indexName, docId);
+        Document document = blIndex.luceneDoc(docId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", "INTERR_FETCHING_DOCUMENT_CONTENTS");
         if (!mayView(blIndex.metadata(), document)) {
@@ -108,11 +107,11 @@ public class RequestHandlerDocContents extends RequestHandler {
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
         if (hits == null) {
-            hitsInDoc = Hits.immutableEmptyList(QueryInfo.create(blIndex));
+            hitsInDoc = Hits.empty(QueryInfo.create(blIndex));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
-        content = doc.highlightContent(hitsInDoc, startAtWord, endAtWord);
+        content = DocUtil.highlightContent(blIndex(), docId, hitsInDoc, startAtWord, endAtWord);
 
         boolean outputXmlDeclaration = true;
         if (surroundWithRootElement) {
@@ -130,7 +129,7 @@ public class RequestHandlerDocContents extends RequestHandler {
             }
             // here we may need to include namespace declarations
             // retrieve the first bit of the document, try to find namespaces
-            String root = doc.contentsByCharPos(doc.index().mainAnnotatedField(), 0, 1024);
+            String root = DocUtil.contentsByCharPos(blIndex(), docId, document, blIndex().mainAnnotatedField(), 0, 1024);
             Matcher m = NAMESPACE.matcher(root);
             Set<String> namespaces = new HashSet<>(2);
             while (m.find()) {

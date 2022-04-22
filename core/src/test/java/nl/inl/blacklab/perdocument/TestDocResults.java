@@ -33,14 +33,14 @@ public class TestDocResults {
         int[] aEnd = { 2, 3, 4, 5, 6 };
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.fromArrays(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
             DocResults drs = hits.perDocResults(Results.NO_LIMIT);
     
             int[] expDoc = { 1, 2, 3 };
             int[] expHits = { 2, 1, 2 };
             int i = 0;
             for (DocResult dr : drs) {
-                Assert.assertEquals(expDoc[i], dr.identity().id());
+                Assert.assertEquals(expDoc[i], (int)dr.identity().value());
                 Assert.assertEquals(expHits[i], dr.size());
                 i++;
             }

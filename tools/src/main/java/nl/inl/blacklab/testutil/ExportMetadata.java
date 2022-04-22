@@ -22,7 +22,6 @@ import org.apache.lucene.index.IndexableField;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.LogUtil;
 
@@ -93,9 +92,9 @@ public class ExportMetadata implements AutoCloseable {
             int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             @Override
-            public void perform(Doc doc) {
-                Document luceneDoc = doc.luceneDoc();
+            public void perform(BlackLabIndex index, int docId) {
                 Map<String, String> metadata = new HashMap<>();
+                Document luceneDoc = index.luceneDoc(docId);
                 for (IndexableField f: luceneDoc.getFields()) {
                     // If this is a regular metadata field, not a control field
                     if (!f.name().contains("#")) {

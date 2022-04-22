@@ -1,15 +1,15 @@
-package nl.inl.blacklab.testutil;
+package nl.inl.blacklab.performance;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * Executes a batch of fetch operations on a content store.

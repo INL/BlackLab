@@ -8,7 +8,6 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.LogUtil;
 
@@ -30,8 +29,8 @@ public class CountTokens {
         }
 
         @Override
-        public void perform(Doc doc) {
-            totalTokens += Long.parseLong(doc.luceneDoc().get(tokenLengthField));
+        public void perform(BlackLabIndex index, int id) {
+            totalTokens += Long.parseLong(index.luceneDoc(id).get(tokenLengthField));
             docsDone++;
             if (docsDone % 100 == 0) {
                 int perc = docsDone * 100 / totalDocs;

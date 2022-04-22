@@ -197,8 +197,8 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.startItem("doc").startMap();
 
             // Find pid
-            Document document = result.identity().luceneDoc();
-            String pid = getDocumentPid(blIndex, result.identity().id(), document);
+            Document document = blIndex().luceneDoc(result.docId());
+            String pid = getDocumentPid(blIndex, result.identity().value(), document);
 
             // Combine all
             ds.entry("docPid", pid);

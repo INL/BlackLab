@@ -3,10 +3,12 @@ package nl.inl.blacklab.search;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -107,14 +109,6 @@ public interface BlackLabIndex extends Closeable {
      * @return true if it is an existing document
      */
     boolean docExists(int docId);
-
-    /**
-     * Get a BlackLab document.
-     * 
-     * @param docId document id
-     * @return document
-     */
-    Doc doc(int docId);
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.
@@ -429,4 +423,11 @@ public interface BlackLabIndex extends Closeable {
      */
     BlackLabEngine blackLab();
 
+    default Document luceneDoc(int docId) {
+        try {
+            return reader().document(docId);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
 }

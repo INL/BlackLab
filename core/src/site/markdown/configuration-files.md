@@ -186,10 +186,11 @@ cache:
     # Higher values make clients more responsive but could cause problems if the data (or worse,
     # the protocol) changes after an update. A value of an hour or so seems reasonable.
     clientCacheTimeSec: 3600
-    
-    # [DEPRECATED, NO LONGER USED]
-    # Use  targetFreeMemMegs to set a "free memory goal" and maxJobAgeSec to set a
-    # "cache cleanup goal".
+
+    # Maximum number of cache entries to keep.
+    # Please note that memory use per cache entry may vary wildly,
+    # so you may prefer to use targetFreeMemMegs to set a "free memory goal"
+    # and/or maxJobAgeSec to set a maximum age for cache entries.
     maxNumberOfJobs: 100
     
     # The cache implementation to use.
@@ -322,6 +323,11 @@ search:
     # [if you want to disable forward index matching, which may be beneficial
     #  if you indexes are small and your query volume is high, set this to 0]
     fiMatchFactor: 900
+    
+    # Enable result sets larger than 2^31?
+    # If you don't need this, you can disable it for slightly better performance.
+    # (defaults to true)
+    enableHugeResultSets: true
 
 
 # Options for indexing operations, if enabled

@@ -34,7 +34,7 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends Hits {
+public class HitsFromQuery extends HitsMutable {
 
     /** Settings such as max. hits to process/count. */
     SearchSettings searchSettings;
@@ -98,8 +98,8 @@ public class HitsFromQuery extends Hits {
      * @param searchSettings search settings
      * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        super(queryInfo, false);
+    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        super(queryInfo);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;
@@ -174,13 +174,13 @@ public class HitsFromQuery extends Hits {
     protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() > number))
+            if (sourceSpansFullyRead || (number >= 0 && hitsInternalMutable.size() > number))
                 return;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
-                number = hitsArrays.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsInternalMutable.size() < FETCH_HITS_MIN)
+                number = hitsInternalMutable.size() + FETCH_HITS_MIN;
 
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -189,14 +189,14 @@ public class HitsFromQuery extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() >= number))
+                if (sourceSpansFullyRead || (number >= 0 && hitsInternalMutable.size() >= number))
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
                 long maxHitsToCount = searchSettings.maxHitsToCount();
                 long maxHitsToProcess = searchSettings.maxHitsToProcess();
-                while (readAllHits || hitsArrays.size() < number) {
+                while (readAllHits || hitsInternalMutable.size() < number) {
 
                     // Abort if asked
                     threadAborter.checkAbort();
@@ -237,8 +237,8 @@ public class HitsFromQuery extends Hits {
                                 //    and there won't be that many segments, so it's probably ok)
                                 hitQueryContext.setSpans(currentSourceSpans);
                                 currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-                                if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                                    capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+                                if (capturedGroupsMutable == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+                                    capturedGroups = capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
 
                                 int doc;
@@ -283,13 +283,13 @@ public class HitsFromQuery extends Hits {
                     }
                     if (!maxHitsProcessed) {
                         Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
-                        if (capturedGroups != null) {
+                        if (capturedGroupsMutable != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                            capturedGroupsMutable.put(hit, groups);
                         }
-                        hitsArrays.add(hit);
-                        if (maxHitsToProcess >= 0 && hitsArrays.size() >= maxHitsToProcess) {
+                        hitsInternalMutable.add(hit);
+                        if (maxHitsToProcess >= 0 && hitsInternalMutable.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }
                     }

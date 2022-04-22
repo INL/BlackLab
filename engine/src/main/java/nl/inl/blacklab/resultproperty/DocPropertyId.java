@@ -35,7 +35,7 @@ public class DocPropertyId extends DocProperty {
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        return new PropertyValueInt(result.identity().id());
+        return new PropertyValueInt(result.identity().value());
     }
 
     /**
@@ -47,8 +47,8 @@ public class DocPropertyId extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        int idA = a.identity().id();
-        int idB = b.identity().id();
+        int idA = a.identity().value();
+        int idB = b.identity().value();
         return reverse ? idB - idA : idA - idB;
     }
 

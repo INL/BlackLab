@@ -8,10 +8,10 @@ import java.nio.file.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -62,6 +62,7 @@ public class BlsUtils {
                                 return IntPoint.newRangeQuery(field, Integer.parseInt(part1), Integer.parseInt(part2)/*, startInclusive, endInclusive*/);// both include start and end default
                             } catch (NumberFormatException e) {
                                 // there is nothing we can do here, just return the default implementation, which will likely return no results
+                                logger.warn("BlsUtil.parseFilter: range value '" + part1 + "' or " + part2 + " is not a valid integer.");
                             }
                         }
                         return super.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
@@ -186,7 +187,7 @@ public class BlsUtils {
                 break;
             }
         }
-        return docResults.get(0).identity().id();
+        return docResults.get(0).identity().value();
     }
 
     // Copied from Apache Commons

@@ -7,10 +7,17 @@
 - Based on Lucene 8. Thanks to @zhyongwei for the initial version update. Further
   changes were made to how DocValues are used, as this API is now sequential instead
   of random-access.
+- Smarter default config values based on number of CPU cores and max. heap memory.
+  A debug message will show that and how the default value for a missing was determined.
+- Corpora larger than 2^31 tokens are now supported. The few operations
+  that don't support this yet will produce a clear error message.
 
-### Fixed
+### Java API
 
-- Corpora larger than 2^31 tokens are now properly supported.
+- `Hits`, `HitsInternal(Mutable)`, CapturedGroups and other interfaces refactored to make
+  (im)mutability more explicit.
+- `Doc` and `DocImpl` classes were removed. Now that we use `DocValues` everywhere, caching
+  Lucene documents doesn't make sense.
 
 ### Removed
 
@@ -20,6 +27,7 @@
 - support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
   fi version 3; these were all replaced with newer versions six years ago. older indexes
   will need to be re-indexed)
+- Some deprecated settings. A warning will be shown if the setting is still found.
 
 
 ## Improvements in 2.3.0
@@ -51,7 +59,7 @@
 
 - Gracefully shut down ExecutorServices to avoid hanging on application exit.
 - Fixed intermittent crashes using synchronization.
-- Fixed count hanging if underlying search was aborted due to timeout. 
+- Fixed count hanging if underlying search was aborted due to timeout.
 - Ensure all BLSpans are startpoint-sorted.
 - Lowercase (desensitize) display values when grouping case-insensitively.
 - Always run at least one search (don't queue if no searches are running)
@@ -66,7 +74,7 @@
 ### Removed
 
 - empty module `interfaces`
-- SQLite logging. Was never fully realized, and the new approach using Prometheus (see 
+- SQLite logging. Was never fully realized, and the new approach using Prometheus (see
   `instrumentation` modules) is better.
 - `checkAgainMs` (from BLS response).
 - several long-deprecated methods.
