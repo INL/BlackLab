@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Arrays;
@@ -63,7 +48,7 @@ public final class AnnotatedFieldNameUtil {
      * Valid XML element names. Field and annotation names should generally conform to
      * this.
      */
-    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_\\.]*");
+    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_.]*");
 
     /**
      * String used to separate the base field name (say, contents) and the field
@@ -144,10 +129,6 @@ public final class AnnotatedFieldNameUtil {
 
     public static String lengthTokensField(String fieldName) {
         return bookkeepingField(fieldName, LENGTH_TOKENS_BOOKKEEP_NAME);
-    }
-
-    public static String tagAnnotationField(String fieldName) {
-        return annotationField(fieldName, TAGS_ANNOT_NAME);
     }
 
     /**
@@ -394,7 +375,7 @@ public final class AnnotatedFieldNameUtil {
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name, String replaceChar) {
-        name = name.replaceAll("[^\\p{L}0-9_\\.]", replaceChar); // can only contain letters, digits, underscores and periods
+        name = name.replaceAll("[^\\p{L}0-9_.]", replaceChar); // can only contain letters, digits, underscores and periods
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }

@@ -23,8 +23,8 @@ public class BatchQuery {
         boolean determineTotalHits = true;
         int fileArgNumber = 0;
         File indexDir = null, inputFile = null;
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].trim();
+        for (String s : args) {
+            String arg = s.trim();
             if (arg.charAt(0) == '-') {
                 if (arg.equals("-t")) {
                     determineTotalHits = false;
@@ -35,26 +35,26 @@ public class BatchQuery {
                 }
             } else {
                 switch (fileArgNumber) {
-                case 0:
-                    indexDir = new File(arg);
-                    if (!indexDir.exists() || !indexDir.isDirectory()) {
-                        System.err.println("Index directory not found: " + arg);
+                    case 0:
+                        indexDir = new File(arg);
+                        if (!indexDir.exists() || !indexDir.isDirectory()) {
+                            System.err.println("Index directory not found: " + arg);
+                            usage();
+                            return;
+                        }
+                        break;
+                    case 1:
+                        inputFile = new File(arg);
+                        if (!inputFile.exists()) {
+                            System.err.println("Input file not found: " + arg);
+                            usage();
+                            return;
+                        }
+                        break;
+                    default:
+                        System.err.println("Too many file arguments (supply index dir and input file)");
                         usage();
                         return;
-                    }
-                    break;
-                case 1:
-                    inputFile = new File(arg);
-                    if (!inputFile.exists()) {
-                        System.err.println("Input file not found: " + arg);
-                        usage();
-                        return;
-                    }
-                    break;
-                default:
-                    System.err.println("Too many file arguments (supply index dir and input file)");
-                    usage();
-                    return;
                 }
                 fileArgNumber++;
             }
@@ -73,7 +73,7 @@ public class BatchQuery {
             if (determineTotalHits) {
                 System.out.print("\t# Hits\tTotal Time");
             }
-            System.out.println("");
+            System.out.println();
     
             for (String query : FileUtil.readLines(inputFile)) {
                 query = query.trim();
@@ -87,7 +87,7 @@ public class BatchQuery {
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());
                     }
-                    System.out.println("");
+                    System.out.println();
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
                     System.err.println("Error with query " + query + "; skipping...");

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -28,10 +13,10 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
  */
 class SpansPositionFilter extends BLSpans {
     /** The spans we're (possibly) looking for */
-    private BLSpans producer;
+    private final BLSpans producer;
 
     /** The spans we use to filter the producer spans */
-    private SpansInBuckets filter;
+    private final SpansInBuckets filter;
 
     /** What doc is the producer in? */
     private int producerDoc = -1;
@@ -49,13 +34,13 @@ class SpansPositionFilter extends BLSpans {
     private int filterIndex = -1;
 
     /** What filter operation to use */
-    private Operation op;
+    private final Operation op;
 
     /** How to adjust the left edge of the producer hits while matching */
-    private int leftAdjust;
+    private final int leftAdjust;
 
     /** How to adjust the right edge of the producer hits while matching */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     /**
      * Are we already at the first match in a new document, before
@@ -67,10 +52,10 @@ class SpansPositionFilter extends BLSpans {
     /**
      * If true, produce hits that DON'T match the filter instead.
      */
-    private boolean invert;
+    private final boolean invert;
 
     /** Are the filter hits guaranteed to have the same length? */
-    private boolean filterFixedLength;
+    private final boolean filterFixedLength;
 
     /**
      * Find hits from producer, filtered by the filter according to the specified op
@@ -176,7 +161,6 @@ class SpansPositionFilter extends BLSpans {
      *
      * @return docID if found, NO_MORE_DOCS if no such producer span exists (i.e.
      *         we're done)
-     * @throws IOException
      */
     private int findDocWithMatch() throws IOException {
         // Find the next "valid" container, if there is one.
@@ -231,7 +215,6 @@ class SpansPositionFilter extends BLSpans {
      *
      * @return start position if found, NO_MORE_POSITIONS if no such container
      *         exists (i.e. we're done)
-     * @throws IOException
      */
     private int synchronizePos() throws IOException {
         // Find the next "valid" producer spans, if there is one.

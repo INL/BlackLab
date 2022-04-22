@@ -6,16 +6,16 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterString extends MatchFilter {
-    ConstraintValueString string;
+    final ConstraintValueString string;
 
     /** -1 if we don't know the annotation index, or the annotation index otherwise */
-    int annotIndex = -1;
+    final int annotIndex = -1;
 
     /**
      * Term index if we know the annotation index to use for this expression (i.e.
      * annotIndex >= 0), or -1 if not
      */
-    int termIndex = -1;
+    final int termIndex = -1;
 
     public MatchFilterString(String string) {
         this.string = new ConstraintValueString(string);

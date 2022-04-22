@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -86,9 +71,9 @@ class SpansSequenceWithGap extends BLSpans {
             return new Gap(minSize, maxSize);
         }
         
-        private int minSize;
+        private final int minSize;
         
-        private int maxSize;
+        private final int maxSize;
     
         public Gap(int minSize, int maxSize) {
             super();
@@ -136,13 +121,13 @@ class SpansSequenceWithGap extends BLSpans {
         
     }
 
-    private BLSpans left;
+    private final BLSpans left;
     
     /** Gap between the two clauses. */
-    private Gap gap;
+    private final Gap gap;
 
     /** Right clause matches, collected for the whole document, sorted by startpoint. */
-    private SpansInBucketsPerDocument right;
+    private final SpansInBucketsPerDocument right;
 
     /** 
      * First index in the right bucket that we could possibly match to a span with the current
@@ -176,10 +161,6 @@ class SpansSequenceWithGap extends BLSpans {
      * matches in the document in .nextDoc()/.advance().
      */
     private boolean alreadyAtFirstMatch = false;
-
-    private int leftStartFirst;
-
-    private int rightStartFirst;
 
     private int rightStartLast;
 
@@ -279,7 +260,6 @@ class SpansSequenceWithGap extends BLSpans {
      * in it.
      *
      * @return docID if we're on a valid match, NO_MORE_DOCS if we're done.
-     * @throws IOException
      */
     private int realignDoc() throws IOException {
         while (true) {
@@ -341,7 +321,6 @@ class SpansSequenceWithGap extends BLSpans {
      * After this function, we're on the first valid match found, or we're out of
      * matches for this document.
      *
-     * @throws IOException
      */
     private void realignPos() throws IOException {
         while (true) {
@@ -351,8 +330,8 @@ class SpansSequenceWithGap extends BLSpans {
             }
             
             // Where should the right clause start?
-            leftStartFirst = leftStart + gap.minSize();
-            rightStartFirst = left.endPosition() + gap.minSize();
+            int leftStartFirst = leftStart + gap.minSize();
+            int rightStartFirst = left.endPosition() + gap.minSize();
             rightStartLast = gap.maxSize() == MAX_UNLIMITED ? MAX_UNLIMITED : left.endPosition() + gap.maxSize();
             
             // Do we need to advance the starting point in the right bucket?

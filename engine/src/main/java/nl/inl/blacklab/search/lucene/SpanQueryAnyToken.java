@@ -1,22 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,12 +24,12 @@ import nl.inl.util.LuceneUtil;
 public class SpanQueryAnyToken extends BLSpanQuery {
 
     /** The minimum number of tokens in this stretch. */
-    protected int min;
+    protected final int min;
 
     /** The maximum number of tokens in this stretch. */
-    protected int max;
+    protected final int max;
 
-    String luceneField;
+    final String luceneField;
 
     public SpanQueryAnyToken(QueryInfo queryInfo, int min, int max, String luceneField) {
         super(queryInfo);
@@ -111,7 +96,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
             }
 
             @Override
-            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) {
                 return new SpansNGrams(context.reader(), getField(), realMin, max);
             }
         };
@@ -187,7 +172,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         final int realMin = min == 0 ? 1 : min; // always rewritten unless the whole query is optional
         NfaState state = NfaState.anyToken(luceneField, null);
-        Nfa frag = new Nfa(state, Arrays.asList(state));
+        Nfa frag = new Nfa(state, List.of(state));
         if (realMin != 1 || max != 1) {
             frag.repeat(realMin, max);
         }
@@ -223,7 +208,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+    public BLSpanQuery rewrite(IndexReader reader) {
         return this;
     }
 

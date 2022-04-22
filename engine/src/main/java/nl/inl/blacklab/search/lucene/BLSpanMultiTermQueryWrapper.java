@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -79,8 +79,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost)
-            throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         throw new IllegalArgumentException("Rewrite first!");
     }
 
@@ -152,7 +151,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         NfaState state = NfaState.regex(getRealField(), getRegex(), null);
-        return new Nfa(state, Arrays.asList(state));
+        return new Nfa(state, List.of(state));
     }
 
     protected String getRegex() {
@@ -186,7 +185,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         if (wrapped instanceof RegexpQuery) {
             numberOfChars = countRegexWordCharacters(pattern);
         } else if (wrapped instanceof WildcardQuery) {
-            numberOfChars = pattern.replaceAll("[\\*\\?]", "").length();
+            numberOfChars = pattern.replaceAll("[*?]", "").length();
         } else if (wrapped instanceof PrefixQuery) {
             numberOfChars = pattern.length();
         } else {
@@ -233,7 +232,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
      * @return number of word characters in the pattern
      */
     public static int countRegexWordCharacters(String pattern) {
-        String trimmed = pattern.replaceAll("^\\^(\\(\\?\\-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
+        String trimmed = pattern.replaceAll("^\\^(\\(\\?-?[ic]\\))?|\\$$", ""); // trim off ^, $ and (?-i), etc.
         // only retain word characters
         return trimmed.replaceAll("\\W", "").length();
         //trimmed.replaceAll("^(\\w*)(\\W(|.*\\W))(\\w*)$", "$1$4"); // only retain prefix and suffix

@@ -36,7 +36,7 @@ public class DownloadCache {
     private static long maxDownloadedFileSize = 10_000_000;
 
     /** Maximum age of downloaded file in sec */
-    private static int maxDownloadAgeSec = 24 * 3600;
+    private static final int maxDownloadAgeSec = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
     private static int maxDownloadFolderSize = 100_000_000;
@@ -45,15 +45,15 @@ public class DownloadCache {
     private static File downloadTempDir;
 
     /** Files we've downloaded to a temp dir. Will be deleted on exit. */
-    static Map<String, Download> downloadedFiles = new HashMap<>();
+    static final Map<String, Download> downloadedFiles = new HashMap<>();
 
     static long downloadFolderSize = 0;
 
     static class Download implements Comparable<Download> {
 
-        public String key;
+        public final String key;
 
-        public File file;
+        public final File file;
 
         public long lastUsed;
 
@@ -173,8 +173,6 @@ public class DownloadCache {
      *
      * @param inputFile URL of the file
      * @return temp file
-     * @throws IOException
-     * @throws MalformedURLException
      */
     public synchronized static File downloadFile(String inputFile) throws IOException, MalformedURLException {
         if (!isFileDownloadAllowed())
@@ -186,7 +184,7 @@ public class DownloadCache {
             if (urlSize > maxDownloadedFileSize)
                 throw new UnsupportedOperationException(
                         "File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
-            String ext = inputFile.replaceAll("^.+(\\.[^\\.]+)$", "$1");
+            String ext = inputFile.replaceAll("^.+(\\.[^.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
             File tempFile = File.createTempFile("BlackLab_download_", ext, getDownloadTempDir());

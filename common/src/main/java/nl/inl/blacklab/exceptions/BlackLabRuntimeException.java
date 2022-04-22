@@ -20,11 +20,6 @@ public class BlackLabRuntimeException extends RuntimeException {
         super();
     }
 
-    public BlackLabRuntimeException(String message, Throwable cause,
-            boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
-
     public BlackLabRuntimeException(String message, Throwable cause) {
         super(message, cause);
     }

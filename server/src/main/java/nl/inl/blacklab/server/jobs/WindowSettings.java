@@ -2,9 +2,9 @@ package nl.inl.blacklab.server.jobs;
 
 public class WindowSettings {
 
-    private long first;
+    private final long first;
 
-    private long size;
+    private final long size;
 
     public WindowSettings(long first, long size) {
         super();

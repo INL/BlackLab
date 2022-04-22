@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.util;
 
 import java.util.ArrayList;
@@ -67,14 +52,14 @@ public class XmlHighlighter {
         TagType type;
 
         /** Start position of tag in original content */
-        int start;
+        final int start;
 
         /**
          * End position of tag in original content. NOTE: this only differs from start
          * if type == EXISTING_TAG. Highlight tags are not in the original content, so
          * there start always equals end.
          */
-        int end;
+        final int end;
 
         /**
          * Start position of matching tag (the close to this open tag, or vice versa) in
@@ -337,7 +322,8 @@ public class XmlHighlighter {
      * content.
      */
     public static class HitCharSpan {
-        private int startChar, endChar;
+        private final int startChar;
+        private final int endChar;
 
         public int getStartChar() {
             return startChar;
@@ -391,7 +377,7 @@ public class XmlHighlighter {
         // Regex for finding all XML tags.
         // Group 1 indicates if this is an open or close tag
         // Group 2 is the tag name
-        Pattern xmlTags = Pattern.compile("<(?![!\\?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
+        Pattern xmlTags = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>");
 
         Matcher m = xmlTags.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
@@ -593,7 +579,6 @@ public class XmlHighlighter {
      * non-well-formed document well-formed, it just works for cutting out part of a
      * well-formed document.
      *
-     * @param xmlFragment
      * @return a well-formed fragment
      */
     public String makeWellFormed(String xmlFragment) {

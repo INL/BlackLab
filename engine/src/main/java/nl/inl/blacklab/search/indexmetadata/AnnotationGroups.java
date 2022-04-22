@@ -8,9 +8,9 @@ import java.util.stream.Stream;
 /** Groups of annotations for a single field */
 public class AnnotationGroups implements Iterable<AnnotationGroup> {
     
-    private String fieldName;
+    private final String fieldName;
     
-    private List<AnnotationGroup> groups;
+    private final List<AnnotationGroup> groups;
     
     public AnnotationGroups(String fieldName, List<AnnotationGroup> groups) {
         this.fieldName = fieldName;

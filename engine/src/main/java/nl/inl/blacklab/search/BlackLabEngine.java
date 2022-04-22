@@ -6,7 +6,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,21 +42,18 @@ public final class BlackLabEngine implements Closeable {
     private ExecutorService searchExecutorService = null;
 
     /** How many threads may a single search use? */
-    private int maxThreadsPerSearch;
+    private final int maxThreadsPerSearch;
 
-    AtomicInteger threadCounter = new AtomicInteger(1);
+    final AtomicInteger threadCounter = new AtomicInteger(1);
 
     BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
         initializationExecutorService = Executors.newSingleThreadExecutor();
-        this.searchExecutorService = Executors.newCachedThreadPool(new ThreadFactory() {
-			@Override
-			public Thread newThread(Runnable runnable) {
-				Thread worker = Executors.defaultThreadFactory().newThread(runnable);
-				int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
-				worker.setName("SearchThread-" + threadNumber);
-                return worker;
-            }
-		});
+        this.searchExecutorService = Executors.newCachedThreadPool(runnable -> {
+            Thread worker = Executors.defaultThreadFactory().newThread(runnable);
+            int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
+            worker.setName("SearchThread-" + threadNumber);
+return worker;
+});
 
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }

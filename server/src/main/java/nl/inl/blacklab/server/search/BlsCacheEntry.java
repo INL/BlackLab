@@ -45,10 +45,10 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     /** Unique entry id */
-    long id;
+    final long id;
 
     /** Our search */
-    private Search<T> search;
+    private final Search<T> search;
 
 
     // OUTCOMES
@@ -76,7 +76,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     // TIMING
 
     /** When was this entry created (ms) */
-    private long createTime;
+    private final long createTime;
 
     /** When was this entry last accessed (ms) */
     private long lastAccessTime;
@@ -327,7 +327,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     /**
      * Cancel the search, including fetching all hits (if that's being done).
      *
-     * @param interrupt
      * @return true if the search was cancelled, false if it could not be cancelled (because it wasn't running anymore)
      */
     @Override

@@ -4,9 +4,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Property value that represents a BlackLab document */
 public class PropertyValueDoc extends PropertyValue {
-    private BlackLabIndex index;
 
-    private int docId;
+    private final int docId;
 
     @Override
     public Integer value() {
@@ -18,7 +17,6 @@ public class PropertyValueDoc extends PropertyValue {
     }*/
 
     public PropertyValueDoc(BlackLabIndex index, int id) {
-        this.index = index;
         this.docId = id;
     }
 

@@ -176,18 +176,18 @@ easier to understand and make future improvements easier.
 
 This the current list of modules:
 
-| Module          | Description                                                  |
-|-----------------|--------------------------------------------------------------|
-| `common`          | classes used by a number of other modules. Currently only contains BlackLab-specific `Exception` subclasses.
-| `content-store`   | responsible for storing the input documents indexed in BlackLab for later display with optional highlighting of hits. |
+| Module            | Description                                                                                                                                                                                                                 |
+|-------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `common`          | classes used by a number of other modules. Currently only contains BlackLab-specific `Exception` subclasses.                                                                                                                |
+| `content-store`   | responsible for storing the input documents indexed in BlackLab for later display with optional highlighting of hits.                                                                                                       |
 | `contrib/*`       | some modules that serve specific functions that some projects may need, but many don't. Currently contains plugins to convert and tag input documents before indexing, as well as some legacy `DocIndexer` implementations. |
-| `core`            | will build the main BlackLab Java library. Doesn't contain any Java code itself but combines other modules (the main module is engine). |
-| `engine`          | implements most of the BlackLab functionality. |
-| `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar. |
-| `mocks`           | mock objects useful for testing. Shouldn't be included in library build. |
-| `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser). |
-| `server`          | the BlackLab Server web service |
-| `text-pattern`    | the `TextPattern` classes that currently sit between the query parser and the `SpanQuery` classes. |
+| `core`            | will build the main BlackLab Java library. Doesn't contain any Java code itself but combines other modules (the main module is engine).                                                                                     |
+| `engine`          | implements most of the BlackLab functionality.                                                                                                                                                                              |
+| `instrumentation` | two experimental modules for monitoring BlackLab Server using Prometheus or similar.                                                                                                                                        |
+| `mocks`           | mock objects useful for testing. Shouldn't be included in library build.                                                                                                                                                    |
+| `query-parser`    | the main Corpus Query Language parser (as well the more limited Contextual Query Language parser).                                                                                                                          |
+| `server`          | the BlackLab Server web service                                                                                                                                                                                             |
+| `text-pattern`    | the `TextPattern` classes that currently sit between the query parser and the `SpanQuery` classes.                                                                                                                          |
 
 Future plans for this module structure:
 

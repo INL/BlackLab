@@ -1,9 +1,8 @@
 package nl.inl.blacklab.instrumentation;
 
-import javax.servlet.http.HttpServletRequest;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * RequestInstrumentationProvider provides information used
@@ -22,12 +21,7 @@ public interface RequestInstrumentationProvider {
      * A RequestIdProvider that does not create a request id
      */
     static RequestInstrumentationProvider noOpProvider() {
-        return new RequestInstrumentationProvider() {
-            @Override
-            public Optional<String> getRequestID(HttpServletRequest request) {
-                return Optional.empty();
-            }
-        };
+        return request -> Optional.empty();
     }
 }
 

@@ -17,7 +17,7 @@ public class ThreadAborter {
     /** The thread that we might want to abort. */
     private Thread thread;
 
-    private long startTimeMs;
+    private final long startTimeMs;
 
     private ThreadAborter() {
         thread = Thread.currentThread();

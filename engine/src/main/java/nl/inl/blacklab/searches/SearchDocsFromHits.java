@@ -3,13 +3,12 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsFromHits extends SearchDocs {
 
-    private SearchHits source;
+    private final SearchHits source;
 
     private long maxHits = 0;
 

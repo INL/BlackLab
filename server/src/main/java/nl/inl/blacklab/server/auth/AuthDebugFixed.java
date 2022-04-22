@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -22,7 +23,7 @@ public class AuthDebugFixed {
 
     static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
 
-    private String userId;
+    private final String userId;
     
     /**
      * 192.168.0.0 - 192.168.255.255

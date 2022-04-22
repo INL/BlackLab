@@ -4,7 +4,7 @@ import nl.inl.blacklab.resultproperty.HitGroupProperty;
 
 public class HitGroupSortSettings {
 
-    private HitGroupProperty sortBy;
+    private final HitGroupProperty sortBy;
 
     public HitGroupSortSettings(HitGroupProperty sortBy) {
         super();

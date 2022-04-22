@@ -29,16 +29,16 @@ import nl.inl.util.UnicodeStream;
  */
 public class DocIndexerFactoryClass implements DocIndexerFactory {
 
-    private Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
-    private Set<String> unsupported = new HashSet<>();
+    private final Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
+    private final Set<String> unsupported = new HashSet<>();
 
     @Override
     public void init() {
         try {
             // If the legacy docindexers JAR is included on the classpath, register them
-            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegacyDocIndexerRegisterer");
+            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegaDocIndexerRegisterer");
             Method m = cls.getMethod("register", DocIndexerFactoryClass.class);
-            m.invoke(this);
+            m.invoke(null, this);
         } catch (ClassNotFoundException e) {
             // OK, JAR not on classpath
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

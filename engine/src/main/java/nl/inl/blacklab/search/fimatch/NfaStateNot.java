@@ -12,7 +12,7 @@ public class NfaStateNot extends NfaState {
     private NfaState nextState;
 
     public NfaStateNot(NfaState clause, NfaState nextState) {
-        clause.finish(new HashSet<NfaState>());
+        clause.finish(new HashSet<>());
         this.clause = clause;
         this.nextState = nextState;
     }

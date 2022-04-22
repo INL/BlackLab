@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 
 public class MockAnnotatedField implements AnnotatedField {
     
-    String name;
+    final String name;
     
-    private List<Annotation> annotations;
+    private final List<Annotation> annotations;
     
     public MockAnnotatedField(String name, List<Annotation> annotations) {
         this.name = name;
@@ -88,11 +88,6 @@ public class MockAnnotatedField implements AnnotatedField {
 
     @Override
     public boolean hasXmlTags() {
-        return false;
-    }
-
-    @Override
-    public boolean hasPunctuationForwardIndex() {
         return false;
     }
 

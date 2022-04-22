@@ -6,18 +6,17 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.
  */
 public class SearchCollocationsFiltered extends SearchCollocations {
 
-    private SearchCollocations source;
+    private final SearchCollocations source;
 
-    private ResultProperty<TermFrequency> property;
+    private final ResultProperty<TermFrequency> property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
         super(queryInfo);

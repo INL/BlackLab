@@ -1,14 +1,13 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
 public class PropertyValueMultiple extends PropertyValue {
-    PropertyValue[] value;
+    final PropertyValue[] value;
 
     public PropertyValueMultiple(PropertyValue[] value) {
         this.value = value;
@@ -82,7 +81,7 @@ public class PropertyValueMultiple extends PropertyValue {
 
     @Override
     public List<PropertyValue> values() {
-        return Collections.unmodifiableList(Arrays.asList(value));
+        return List.of(value);
     }
 
     /**
@@ -98,7 +97,7 @@ public class PropertyValueMultiple extends PropertyValue {
      * @return 0 if equal, negative if a &lt; b, positive if a &gt; b
      */
     private static int compareHitPropValueArrays(PropertyValue[] a, PropertyValue[] b) {
-        int n = a.length < b.length ? a.length : b.length; // min
+        int n = Math.min(a.length, b.length); // min
         for (int i = 0; i < n; i++) {
             // Does this element decide the comparison?
             int cmp = a[i].compareTo(b[i]);

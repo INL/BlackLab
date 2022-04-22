@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.io.IOException;
@@ -33,7 +18,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      */
     private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
 
-    protected boolean skippingCurrentDocument = false;
+    protected final boolean skippingCurrentDocument = false;
 
     protected CountingReader reader;
 
@@ -46,7 +31,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
     //protected ContentStore contentStore;
 
-    private StringBuilder content = new StringBuilder();
+    private final StringBuilder content = new StringBuilder();
 
     /** Are we capturing the content of the document for indexing? */
     private boolean captureContent = false;
@@ -56,7 +41,7 @@ public abstract class DocIndexerAbstract extends DocIndexer {
 
     private int charsContentAlreadyStored = 0;
 
-    protected int nDocumentsSkipped = 0;
+    protected final int nDocumentsSkipped = 0;
 
     public void startCaptureContent(String fieldName) {
         captureContent = true;
@@ -105,11 +90,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
         }
     }
 
-    public void processContent(char[] buffer, int start, int length) {
-        if (captureContent)
-            appendContent(buffer, start, length);
-    }
-
     public void processContent(String contentToProcess) {
         if (captureContent)
             appendContent(contentToProcess);
@@ -123,17 +103,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
     @Override
     protected int getCharacterPosition() {
         return charsContentAlreadyStored + content.length();
-    }
-
-    /**
-     * NOTE: newer DocIndexers should only have a default constructor, and provide
-     * methods to set the Indexer object and the document being indexed (which are
-     * called by the Indexer). This allows us more flexibility in how we supply the
-     * document to this object (e.g. as a file, a byte array, an inputstream, a
-     * reader, ...), which helps if we want to use e.g. VTD-XML and could allow us
-     * to re-use DocIndexers in the future.
-     */
-    public DocIndexerAbstract() {
     }
 
     public DocIndexerAbstract(DocWriter indexer, String fileName, Reader reader) {
@@ -220,7 +189,6 @@ public abstract class DocIndexerAbstract extends DocIndexer {
      * A DocIndexer can be hidden by implementing a a static function named
      * isVisible, returning false.
      *
-     * @param docIndexerClass
      * @return true if the format should be listed, false if it should be omitted.
      *         Defaults to true when the DocIndexer does not implement the method.
      */

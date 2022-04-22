@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.commons.csv.CSVFormat;
@@ -38,15 +39,14 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 
         try (
                 Reader reader = new InputStreamReader(new BOMInputStream(new FileInputStream(metadataFileName)),
-                        "UTF-8");
+                        StandardCharsets.UTF_8);
 
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
-                        .withTrim());) {
+                        .withTrim())) {
 
             metadata = csvParser.getRecords();
-            reader.close();
         } catch (FileNotFoundException ex) {
             System.err.println("Metadata file \"" + metadataFileName + "\" not found. Not adding metadata.");
         } catch (IOException ex) {

@@ -172,22 +172,16 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = searchParam.docsCount().executeAsync().peek();
-        addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
+        datastreamSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
-            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
+            datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
+            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
-        ds.endEntry();
-
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
-        ds.endEntry();
+        datastreamMetadataFieldInfo(ds, blIndex);
 
         ds.endMap().endEntry();
 
@@ -248,7 +242,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, totalDocResults, searchParam.facets());
+            dataStreamFacets(ds, searchParam.facets());
             ds.endEntry();
         }
         ds.endMap();

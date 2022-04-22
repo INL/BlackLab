@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
@@ -60,10 +45,10 @@ public class DocPropertyStoredField extends DocProperty {
     //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
 
     /** Lucene field name */
-    private String fieldName;
+    private final String fieldName;
 
     /** Display name for the field */
-    private String friendlyName;
+    private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
     private Map<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> docValues = null;
@@ -71,7 +56,7 @@ public class DocPropertyStoredField extends DocProperty {
     private Map<Integer, NumericDocValuesCacher> numericDocValues = null;
 
     /** Our index */
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
         super(prop, invert);
@@ -119,7 +104,7 @@ public class DocPropertyStoredField extends DocProperty {
                 }
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -127,8 +112,6 @@ public class DocPropertyStoredField extends DocProperty {
      * Get the raw values straight from lucene.
      * The returned array is in whichever order the values were originally added to the document.
      *
-     * @param docId
-     * @return
      */
     public String[] get(int docId) {
         if  (docValues != null) {
@@ -141,7 +124,7 @@ public class DocPropertyStoredField extends DocProperty {
 
             String[] ret = new String[0];
             if (target != null) {
-                final Integer targetDocBase = target.getKey();
+                final int targetDocBase = target.getKey();
                 final Pair<SortedDocValuesCacher, SortedSetDocValuesCacher> targetDocValues = target.getValue();
                 if (targetDocValues != null) {
                     SortedDocValuesCacher a = targetDocValues.getLeft();
@@ -175,7 +158,7 @@ public class DocPropertyStoredField extends DocProperty {
                 // If no docvalues for this segment - no values were indexed for this field (in this segment).
                 // So returning the empty array is good.
             }
-            return ret.toArray(new String[ret.size()]);
+            return ret.toArray(new String[0]);
         }
 
         // We don't have DocValues; just get the property from the document.
@@ -296,7 +279,7 @@ public class DocPropertyStoredField extends DocProperty {
         if (value.toString().isEmpty())
             return null; // Cannot search for empty string (to avoid this problem, configure ans "Unknown value")
         if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
-            String strValue = "\"" + value.toString().replaceAll("\\\"", "\\\\\"") + "\"";
+            String strValue = "\"" + value.toString().replaceAll("\"", "\\\\\"") + "\"";
             try {
                 Analyzer analyzer = BlackLabIndexImpl.analyzerInstance(metadataField.analyzerName());
                 return LuceneUtil.parseLuceneQuery(strValue, analyzer, fieldName);

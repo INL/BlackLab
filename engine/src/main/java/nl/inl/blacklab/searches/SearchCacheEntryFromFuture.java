@@ -17,8 +17,6 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCacheEntry<R> {
 
-    private final Search<R> search;
-
     final Future<R> future;
 
     /** A peek at the future result, or null if not available. */
@@ -26,7 +24,6 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
 
     public SearchCacheEntryFromFuture(Future<R> future, Search<R> search) {
         this.future = future;
-        this.search = search;
         peekValue = search.peekObject(this);
     }
 

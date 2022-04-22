@@ -31,13 +31,13 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     private String punctPath = null;
 
     /** Annotations on our words */
-    private Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+    private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
     /** Annotations on our words, defined elsewhere in the document */
-    private List<ConfigStandoffAnnotations> standoffAnnotations = new ArrayList<>();
+    private final List<ConfigStandoffAnnotations> standoffAnnotations = new ArrayList<>();
 
     /** Inline tags within body text */
-    private List<ConfigInlineTag> inlineTags = new ArrayList<>();
+    private final List<ConfigInlineTag> inlineTags = new ArrayList<>();
 
     private Map<String, ConfigAnnotation> annotationsFlattened;
 
@@ -103,10 +103,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public void addInlineTag(ConfigInlineTag inlineTag) {
         this.inlineTags.add(inlineTag);
-    }
-
-    public void addInlineTag(String path, String displayAs) {
-        inlineTags.add(new ConfigInlineTag(path, displayAs));
     }
 
     @Override

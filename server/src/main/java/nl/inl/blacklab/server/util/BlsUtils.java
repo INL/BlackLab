@@ -12,6 +12,7 @@ import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
@@ -27,7 +28,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
 
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
@@ -79,13 +79,8 @@ public class BlsUtils {
                     }
                 };
                 parser.setAllowLeadingWildcard(true);
-                Query query = parser.parse(filter);
-                return query;
-            } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-                throw new BadRequest("FILTER_SYNTAX_ERROR",
-                        "Error parsing LuceneQL filter query: "
-                                + e.getMessage());
-            } catch (org.apache.lucene.queryparser.classic.TokenMgrError e) {
+                return parser.parse(filter);
+            } catch (ParseException | TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing LuceneQL filter query: "
                                 + e.getMessage());
@@ -228,25 +223,11 @@ public class BlsUtils {
         root.delete();
     }
 
-    static void debugWait() throws BlsException {
-        // Fake extra search time
-        try {
-            Thread.sleep(2000);
-        } catch (InterruptedException e) {
-            throw new ServiceUnavailable("Debug wait interrupted");
-        }
-    }
-
     /**
      * A file filter that returns readable directories only; used for scanning
      * collections dirs
      */
-    public static FileFilter readableDirFilter = new FileFilter() {
-        @Override
-        public boolean accept(File f) {
-            return f.isDirectory() && f.canRead();
-        }
-    };
+    public static final FileFilter readableDirFilter = f -> f.isDirectory() && f.canRead();
 
     /**
      * Convert a number of seconds to a M:SS string.

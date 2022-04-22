@@ -8,6 +8,7 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -21,7 +22,7 @@ public abstract class Terms {
 
     public static final int NO_TERM = -1;
 
-    protected static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+    protected static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     /**
      * We set this to a lower value on Windows because we can't properly truncate
@@ -56,7 +57,7 @@ public abstract class Terms {
      * that this should be significantly larger than maxBlockSize, because we also
      * need to store offsets.
      */
-    int maxMapSize = DEFAULT_MAX_MAP_SIZE;
+    final int maxMapSize = DEFAULT_MAX_MAP_SIZE;
 
     public void initialize() {
         // NOP

@@ -14,7 +14,7 @@ public class WindowStats {
     
     private final long requestedWindowSize;
 
-    private boolean hasNext;
+    private final boolean hasNext;
 
     public WindowStats(boolean hasNext, long first, long requestedWindowSize, long actualWindowSize) {
         this.first = first;

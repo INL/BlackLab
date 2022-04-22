@@ -10,14 +10,12 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
-import org.apache.solr.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -26,6 +24,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.solr.index.SlowCompositeReaderWrapper;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.LuceneUtil;
@@ -184,7 +183,7 @@ public class RunTermQuery {
             @Override
             public void collect(int doc) {
                 bits.set(doc + docBase);
-                System.out.println(String.format("  doc %7d", doc + docBase));
+                System.out.printf("  doc %7d%n", doc + docBase);
                 matchingDoc = doc + docBase;
                 docsFound = true;
             }
@@ -196,7 +195,7 @@ public class RunTermQuery {
         });
         if (!docsFound)
             System.out.println("  (no matching docs)");
-        System.out.println("");
+        System.out.println();
     }
 
     private static void doSpanQuery(Term term, IndexReader reader) throws IOException {
@@ -216,15 +215,14 @@ public class RunTermQuery {
             while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
                 while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
                     int doc = arc.docBase + spans.docID();
-                    System.out.println(
-                            String.format("  doc %7d, pos %4d-%4d", doc, spans.startPosition(), spans.endPosition()));
+                    System.out.printf("  doc %7d, pos %4d-%4d%n", doc, spans.startPosition(), spans.endPosition());
                     hitsFound = true;
                 }
             }
         }
         if (!hitsFound)
             System.out.println("  (no hits)");
-        System.out.println("");
+        System.out.println();
 
         System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
         LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
@@ -232,14 +230,14 @@ public class RunTermQuery {
         hitsFound = false;
         while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
             while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-                System.out.println(String.format("  doc %7d, pos %4d-%4d", spans.docID(), spans.startPosition(),
-                        spans.endPosition()));
+                System.out.printf("  doc %7d, pos %4d-%4d%n", spans.docID(), spans.startPosition(),
+                        spans.endPosition());
                 hitsFound = true;
             }
         }
         if (!hitsFound)
             System.out.println("  (no hits)");
-        System.out.println("");
+        System.out.println();
     }
 
     private static void usage() {

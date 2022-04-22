@@ -86,9 +86,9 @@ public class BatchContentStore {
                 int number = numbers.length > 1 ? numbers[1] : 100;
                 int skip = numbers.length > 2 ? numbers[2] : 0;
                 int snippets = numbers.length > 3 ? numbers[3] : 5;
-                long time = doPerformanceTest(cs, first, number, skip, snippets);
-                System.out.println(String.format("%d\t%d\t%d\t%d\t%d", first, number, skip, snippets,
-                        time));
+                long time = doPerformanceTest(cs, first, number, snippets);
+                System.out.printf("%d\t%d\t%d\t%d\t%d%n", first, number, skip, snippets,
+                        time);
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);
@@ -105,12 +105,11 @@ public class BatchContentStore {
      *
      * @param first fiid (position in toc) of first document to access
      * @param number number of documents to access
-     * @param skip number of documents to skip between accesses
      * @param snippets number of random snippets to retrieve from each document
      * @return elapsed time in ms
      */
-    public static long doPerformanceTest(ContentStore cs, int first, int number, int skip,
-            int snippets) {
+    public static long doPerformanceTest(ContentStore cs, int first, int number,
+                                         int snippets) {
         int[] start = new int[snippets];
         int[] end = new int[snippets];
 

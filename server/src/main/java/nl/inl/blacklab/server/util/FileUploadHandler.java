@@ -29,7 +29,6 @@ public class FileUploadHandler {
      * Only one file may be uploaded at a time, and it must be uploaded using
      * fieldName.
      *
-     * @param request
      * @return the file
      * @throws BlsException on invalid upload parameter/missing file/too large
      *             file/general IO errors

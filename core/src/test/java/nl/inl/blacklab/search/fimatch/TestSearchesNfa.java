@@ -36,19 +36,19 @@ public class TestSearchesNfa {
 
     @Test
     public void testSequence1() {
-        expected = Arrays.asList("[May the] Force");
+        expected = List.of("[May the] Force");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' "));
     }
 
     @Test
     public void testSequence2a() {
-        expected = Arrays.asList("[May the Force be with you]");
+        expected = List.of("[May the Force be with you]");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' ('force' 'be' 'with') 'you' "));
     }
 
     @Test
     public void testSequence2b() {
-        expected = Arrays.asList("[May the Force be with you]");
+        expected = List.of("[May the Force be with you]");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' 'force' 'be' 'with' 'you' "));
     }
 
@@ -60,25 +60,25 @@ public class TestSearchesNfa {
 
     @Test
     public void testRepetition0() {
-        expected = Arrays.asList("[May the] Force");
+        expected = List.of("[May the] Force");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the'+ "));
     }
 
     @Test
     public void testRepetition1() {
-        expected = Arrays.asList("[May the Force be with] you");
+        expected = List.of("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' '.*e'+ 'with' "));
     }
 
     @Test
     public void testRepetition2() {
-        expected = Arrays.asList("[May the Force be with] you");
+        expected = List.of("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' '(?-i).*e'{2,3} 'with' "));
     }
 
     @Test
     public void testRepetition3() {
-        expected = Arrays.asList("[May the] Force");
+        expected = List.of("[May the] Force");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'dsgsdg'* 'the' "));
     }
 
@@ -90,7 +90,7 @@ public class TestSearchesNfa {
 
     @Test
     public void testRepetitionCaseSensitive() {
-        expected = Arrays.asList("[May the Force be with] you");
+        expected = List.of("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' '(?-i).*e'+ 'with' "));
     }
 
@@ -102,13 +102,13 @@ public class TestSearchesNfa {
 
     @Test
     public void testExpansion1() {
-        expected = Arrays.asList("[May the Force be with] you");
+        expected = List.of("[May the Force be with] you");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' []{2,3} 'with' "));
     }
 
     @Test
     public void testExpansion2() {
-        expected = Arrays.asList("[May the Force] be");
+        expected = List.of("[May the Force] be");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' 'the' []{0,2} 'Force' "));
     }
 
@@ -120,7 +120,7 @@ public class TestSearchesNfa {
 
     @Test
     public void testExpansion4() {
-        expected = Arrays.asList("[May the Force] be");
+        expected = List.of("[May the Force] be");
         Assert.assertEquals(expected, testIndex.findConc(" 'May' []+ 'Force' "));
     }
 
@@ -132,7 +132,7 @@ public class TestSearchesNfa {
 
     @Test
     public void testRelativeFreqs2() {
-        expected = Arrays.asList("[noot mier aap] mier");
+        expected = List.of("[noot mier aap] mier");
         Assert.assertEquals(expected, testIndex.findConc(" 'noot' 'mier' 'aap' "));
     }
 
@@ -144,13 +144,13 @@ public class TestSearchesNfa {
 
     @Test
     public void testSuffix() {
-        expected = Arrays.asList("[The quick] brown");
+        expected = List.of("[The quick] brown");
         Assert.assertEquals(expected, testIndex.findConc("\".*E\" \"quick\""));
     }
 
     @Test
     public void testNegation() {
-        expected = Arrays.asList("mier [mier noot noot aap] aap");
+        expected = List.of("mier [mier noot noot aap] aap");
         Assert.assertEquals(expected, testIndex.findConc("'mier' [word != 'aap|mier']+ 'aap'"));
     }
 

@@ -44,7 +44,6 @@ public interface ConvertPlugin extends Plugin {
      * @param is stream containing a pushback buffer of at least 251 characters
      * @param cs (optional) charset of the inputstream, if this is a text
      *            (non-binary) file type
-     * @param inputFormat
      * @return true if this file can be converted into this plugin's outputFormat
      */
     boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat);
@@ -60,7 +59,6 @@ public interface ConvertPlugin extends Plugin {
      *            extension, or more semantic. Usage may vary, so acceptable values
      *            must be coordinated between callers and implementations.
      * @param os output. Should not be closed by the implementation.
-     * @throws PluginException
      */
     void perform(InputStream is, Charset cs, String inputFormat, OutputStream os) throws PluginException;
 }

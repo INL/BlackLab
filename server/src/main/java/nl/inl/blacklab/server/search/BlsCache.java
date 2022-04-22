@@ -85,9 +85,9 @@ public class BlsCache implements SearchCache {
     /** Abort an abandoned count after how much time? (s) */
     private final int abandonedCountAbortTimeSec;
 
-    protected Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
+    protected final Map<Search<?>, BlsCacheEntry<? extends SearchResult>> searches = new HashMap<>();
 
-    protected boolean trace;
+    protected final boolean trace;
 
     private final boolean cacheDisabled;
 

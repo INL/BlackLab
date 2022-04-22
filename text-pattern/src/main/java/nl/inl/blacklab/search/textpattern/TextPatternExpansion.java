@@ -8,19 +8,19 @@ import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 
 public class TextPatternExpansion extends TextPattern {
 
-    protected TextPattern clause;
+    protected final TextPattern clause;
 
-    protected Direction direction;
+    protected final Direction direction;
 
     /*
      * The minimum number of tokens in this stretch.
      */
-    protected int min;
+    protected final int min;
 
     /*
      * The maximum number of tokens in this stretch.
      */
-    protected int max;
+    protected final int max;
 
     public TextPatternExpansion(TextPattern clause, Direction direction, int min, int max) {
         this.clause = clause;

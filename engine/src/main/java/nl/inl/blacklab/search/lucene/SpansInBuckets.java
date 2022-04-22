@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -83,7 +68,6 @@ public interface SpansInBuckets {
      * You still have to call nextBucket() to get to the first valid bucket.
      *
      * @return docID if we're at the next valid doc, NO_MORE_DOCS if we're done
-     * @throws IOException
      */
     int nextDoc() throws IOException;
 
@@ -92,7 +76,6 @@ public interface SpansInBuckets {
      *
      * @return docID if we're at the next valid bucket, NO_MORE_BUCKETS if we're
      *         done
-     * @throws IOException
      */
     int nextBucket() throws IOException;
 
@@ -103,7 +86,6 @@ public interface SpansInBuckets {
      *
      * @param target document id to skip to
      * @return docID if we're at a valid document, NO_MORE_DOCS if we're done
-     * @throws IOException
      */
     int advance(int target) throws IOException;
 

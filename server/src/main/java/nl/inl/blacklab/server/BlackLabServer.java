@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -52,9 +53,9 @@ public class BlackLabServer extends HttpServlet {
 
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
-    static final Charset CONFIG_ENCODING = Charset.forName("utf-8");
+    static final Charset CONFIG_ENCODING = StandardCharsets.UTF_8;
 
-    static final Charset OUTPUT_ENCODING = Charset.forName("utf-8");
+    static final Charset OUTPUT_ENCODING = StandardCharsets.UTF_8;
 
     /** Manages all our searches */
     private SearchManager searchManager;
@@ -91,8 +92,6 @@ public class BlackLabServer extends HttpServlet {
             // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
             BlackLab.setConfig(config.getBLConfig());
 
-            if (config.getProtocol().isUseOldElementNames())
-                logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
             searchManager = new SearchManager(config);
 
             // Set default parameter settings from config
@@ -141,9 +140,8 @@ public class BlackLabServer extends HttpServlet {
             : String.format("nl.inl.blacklab.instrumentation.impl.%s", provider);
 
         try {
-            RequestInstrumentationProvider instrumentationProvider = (RequestInstrumentationProvider)
+            return (RequestInstrumentationProvider)
                 Class.forName(fqClassName).getDeclaredConstructor().newInstance();
-            return instrumentationProvider;
 
         } catch (Exception ex) {
             throw new ConfigurationException("Can not create request instrumentation provider with class" + fqClassName);
@@ -154,30 +152,27 @@ public class BlackLabServer extends HttpServlet {
     /**
      * Process POST requests (add data to index)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
     /**
      * Process PUT requests (create index)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doPut(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doPut(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
     /**
      * Process DELETE requests (create a index, add data to one)
      *
-     * @throws ServletException
      */
     @Override
-    protected void doDelete(HttpServletRequest request, HttpServletResponse responseObject) throws ServletException {
+    protected void doDelete(HttpServletRequest request, HttpServletResponse responseObject) {
         handleRequest(request, responseObject);
     }
 
@@ -342,7 +337,6 @@ public class BlackLabServer extends HttpServlet {
             // Client cancelled the request midway through.
             // This is okay, don't raise the alarm.
             logger.debug("(couldn't send response, client probably cancelled the request)");
-            return;
         }
     }
 

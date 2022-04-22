@@ -6,7 +6,8 @@ package nl.inl.blacklab.search;
  * Used for captured groups.
  */
 public class Span {
-    private int start, end;
+    private final int start;
+    private final int end;
 
     public Span(int start, int end) {
         this.start = start;

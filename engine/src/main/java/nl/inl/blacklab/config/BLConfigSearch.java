@@ -26,6 +26,7 @@ public class BLConfigSearch {
         return collator;
     }
 
+    @SuppressWarnings("unused")
     public void setCollator(BLConfigCollator collator) {
         this.collator = collator;
     }
@@ -42,6 +43,7 @@ public class BLConfigSearch {
         return maxHitsToRetrieve;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxHitsToRetrieve(int maxHitsToRetrieve) {
         this.maxHitsToRetrieve = maxHitsToRetrieve;
     }
@@ -50,6 +52,7 @@ public class BLConfigSearch {
         return maxHitsToCount;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxHitsToCount(long maxHitsToCount) {
         this.maxHitsToCount = maxHitsToCount;
     }
@@ -58,6 +61,7 @@ public class BLConfigSearch {
         return fiMatchFactor;
     }
 
+    @SuppressWarnings("unused")
     public void setFiMatchFactor(int fiMatchFactor) {
         this.fiMatchFactor = fiMatchFactor;
     }
@@ -66,6 +70,7 @@ public class BLConfigSearch {
         return enableHugeResultSets;
     }
 
+    @SuppressWarnings("unused")
     public void setEnableHugeResultSets(boolean enableHugeResultSets) {
         this.enableHugeResultSets = enableHugeResultSets;
     }

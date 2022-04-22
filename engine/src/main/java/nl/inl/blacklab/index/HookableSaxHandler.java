@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.util.ArrayList;
@@ -124,7 +109,7 @@ public class HookableSaxHandler extends DefaultHandler {
         List<String> elementNames;
 
         /** Current matching status */
-        private List<ExprMatcher> matchers = new ArrayList<>();
+        private final List<ExprMatcher> matchers = new ArrayList<>();
 
         /** Current parsing depth */
         private int depth = 0;
@@ -162,14 +147,14 @@ public class HookableSaxHandler extends DefaultHandler {
                 throw new IllegalArgumentException("Cannot match on attribute");
             }
             elementNames = new ArrayList<>();
-            for (int i = 0; i < numberOfElementParts; i++) {
-                if (parts[i].length() == 0) {
+            for (String part : parts) {
+                if (part.length() == 0) {
                     throw new IllegalArgumentException("Double slash in simple-xpath expression");
                 }
-                if (parts[i].charAt(0) == '@') {
+                if (part.charAt(0) == '@') {
                     throw new IllegalArgumentException("Cannot match on attribute");
                 }
-                elementNames.add(parts[i]);
+                elementNames.add(part);
             }
         }
 
@@ -258,7 +243,7 @@ public class HookableSaxHandler extends DefaultHandler {
      */
     public static class ContentCapturingHandler extends ElementHandler {
 
-        private StringBuilder elementContent = new StringBuilder();
+        private final StringBuilder elementContent = new StringBuilder();
 
         public String getElementContent() {
             return elementContent.toString();
@@ -281,15 +266,15 @@ public class HookableSaxHandler extends DefaultHandler {
      */
     private static class SaxParserHook {
         /** The path to check for */
-        private SaxPathExpressionChecker expression;
+        private final SaxPathExpressionChecker expression;
 
         /** The handler for this hook */
-        private ElementHandler handler;
+        private final ElementHandler handler;
 
         /**
          * Whether or not to call the handler for all descendants of the matched element
          */
-        private boolean callHandlerForDescendants;
+        private final boolean callHandlerForDescendants;
 
         /**
          * Constructs the object.
@@ -370,7 +355,7 @@ public class HookableSaxHandler extends DefaultHandler {
     }
 
     /** The list of hooks into our parser */
-    private List<SaxParserHook> hooks = new ArrayList<>();
+    private final List<SaxParserHook> hooks = new ArrayList<>();
 
     /** To keep track of the position within the document */
     protected Locator locator;

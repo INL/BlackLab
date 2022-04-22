@@ -1,24 +1,4 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
-/**
- *
- */
 package nl.inl.blacklab.mocks;
-
-import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
@@ -33,13 +13,13 @@ import nl.inl.blacklab.search.lucene.SpansInBuckets;
  */
 public class MockSpansInBuckets implements SpansInBuckets {
 
-    private int[] start;
+    private final int[] start;
 
-    private int[] end;
+    private final int[] end;
 
-    private int[] bucketStart;
+    private final int[] bucketStart;
 
-    private int[] bucketDoc;
+    private final int[] bucketDoc;
 
     private int currentBucket = -1;
 
@@ -78,7 +58,7 @@ public class MockSpansInBuckets implements SpansInBuckets {
     }
 
     @Override
-    public int nextBucket() throws IOException {
+    public int nextBucket() {
         if (alreadyAtFirstBucket) {
             alreadyAtFirstBucket = false;
             return docID();
@@ -109,7 +89,7 @@ public class MockSpansInBuckets implements SpansInBuckets {
     }
 
     @Override
-    public int advance(int target) throws IOException {
+    public int advance(int target) {
         alreadyAtFirstBucket = false;
         int doc;
         do {

@@ -1,5 +1,22 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerAbstract;
@@ -10,24 +27,6 @@ import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
 import nl.inl.blacklab.indexers.preprocess.TagPlugin;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Configuration for an input format (either contents, or metadata, or a mix of
@@ -37,10 +36,10 @@ public class ConfigInputFormat {
 
     /** Basic file types we support */
     public enum FileType {
-    XML,
-    TABULAR, // csv, tsv
-    TEXT, // plain text
-    CHAT; // CHILDES CHAT format
+        XML,
+        TABULAR, // csv, tsv
+        TEXT, // plain text
+        CHAT; // CHILDES CHAT format
 
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase());
@@ -53,17 +52,16 @@ public class ConfigInputFormat {
 
     /** file type options for a FileType */
     public enum FileTypeOption {
-        VTD(FileType.XML, Constants.PROCESSING), SAXONICA(FileType.XML, Constants.PROCESSING);
+
+        VTD(FileType.XML, Constants.PROCESSING),
+        SAXONICA(FileType.XML, Constants.PROCESSING);
+
         private final FileType fileType;
         private final String key;
 
         FileTypeOption(FileType fileType, String key) {
             this.fileType = fileType;
             this.key = key;
-        }
-
-        public FileType getFileType() {
-            return fileType;
         }
 
         public String getKey() {
@@ -77,10 +75,6 @@ public class ConfigInputFormat {
                 }
             }
             return null;
-        }
-
-        public static List<FileTypeOption> forFileType(FileType fileType) {
-            return Arrays.stream(values()).filter(fto -> fto.fileType == fileType).collect(Collectors.toList());
         }
 
         public static List<FileTypeOption> fromConfig (ConfigInputFormat config, FileType ft) {
@@ -132,13 +126,13 @@ public class ConfigInputFormat {
     private FileType fileType = FileType.XML;
 
     /** Options for the file type (i.e. separator in case of tabular, etc.) */
-    private Map<String, String> fileTypeOptions = new HashMap<>();
+    private final Map<String, String> fileTypeOptions = new HashMap<>();
 
     /** Configuration that will be added to indexmetadata when creating a corpus */
     private ConfigCorpus corpusConfig = new ConfigCorpus();
 
     /** XML namespace declarations */
-    Map<String, String> namespaces = new LinkedHashMap<>();
+    final Map<String, String> namespaces = new LinkedHashMap<>();
 
     /** How to find our documents */
     private String documentPath = "/";
@@ -149,7 +143,7 @@ public class ConfigInputFormat {
     /**
      * Before adding metadata fields to the document, this name mapping is applied.
      */
-    Map<String, String> indexFieldAs = new LinkedHashMap<>();
+    final Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
     /** What default analyzer to use if not overridden */
     private String metadataDefaultAnalyzer = "default";
@@ -159,13 +153,13 @@ public class ConfigInputFormat {
     private String metadataDefaultUnknownValue = "unknown";
 
     /** Blocks of embedded metadata */
-    private List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
+    private final List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
 
     /** Annotated fields (usually just "contents") */
-    private Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
+    private final Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
 
     /** Linked document(s), e.g. containing our metadata */
-    private Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
+    private final Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
     /** id of a {@link ConvertPlugin} to run files through prior to indexing */
     private String convertPluginId;
@@ -202,20 +196,6 @@ public class ConfigInputFormat {
         this.readFromFile = file;
         this.name = ConfigInputFormat.stripExtensions(file.getName());
         InputFormatReader.read(file, this, finder);
-    }
-
-    /**
-     *
-     * @param name format name
-     * @param reader format file to read
-     * @param isJson true if json, false if yaml
-     * @param finder finder to locate the baseFormat of this config, if set, may be
-     *            null if no baseFormat is required
-     * @throws IOException
-     */
-    public ConfigInputFormat(String name, Reader reader, boolean isJson, BaseFormatFinder finder) throws IOException {
-        this.name = name;
-        InputFormatReader.read(reader, isJson, this, finder);
     }
 
     /**
@@ -315,18 +295,6 @@ public class ConfigInputFormat {
         this.visible = listed;
     }
 
-//    public ConfigTabularOptions getTabularOptions() {
-//        return tabularOptions;
-//    }
-//
-//    public void setTabularOptions(ConfigTabularOptions tabularOptions) {
-//        this.tabularOptions = tabularOptions;
-//    }
-
-    public void addNamespace(String name, String uri) {
-        namespaces.put(name, uri);
-    }
-
     public void setDocumentPath(String documentPath) {
         this.documentPath = documentPath;
     }
@@ -350,10 +318,6 @@ public class ConfigInputFormat {
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
         this.annotatedFields.put(f.getName(), f);
-    }
-
-    public void addLinkedDocument(ConfigLinkedDocument d) {
-        linkedDocuments.put(d.getName(), d);
     }
 
     public void setConvertPluginId(String id) {
@@ -409,10 +373,6 @@ public class ConfigInputFormat {
         return Collections.unmodifiableMap(linkedDocuments);
     }
 
-    public ConfigLinkedDocument getLinkedDocument(String name) {
-        return getLinkedDocument(name, false);
-    }
-
     private ConfigLinkedDocument getLinkedDocument(String name, boolean createIfNotFound) {
         ConfigLinkedDocument ld = linkedDocuments.get(name);
         if (ld == null && createIfNotFound) {
@@ -428,10 +388,6 @@ public class ConfigInputFormat {
 
     public Map<String, String> getIndexFieldAs() {
         return Collections.unmodifiableMap(indexFieldAs);
-    }
-
-    public void addIndexFieldAs(String from, String to) {
-        indexFieldAs.put(from, to);
     }
 
     public boolean shouldStore() {

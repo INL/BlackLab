@@ -2,6 +2,7 @@ package nl.inl.util;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,7 +51,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public final class LuceneUtil {
 
-    static final Charset LUCENE_DEFAULT_CHARSET = Charset.forName("utf-8");
+    static final Charset LUCENE_DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final Logger logger = LogManager.getLogger(LuceneUtil.class);
 
     private LuceneUtil() {
@@ -328,7 +329,6 @@ public final class LuceneUtil {
      * @param fieldName the field to find terms for
      * @param startFrom (prefix of a) term to start iterating from, or null to start at the beginning
      * @param handler called to handle terms found, until it returns false (or we run out of terms)
-     * @return the matching terms
      */
     public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
     	boolean allTerms = startFrom == null || startFrom.length() == 0;
@@ -405,8 +405,8 @@ public final class LuceneUtil {
                         break outerLoop;
                     
                     String termText = term.utf8ToString();
-                    boolean startsWithPrefix = allTerms ? true : sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
-                            : termText.startsWith(prefix);
+                    boolean startsWithPrefix = allTerms || (sensitive ? StringUtil.stripAccents(termText).startsWith(prefix)
+                            : termText.startsWith(prefix));
                     if (!startsWithPrefix) {
                         // Doesn't match prefix or different field; no more matches
                         break;
@@ -425,7 +425,6 @@ public final class LuceneUtil {
     /**
      * Get term frequencies for an annotation in a subset of documents.
      *
-     * @param indexSearcher
      * @param documentFilterQuery document filter, or null for all documents
      * @param annotSensitivity field to get frequencies for
      * @param searchTerms list of terms to get frequencies for, or null for all terms
@@ -485,10 +484,8 @@ public final class LuceneUtil {
      * @param it the terms in the (set of) documents or a leaf
      * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
      * @param freq map containing existing frequencies to add on to or merge in to
-     * @return the freq map, for ease of use
-     * @throws IOException
      */
-    private static Map<String, Integer> getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
+    private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
         if (searchTerms != null && !searchTerms.isEmpty()) {
             for (String term : searchTerms) {
                 if (it.seekExact(new BytesRef(term))) {
@@ -514,7 +511,6 @@ public final class LuceneUtil {
                 }
             }
         }
-        return freq;
     }
 
     public static IndexWriterConfig getIndexWriterConfig(Analyzer analyzer, boolean create) {
@@ -578,11 +574,7 @@ public final class LuceneUtil {
                         termText = StringUtil.stripAccents(termText).toLowerCase();
                         String[] parts = termText.split(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
                         String subpropName = parts[1];
-                        Set<String> resultList = results.get(subpropName);
-                        if (resultList == null) {
-                            resultList = new TreeSet<>();
-                            results.put(subpropName, resultList);
-                        }
+                        Set<String> resultList = results.computeIfAbsent(subpropName, k -> new TreeSet<>());
                         String subpropValue = parts[2];
                         resultList.add(subpropValue);
                     }

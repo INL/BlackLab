@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.tools;
 
 import java.io.BufferedReader;
@@ -21,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -53,7 +39,7 @@ import nl.inl.util.LuceneUtil;
  */
 public class IndexTool {
 
-    static Map<String, String> indexerParam = new TreeMap<>();
+    static final Map<String, String> indexerParam = new TreeMap<>();
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
@@ -233,7 +219,7 @@ public class IndexTool {
             dirs.add(2, inputDirParent);
         if (indexDirParent != null && !dirs.contains(indexDirParent))
             dirs.add(indexDirParent);
-        propFile = FileUtil.findFile(dirs, "indexer", Arrays.asList("properties"));
+        propFile = FileUtil.findFile(dirs, "indexer", List.of("properties"));
         if (propFile != null && propFile.canRead())
             readParametersFromPropertiesFile(propFile);
 
@@ -406,7 +392,7 @@ public class IndexTool {
                         + " does not exist or is not a regular file!");
             }
 
-            try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "iso-8859-1"))) {
+            try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1))) {
                 Properties properties = new Properties();
                 properties.load(in);
                 return properties;

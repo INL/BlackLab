@@ -117,14 +117,14 @@ public class ContextualQueryLanguageParser {
             // Phrase query
             if (isContentsSearch) {
                 List<TextPattern> clauses = new ArrayList<>();
-                for (int i = 0; i < parts.length; i++) {
-                    clauses.add(new TextPatternWildcard(parts[i]));
+                for (String part : parts) {
+                    clauses.add(new TextPatternWildcard(part));
                 }
                 tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
             } else {
                 PhraseQuery.Builder pb = new PhraseQuery.Builder();
-                for (int i = 0; i < parts.length; i++) {
-                    pb.add(new Term(field, parts[i]));
+                for (String part : parts) {
+                    pb.add(new Term(field, part));
                 }
                 q = pb.build();
             }
@@ -135,7 +135,7 @@ public class ContextualQueryLanguageParser {
         return new CompleteQuery(null, q);
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     private String defaultProperty = "contents.word";
 

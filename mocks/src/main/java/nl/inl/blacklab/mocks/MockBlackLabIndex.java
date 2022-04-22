@@ -42,19 +42,19 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class MockBlackLabIndex implements BlackLabIndex {
 
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
 
-    private SearchSettings searchSettings;
+    private final SearchSettings searchSettings;
 
-    private Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
+    private final Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
-    private Analyzer analyzer;
+    private final Analyzer analyzer;
 
     private IndexSearcher searcher;
 
-    private SearchCache cache = new SearchCacheDummy();
+    private final SearchCache cache = new SearchCacheDummy();
 
-    private BlackLabEngine blackLab;
+    private final BlackLabEngine blackLab;
 
     public MockBlackLabIndex() {
         super();
@@ -239,11 +239,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public SearchCache cache() {
         return cache;
     }
-
-//    @Override
-//    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
-//        throw new UnsupportedOperationException();
-//    }
 
     @Override
     public String toString() {

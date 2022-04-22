@@ -194,11 +194,11 @@ public class SearchParameters {
     );
 
     /** The search manager, for querying default value for missing parameters */
-    private SearchManager searchManager;
+    private final SearchManager searchManager;
 
     private boolean debugMode;
 
-    private Map<String, String> map = new TreeMap<>();
+    private final Map<String, String> map = new TreeMap<>();
 
     /** The pattern, if parsed already */
     private TextPattern pattern;
@@ -206,7 +206,7 @@ public class SearchParameters {
     /** The filter query, if parsed already */
     private Query filterQuery;
 
-    private boolean isDocsOperation;
+    private final boolean isDocsOperation;
 
     private List<DocProperty> facetProps;
 
@@ -223,10 +223,10 @@ public class SearchParameters {
         return map.put(key, value);
     }
 
-    public String getString(Object key) {
+    public String getString(String key) {
         String value = map.get(key);
         if (value == null || value.length() == 0) {
-            value = getDefault(key.toString());
+            value = getDefault(key);
         }
         return value;
     }
@@ -373,7 +373,7 @@ public class SearchParameters {
     }
 
     boolean getUseCache() {
-        return debugMode ? getBoolean("usecache") : true;
+        return !debugMode || getBoolean("usecache");
     }
 
     public SearchSettings getSearchSettings() {
@@ -561,7 +561,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted then sampled then windowed
-     * @throws BlsException
      */
     public SearchHits hitsWindow() throws BlsException {
         WindowSettings windowSettings = getWindowSettings();
@@ -572,7 +571,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted then sampled
-     * @throws BlsException
      */
     public SearchHits hitsSample() throws BlsException {
         SampleParameters sampleSettings = getSampleSettings();
@@ -583,7 +581,6 @@ public class SearchParameters {
 
     /**
      * @return hits - filtered then sorted
-     * @throws BlsException
      */
     private SearchHits hitsSorted() throws BlsException {
         HitSortSettings hitsSortSettings = hitsSortSettings();
@@ -608,8 +605,6 @@ public class SearchParameters {
             return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
-        } catch (BlsException e) {
-            throw e;
         }
     }
 
@@ -652,7 +647,6 @@ public class SearchParameters {
      * If no metadata query is given, the subcorpus is all documents in the corpus.
      *
      * @return subcorpus
-     * @throws BlsException
      */
     public SearchDocs subcorpus() throws BlsException {
         Query docFilterQuery = getFilterQuery();

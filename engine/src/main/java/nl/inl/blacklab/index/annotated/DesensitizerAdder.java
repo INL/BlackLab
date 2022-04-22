@@ -7,10 +7,10 @@ import nl.inl.blacklab.analysis.DesensitizeFilter;
 public class DesensitizerAdder implements TokenFilterAdder {
 
     /** Should we add a LowerCaseFilter? */
-    private boolean lowerCase;
+    private final boolean lowerCase;
 
     /** Should we add a RemoveAllAccentsFilter? */
-    private boolean removeAccents;
+    private final boolean removeAccents;
 
     public DesensitizerAdder(boolean lowerCase, boolean removeAccents) {
         this.lowerCase = lowerCase;

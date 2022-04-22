@@ -35,7 +35,7 @@ class DocFieldLengthGetter implements Closeable {
     private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
     /** The Lucene index reader, for querying field length */
-    private LeafReader reader;
+    private final LeafReader reader;
 
     /**
      * For testing, we don't have an IndexReader available, so we use test values
@@ -49,10 +49,10 @@ class DocFieldLengthGetter implements Closeable {
     private boolean lengthFieldIsStored = false;
 
     /** Name of the field we're searching */
-    private String fieldName;
+    private final String fieldName;
 
     /** Field name to check for the length of the field in tokens */
-    private String lengthTokensFieldName;
+    private final String lengthTokensFieldName;
 
     /** Field visitor to get the field value (without loading the entire document) */
     private final DocumentStoredFieldVisitor lengthTokensFieldVisitor;
@@ -77,7 +77,6 @@ class DocFieldLengthGetter implements Closeable {
                     // Use UninvertingReader to simulate DocValues (slower)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                     fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER_POINT);
-                    @SuppressWarnings("resource")
                     LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                     cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName);
                 }
@@ -94,7 +93,7 @@ class DocFieldLengthGetter implements Closeable {
                             break;
                         }
         			} catch (IOException e) {
-        				BlackLabRuntimeException.wrap(e);
+                        throw BlackLabRuntimeException.wrap(e);
         			}
 
                 }
@@ -154,7 +153,7 @@ class DocFieldLengthGetter implements Closeable {
         			return (int)cachedFieldLengths.longValue(); 
         		}
 			} catch (IOException e) {
-				BlackLabRuntimeException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
 			}
         }
 

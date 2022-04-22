@@ -17,7 +17,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
         void rejectedExecution(Runnable r, MainThreadExecutorService e);
     }
 
-    private RejectedExecutionHandler handler;
+    private final RejectedExecutionHandler handler;
 
     private boolean shutdown;
 
@@ -34,7 +34,7 @@ public class MainThreadExecutorService extends AbstractExecutorService {
     }
 
     @Override
-    public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+    public boolean awaitTermination(long timeout, TimeUnit unit) {
         shutdown = true;
         return true;
     }

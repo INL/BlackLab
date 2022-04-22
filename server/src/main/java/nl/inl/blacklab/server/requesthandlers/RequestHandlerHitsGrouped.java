@@ -1,10 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -14,19 +12,14 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -78,7 +71,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
-        addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
+        datastreamSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
@@ -94,7 +87,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+        datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
         ds.endMap().endEntry();
 
         /* Gather group values per property:
@@ -102,13 +95,12 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? ((HitPropertyMultiple) groups.groupCriteria()).props() : List.of(groups.groupCriteria());
-
-        Map<Integer, String> pids = new HashMap<>();
+        List<HitProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
 
         ds.startEntry("hitGroups").startList();
         long last = Math.min(first + requestedWindowSize, groups.size());
 
+        Map<Integer, Document> luceneDocs = new HashMap<>();
         try (BlockTimer ignored = BlockTimer.create("Serializing groups to JSON")) {
             for (long i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
@@ -118,7 +110,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
-                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
+                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
 //                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
@@ -145,13 +137,13 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 if (INCLUDE_RELATIVE_FREQ) {
                     ds.entry("numberOfDocs", numberOfDocsInGroup);
                     if (metadataGroupProperties != null) {
-                        addSubcorpusSize(ds, subcorpusSize);
+                        datastreamSubcorpusSize(ds, subcorpusSize);
                     }
                 }
 
                 if (searchParam.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
-                    writeHits(ds, hitsInGroup, pids, searchParam.getContextSettings());
+                    datastreamHits(ds, hitsInGroup, luceneDocs, searchParam.getContextSettings());
                 }
 
                 ds.endMap().endItem();
@@ -160,47 +152,14 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.endList().endEntry();
 
         if (searchParam.includeGroupContents()) {
-            writeDocInfos(ds, groups, pids, first, requestedWindowSize);
+            datastreamDocInfos(ds, blIndex(), luceneDocs, getMetadataToWrite());
         }
         ds.endMap();
 
         return HTTP_OK;
     }
 
-    private void writeDocInfos(DataStream ds, HitGroups hitGroups, Map<Integer, String> pids, long first, long requestedWindowSize) throws BlsException {
-        BlackLabIndex index = hitGroups.index();
-        ds.startEntry("docInfos").startMap();
-        MutableIntSet docsDone = new IntHashSet();
-        Document doc = null;
-        String lastPid = "";
-        Set<MetadataField> metadataFieldsTolist = new HashSet<>(this.getMetadataToWrite());
-
-        int i = 0;
-        for (HitGroup group : hitGroups) {
-            if (i >= first && i < first + requestedWindowSize) {
-                for (Hit hit : group.storedResults()) {
-                    String pid = pids.get(hit.doc());
-
-                    // Add document info if we didn't already
-                    if (!docsDone.contains(hit.doc())) {
-                        docsDone.add(hit.doc());
-                        ds.startAttrEntry("docInfo", "pid", pid);
-                        if (!pid.equals(lastPid)) {
-                            doc = index.luceneDoc(hit.doc());
-                            lastPid = pid;
-                        }
-                        dataStreamDocumentInfo(ds, index, doc, metadataFieldsTolist);
-                        ds.endAttrEntry();
-                    }
-                }
-            }
-            i++;
-        }
-
-        ds.endMap().endEntry();
-    }
-
-    static CorpusSize findSubcorpusSize(SearchParameters searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value, boolean countTokens) {
+    static CorpusSize findSubcorpusSize(SearchParameters searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
@@ -215,6 +174,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             query = builder.build();
         }
         // Determine number of tokens in this subcorpus
-        return searchParam.blIndex().queryDocuments(query).subcorpusSize(countTokens);
+        return searchParam.blIndex().queryDocuments(query).subcorpusSize(true);
     }
 }

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
@@ -22,6 +7,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -50,16 +36,16 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     /** The properties we're combining */
-    List<HitProperty> properties;
+    final List<HitProperty> properties;
 
     /** All the contexts needed by the criteria */
-    List<Annotation> contextNeeded;
+    final List<Annotation> contextNeeded;
     
     /** Sensitivities needed for the criteria in contextNeeded (same order) */
-    List<MatchSensitivity> sensitivities; 
+    final List<MatchSensitivity> sensitivities;
     
     /** Which of the contexts do the individual properties need? */
-    Map<HitProperty, IntArrayList> contextIndicesPerProperty;
+    final Map<HitProperty, IntArrayList> contextIndicesPerProperty;
     
     HitPropertyMultiple(HitPropertyMultiple mprop, Hits newHits, Contexts contexts, boolean invert) {
         super(mprop, null, null, invert);
@@ -203,7 +189,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
         // Get ContextSize that's large enough for all our properties
-        return properties.stream().map(p -> p.needsContextSize(index)).filter(s -> s != null).reduce( (a, b) -> ContextSize.union(a, b) ).orElse(null);
+        return properties.stream().map(p -> p.needsContextSize(index)).filter(Objects::nonNull).reduce(ContextSize::union).orElse(null);
     }
 
     @Override
@@ -259,7 +245,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public DocProperty docPropsOnly() {
-        List<DocProperty> crit = properties.stream().map(hp -> hp.docPropsOnly()).filter(prop -> prop != null).collect(Collectors.toList());
+        List<DocProperty> crit = properties.stream().map(HitProperty::docPropsOnly).filter(Objects::nonNull).collect(Collectors.toList());
         if (crit.isEmpty())
             return null;
         if (crit.size() == 1) {

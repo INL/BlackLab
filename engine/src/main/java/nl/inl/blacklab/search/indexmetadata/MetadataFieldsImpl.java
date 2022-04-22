@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,10 +17,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
      */
-    private Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
+    private final Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
-    private Map<String, MetadataFieldImpl> metadataFieldInfos;
+    private final Map<String, MetadataFieldImpl> metadataFieldInfos;
 
     /**
      * When a metadata field value is considered "unknown"
@@ -60,7 +61,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @Override
     public Iterator<MetadataField> iterator() {
         final Iterator<MetadataFieldImpl> it = metadataFieldInfos.values().iterator();
-        return new Iterator<MetadataField>() {
+        return new Iterator<>() {
             @Override
             public boolean hasNext() {
                 return it.hasNext();
@@ -75,7 +76,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public Stream<MetadataField> stream() {
-        return metadataFieldInfos.values().stream().map(f -> (MetadataField)f);
+        return metadataFieldInfos.values().stream().map(f -> f);
     }
 
     @Override
@@ -101,7 +102,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             @Override
             public Iterator<MetadataFieldGroup> iterator() {
                 Iterator<MetadataFieldGroupImpl> it = metadataGroups.values().iterator();
-                return new Iterator<MetadataFieldGroup>() {
+                return new Iterator<>() {
                     @Override
                     public boolean hasNext() {
                         return it.hasNext();
@@ -116,7 +117,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
             @Override
             public Stream<MetadataFieldGroup> stream() {
-                return metadataGroups.values().stream().map(g -> (MetadataFieldGroup)g);
+                return metadataGroups.values().stream().map(g -> g);
             }
 
             @Override
@@ -174,7 +175,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             return null;
 
         // Sort (so we always return the same field if more than one matches
-        fieldsFound.sort( (a, b) -> a.name().compareTo(b.name()) );
+        fieldsFound.sort(Comparator.comparing(Field::name));
         return fieldsFound.get(0);
     }
 
@@ -231,7 +232,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /**
      * Check if field exists, or create a default (tokenized) field for it if not.
      *
-     * @param name
      */
     @Override
     public void ensureFieldExists(String name) {
@@ -304,12 +304,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public MetadataFieldsImpl freeze() {
+    public void freeze() {
         this.frozen = true;
         for (MetadataFieldImpl field: metadataFieldInfos.values()) {
             field.freeze();
         }
-        return this;
     }
 
     @Override

@@ -1,19 +1,24 @@
 package nl.inl.blacklab.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
-import nl.inl.util.Json;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.util.Json;
 
 public class BlackLabConfig {
 
@@ -40,12 +45,10 @@ public class BlackLabConfig {
      * Attempting to set another configuration when one is already loaded will throw
      * an UnsupportedOperationException.
      *
-     * @param file
-     * @return configuration
-     * @throws FileNotFoundException
-     * @throws IOException
+     * @param file file to read
+     * @return configuration configuration from file
      */
-    public synchronized static BlackLabConfig readConfigFile(File file) throws FileNotFoundException, IOException {
+    public synchronized static BlackLabConfig readConfigFile(File file) throws IOException {
         if (file == null || !file.canRead())
             throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -61,9 +64,7 @@ public class BlackLabConfig {
      *
      * @param fileName config file name
      * @param fileContents contents of the config file
-     * @param isJson
-     * @throws JsonProcessingException
-     * @throws IOException
+     * @param isJson if true, reads JSON. Otherwise, reads YAML.
      */
     private synchronized static BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();

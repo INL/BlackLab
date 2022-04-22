@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
-import nl.inl.blacklab.search.results.ResultsStats;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -21,7 +20,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class AbstractSearch<R extends SearchResult> implements Search<R> {
 
-    private QueryInfo queryInfo;
+    private final QueryInfo queryInfo;
 
     public AbstractSearch(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;

@@ -16,7 +16,7 @@ public class TestKwic {
 
     static final List<String> PROPS = Arrays.asList("punct", "lemma", "pos", "word");
     
-    static final List<Annotation> ANNOTS = PROPS.stream().map(name -> new MockAnnotation(name)).collect(Collectors.toList());
+    static final List<Annotation> ANNOTS = PROPS.stream().map(MockAnnotation::new).collect(Collectors.toList());
     
     static final AnnotatedField FIELD = new MockAnnotatedField("contents", ANNOTS);
     

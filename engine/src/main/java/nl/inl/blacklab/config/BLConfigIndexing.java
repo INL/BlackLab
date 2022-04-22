@@ -23,6 +23,7 @@ public class BLConfigIndexing {
         return downloadAllowed;
     }
 
+    @SuppressWarnings("unused")
     public void setDownloadAllowed(boolean downloadAllowed) {
         this.downloadAllowed = downloadAllowed;
     }
@@ -31,6 +32,7 @@ public class BLConfigIndexing {
         return downloadCacheDir;
     }
 
+    @SuppressWarnings("unused")
     public void setDownloadCacheDir(String downloadCacheDir) {
         this.downloadCacheDir = downloadCacheDir;
     }
@@ -39,6 +41,7 @@ public class BLConfigIndexing {
         return downloadCacheSizeMegs;
     }
 
+    @SuppressWarnings("unused")
     public void setDownloadCacheSizeMegs(int downloadCacheSizeMegs) {
         this.downloadCacheSizeMegs = downloadCacheSizeMegs;
     }
@@ -47,6 +50,7 @@ public class BLConfigIndexing {
         return downloadCacheMaxFileSizeMegs;
     }
 
+    @SuppressWarnings("unused")
     public void setDownloadCacheMaxFileSizeMegs(int downloadCacheMaxFileSizeMegs) {
         this.downloadCacheMaxFileSizeMegs = downloadCacheMaxFileSizeMegs;
     }
@@ -55,6 +59,7 @@ public class BLConfigIndexing {
         return zipFilesMaxOpen;
     }
 
+    @SuppressWarnings("unused")
     public void setZipFilesMaxOpen(int zipFilesMaxOpen) {
         this.zipFilesMaxOpen = zipFilesMaxOpen;
     }
@@ -63,6 +68,7 @@ public class BLConfigIndexing {
         return maxMetadataValuesToStore;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxMetadataValuesToStore(int maxMetadataValuesToStore) {
         this.maxMetadataValuesToStore = maxMetadataValuesToStore;
         MetadataFieldImpl.setMaxMetadataValuesToStore(maxMetadataValuesToStore);
@@ -72,10 +78,16 @@ public class BLConfigIndexing {
         return numberOfThreads;
     }
 
+    @SuppressWarnings("unused")
+    public void setNumberOfThreads(int numberOfThreads) {
+        this.numberOfThreads = numberOfThreads;
+    }
+
     public int getMaxNumberOfIndicesPerUser() {
         return maxNumberOfIndicesPerUser;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxNumberOfIndicesPerUser(int maxNumberOfIndicesPerUser) {
         this.maxNumberOfIndicesPerUser = maxNumberOfIndicesPerUser;
     }

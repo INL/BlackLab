@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsSorted extends SearchDocs {
 
-    private SearchDocs source;
+    private final SearchDocs source;
 
-    private DocProperty property;
+    private final DocProperty property;
 
     public SearchDocsSorted(QueryInfo queryInfo, SearchDocs docsSearch, DocProperty sortBy) {
         super(queryInfo);

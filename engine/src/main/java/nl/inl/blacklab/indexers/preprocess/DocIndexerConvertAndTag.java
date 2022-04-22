@@ -43,7 +43,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
      */
     Charset charset;
 
-    private DocIndexerConfig outputIndexer;
+    private final DocIndexerConfig outputIndexer;
 
     public DocIndexerConvertAndTag(DocIndexerConfig actualIndexer, ConfigInputFormat config) {
         this.outputIndexer = actualIndexer;
@@ -169,11 +169,6 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     @Override
     public void setOmitNorms(boolean b) {
         outputIndexer.setOmitNorms(b);
-    }
-
-    @Override
-    public boolean shouldAddDefaultPunctuation() {
-        return outputIndexer.shouldAddDefaultPunctuation();
     }
 
     // do not override setDocumentName

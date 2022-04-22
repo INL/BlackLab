@@ -1,6 +1,11 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An OR-node where none of the clauses cycle back to an earlier node. This can
@@ -9,7 +14,7 @@ import java.util.*;
  */
 public class NfaStateOrAcyclic extends NfaState {
 
-    List<NfaState> clauses;
+    final List<NfaState> clauses;
 
     NfaState nextState;
 
@@ -21,7 +26,7 @@ public class NfaStateOrAcyclic extends NfaState {
 
     public NfaStateOrAcyclic(List<NfaState> clauses, boolean clausesAllSameLength) {
         for (NfaState clause : clauses) {
-            clause.finish(new HashSet<NfaState>());
+            clause.finish(new HashSet<>());
         }
         this.clauses = new ArrayList<>(clauses);
         this.nextState = null;
@@ -116,24 +121,6 @@ public class NfaStateOrAcyclic extends NfaState {
     @Override
     public boolean hitsAllSameLength(Set<NfaState> statesVisited) {
         return clausesAllSameLength && (nextState == null || nextState.hitsAllSameLength(statesVisited));
-        /*
-        if (statesVisited.contains(this)) {
-        	// We've found a cycle. Stop processing, and just return the
-        	// "safest" (least-guarantee) answer. In this case: we can't
-        	// guarantee that hits are all the same length.
-        	return false;
-        }
-        statesVisited.add(this);
-        int hitLength = -1;
-        for (NfaState clause: clauses) {
-        	if (!clause.hitsAllSameLength(statesVisited))
-        		return false;
-        	if (hitLength != -1 && hitLength != clause.hitsLengthMin(statesVisited))
-        		return false;
-        	hitLength = clause.hitsLengthMin(statesVisited);
-        }
-        return nextState == null || nextState.hitsAllSameLength(statesVisited);
-        */
     }
 
     @Override
@@ -175,9 +162,7 @@ public class NfaStateOrAcyclic extends NfaState {
         if (hitLengthMax >= 0 && nextState != null) {
             hitLengthMax += nextState.hitsLengthMax(statesVisited);
         }
-        if (hitLengthMax < 0)
-            return 0;
-        return hitLengthMax;
+        return Math.max(hitLengthMax, 0);
     }
 
     @Override
@@ -188,7 +173,7 @@ public class NfaStateOrAcyclic extends NfaState {
                 b.append(",");
             b.append(dump(clause, stateNrs));
         }
-        return "OR(" + b.toString() + ", " + dump(nextState, stateNrs) + ")";
+        return "OR(" + b + ", " + dump(nextState, stateNrs) + ")";
     }
 
     @Override

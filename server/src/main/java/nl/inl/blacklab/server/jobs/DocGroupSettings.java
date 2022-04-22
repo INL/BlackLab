@@ -4,7 +4,7 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 
 public class DocGroupSettings {
 
-    DocProperty groupBy;
+    final DocProperty groupBy;
 
     public DocGroupSettings(DocProperty groupBy) {
         super();

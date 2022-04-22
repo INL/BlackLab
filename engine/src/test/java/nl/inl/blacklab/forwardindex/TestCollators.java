@@ -45,8 +45,7 @@ public class TestCollators {
         Collator coll = getDefaultEnglishCollator();
         //Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
-        Collator blacklabCollator = colls.get(MatchSensitivity.INSENSITIVE);
-        return blacklabCollator;
+        return colls.get(MatchSensitivity.INSENSITIVE);
     }
 
     @Before
@@ -67,6 +66,7 @@ public class TestCollators {
         Assert.assertEquals(1, getBlackLabCollator().compare(zalgo1, zalgo2));
     }
 
+    @Test
     public void testZalgoTextWithDefaultCollator() {
         // This should succeed, even on Java 8, but is here just for completeness.
         Assert.assertEquals(1, getDefaultEnglishCollator().compare(zalgo1, zalgo2));

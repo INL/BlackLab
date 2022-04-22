@@ -1,5 +1,14 @@
 package nl.inl.blacklab.instrumentation.impl;
 
+import java.io.IOException;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmHeapPressureMetrics;
@@ -11,13 +20,6 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.prometheus.client.exporter.common.TextFormat;
 import nl.inl.blacklab.instrumentation.MetricsProvider;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.Optional;
 
 /**
  * Create a registry backed by prometheus
@@ -54,9 +56,6 @@ public class PrometheusMetricsProvider implements MetricsProvider {
     /**
      * A simple request handler that responds to prometheus  metrics scrapping requests
      * @param registry must be of type {@link PrometheusMeterRegistry}
-     * @param request
-     * @param responseObject
-     * @param charEncoding
      * @return true if the request was handled, false otherwise
      */
     public static boolean handlePrometheus(MeterRegistry registry, HttpServletRequest request, HttpServletResponse responseObject, String charEncoding) {

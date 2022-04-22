@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index.annotated;
 
 import java.util.Collection;
@@ -24,7 +9,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StoredField;
@@ -62,17 +46,17 @@ public class AnnotatedFieldWriter {
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
 
-    private Map<String, AnnotationWriter> annotations = new HashMap<>();
+    private final Map<String, AnnotationWriter> annotations = new HashMap<>();
 
     private IntArrayList start = new IntArrayList();
 
     private IntArrayList end = new IntArrayList();
 
-    private String fieldName;
+    private final String fieldName;
 
-    private AnnotationWriter mainAnnotation;
+    private final AnnotationWriter mainAnnotation;
 
-    private Set<String> noForwardIndexAnnotations = new HashSet<>();
+    private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
     private AnnotatedField field;
 
@@ -174,7 +158,7 @@ public class AnnotatedFieldWriter {
 //        }
 
         for (AnnotationWriter p : annotations.values()) {
-            p.clear(reuseBuffers);
+            p.clear();
         }
     }
 

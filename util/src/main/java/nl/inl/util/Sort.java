@@ -2,8 +2,8 @@ package nl.inl.util;
 
 public class Sort {
     public interface Sortable {
-        public int compare(int a, int b);
-        public void swap(int a, int b);        
+        int compare(int a, int b);
+        void swap(int a, int b);
     }
 
     // Based on the java default implementation of int sorts

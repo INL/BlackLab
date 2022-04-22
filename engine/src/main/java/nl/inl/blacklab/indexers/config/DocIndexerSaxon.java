@@ -202,10 +202,6 @@ public class DocIndexerSaxon extends DocIndexerConfig {
 
     /**
      * return punctuations and inlines occurring before a word
-     * @param puncts
-     * @param inlines
-     * @param word
-     * @return
      */
     private static List<NodeInfo> getPreceding(List<NodeInfo> puncts, List<NodeInfo> inlines, NodeInfo word, List<NodeInfo> precedingPuncts) {
         List<NodeInfo> preceding = new ArrayList<>();
@@ -231,9 +227,7 @@ public class DocIndexerSaxon extends DocIndexerConfig {
 
         for (NodeInfo header : saxonHelper.findNodes(b.getContainerPath(),doc)) {
             List<ConfigMetadataField> fields = b.getFields();
-            for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
-                ConfigMetadataField f = fields.get(i);
-
+            for (ConfigMetadataField f : fields) { // NOTE: fields may be added during loop, so can't iterate
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
                 // such as extra processing steps
@@ -244,9 +238,9 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                 if (f.isForEach()) {
                     // "forEach" metadata specification
                     // (allows us to capture many metadata fields with 3 XPath expressions)
-                    for (NodeInfo forEach : saxonHelper.findNodes(f.getForEachPath(),header)) {
+                    for (NodeInfo forEach : saxonHelper.findNodes(f.getForEachPath(), header)) {
                         // Find the fieldName and value for this forEach match
-                        String origFieldName = saxonHelper.getValue(f.getName(),forEach);
+                        String origFieldName = saxonHelper.getValue(f.getName(), forEach);
                         String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
                         if (!origFieldName.equals(fieldName)) {
                             DocIndexerXPath.warnSanitized(origFieldName, fieldName);

@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public class DataStreamJson extends DataStream {
 
     /** JSONP callback function name, or null for none */
-    String jsonpCallback;
+    final String jsonpCallback;
 
     boolean isJsonp = false;
 

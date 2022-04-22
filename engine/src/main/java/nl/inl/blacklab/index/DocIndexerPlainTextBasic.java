@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.io.BufferedReader;
@@ -21,7 +6,6 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 
@@ -44,13 +28,13 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
      * Annotated field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    AnnotatedFieldWriter contentsField;
+    final AnnotatedFieldWriter contentsField;
 
     /** The main annotation (usually "word") */
-    AnnotationWriter annotMain;
+    final AnnotationWriter annotMain;
 
     /** The punctuation annotation */
-    AnnotationWriter annotPunct;
+    final AnnotationWriter annotPunct;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the
@@ -143,7 +127,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
             if (line == null)
                 break;
             String[] words = line.trim().split("\\s+");
-            for (int i = 0; i < words.length; i++) {
+            for (String word : words) {
                 // Handle space and punctuation between words. Instead of always using a hardcoded
                 // space,
                 // you would want to use smarter tokenization and actually capture the space and
@@ -160,9 +144,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
 
                 // Handle the word itself, including character positions.
                 contentsField.addStartChar(getCharacterPosition());
-                processContent(words[i]); // add word to content store
+                processContent(word); // add word to content store
                 contentsField.addEndChar(getCharacterPosition());
-                annotMain.addValue(words[i]); // add word to index
+                annotMain.addValue(word); // add word to index
 
                 // Report progress regularly but not too often
                 wordsDone++;

@@ -27,7 +27,7 @@ import nl.inl.util.ThreadAborter;
 public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements Results<T, P> {
 
     /** Id the next Hits instance will get */
-    private static AtomicInteger nextHitsObjId = new AtomicInteger();
+    private static final AtomicInteger nextHitsObjId = new AtomicInteger();
 
     // Perform simple generic sampling operation
     protected static <T, P extends ResultProperty<T>> List<T> doSample(ResultsList<T, P> source, SampleParameters sampleParameters) {
@@ -92,7 +92,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
      * Helper object for pausing threads (making sure queries
      * don't hog the CPU for way too long).
      */
-    protected ThreadAborter threadAborter;
+    protected final ThreadAborter threadAborter;
 
     private final ResultsStats resultsStats = new ResultsStats() {
         @Override

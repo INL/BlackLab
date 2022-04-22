@@ -31,13 +31,13 @@ public class ZipHandleManager {
     private static int maxOpenZipFiles = 10;
 
     /** Zip files opened by DocIndexerBase indexers. Should be closed eventually. */
-    private static Map<File, ZipHandle> openZips = new LinkedHashMap<>();
+    private static final Map<File, ZipHandle> openZips = new LinkedHashMap<>();
 
     static class ZipHandle implements Comparable<ZipHandle> {
 
-        public File key;
+        public final File key;
 
-        public ZipFile zipFile;
+        public final ZipFile zipFile;
 
         public long lastUsed;
 

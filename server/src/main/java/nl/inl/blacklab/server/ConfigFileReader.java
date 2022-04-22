@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,7 +37,7 @@ class ConfigFileReader {
 
     private boolean configFileIsJson;
 
-    private JsonNode configFileJsonNode;
+    private final JsonNode configFileJsonNode;
 
     public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
         configFileIsJson = false;
@@ -100,21 +99,6 @@ class ConfigFileReader {
 
     public boolean isJson() {
         return configFileIsJson;
-    }
-
-    public String getConfigFileRead() {
-        return configFileRead;
-    }
-
-    /**
-     * Read JSON or YAML from config file, depending on type.
-     *
-     * @return config structure read
-     * @throws JsonProcessingException on Json error
-     * @throws IOException on any I/O error
-     */
-    public JsonNode getJsonConfig() throws JsonProcessingException, IOException {
-        return configFileJsonNode;
     }
 
     public BLSConfig getConfig() throws InvalidConfiguration {

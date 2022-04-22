@@ -45,7 +45,6 @@ public class DocumentFormats {
      * If an exception occurs during initialization of the factory, the factory will
      * not be added, and the exception is rethrown.
      * 
-     * @param fac
      * @throws RuntimeException rethrows exceptions occuring during factory
      *             initialization
      */
@@ -82,7 +81,6 @@ public class DocumentFormats {
      * under this formatIdentifier. This method isn't used in BlackLab itself, but
      * it could be useful for client applications.
      *
-     * @param formatIdentifier
      * @return the factory if a valid formatIdentifier is provided, null otherwise
      */
     public static DocIndexerFactory getFactory(String formatIdentifier) {
@@ -147,7 +145,6 @@ public class DocumentFormats {
     /**
      * Returns a format descriptor for a specific format
      * 
-     * @param formatIdentifier
      * @return the descriptor, or null if not supported by any factory
      */
     public static Format getFormat(String formatIdentifier) {
@@ -166,8 +163,7 @@ public class DocumentFormats {
      * @param documentName document name
      * @param reader file contents
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
-     * @deprecated (since 2.2) use byte[] version 
+     * @deprecated (since 2.2) use byte[] version
      */
     @Deprecated
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
@@ -188,7 +184,6 @@ public class DocumentFormats {
      * @param is contents
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
@@ -205,8 +200,6 @@ public class DocumentFormats {
      * @param f file
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
-     * @throws FileNotFoundException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
@@ -222,7 +215,6 @@ public class DocumentFormats {
      * @param b file contents
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {

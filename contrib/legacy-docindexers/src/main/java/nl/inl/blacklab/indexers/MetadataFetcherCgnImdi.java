@@ -20,7 +20,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.xml.sax.Attributes;
@@ -160,13 +159,13 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
      */
     class MetadataParser extends DefaultHandler {
 
-        private StringBuilder textContent = new StringBuilder();
+        private final StringBuilder textContent = new StringBuilder();
 
         private boolean hasChild = false;
 
-        Map<String, String> indexFieldAs = new HashMap<>();
+        final Map<String, String> indexFieldAs = new HashMap<>();
 
-        List<String> elementStack = new ArrayList<>();
+        final List<String> elementStack = new ArrayList<>();
 
         /**
          * Push the current element name onto the element stack

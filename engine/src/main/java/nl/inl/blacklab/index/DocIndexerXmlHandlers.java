@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.io.IOException;
@@ -30,7 +15,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
@@ -65,9 +49,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      */
     private static final int MAX_CHARACTER_CONTENT_CAPTURE_LENGTH = 4000;
 
-    private HookableSaxHandler hookableHandler = new HookableSaxHandler();
+    private final HookableSaxHandler hookableHandler = new HookableSaxHandler();
 
-    private SaxParseHandler saxParseHandler = new SaxParseHandler();
+    private final SaxParseHandler saxParseHandler = new SaxParseHandler();
 
     /**
      * What namespace prefix mappings have we encountered but not output in a start
@@ -223,9 +207,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     public class MetadataNameValueAttributeHandler extends
             ContentCapturingHandler {
 
-        private String nameAttribute;
+        private final String nameAttribute;
 
-        private String valueAttribute;
+        private final String valueAttribute;
 
         public MetadataNameValueAttributeHandler(String nameAttribute,
                 String valueAttribute) {
@@ -249,7 +233,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
         }
     }
 
-    List<Integer> openTagIndexes = new ArrayList<>();
+    final List<Integer> openTagIndexes = new ArrayList<>();
 
     /** Handle tags. */
     public class InlineTagHandler extends ElementHandler {
@@ -348,7 +332,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /** Handle &lt;Word&gt; tags (word tokens). */
     public class WordInAttributeHandler extends DefaultWordHandler {
 
-        private String attName;
+        private final String attName;
 
         protected String currentWord;
 
@@ -428,7 +412,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
     /**
      * StringBuffer re-used for building start/end tags and processing instructions.
      */
-    StringBuilder elementBuilder = new StringBuilder();
+    final StringBuilder elementBuilder = new StringBuilder();
 
     public void startElement(String uri, String localName, String qName,
             Attributes attributes) {
@@ -463,7 +447,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * Character content encountered in the XML document since the last call to
      * consumeCharacterContent().
      */
-    StringBuilder characterContent = new StringBuilder();
+    final StringBuilder characterContent = new StringBuilder();
 
     /**
      * Returns and resets the character content captured since the last call to this
@@ -493,16 +477,16 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
      * Annotated field where different aspects (word form, named entity status, etc.)
      * of the main content of the document are captured for indexing.
      */
-    AnnotatedFieldWriter contentsField;
+    final AnnotatedFieldWriter contentsField;
 
     /** The main annotation (usually "word") */
-    AnnotationWriter propMain;
+    final AnnotationWriter propMain;
 
     /** The punctuation annotation */
-    AnnotationWriter propPunct;
+    final AnnotationWriter propPunct;
 
     /** The start tag annotation. Also contains tag length in payload. */
-    AnnotationWriter propTags;
+    final AnnotationWriter propTags;
 
     /**
      * Our external metadata fetcher (if any), responsible for looking up the

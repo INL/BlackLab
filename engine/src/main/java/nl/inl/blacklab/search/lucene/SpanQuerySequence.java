@@ -1,23 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,6 +75,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             if (child instanceof SpanQuerySequence) {
                 clauses.remove(i);
                 clauses.addAll(i, ((SpanQuerySequence) child).getClauses());
+                --i;
                 anyRewritten = true;
             }
         }
@@ -468,14 +453,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
      * @param parts translation results for each of the clauses so far
      * @param reader the index reader
      * @return several alternatives combined with or
-     * @throws IOException
      */
     List<List<BLSpanQuery>> makeAlternatives(List<BLSpanQuery> parts, IndexReader reader) throws IOException {
         if (parts.size() == 1) {
             // Last clause in the sequence; just return it
             // (noEmpty() version because we will build alternatives
             // in the caller if the input matched the empty sequence)
-            return Arrays.asList(Arrays.asList(parts.get(0).noEmpty().rewrite(reader)));
+            return List.of(List.of(parts.get(0).noEmpty().rewrite(reader)));
         }
 
         // Recursively determine the query for the "tail" of the list,
@@ -512,7 +496,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         // If tail can be empty, also add the head separately
         if (tailMatchesEmpty)
-            results.add(Arrays.asList(headNoEmpty));
+            results.add(List.of(headNoEmpty));
         return results;
     }
 
@@ -614,8 +598,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
             List<CombiPart> parts = new ArrayList<>();
-            for (int i = 0; i < weights.size(); i++) {
-                CombiPart part = new CombiPart(weights.get(i), context, requiredPostings);
+            for (BLSpanWeight weight : weights) {
+                CombiPart part = new CombiPart(weight, context, requiredPostings);
                 if (part.spans == null)
                     return null;
                 parts.add(part);

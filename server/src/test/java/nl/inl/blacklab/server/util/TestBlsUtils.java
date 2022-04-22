@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.index.Index;
 
 public class TestBlsUtils {
 
-    BlackLabIndex index = new MockBlackLabIndex();
+    final BlackLabIndex index = new MockBlackLabIndex();
 
     @Test
     public void testIsValidIndexName() {

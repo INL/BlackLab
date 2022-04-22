@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -29,7 +14,6 @@ import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
-import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 
 /**
@@ -47,16 +31,16 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
     public static final boolean END_OF_ANCHOR = false;
 
-    boolean startOfAnchor;
+    final boolean startOfAnchor;
 
     /** Our NFA, both in our own direction and the opposite direction. */
-    NfaTwoWay nfa;
+    final NfaTwoWay nfa;
 
-    private BLSpanQuery nfaQuery;
+    private final BLSpanQuery nfaQuery;
 
-    int direction;
+    final int direction;
 
-    ForwardIndexAccessor fiAccessor;
+    final ForwardIndexAccessor fiAccessor;
 
     /**
      *
@@ -95,7 +79,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
 
         // Finalize our NFA, so it looks up annotation numbers for its annotation names.
         nfa.finish();
-        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<NfaState, Boolean>());
+        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;

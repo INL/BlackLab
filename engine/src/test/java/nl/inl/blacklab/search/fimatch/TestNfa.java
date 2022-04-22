@@ -1,20 +1,21 @@
 package nl.inl.blacklab.search.fimatch;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
 
-    final class MockFiAccessor extends ForwardIndexAccessor {
+    static final class MockFiAccessor extends ForwardIndexAccessor {
         @Override
         public int numberOfAnnotations() {
             return 1;
@@ -66,9 +67,9 @@ public class TestNfa {
         }
     }
 
-    class ForwardIndexDocumentString extends ForwardIndexDocument {
+    static class ForwardIndexDocumentString extends ForwardIndexDocument {
 
-        private String input;
+        private final String input;
 
         ForwardIndexDocumentString(String input) {
             this.input = input;
@@ -113,8 +114,8 @@ public class TestNfa {
         NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
         NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
         NfaState start = NfaState.or(false, Arrays.asList(ab, ba), true);
-        start.finish(new HashSet<NfaState>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
+        start.finish(new HashSet<>());
+        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
 
         ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
         Assert.assertTrue(start.matches(fiDoc, 0, 1));
@@ -130,8 +131,8 @@ public class TestNfa {
         NfaState split = NfaState.or(true, Arrays.asList(c, NfaState.token("contents%word@i", "e", null)), false);
         NfaState start = NfaState.token("contents%word@i", "a", split);
         c.setNextState(0, split); // loopback
-        start.finish(new HashSet<NfaState>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<NfaState, Boolean>());
+        start.finish(new HashSet<>());
+        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
 
         // Forward matching
         Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));

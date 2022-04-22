@@ -1,11 +1,12 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * (Part of) the contents of a document, in separate annotations read from the
@@ -33,13 +34,13 @@ public class DocContentsFromForwardIndex extends DocContents {
      * What annotations are stored in what order for this Kwic (e.g. word, lemma,
      * pos)
      */
-    List<Annotation> annotations;
+    final List<Annotation> annotations;
 
     /**
      * Word annotations for context left of match (annotations.size() values per word;
      * e.g. punct 1, lemma 1, pos 1, word 1, punct 2, lemma 2, pos 2, word 2, etc.)
      */
-    List<String> tokens;
+    final List<String> tokens;
 
     /**
      * Construct DocContentsFromForwardIndex object.
@@ -106,7 +107,7 @@ public class DocContentsFromForwardIndex extends DocContents {
         final int annotIndex = annotations.indexOf(annotation);
         if (annotIndex == -1)
             return null;
-        return new AbstractList<String>() {
+        return new AbstractList<>() {
             @Override
             public String get(int index) {
                 return tokens.get(annotIndex + nProp * index);

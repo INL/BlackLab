@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.io.ByteArrayInputStream;
@@ -26,7 +11,6 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -95,9 +79,9 @@ public abstract class DocIndexer implements AutoCloseable {
     /**
      * Parameters passed to this indexer
      */
-    protected Map<String, String> parameters = new HashMap<>();
+    protected final Map<String, String> parameters = new HashMap<>();
 
-    Set<String> numericFields = new HashSet<>();
+    final Set<String> numericFields = new HashSet<>();
 
     /** How many documents we've processed */
     private int numberOfDocsDone = 0;
@@ -244,9 +228,7 @@ public abstract class DocIndexer implements AutoCloseable {
      */
     @Deprecated
     public void setParameters(Map<String, String> param) {
-        for (Map.Entry<String, String> e : param.entrySet()) {
-            parameters.put(e.getKey(), e.getValue());
-        }
+        parameters.putAll(param);
     }
 
     /**
@@ -420,8 +402,8 @@ public abstract class DocIndexer implements AutoCloseable {
         IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
-        for (int i = 0; i < fields.size(); i++) {
-            MetadataField fd = indexMetadata.metadataField(fields.get(i));
+        for (String field: fields) {
+            MetadataField fd = indexMetadata.metadataField(field);
             if (fd.type() == FieldType.NUMERIC)
                 continue;
             boolean missing = false, empty = false;
@@ -450,14 +432,14 @@ public abstract class DocIndexer implements AutoCloseable {
                 if (empty) {
                     // Don't count this as a value, count the unknown value
                     for (String value : currentValue) {
-                        ((MetadataFieldImpl)indexMetadata.metadataFields().get(fd.name())).removeValue(value);
+                        ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
                     }
                 }
                 unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
-            metadataFieldValues.put(e.getKey(), Arrays.asList(e.getValue()));
+            metadataFieldValues.put(e.getKey(), List.of(e.getValue()));
         }
         for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());

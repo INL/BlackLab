@@ -1,18 +1,25 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import java.util.*;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
     
     /** The field this is an annotation for. */
-    private AnnotatedField field;
+    private final AnnotatedField field;
     
     /** The annotation name */
     private String name;
@@ -35,10 +42,10 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean isInternal;
 
     /** Reference to match sensitivities this annotation has */
-    private Set<AnnotationSensitivity> alternatives = new HashSet<>();
+    private final Set<AnnotationSensitivity> alternatives = new HashSet<>();
 
     /** Match sensitivity values this annotation has */
-    private Set<MatchSensitivity> matchSensitivities = new HashSet<>();
+    private final Set<MatchSensitivity> matchSensitivities = new HashSet<>();
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -52,13 +59,13 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean frozen = false;
     
     /** Names of our subannotations, if declared (new-style index) and if we have any */
-    private Set<String> subAnnotationNames = new HashSet<>();
+    private final Set<String> subAnnotationNames = new HashSet<>();
 
     /** Our subannotations (if we have an old-style index, where subannotations aren't declared).
      *  This is not actually considered state, just cache, because all 
      *  subannotations are valid (we don't know which ones were indexed).
      */
-    Map<String, Subannotation> cachedSubs = new HashMap<>();
+    final Map<String, Subannotation> cachedSubs = new HashMap<>();
     
     /**
      * If this is a subannotation, what is its parent annotation?
@@ -178,10 +185,9 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      * Note that there may not be such an alternative.
      *
      * @param reader the index reader
-     * @param fieldName the field this annotation belongs under
      * @return true if found, false if not
      */
-    public boolean detectOffsetsSensitivity(IndexReader reader, String fieldName) {
+    public boolean detectOffsetsSensitivity(IndexReader reader) {
         ensureNotFrozen();
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main annotation.
@@ -207,23 +213,20 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         matchSensitivities.add(matchSensitivity);
     }
 
-    AnnotationImpl setForwardIndex(boolean b) {
+    void setForwardIndex(boolean b) {
         ensureNotFrozen();
         forwardIndex = b;
-        return this;
     }
 
-    public AnnotationImpl setName(String annotationName) {
+    public void setName(String annotationName) {
         ensureNotFrozen();
         this.name = annotationName;
         this.isInternal |= nameImpliesInternal();
-        return this;
     }
     
-    public AnnotationImpl setInternal() {
+    public void setInternal() {
         ensureNotFrozen();
         this.isInternal = true;
-        return this;
     }
 
     private boolean nameImpliesInternal() {
@@ -231,22 +234,19 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
     }
 
-    public AnnotationImpl setUiType(String uiType) {
+    public void setUiType(String uiType) {
         ensureNotFrozen();
         this.uiType = uiType;
-        return this;
     }
 
-    public AnnotationImpl setDescription(String description) {
+    public void setDescription(String description) {
         ensureNotFrozen();
         this.description = description;
-        return this;
     }
     
     @Override
-    public AnnotationImpl freeze() {
+    public void freeze() {
         this.frozen = true;
-        return this;
     }
     
     @Override

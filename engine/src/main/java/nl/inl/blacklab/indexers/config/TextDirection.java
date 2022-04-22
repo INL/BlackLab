@@ -7,7 +7,7 @@ public enum TextDirection {
     LEFT_TO_RIGHT("ltr", "lefttoright"),
     RIGHT_TO_LEFT("rtl", "righttoleft");
 
-    private String[] codes;
+    private final String[] codes;
 
     TextDirection(String... codes) {
         this.codes = codes;

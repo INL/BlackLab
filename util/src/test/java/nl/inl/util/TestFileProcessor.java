@@ -195,10 +195,10 @@ public class TestFileProcessor {
     // In we didn't synchronize then multiple file() or directory() calls may run simultaneously.
     // (also ArrayList is not thread-safe)
     private static class LoggingFileHandler implements FileProcessor.FileHandler {
-        private boolean triggerException;
+        private final boolean triggerException;
 
-        public List<File> dirsReceived = new ArrayList<>();
-        public List<String> filesReceived = new ArrayList<>();
+        public final List<File> dirsReceived = new ArrayList<>();
+        public final List<String> filesReceived = new ArrayList<>();
 
         public LoggingFileHandler(boolean triggerException) {
             this.triggerException = triggerException;

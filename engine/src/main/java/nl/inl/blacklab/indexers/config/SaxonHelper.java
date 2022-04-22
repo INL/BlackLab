@@ -55,7 +55,7 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 class SaxonHelper {
 
     public static final int MAXDOCSIZEINMEMORY = 4_096_000;
-    private static final ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<XPathFactory>() {
+    private static final ThreadLocal<XPathFactory> X_PATH_FACTORY_THREAD_LOCAL = new InheritableThreadLocal<>() {
         @Override
         protected XPathFactory initialValue() {
             return new XPathFactoryImpl();
@@ -73,7 +73,7 @@ class SaxonHelper {
      */
     private Map<Integer, Integer> cumulativeColsPerLine = new HashMap<>();
 
-    private class StartEndPos {
+    private static class StartEndPos {
         private final int startPos;
         private int endPos;
 
@@ -99,9 +99,6 @@ class SaxonHelper {
 
     /**
      * translation of recorded line and column number to character position in the document
-     * @param lineNumber
-     * @param columnNumber
-     * @return
      */
     private int getCharPos(int lineNumber, int columnNumber) {
         int charsOnline = cumulativeColsPerLine.get(lineNumber) -
@@ -132,7 +129,7 @@ class SaxonHelper {
                 cumulativeColsPerLine.put(line.incrementAndGet(), cols.addAndGet(l.length())));
         stream.reset();
         if (cumulativeColsPerLine.size() > 1) {
-            int i = -1;
+            int i;
             while ((i = stream.read()) != -1) {
                 if (i == '\r') {
                     // windows file
@@ -165,6 +162,7 @@ class SaxonHelper {
         // setup namespace aware xpath that will compile xpath expressions
         xPath = X_PATH_FACTORY_THREAD_LOCAL.get().newXPath();
         if (blConfig.isNamespaceAware()) {
+            NSCTX namespaces = new NSCTX();
             namespaces.add("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e : blConfig.getNamespaces().entrySet()) {
                 namespaces.add(e.getKey(), e.getValue());
@@ -173,7 +171,7 @@ class SaxonHelper {
         }
     }
 
-    private XPath xPath;
+    private final XPath xPath;
 
     /**
      * Needed to not loose our contenthandler, which would otherwise be overridden by saxon.
@@ -230,8 +228,6 @@ class SaxonHelper {
         /**
          * instead of silently replacing the handler we set it in our wrapping handler
          * that we need for positions.
-         *
-         * @param handler
          */
         @Override
         public void setContentHandler(ContentHandler handler) {
@@ -302,7 +298,7 @@ class SaxonHelper {
             saxonHandler.endPrefixMapping(prefix);
         }
         
-        private Deque<StartEndPos> elStack = new ArrayDeque<>();
+        private final Deque<StartEndPos> elStack = new ArrayDeque<>();
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
@@ -360,8 +356,6 @@ class SaxonHelper {
      */
     private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
-    private final NSCTX namespaces = new NSCTX();
-
     private static class NSCTX implements NamespaceContext {
         private final Map<String, String> ns = new HashMap<>(3);
 
@@ -377,7 +371,7 @@ class SaxonHelper {
         
         @Override
         public String getPrefix(String namespaceURI) {
-            return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(e -> e.getKey()).findFirst().orElse(null);
+            return ns.entrySet().stream().filter(e -> e.getValue().equals(namespaceURI)).map(Map.Entry::getKey).findFirst().orElse(null);
         }
 
         @Override
@@ -410,9 +404,6 @@ class SaxonHelper {
      * the return type(s) in advance. This works for all return types of an xPath, also the ones that
      * return for example one boolean. Often a List&lt;NodeInfo> will be returned.
      *
-     * @param xPath
-     * @param context
-     * @return
      */
     List<?> find(String xPath, Object context) throws XPathExpressionException {
         return (List<?>) acquireXPathExpression(xPath).evaluate(context,XPathConstants.NODESET);
@@ -422,10 +413,6 @@ class SaxonHelper {
      * Calls {@link #find(String, Object)} and casts the result to List&lt;NodeInfo>, NOTE that the
      * resulting list may still contain Objects that are no NodeInfo, due to the way collections work,
      * Collections.checkedList won't help here.
-     * @param xPath
-     * @param context
-     * @return
-     * @throws XPathExpressionException
      */
     @SuppressWarnings("unchecked")
     List<NodeInfo> findNodes(String xPath, Object context) throws XPathExpressionException {
@@ -435,10 +422,6 @@ class SaxonHelper {
     /**
      * return a string representation of an xpath result, using {@link NodeInfo#getStringValue()} or
      * String.valueOf. Handling multiple results should be done in xPath, for example concat.
-     * @param xPath
-     * @param context
-     * @return
-     * @throws XPathExpressionException
      * @throws InvalidConfiguration when the xpath returns multiple results
      */
     String getValue(String xPath, Object context) throws XPathExpressionException {
@@ -465,7 +448,6 @@ class SaxonHelper {
      * find where in the character[] of the source the closing tag ends
      *
      * @param nodeInfo the node to find the endtag for
-     * @return
      */
     int findClosingTagPosition(NodeInfo nodeInfo) {
         return startEndPosMap.get(getCharPos(nodeInfo)).endPos;
@@ -503,8 +485,6 @@ class SaxonHelper {
      * find the position of the starting character (&lt;) of a node in the characters of a document.
      * Note that CR and LF are included in the count. It is recomended to cache this number for use in
      * clients.
-     * @param node
-     * @return
      */
     int getStartPos(NodeInfo node) {
         return startEndPosMap.get(getCharPos(node)).startPos;
@@ -514,8 +494,6 @@ class SaxonHelper {
      * find the position of the end character (>) of a node in the characters of a document.
      * Note that CR and LF are included in the count. It is recomended to cache this number for use in
      * clients.
-     * @param node
-     * @return
      */
     int getEndPos(NodeInfo node) {
         return findClosingTagPosition(node);
@@ -523,7 +501,6 @@ class SaxonHelper {
 
     /**
      * The parsed tree of the document, can be used as context for xpaths.
-     * @return
      */
     TreeInfo getContents() {
         return contents;
@@ -531,7 +508,6 @@ class SaxonHelper {
 
     /**
      * returns the document as a string, sets all state in the helper to null
-     * @return
      */
     String getDocument(boolean clean) {
         char[] rv = document;

@@ -4,7 +4,6 @@ import java.util.Iterator;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -26,9 +25,8 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @param query          the query to execute to get the hits
      * @param searchSettings settings such as max. hits to process/count
      * @return hits found
-     * @throws WildcardTermTooBroad if a wildcard term matches too many terms in the index
      */
-    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) throws WildcardTermTooBroad {
+    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
         if (queryInfo.index().blackLab().maxThreadsPerSearch() <= 1) {
             // We don't want to use multi-threaded search. Stick with the single-threaded version.
             return new HitsFromQuery(queryInfo, query, searchSettings);
@@ -110,7 +108,7 @@ public interface Hits extends Results<Hit, HitProperty> {
     /**
      * Get a window into this list of hits.
      * <p>
-     * Use this if you're displaying part of the resultset, like in a paging
+     * Use this if you're displaying part of the result set, like in a paging
      * interface. It makes sure BlackLab only works with the hits you want to
      * display and doesn't do any unnecessary processing on the other hits.
      * <p>
@@ -137,7 +135,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Return a new Hits object with these hits sorted by the given property.
      * <p>
      * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same resultset.
+     * different sorts of the same result set.
      *
      * @param sortProp the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
@@ -283,7 +281,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     Concordances concordances(ContextSize contextSize);
 
-    Hits getHitsInDoc(int docid);
+    Hits getHitsInDoc(int docId);
 
     ResultsStats hitsStats();
 

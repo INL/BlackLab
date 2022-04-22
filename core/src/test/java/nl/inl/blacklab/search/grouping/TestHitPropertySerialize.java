@@ -32,11 +32,11 @@ import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 
-    private MetadataField decadeField = new MockMetadataField("decade");
+    private final MetadataField decadeField = new MockMetadataField("decade");
 
-    private MockBlackLabIndex mockIndex = new MockBlackLabIndex();
+    private final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
+    private final Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
 
     private Annotation lemmaAnnotation;
 

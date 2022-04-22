@@ -1,22 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
@@ -44,7 +29,7 @@ public class HitPropertyContextWords extends HitProperty {
         HIT_TEXT_FROM_END("E"), // hit text, backwards from last matched word
         RIGHT_OF_HIT("R"); // right context of the hit
 
-        private String code;
+        private final String code;
 
         ContextStart(String code) {
             this.code = code;
@@ -79,16 +64,16 @@ public class HitPropertyContextWords extends HitProperty {
             return new ContextPart(startFrom, firstWord, direction, maxLength);
         }
 
-        protected ContextStart startFrom;
+        protected final ContextStart startFrom;
 
-        protected int firstWord;
+        protected final int firstWord;
 
         /**
          * Direction: 1 = default direction, -1 = reverse direction. Default direction
          * is right for ContextStart.HIT_TEXT_FROM_START and ContextStart.RIGHT_OF_HIT,
          * left for ContextStart.HIT_TEXT_FROM_END and ContextStart.LEFT_OF_HIT.
          */
-        protected int direction;
+        protected final int direction;
 
         protected int maxLength;
 
@@ -169,7 +154,7 @@ public class HitPropertyContextWords extends HitProperty {
             if (part.length() > 1) {
                 if (part.contains("-")) {
                     // Two numbers, or a number followed by a dash ("until end of part")
-                    String[] numbers = part.substring(1).split("\\-");
+                    String[] numbers = part.substring(1).split("-");
                     try {
                         firstWord = Integer.parseInt(numbers[0]) - 1;
                         if (numbers.length > 1)
@@ -346,12 +331,12 @@ public class HitPropertyContextWords extends HitProperty {
 
     @Override
     public List<Annotation> needsContext() {
-        return Arrays.asList(annotation);
+        return annotation == null ? Collections.emptyList() : List.of(annotation);
     }
     
     @Override
     public List<MatchSensitivity> getSensitivities() {
-        return Arrays.asList(sensitivity);
+        return List.of(sensitivity);
     }
 
     @Override

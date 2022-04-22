@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
@@ -72,7 +57,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         }
 
         @Override
-        public void collect(int docId) throws IOException {
+        public void collect(int docId) {
             int globalDocId = docId + docBase;
             if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
@@ -256,38 +241,6 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         List<DocResult> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         return DocResults.fromList(queryInfo(), sorted, null, null);
-    }
-
-    /**
-     * Determines if there are at least a certain number of results
-     *
-     * This may be used if we don't want to process all results (which may be a lot)
-     * but we do need to know something about the size of the result set (such as
-     * for paging).
-     *
-     * @param lowerBound the number we're testing against
-     *
-     * @return true if the size of this set is at least lowerBound, false otherwise.
-     */
-    public boolean docsProcessedAtLeast(long lowerBound) {
-        return resultsProcessedAtLeast(lowerBound);
-    }
-
-    public long docsProcessedSoFar() {
-        return resultsProcessedSoFar();
-    }
-
-    /**
-     * Get the number of documents in this results set.
-     *
-     * Note that this returns the number of document results available; if there
-     * were so many hits that not all were retrieved (call maxHitsRetrieved()), you
-     * can find the grand total of documents by calling totalSize().
-     *
-     * @return the number of documents.
-     */
-    protected long docsProcessedTotal() {
-        return size();
     }
 
     /**

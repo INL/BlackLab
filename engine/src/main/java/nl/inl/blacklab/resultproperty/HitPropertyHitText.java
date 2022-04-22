@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -29,7 +14,7 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyHitText extends HitPropertyContextBase {
 
-    protected static ContextSize contextSize = ContextSize.get(0,0,true);
+    protected static final ContextSize contextSize = ContextSize.get(0,0,true);
     
     static HitPropertyHitText deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyHitText.class, index, field, info);
@@ -42,10 +27,6 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity/*, ContextSize contextSize*/) {
         super("hit text", "hit", index, annotation, sensitivity/*, contextSize*/);
     }
-
-//    public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-//        this(index, annotation, sensitivity/*, null*/);
-//    }
 
     public HitPropertyHitText(BlackLabIndex index, MatchSensitivity sensitivity) {
         this(index, null, sensitivity/*, null*/);

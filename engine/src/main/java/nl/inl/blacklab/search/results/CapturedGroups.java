@@ -36,8 +36,6 @@ public interface CapturedGroups {
      */
     Map<String, Span> getMap(Hit hit);
 
-    Map<? extends Hit, ? extends Span[]> getAll();
-
     @Override
     String toString();
 

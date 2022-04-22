@@ -1,16 +1,17 @@
 package nl.inl.blacklab.search.fimatch;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import org.apache.commons.lang3.StringUtils;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -21,7 +22,7 @@ public class NfaStateToken extends NfaState {
     static final String ANY_TOKEN = null;
 
     /** What annotation we're trying to match */
-    protected String luceneField;
+    protected final String luceneField;
 
     /**
      * Index of the annotation we're trying to match. Only valid after
@@ -30,7 +31,7 @@ public class NfaStateToken extends NfaState {
     private int propertyNumber = -1;
 
     /** The tokens this state accepts. */
-    private Set<String> inputTokenStrings;
+    private final Set<String> inputTokenStrings;
 
     /**
      * The tokens this state accepts. Only valid after lookupPropertNumber() called.
@@ -94,8 +95,7 @@ public class NfaStateToken extends NfaState {
     NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
         NfaStateToken copy = new NfaStateToken(luceneField, inputTokenStrings, null);
         copiesMade.put(this, copy);
-        NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
-        copy.nextState = nextStateCopy;
+        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade);
         if (nextState == null && dangling != null)
             dangling.add(copy);
         return copy;

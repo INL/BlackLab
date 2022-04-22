@@ -42,13 +42,13 @@ public interface DocIndexerFactory {
      */
     class Format {
 
-        private String formatIdentifier;
+        private final String formatIdentifier;
 
-        private String displayName;
+        private final String displayName;
 
-        private String description;
+        private final String description;
 
-        private String helpUrl;
+        private final String helpUrl;
 
         private boolean visible = true;
 
@@ -130,13 +130,11 @@ public interface DocIndexerFactory {
     /**
      * Get the full format from its identifier.
      *
-     * @param formatIdentifier
      * @return the format
      */
     Format getFormat(String formatIdentifier);
 
     /**
-     * @Deprecated (since 2.0) use byte[] version
      * Instantiating a DocIndexer from a reader.
      *
      * @param formatIdentifier the formatIdentifier for the document
@@ -147,6 +145,7 @@ public interface DocIndexerFactory {
      * @throws UnsupportedOperationException if called with an unsupported
      *             formatIdentifier (use
      *             {@link DocIndexerFactory#isSupported(String)})
+     * @deprecated (since 2.0) use byte[] version
      */
     @Deprecated
     DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)

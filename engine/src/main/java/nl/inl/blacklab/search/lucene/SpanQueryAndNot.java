@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -29,7 +14,6 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -45,9 +29,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryAndNot extends BLSpanQuery {
 
-    private List<BLSpanQuery> include;
+    private final List<BLSpanQuery> include;
 
-    private List<BLSpanQuery> exclude;
+    private final List<BLSpanQuery> exclude;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
@@ -181,8 +165,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             // All-negative; node should be rewritten to OR.
             if (rewrNotCl.size() == 1)
                 return rewrCl.get(0).inverted().rewrite(reader);
-            BLSpanQuery r = (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
-            return r;
+            return (new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]))).inverted().rewrite(reader);
         }
 
         if (rewrCl.size() > 1) {
@@ -421,7 +404,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 //			dangling.addAll(nfa.getDanglingArrows());
         }
         NfaState andAcyclic = NfaState.and(false, nfaClauses);
-        return new Nfa(andAcyclic, Arrays.asList(andAcyclic));
+        return new Nfa(andAcyclic, List.of(andAcyclic));
     }
 
     @Override
@@ -451,8 +434,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
     public int forwardMatchingCost() {
         // Add the costs of our clauses.
         int cost = 1;
-        for (SpanQuery cl : include) {
-            BLSpanQuery clause = (BLSpanQuery) cl;
+        for (BLSpanQuery cl : include) {
+            BLSpanQuery clause = cl;
             cost += clause.forwardMatchingCost();
         }
         return cost * 2 / 3; // we expect to be able to short-circuit AND in a significant number of cases

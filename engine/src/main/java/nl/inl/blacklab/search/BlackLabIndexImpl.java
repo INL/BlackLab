@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexReader;
@@ -37,7 +36,6 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.lucene.store.LockObtainFailedException;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BLDutchAnalyzer;
@@ -50,12 +48,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -116,38 +112,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
     // Static methods
     //---------------------------------------------------------------
-
-    /**
-     * Cut a few words from a string.
-     *
-     * Note, this just splits on whitespace and glues words back with space. Might
-     * not work very well in all cases, but it's not likely to be used anyway (we
-     * generally don't cut a few words from a metadata field).
-     *
-     * @param content the string to cut from
-     * @param startAtWord first word to include
-     * @param endAtWord first word not to include
-     * @return the cut string
-     */
-    static String getWordsFromString(String content, int startAtWord,
-            int endAtWord) {
-        if (startAtWord == -1 && endAtWord == -1)
-            return content;
-        // We want specific words from the field; quick-n-dirty way to do this
-        // (will probably never be used, but let's try to be generic)
-        String[] words = content.split("\\s+");
-        if (startAtWord == -1)
-            startAtWord = 0;
-        if (endAtWord == -1)
-            endAtWord = words.length;
-        StringBuilder b = new StringBuilder();
-        for (int i = startAtWord; i < endAtWord; i++) {
-            if (b.length() > 0)
-                b.append(" ");
-            b.append(words[i]);
-        }
-        return b.toString();
-    }
 
     public static Collator defaultCollator() {
         return defaultCollator;
@@ -213,7 +177,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * Instantiate analyzer based on an analyzer alias.
      *
      * @param analyzerName type of analyzer
-     *            (default|whitespace|standard|nontokenizing)
+     *         (default|whitespace|standard|nontokenizing)
      * @return the analyzer, or null if the name wasn't recognized
      */
     public static Analyzer analyzerInstance(String analyzerName) {
@@ -339,13 +303,14 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
-     *            exists.
+     *         exists.
      * @param config input format config to use as template for index structure /
-     *            metadata (if creating new index)
+     *         metadata (if creating new index)
      * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
+            ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         searchSettings = SearchSettings.defaults();
         try {
@@ -362,8 +327,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening)
                 logger.debug("  Determining index structure...");
-            IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
-            indexMetadata = indexMetadataImpl;
+            indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -380,11 +344,11 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
-     *            exists.
+     *         exists.
      * @param indexTemplateFile index template file to use to create index
-     * @throws ErrorOpeningIndex
      */
-    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, File indexTemplateFile) throws ErrorOpeningIndex {
+    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
+            File indexTemplateFile) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         searchSettings = SearchSettings.defaults();
         this.indexMode = indexMode;
@@ -397,8 +361,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening)
                 logger.debug("  Determining index structure...");
-            IndexMetadataImpl indexMetadataImpl = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
-            indexMetadata = indexMetadataImpl;
+            indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -465,13 +428,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad {
+    public Hits find(BLSpanQuery query, SearchSettings settings) {
         QueryInfo queryInfo = QueryInfo.create(this, fieldFromQuery(query), true);
         return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
-    public QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad {
+    public QueryExplanation explain(BLSpanQuery query) {
         try {
             IndexReader indexReader = reader();
             query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));
@@ -510,21 +473,15 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      *
      * @param field the field for which this is the content accessor
      * @param contentStore the ContentStore object by which to access the content
-     *
      */
     protected void registerContentStore(Field field, ContentStore contentStore) {
         contentStores.put(field, contentStore);
 
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
-        blackLab.initializationExecutorService().execute(new Runnable() {
-            @Override
-            public void run() {
-                //logger.debug("START initialize CS: " + field.name());
-                contentStore.initialize();
-                //logger.debug("END   initialize CS: " + field.name());
-            }
-        });
+        //logger.debug("START initialize CS: " + field.name());
+        //logger.debug("END   initialize CS: " + field.name());
+        blackLab.initializationExecutorService().execute(contentStore::initialize);
     }
 
     @Override
@@ -542,10 +499,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     @Override
     public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
         return forwardIndex(annotation.field()).get(annotation);
-    }
-
-    protected void addForwardIndex(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        forwardIndex(annotation.field()).put(annotation, forwardIndex);
     }
 
     @Override
@@ -576,7 +529,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
-            throws IOException, CorruptIndexException, LockObtainFailedException {
+            throws IOException {
         if (!indexMode && createNewIndex)
             throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
 
@@ -598,7 +551,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             indexWriter = openIndexWriter(indexDir, createNewIndex, null);
             if (traceIndexOpening)
                 logger.debug("  Opening corresponding IndexReader...");
-            reader = DirectoryReader.open(indexWriter, false, false);//applyAllDeletes is false and  writeAllDeletes is false
+            reader = DirectoryReader.open(indexWriter, false, false);
         } else {
             // Open Lucene index
             if (traceIndexOpening)
@@ -620,7 +573,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
-            throws IOException, CorruptIndexException, LockObtainFailedException, ErrorOpeningIndex {
+            throws IOException, ErrorOpeningIndex {
         isEmptyIndex = indexMetadata.isNewIndex();
 
         // TODO: we need to create the analyzer before opening the index, because
@@ -642,7 +595,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
             if (traceIndexOpening)
                 logger.debug("  IndexReader too...");
-            reader = DirectoryReader.open(indexWriter, false, false);//applyAllDeletes is false and  writeAllDeletes is false
+            reader = DirectoryReader.open(indexWriter, false, false);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
@@ -754,7 +707,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
             // Close the forward indices
             if (forwardIndices != null) {
-                for (ForwardIndex fi : forwardIndices.values()) {
+                for (ForwardIndex fi: forwardIndices.values()) {
                     fi.close();
                 }
                 forwardIndices = null;
@@ -808,9 +761,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     // Methods for mutating the index
     //----------------------------------------------------------------
 
-    @Override
-    public IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException,
-            CorruptIndexException, LockObtainFailedException {
+    private IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
                 throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
@@ -850,7 +801,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
     protected void deleteFromForwardIndices(Document d) {
         // Delete this document in all forward indices
-        for (Map.Entry<AnnotatedField, ForwardIndex> e : forwardIndices.entrySet()) {
+        for (Map.Entry<AnnotatedField, ForwardIndex> e: forwardIndices.entrySet()) {
             AnnotatedField field = e.getKey();
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
@@ -858,14 +809,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                     fi.get(annotation).deleteDocumentByLuceneDoc(d);
             }
         }
-    }
-
-    @Override
-    public Annotation getOrCreateAnnotation(AnnotatedField field, String annotName) {
-        if (field.annotations().exists(annotName))
-            return field.annotation(annotName);
-        AnnotatedFieldImpl fld = (AnnotatedFieldImpl)field;
-        return fld.getOrCreateAnnotation(annotName);
     }
 
     @Override
@@ -888,9 +831,9 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             try (IndexReader freshReader = DirectoryReader.open(indexWriter, false, false)) {
                 // Execute the query, iterate over the docs and delete from FI and CS.
                 IndexSearcher s = new IndexSearcher(freshReader);
-                Weight w = s.createWeight(q, ScoreMode.COMPLETE_NO_SCORES, 1.0f);// equals to s.createNormalizedWeight(q, false);
+                Weight w = s.createWeight(q, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                 logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
-                for (LeafReaderContext leafContext : freshReader.leaves()) {
+                for (LeafReaderContext leafContext: freshReader.leaves()) {
                     Bits liveDocs = leafContext.reader().getLiveDocs();
 
                     Scorer scorer = w.scorer(leafContext);
@@ -912,7 +855,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                         }
                         docId += leafContext.docBase;
                         Document d = freshReader.document(docId);
-                        logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile") + " from FI and CS");
+                        logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile")
+                                + " from FI and CS");
 
                         deleteFromForwardIndices(d);
 
@@ -974,7 +918,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms) {
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
+            Set<String> terms) {
         Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms);
         return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
     }

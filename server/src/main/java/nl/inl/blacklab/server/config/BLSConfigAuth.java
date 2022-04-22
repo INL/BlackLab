@@ -15,12 +15,13 @@ public class BLSConfigAuth {
      * An insecure way of authenticating a user via HTTP headers
      * X-BlackLabAccessToken / X-BlackLabUserId, only to be used for testing.
      */
-    String debugHttpHeaderAuthToken = "";
+    final String debugHttpHeaderAuthToken = "";
     
     public Map<String, String> getSystem() {
         return system;
     }
 
+    @SuppressWarnings("unused")
     public void setSystem(Map<String, String> system) {
         this.system = system;
     }
@@ -29,6 +30,7 @@ public class BLSConfigAuth {
         return overrideUserIdIps;
     }
 
+    @SuppressWarnings("unused")
     public void setOverrideUserIdIps(List<String> overrideUserIdIps) {
         this.overrideUserIdIps = overrideUserIdIps;
     }

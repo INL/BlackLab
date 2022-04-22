@@ -15,10 +15,10 @@ public class ConfigMetadataBlock {
     private String defaultAnalyzer = "";
 
     /** Metadata fields */
-    private List<ConfigMetadataField> fields = new ArrayList<>();
+    private final List<ConfigMetadataField> fields = new ArrayList<>();
 
     /** Metadata fields (except forEach's) by name */
-    private Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
+    private final Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
 
     public void validate() {
         for (ConfigMetadataField f : fields) {

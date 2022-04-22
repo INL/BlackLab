@@ -8,7 +8,7 @@ package nl.inl.blacklab.search;
 public class DocContentsString extends DocContents {
 
     /** The content */
-    String contents;
+    final String contents;
 
     /**
      * Construct DocContents object.

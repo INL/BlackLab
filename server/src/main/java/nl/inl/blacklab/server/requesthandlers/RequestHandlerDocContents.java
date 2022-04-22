@@ -30,7 +30,7 @@ import nl.inl.blacklab.server.util.BlsUtils;
  */
 public class RequestHandlerDocContents extends RequestHandler {
 
-    private boolean surroundWithRootElement;
+    private final boolean surroundWithRootElement;
 
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
@@ -45,7 +45,7 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         int startAtWord = searchParam.getInteger("wordstart");
         int endAtWord = searchParam.getInteger("wordend");
-        if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord)) {
+        if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             // Illegal value. Error will be thrown, so we'll need a root element.
             surroundWithRootElement = true;
         } else {
@@ -99,7 +99,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         String content;
         int startAtWord = searchParam.getInteger("wordstart");
         int endAtWord = searchParam.getInteger("wordend");
-        if (startAtWord < -1 || endAtWord < -1 || (startAtWord >= 0 && endAtWord >= 0 && endAtWord <= startAtWord)) {
+        if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
@@ -139,7 +139,7 @@ public class RequestHandlerDocContents extends RequestHandler {
             }
             // see if a prefix isn't bound
             if (prefixes.stream().noneMatch(s -> namespaces.stream().anyMatch(s1 -> s1.startsWith(" xmlns:" + s)))) {
-                String msg = String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.",prefixes.toString(),docPid, namespaces.toString());
+                String msg = String.format("some namespace prefixes (%s) in doc %s are not declared on the document root element, only %s.", prefixes,docPid, namespaces);
                 logger.warn(msg);
                 //throw new InternalServerError(msg);
             }

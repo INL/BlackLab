@@ -29,6 +29,7 @@ public class BLSConfigParameters {
     }
 
     @JsonSetter("defaultSearchSensitivity")
+    @SuppressWarnings("unused")
     public void setDefaultSearchSensitivityName(String value) {
         defaultSearchSensitivity = MatchSensitivity.fromName(value);
     }
@@ -37,6 +38,7 @@ public class BLSConfigParameters {
         return patternLanguage;
     }
 
+    @SuppressWarnings("unused")
     public void setPatternLanguage(String patternLanguage) {
         this.patternLanguage = patternLanguage;
     }
@@ -45,6 +47,7 @@ public class BLSConfigParameters {
         return filterLanguage;
     }
 
+    @SuppressWarnings("unused")
     public void setFilterLanguage(String filterLanguage) {
         this.filterLanguage = filterLanguage;
     }
@@ -53,6 +56,7 @@ public class BLSConfigParameters {
         return processHits;
     }
 
+    @SuppressWarnings("unused")
     public void setProcessHits(DefaultMax processHits) {
         this.processHits = processHits;
     }
@@ -61,6 +65,7 @@ public class BLSConfigParameters {
         return countHits;
     }
 
+    @SuppressWarnings("unused")
     public void setCountHits(DefaultMax countHits) {
         this.countHits = countHits;
     }
@@ -69,6 +74,7 @@ public class BLSConfigParameters {
         return pageSize;
     }
 
+    @SuppressWarnings("unused")
     public void setPageSize(DefaultMax pageSize) {
         this.pageSize = pageSize;
     }
@@ -77,6 +83,7 @@ public class BLSConfigParameters {
         return contextSize;
     }
 
+    @SuppressWarnings("unused")
     public void setContextSize(DefaultMax contextSize) {
         this.contextSize = contextSize;
     }
@@ -85,6 +92,7 @@ public class BLSConfigParameters {
         return defaultSearchSensitivity;
     }
 
+    @SuppressWarnings("unused")
     public void setDefaultSearchSensitivity(MatchSensitivity defaultSearchSensitivity) {
         this.defaultSearchSensitivity = defaultSearchSensitivity;
     }
@@ -93,6 +101,7 @@ public class BLSConfigParameters {
         return writeHitsAndDocsInGroupedHits;
     }
 
+    @SuppressWarnings("unused")
     public void setWriteHitsAndDocsInGroupedHits(boolean writeHitsAndDocsInGroupedHits) {
         this.writeHitsAndDocsInGroupedHits = writeHitsAndDocsInGroupedHits;
     }

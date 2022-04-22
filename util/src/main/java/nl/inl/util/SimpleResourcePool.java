@@ -1,6 +1,3 @@
-/**
- *
- */
 package nl.inl.util;
 
 import java.util.ArrayList;
@@ -24,7 +21,7 @@ public abstract class SimpleResourcePool<T> {
      * time. Once the pool is full, additional resource objects are dropped to be
      * garbage-collected instead of returned to the pool.
      */
-    private int maxFreePoolSize;
+    private final int maxFreePoolSize;
 
     /**
      * Switch to disable pooling.
@@ -32,7 +29,7 @@ public abstract class SimpleResourcePool<T> {
     private boolean neverPool;
 
     /** List of free resource objects */
-    private List<T> freePool;
+    private final List<T> freePool;
 
     /**
      * Initializes the free pool.
@@ -107,7 +104,6 @@ public abstract class SimpleResourcePool<T> {
     /**
      * Returns a resource object to the free pool.
      *
-     * @param resource
      */
     public synchronized void release(T resource) {
         if (neverPool)

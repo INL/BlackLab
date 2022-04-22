@@ -12,11 +12,6 @@ public abstract class BlackLabException extends Exception {
         super();
     }
 
-    public BlackLabException(String message, Throwable cause,
-            boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
-
     public BlackLabException(String message, Throwable cause) {
         super(message, cause);
     }

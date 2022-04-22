@@ -19,7 +19,7 @@ public class CountTokens {
 
     private static final class CountTask implements DocTask {
         private final String tokenLengthField;
-        int totalDocs;
+        final int totalDocs;
         int docsDone = 0;
         public long totalTokens = 0;
 

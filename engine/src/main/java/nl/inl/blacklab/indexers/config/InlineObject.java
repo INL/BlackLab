@@ -22,11 +22,11 @@ class InlineObject implements Comparable<InlineObject> {
         PUNCTUATION
     }
 
-    private String text;
+    private final String text;
 
-    private int offset;
+    private final int offset;
 
-    private InlineObjectType type;
+    private final InlineObjectType type;
 
     /** The close tag to this open tag, or vice versa */
     private InlineObject matchingTag;

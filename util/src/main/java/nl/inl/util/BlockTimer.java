@@ -15,7 +15,7 @@ public class BlockTimer implements AutoCloseable {
     
     private long start;
     private long end;
-    private TimerGroup group;
+    private final TimerGroup group;
     private Thread ownThread;
     
     private BlockTimer(TimerGroup group) {
@@ -55,16 +55,16 @@ public class BlockTimer implements AutoCloseable {
     }
     
     private static class TimerGroup {
-        private boolean log;
-        private String message;
+        private final boolean log;
+        private final String message;
         private long invocations = 0;
         private long running = 0;
         private long runtime = 0;
-        private TimerGroup parent;
+        private final TimerGroup parent;
         private final Thread ownThread;
         private int childTimeInOwnThread = 0;
         
-        private List<BlockTimer> instances = new ArrayList<>();
+        private final List<BlockTimer> instances = new ArrayList<>();
         private final ConcurrentHashMap<String, TimerGroup> children = new ConcurrentHashMap<>();
 
         

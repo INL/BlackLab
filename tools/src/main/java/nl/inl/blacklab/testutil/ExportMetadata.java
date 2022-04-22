@@ -32,7 +32,7 @@ public class ExportMetadata implements AutoCloseable {
         return str.replaceAll("\t", "\\t");
     }
 
-    public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -64,11 +64,11 @@ public class ExportMetadata implements AutoCloseable {
         }
     }
 
-    Set<String> fieldNames = new HashSet<>();
+    final Set<String> fieldNames = new HashSet<>();
 
     BlackLabIndex index;
 
-    List<Map<String, String>> values = new ArrayList<>();
+    final List<Map<String, String>> values = new ArrayList<>();
 
     public ExportMetadata(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
@@ -89,7 +89,7 @@ public class ExportMetadata implements AutoCloseable {
 
             int docsDone = 0;
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             @Override
             public void perform(BlackLabIndex index, int docId) {
@@ -134,7 +134,7 @@ public class ExportMetadata implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (index != null)
             index.close();
     }

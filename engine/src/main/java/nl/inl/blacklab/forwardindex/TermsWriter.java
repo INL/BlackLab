@@ -11,7 +11,6 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.CollationKey;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -51,7 +50,7 @@ class TermsWriter extends Terms {
      * Mapping from term to its unique index number. We use a SortedMap because we
      * wish to store the sorted index numbers later (to speed up sorting).
      */
-    Map<CollationKey, Integer> termIndex;
+    final Map<CollationKey, Integer> termIndex;
 
     /**
      * The maximum block size to use while writing the terms file. Usually around
@@ -247,12 +246,7 @@ class TermsWriter extends Terms {
                     ib.put(sortPositionPerId);
 
                     // Now, sort case-insensitively and write those arrays as well
-                    Arrays.sort(insensitive, new Comparator<Integer>() {
-                        @Override
-                        public int compare(Integer a, Integer b) {
-                            return collatorInsensitive.compare(terms[a], terms[b]);
-                        }
-                    });
+                    Arrays.sort(insensitive, (a, b) -> collatorInsensitive.compare(terms[a], terms[b]));
                     // Copy into the sortPositionPerIdInsensitive array, making sure that
                     // identical values get identical sort positions!
                     int[] sortPositionPerIdInsensitive = new int[n];

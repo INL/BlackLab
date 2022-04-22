@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -47,12 +32,12 @@ import nl.inl.blacklab.search.Span;
  */
 abstract class SpansInBucketsAbstract implements SpansInBuckets {
     
-    protected BLSpans source;
+    protected final BLSpans source;
 
     protected int currentDoc = -1;
 
     /** Starts of hits in our bucket */
-    private LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
+    private final LongArrayList bucket = new LongArrayList(LIST_INITIAL_CAPACITY);
 
     /**
      * For each hit we fetched, store the captured groups, so we don't lose this
@@ -89,16 +74,13 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         bucketSize++;
     }
     
-    static final LongComparator longCmpEndPoint = new LongComparator() {
-        @Override
-        public int compare(long k1, long k2) {
-            int a = (int)k1;
-            int b = (int)k2;
-            if (a == b)
-                return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
-            else
-                return a - b; // compare endpoints
-        }
+    static final LongComparator longCmpEndPoint = (k1, k2) -> {
+        int a = (int)k1;
+        int b = (int)k2;
+        if (a == b)
+            return (int)(k1 >> 32) - (int)(k2 >> 32); // compare start points
+        else
+            return a - b; // compare endpoints
     };
     
     protected void sortHits(boolean sortByStartPoint) {
@@ -164,7 +146,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      *
      * @param targetPos the target start point
      * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
-     * @throws IOException
      */
     public int advanceBucket(int targetPos) throws IOException {
         if (source.startPosition() >= targetPos)
@@ -183,7 +164,6 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * doesn't fit in the bucket (or beyond the last hit, i.e.
      * Spans.NO_MORE_POSITIONS).
      *
-     * @throws IOException
      */
     protected abstract void gatherHits() throws IOException;
 

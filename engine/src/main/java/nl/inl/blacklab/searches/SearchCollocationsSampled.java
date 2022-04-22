@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public class SearchCollocationsSampled extends SearchCollocations {
 
-    private SearchCollocations source;
+    private final SearchCollocations source;
 
-    private SampleParameters sampleParameters;
+    private final SampleParameters sampleParameters;
 
     public SearchCollocationsSampled(QueryInfo queryInfo, SearchCollocations source, SampleParameters sampleParameters) {
         super(queryInfo);

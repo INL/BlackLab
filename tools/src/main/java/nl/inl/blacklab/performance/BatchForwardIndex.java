@@ -21,34 +21,34 @@ public class BatchForwardIndex {
 
         int fileArgNumber = 0;
         File indexDir = null, inputFile = null;
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].trim();
+        for (String s : args) {
+            String arg = s.trim();
             if (arg.charAt(0) == '-') {
                 System.err.println("Illegal option: " + arg);
                 usage();
                 return;
             }
             switch (fileArgNumber) {
-            case 0:
-                indexDir = new File(arg);
-                if (!indexDir.exists() || !indexDir.isDirectory()) {
-                    System.err.println("Index directory not found: " + arg);
+                case 0:
+                    indexDir = new File(arg);
+                    if (!indexDir.exists() || !indexDir.isDirectory()) {
+                        System.err.println("Index directory not found: " + arg);
+                        usage();
+                        return;
+                    }
+                    break;
+                case 1:
+                    inputFile = new File(arg);
+                    if (!inputFile.exists()) {
+                        System.err.println("Input file not found: " + arg);
+                        usage();
+                        return;
+                    }
+                    break;
+                default:
+                    System.err.println("Too many file arguments (supply index dir and input file)");
                     usage();
                     return;
-                }
-                break;
-            case 1:
-                inputFile = new File(arg);
-                if (!inputFile.exists()) {
-                    System.err.println("Input file not found: " + arg);
-                    usage();
-                    return;
-                }
-                break;
-            default:
-                System.err.println("Too many file arguments (supply index dir and input file)");
-                usage();
-                return;
             }
             fileArgNumber++;
         }
@@ -80,8 +80,8 @@ public class BatchForwardIndex {
                 int skip = numbers.length > 2 ? numbers[2] : 0;
                 int snippets = numbers.length > 3 ? numbers[3] : 5;
                 long time = doPerformanceTest(fi, first, number, skip, snippets);
-                System.out.println(String.format("%d\t%d\t%d\t%d\t%d", first, number, skip, snippets,
-                        time));
+                System.out.printf("%d\t%d\t%d\t%d\t%d%n", first, number, skip, snippets,
+                        time);
 
             } catch (Exception e) {
                 e.printStackTrace(System.err);

@@ -4,17 +4,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.CacheLoader;
@@ -23,6 +19,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -88,12 +85,12 @@ public class ResultsCache implements SearchCache {
         }
 
         @Override
-        public T get() throws InterruptedException, ExecutionException {
+        public T get() {
             return results;
         }
 
         @Override
-        public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+        public T get(long timeout, TimeUnit unit) {
             return results;
         }
 
@@ -142,25 +139,22 @@ public class ResultsCache implements SearchCache {
     public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
         this.threadPool = threadPool;
 
-        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = new CacheLoader<SearchInfoWrapper, SearchResult>() {
-            @Override
-            public SearchResult load(final SearchInfoWrapper searchWrapper) throws Exception {
-                final String requestId = searchWrapper.getRequestId();
+        CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = searchWrapper -> {
+            final String requestId = searchWrapper.getRequestId();
+            ThreadContext.put("requestId", requestId);
+            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
                 ThreadContext.put("requestId", requestId);
-                Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
-                    ThreadContext.put("requestId", requestId);
-                    final long startTime = System.currentTimeMillis();
-                    SearchResult results = search.executeInternal(null);
-                    ThreadContext.remove("requestId");
-                    return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
-                }));
-                try {
-                    CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
-                    logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
-                    return searchResult.getResults();
-                } finally {
-                    runningJobs.remove(searchWrapper.getSearch());
-                }
+                final long startTime = System.currentTimeMillis();
+                SearchResult results = search.executeInternal(null);
+                ThreadContext.remove("requestId");
+                return new CacheEntryWithResults<>(results, System.currentTimeMillis() - startTime);
+            }));
+            try {
+                CacheEntryWithResults<? extends SearchResult> searchResult = job.get();
+                logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
+                return searchResult.getResults();
+            } finally {
+                runningJobs.remove(searchWrapper.getSearch());
             }
         };
 

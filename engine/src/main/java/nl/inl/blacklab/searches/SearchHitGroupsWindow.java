@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsWindow extends SearchHitGroups {
 
-    private SearchHitGroups source;
-    private long first;
-    private long number;
+    private final SearchHitGroups source;
+    private final long first;
+    private final long number;
 
     public SearchHitGroupsWindow(QueryInfo queryInfo, SearchHitGroups source, long first, long number) {
         super(queryInfo);

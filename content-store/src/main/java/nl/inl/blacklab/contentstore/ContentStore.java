@@ -1,27 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.contentstore;
-
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.VersionFile;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
+
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.VersionFile;
 
 /**
  * Store string content by integer id. Quickly retrieve (parts of) the string
@@ -29,7 +15,7 @@ import java.util.Set;
  */
 public abstract class ContentStore {
 
-    static final Charset DEFAULT_CHARSET = Charset.forName("utf-8");
+    static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
     public static ContentStore open(File indexXmlDir, boolean indexMode, boolean create) throws ErrorOpeningIndex {
         String type;
@@ -134,7 +120,6 @@ public abstract class ContentStore {
 
     /**
      * Clear the entire content store.
-     * @throws IOException 
      */
     public abstract void clear() throws IOException;
 
@@ -168,7 +153,7 @@ public abstract class ContentStore {
      * @param task the task to perform
      */
     public void forEachDocument(DocTask task) {
-        idSet().stream().forEach(cid -> task.perform(cid, retrieve(cid)));
+        idSet().forEach(cid -> task.perform(cid, retrieve(cid)));
     }
 
     public abstract void initialize();

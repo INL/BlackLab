@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index.annotated;
 
 import java.util.ArrayList;
@@ -45,12 +30,12 @@ public class AnnotationWriter {
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
     /** The field type for annotations without character offsets */
-    private static FieldType tokenStreamFieldNoOffsets;
+    private static final FieldType tokenStreamFieldNoOffsets;
 
     /**
      * The field type for annotations with character offsets (on the main sensitivity variant)
      */
-    private static FieldType tokenStreamFieldWithOffsets;
+    private static final FieldType tokenStreamFieldWithOffsets;
 
     static {
         FieldType type = tokenStreamFieldNoOffsets = new FieldType();
@@ -104,7 +89,7 @@ public class AnnotationWriter {
         }
     }
 
-    private AnnotatedFieldWriter fieldWriter;
+    private final AnnotatedFieldWriter fieldWriter;
 
     protected boolean includeOffsets;
 
@@ -133,13 +118,13 @@ public class AnnotationWriter {
      * A annotation may be indexed in different ways (sensitivities). This specifies
      * names and filters for each way.
      */
-    private Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
+    private final Map<String, TokenFilterAdder> sensitivities = new HashMap<>();
 
     /** The main sensitivity (the one that gets character offsets if desired) */
     private String mainSensitivity;
 
     /** The annotation name */
-    private String annotationName;
+    private final String annotationName;
 
     /** The annotation descriptor */
     private Annotation annotation;
@@ -401,26 +386,19 @@ public class AnnotationWriter {
         payloads.set(i, payload);
     }
 
-    public void clear(boolean reuseBuffers) {
+    public void clear() {
         lastValuePosition = -1;
         // In theory, we don't need to clear the cached values between documents, but
         // for large data sets, this would keep getting larger and larger, so we do
         // it anyway.
-//        storedValues.clear(); // We can always reuse storedValues; it's exclusively owned by this
         storedValues = new HashMap<>();
 
         // Don't reuse buffers, reclaim memory so we don't run out
-//        if (reuseBuffers) {
-//            values.clear();
-//            increments.clear();
-//            payloads.clear();
-//        } else {
-            values = new ArrayList<>();
-            increments = new IntArrayList();
-            if (payloads != null) {
-                payloads = new ArrayList<>();
-            }
-//        }
+        values = new ArrayList<>();
+        increments = new IntArrayList();
+        if (payloads != null) {
+            payloads = new ArrayList<>();
+        }
     }
 
     public boolean hasPayload() {

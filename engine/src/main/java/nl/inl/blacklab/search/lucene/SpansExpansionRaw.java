@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -51,7 +36,7 @@ import nl.inl.blacklab.search.lucene.SpansSequenceWithGap.Gap;
 class SpansExpansionRaw extends BLSpans {
 
     /** The clause to expand */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** Whether or not there's more docs in the clause */
     private int currentDoc = -1;
@@ -60,13 +45,13 @@ class SpansExpansionRaw extends BLSpans {
     private int clauseStart = -1;
 
     /** Whether to expand to left or right */
-    private Direction direction;
+    private final Direction direction;
 
     /** Minimum number of tokens to expand */
-    private int min;
+    private final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    private int max;
+    private final int max;
 
     /** Start of the current expanded hit */
     private int start = -1;
@@ -251,7 +236,6 @@ class SpansExpansionRaw extends BLSpans {
      * Updates clauseStart to the start position if we're at a valid hit and have
      * reset the expansion, or to NO_MORE_POSITIONS if we're done.
      *
-     * @throws IOException
      */
     private void resetExpand() throws IOException {
         if (clauseStart == NO_MORE_POSITIONS) {

@@ -8,7 +8,7 @@ import java.util.stream.Stream;
 
 final class AnnotatedFieldsImpl implements AnnotatedFields {
     /** The annotated fields in our index */
-    private Map<String, AnnotatedFieldImpl> annotatedFields;
+    private final Map<String, AnnotatedFieldImpl> annotatedFields;
     
     /**
      * The main contents field in our index. This is either the annotated field with
@@ -19,7 +19,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     /**
      * Logical groups of annotations, for presenting them in the user interface.
      */
-    private Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
+    private final Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
     
     public AnnotatedFieldsImpl() {
         annotatedFields = new TreeMap<>();
@@ -33,7 +33,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     @Override
     public Iterator<AnnotatedField> iterator() {
         Iterator<AnnotatedFieldImpl> it = annotatedFields.values().iterator();
-        return new Iterator<AnnotatedField>() {
+        return new Iterator<>() {
             @Override
             public boolean hasNext() {
                 return it.hasNext();
@@ -48,7 +48,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @Override
     public Stream<AnnotatedField> stream() {
-        return annotatedFields.values().stream().map(f -> (AnnotatedField)f);
+        return annotatedFields.values().stream().map(f -> f);
     }
 
     @Override
@@ -64,7 +64,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     }
 
     public void freeze() {
-        annotatedFields.values().forEach(f -> f.freeze());
+        annotatedFields.values().forEach(AnnotatedFieldImpl::freeze);
     }
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {

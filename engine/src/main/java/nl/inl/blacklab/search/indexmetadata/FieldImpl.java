@@ -6,7 +6,7 @@ import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
     /** Field's name */
-    protected String fieldName;
+    protected final String fieldName;
 
     /** Field's name */
     protected String displayName;
@@ -18,12 +18,8 @@ public abstract class FieldImpl implements Field {
     protected boolean contentStore;
 
     FieldImpl(String fieldName) {
-        this(fieldName, null);
-    }
-
-    FieldImpl(String fieldName, String displayName) {
         this.fieldName = fieldName;
-        this.displayName = StringUtils.defaultIfEmpty(displayName, "");
+        this.displayName = "";
     }
 
     /**

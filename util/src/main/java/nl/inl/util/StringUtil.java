@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.util;
 
 import java.text.Normalizer;
@@ -38,7 +23,7 @@ public final class StringUtil {
     /** Whitespace and/or punctuation at start */
     private static final Pattern PATT_WS_PUNCT_AT_START = Pattern.compile("^[\\p{P}\\s]+");
 
-    private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
+    private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([|\\\\?*+()\\[\\]\\-^${}.])");
 
     /** Diacritical marks as well as "soft hyphen" U+00AD and "general punctuation" U+2003
         (which are also a pain when trying to compare insensitively, and ignored by collators) */
@@ -134,7 +119,7 @@ public final class StringUtil {
     /**
      * A lowercase letter followed by an uppercase one, both matched in groups.
      */
-    static Pattern lcaseUcase = Pattern.compile("(\\p{Ll})(\\p{Lu})");
+    static final Pattern lcaseUcase = Pattern.compile("(\\p{Ll})(\\p{Lu})");
 
 
     /**
@@ -182,7 +167,7 @@ public final class StringUtil {
      * @return equivalent regex pattern
      */
     public static String wildcardToRegex(String wildcard) {
-        StringBuffer s = new StringBuffer(wildcard.length());
+        StringBuilder s = new StringBuilder(wildcard.length());
         s.append('^');
         for (int i = 0, is = wildcard.length(); i < is; i++) {
             char c = wildcard.charAt(i);

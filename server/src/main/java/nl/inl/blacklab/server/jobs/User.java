@@ -13,7 +13,7 @@ public class User {
     private String userId;
 
     /** The session id */
-    private String sessionId;
+    private final String sessionId;
     
     /** Is this the superuser? */
     private boolean superuser = false;
@@ -98,9 +98,9 @@ public class User {
             byte[] hashBytes = md5.digest();
             BigInteger hashInt = new BigInteger(1, hashBytes);
             String hashHex = hashInt.toString(16);
-            String zeroes = "";
+            StringBuilder zeroes = new StringBuilder();
             for (int i = 0; i < 32 - hashHex.length(); i++) {
-                zeroes += "0";
+                zeroes.append("0");
             }
             return stripped + "_" + zeroes + hashHex;
         } catch (NoSuchAlgorithmException e) {
@@ -110,14 +110,14 @@ public class User {
     }
 
     public static boolean isValidUserId(String userId) {
-        return userId.matches("^[a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]+$");
+        return userId.matches("^[a-zA-Z0-9\\-._!$&'()*+,;=@]+$");
     }
 
     public static String sanitize(String originalUserId) {
         if (originalUserId == null || originalUserId.isEmpty())
             return null;
 
-        return originalUserId.replaceAll("[^a-zA-Z0-9\\-\\._!\\$&'\\(\\)\\*\\+,;=@]", "_");
+        return originalUserId.replaceAll("[^a-zA-Z0-9\\-._!$&'()*+,;=@]", "_");
     }
 
     public boolean isSuperuser() {

@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 
 public class MatchFilterNot extends MatchFilter {
 
-    MatchFilter a;
+    final MatchFilter a;
 
     public MatchFilterNot(MatchFilter a) {
         super();

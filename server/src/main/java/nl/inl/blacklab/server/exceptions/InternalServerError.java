@@ -10,7 +10,7 @@ import nl.inl.blacklab.server.requesthandlers.Response;
 public class InternalServerError extends BlsException {
     static final Logger logger = LogManager.getLogger(Response.class);
 
-    private String internalErrorCode;
+    private final String internalErrorCode;
 
     public String getInternalErrorCode() {
         return internalErrorCode;

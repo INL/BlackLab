@@ -22,7 +22,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
@@ -37,10 +36,10 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 public class HitsFromQuery extends HitsMutable {
 
     /** Settings such as max. hits to process/count. */
-    SearchSettings searchSettings;
+    final SearchSettings searchSettings;
 
     /** Did we exceed the maximums? */
-    MaxStats maxStats;
+    final MaxStats maxStats;
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -56,7 +55,7 @@ public class HitsFromQuery extends HitsMutable {
     /**
      * What LeafReaderContext we're querying now.
      */
-    private int atomicReaderContextIndex = -1;
+    private int atomicReaderContextIndex;
 
     /**
      * Term contexts for the terms in the query.
@@ -76,9 +75,9 @@ public class HitsFromQuery extends HitsMutable {
     /**
      * Did we completely read our Spans object?
      */
-    private boolean sourceSpansFullyRead = true;
+    private boolean sourceSpansFullyRead;
 
-    private Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /** Context of our query; mostly used to keep track of captured groups. */
     private HitQueryContext hitQueryContext;
@@ -96,7 +95,6 @@ public class HitsFromQuery extends HitsMutable {
      * @param queryInfo query info
      * @param sourceQuery the query to execute to get the hits
      * @param searchSettings search settings
-     * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         super(queryInfo);
@@ -209,7 +207,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
-                    while (true) {
+                    // We're at the next hit.
+                    do {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.
 
@@ -247,8 +246,8 @@ public class HitsFromQuery extends HitsMutable {
                                     doc = currentSourceSpans.nextDoc();
                                     if (doc == DocIdSetIterator.NO_MORE_DOCS)
                                         currentSourceSpans = null; // no matching docs in this segment, try next
-                                    alive = liveDocs == null ? true : liveDocs.get(doc);
-                                } while(currentSourceSpans != null && !alive);
+                                    alive = liveDocs == null || liveDocs.get(doc);
+                                } while (currentSourceSpans != null && !alive);
                             }
                         }
 
@@ -258,17 +257,13 @@ public class HitsFromQuery extends HitsMutable {
                             int doc = currentSourceSpans.nextDoc();
                             if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                                 // Go to first hit in doc
-                                start = currentSourceSpans.nextStartPosition();
+                                currentSourceSpans.nextStartPosition();
                             } else {
                                 // This one is exhausted; go to the next one.
                                 currentSourceSpans = null;
                             }
                         }
-                        if (currentSourceSpans != null) {
-                            // We're at the next hit.
-                            break;
-                        }
-                    }
+                    } while (currentSourceSpans == null); // until at next hit
 
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)

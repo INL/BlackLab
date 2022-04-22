@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 public class PropertyValueInt extends PropertyValue {
-    long value;
+    final long value;
 
     @Override
     public Long value() {
@@ -15,7 +15,7 @@ public class PropertyValueInt extends PropertyValue {
     @Override
     public int compareTo(Object o) {
         long ovalue = ((PropertyValueInt) o).value;
-        return value == ovalue ? 0 : (value > ovalue ? 1 : -1);
+        return Long.compare(value, ovalue);
     }
 
     @Override

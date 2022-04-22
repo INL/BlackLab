@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +20,6 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
@@ -51,9 +50,9 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     static final class OpenTagInfo {
 
-        public String name;
+        public final String name;
 
-        public int index;
+        public final int index;
 
         public OpenTagInfo(String name, int index) {
             this.name = name;
@@ -62,7 +61,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     /** Annotated fields we're indexing. */
-    private Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
+    private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
      * A field named "contents", or, if that doesn't exist, the first annotated field
@@ -102,7 +101,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * Unique strings we store, so we avoid storing many copies of the same string
      * (e.g. punctuation).
      */
-    private Map<String, String> uniqueStrings = new HashMap<>();
+    private final Map<String, String> uniqueStrings = new HashMap<>();
 
     /**
      * If true, we're indexing into an existing Lucene document. Don't overwrite it
@@ -111,7 +110,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     private boolean indexingIntoExistingLuceneDoc = false;
 
     /** Currently opened inline tags we still need to add length payload to */
-    private List<OpenTagInfo> openInlineTags = new ArrayList<>();
+    private final List<OpenTagInfo> openInlineTags = new ArrayList<>();
 
     /**
      * Store documents? Can be set to false in ConfigInputFormat to if no content
@@ -147,7 +146,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     /**
      * What annotations where skipped because they were not declared?
      */
-    Set<String> skippedAnnotations = new HashSet<>();
+    final Set<String> skippedAnnotations = new HashSet<>();
 
     protected String getContentStoreName() {
         return contentStoreName;
@@ -212,10 +211,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         return annotStartTag;
     }
 
-    protected AnnotationWriter propMain() {
-        return annotMain;
-    }
-
     protected AnnotationWriter propPunct() {
         return annotPunct;
     }
@@ -266,7 +261,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, getDocWriter(), completePath, data,
                 Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
-                @SuppressWarnings("resource")
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
@@ -300,7 +294,6 @@ public abstract class DocIndexerBase extends DocIndexer {
      *
      * @param inputFile URL or (relative) file reference
      * @return the file
-     * @throws IOException
      */
     protected File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
@@ -493,7 +486,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
     }
 
-    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
+    protected void storeWholeDocument(byte[] content, int offset, int length) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
         // (Note that we do this after adding the "extra closing token", so the character
@@ -515,7 +508,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         int contentId = -1;
         if (getDocWriter() != null) {
             ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
-            contentId = contentStore.store(content, offset, length, cs);
+            contentId = contentStore.store(content, offset, length, StandardCharsets.UTF_8);
         }
         currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
@@ -572,10 +565,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected void setAddDefaultPunctuation(boolean addDefaultPunctuation) {
         this.addDefaultPunctuation = addDefaultPunctuation;
-    }
-
-    public boolean shouldAddDefaultPunctuation() {
-        return addDefaultPunctuation;
     }
 
     /**

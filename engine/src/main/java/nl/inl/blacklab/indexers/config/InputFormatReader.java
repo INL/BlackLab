@@ -47,13 +47,9 @@ public class InputFormatReader extends YamlJsonReader {
 
     /**
      *
-     * @param r
-     * @param isJson
-     * @param cfg
      * @param finder responsible for getting (optionally locating/loading) other
      *            configs that this config depends on. (for config keys "baseFormat"
      *            and "inputFormat")
-     * @throws IOException
      * @throws InvalidInputFormatConfig if the file is not a valid config
      */
     public static void read(Reader r, boolean isJson, ConfigInputFormat cfg,
@@ -71,12 +67,9 @@ public class InputFormatReader extends YamlJsonReader {
 
     /**
      *
-     * @param file
-     * @param cfg
      * @param finder responsible for getting (optionally locating/loading) other
      *            configs that this config depends on. ("baseFormat" and
      *            "inputFormat")
-     * @throws IOException
      * @throws InvalidInputFormatConfig if the file is not a valid config
      */
     public static void read(File file, ConfigInputFormat cfg, Function<String, Optional<ConfigInputFormat>> finder)
@@ -387,9 +380,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "captureValuePaths":
                 ArrayNode paths = (ArrayNode) e.getValue();
-                paths.iterator().forEachRemaining((t) -> {
-                    annot.addCaptureValuePath(t.asText());
-                });
+                paths.iterator().forEachRemaining((t) -> annot.addCaptureValuePath(t.asText()));
                 break;
             case "forEachPath":
                 if (!isSubannotation)

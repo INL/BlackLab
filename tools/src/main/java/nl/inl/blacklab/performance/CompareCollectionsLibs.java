@@ -1,6 +1,7 @@
 package nl.inl.blacklab.performance;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,9 @@ public class CompareCollectionsLibs {
     }
     
     static class Hit implements Comparable<Hit> {
-        public int doc, start, end;
+        public final int doc;
+        public final int start;
+        public final int end;
         
         public Hit(int doc, int start, int end) {
             this.doc = doc;
@@ -128,26 +131,23 @@ public class CompareCollectionsLibs {
             base[i] = new Hit(random.nextInt(), random.nextInt(), random.nextInt());
         }
         
-        time("Fill Java list", () -> { for (Hit item: base) javaList.add(item); });
-        time("Fill Eclipse list", () -> { for (Hit item: base) ecList.add(item); });
-        time("Fill fastutil list", () -> { for (Hit item: base) fuList.add(item); });
+        time("Fill Java list", () -> javaList.addAll(Arrays.asList(base)));
+        time("Fill Eclipse list", () -> ecList.addAll(Arrays.asList(base)));
+        time("Fill fastutil list", () -> fuList.addAll(Arrays.asList(base)));
         
-        Comparator<Hit> comp = new Comparator<Hit>() {
-            @Override
-            public int compare(Hit a, Hit b) {
-                int c = Integer.compare(a.doc, b.doc);
+        Comparator<Hit> comp = (a, b) -> {
+            int c = Integer.compare(a.doc, b.doc);
+            if (c == 0) {
+                c = Integer.compare(a.start, b.start);
                 if (c == 0) {
-                    c = Integer.compare(a.start, b.start);
-                    if (c == 0) {
-                        c = Integer.compare(a.end, b.end);
-                    }
+                    c = Integer.compare(a.end, b.end);
                 }
-                return c;
             }
+            return c;
         };
-        time("Sort Java list", () -> { javaList.sort(comp); });
-        time("Sort Eclipse list", () -> { ecList.sort(comp); });
-        time("Sort fastutil list", () -> { fuList.sort(comp); });
+        time("Sort Java list", () -> javaList.sort(comp));
+        time("Sort Eclipse list", () -> ecList.sort(comp));
+        time("Sort fastutil list", () -> fuList.sort(comp));
     }
     
     private static void testIntegerLists() {
@@ -176,9 +176,9 @@ public class CompareCollectionsLibs {
         time("Fill Eclipse list", () -> { for (int item: base) ecList.add(item); });
         time("Fill fastutil list", () -> { for (int item: base) fuList.add(item); });
         
-        time("Sort Java list", () -> { javaList.sort(Comparator.naturalOrder()); });
-        time("Sort Eclipse list", () -> { ecList.sortThis(); });
-        time("Sort fastutil list", () -> { IntArrays.quickSort(fuList.elements(), 0, numberOfItems); });
+        time("Sort Java list", () -> javaList.sort(Comparator.naturalOrder()));
+        time("Sort Eclipse list", ecList::sortThis);
+        time("Sort fastutil list", () -> IntArrays.quickSort(fuList.elements(), 0, numberOfItems));
     }
     
     interface Task {

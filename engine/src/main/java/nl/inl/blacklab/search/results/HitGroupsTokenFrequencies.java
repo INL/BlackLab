@@ -406,17 +406,15 @@ public class HitGroupsTokenFrequencies {
                                 }
 
                                 // Merge occurrences in this doc with global occurrences
-                                occsInDoc.forEach((groupId, occ) -> {
-                                    occurrences.compute(groupId, (__, groupSize) -> {
-                                        if (groupSize != null) {
-                                            // Group existed already
-                                            // Count hits and doc
-                                            occ.hits += groupSize.hits;
-                                            occ.docs += groupSize.docs;
-                                        }
-                                        return occ;
-                                    });
-                                });
+                                occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
+                                    if (groupSize != null) {
+                                        // Group existed already
+                                        // Count hits and doc
+                                        occ.hits += groupSize.hits;
+                                        occ.docs += groupSize.docs;
+                                    }
+                                    return occ;
+                                }));
 
 
                                 // If we exceeded maxHitsToCount, remember that and don't process more docs.

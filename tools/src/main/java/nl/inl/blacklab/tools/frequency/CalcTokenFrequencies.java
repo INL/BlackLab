@@ -171,31 +171,27 @@ class CalcTokenFrequencies {
                             // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                             //       because we use ConcurrentSkipListMap, which may call the remapping function
                             //       multiple times if there's potential concurrency issues.
-                            occsInDoc.forEach((groupId, occ) -> {
-                                occurrences.compute(groupId, (__, groupSize) -> {
-                                    if (groupSize == null)
-                                        return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                                    else
-                                        return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
-                                });
-                            });
+                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
+                                if (groupSize == null)
+                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                                else
+                                    return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
+                            }));
                         } else {
                             // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
                             // because our remapping function will only be called once.
-                            occsInDoc.forEach((groupId, occ) -> {
-                                occurrences.compute(groupId, (__, groupSize) -> {
-                                    // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                                    //       because we use ConcurrentSkipListMap, which may call the remapping function
-                                    //       multiple times if there's potential concurrency issues.
-                                    if (groupSize != null) {
-                                        // Group existed already
-                                        // Count hits and doc
-                                        occ.hits += groupSize.hits;
-                                        occ.docs += groupSize.docs;
-                                    }
-                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                                });
-                            });
+                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
+                                // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                                //       because we use ConcurrentSkipListMap, which may call the remapping function
+                                //       multiple times if there's potential concurrency issues.
+                                if (groupSize != null) {
+                                    // Group existed already
+                                    // Count hits and doc
+                                    occ.hits += groupSize.hits;
+                                    occ.docs += groupSize.docs;
+                                }
+                                return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                            }));
                         }
 
                     }

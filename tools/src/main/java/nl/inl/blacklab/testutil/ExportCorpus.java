@@ -20,7 +20,7 @@ import nl.inl.util.LogUtil;
 /** Export the original corpus from a BlackLab index. */
 public class ExportCorpus implements AutoCloseable {
 
-    public static void main(String[] args) throws ErrorOpeningIndex {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -73,7 +73,7 @@ public class ExportCorpus implements AutoCloseable {
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new DocTask() {
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             int docsDone = 0;
 
@@ -121,7 +121,7 @@ public class ExportCorpus implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (index != null)
             index.close();
     }

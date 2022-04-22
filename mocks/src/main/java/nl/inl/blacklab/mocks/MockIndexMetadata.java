@@ -15,14 +15,14 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
 public class MockIndexMetadata implements IndexMetadata {
     
-    private List<AnnotatedField> fields;
+    private final List<AnnotatedField> fields;
     
     private boolean frozen;
 
     public MockIndexMetadata() {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
         MockAnnotatedField contents = new MockAnnotatedField("contents", annot);
-        fields = Arrays.asList(contents);
+        fields = List.of(contents);
     }
 
     @Override
@@ -127,9 +127,8 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public IndexMetadata freeze() {
+    public void freeze() {
         this.frozen = true;
-        return this;
     }
 
     @Override

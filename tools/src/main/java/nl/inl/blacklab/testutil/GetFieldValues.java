@@ -37,9 +37,7 @@ public class GetFieldValues {
             IndexReader r = index.reader();
 
             Set<String> fieldsToLoad = new HashSet<>();
-            for (String fieldToLoad : fieldNames) {
-                fieldsToLoad.add(fieldToLoad);
-            }
+            fieldsToLoad.addAll(fieldNames);
             /* OLD:
             HashSet<String> lazyFieldsToLoad = new HashSet<String>();
             FieldSelector fieldSelector = new SetBasedFieldSelector(fieldsToLoad, lazyFieldsToLoad);
@@ -54,11 +52,8 @@ public class GetFieldValues {
                     String value = d.get(fieldName);
                     if (value != null) {
                         Set<String> uniq;
-                        uniq = fieldValues.get(fieldName);
-                        if (uniq == null) {
-                            uniq = new TreeSet<>(); // TreeSet auto-sorts
-                            fieldValues.put(fieldName, uniq);
-                        }
+                        uniq = fieldValues.computeIfAbsent(fieldName, k -> new TreeSet<>());
+                        // TreeSet auto-sorts
                         uniq.add(value);
                     }
                 }
