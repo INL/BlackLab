@@ -149,13 +149,9 @@ public class IndexManager {
     private void checkAnyIndexesAvailable() throws ConfigurationException {
         if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
             throw new ConfigurationException(
-                    "Configuration error: no readable index locations found. Create " +
-                            "/etc/blacklab/blacklab-server.json containing at least the following:\n" +
-                            "{\n" +
-                            "  \"indexCollections\": [\n" +
-                            "    \"/dir/containing/indices\"\n" +
-                            "  ]\n" +
-                            "}");
+                    "Configuration error: no readable indexLocations found. Check your configuration file, or see "
+                            + "https://inl.github.io/BlackLab/configuration-files.html#minimal-config-file for a "
+                            + "minimal configuration file.");
         }
     }
 
