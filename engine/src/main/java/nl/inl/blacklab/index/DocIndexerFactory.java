@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -133,23 +132,6 @@ public interface DocIndexerFactory {
      * @return the format
      */
     Format getFormat(String formatIdentifier);
-
-    /**
-     * Instantiating a DocIndexer from a reader.
-     *
-     * @param formatIdentifier the formatIdentifier for the document
-     * @param indexer indexer object
-     * @param documentName name of the unit we're indexing
-     * @param reader text to index
-     * @return DocIndexer instance
-     * @throws UnsupportedOperationException if called with an unsupported
-     *             formatIdentifier (use
-     *             {@link DocIndexerFactory#isSupported(String)})
-     * @deprecated (since 2.0) use byte[] version
-     */
-    @Deprecated
-    DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
-            throws UnsupportedOperationException;
 
     /**
      * Instantiating a DocIndexer from an input stream.

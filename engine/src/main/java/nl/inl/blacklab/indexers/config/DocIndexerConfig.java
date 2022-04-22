@@ -45,17 +45,17 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
-        DocIndexerConfig docIndexer=null;
+        DocIndexerConfig docIndexer = null;
         switch (config.getFileType()) {
         case XML:
-            for (ConfigInputFormat.FileTypeOption fto : ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
-                if (fto== ConfigInputFormat.FileTypeOption.SAXONICA) {
-                    docIndexer=new DocIndexerSaxon();
+            for (ConfigInputFormat.FileTypeOption fto: ConfigInputFormat.FileTypeOption.fromConfig(config, ConfigInputFormat.FileType.XML)) {
+                if (fto == ConfigInputFormat.FileTypeOption.SAXONICA) {
+                    docIndexer = new DocIndexerSaxon();
                     break;
                 }
             }
-            if (docIndexer==null) {
-                docIndexer=new DocIndexerXPath();
+            if (docIndexer == null) {
+                docIndexer = new DocIndexerXPath();
             }
             break;
         case TABULAR:

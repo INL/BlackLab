@@ -106,40 +106,6 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
-    public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
-        if (!isSupported(formatIdentifier))
-            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
-                    + "', call isSupported(formatIdentifier) before attempting to get()");
-
-        try {
-            // Instantiate our DocIndexer class
-            Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
-            Constructor<? extends DocIndexer> constructor;
-            DocIndexer docIndexer;
-            try {
-                // NOTE: newer DocIndexers have a constructor that takes only a DocWriter, not the document
-                // being indexed. This allows us more flexibility in how we supply the document to this object
-                // (e.g. as a file, a byte array, a reader, ...).
-                // Assume this is a newer DocIndexer, and only construct it the old way if this fails.
-                constructor = docIndexerClass.getConstructor();
-                docIndexer = constructor.newInstance();
-                docIndexer.setDocWriter(indexer);
-                docIndexer.setDocumentName(documentName);
-                docIndexer.setDocument(reader);
-            } catch (NoSuchMethodException e) {
-                // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                docIndexer = constructor.newInstance(indexer, documentName, reader);
-            }
-            return docIndexer;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-                | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
     public DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is, Charset cs) {
         if (!isSupported(formatIdentifier))
             throw new UnsupportedOperationException("Unknown format '" + formatIdentifier

@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -510,16 +508,6 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
-    }
-
-    @Deprecated
-    @Override
-    public void index(String documentName, Reader reader) {
-    	try {
-    		index(documentName, IOUtils.toByteArray(reader, DEFAULT_INPUT_ENCODING), null); // convert to our default encoding
-    	} catch (IOException e) {
-    	    listener().errorOccurred(e, documentName, null);
-    	}
     }
 
     @Override

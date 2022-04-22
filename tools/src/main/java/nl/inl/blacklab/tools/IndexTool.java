@@ -351,17 +351,6 @@ public class IndexTool {
                         + "  --linked-file-dir <d>  Look in directory <d> for linked (e.g. metadata) files\n"
                         + "  --nothreads            Disable multithreaded indexing (enabled by default)\n"
                         + "\n"
-                        + "Deprecated options (not needed anymore with .yaml format configs):\n"
-                        + "  --indexparam <file>    Read properties file with parameters for DocIndexer\n"
-                        + "                         (NOTE: even without this option, if the current\n"
-                        + "                         directory, the input or index directory (or its parent)\n"
-                        + "                         contain a file named indexer.properties, these are passed\n"
-                        + "                         to the indexer)\n"
-                        + "  ---<name> <value>      Pass parameter to DocIndexer class\n"
-                        + "  ---meta-<name> <value> Add an extra metadata field to documents indexed.\n"
-                        + "                         You can also add a property named meta-<name> to your\n"
-                        + "                         indexer.properties file. This field is stored untokenized.\n"
-                        + "\n"
                         + "Available input format configurations:");
         for (Format format : DocumentFormats.getFormats()) {
             String name = format.getId();

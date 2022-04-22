@@ -1,13 +1,9 @@
 package nl.inl.blacklab.index;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -30,7 +26,6 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -42,7 +37,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
-import nl.inl.util.UnicodeStream;
 
 /**
  * Indexes a file.
@@ -135,33 +129,12 @@ public abstract class DocIndexer implements AutoCloseable {
     }
 
     /**
-     * @deprecated use {@link #setDocument(byte[], Charset)}
-     * Set the document to index.
-     *
-     * NOTE: you should generally prefer calling the File or byte[] versions of this
-     * method, as those can be more efficient (e.g. when using DocIndexer that
-     * parses using VTD-XML).
-     *
-     * @param reader document
-     */
-    @Deprecated
-    public abstract void setDocument(Reader reader);
-
-    /**
      * Set the document to index.
      *
      * @param is document contents
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
-    public void setDocument(InputStream is, Charset cs) {
-        try {
-            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
-            Charset detectedCharset = unicodeStream.getEncoding();
-            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
+    public abstract void setDocument(InputStream is, Charset cs);
 
     /**
      *
@@ -170,9 +143,7 @@ public abstract class DocIndexer implements AutoCloseable {
      * @param contents document contents
      * @param cs charset to use if no BOM found, or null for the default (utf-8)
      */
-    public void setDocument(byte[] contents, Charset cs) {
-        setDocument(new ByteArrayInputStream(contents), cs);
-    }
+    public abstract void setDocument(byte[] contents, Charset cs);
 
     /**
      * Set the document to index.
@@ -182,9 +153,7 @@ public abstract class DocIndexer implements AutoCloseable {
      *            (utf-8)
      * @throws FileNotFoundException if not found
      */
-    public void setDocument(File file, Charset charset) throws FileNotFoundException {
-        setDocument(new FileInputStream(file), charset);
-    }
+    public abstract void setDocument(File file, Charset charset) throws FileNotFoundException;
 
     /**
      * Index documents contained in a file.
@@ -294,28 +263,6 @@ public abstract class DocIndexer implements AutoCloseable {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
-    }
-
-    protected boolean tokenizeField(String name) {
-        // (Also check the old (Lucene 3.x) term, "analyzed")
-        String parName = hasParameter(name + "_tokenized") ? name + "_tokenized" : name + "_analyzed";
-        return getParameter(parName, true);
-    }
-
-    /**
-     * Return the fieldtype to use for the specified field.
-     *
-     * @param fieldName the field name
-     * @return the fieldtype
-     * @deprecated use a DocIndexerConfig-based indexer
-     */
-    @Deprecated
-    public FieldType getMetadataFieldTypeFromIndexerProperties(String fieldName) {
-        // (Also check the old (Lucene 3.x) term, "analyzed")
-        String parName = hasParameter(fieldName + "_tokenized") ? fieldName + "_tokenized" : fieldName + "_analyzed";
-        if (getParameter(parName, true))
-            return FieldType.TOKENIZED;
-        return FieldType.UNTOKENIZED;
     }
 
     protected org.apache.lucene.document.FieldType luceneTypeFromIndexMetadataType(FieldType type) {
@@ -455,16 +402,6 @@ public abstract class DocIndexer implements AutoCloseable {
         FieldType type = desc.type();
         for (String value : values) {
             desc.addValue(value);
-        }
-
-
-        // There used to be another way of specifying metadata field type,
-        // via indexer.properties. This is still supported, but deprecated.
-        FieldType shouldBeType = getMetadataFieldTypeFromIndexerProperties(name);
-        if (type == FieldType.TOKENIZED
-                && shouldBeType != FieldType.TOKENIZED) {
-            // indexer.properties overriding default type
-            type = shouldBeType;
         }
 
         if (type != FieldType.NUMERIC) {

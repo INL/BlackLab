@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -150,26 +149,6 @@ public class DocumentFormats {
     public static Format getFormat(String formatIdentifier) {
         DocIndexerFactory factory = getFactory(formatIdentifier);
         return factory != null ? factory.getFormat(formatIdentifier) : null;
-    }
-
-    /**
-     * Convenience function.
-     *  
-     * Note that it is usually faster to offer the document as byte[] and charset, 
-     * because that allows the buffer to be passed on without copying. 
-     * 
-     * @param formatIdentifier format to get the DocIndexer for
-     * @param indexer our indexer
-     * @param documentName document name
-     * @param reader file contents
-     * @return the DocIndexer
-     * @deprecated (since 2.2) use byte[] version
-     */
-    @Deprecated
-    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
-            throws UnsupportedOperationException {
-        DocIndexerFactory fac = getFactory(formatIdentifier);
-        return fac != null ? fac.get(formatIdentifier, indexer, documentName, reader) : null;
     }
 
     /** 

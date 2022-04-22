@@ -42,7 +42,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
      */
     MetadataFetcher metadataFetcher;
 
-    @SuppressWarnings("deprecation")
     public DocIndexerPlainTextBasic(DocWriter indexer, String fileName, Reader reader) {
         super(indexer, fileName, reader);
 

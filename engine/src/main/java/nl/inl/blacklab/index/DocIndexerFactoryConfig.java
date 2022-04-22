@@ -258,20 +258,6 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     }
 
     @Override
-    @Deprecated
-    public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader) {
-        if (!isSupported(formatIdentifier))
-            throw new UnsupportedOperationException("Unknown format '" + formatIdentifier
-                    + "', call isSupported(formatIdentifier) before attempting to get()");
-
-        DocIndexerConfig d = DocIndexerConfig.fromConfig(supported.get(formatIdentifier));
-        d.setDocWriter(indexer);
-        d.setDocumentName(documentName);
-        d.setDocument(reader);
-        return d;
-    }
-
-    @Override
     public DocIndexerConfig get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs) {
         if (!isSupported(formatIdentifier))

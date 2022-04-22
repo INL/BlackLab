@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -137,24 +136,6 @@ public interface Indexer {
      * @param input the stream
      */
     void index(String documentName, InputStream input);
-
-    /**
-     * @deprecated (since 2.2)
-     * Index a document from a Reader.
-     *
-     * NOTE: it is generally better to supply an (UTF-8) InputStream or byte array
-     * directly, as this can in some cases be parsed more efficiently (e.g. using
-     * VTD-XML).
-     *
-     * Catches and reports any errors that occur to the IndexListener.
-     *
-     * @param documentName some (preferably unique) name for this document (for
-     *            example, the file name or path)
-     * @param reader where to index from
-     *
-     */
-    @Deprecated
-    void index(String documentName, Reader reader);
 
     /**
      * Index a document (or archive if enabled by
