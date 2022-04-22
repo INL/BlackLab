@@ -28,8 +28,9 @@ services:
         dockerfile: docker/Dockerfile
     command: >-
         /bin/bash -c 
-        "cd /usr/local/lib/blacklab-tools && 
-        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/${INDEX_NAME} /input ${INDEX_FORMAT}"
+        "cd /usr/local/lib/blacklab-tools &&
+        mkdir -p /data/index && mkdir -p /data/user-index && 
+        java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/${INDEX_NAME} /input ${INDEX_FORMAT}"
     volumes:
       - "${BLACKLAB_FORMATS_DIR:-./formats}:/etc/blacklab/formats"
       - "${INDEX_INPUT_DIR:-./input}:/input"
