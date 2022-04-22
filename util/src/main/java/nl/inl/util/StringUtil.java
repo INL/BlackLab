@@ -40,7 +40,9 @@ public final class StringUtil {
 
     private static final Pattern PATT_REGEX_CHARACTERS = Pattern.compile("([\\|\\\\\\?\\*\\+\\(\\)\\[\\]\\-\\^\\$\\{\\}\\.])");
 
-    private static final Pattern PATT_DIACRITICAL_MARKS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+    /** Diacritical marks as well as "soft hyphen" U+00AD and "general punctuation" U+2003
+        (which are also a pain when trying to compare insensitively, and ignored by collators) */
+    private static final Pattern PATT_DIACRITICAL_MARKS = Pattern.compile("[\\p{InCombiningDiacriticalMarks}\u00ad\u2003]+");
 
     private StringUtil() {
     }
@@ -72,15 +74,12 @@ public final class StringUtil {
     }
 
     /**
-     * <p>
      * Removes diacritics (~= accents) from a string. The case will not be altered.
-     * </p>
-     * <p>
-     * For instance, '&agrave;' will be replaced by 'a'.
-     * </p>
-     * <p>
-     * Note that ligatures will be left as is.
-     * </p>
+     *
+     * For instance, '&agrave;' will be replaced by 'a'. Note that ligatures will be left as is.
+     *
+     * Also strips out 0xAD (also known as soft hyphen or &amp;shy;), which frequently causes
+     * issues when comparing insensitively (and Collator ignores it as well).
      *
      * <pre>
      * StringUtils.stripAccents(null)                = null

@@ -303,7 +303,14 @@ public interface BlackLabIndex extends Closeable {
     default MetadataFields metadataFields() {
         return metadata().metadataFields();
     }
-    
+
+    /**
+     * Get the specified metadata field config.
+     *
+     * @param fieldName metadata field name
+     * @return metadata field config
+     * @throws IllegalArgumentException if field not found
+     */
     default MetadataField metadataField(String fieldName) {
         return metadata().metadataField(fieldName);
     }
