@@ -88,8 +88,12 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
         // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, 
         // or this will override those classes.
-        String[] formats = { "chat", "cmdi", "csv", "eaf", "folia", "sketch-wpl", "tcf", "tei-p4", "tei", "tsv-frog",
-                "tsv", "txt" };
+        String[] formats = {
+                "chat", "cmdi", "csv",
+                "eaf", "folia", "sketch-wpl",
+                "tcf", "tei-p5", "tei-p4-legacy",
+                "tei-p5-legacy", "tsv-frog", "tsv",
+                "txt" };
         for (String formatIdentifier : formats) {
             try (InputStream is = DocumentFormats.class.getClassLoader()
                     .getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
@@ -162,7 +166,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
 
     protected void addFormat(ConfigInputFormat format) throws InvalidInputFormatConfig {
         if (isSupported(format.getName()))
-            throw new IllegalArgumentException("A config format with this name already exists.");
+            throw new IllegalArgumentException("A config format with the name '" + format.getName() + "' already exists.");
 
         format.validate();
         supported.put(format.getName(), format);
