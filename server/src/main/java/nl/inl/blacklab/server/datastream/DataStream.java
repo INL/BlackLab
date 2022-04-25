@@ -367,4 +367,17 @@ public abstract class DataStream {
         this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
+    /**
+     * Output an XML fragment, either as a string
+     * value or as part of the XML structure.
+     *
+     * DataStreamXML overrides this methods to output the fragment
+     * unquoted and -escaped. Used with usecontent=orig.
+     *
+     * @param fragment
+     * @return data stream
+     */
+    public DataStream xmlFragment(String fragment) {
+        return value(fragment);
+    }
 }

@@ -222,9 +222,9 @@ public class RequestHandlerDocs extends RequestHandler {
                     if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                         // Add concordance from original XML
                         Concordance c = concordances.get(hit);
-                        ds.startEntry("left").plain(c.left()).endEntry()
-                                .startEntry("match").plain(c.match()).endEntry()
-                                .startEntry("right").plain(c.right()).endEntry();
+                        ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                                .startEntry("match").xmlFragment(c.match()).endEntry()
+                                .startEntry("right").xmlFragment(c.right()).endEntry();
                     } else {
                         // Add KWIC info
                         Kwic c = kwics.get(hit);

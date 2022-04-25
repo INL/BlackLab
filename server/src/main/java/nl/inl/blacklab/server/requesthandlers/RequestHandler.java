@@ -996,11 +996,11 @@ public abstract class RequestHandler {
                 assert concordances != null;
                 Concordance c = concordances.get(hit);
                 if (includeContext) {
-                    ds.startEntry("left").plain(c.left()).endEntry()
-                            .startEntry("match").plain(c.match()).endEntry()
-                            .startEntry("right").plain(c.right()).endEntry();
+                    ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                            .startEntry("match").xmlFragment(c.match()).endEntry()
+                            .startEntry("right").xmlFragment(c.right()).endEntry();
                 } else {
-                    ds.startEntry("match").plain(c.match()).endEntry();
+                    ds.startEntry("match").xmlFragment(c.match()).endEntry();
                 }
             } else {
                 // Add KWIC info

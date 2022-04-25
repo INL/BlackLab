@@ -112,14 +112,15 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 
         Hits singleHit = hits.window(hit);
         if (useOrigContent) {
+            // We're using original content.
             Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
             Concordance c = concordances.get(hit);
             if (!isFragment) {
-                ds.startEntry("left").plain(c.left()).endEntry()
-                        .startEntry("match").plain(c.match()).endEntry()
-                        .startEntry("right").plain(c.right()).endEntry();
+                ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                        .startEntry("match").xmlFragment(c.match()).endEntry()
+                        .startEntry("right").xmlFragment(c.right()).endEntry();
             } else {
-                ds.plain(c.match());
+                ds.xmlFragment(c.match());
             }
         } else {
             Kwics kwics = singleHit.kwics(wordsAroundHit);

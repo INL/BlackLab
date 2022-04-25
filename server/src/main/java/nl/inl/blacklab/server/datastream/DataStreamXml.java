@@ -274,4 +274,16 @@ public class DataStreamXml extends DataStream {
         return indent().print(value).newline();
     }
 
+    /**
+     * Output an XML fragment, either as a string
+     * value or as part of the XML structure.
+     *
+     * @param fragment
+     * @return data stream
+     */
+    public DataStream xmlFragment(String fragment) {
+        // Because we're outputting XML, we output the fragment plain (unquoted or -escaped)
+        return plain(fragment);
+    }
+
 }
