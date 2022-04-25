@@ -19,8 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.InputFormatReader.BaseFormatFinder;
 import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
@@ -107,7 +107,7 @@ public class ConfigInputFormat {
 
     /**
      * Should this format be marked as hidden? Mirrors
-     * {@link DocIndexerAbstract#isVisible(Class)}. Used to set
+     * {@link DocIndexerLegacy#isVisible(Class)}. Used to set
      * {@link Format#isVisible()}, to indicate internal formats to client
      * applications, but has no other internal meaning.
      */

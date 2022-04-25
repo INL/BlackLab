@@ -4,7 +4,6 @@ import java.io.Reader;
 import java.io.Writer;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Plugin;
 
 public interface TagPlugin extends Plugin {

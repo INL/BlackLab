@@ -28,7 +28,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
@@ -315,7 +315,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     /** Pattern for getting DPO number from image file name */
     private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
-    public MetadataFetcherKbDpo(DocIndexer docIndexer) {
+    public MetadataFetcherKbDpo(DocIndexerLegacy docIndexer) {
         super(docIndexer);
     }
 

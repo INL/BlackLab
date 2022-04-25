@@ -41,7 +41,7 @@ import nl.inl.util.StringUtil;
  * Abstract base class for a DocIndexer processing XML files using the hookable
  * SAX parser.
  */
-public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
+public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
     /**
      * Max. length of captured character content. Should only be used for short
@@ -510,7 +510,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerAbstract {
                 try {
                     Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)
                             .asSubclass(MetadataFetcher.class);
-                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
+                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(
+                            DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
                     throw new BlackLabRuntimeException(e);

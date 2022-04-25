@@ -10,7 +10,7 @@ abstract public class MetadataFetcher implements Closeable {
 
     public final DocIndexer docIndexer;
 
-    public MetadataFetcher(DocIndexer docIndexer) {
+    public MetadataFetcher(DocIndexerLegacy docIndexer) {
         this.docIndexer = docIndexer;
     }
 

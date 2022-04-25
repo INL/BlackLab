@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -34,10 +33,10 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -45,7 +44,7 @@ import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UnicodeStream;
 
-public abstract class DocIndexerBase extends DocIndexer {
+public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     private static final boolean TRACE = false;
 
@@ -141,12 +140,6 @@ public abstract class DocIndexerBase extends DocIndexer {
     protected int wordsDone = 0;
     private int wordsDoneAtLastReport = 0;
     private int charsDoneAtLastReport = 0;
-
-    /**
-     * External metadata fetcher (if any), responsible for looking up the metadata
-     * and adding it to the Lucene document.
-     */
-    private MetadataFetcher metadataFetcher;
 
     /**
      * What annotations where skipped because they were not declared?
@@ -354,7 +347,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (!indexingIntoExistingLuceneDoc) {
             currentLuceneDoc = new Document();
             addMetadataField("fromInputFile", documentName);
-            addMetadataFieldsFromParameters(); // DEPRECATED for these types of indexer, but still supported for now
         }
         if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
             getDocWriter().listener().documentStarted(documentName);
@@ -405,19 +397,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         if (isStoreDocuments()) {
             storeDocument();
-        }
-
-        if (getDocWriter() != null) {
-            // If there's an external metadata fetcher, call it now so it can
-            // add the metadata for this document and (optionally) store the
-            // metadata
-            // document in the content store (and the corresponding id in the
-            // Lucene doc)
-            MetadataFetcher m = getMetadataFetcher();
-            if (m != null) {
-                m.addMetadata();
-            }
-
         }
 
         if (!indexingIntoExistingLuceneDoc)
@@ -673,32 +652,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         tokensDone(wordsDoneSinceLastReport);
         wordsDoneAtLastReport = wordsDone;
-    }
-
-    /**
-     * Get the external metadata fetcher for this indexer, if any.
-     *
-     * The metadata fetcher can be configured through the "metadataFetcherClass"
-     * parameter.
-     *
-     * @return the metadata fetcher if any, or null if there is none.
-     */
-    protected MetadataFetcher getMetadataFetcher() {
-        if (metadataFetcher == null) {
-            @SuppressWarnings("deprecation")
-            String metadataFetcherClassName = getParameter("metadataFetcherClass");
-            if (metadataFetcherClassName != null) {
-                try {
-                    Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)
-                            .asSubclass(MetadataFetcher.class);
-                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
-                    metadataFetcher = ctor.newInstance(this);
-                } catch (ReflectiveOperationException e) {
-                    throw BlackLabRuntimeException.wrap(e);
-                }
-            }
-        }
-        return metadataFetcher;
     }
 
     /**

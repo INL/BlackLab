@@ -14,7 +14,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.MetadataFetcher;
 
 /**
@@ -32,7 +32,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
     private Iterable<CSVRecord> metadata;
 
     @SuppressWarnings("deprecation")
-    public MetadataFetcherCsv(DocIndexer docIndexer) {
+    public MetadataFetcherCsv(DocIndexerLegacy docIndexer) {
         super(docIndexer);
 
         String metadataFileName = docIndexer.getParameter("metadataFile");

@@ -1,248 +1,354 @@
 package nl.inl.blacklab.index;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.util.CountingReader;
-import nl.inl.util.UnicodeStream;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.NumericDocValuesField;
+import org.apache.lucene.document.SortedSetDocValuesField;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
 /**
- * Abstract base class for a DocIndexer processing XML files.
+ * Indexes a file.
  */
-public abstract class DocIndexerAbstract extends DocIndexer {
+public abstract class DocIndexerAbstract implements DocIndexer {
+
+    protected static final Logger logger = LogManager.getLogger(DocIndexerAbstract.class);
+
+    private DocWriter docWriter;
+
+    /** Do we want to omit norms? (Default: yes) */
+    protected boolean omitNorms = true;
+
     /**
-     * Write content chunks per 10M (i.e. don't keep all content in memory at all
-     * times)
+     * File we're currently parsing. This can be useful for storing the original
+     * filename in the index.
      */
-    private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
-
-    protected final boolean skippingCurrentDocument = false;
-
-    protected CountingReader reader;
+    protected String documentName;
 
     /**
-     * Total words processed by this indexer. Used for reporting progress, do not
-     * reset except when finished with file.
+     * The Lucene Document we're currently constructing (corresponds to the document
+     * we're indexing)
      */
-    protected int wordsDone = 0;
-    private int wordsDoneAtLastReport = 0;
+    protected Document currentLuceneDoc;
 
-    //protected ContentStore contentStore;
+    /**
+     * Document metadata. Added at the end to deal with unknown values, multiple occurrences
+     * (only the first is actually indexed, because of DocValues, among others), etc.
+     */
+    protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
-    private final StringBuilder content = new StringBuilder();
+    /**
+     * Parameters passed to this indexer
+     */
+    protected final Map<String, String> parameters = new HashMap<>();
 
-    /** Are we capturing the content of the document for indexing? */
-    private boolean captureContent = false;
+    final Set<String> numericFields = new HashSet<>();
 
-    /** What field we're capturing content for */
-    private String captureContentFieldName;
+    /** How many documents we've processed */
+    private int numberOfDocsDone = 0;
 
-    private int charsContentAlreadyStored = 0;
+    /** How many tokens we've processed */
+    private int numberOfTokensDone = 0;
 
-    protected final int nDocumentsSkipped = 0;
-
-    public void startCaptureContent(String fieldName) {
-        captureContent = true;
-        captureContentFieldName = fieldName;
-
-        // Empty the StringBuilder object
-        content.setLength(0);
-    }
-
-    public int storeCapturedContent() {
-        captureContent = false;
-        int id = -1;
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            id = contentStore.store(content.toString());
-        }
-        content.setLength(0);
-        charsContentAlreadyStored = 0;
-        return id;
-    }
-
-    public void storePartCapturedContent() {
-        charsContentAlreadyStored += content.length();
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            contentStore.storePart(content.toString());
-        }
-        content.setLength(0);
-    }
-
-    private void appendContentInternal(String str) {
-        content.append(str);
-    }
-
-    public void appendContent(String str) {
-        appendContentInternal(str);
-        if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-            storePartCapturedContent();
-        }
-    }
-
-    public void appendContent(char[] buffer, int start, int length) {
-        appendContentInternal(new String(buffer, start, length));
-        if (content.length() >= WRITE_CONTENT_CHUNK_SIZE) {
-            storePartCapturedContent();
-        }
-    }
-
-    public void processContent(String contentToProcess) {
-        if (captureContent)
-            appendContent(contentToProcess);
+    @Override
+    public Document getCurrentLuceneDoc() {
+        return currentLuceneDoc;
     }
 
     /**
-     * Returns the current position in the original XML content in chars.
-     * 
-     * @return the current char position
+     * Returns our DocWriter object
+     *
+     * @return the DocWriter object
      */
     @Override
-    protected int getCharacterPosition() {
-        return charsContentAlreadyStored + content.length();
-    }
-
-    public DocIndexerAbstract(DocWriter indexer, String fileName, Reader reader) {
-        setDocWriter(indexer);
-        setDocumentName(fileName);
-        setDocument(reader);
+    public DocWriter getDocWriter() {
+        return docWriter;
     }
 
     /**
-     * Set the document to index.
-     * 
-     * @param reader document
-     */
-    public void setDocument(Reader reader) {
-        this.reader = new CountingReader(reader);
-    }
-
-    /**
-     * Set the document to index.
+     * Set the DocWriter object.
      *
-     * @param is document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
+     * We use this to add documents to the index.
+     *
+     * Called by Indexer when the DocIndexer is instantiated.
+     *
+     * @param docWriter our DocWriter object
      */
-    public void setDocument(InputStream is, Charset cs) {
-        try {
-            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
-            Charset detectedCharset = unicodeStream.getEncoding();
-            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+    @Override
+    public void setDocWriter(DocWriter docWriter) {
+        this.docWriter = docWriter;
+    }
+
+    /**
+     * Set the file name of the document to index.
+     *
+     * @param documentName name of the document
+     */
+    @Override
+    public void setDocumentName(String documentName) {
+        this.documentName = documentName == null ? "?" : documentName;
+    }
+
+    protected org.apache.lucene.document.FieldType luceneTypeFromIndexMetadataType(FieldType type) {
+        switch (type) {
+        case NUMERIC:
+            throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
+        case TOKENIZED:
+            return getDocWriter().metadataFieldType(true);
+        case UNTOKENIZED:
+            return getDocWriter().metadataFieldType(false);
+        default:
+            throw new IllegalArgumentException("Unknown field type: " + type);
         }
     }
 
     /**
+     * Enables or disables norms. Norms are disabled by default.
      *
-     * Set the document to index.
+     * The method name was chosen to match Lucene's Field.setOmitNorms(). Norms are
+     * only required if you want to use document-length-normalized scoring.
      *
-     * @param contents document contents
-     * @param cs charset to use if no BOM found, or null for the default (utf-8)
+     * @param b if true, doesn't store norms; if false, does store norms
      */
-    public void setDocument(byte[] contents, Charset cs) {
-        setDocument(new ByteArrayInputStream(contents), cs);
-    }
-
-    /**
-     * Set the document to index.
-     *
-     * @param file file to index
-     * @param charset charset to use if no BOM found, or null for the default
-     *            (utf-8)
-     * @throws FileNotFoundException if not found
-     */
-    public void setDocument(File file, Charset charset) throws FileNotFoundException {
-        setDocument(new FileInputStream(file), charset);
+    @Override
+    public void setOmitNorms(boolean b) {
+        omitNorms = b;
     }
 
     @Override
-    public void close() throws BlackLabRuntimeException {
-        try {
-            reader.close();
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+    public void addNumericFields(Collection<String> fields) {
+        numericFields.addAll(fields);
     }
 
     @Override
-    public final void reportCharsProcessed() {
-        long charsProcessed = reader.getCharsReadSinceLastCall();
-        getDocWriter().listener().charsDone(charsProcessed);
+    public boolean continueIndexing() {
+        return getDocWriter().continueIndexing();
+    }
+
+    protected void warn(String msg) {
+        getDocWriter().listener().warning(msg);
+    }
+
+    @Override
+    public List<String> getMetadataField(String name) {
+        return metadataFieldValues.get(name);
+    }
+
+    @Override
+    public void addMetadataField(String name, String value) {
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
+            logger.warn("Field name '" + name
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
+
+        if (name == null || value == null) {
+            warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
+            return;
+        }
+
+        value = value.trim();
+        if (!value.isEmpty()) {
+            metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
+            IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+            indexMetadata.registerMetadataField(name);
+        }
     }
 
     /**
-     * Report the change in wordsDone since the last report
+     * Translate a field name before adding it to the Lucene document.
+     *
+     * By default, simply returns the input. May be overridden to change the name of
+     * a metadata field as it is indexed.
+     *
+     * @param from original metadata field name
+     * @return new name
+     */
+    protected String optTranslateFieldName(String from) {
+        return from;
+    }
+
+    /**
+     * When all metadata values have been set, call this to add the to the Lucene document.
+     *
+     * We do it this way because we don't want to add multiple values for a field (DocValues and
+     * Document.get() only deal with the first value added), and we want to set an "unknown value"
+     * in certain conditions, depending on the configuration.
      */
     @Override
-    public final void reportTokensProcessed() {
-        int wordsDoneSinceLastReport = 0;
-
-        if (wordsDoneAtLastReport > wordsDone) // reset by child class?
-            wordsDoneSinceLastReport = wordsDone;
-        else
-            wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
-
-        tokensDone(wordsDoneSinceLastReport);
-        wordsDoneAtLastReport = wordsDone;
+    public void addMetadataToDocument() {
+        // See what metadatafields are missing or empty and add unknown value if desired.
+        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) getDocWriter().indexWriter().metadata();
+        Map<String, String> unknownValuesToUse = new HashMap<>();
+        List<String> fields = indexMetadata.metadataFields().names();
+        for (String field: fields) {
+            MetadataField fd = indexMetadata.metadataField(field);
+            if (fd.type() == FieldType.NUMERIC)
+                continue;
+            boolean missing = false, empty = false;
+            List<String> currentValue = getMetadataField(fd.name());
+            if (currentValue == null)
+                missing = true;
+            else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
+                empty = true;
+            UnknownCondition cond = fd.unknownCondition();
+            boolean useUnknownValue = false;
+            switch (cond) {
+            case EMPTY:
+                useUnknownValue = empty;
+                break;
+            case MISSING:
+                useUnknownValue = missing;
+                break;
+            case MISSING_OR_EMPTY:
+                useUnknownValue = missing || empty;
+                break;
+            case NEVER:
+                // (useUnknownValue is already false)
+                break;
+            }
+            if (useUnknownValue) {
+                if (empty) {
+                    // Don't count this as a value, count the unknown value
+                    for (String value: currentValue) {
+                        ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
+                    }
+                }
+                unknownValuesToUse.put(optTranslateFieldName(fd.name()), fd.unknownValue());
+            }
+        }
+        for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
+            metadataFieldValues.put(e.getKey(), List.of(e.getValue()));
+        }
+        for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
+            addMetadataFieldToDocument(e.getKey(), e.getValue());
+        }
+        metadataFieldValues.clear();
     }
 
-    /**
-     * If the supplied class has a static getDisplayName() method, call it.
-     *
-     * @param docIndexerClass class to get the display name for
-     * @return display name, or empty string if method not found
-     */
-    public static String getDisplayName(Class<? extends DocIndexer> docIndexerClass) {
-        try {
-            Method m = docIndexerClass.getMethod("getDisplayName");
-            return (String) m.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            return "";
+    public void addMetadataFieldToDocument(String name, List<String> values) {
+        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+        //indexMetadata.registerMetadataField(name);
+
+        MetadataFieldImpl desc = (MetadataFieldImpl) indexMetadata.metadataFields().get(name);
+        FieldType type = desc.type();
+        for (String value: values) {
+            desc.addValue(value);
+        }
+
+        if (type != FieldType.NUMERIC) {
+            for (String value: values) {
+                currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
+                // If a value is too long (more than 32K), just truncate it a bit.
+                // This should be very rare and would generally only affect sorting/grouping, if anything.
+                if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
+                    // While it's really too large
+                    byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    while (utf8.length > MAX_DOCVALUES_LENGTH) {
+                        // assume all characters take two bytes, truncate and try again
+                        int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
+                        int truncateAt = value.length() - 2 * overshoot;
+                        if (truncateAt < 1)
+                            truncateAt = 1;
+                        value = value.substring(0, truncateAt);
+                        utf8 = value.getBytes(StandardCharsets.UTF_8);
+                    }
+                }
+                currentLuceneDoc.add(new SortedSetDocValuesField(name,
+                        new BytesRef(value))); // docvalues for efficient sorting/grouping
+            }
+        }
+        if (type == FieldType.NUMERIC || numericFields.contains(name)) {
+            String numFieldName = name;
+            if (type != FieldType.NUMERIC) {
+                numFieldName += "Numeric";
+            }
+
+            boolean firstValue = true;
+            for (String value: values) {
+                // Index these fields as numeric too, for faster range queries
+                // (we do both because fields sometimes aren't exclusively numeric)
+                int n;
+                try {
+                    n = Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    // This just happens sometimes, e.g. given multiple years, or
+                    // descriptive text like "around 1900". OK to ignore.
+                    n = 0;
+                }
+                IntPoint nf = new IntPoint(numFieldName, n);
+                currentLuceneDoc.add(nf);
+                currentLuceneDoc.add(new StoredField(numFieldName, n));
+                if (firstValue)
+                    currentLuceneDoc.add(
+                            new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
+                else {
+                    warn(documentName + " contains multiple values for single-valued numeric field " + numFieldName
+                            + "(values: " + StringUtils.join(values, "; ") + ")");
+                }
+                firstValue = false;
+            }
         }
     }
 
     /**
-     * If the supplied class has a static getDescription() method, call it.
+     * Add the field, with all its properties, to the forward index.
      *
-     * @param docIndexerClass class to get the description for
-     * @return description, or empty string if method not found
+     * @param field field to add to the forward index
      */
-    public static String getDescription(Class<? extends DocIndexer> docIndexerClass) {
-        try {
-            Method m = docIndexerClass.getMethod("getDescription");
-            return (String) m.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            return "";
-        }
+    protected void addToForwardIndex(AnnotatedFieldWriter field) {
+        getDocWriter().addToForwardIndex(field, currentLuceneDoc);
+    }
+
+    protected abstract int getCharacterPosition();
+
+    /**
+     * Keep track of how many tokens have been processed.
+     */
+    @Override
+    public void documentDone(String documentName) {
+        numberOfDocsDone++;
+        getDocWriter().listener().documentDone(documentName);
     }
 
     /**
-     * Should this docIndexer implementation be listed?
-     *
-     * A DocIndexer can be hidden by implementing a a static function named
-     * isVisible, returning false.
-     *
-     * @return true if the format should be listed, false if it should be omitted.
-     *         Defaults to true when the DocIndexer does not implement the method.
+     * Keep track of how many tokens have been processed.
      */
-    public static boolean isVisible(Class<? extends DocIndexer> docIndexerClass) {
-        try {
-            Method m = docIndexerClass.getMethod("isVisible");
-            return (boolean) m.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            return true;
-        }
+    @Override
+    public void tokensDone(int n) {
+        numberOfTokensDone += n;
+        getDocWriter().listener().tokensDone(n);
     }
+
+    @Override
+    public int numberOfDocsDone() {
+        return numberOfDocsDone;
+    }
+
+    @Override
+    public long numberOfTokensDone() {
+        return numberOfTokensDone;
+    }
+
 }

@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  * Simple example indexer for plain text files. Reads a line, chops it into
  * words to index and keeps track of word positions.
  */
-public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
+public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
     /**
      * Annotated field where different aspects (word form, named entity status, etc.)
@@ -72,7 +72,8 @@ public class DocIndexerPlainTextBasic extends DocIndexerAbstract {
                 try {
                     Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)
                             .asSubclass(MetadataFetcher.class);
-                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
+                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(
+                            DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException | IllegalArgumentException e) {
                     throw BlackLabRuntimeException.wrap(e);

@@ -29,7 +29,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 
@@ -50,7 +50,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
 
     @SuppressWarnings("deprecation")
-    private static void init(DocIndexer docIndexer) {
+    private static void init(DocIndexerLegacy docIndexer) {
         String zipFilePath = docIndexer.getParameter("metadataZipFile");
         if (zipFilePath == null) {
             zipFilePath = docIndexer.getParameter("metadataDir");
@@ -74,7 +74,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     private String metadataPathInZip;
 
     @SuppressWarnings("deprecation")
-    public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
+    public MetadataFetcherCgnImdi(DocIndexerLegacy docIndexer) {
         super(docIndexer);
         if (metadataZipFile == null)
             init(docIndexer);

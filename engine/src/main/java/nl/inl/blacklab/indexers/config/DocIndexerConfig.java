@@ -98,10 +98,18 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     @SuppressWarnings("deprecation")
     protected SensitivitySetting getSensitivitySetting(ConfigAnnotation mainAnnotation) {
-        if (mainAnnotation.getSensitivity() == SensitivitySetting.DEFAULT) {
-            return getSensitivitySetting(mainAnnotation.getName());
+        SensitivitySetting sensitivity = mainAnnotation.getSensitivity();
+        if (sensitivity == SensitivitySetting.DEFAULT) {
+            // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
+            // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
+            // Unfortunately, many existing configurations rely on this.
+            String name = mainAnnotation.getName();
+            if (name.equals(AnnotatedFieldNameUtil.LEMMA_ANNOT_NAME) || name.equals(AnnotatedFieldNameUtil.getDefaultMainAnnotationName()))
+                sensitivity = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+            else
+                sensitivity = SensitivitySetting.ONLY_INSENSITIVE;
         }
-        return mainAnnotation.getSensitivity();
+        return sensitivity;
     }
 
     @Override
@@ -132,7 +140,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             addAnnotatedField(fieldWriter);
 
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
-                    getSensitivitySetting(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME), true);
+                    SensitivitySetting.ONLY_SENSITIVE, true);
             annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations
@@ -149,7 +157,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
                 fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-                        getSensitivitySetting(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME), false);
+                        SensitivitySetting.ONLY_INSENSITIVE, false);
             }
             if (getDocWriter() != null) {
                 IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();

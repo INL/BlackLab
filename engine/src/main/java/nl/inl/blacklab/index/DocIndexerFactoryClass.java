@@ -29,7 +29,7 @@ import nl.inl.util.UnicodeStream;
  */
 public class DocIndexerFactoryClass implements DocIndexerFactory {
 
-    private final Map<String, Class<? extends DocIndexerAbstract>> supported = new HashMap<>();
+    private final Map<String, Class<? extends DocIndexerLegacy>> supported = new HashMap<>();
     private final Set<String> unsupported = new HashSet<>();
 
     @Override
@@ -57,10 +57,10 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
     @Override
     public List<Format> getFormats() {
         List<Format> ret = new ArrayList<>();
-        for (Entry<String, Class<? extends DocIndexerAbstract>> e : supported.entrySet()) {
-            Format desc = new Format(e.getKey(), DocIndexerAbstract.getDisplayName(e.getValue()),
-                    DocIndexerAbstract.getDescription(e.getValue()));
-            desc.setVisible(DocIndexerAbstract.isVisible(e.getValue()));
+        for (Entry<String, Class<? extends DocIndexerLegacy>> e : supported.entrySet()) {
+            Format desc = new Format(e.getKey(), DocIndexerLegacy.getDisplayName(e.getValue()),
+                    DocIndexerLegacy.getDescription(e.getValue()));
+            desc.setVisible(DocIndexerLegacy.isVisible(e.getValue()));
             ret.add(desc);
         }
         return ret;
@@ -72,26 +72,26 @@ public class DocIndexerFactoryClass implements DocIndexerFactory {
             return null;
 
         Class<? extends DocIndexer> docIndexerClass = supported.get(formatIdentifier);
-        Format desc = new Format(formatIdentifier, DocIndexerAbstract.getDisplayName(docIndexerClass),
-                DocIndexerAbstract.getDescription(docIndexerClass));
-        desc.setVisible(DocIndexerAbstract.isVisible(docIndexerClass));
+        Format desc = new Format(formatIdentifier, DocIndexerLegacy.getDisplayName(docIndexerClass),
+                DocIndexerLegacy.getDescription(docIndexerClass));
+        desc.setVisible(DocIndexerLegacy.isVisible(docIndexerClass));
         return desc;
     }
 
-    public void addFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
+    public void addFormat(String formatIdentifier, Class<? extends DocIndexerLegacy> docIndexerClass) {
         this.supported.put(formatIdentifier, docIndexerClass);
     }
 
     @SuppressWarnings("unchecked")
     private void find(String formatIdentifier) {
         // Is it a fully qualified class name?
-        Class<? extends DocIndexerAbstract> docIndexerClass = null;
+        Class<? extends DocIndexerLegacy> docIndexerClass = null;
         try {
-            docIndexerClass = (Class<? extends DocIndexerAbstract>) Class.forName(formatIdentifier);
+            docIndexerClass = (Class<? extends DocIndexerLegacy>) Class.forName(formatIdentifier);
         } catch (Exception e1) {
             try {
                 // No. Is it a class in the BlackLab indexers package?
-                docIndexerClass = (Class<? extends DocIndexerAbstract>) Class
+                docIndexerClass = (Class<? extends DocIndexerLegacy>) Class
                         .forName("nl.inl.blacklab.indexers." + formatIdentifier);
             } catch (Exception e) {
                 // Couldn't be resolved. That's okay, maybe another factory will support this key
