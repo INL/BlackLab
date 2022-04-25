@@ -350,7 +350,7 @@ public class Index {
      * beyond that, the indexname group, this is not optional so group 1 is always
      * the username, and group 2 is always the indexname
      */
-    private static final Pattern PATT_INDEXID = Pattern.compile("^(?:([\\w\\Q-.!$&'()*+,;=@\\E]+):)?([\\w\\-]+)$");
+    private static final Pattern PATT_INDEXID = Pattern.compile("^(?:([\\w\\Q-.!$&'()*+,;=@\\E]+):)?([\\w\\-.]+)$");
 
     /**
      * Check the index name part (not the user id part, if any) of the specified

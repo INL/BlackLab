@@ -79,14 +79,9 @@ class ConfigFileReader {
         if (configFileContents == null) {
             String descDirs = StringUtils.join(searchDirs, ", ");
             throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
-                    + ", or on classpath. Please place " +
-                    "blacklab-server.json in one of these locations containing at least the following:\n" +
-                    "{\n" +
-                    "  \"indexCollections\": [\n" +
-                    "    \"/my/indices\" \n" +
-                    "  ]\n" +
-                    "}\n\n" +
-                    "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+                    + ", or on classpath. Please place this configuration file in one of these locations. "
+                    + "See https://inl.github.io/BlackLab/configuration-files.html#minimal-config-file for a "
+                    + "minimal configuration file.");
         } else {
             ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             try {

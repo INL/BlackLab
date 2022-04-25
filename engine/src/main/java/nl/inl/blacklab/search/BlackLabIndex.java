@@ -4,6 +4,8 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.text.Collator;
 import java.util.Set;
 
@@ -49,6 +51,8 @@ public interface BlackLabIndex extends Closeable {
     
     /**
      * Does the specified directory contain a BlackLab index?
+     *
+     * NOTE: does NOT follow symlinks.
      * 
      * @param indexDir the directory
      * @return true if it's a BlackLab index, false if not.
@@ -64,6 +68,19 @@ public interface BlackLabIndex extends Closeable {
         } catch (FileNotFoundException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    /**
+     * Does the specified directory contain a BlackLab index?
+     *
+     * NOTE: does NOT follow symlinks. Call {@link Path#toRealPath(LinkOption...)}
+     * yourself if you want this.
+     *
+     * @param indexDir the directory
+     * @return true if it's a BlackLab index, false if not.
+     */
+    static boolean isIndex(Path indexDirPath) {
+        return isIndex(indexDirPath.toFile());
     }
 
     /**

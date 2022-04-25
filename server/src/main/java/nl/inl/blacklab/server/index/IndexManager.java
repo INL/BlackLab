@@ -3,6 +3,8 @@ package nl.inl.blacklab.server.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -15,7 +17,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
@@ -469,19 +470,42 @@ public class IndexManager {
 
                     @Override
                     public boolean accept(File pathName, String fileName) {
-                        return accept(pathName);
+                        return accept(new File(pathName, fileName));
                     }
                 };
-                for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE,
-                        notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
-                    if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !BlackLabIndex.isIndex(subDir)) {
-                        if (subDir.getParentFile().equals(collection)) {
-                            if (!subDir.canRead())
-                                logger.debug("  Cannot read direct subdir of collection dir: " + subDir);
-                            else
-                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + subDir);
+                IOFileFilter symlinkToDirFilter = new IOFileFilter() {
+                    @Override
+                    public boolean accept(File pathName) {
+                        try {
+                            Path indexPath = pathName.toPath().toRealPath();
+                            return Files.isDirectory(indexPath);
+                        } catch (IOException e) {
+                            throw BlackLabRuntimeException.wrap(e);
                         }
-                        continue;
+                    }
+
+                    @Override
+                    public boolean accept(File pathName, String fileName) {
+                        return accept(new File(pathName, fileName));
+                    }
+                };
+                for (File subDir : FileUtils.listFilesAndDirs(collection, symlinkToDirFilter,
+                        notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
+                    if (subDir.getParentFile().equals(collection)) {
+                        try {
+                            Path indexPath = subDir.toPath().toRealPath(); // follow symlinks
+                            boolean isReadable = Files.isReadable(indexPath);
+                            boolean isIndex = isReadable && BlackLabIndex.isIndex(indexPath);
+                            if (!isIndex) {
+                                if (!isReadable)
+                                    logger.debug("  Cannot read index dir: " + indexPath);
+                                else
+                                    logger.debug("  Not recognized as an index: " + indexPath);
+                                continue;
+                            }
+                        } catch (IOException e) {
+                            throw BlackLabRuntimeException.wrap(e);
+                        }
                     }
 
                     String indexName = subDir.getName();
@@ -495,8 +519,14 @@ public class IndexManager {
                         logger.warn("Replacing this with the parent directory name (" + indexName
                                 + "), but note that this behaviour is deprecated.");
                     }
-                    if (indices.containsKey(indexName))
+                    if (indices.containsKey(indexName)) {
+                        // Index was already loaded, or name collision
+                        File otherDir = indices.get(indexName).getDir();
+                        if (!otherDir.equals(subDir)) {
+                            logger.warn("  Skipping subdir " + subDir + " because another index (" + otherDir + ") is named '" + indexName + "' as well.");
+                        }
                         continue;
+                    }
 
                     try {
                         logger.debug("Index found: " + indexName + " (" + subDir + ")");

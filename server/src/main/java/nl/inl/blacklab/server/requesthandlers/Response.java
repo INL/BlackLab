@@ -126,6 +126,6 @@ public class Response {
         return badRequest(ds, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
     }
 
-    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, underscores and dashes allowed, and must start with a letter)";
+    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, dots, underscores and dashes allowed, and must start with a letter)";
 
 }

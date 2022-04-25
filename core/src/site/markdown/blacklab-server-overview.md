@@ -432,7 +432,7 @@ BlackLab Server includes experimental support for creating indices and adding do
 
 Currently, only private indices can be created and appended to. This means there must be a logged-in user. The setting authSystem in blacklab-server.yaml (or .json) will let you specify what authentication system you'd like to use. If you specify class "AuthDebugFixed" and a userId, you will always be logged in as this user. Note that this debug authentication method only works if you are a debug client (i.e. your IP address is listed in the debug.addresses setting, see [Configuration files](configuration-files.html)). Have a look at the other Auth* classes (mostly AuthRequestAttribute) to see how real authentication would work.
 
-Another required setting is `userCollectionsDir` (in addition to `indexCollections` which points to the "globally available" indices). In this directory, user-private indices will be created. Obviously, the application needs write permissions on this directory.
+Another required setting is `userCollectionsDir` (in addition to `indexLocations` which points to the "globally available" indices). In this directory, user-private indices will be created. Obviously, the application needs write permissions on this directory.
 
 When a user is logged in and you have a userCollectionsDir set up, you will see a `user` section on the BlackLab Server info page (`/blacklab-server/`) with both `loggedIn` and `canCreateIndex` set to `true`. To see what input formats are supported, look at the `/blacklab-server/input-formats/` URL.
 
