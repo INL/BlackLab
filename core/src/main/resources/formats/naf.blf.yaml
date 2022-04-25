@@ -63,28 +63,3 @@ metadata:
     - name: publicId
       valuePath: "//public/@publicId"
 
-corpusConfig:
-  displayName: NAF
-  description: Testcorpus for NAF configuration
-  specialFields:
-    titleField: title
-    pidField: publicId
-
-  contentViewable: true
-
-  annotationGroups:
-    contents:
-      - name: Basics
-        annotations:
-          - word
-          - lemma
-          - pos
-
-  metadataFieldGroups:
-    - name: Basics
-      fields:
-        - title
-        - publicId
-
-    - name: "Other Fields"
-      addRemainingFields: true
