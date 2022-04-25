@@ -122,7 +122,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     /**
      * Iterator in our source hits object
      */
-    private Iterator<EphemeralHit> sourceHitsIterator;
+    private Iterator<Hit> sourceHitsIterator;
 
     /**
      * A partial list of hits in a doc, because we stopped iterating through the
@@ -183,7 +183,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
-        this.sourceHitsIterator = hits.ephemeralIterator();
+        this.sourceHitsIterator = hits.iterator();
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
@@ -273,8 +273,8 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
-                    EphemeralHit h = sourceHitsIterator.next();
-                    int curDoc = h.doc;
+                    Hit h = sourceHitsIterator.next();
+                    int curDoc = h.doc();
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(index(), lastDocId);

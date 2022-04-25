@@ -76,7 +76,7 @@ public interface BlackLabIndex extends Closeable {
      * NOTE: does NOT follow symlinks. Call {@link Path#toRealPath(LinkOption...)}
      * yourself if you want this.
      *
-     * @param indexDir the directory
+     * @param indexDirPath the directory
      * @return true if it's a BlackLab index, false if not.
      */
     static boolean isIndex(Path indexDirPath) {
