@@ -36,7 +36,7 @@ annotatedFields:
 
       - name: word
         displayName: Word
-        valuePath: .//text()
+        valuePath: .
 
     standoffAnnotations:
       - path: terms/term      # Element containing what to index (relative to documentPath)
