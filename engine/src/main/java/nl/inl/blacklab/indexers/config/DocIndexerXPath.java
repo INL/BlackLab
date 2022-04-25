@@ -103,6 +103,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     public void setDocument(byte[] contents, Charset defaultCharset) {
+        if (defaultCharset != StandardCharsets.UTF_8)
+            throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but defaultCharset " + defaultCharset + " was specified");
         if (config.shouldResolveNamedEntityReferences()) {
             // Document contains old DTD-style named entity declarations. Resolve them because VTD-XML can't deal with these.
             String doc = XmlUtil.readXmlAndResolveReferences(
@@ -192,6 +194,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 vg.parse(config.isNamespaceAware());
 
                 nav = vg.getNav();
+                if (nav.getEncoding() != VTDNav.FORMAT_UTF8)
+                    throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding() + " (See VTD-XML's VTDNav.java for format codes)");
 
                 // Find all documents
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
@@ -762,6 +766,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             vg.parse(config.isNamespaceAware());
 
             nav = vg.getNav();
+            if (nav.getEncoding() != VTDNav.FORMAT_UTF8)
+                throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding() + " (See VTD-XML's VTDNav.java for format codes)");
 
             boolean docDone = false;
             if (documentXPath != null) {
