@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This web.xml file is not required when using Servlet 3.0 container,
+     see implementation details http://jersey.java.net/nonav/documentation/latest/jax-rs.html -->
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+
+    <servlet>
+        <servlet-name>BlackLab Server Aggregator</servlet-name>
+        <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
+
+        <!-- Our Application class -->
+        <init-param>
+            <param-name>javax.ws.rs.Application</param-name>
+            <param-value>org.ivdnt.blacklab.aggregator.JerseyClassRegisterer</param-value>
+        </init-param>
+
+        <!-- When serializing list to XML, apply @XmlRootElement not only to items, but also to wrapper element
+             (so not <ClassNames> <elName></elName><elName></elName> </ClassNames> but
+                     <elNames> <elName></elName><elName></elName> </elNames>) -->
+        <init-param>
+            <param-name>jersey.config.jaxb.collections.processXmlRootElement</param-name>
+            <param-value>true</param-value>
+        </init-param>
+
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>BlackLab Server Aggregator</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+
+
+</web-app>

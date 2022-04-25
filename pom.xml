@@ -38,6 +38,8 @@
 
         <!-- Older DocIndexers -->
         <module>contrib/legacy-docindexers</module>
+
+        <module>aggregator</module>
     </modules>
 
     <properties>

@@ -1,3 +1,10 @@
+# Distributed Search (Proof of Concept)
+
+This branch contains a proof of concept for distributed search. It is not intended to be merged.
+If succesful, we will integrate BlackLab with Solr to enable distributed indexing and search.
+
+See [aggregator/](aggregator/README.md) for details.
+
 # What is BlackLab?
 
 [BlackLab](https://inl.github.io/BlackLab/) is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
