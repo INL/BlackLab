@@ -12,7 +12,7 @@ import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
 /**
- * If a parameter "outputtype" was specified, override the Accept header
+ * If a parameter "outputformat" was specified, override the Accept header
  * with the requested output type. Handy for easier testing in browser.
  */
 @Provider
@@ -23,7 +23,7 @@ public class OutputTypeFilter implements ContainerRequestFilter {
     public void filter(ContainerRequestContext ctx) throws IOException {
         UriInfo uriInfo = ctx.getUriInfo();
         MultivaluedMap<String, String> param = uriInfo.getQueryParameters();
-        List<String> parOutput = param.get("outputtype");
+        List<String> parOutput = param.get("outputformat");
         if (parOutput != null && parOutput.size() > 0) {
             String outputType = parOutput.get(0);
             switch(outputType) {

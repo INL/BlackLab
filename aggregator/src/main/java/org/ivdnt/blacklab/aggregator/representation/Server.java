@@ -10,7 +10,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ServerInfoResponse {
+public class Server {
 
     private String blacklabBuildTime;
 
@@ -24,9 +24,9 @@ public class ServerInfoResponse {
 
     // required for Jersey
     @SuppressWarnings("unused")
-    private ServerInfoResponse() {}
+    private Server() {}
 
-    public ServerInfoResponse(String blacklabBuildTime, String blacklabVersion,
+    public Server(String blacklabBuildTime, String blacklabVersion,
             List<IndexSummary> indices, User user) {
         this.blacklabBuildTime = blacklabBuildTime;
         this.blacklabVersion = blacklabVersion;
