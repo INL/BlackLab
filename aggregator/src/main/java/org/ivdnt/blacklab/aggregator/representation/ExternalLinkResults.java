@@ -12,12 +12,11 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.glassfish.jersey.linking.Binding;
 import org.glassfish.jersey.linking.InjectLink;
 import org.glassfish.jersey.linking.InjectLink.Style;
+import org.ivdnt.blacklab.aggregator.resources.Aggregator;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import nl.inl.anw.api.resources.ExternalLinks;
 
 /**
  * A list of article properties.
@@ -32,7 +31,7 @@ public class ExternalLinkResults {
 
     // This should be a link to /external-links/RESOURCE?offset=...
     @InjectLink(
-        resource = ExternalLinks.class,
+        resource = Aggregator.class,
         method = "list",
         style = Style.ABSOLUTE_PATH,
         condition = "${instance.hasNext}",
@@ -45,7 +44,7 @@ public class ExternalLinkResults {
 
     // This should be a link to /external-links/RESOURCE?offset=...
     @InjectLink(
-        resource = ExternalLinks.class,
+        resource = Aggregator.class,
         method = "list",
         style = Style.ABSOLUTE_PATH,
         condition = "${instance.offset > 0}",

@@ -1,3 +1,5 @@
+package org.ivdnt.blacklab.aggregator;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -11,8 +13,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-
-import nl.inl.anw.ArtikelNotFoundException;
 
 /**
  * A catch-all for exceptions.
@@ -50,9 +50,6 @@ public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<E
 			response = Response.fromResponse(appEx.getResponse());
 			message = new ResponseMessage("Message", appEx);
 
-		} else if (exception instanceof ArtikelNotFoundException) {
-			message = new ResponseMessage("File not found", exception);
-			response = Response.status(Response.Status.NOT_FOUND);
         } else if (exception instanceof IllegalArgumentException) {
             message = new ResponseMessage("Bad request", exception);
             response = Response.status(Response.Status.BAD_REQUEST);

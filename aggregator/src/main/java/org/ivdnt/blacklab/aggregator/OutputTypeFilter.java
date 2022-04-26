@@ -1,3 +1,5 @@
+package org.ivdnt.blacklab.aggregator;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
