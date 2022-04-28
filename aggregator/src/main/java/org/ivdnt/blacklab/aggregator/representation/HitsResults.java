@@ -1,5 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -12,48 +13,23 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitsResults {
 
-    private SearchSummary summary;
-
-    private String indexName = "";
-
-    private String displayName = "";
-
-    private String description = "";
-
-    private String status = "available";
-
-    private boolean contentViewable = false;
-
-    private String textDirection = "ltr";
-
-    private String documentFormat = "tei";
-
-    private String timeModified = "";
-
-    private long tokenCount = 0;
-
-    private long documentCount = 0;
-
-    private VersionInfo versionInfo;
-
-    private FieldInfo fieldInfo;
-
-    @XmlElementWrapper(name="annotatedField")
-    @XmlElement(name = "annotatedField")
-    private List<AnnotatedField> annotatedFields;
+    private SearchSummary summary = new SearchSummary();
 
     @XmlElementWrapper(name="hits")
     @XmlElement(name = "hit")
-    private List<Hit> hits;
+    private List<Hit> hits = Collections.emptyList();
+
+    @XmlElementWrapper(name="docInfos")
+    @XmlElement(name = "docInfo")
+    private List<DocInfo> docInfos = Collections.emptyList();
 
     // required for Jersey
-    @SuppressWarnings("unused")
-    private HitsResults() {}
+    public HitsResults() {}
 
-    public HitsResults(String indexName, FieldInfo fieldInfo,
-            List<AnnotatedField> annotatedFields) {
-        this.indexName = indexName;
-        this.fieldInfo = fieldInfo;
-        this.annotatedFields = annotatedFields;
+    public HitsResults(SearchSummary summary, List<Hit> hits,
+            List<DocInfo> docInfos) {
+        this.summary = summary;
+        this.hits = hits;
+        this.docInfos = docInfos;
     }
 }

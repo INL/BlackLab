@@ -11,7 +11,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchSummary {
 
-    private SearchParam searchParam;
+    private SearchParam searchParam = new SearchParam();
 
     private long searchTime;
 
@@ -48,4 +48,11 @@ public class SearchSummary {
     @XmlElement(name = "item")
     private final List<String> metadataFieldDisplayNames = Collections.emptyList();
 
+    public SearchSummary() {
+
+    }
+
+    public SearchSummary(SearchParam searchParam) {
+        this.searchParam = searchParam;
+    }
 }

@@ -16,4 +16,10 @@ public class Hit {
 
     // required for Jersey
     public Hit() {}
+
+    public Hit(String docPid, long start, long end) {
+        this.docPid = docPid;
+        this.start = start;
+        this.end = end;
+    }
 }
