@@ -14,13 +14,14 @@ import org.ivdnt.blacklab.aggregator.helper.MapAdapterMetadataValues;
 public class DocInfo {
 
     @XmlAttribute
-    private String pid;
+    String pid;
 
     @XmlJavaTypeAdapter(MapAdapterMetadataValues.class)
-    private Map<String, MetadataValues> metadata = Collections.emptyMap();
+    Map<String, MetadataValues> metadata = Collections.emptyMap();
 
     public DocInfo(String pid, Map<String, MetadataValues> metadata) {
         this.pid = pid;
         this.metadata = metadata;
     }
+
 }

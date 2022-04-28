@@ -12,10 +12,13 @@ import javax.xml.namespace.QName;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 import org.w3c.dom.Element;
 
-public class MapAdapterMetadataValues extends XmlAdapter<MapWrapper, Map<String, MetadataValues>> {
+/**
+ * Serialize
+ */
+public class MapAdapterMetadataValues extends XmlAdapter<MapWrapperMetadataValues, Map<String, MetadataValues>> {
     @Override
-    public MapWrapper marshal(Map<String, MetadataValues> m) throws Exception {
-        MapWrapper wrapper = new MapWrapper();
+    public MapWrapperMetadataValues marshal(Map<String, MetadataValues> m) throws Exception {
+        MapWrapperMetadataValues wrapper = new MapWrapperMetadataValues();
         List elements = new ArrayList();
         for (Map.Entry<String, MetadataValues> property : m.entrySet()) {
 
@@ -27,7 +30,7 @@ public class MapAdapterMetadataValues extends XmlAdapter<MapWrapper, Map<String,
     }
 
     @Override
-    public Map<String, MetadataValues> unmarshal(MapWrapper v) throws Exception {
+    public Map<String, MetadataValues> unmarshal(MapWrapperMetadataValues v) throws Exception {
         HashMap<String, MetadataValues> returnval = new HashMap();
         for (Object o : v.elements) {
             Element e = (Element) o;
