@@ -26,8 +26,9 @@ General:
   (don't change things for change's sake, and make sure there's a clear migration 
   guide available)
 - Consider supporting the old API for a while longer.
-  (we don't want a lot of duplicated maintenance, but maybe a simple (?) adapter could 
-  be created that translates between the old and new API?)
+  (we don't want a lot of duplicated maintenance, but maybe an adapter could 
+  be created that translates between the old and new API. Such an adapter could
+  use the experimental aggregator code as a starting point)
 
 XML-related:
 - JSON should probably be our primary output format, and the XML structure should 
