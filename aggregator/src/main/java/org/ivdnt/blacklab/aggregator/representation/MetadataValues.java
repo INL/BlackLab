@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 @SuppressWarnings("unused")
 public class MetadataValues {
 
-    //@XmlElementWrapper(name="indices")
     @XmlElement(name = "value")
     @JsonValue
     private List<String> value;

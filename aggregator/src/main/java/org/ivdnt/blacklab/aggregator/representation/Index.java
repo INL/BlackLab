@@ -8,6 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Index {
@@ -36,8 +38,9 @@ public class Index {
 
     private FieldInfo fieldInfo;
 
-    @XmlElementWrapper(name="annotatedField")
+    @XmlElementWrapper(name="annotatedFields")
     @XmlElement(name = "annotatedField")
+    @JsonProperty("annotatedFields")
     private List<AnnotatedField> annotatedFields;
 
     // required for Jersey

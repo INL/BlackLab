@@ -13,7 +13,7 @@ import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 class MapWrapperMetadataValues {
 
     /** Use this to serialize this class to JSON
-    public static class Serializer extends JsonSerializer<MapWrapperMetadataValues> {
+    private static class Serializer extends JsonSerializer<MapWrapperMetadataValues> {
         @Override
         public void serialize(MapWrapperMetadataValues value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {

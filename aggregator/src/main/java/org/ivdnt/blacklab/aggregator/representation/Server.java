@@ -8,6 +8,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Server {
@@ -18,6 +20,7 @@ public class Server {
 
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")
+    @JsonProperty("indices")
     private List<IndexSummary> indices;
 
     private User user;

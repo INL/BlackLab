@@ -8,6 +8,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchSummary {
 
@@ -46,6 +48,7 @@ public class SearchSummary {
     // (just include an empty element here)
     @XmlElementWrapper(name="metadataFieldDisplayNames")
     @XmlElement(name = "item")
+    @JsonProperty("metadataFieldDisplayNames")
     private final List<String> metadataFieldDisplayNames = Collections.emptyList();
 
     public SearchSummary() {

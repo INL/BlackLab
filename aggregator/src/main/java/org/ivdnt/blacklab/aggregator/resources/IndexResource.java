@@ -14,6 +14,7 @@ import org.ivdnt.blacklab.aggregator.representation.AnnotatedField;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.FieldInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
+import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.Index;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
@@ -43,15 +44,22 @@ public class IndexResource {
             @QueryParam("group") String group) {
         SearchParam searchParam = new SearchParam(corpusName, cqlPattern, sort, group);
         SearchSummary summary = new SearchSummary(searchParam);
-        String docPid = "my-doc-pid";
-        Hit hit = new Hit(docPid, 0, 10);
-        List<Hit> hits = List.of(hit);
-        Map<String, MetadataValues> metadata = Map.of(
-                "title", new MetadataValues(List.of("Bla bla")),
-                "author", new MetadataValues(List.of("Zwets", "Neuzel"))
-        );
-        DocInfo docInfo = new DocInfo(docPid, metadata);
-        List<DocInfo> docInfos = List.of(docInfo);
-        return new HitsResults(summary, hits, docInfos);
+        if (group == null || group.isEmpty()) {
+            // Hits results
+            String docPid = "my-doc-pid";
+            Hit hit = new Hit(docPid, 0, 10);
+            List<Hit> hits = List.of(hit);
+            Map<String, MetadataValues> metadata = Map.of(
+                    "title", new MetadataValues(List.of("Bla bla")),
+                    "author", new MetadataValues(List.of("Zwets", "Neuzel"))
+            );
+            DocInfo docInfo = new DocInfo(docPid, metadata);
+            List<DocInfo> docInfos = List.of(docInfo);
+            return new HitsResults(summary, hits, docInfos);
+        } else {
+            // Hits grouped results
+            List<HitGroup> hitGroups = List.of(new HitGroup());
+            return new HitsResults(summary, hitGroups);
+        }
     }
 }
