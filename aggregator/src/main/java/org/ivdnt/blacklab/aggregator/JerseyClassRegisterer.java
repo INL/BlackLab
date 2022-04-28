@@ -13,14 +13,14 @@ public class JerseyClassRegisterer extends ResourceConfig {
 
 	public JerseyClassRegisterer() {
     	super(
-    			JacksonFeature.class, // Enable Jackson as our JAXB provider
+			JacksonFeature.class, // Enable Jackson as our JAXB provider
 
-    			OutputTypeFilter.class, // "outputformat" parameter overrides Accept header
-    			CORSFilter.class, // add CORS headers to output
+			OutputTypeFilter.class, // "outputformat" parameter overrides Accept header
+			CORSFilter.class, // add CORS headers to output
 
-				RootResource.class,
-    			IndexResource.class,
+			RootResource.class,
+			IndexResource.class,
 
-    			GenericExceptionMapper.class);
+			GenericExceptionMapper.class);
 	}
 }

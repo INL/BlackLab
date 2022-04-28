@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -15,7 +16,7 @@ import org.ivdnt.blacklab.aggregator.representation.FieldInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.Index;
-import org.ivdnt.blacklab.aggregator.representation.MetadataEntry;
+import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 import org.ivdnt.blacklab.aggregator.representation.SearchParam;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 
@@ -45,9 +46,9 @@ public class IndexResource {
         String docPid = "my-doc-pid";
         Hit hit = new Hit(docPid, 0, 10);
         List<Hit> hits = List.of(hit);
-        List<MetadataEntry> metadata = List.of(
-                new MetadataEntry("title", List.of("Bla bla")),
-                new MetadataEntry("author", List.of("Zwets", "Neuzel"))
+        Map<String, MetadataValues> metadata = Map.of(
+                "title", new MetadataValues(List.of("Bla bla")),
+                "author", new MetadataValues(List.of("Zwets", "Neuzel"))
         );
         DocInfo docInfo = new DocInfo(docPid, metadata);
         List<DocInfo> docInfos = List.of(docInfo);

@@ -36,7 +36,7 @@ public class AnnotatedField {
 
     @XmlElementWrapper(name="annotations")
     @XmlElement(name = "annotation")
-    private List<Annotation> annotations;
+    private List<Annotation> annotations = List.of(new Annotation());
 
     // required for Jersey
     public AnnotatedField() {}
