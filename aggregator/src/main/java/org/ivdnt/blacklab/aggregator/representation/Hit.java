@@ -12,7 +12,11 @@ public class Hit {
 
     private long end = 0;
 
-    //private List
+    private ContextWords left = new ContextWords();
+
+    private ContextWords match = new ContextWords();
+
+    private ContextWords right = new ContextWords();
 
     // required for Jersey
     public Hit() {}
