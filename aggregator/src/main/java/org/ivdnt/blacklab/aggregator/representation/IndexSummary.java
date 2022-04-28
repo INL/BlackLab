@@ -8,23 +8,22 @@ import javax.xml.bind.annotation.XmlAttribute;
 public class IndexSummary {
 
     @XmlAttribute
-    private String name = "";
+    String name = "";
 
-    private String displayName = "";
+    String displayName = "";
 
-    private String description = "";
+    String description = "";
 
-    private String status = "available";
+    String status = "available";
 
-    private String documentFormat = "";
+    String documentFormat = "";
 
-    private String timeModified = "";
+    String timeModified = "";
 
-    private long tokenCount = 0;
+    long tokenCount = 0;
 
     // required for Jersey
-    @SuppressWarnings("unused")
-    private IndexSummary() {}
+    IndexSummary() {}
 
     public IndexSummary(String name, String displayName, String documentFormat) {
         this.name = name;
