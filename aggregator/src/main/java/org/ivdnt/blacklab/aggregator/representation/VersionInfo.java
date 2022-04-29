@@ -15,7 +15,4 @@ public class VersionInfo {
     private String timeCreated = "";
 
     private String timeModified = "";
-
-    // required for Jersey
-    public VersionInfo() {}
 }

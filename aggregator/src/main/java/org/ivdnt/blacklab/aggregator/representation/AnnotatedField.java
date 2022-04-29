@@ -41,7 +41,4 @@ public class AnnotatedField {
     @XmlElement(name = "annotation")
     @JsonProperty("annotations")
     private List<Annotation> annotations = List.of(new Annotation());
-
-    // required for Jersey
-    public AnnotatedField() {}
 }

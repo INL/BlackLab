@@ -23,7 +23,4 @@ public class Annotation {
     private String offsetsAlternative = "i";
 
     private boolean isInternal = false;
-
-    // required for Jersey
-    public Annotation() {}
 }

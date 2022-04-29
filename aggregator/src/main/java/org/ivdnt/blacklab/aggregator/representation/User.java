@@ -21,4 +21,13 @@ public class User {
         this.id = id;
         this.canCreateIndex = canCreateIndex;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "loggedIn=" + loggedIn +
+                ", id='" + id + '\'' +
+                ", canCreateIndex=" + canCreateIndex +
+                '}';
+    }
 }

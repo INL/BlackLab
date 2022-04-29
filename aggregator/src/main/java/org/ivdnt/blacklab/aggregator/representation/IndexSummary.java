@@ -30,4 +30,17 @@ public class IndexSummary {
         this.displayName = displayName;
         this.documentFormat = documentFormat;
     }
+
+    @Override
+    public String toString() {
+        return "IndexSummary{" +
+                "name='" + name + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", description='" + description + '\'' +
+                ", status='" + status + '\'' +
+                ", documentFormat='" + documentFormat + '\'' +
+                ", timeModified='" + timeModified + '\'' +
+                ", tokenCount=" + tokenCount +
+                '}';
+    }
 }
