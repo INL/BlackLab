@@ -21,4 +21,14 @@ public class FieldInfo {
         this.pidField = pidField;
         this.titleField = titleField;
     }
+
+    @Override
+    public String toString() {
+        return "FieldInfo{" +
+                "pidField='" + pidField + '\'' +
+                ", titleField='" + titleField + '\'' +
+                ", authorField='" + authorField + '\'' +
+                ", dateField='" + dateField + '\'' +
+                '}';
+    }
 }

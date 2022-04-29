@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Server {
 
-    /** Use this to serialize this class to JSON.
+    /** Use this to serialize indices to JSON.
      *
      * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure .
      */
@@ -54,7 +54,7 @@ public class Server {
         }
     }
 
-    /** Use this to deserialize this class from JSON.
+    /** Use this to deserialize indices from JSON.
      *
      * Necessary because we convert a JSON object structure to a list (because that's what the XML mapping uses).
      */
@@ -107,16 +107,16 @@ public class Server {
         }
     }
 
-    private String blacklabBuildTime;
+    private String blackLabBuildTime;
 
-    private String blacklabVersion;
+    private String blackLabVersion;
 
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")
     @JsonProperty("indices")
     @JsonSerialize(using=ListIndexSummarySerializer.class)
     @JsonDeserialize(using=ListIndexSummaryDeserializer.class)
-    private List<IndexSummary> indices;
+    public List<IndexSummary> indices;
 
     private User user;
 
@@ -128,10 +128,10 @@ public class Server {
     @SuppressWarnings("unused")
     private Server() {}
 
-    public Server(String blacklabBuildTime, String blacklabVersion,
+    public Server(String blackLabBuildTime, String blackLabVersion,
             List<IndexSummary> indices, User user) {
-        this.blacklabBuildTime = blacklabBuildTime;
-        this.blacklabVersion = blacklabVersion;
+        this.blackLabBuildTime = blackLabBuildTime;
+        this.blackLabVersion = blackLabVersion;
         this.indices = indices;
         this.user = user;
     }
@@ -139,8 +139,8 @@ public class Server {
     @Override
     public String toString() {
         return "Server{" +
-                "blacklabBuildTime='" + blacklabBuildTime + '\'' +
-                ", blacklabVersion='" + blacklabVersion + '\'' +
+                "blackLabBuildTime='" + blackLabBuildTime + '\'' +
+                ", blackLabVersion='" + blackLabVersion + '\'' +
                 ", indices=" + indices +
                 ", user=" + user +
                 '}';

@@ -1,0 +1,138 @@
+package org.ivdnt.blacklab.aggregator;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.ivdnt.blacklab.aggregator.representation.Annotation;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+
+public class JsonParserUtil {
+    private JsonParserUtil() {}
+
+
+    public static List<String> readStringList(JsonParser parser) throws IOException {
+        JsonToken token = parser.currentToken();
+        if (token != JsonToken.START_ARRAY)
+            throw new RuntimeException("Expected START_ARRAY, found " + token);
+
+        List<String> list = new ArrayList<>();
+        while (true) {
+            token = parser.nextToken();
+            if (token == JsonToken.END_ARRAY)
+                break;
+            if (token != JsonToken.VALUE_STRING)
+                throw new RuntimeException("Expected END_ARRAY or VALUE_STRING, found " + token);
+            list.add(parser.getValueAsString());
+        }
+        return list;
+    }
+
+    public static List<Annotation> readAnnotations(JsonParser parser) throws IOException {
+        List<Annotation> result = new ArrayList<>();
+        while (true) {
+            JsonToken token = parser.nextToken();
+            if (token == JsonToken.END_OBJECT)
+                break;
+
+            if (token != JsonToken.FIELD_NAME)
+                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+            Annotation annotation = new Annotation();
+            annotation.name = parser.getCurrentName();
+
+            token = parser.nextToken();
+            if (token != JsonToken.START_OBJECT)
+                throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
+            while (true) {
+                token = parser.nextToken();
+                if (token == JsonToken.END_OBJECT)
+                    break;
+
+                if (token != JsonToken.FIELD_NAME)
+                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                String fieldName = parser.getCurrentName();
+                parser.nextToken();
+                switch (fieldName) {
+                case "displayName": annotation.displayName = parser.getValueAsString(); break;
+                case "description": annotation.description = parser.getValueAsString(); break;
+                case "uiType": annotation.uiType = parser.getValueAsString(); break;
+                case "hasForwardIndex": annotation.hasForwardIndex = parser.getValueAsBoolean(); break;
+                case "sensitivity": annotation.sensitivity = parser.getValueAsString(); break;
+                case "offsetsAlternative": annotation.offsetsAlternative = parser.getValueAsString(); break;
+                case "isInternal": annotation.isInternal = parser.getValueAsBoolean(); break;
+                case "subannotations":
+                    annotation.subannotations = readStringList(parser);
+                    break;
+                case "parentAnnotation": annotation.parentAnnotation = parser.getValueAsString(); break;
+                default: throw new RuntimeException("Unexpected field " + fieldName + " in Annotation");
+                }
+            }
+
+            result.add(annotation);
+        }
+        return result;
+    }
+
+    public static Map<String, String> readStringMap(JsonParser parser) throws IOException {
+        JsonToken token = parser.currentToken();
+        if (token != JsonToken.START_OBJECT)
+            throw new RuntimeException("Expected START_OBJECT, found " + token);
+
+        Map<String, String> result = new HashMap<>();
+        while (true) {
+            token = parser.nextToken();
+            if (token == JsonToken.END_OBJECT)
+                break;
+
+            if (token != JsonToken.FIELD_NAME)
+                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+            String key = parser.getCurrentName();
+
+            token = parser.nextToken();
+            if (token != JsonToken.VALUE_STRING)
+                throw new RuntimeException("Expected VALUE_STRING, found " + token);
+            String value = parser.getValueAsString();
+
+            result.put(key, value);
+        }
+        return result;
+    }
+
+    public static Map<String, Integer> readIntegerMap(JsonParser parser) throws IOException {
+        JsonToken token = parser.currentToken();
+        if (token != JsonToken.START_OBJECT)
+            throw new RuntimeException("Expected START_OBJECT, found " + token);
+
+        Map<String, Integer> result = new HashMap<>();
+        while (true) {
+            token = parser.nextToken();
+            if (token == JsonToken.END_OBJECT)
+                break;
+
+            if (token != JsonToken.FIELD_NAME)
+                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+            String key = parser.getCurrentName();
+
+            token = parser.nextToken();
+            int value;
+            switch (token) {
+            case VALUE_NUMBER_INT:
+                value = parser.getValueAsInt();
+                break;
+            case VALUE_STRING: // fieldValues accidentally sends numbers as string, compensate...
+                String strValue = parser.getValueAsString();
+                value = Integer.parseInt(strValue);
+                break;
+            default:
+                throw new RuntimeException("Expected VALUE_NUMBER_INT or VALUE_STRING, found " + token);
+            }
+
+            result.put(key, value);
+        }
+        return result;
+    }
+}

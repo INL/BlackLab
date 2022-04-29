@@ -9,7 +9,11 @@ public class Property {
 
     String value = "value";
 
-    public Property() {
-
+    @Override
+    public String toString() {
+        return "Property{" +
+                "name='" + name + '\'' +
+                ", value='" + value + '\'' +
+                '}';
     }
 }

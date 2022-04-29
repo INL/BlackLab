@@ -1,5 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,31 +15,48 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AnnotatedField {
 
     @XmlAttribute
-    private String name = "contents";
+    String name;
 
-    private String fieldName = "contents";
+    String fieldName;
 
-    private boolean isAnnotatedField = true;
+    boolean isAnnotatedField = true;
 
-    private String displayName = "Annotated field";
+    String displayName = "";
 
-    private String description = "A nicely annotated field";
+    String description = "";
 
-    private boolean hasContentStore = true;
+    boolean hasContentStore;
 
-    private boolean hasXmlTags = true;
+    boolean hasXmlTags;
 
-    private boolean hasLengthTokens = true;
+    boolean hasLengthTokens;
 
-    private String mainAnnotation = "word";
+    String mainAnnotation;
 
     @XmlElementWrapper(name="displayOrder")
     @XmlElement(name = "fieldName")
     @JsonProperty("displayOrder")
-    private List<String> displayOrder = List.of("word", "lemma", "pos");
+    List<String> displayOrder = new ArrayList<>();
 
     @XmlElementWrapper(name="annotations")
     @XmlElement(name = "annotation")
     @JsonProperty("annotations")
-    private List<Annotation> annotations = List.of(new Annotation());
+    List<Annotation> annotations = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return "AnnotatedField{" +
+                "name='" + name + '\'' +
+                ", fieldName='" + fieldName + '\'' +
+                ", isAnnotatedField=" + isAnnotatedField +
+                ", displayName='" + displayName + '\'' +
+                ", description='" + description + '\'' +
+                ", hasContentStore=" + hasContentStore +
+                ", hasXmlTags=" + hasXmlTags +
+                ", hasLengthTokens=" + hasLengthTokens +
+                ", mainAnnotation='" + mainAnnotation + '\'' +
+                ", displayOrder=" + displayOrder +
+                ", annotations=" + annotations +
+                '}';
+    }
 }

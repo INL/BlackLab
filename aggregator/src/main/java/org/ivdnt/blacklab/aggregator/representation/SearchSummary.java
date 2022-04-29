@@ -58,4 +58,27 @@ public class SearchSummary {
     public SearchSummary(SearchParam searchParam) {
         this.searchParam = searchParam;
     }
+
+    @Override
+    public String toString() {
+        return "SearchSummary{" +
+                "searchParam=" + searchParam +
+                ", searchTime=" + searchTime +
+                ", countTime=" + countTime +
+                ", windowFirstResult=" + windowFirstResult +
+                ", requestedWindowSize=" + requestedWindowSize +
+                ", actualWindowSize=" + actualWindowSize +
+                ", windowHasPrevious=" + windowHasPrevious +
+                ", windowHasNext=" + windowHasNext +
+                ", stillCounting=" + stillCounting +
+                ", numberOfHits=" + numberOfHits +
+                ", numberOfHitsRetrieved=" + numberOfHitsRetrieved +
+                ", stoppedCountingHits=" + stoppedCountingHits +
+                ", stoppedRetrievingHits=" + stoppedRetrievingHits +
+                ", numberOfDocs=" + numberOfDocs +
+                ", numberOfDocsRetrieved=" + numberOfDocsRetrieved +
+                ", docFields=" + docFields +
+                ", metadataFieldDisplayNames=" + metadataFieldDisplayNames +
+                '}';
+    }
 }

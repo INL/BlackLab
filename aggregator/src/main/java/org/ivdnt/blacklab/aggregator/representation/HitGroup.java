@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,9 +15,20 @@ public class HitGroup {
 
     long size = 0;
 
-    List<Property> properties = List.of(new Property());
+    List<Property> properties = new ArrayList<>();
 
     long numberOfDocs = 0;
 
     public HitGroup() {}
+
+    @Override
+    public String toString() {
+        return "HitGroup{" +
+                "identity='" + identity + '\'' +
+                ", identityDisplay='" + identityDisplay + '\'' +
+                ", size=" + size +
+                ", properties=" + properties +
+                ", numberOfDocs=" + numberOfDocs +
+                '}';
+    }
 }

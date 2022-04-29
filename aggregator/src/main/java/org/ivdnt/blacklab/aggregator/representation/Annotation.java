@@ -1,26 +1,56 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Annotation {
 
     @XmlAttribute
-    private String name = "word";
+    public String name;
 
-    private String displayName = "Word";
+    public String displayName = "";
 
-    private String description = "A word in the document";
+    public String description = "";
 
-    private String uiType = "";
+    public String uiType = "";
 
-    private boolean hasForwardIndex = true;
+    public boolean hasForwardIndex;
 
-    private String sensitivity = "ONLY_INSENSITIVE";
+    public String sensitivity;
 
-    private String offsetsAlternative = "i";
+    public String offsetsAlternative;
 
-    private boolean isInternal = false;
+    public boolean isInternal;
+
+    @XmlElementWrapper(name="subannotations")
+    @XmlElement(name = "subannotation")
+    @JsonProperty("subannotations")
+    public List<String> subannotations = new ArrayList<>();
+
+    public String parentAnnotation = "";
+
+    @Override
+    public String toString() {
+        return "Annotation{" +
+                "name='" + name + '\'' +
+                ", displayName='" + displayName + '\'' +
+                ", description='" + description + '\'' +
+                ", uiType='" + uiType + '\'' +
+                ", hasForwardIndex=" + hasForwardIndex +
+                ", sensitivity='" + sensitivity + '\'' +
+                ", offsetsAlternative='" + offsetsAlternative + '\'' +
+                ", isInternal=" + isInternal +
+                ", subannotations=" + subannotations +
+                ", parentAnnotation=" + parentAnnotation +
+                '}';
+    }
 }

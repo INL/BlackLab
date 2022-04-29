@@ -87,4 +87,14 @@ public class HitsResults {
         this.docInfos = null;
         this.hitGroups = groups;
     }
+
+    @Override
+    public String toString() {
+        return "HitsResults{" +
+                "summary=" + summary +
+                ", hits=" + hits +
+                ", docInfos=" + docInfos +
+                ", hitGroups=" + hitGroups +
+                '}';
+    }
 }

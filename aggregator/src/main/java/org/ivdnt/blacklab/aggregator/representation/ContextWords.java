@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,9 +50,18 @@ public class ContextWords {
         }
     }
 
+    // TODO: deserializer!
+
     @XmlElement(name="w")
     @JsonSerialize(using = ContextWords.Serializer.class)
-    List<Word> words = List.of(new Word(), new Word());
+    List<Word> words = new ArrayList<>();
 
     public ContextWords() {}
+
+    @Override
+    public String toString() {
+        return "ContextWords{" +
+                "words=" + words +
+                '}';
+    }
 }

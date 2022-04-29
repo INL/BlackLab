@@ -23,4 +23,14 @@ public class SearchParam {
         this.sort = sort;
         this.group = group;
     }
+
+    @Override
+    public String toString() {
+        return "SearchParam{" +
+                "indexname='" + indexname + '\'' +
+                ", patt='" + patt + '\'' +
+                ", sort='" + sort + '\'' +
+                ", group='" + group + '\'' +
+                '}';
+    }
 }

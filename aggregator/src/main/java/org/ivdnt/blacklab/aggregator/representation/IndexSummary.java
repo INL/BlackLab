@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 public class IndexSummary {
 
     @XmlAttribute
-    String name = "";
+    public String name = "";
 
     String displayName = "";
 

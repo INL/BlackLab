@@ -25,4 +25,11 @@ public class MetadataValues {
     public List<String> getValues() {
         return value;
     }
+
+    @Override
+    public String toString() {
+        return "MetadataValues{" +
+                "value=" + value +
+                '}';
+    }
 }

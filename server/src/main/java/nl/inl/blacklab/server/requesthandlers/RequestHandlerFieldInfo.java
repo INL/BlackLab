@@ -136,7 +136,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             Map<String, Integer> values = fd.valueDistribution();
             Set<String> valuesLeft = new HashSet<>(values.keySet());
             for (String value : fd.displayOrder()) {
-                ds.attrEntry("value", "text", value, values.get(value));
+                ds.attrEntry("value", "text", value, values.get(value)); // FIXME: cast value.get(value) to int!!
                 valuesLeft.remove(value);
             }
             List<String> sortedLeft = new ArrayList<>(valuesLeft);

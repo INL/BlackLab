@@ -26,4 +26,16 @@ public class Hit {
         this.start = start;
         this.end = end;
     }
+
+    @Override
+    public String toString() {
+        return "Hit{" +
+                "docPid='" + docPid + '\'' +
+                ", start=" + start +
+                ", end=" + end +
+                ", left=" + left +
+                ", match=" + match +
+                ", right=" + right +
+                '}';
+    }
 }

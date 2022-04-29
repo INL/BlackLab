@@ -1,5 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAnyAttribute;
@@ -16,6 +17,13 @@ public class Word {
 //    String lemma = "testlemma";
 
     @XmlAnyAttribute
-    Map<QName, String> otherAnnotations = Map.of(new QName("lemma"), "thelemma", new QName("pos"), "thepos");
+    Map<QName, String> otherAnnotations = new HashMap<>();
 
+    @Override
+    public String toString() {
+        return "Word{" +
+                "mainAnnotation='" + mainAnnotation + '\'' +
+                ", otherAnnotations=" + otherAnnotations +
+                '}';
+    }
 }

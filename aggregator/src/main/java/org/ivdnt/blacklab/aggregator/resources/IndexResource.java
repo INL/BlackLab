@@ -17,6 +17,7 @@ import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.Index;
+import org.ivdnt.blacklab.aggregator.representation.MetadataField;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 import org.ivdnt.blacklab.aggregator.representation.SearchParam;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
@@ -30,7 +31,8 @@ public class IndexResource {
     public Index indexInfo(@PathParam("corpus-name") String corpusName) {
         FieldInfo fieldInfo = new FieldInfo("pid", "title");
         List<AnnotatedField> annotatedFields = List.of(new AnnotatedField());
-        Index index = new Index(corpusName, fieldInfo, annotatedFields);
+        List<MetadataField> metadataFields = List.of(new MetadataField());
+        Index index = new Index(corpusName, fieldInfo, annotatedFields, metadataFields);
         return index;
     }
 
