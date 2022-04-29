@@ -6,11 +6,11 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class User {
 
-    private boolean loggedIn = false;
+    public boolean loggedIn = false;
 
-    private String id = "";
+    public String id = "";
 
-    private boolean canCreateIndex = false;
+    public boolean canCreateIndex = false;
 
     // required for Jersey
     @SuppressWarnings("unused")

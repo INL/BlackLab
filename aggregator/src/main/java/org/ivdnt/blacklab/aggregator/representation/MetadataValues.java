@@ -14,7 +14,7 @@ public class MetadataValues {
 
     @XmlElement(name = "value")
     @JsonValue
-    private List<String> value;
+    public List<String> value;
 
     private MetadataValues() { }
 
@@ -22,7 +22,7 @@ public class MetadataValues {
         this.value = value;
     }
 
-    public List<String> getValues() {
+    public List<String> getValue() {
         return value;
     }
 

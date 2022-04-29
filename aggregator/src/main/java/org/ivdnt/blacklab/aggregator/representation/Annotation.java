@@ -34,7 +34,7 @@ public class Annotation {
     @XmlElementWrapper(name="subannotations")
     @XmlElement(name = "subannotation")
     @JsonProperty("subannotations")
-    public List<String> subannotations = new ArrayList<>();
+    public List<String> subannotations;
 
     public String parentAnnotation = "";
 

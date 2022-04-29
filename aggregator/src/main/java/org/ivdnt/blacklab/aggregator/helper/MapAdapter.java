@@ -13,20 +13,16 @@ import org.w3c.dom.Element;
 
 public class MapAdapter extends XmlAdapter<MapWrapper, Map<String, Object>> {
     @Override
-    public MapWrapper marshal(Map<String, Object> m) throws Exception {
+    public MapWrapper marshal(Map<String, Object> m) {
         MapWrapper wrapper = new MapWrapper();
         List elements = new ArrayList();
         for (Map.Entry<String, Object> property : m.entrySet()) {
 
             if (property.getValue() instanceof Map) {
-                elements.add(new JAXBElement<MapWrapper>(new QName(getCleanLabel(property.getKey())),
+                elements.add(new JAXBElement<>(new QName(getCleanLabel(property.getKey())),
                         MapWrapper.class, marshal((Map) property.getValue())));
-            } else if (property.getValue() instanceof List) {
-                // TODO
-                elements.add(new JAXBElement<String>(new QName(getCleanLabel(property.getKey())),
-                        String.class, property.getValue().toString()));
             } else {
-                elements.add(new JAXBElement<String>(new QName(getCleanLabel(property.getKey())),
+                elements.add(new JAXBElement<>(new QName(getCleanLabel(property.getKey())),
                         String.class, property.getValue().toString()));
             }
         }
@@ -35,7 +31,7 @@ public class MapAdapter extends XmlAdapter<MapWrapper, Map<String, Object>> {
     }
 
     @Override
-    public Map<String, Object> unmarshal(MapWrapper v) throws Exception {
+    public Map<String, Object> unmarshal(MapWrapper v) {
         HashMap<String, Object> returnval = new HashMap();
         for (Object o : v.elements) {
             Element e = (Element) o;

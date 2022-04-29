@@ -10,17 +10,17 @@ public class IndexSummary {
     @XmlAttribute
     public String name = "";
 
-    String displayName = "";
+    public String displayName = "";
 
-    String description = "";
+    public String description = "";
 
-    String status = "available";
+    public String status = "available";
 
-    String documentFormat = "";
+    public String documentFormat = "";
 
-    String timeModified = "";
+    public String timeModified = "";
 
-    long tokenCount = 0;
+    public long tokenCount = 0;
 
     // required for Jersey
     IndexSummary() {}

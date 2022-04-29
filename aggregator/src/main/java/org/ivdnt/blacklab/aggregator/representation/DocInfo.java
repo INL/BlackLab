@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.Collections;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -14,10 +13,16 @@ import org.ivdnt.blacklab.aggregator.helper.MapAdapterMetadataValues;
 public class DocInfo {
 
     @XmlAttribute
-    String pid;
+    public String pid;
 
     @XmlJavaTypeAdapter(MapAdapterMetadataValues.class)
-    Map<String, MetadataValues> metadata = Collections.emptyMap();
+    public Map<String, MetadataValues> metadata;
+
+    public int lengthInTokens;
+
+    public boolean mayView;
+
+    public DocInfo() {}
 
     public DocInfo(String pid, Map<String, MetadataValues> metadata) {
         this.pid = pid;
@@ -31,4 +36,5 @@ public class DocInfo {
                 ", metadata=" + metadata +
                 '}';
     }
+
 }

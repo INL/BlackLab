@@ -5,9 +5,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Property {
-    String name = "prop";
+    public String name = "prop";
 
-    String value = "value";
+    public String value = "value";
 
     @Override
     public String toString() {

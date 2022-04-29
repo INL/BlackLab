@@ -6,13 +6,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchParam {
 
-    private String indexname = "";
+    public String indexname = "";
 
-    private String patt = "";
+    public String patt = "";
 
-    private String sort = "";
+    public String sort = "";
 
-    private String group = "";
+    public String group = "";
 
     public SearchParam() {
     }

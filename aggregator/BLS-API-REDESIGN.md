@@ -29,7 +29,7 @@ General:
 - Eliminate inconsistencies in response structure.<br>
   (if information is given in multiple places, e.g. on the server info page as well
    as on the index info page, use the same structure and element names (except one page
-   may give additional details))
+   may give additional details). Fix `blacklabBuildTime` vs. `blackLabBuildTime` etc.)
 - Change confusing names.<br>
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
   `reachedHitLimit` might be easier to understand, especially if it's directly 
@@ -39,6 +39,10 @@ General:
 - Group related values.<br>
   (e.g. numberOfHitsRetrieved / numberOfDocsRetrieved / stoppedRetrievingHits
   would be better as a structure `"retrieved": { "hits": 100, "docs": "10", "reachedHitLimit": true }` ).
+- Separate unrelated parts.<br>
+  (e.g. in DocInfo, arbitrary document metadata values such as `title` or `author` should probably be
+  in a separate subobject, not alongside special values like `lengthInTokens` `mayView`. Also, 
+  `metadataFieldGroups` shouldn't be alongside DocInfo structures.)
 - Handle custom information better. <br>
   Custom information, ignored by BlackLab but useful for e.g. the frontend,
   like displayName, uiType, etc. is polluting the response structure.

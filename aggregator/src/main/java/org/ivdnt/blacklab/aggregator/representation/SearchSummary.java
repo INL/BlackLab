@@ -1,55 +1,58 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
+import org.ivdnt.blacklab.aggregator.helper.MapAdapter;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchSummary {
 
-    private SearchParam searchParam = new SearchParam();
+    public SearchParam searchParam = new SearchParam();
 
-    private long searchTime;
+    public long searchTime;
 
-    private long countTime;
+    public long countTime;
 
-    private long windowFirstResult;
+    public long windowFirstResult;
 
-    private long requestedWindowSize;
+    public long requestedWindowSize;
 
-    private long actualWindowSize;
+    public long actualWindowSize;
 
-    private boolean windowHasPrevious;
+    public boolean windowHasPrevious;
 
-    private boolean windowHasNext;
+    public boolean windowHasNext;
 
-    private boolean stillCounting;
+    public boolean stillCounting;
 
-    private long numberOfHits;
+    public long numberOfHits;
 
-    private long numberOfHitsRetrieved;
+    public long numberOfHitsRetrieved;
 
-    private boolean stoppedCountingHits;
+    public boolean stoppedCountingHits;
 
-    private boolean stoppedRetrievingHits;
+    public boolean stoppedRetrievingHits;
 
-    private long numberOfDocs;
+    public long numberOfDocs;
 
-    private long numberOfDocsRetrieved;
+    public long numberOfDocsRetrieved;
 
-    private FieldInfo docFields;
+    public FieldInfo docFields;
 
     // (just include an empty element here)
-    @XmlElementWrapper(name="metadataFieldDisplayNames")
-    @XmlElement(name = "item")
-    @JsonProperty("metadataFieldDisplayNames")
-    private final List<String> metadataFieldDisplayNames = Collections.emptyList();
+    @XmlJavaTypeAdapter(MapAdapter.class)
+    @JsonSerialize(using = JacksonUtil.StringMapSerializer.class)
+    @JsonDeserialize(using = JacksonUtil.StringMapDeserializer.class)
+    public Map<String, String> metadataFieldDisplayNames = new HashMap<>();
 
     public SearchSummary() {
 

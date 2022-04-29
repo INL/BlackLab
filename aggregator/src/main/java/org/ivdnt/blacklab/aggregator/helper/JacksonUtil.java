@@ -1,4 +1,4 @@
-package org.ivdnt.blacklab.aggregator;
+package org.ivdnt.blacklab.aggregator.helper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -6,14 +6,64 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.JAXBElement;
+
 import org.ivdnt.blacklab.aggregator.representation.Annotation;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
 
-public class JsonParserUtil {
-    private JsonParserUtil() {}
+public class JacksonUtil {
 
+    /** Use this to serialize a String map using MapAdapter to JSON.
+     */
+    public static class StringMapSerializer extends JsonSerializer<Object> {
+        @Override
+        public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider)
+                throws IOException {
+            if (value instanceof MapWrapper) {
+                // This happens because of using MapAdapter with Jersey
+                jgen.writeStartObject();
+                for (Object element: ((MapWrapper) value).elements) {
+                    JAXBElement el = (JAXBElement) element;
+                    jgen.writeStringField(el.getName().getLocalPart(), el.getValue().toString());
+                }
+                jgen.writeEndObject();
+            } else if (value instanceof Map) {
+                // This happens if we use Jackson directly without Jersey
+                jgen.writeStartObject();
+                for (Map.Entry<String, String> entry: ((Map<String, String>) value).entrySet()) {
+                    jgen.writeStringField(entry.getKey(), entry.getValue());
+                }
+                jgen.writeEndObject();
+            }
+        }
+    }
+
+    /** Use this to deserialize a String map using MapAdapter from JSON.
+     *
+     * Necessary because we convert a JSON object structure to a list (because that's what the XML mapping uses).
+     */
+    public static class StringMapDeserializer extends JsonDeserializer<Map<String, String>> {
+
+        @Override
+        public Map<String, String> deserialize(JsonParser parser, DeserializationContext deserializationContext)
+                throws IOException {
+            Map<String, String> map = readStringMap(parser);
+            /*MapWrapper wrapper = new MapWrapper();
+            wrapper.elements = map.entrySet().stream().map(e -> new JAXBElement<>(new QName(e.getKey()), String.class,
+                    e.getValue())).collect(Collectors.toList());
+            return wrapper;*/
+            return map;
+        }
+    }
+
+    private JacksonUtil() {}
 
     public static List<String> readStringList(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
@@ -135,4 +185,5 @@ public class JsonParserUtil {
         }
         return result;
     }
+
 }

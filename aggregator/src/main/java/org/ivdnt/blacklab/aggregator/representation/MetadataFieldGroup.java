@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -13,12 +12,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataFieldGroup {
 
-    String name = "group1";
+    public String name = "group1";
 
     @XmlElementWrapper(name="fields")
     @XmlElement(name = "field")
     @JsonProperty("fields")
-    List<String> fields = new ArrayList<>();
+    public List<String> fields;
 
     @Override
     public String toString() {

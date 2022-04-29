@@ -6,36 +6,46 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
+import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
+import org.ivdnt.blacklab.aggregator.helper.MapAdapter;
+
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataField {
 
     @XmlAttribute
-    String name = "title";
+    public String name = "title";
 
-    String fieldName = "title";
+    public String fieldName = "title";
 
-    boolean isAnnotatedField = false;
+    public boolean isAnnotatedField = false;
 
-    String displayName = "Title";
+    public String displayName = "Title";
 
-    String description = "Document title";
+    public String description = "Document title";
 
-    String uiType = "";
+    public String uiType = "";
 
-    String type = "";
+    public String type = "";
 
-    String analyzer = "";
+    public String analyzer = "";
 
-    String unknownCondition = "";
+    public String unknownCondition = "";
 
-    String unknownValue = "";
+    public String unknownValue = "";
 
-    Map<String, String> displayValues = new HashMap<>();
+    @XmlJavaTypeAdapter(MapAdapter.class)
+    @JsonSerialize(using= JacksonUtil.StringMapSerializer.class)
+    @JsonDeserialize(using= JacksonUtil.StringMapDeserializer.class)
+    public Map<String, String> displayValues = new HashMap<>();
 
-    Map<String, Integer> fieldValues = new HashMap<>();
+    public Map<String, Integer> fieldValues = new HashMap<>();
 
-    boolean valueListComplete = true;
+    public boolean valueListComplete = true;
 
     @Override
     public String toString() {

@@ -8,7 +8,7 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 
 @XmlSeeAlso(MetadataValues.class)
-class MapWrapper {
+public class MapWrapper {
     @XmlAnyElement
-    List elements;
+    public List elements;
 }

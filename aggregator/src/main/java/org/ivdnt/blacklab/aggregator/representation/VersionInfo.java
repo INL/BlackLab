@@ -6,15 +6,15 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class VersionInfo {
 
-    private String blackLabBuildTime = "";
+    public String blackLabBuildTime = "";
 
-    private String blackLabVersion = "";
+    public String blackLabVersion = "";
 
-    private String indexFormat = "3.1";
+    public String indexFormat = "3.1";
 
-    private String timeCreated = "";
+    public String timeCreated = "";
 
-    private String timeModified = "";
+    public String timeModified = "";
 
     @Override
     public String toString() {

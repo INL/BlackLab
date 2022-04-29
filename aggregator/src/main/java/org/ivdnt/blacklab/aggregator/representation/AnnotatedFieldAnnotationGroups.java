@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -15,12 +14,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AnnotatedFieldAnnotationGroups {
 
     @XmlAttribute
-    String name;
+    public String name;
 
     @XmlElementWrapper(name="annotationGroups")
     @XmlElement(name = "annotationGroup")
     @JsonProperty("annotationGroups")
-    List<AnnotationGroup> annotationGroups = new ArrayList<>();
+    public List<AnnotationGroup> annotationGroups;
 
     @Override
     public String toString() {

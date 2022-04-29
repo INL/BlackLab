@@ -15,33 +15,33 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class AnnotatedField {
 
     @XmlAttribute
-    String name;
+    public String name;
 
-    String fieldName;
+    public String fieldName;
 
-    boolean isAnnotatedField = true;
+    public boolean isAnnotatedField = true;
 
-    String displayName = "";
+    public String displayName = "";
 
-    String description = "";
+    public String description = "";
 
-    boolean hasContentStore;
+    public boolean hasContentStore;
 
-    boolean hasXmlTags;
+    public boolean hasXmlTags;
 
-    boolean hasLengthTokens;
+    public boolean hasLengthTokens;
 
-    String mainAnnotation;
+    public String mainAnnotation = "";
 
     @XmlElementWrapper(name="displayOrder")
     @XmlElement(name = "fieldName")
     @JsonProperty("displayOrder")
-    List<String> displayOrder = new ArrayList<>();
+    public List<String> displayOrder = new ArrayList<>();
 
     @XmlElementWrapper(name="annotations")
     @XmlElement(name = "annotation")
     @JsonProperty("annotations")
-    List<Annotation> annotations = new ArrayList<>();
+    public List<Annotation> annotations = new ArrayList<>();
 
     @Override
     public String toString() {
@@ -58,5 +58,11 @@ public class AnnotatedField {
                 ", displayOrder=" + displayOrder +
                 ", annotations=" + annotations +
                 '}';
+    }
+
+    private AnnotatedField() {}
+
+    public AnnotatedField(String name) {
+        this.name = this.fieldName = name;
     }
 }

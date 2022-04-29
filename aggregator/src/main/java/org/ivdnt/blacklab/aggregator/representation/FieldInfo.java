@@ -6,13 +6,13 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class FieldInfo {
 
-    private String pidField = "";
+    public String pidField = "";
 
-    private String titleField = "";
+    public String titleField = "";
 
-    private String authorField = "";
+    public String authorField = "";
 
-    private String dateField = "";
+    public String dateField = "";
 
     // required for Jersey
     public FieldInfo() {}

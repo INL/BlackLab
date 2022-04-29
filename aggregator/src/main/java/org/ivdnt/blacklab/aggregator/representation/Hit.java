@@ -6,17 +6,17 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit {
 
-    private String docPid = "";
+    public String docPid;
 
-    private long start = 0;
+    public long start;
 
-    private long end = 0;
+    public long end;
 
-    private ContextWords left = new ContextWords();
+    public ContextWords left;
 
-    private ContextWords match = new ContextWords();
+    public ContextWords match;
 
-    private ContextWords right = new ContextWords();
+    public ContextWords right;
 
     // required for Jersey
     public Hit() {}

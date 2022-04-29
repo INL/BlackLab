@@ -13,12 +13,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AnnotationGroup {
 
-    String name;
+    public String name;
 
     @XmlElementWrapper(name="annotations")
     @XmlElement(name = "annotation")
     @JsonProperty("annotations")
-    List<String> annotations = new ArrayList<>();
+    public List<String> annotations = new ArrayList<>();
 
     @Override
     public String toString() {

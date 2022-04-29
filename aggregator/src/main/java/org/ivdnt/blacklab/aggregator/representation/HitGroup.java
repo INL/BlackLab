@@ -1,7 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -9,15 +8,15 @@ import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitGroup {
-    String identity = "id";
+    public String identity;
 
-    String identityDisplay = "idDisp";
+    public String identityDisplay;
 
-    long size = 0;
+    public long size;
 
-    List<Property> properties = new ArrayList<>();
+    public List<Property> properties;
 
-    long numberOfDocs = 0;
+    public long numberOfDocs;
 
     public HitGroup() {}
 

@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ivdnt.blacklab.aggregator.JsonParserUtil;
+import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -87,6 +87,7 @@ public class Index {
                     throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
                 AnnotatedFieldAnnotationGroups groups = new AnnotatedFieldAnnotationGroups();
                 groups.name = parser.getCurrentName();
+                groups.annotationGroups = new ArrayList<>();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_ARRAY)
@@ -113,7 +114,7 @@ public class Index {
                             group.name = parser.getValueAsString();
                             break;
                         case "annotations":
-                            group.annotations = JsonParserUtil.readStringList(parser);
+                            group.annotations = JacksonUtil.readStringList(parser);
                             break;
                         default:
                             throw new RuntimeException("Unexpected field " + fieldName + " in AnnotationGroup");
@@ -141,7 +142,7 @@ public class Index {
             jgen.writeStartObject();
             for (AnnotatedField field: value) {
                 jgen.writeObjectFieldStart(field.name);
-                jgen.writeStringField("fieldName", field.name);
+                jgen.writeStringField("fieldName", field.fieldName);
                 jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
                 jgen.writeStringField("displayName", field.displayName);
                 jgen.writeStringField("description", field.description);
@@ -203,8 +204,7 @@ public class Index {
 
                 if (token != JsonToken.FIELD_NAME)
                     throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                AnnotatedField field = new AnnotatedField();
-                field.name = parser.getCurrentName();
+                AnnotatedField field = new AnnotatedField(parser.getCurrentName());
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
@@ -228,12 +228,12 @@ public class Index {
                     case "hasLengthTokens": field.hasLengthTokens = parser.getValueAsBoolean(); break;
                     case "mainAnnotation": field.mainAnnotation = parser.getValueAsString(); break;
                     case "displayOrder":
-                        field.displayOrder = JsonParserUtil.readStringList(parser);
+                        field.displayOrder = JacksonUtil.readStringList(parser);
                         break;
                     case "annotations":
                         if (token != JsonToken.START_OBJECT)
                             throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.annotations = JsonParserUtil.readAnnotations(parser);
+                        field.annotations = JacksonUtil.readAnnotations(parser);
                         break;
                     default: throw new RuntimeException("Unexpected field " + fieldName + " in AnnotatedField");
                     }
@@ -337,12 +337,12 @@ public class Index {
                     case "displayValues":
                         if (token != JsonToken.START_OBJECT)
                             throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.displayValues = JsonParserUtil.readStringMap(parser);
+                        field.displayValues = JacksonUtil.readStringMap(parser);
                         break;
                     case "fieldValues":
                         if (token != JsonToken.START_OBJECT)
                             throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.fieldValues = JsonParserUtil.readIntegerMap(parser);
+                        field.fieldValues = JacksonUtil.readIntegerMap(parser);
                         break;
                     case "valueListComplete": field.valueListComplete = parser.getValueAsBoolean(); break;
                     default: throw new RuntimeException("Unexpected field " + fieldName + " in MetadataField");
@@ -354,56 +354,55 @@ public class Index {
         }
     }
 
+    public String indexName = "";
 
-    private String indexName = "";
+    public String displayName = "";
 
-    private String displayName = "";
+    public String description = "";
 
-    private String description = "";
+    public String status = "available";
 
-    private String status = "available";
+    public boolean contentViewable = false;
 
-    private boolean contentViewable = false;
+    public String textDirection = "ltr";
 
-    private String textDirection = "ltr";
+    public String documentFormat = "tei";
 
-    private String documentFormat = "tei";
+    public String timeModified = "";
 
-    private String timeModified = "";
+    public long tokenCount = 0;
 
-    private long tokenCount = 0;
+    public long documentCount = 0;
 
-    private long documentCount = 0;
+    public VersionInfo versionInfo;
 
-    private VersionInfo versionInfo;
-
-    private FieldInfo fieldInfo;
+    public FieldInfo fieldInfo;
 
     @XmlElementWrapper(name="annotatedFields")
     @XmlElement(name = "annotatedField")
     @JsonProperty("annotatedFields")
     @JsonSerialize(using = ListAnnotatedFieldSerializer.class)
     @JsonDeserialize(using = ListAnnotatedFieldDeserializer.class)
-    private List<AnnotatedField> annotatedFields;
+    public List<AnnotatedField> annotatedFields;
 
     @XmlElementWrapper(name="metadataFields")
     @XmlElement(name = "metadataField")
     @JsonProperty("metadataFields")
     @JsonSerialize(using = ListMetadataFieldSerializer.class)
     @JsonDeserialize(using = ListMetadataFieldDeserializer.class)
-    private List<MetadataField> metadataFields;
+    public List<MetadataField> metadataFields;
 
     @XmlElementWrapper(name="metadataFieldGroups")
     @XmlElement(name = "metadataFieldGroup")
     @JsonProperty("metadataFieldGroups")
-    private List<MetadataFieldGroup> metadataFieldGroups = new ArrayList<>();
+    public List<MetadataFieldGroup> metadataFieldGroups;
 
     //@XmlElementWrapper(name="annotationGroups")
     @XmlElement(name = "annotatedField")
     @JsonProperty("annotationGroups")
     @JsonSerialize(using = ListAnnotatedFieldAnnotationGroupsSerializer.class)
     @JsonDeserialize(using = ListAnnotatedFieldAnnotationGroupsDeserializer.class)
-    private List<AnnotatedFieldAnnotationGroups> annotationGroups = new ArrayList<>();
+    public List<AnnotatedFieldAnnotationGroups> annotationGroups;
 
     // required for Jersey
     @SuppressWarnings("unused")

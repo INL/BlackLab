@@ -1,5 +1,6 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 import org.ivdnt.blacklab.aggregator.representation.AnnotatedField;
+import org.ivdnt.blacklab.aggregator.representation.ContextWords;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.FieldInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
@@ -21,6 +23,7 @@ import org.ivdnt.blacklab.aggregator.representation.MetadataField;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 import org.ivdnt.blacklab.aggregator.representation.SearchParam;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
+import org.ivdnt.blacklab.aggregator.representation.Word;
 
 @Path("/{corpus-name}")
 public class IndexResource {
@@ -30,7 +33,7 @@ public class IndexResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Index indexInfo(@PathParam("corpus-name") String corpusName) {
         FieldInfo fieldInfo = new FieldInfo("pid", "title");
-        List<AnnotatedField> annotatedFields = List.of(new AnnotatedField());
+        List<AnnotatedField> annotatedFields = List.of(new AnnotatedField("contents"));
         List<MetadataField> metadataFields = List.of(new MetadataField());
         Index index = new Index(corpusName, fieldInfo, annotatedFields, metadataFields);
         return index;
@@ -50,6 +53,12 @@ public class IndexResource {
             // Hits results
             String docPid = "my-doc-pid";
             Hit hit = new Hit(docPid, 0, 10);
+            List<Word> words = new ArrayList<>();
+            words.add(new Word(Map.of("word", "myword", "lemma", "mylemma")));
+            words.add(new Word(Map.of("word", "hey", "lemma", "hey")));
+            hit.left = new ContextWords(words);
+            hit.match = new ContextWords(words);
+            hit.right = new ContextWords(words);
             List<Hit> hits = List.of(hit);
             Map<String, MetadataValues> metadata = Map.of(
                     "title", new MetadataValues(List.of("Bla bla")),
