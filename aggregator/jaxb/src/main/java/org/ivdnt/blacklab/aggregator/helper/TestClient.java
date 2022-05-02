@@ -1,4 +1,4 @@
-package org.ivdnt.blacklab.aggregator;
+package org.ivdnt.blacklab.aggregator.helper;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;

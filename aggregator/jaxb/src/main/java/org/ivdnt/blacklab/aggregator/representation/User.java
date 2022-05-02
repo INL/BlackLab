@@ -3,12 +3,15 @@ package org.ivdnt.blacklab.aggregator.representation;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class User {
 
     public boolean loggedIn = false;
 
-    public String id = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String id;
 
     public boolean canCreateIndex = false;
 
