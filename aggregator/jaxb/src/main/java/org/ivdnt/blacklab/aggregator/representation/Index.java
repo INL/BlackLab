@@ -142,38 +142,43 @@ public class Index {
             jgen.writeStartObject();
             for (AnnotatedField field: value) {
                 jgen.writeObjectFieldStart(field.name);
-                jgen.writeStringField("fieldName", field.fieldName);
-                jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
-                jgen.writeStringField("displayName", field.displayName);
-                jgen.writeStringField("description", field.description);
-                jgen.writeBooleanField("hasContentStore", field.hasContentStore);
-                jgen.writeBooleanField("hasXmlTags", field.hasXmlTags);
-                jgen.writeBooleanField("hasLengthTokens", field.hasLengthTokens);
-                jgen.writeStringField("mainAnnotation", field.mainAnnotation);
-                jgen.writeArrayFieldStart("displayOrder");
-                for (String a: field.displayOrder) {
-                    jgen.writeString(a);
-                }
-                jgen.writeEndArray();
-                jgen.writeObjectFieldStart("annotations");
-                for (Annotation a: field.annotations) {
-                    jgen.writeObjectFieldStart(a.name);
-                    jgen.writeStringField("displayName", a.displayName);
-                    jgen.writeStringField("description", a.description);
-                    jgen.writeStringField("uiType", a.uiType);
-                    jgen.writeBooleanField("hasForwardIndex", a.hasForwardIndex);
-                    jgen.writeStringField("sensitivity", a.sensitivity);
-                    jgen.writeStringField("offsetsAlternative", a.offsetsAlternative);
-                    jgen.writeBooleanField("isInternal", a.isInternal);
-                    jgen.writeArrayFieldStart("subannotations");
-                    if (a.subannotations != null && !a.subannotations.isEmpty()) {
-                        for (String sub: a.subannotations) {
-                            jgen.writeString(sub);
-                        }
+                {
+                    jgen.writeStringField("fieldName", field.fieldName);
+                    jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
+                    jgen.writeStringField("displayName", field.displayName);
+                    jgen.writeStringField("description", field.description);
+                    jgen.writeBooleanField("hasContentStore", field.hasContentStore);
+                    jgen.writeBooleanField("hasXmlTags", field.hasXmlTags);
+                    jgen.writeBooleanField("hasLengthTokens", field.hasLengthTokens);
+                    jgen.writeStringField("mainAnnotation", field.mainAnnotation);
+                    jgen.writeArrayFieldStart("displayOrder");
+                    for (String a: field.displayOrder) {
+                        jgen.writeString(a);
                     }
                     jgen.writeEndArray();
-                    if (!StringUtils.isEmpty(a.parentAnnotation))
-                        jgen.writeStringField("parentAnnotation", a.parentAnnotation);
+                    jgen.writeObjectFieldStart("annotations");
+                    for (Annotation a: field.annotations) {
+                        jgen.writeObjectFieldStart(a.name);
+                        {
+                            jgen.writeStringField("displayName", a.displayName);
+                            jgen.writeStringField("description", a.description);
+                            jgen.writeStringField("uiType", a.uiType);
+                            jgen.writeBooleanField("hasForwardIndex", a.hasForwardIndex);
+                            jgen.writeStringField("sensitivity", a.sensitivity);
+                            jgen.writeStringField("offsetsAlternative", a.offsetsAlternative);
+                            jgen.writeBooleanField("isInternal", a.isInternal);
+                            if (a.subannotations != null && !a.subannotations.isEmpty()) {
+                                jgen.writeArrayFieldStart("subannotations");
+                                for (String sub: a.subannotations) {
+                                    jgen.writeString(sub);
+                                }
+                                jgen.writeEndArray();
+                            }
+                            if (!StringUtils.isEmpty(a.parentAnnotation))
+                                jgen.writeStringField("parentAnnotation", a.parentAnnotation);
+                        }
+                        jgen.writeEndObject();
+                    }
                     jgen.writeEndObject();
                 }
                 jgen.writeEndObject();
@@ -259,28 +264,31 @@ public class Index {
             jgen.writeStartObject();
             for (MetadataField field: value) {
                 jgen.writeObjectFieldStart(field.name);
-                jgen.writeStringField("fieldName", field.fieldName);
-                jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
-                jgen.writeStringField("displayName", field.displayName);
-                jgen.writeStringField("description", field.description);
-                jgen.writeStringField("uiType", field.uiType);
-                jgen.writeStringField("type", field.type);
-                jgen.writeStringField("analyzer", field.analyzer);
-                jgen.writeStringField("unknownCondition", field.unknownCondition);
-                jgen.writeStringField("unknownValue", field.unknownValue);
+                {
+                    jgen.writeStringField("fieldName", field.fieldName);
+                    jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
+                    jgen.writeStringField("displayName", field.displayName);
+                    jgen.writeStringField("description", field.description);
+                    jgen.writeStringField("uiType", field.uiType);
+                    jgen.writeStringField("type", field.type);
+                    jgen.writeStringField("analyzer", field.analyzer);
+                    jgen.writeStringField("unknownCondition", field.unknownCondition);
+                    jgen.writeStringField("unknownValue", field.unknownValue);
 
-                jgen.writeObjectFieldStart("displayValues");
-                for (Map.Entry<String, String> e: field.displayValues.entrySet()) {
-                    jgen.writeStringField(e.getKey(), e.getValue());
+                    jgen.writeObjectFieldStart("displayValues");
+                    for (Map.Entry<String, String> e: field.displayValues.entrySet()) {
+                        jgen.writeStringField(e.getKey(), e.getValue());
+                    }
+                    jgen.writeEndObject();
+
+                    jgen.writeObjectFieldStart("fieldValues");
+                    for (Map.Entry<String, Integer> e: field.fieldValues.entrySet()) {
+                        jgen.writeNumberField(e.getKey(), e.getValue());
+                    }
+                    jgen.writeEndObject();
+
+                    jgen.writeBooleanField("valueListComplete", field.valueListComplete);
                 }
-                jgen.writeEndObject();
-
-                jgen.writeObjectFieldStart("fieldValues");
-                for (Map.Entry<String, Integer> e: field.fieldValues.entrySet()) {
-                    jgen.writeNumberField(e.getKey(), e.getValue());
-                }
-                jgen.writeEndObject();
-
                 jgen.writeEndObject();
             }
             jgen.writeEndObject();
@@ -368,8 +376,6 @@ public class Index {
 
     public String documentFormat = "tei";
 
-    public String timeModified = "";
-
     public long tokenCount = 0;
 
     public long documentCount = 0;
@@ -426,7 +432,6 @@ public class Index {
                 ", contentViewable=" + contentViewable +
                 ", textDirection='" + textDirection + '\'' +
                 ", documentFormat='" + documentFormat + '\'' +
-                ", timeModified='" + timeModified + '\'' +
                 ", tokenCount=" + tokenCount +
                 ", documentCount=" + documentCount +
                 ", versionInfo=" + versionInfo +

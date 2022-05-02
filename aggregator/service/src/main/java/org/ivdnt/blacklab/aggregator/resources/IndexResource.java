@@ -11,8 +11,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.aggregator.Aggregator;
+import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.Index;
 
@@ -40,11 +44,18 @@ public class IndexResource {
     @GET
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Index indexInfo(@PathParam("corpus-name") String corpusName) {
-        return client.target(Aggregator.BLS_URL)
+    public Response indexInfo(@PathParam("corpus-name") String corpusName) {
+        Response clientResponse = client.target(Aggregator.BLS_URL)
                 .path(corpusName)
                 .request(MediaType.APPLICATION_JSON)
-                .get(Index.class);
+                .get();
+        Status status = Status.fromStatusCode(clientResponse.getStatus());
+        ResponseBuilder ourResponse;
+        if (status == Status.OK)
+            ourResponse = Response.ok().entity(clientResponse.readEntity(Index.class));
+        else
+            ourResponse = Response.status(status).entity(clientResponse.readEntity(ErrorResponse.class));
+        return ourResponse.build();
     }
 
     /**
@@ -56,19 +67,26 @@ public class IndexResource {
     @GET
     @Path("/hits")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public HitsResults hits(
+    public Response hits(
     		@PathParam("corpus-name") String corpusName,
     		@QueryParam("patt") String cqlPattern,
             @QueryParam("sort") String sort,
             @QueryParam("group") String group) {
 
-        return client.target(Aggregator.BLS_URL)
+        Response clientResponse = client.target(Aggregator.BLS_URL)
                 .path(corpusName)
                 .path("hits")
                 .queryParam("patt", cqlPattern)
                 .queryParam("sort", sort)
                 .queryParam("group", group)
                 .request(MediaType.APPLICATION_JSON)
-                .get(HitsResults.class);
+                .get();
+        Status status = Status.fromStatusCode(clientResponse.getStatus());
+        ResponseBuilder ourResponse;
+        if (status == Status.OK)
+            ourResponse = Response.ok().entity(clientResponse.readEntity(HitsResults.class));
+        else
+            ourResponse = Response.status(status).entity(clientResponse.readEntity(ErrorResponse.class));
+        return ourResponse.build();
     }
 }

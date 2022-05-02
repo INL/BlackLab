@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -9,6 +8,8 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -34,7 +35,14 @@ public class Annotation {
     @XmlElementWrapper(name="subannotations")
     @XmlElement(name = "subannotation")
     @JsonProperty("subannotations")
+    @JsonInclude(Include.NON_NULL)
     public List<String> subannotations;
+
+    @XmlElementWrapper(name="tests")
+    @XmlElement(name = "test")
+    @JsonProperty("tests")
+    @JsonInclude(Include.NON_NULL)
+    public List<String> test = null;
 
     public String parentAnnotation = "";
 

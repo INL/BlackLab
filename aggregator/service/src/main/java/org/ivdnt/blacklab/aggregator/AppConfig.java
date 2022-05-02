@@ -37,13 +37,16 @@ public class AppConfig extends ResourceConfig {
     	super(
 			JacksonFeature.class, // Enable Jackson as our JAXB provider
 
+			// Handle error responses by throwing a WebApplicationException
+			ErrorResponseFilter.class,
+			GenericExceptionMapper.class, // Map any exceptions thrown to an error response
 			OutputTypeFilter.class, // "outputformat" parameter overrides Accept header
 			CORSFilter.class, // add CORS headers to output
 
+			// Our REST resources
 			RootResource.class,
-			IndexResource.class,
-
-			GenericExceptionMapper.class);
+			IndexResource.class
+		);
 
 		// Tell HK2 how to inject Client where needed
 		register(new AbstractBinder() {

@@ -4,6 +4,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class IndexSummary {
 
@@ -18,6 +21,7 @@ public class IndexSummary {
 
     public String documentFormat = "";
 
+    @JsonInclude(Include.NON_EMPTY)
     public String timeModified = "";
 
     public long tokenCount = 0;
