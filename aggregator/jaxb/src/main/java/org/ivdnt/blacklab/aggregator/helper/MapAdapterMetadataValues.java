@@ -1,7 +1,7 @@
 package org.ivdnt.blacklab.aggregator.helper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +31,7 @@ public class MapAdapterMetadataValues extends XmlAdapter<MapWrapperMetadataValue
 
     @Override
     public Map<String, MetadataValues> unmarshal(MapWrapperMetadataValues v) throws Exception {
-        HashMap<String, MetadataValues> returnval = new HashMap();
+        Map<String, MetadataValues> returnval = new LinkedHashMap();
         for (Object o : v.elements) {
             Element e = (Element) o;
 

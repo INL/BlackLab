@@ -2,8 +2,8 @@ package org.ivdnt.blacklab.aggregator.representation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class ContextWords {
                 throws IOException {
 
             // See what annotation there are (because not every word will have a value for every annotation)
-            Set<QName> annotations = new HashSet<>();
+            Set<QName> annotations = new LinkedHashSet<>();
             annotations.add(new QName(Word.MAIN_ANNOTATION_NAME));
             for (Word w: value.words) {
                 for (QName a: w.otherAnnotations.keySet()) {
@@ -71,7 +71,7 @@ public class ContextWords {
             if (token != JsonToken.START_OBJECT)
                 throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-            Map<String, List<String>> wordsPerAnnot = new HashMap<>();
+            Map<String, List<String>> wordsPerAnnot = new LinkedHashMap<>();
             while (true) {
                 token = parser.nextToken();
                 if (token == JsonToken.END_OBJECT)
@@ -99,7 +99,7 @@ public class ContextWords {
             int n = wordsPerAnnot.values().iterator().next().size();
             for (int i = 0; i < n; i++) {
                 Word word = new Word();
-                Map<QName, String> m = word.otherAnnotations = new HashMap<>();
+                Map<QName, String> m = word.otherAnnotations = new LinkedHashMap<>();
                 for (String name: wordsPerAnnot.keySet()) {
                     String w = wordsPerAnnot.get(name).get(i);
                     if (name.equals(Word.MAIN_ANNOTATION_NAME))

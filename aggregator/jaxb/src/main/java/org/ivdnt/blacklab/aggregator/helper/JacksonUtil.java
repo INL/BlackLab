@@ -2,7 +2,7 @@ package org.ivdnt.blacklab.aggregator.helper;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -132,7 +132,7 @@ public class JacksonUtil {
         if (token != JsonToken.START_OBJECT)
             throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-        Map<String, String> result = new HashMap<>();
+        Map<String, String> result = new LinkedHashMap<>();
         while (true) {
             token = parser.nextToken();
             if (token == JsonToken.END_OBJECT)
@@ -157,7 +157,7 @@ public class JacksonUtil {
         if (token != JsonToken.START_OBJECT)
             throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-        Map<String, Integer> result = new HashMap<>();
+        Map<String, Integer> result = new LinkedHashMap<>();
         while (true) {
             token = parser.nextToken();
             if (token == JsonToken.END_OBJECT)

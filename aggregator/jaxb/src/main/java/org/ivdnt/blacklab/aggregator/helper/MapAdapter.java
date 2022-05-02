@@ -1,7 +1,7 @@
 package org.ivdnt.blacklab.aggregator.helper;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +32,7 @@ public class MapAdapter extends XmlAdapter<MapWrapper, Map<String, Object>> {
 
     @Override
     public Map<String, Object> unmarshal(MapWrapper v) {
-        HashMap<String, Object> returnval = new HashMap();
+        Map<String, Object> returnval = new LinkedHashMap();
         for (Object o : v.elements) {
             Element e = (Element) o;
             if (e.getChildNodes().getLength() > 1) {

@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,9 +41,9 @@ public class MetadataField {
     @XmlJavaTypeAdapter(MapAdapter.class)
     @JsonSerialize(using= JacksonUtil.StringMapSerializer.class)
     @JsonDeserialize(using= JacksonUtil.StringMapDeserializer.class)
-    public Map<String, String> displayValues = new HashMap<>();
+    public Map<String, String> displayValues = new LinkedHashMap<>();
 
-    public Map<String, Integer> fieldValues = new HashMap<>();
+    public Map<String, Integer> fieldValues = new LinkedHashMap<>();
 
     public boolean valueListComplete = true;
 

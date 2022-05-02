@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -10,6 +10,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
 import org.ivdnt.blacklab.aggregator.helper.MapAdapter;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
@@ -20,7 +22,14 @@ public class SearchSummary {
 
     public long searchTime;
 
-    public long countTime;
+    @JsonInclude(Include.NON_NULL)
+    public Long countTime;
+
+    @JsonInclude(Include.NON_NULL)
+    public Long numberOfGroups;
+
+    @JsonInclude(Include.NON_NULL)
+    public Long largestGroupSize;
 
     public long windowFirstResult;
 
@@ -46,13 +55,18 @@ public class SearchSummary {
 
     public long numberOfDocsRetrieved;
 
+    @JsonInclude(Include.NON_NULL)
+    Map<String, Long> subcorpusSize;
+
+    @JsonInclude(Include.NON_NULL)
     public FieldInfo docFields;
 
     // (just include an empty element here)
+    @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)
     @JsonSerialize(using = JacksonUtil.StringMapSerializer.class)
     @JsonDeserialize(using = JacksonUtil.StringMapDeserializer.class)
-    public Map<String, String> metadataFieldDisplayNames = new HashMap<>();
+    public Map<String, String> metadataFieldDisplayNames = new LinkedHashMap<>();
 
     public SearchSummary() {
 
@@ -68,6 +82,7 @@ public class SearchSummary {
                 "searchParam=" + searchParam +
                 ", searchTime=" + searchTime +
                 ", countTime=" + countTime +
+                ", numberOfGroups=" + numberOfGroups +
                 ", windowFirstResult=" + windowFirstResult +
                 ", requestedWindowSize=" + requestedWindowSize +
                 ", actualWindowSize=" + actualWindowSize +
@@ -80,6 +95,7 @@ public class SearchSummary {
                 ", stoppedRetrievingHits=" + stoppedRetrievingHits +
                 ", numberOfDocs=" + numberOfDocs +
                 ", numberOfDocsRetrieved=" + numberOfDocsRetrieved +
+                ", subcorpusSize=" + subcorpusSize +
                 ", docFields=" + docFields +
                 ", metadataFieldDisplayNames=" + metadataFieldDisplayNames +
                 '}';

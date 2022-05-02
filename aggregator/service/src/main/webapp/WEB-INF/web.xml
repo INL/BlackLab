@@ -12,7 +12,7 @@
         <!-- Our Application class -->
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>org.ivdnt.blacklab.aggregator.JerseyClassRegisterer</param-value>
+            <param-value>org.ivdnt.blacklab.aggregator.AppConfig</param-value>
         </init-param>
 
         <!-- When serializing list to XML, apply @XmlRootElement not only to items, but also to wrapper element

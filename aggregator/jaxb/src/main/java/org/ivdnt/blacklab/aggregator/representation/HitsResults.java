@@ -2,7 +2,7 @@ package org.ivdnt.blacklab.aggregator.representation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +52,10 @@ public class HitsResults {
                     }
                     jgen.writeEndArray();
                 }
+                if (el.lengthInTokens != null)
+                    jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
+                if (el.mayView != null)
+                    jgen.writeBooleanField("mayView", el.mayView);
                 jgen.writeEndObject();
             }
             jgen.writeEndObject();
@@ -86,7 +90,7 @@ public class HitsResults {
                 }
                 DocInfo docInfo = new DocInfo();
                 docInfo.pid = parser.getCurrentName();
-                docInfo.metadata = new HashMap<>();
+                docInfo.metadata = new LinkedHashMap<>();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)

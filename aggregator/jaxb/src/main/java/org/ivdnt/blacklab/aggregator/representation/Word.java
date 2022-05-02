@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAnyAttribute;
@@ -28,7 +28,7 @@ public class Word {
     public Word() {}
 
     public Word(Map<String, String> w) {
-        otherAnnotations = new HashMap<>();
+        otherAnnotations = new LinkedHashMap<>();
         for (Map.Entry<String, String> e: w.entrySet()) {
             if (e.getKey().equals(MAIN_ANNOTATION_NAME))
                 mainAnnotation = e.getValue();
