@@ -11,6 +11,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import org.ivdnt.blacklab.aggregator.helper.BlaUtil;
 import org.ivdnt.blacklab.aggregator.representation.AnnotatedField;
 import org.ivdnt.blacklab.aggregator.representation.ContextWords;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
@@ -32,7 +33,7 @@ public class IndexResource {
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Index indexInfo(@PathParam("corpus-name") String corpusName) {
-        FieldInfo fieldInfo = new FieldInfo("pid", "title");
+        FieldInfo fieldInfo = new FieldInfo("pid", BlaUtil.getTitleFieldName());
         List<AnnotatedField> annotatedFields = List.of(new AnnotatedField("contents"));
         List<MetadataField> metadataFields = List.of(new MetadataField());
         Index index = new Index(corpusName, fieldInfo, annotatedFields, metadataFields);
