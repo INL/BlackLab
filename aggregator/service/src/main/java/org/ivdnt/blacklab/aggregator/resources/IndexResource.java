@@ -1,8 +1,5 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -29,10 +26,6 @@ public class IndexResource {
     @Inject
     public IndexResource(Client client) {
         this.client = client;
-    }
-
-    private String corpusUrl(String blsUrl, String corpusName) {
-        return blsUrl + "/" + URLEncoder.encode(corpusName, StandardCharsets.UTF_8);
     }
 
     /**
