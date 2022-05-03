@@ -53,9 +53,9 @@
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
 
         <!-- Java versions -->
-        <maven.compiler.source>9</maven.compiler.source>
-        <maven.compiler.target>9</maven.compiler.target>
-        <maven.compiler.release>9</maven.compiler.release>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
 
         <!-- Plugin versions -->
         <checkstyle.version>3.1.2</checkstyle.version>
@@ -369,7 +369,6 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${javadoc.version}</version>
                 <configuration>
-                    <source>8</source>
                     <notimestamp>true</notimestamp>
                 </configuration>
             </plugin>
@@ -496,7 +495,6 @@
                         <artifactId>maven-javadoc-plugin</artifactId>
                         <version>${javadoc.version}</version>
                         <configuration>
-                            <source>8</source>
                             <notimestamp>true</notimestamp>
                         </configuration>
                         <executions>
@@ -645,7 +643,6 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>${javadoc.version}</version>
                 <configuration>
-                    <source>8</source>
                     <notimestamp>true</notimestamp>
                 </configuration>
                 <reportSets>
