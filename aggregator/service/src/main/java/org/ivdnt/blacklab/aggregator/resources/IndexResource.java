@@ -1,5 +1,7 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
+import java.util.List;
+
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -12,6 +14,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.ivdnt.blacklab.aggregator.Aggregation;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -38,6 +41,7 @@ public class IndexResource {
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response indexInfo(@PathParam("corpus-name") String corpusName) {
+        /*
         Response clientResponse = client.target(AggregatorConfig.get().getBlackLabServerUrl())
                 .path(corpusName)
                 .request(MediaType.APPLICATION_JSON)
@@ -49,6 +53,22 @@ public class IndexResource {
         else
             ourResponse = Response.status(status).entity(clientResponse.readEntity(ErrorResponse.class));
         return ourResponse.build();
+        */
+
+        // Query each node and collect responses
+        List<Index> nodeResponses;
+        try {
+            nodeResponses = Aggregation.getNodeResponses(client, nodeUrl -> client.target(nodeUrl).path(corpusName),
+                    Index.class);
+        } catch (Aggregation.BlsRequestException e) {
+            // One of the node requests produced an error. Return it now.
+            return Response.status(e.getStatus()).entity(e.getResponse()).build();
+        }
+
+        // Merge responses
+        Index merged = nodeResponses.stream().reduce(Aggregation::mergeIndex).get();
+        return Response.ok().entity(merged).build();
+
     }
 
     /**

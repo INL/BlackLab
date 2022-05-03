@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Index {
+public class Index implements Cloneable {
 
     /** Use this to serialize indices to JSON.
      *
@@ -420,6 +420,11 @@ public class Index {
         this.fieldInfo = fieldInfo;
         this.annotatedFields = annotatedFields;
         this.metadataFields = metadataFields;
+    }
+
+    @Override
+    public Index clone() throws CloneNotSupportedException {
+        return (Index)super.clone();
     }
 
     @Override

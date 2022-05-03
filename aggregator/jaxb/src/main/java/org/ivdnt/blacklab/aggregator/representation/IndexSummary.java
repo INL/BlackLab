@@ -35,16 +35,9 @@ public class IndexSummary implements Cloneable {
         this.documentFormat = documentFormat;
     }
 
-    public static IndexSummary merge(IndexSummary i1, IndexSummary i2) {
-        IndexSummary cl;
-        try {
-            cl = (IndexSummary)i1.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-        cl.timeModified = i1.timeModified.compareTo(i2.timeModified) < 0 ? i2.timeModified : i1.timeModified;
-        cl.tokenCount = i1.tokenCount + i2.tokenCount;
-        return cl;
+    @Override
+    public IndexSummary clone() throws CloneNotSupportedException {
+        return (IndexSummary)super.clone();
     }
 
     @Override
