@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import org.ivdnt.blacklab.aggregator.Aggregator;
+import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.Index;
@@ -38,7 +38,7 @@ public class IndexResource {
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response indexInfo(@PathParam("corpus-name") String corpusName) {
-        Response clientResponse = client.target(Aggregator.BLS_URL)
+        Response clientResponse = client.target(AggregatorConfig.get().getBlackLabServerUrl())
                 .path(corpusName)
                 .request(MediaType.APPLICATION_JSON)
                 .get();
@@ -66,7 +66,7 @@ public class IndexResource {
             @QueryParam("sort") String sort,
             @QueryParam("group") String group) {
 
-        Response clientResponse = client.target(Aggregator.BLS_URL)
+        Response clientResponse = client.target(AggregatorConfig.get().getBlackLabServerUrl())
                 .path(corpusName)
                 .path("hits")
                 .queryParam("patt", cqlPattern)

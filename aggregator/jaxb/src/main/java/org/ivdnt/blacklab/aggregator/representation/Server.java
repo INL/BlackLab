@@ -3,6 +3,7 @@ package org.ivdnt.blacklab.aggregator.representation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"blacklabBuildTime", "blacklabVersion", "indices", "user", "helpPageUrl" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
-public class Server {
+public class Server implements Cloneable {
 
     /** Use this to serialize indices to JSON.
      *
@@ -151,5 +152,26 @@ public class Server {
                 ", indices=" + indices +
                 ", user=" + user +
                 '}';
+    }
+
+    public static Server merge(Server s1, Server s2) {
+        Server cl;
+        try {
+            cl = (Server)s1.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Determine intersection of corpus list
+        cl.indices = s1.indices.stream()
+                .map(i -> i.name)
+                .filter(name -> s2.indices.stream().anyMatch(i2 -> i2.name.equals(name)))
+                .map(name -> {
+                    IndexSummary i1 = s1.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
+                    IndexSummary i2 = s2.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
+                    return IndexSummary.merge(i1, i2);
+                })
+                .collect(Collectors.toList());
+        return cl;
     }
 }

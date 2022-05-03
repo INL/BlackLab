@@ -36,6 +36,7 @@ General:
   related to a configuration setting `hitLimit`)
 - Try to use consistent terminology between parameters, response and configuration files.<br>
   (e.g. use the term "hitLimit" everywhere for the same concept)
+- Use `corpus`/`corpora` in favor of `index`/`indices`.
 - Group related values.<br>
   (e.g. numberOfHitsRetrieved / numberOfDocsRetrieved / stoppedRetrievingHits
   would be better as a structure `"retrieved": { "hits": 100, "docs": "10", "reachedHitLimit": true }` ).

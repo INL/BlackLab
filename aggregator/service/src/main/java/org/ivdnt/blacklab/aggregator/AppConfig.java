@@ -11,7 +11,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.ivdnt.blacklab.aggregator.resources.IndexResource;
 import org.ivdnt.blacklab.aggregator.resources.RootResource;
 
-
 /**
  * Add any classes that Jersey needs to be aware of here (or add packages in which to use auto-discovering)
  */
@@ -48,6 +47,9 @@ public class AppConfig extends ResourceConfig {
 			IndexResource.class
 		);
 
+		// Make sure the config file is read (or fail if not found)
+		AggregatorConfig.get();
+
 		// Tell HK2 how to inject Client where needed
 		register(new AbstractBinder() {
 			@Override
@@ -58,4 +60,5 @@ public class AppConfig extends ResourceConfig {
 			}
 		});
 	}
+
 }
