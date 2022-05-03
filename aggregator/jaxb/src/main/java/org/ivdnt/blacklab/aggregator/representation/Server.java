@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"blacklabBuildTime", "blacklabVersion", "indices", "user", "helpPageUrl", "cacheStatus" })
+@XmlType(propOrder={"blacklabBuildTime", "blacklabVersion", "indices", "user", "helpPageUrl" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class Server {
 
@@ -130,12 +130,6 @@ public class Server {
     @XmlTransient
     //@XmlElement
     public Object cacheStatus;
-
-    /*
-    // Collect helpPageUrl, cacheStatus here, we ignore those
-    @XmlAnyElement(lax = true)
-    private List<Object> anything;
-     */
 
     // required for Jersey
     @SuppressWarnings("unused")
