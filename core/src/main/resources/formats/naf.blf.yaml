@@ -28,15 +28,15 @@ annotatedFields:
     tokenPositionIdPath: "@id"
 
     annotations: # basic
+      - name: word
+        displayName: Word
+        valuePath: .
+        
       - name: word_or_lemma
         valuePath: .//text()|./@lemma
         displayName: Word or lemma
         multipleValues: true
         forwardIndex: true
-
-      - name: word
-        displayName: Word
-        valuePath: .
 
     standoffAnnotations:
       - path: terms/term      # Element containing what to index (relative to documentPath)
