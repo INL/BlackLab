@@ -491,21 +491,24 @@ public class IndexManager {
                 };
                 for (File subDir : FileUtils.listFilesAndDirs(collection, symlinkToDirFilter,
                         notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
-                    if (subDir.getParentFile().equals(collection)) {
-                        try {
-                            Path indexPath = subDir.toPath().toRealPath(); // follow symlinks
-                            boolean isReadable = Files.isReadable(indexPath);
-                            boolean isIndex = isReadable && BlackLabIndex.isIndex(indexPath);
-                            if (!isIndex) {
-                                if (!isReadable)
-                                    logger.debug("  Cannot read index dir: " + indexPath);
-                                else
-                                    logger.debug("  Not recognized as an index: " + indexPath);
-                                continue;
-                            }
-                        } catch (IOException e) {
-                            throw BlackLabRuntimeException.wrap(e);
+
+                    Path indexPath; // follow symlinks
+                    try {
+                        indexPath = subDir.toPath().toRealPath();
+                    } catch (IOException e) {
+                        throw BlackLabRuntimeException.wrap(e);
+                    }
+                    if (/*!subDir.getName().equals("index") ||*/ !Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
+                        // Not readable or not an index.
+                        // Warn about this only if this directory is a direct subdir of a collection dir.
+                        // (otherwise we get warnings about all forward index directories)
+                        if (indexPath.toFile().getParentFile().equals(collection)) {
+                            if (!Files.isReadable(indexPath))
+                                logger.debug("  Cannot read direct subdir of collection dir: " + indexPath);
+                            else
+                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + indexPath);
                         }
+                        continue;
                     }
 
                     String indexName = subDir.getName();
