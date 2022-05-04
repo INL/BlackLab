@@ -1,0 +1,39 @@
+version: '3.9'
+
+services:
+
+  node1:
+    image: instituutnederlandsetaal/blacklab:latest
+    environment:
+      # Give JVM enough heap memory
+      - JAVA_OPTS="-Xmx2G"
+    command: /bin/bash /etc/blacklab/start-server.sh
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./testdata/node1:/input
+      - ./testdata/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
+
+  node2:
+    image: instituutnederlandsetaal/blacklab:latest
+    environment:
+      # Give JVM enough heap memory
+      - JAVA_OPTS="-Xmx2G"
+    command: /bin/bash /etc/blacklab/start-server.sh
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./testdata/node2:/input
+      - ./testdata/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
+
+  aggregator:
+    build:
+      context: ..
+      dockerfile: aggregator/Dockerfile
+    volumes:
+      - ./testdata/aggregator.yaml:/etc/blacklab/aggregator.yaml
+    ports:
+      - "8083:8080"
+    depends_on:
+      - node1
+      - node2

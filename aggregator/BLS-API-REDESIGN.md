@@ -37,12 +37,20 @@ General:
 - Try to use consistent terminology between parameters, response and configuration files.<br>
   (e.g. use the term "hitLimit" everywhere for the same concept)
 - Use `corpus`/`corpora` in favor of `index`/`indices`.
+- Replace `left`/`right` with `before`/`after`<br>
+  (makes more sense for RTL languages)
+- Support Solr's common query parameters, e.g. `start`,`rows`,`fq`, etc.
+  as the preferred version.<br>
+  Support the `lowerCamelCase` version of query parameter names for consistency 
+  with responses and configuration options.<br>
+  Support the old query parameter names (but issue deprecation warning when first 
+  encountered?)
 - Group related values.<br>
   (e.g. numberOfHitsRetrieved / numberOfDocsRetrieved / stoppedRetrievingHits
-  would be better as a structure `"retrieved": { "hits": 100, "docs": "10", "reachedHitLimit": true }` ).
+  would be better as a structure `"retrieved": { "hits": 100, "docs": 10, "reachedHitLimit": true }` ).
 - Separate unrelated parts.<br>
   (e.g. in DocInfo, arbitrary document metadata values such as `title` or `author` should probably be
-  in a separate subobject, not alongside special values like `lengthInTokens` `mayView`. Also, 
+  in a separate subobject, not alongside special values like `lengthInTokens` and `mayView`. Also, 
   `metadataFieldGroups` shouldn't be alongside DocInfo structures.)
 - Handle custom information better. <br>
   Custom information, ignored by BlackLab but useful for e.g. the frontend,
@@ -52,8 +60,6 @@ General:
 - Don't include static info on dynamic (results) pages.<br>
   (e.g. don't send display names for all metadata fields with each hits results;
    the client can request those once if needed)
-- Replace `left`/`right` with `before`/`after`<br>
-  (makes more sense for RTL languages)
 
 
 JSON-related:

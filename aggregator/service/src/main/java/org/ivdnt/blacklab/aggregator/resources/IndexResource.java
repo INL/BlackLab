@@ -41,20 +41,6 @@ public class IndexResource {
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response indexInfo(@PathParam("corpus-name") String corpusName) {
-        /*
-        Response clientResponse = client.target(AggregatorConfig.get().getBlackLabServerUrl())
-                .path(corpusName)
-                .request(MediaType.APPLICATION_JSON)
-                .get();
-        Status status = Status.fromStatusCode(clientResponse.getStatus());
-        ResponseBuilder ourResponse;
-        if (status == Status.OK)
-            ourResponse = Response.ok().entity(clientResponse.readEntity(Index.class));
-        else
-            ourResponse = Response.status(status).entity(clientResponse.readEntity(ErrorResponse.class));
-        return ourResponse.build();
-        */
-
         // Query each node and collect responses
         List<Index> nodeResponses;
         try {
@@ -68,7 +54,6 @@ public class IndexResource {
         // Merge responses
         Index merged = nodeResponses.stream().reduce(Aggregation::mergeIndex).get();
         return Response.ok().entity(merged).build();
-
     }
 
     /**
