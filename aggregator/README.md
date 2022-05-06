@@ -51,7 +51,7 @@ We will test the service for correctness and performance.
 - How big a corpus do we need to effectively test performance?
 - Does using our central SAN present a bottleneck? If so, could local SSDs 
   solve this?
-- Is it enough to distribute an index over multiple (virtual) disk volumes, or 
+- Is it enough to distribute a corpus over multiple (virtual) disk volumes, or 
   do we need separate servers?
 - How many nodes should the cluster have?
 

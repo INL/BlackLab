@@ -12,8 +12,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
-import org.ivdnt.blacklab.aggregator.representation.Index;
-import org.ivdnt.blacklab.aggregator.representation.IndexSummary;
+import org.ivdnt.blacklab.aggregator.representation.Corpus;
+import org.ivdnt.blacklab.aggregator.representation.CorpusSummary;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
 public class Aggregation {
@@ -35,8 +35,8 @@ public class Aggregation {
                 .map(i -> i.name)
                 .filter(name -> s2.indices.stream().anyMatch(i2 -> i2.name.equals(name)))
                 .map(name -> {
-                    IndexSummary i1 = s1.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
-                    IndexSummary i2 = s2.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
+                    CorpusSummary i1 = s1.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
+                    CorpusSummary i2 = s2.indices.stream().filter(i -> name.equals(i.name)).findFirst().orElseThrow();
                     return mergeIndexSummary(i1, i2);
                 })
                 .collect(Collectors.toList());
@@ -44,12 +44,12 @@ public class Aggregation {
     }
 
     /**
-     * Merge index summary from two nodes.
+     * Merge corpus summary from two nodes.
      *
-     * Will add tokenCount for index and take max. of timeModified.
+     * Will add tokenCount for corpus and take max. of timeModified.
      */
-    public static IndexSummary mergeIndexSummary(IndexSummary i1, IndexSummary i2) {
-        IndexSummary cl;
+    public static CorpusSummary mergeIndexSummary(CorpusSummary i1, CorpusSummary i2) {
+        CorpusSummary cl;
         try {
             cl = i1.clone();
         } catch (CloneNotSupportedException e) {
@@ -60,8 +60,8 @@ public class Aggregation {
         return cl;
     }
 
-    public static Index mergeIndex(Index i1, Index i2) {
-        Index cl;
+    public static Corpus mergeCorpus(Corpus i1, Corpus i2) {
+        Corpus cl;
         try {
             cl = i1.clone();
         } catch (CloneNotSupportedException e) {

@@ -8,7 +8,7 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.ivdnt.blacklab.aggregator.resources.IndexResource;
+import org.ivdnt.blacklab.aggregator.resources.CorpusResource;
 import org.ivdnt.blacklab.aggregator.resources.RootResource;
 
 /**
@@ -44,7 +44,7 @@ public class AppConfig extends ResourceConfig {
 
 			// Our REST resources
 			RootResource.class,
-			IndexResource.class
+			CorpusResource.class
 		);
 
 		// Make sure the config file is read (or fail if not found)

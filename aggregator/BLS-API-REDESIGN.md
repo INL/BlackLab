@@ -19,16 +19,13 @@ implements most of the JAXB-annotated classes required.
 ## Goals for new API
 
 General:
-- Document the changes<br>(make sure there's a clear migration guide available)
-- Don't stray too far<br>(don't change things for change's sake)
-- Try to make the transition smooth.<br>
-  (when possible, consider keeping the response the same and
-  change the parameter and/or configuration setting while still supporting the old ones)
+- Publish a clear and complete migration guide
+- Publish complete reference documentation
 - Ensure correct data types.<br>
   (e.g. `fieldValues` should have integer values, but are strings.)
 - Eliminate inconsistencies in response structure.<br>
   (if information is given in multiple places, e.g. on the server info page as well
-   as on the index info page, use the same structure and element names (except one page
+   as on the corpus info page, use the same structure and element names (except one page
    may give additional details). Fix `blacklabBuildTime` vs. `blackLabBuildTime` etc.)
 - Change confusing names.<br>
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
@@ -71,6 +68,9 @@ JSON-related:
   On the other hand, it can sometimes be convenient for the client to be able to 
   look up fields by name. Iterating over fields on the other hand is a little less convient 
   with objects than with arrays, so it might be a wash.
+- Consider adding a JSON request option in addition to regular query parameters.
+  There should be an easy-to-use test interface so there's no need to
+  manually type URL-encoded JSON requests into the browser address bar.
 
 
 XML-related:

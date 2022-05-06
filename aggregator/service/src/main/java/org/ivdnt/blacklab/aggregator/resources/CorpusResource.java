@@ -18,16 +18,16 @@ import org.ivdnt.blacklab.aggregator.Aggregation;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
-import org.ivdnt.blacklab.aggregator.representation.Index;
+import org.ivdnt.blacklab.aggregator.representation.Corpus;
 
 @Path("/{corpus-name}")
-public class IndexResource {
+public class CorpusResource {
 
     /** REST client */
     private final Client client;
 
     @Inject
-    public IndexResource(Client client) {
+    public CorpusResource(Client client) {
         this.client = client;
     }
 
@@ -35,32 +35,29 @@ public class IndexResource {
      * Get information about a corpus.
      *
      * @param corpusName corpus name
-     * @return index information
+     * @return corpus information
      */
     @GET
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response indexInfo(@PathParam("corpus-name") String corpusName) {
+    public Response corpusInfo(@PathParam("corpus-name") String corpusName) {
         // Query each node and collect responses
-        List<Index> nodeResponses;
+        List<Corpus> nodeResponses;
         try {
             nodeResponses = Aggregation.getNodeResponses(client, nodeUrl -> client.target(nodeUrl).path(corpusName),
-                    Index.class);
+                    Corpus.class);
         } catch (Aggregation.BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
 
         // Merge responses
-        Index merged = nodeResponses.stream().reduce(Aggregation::mergeIndex).get();
+        Corpus merged = nodeResponses.stream().reduce(Aggregation::mergeCorpus).get();
         return Response.ok().entity(merged).build();
     }
 
     /**
      * Perform a /hits request.
-     *
-     * @param corpusName corpus name
-     * @return index information
      */
     @GET
     @Path("/hits")

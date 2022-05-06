@@ -31,11 +31,11 @@ public class TestClient {
 //                .get(Server.class);
 //        System.out.println(writer.writeValueAsString(server));
 //
-//        // Get index info
-//        Index index = client.target(ZEEBRIEVEN_URL)
+//        // Get corpus info
+//        Corpus corpus = client.target(ZEEBRIEVEN_URL)
 //                .request(MediaType.APPLICATION_JSON)
-//                .get(Index.class);
-//        System.out.println(writer.writeValueAsString(index));
+//                .get(Corpus.class);
+//        System.out.println(writer.writeValueAsString(corpus));
 
         // Perform search
         HitsResults hits = client.target(ZEEBRIEVEN_URL + "/hits?patt=%22de%22")

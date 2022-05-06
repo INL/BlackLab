@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class IndexSummary implements Cloneable {
+public class CorpusSummary implements Cloneable {
 
     @XmlAttribute
     public String name = "";
@@ -27,22 +27,22 @@ public class IndexSummary implements Cloneable {
     public long tokenCount = 0;
 
     // required for Jersey
-    IndexSummary() {}
+    CorpusSummary() {}
 
-    public IndexSummary(String name, String displayName, String documentFormat) {
+    public CorpusSummary(String name, String displayName, String documentFormat) {
         this.name = name;
         this.displayName = displayName;
         this.documentFormat = documentFormat;
     }
 
     @Override
-    public IndexSummary clone() throws CloneNotSupportedException {
-        return (IndexSummary)super.clone();
+    public CorpusSummary clone() throws CloneNotSupportedException {
+        return (CorpusSummary)super.clone();
     }
 
     @Override
     public String toString() {
-        return "IndexSummary{" +
+        return "CorpusSummary{" +
                 "name='" + name + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +

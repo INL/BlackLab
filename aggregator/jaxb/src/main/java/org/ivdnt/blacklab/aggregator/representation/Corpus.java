@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Index implements Cloneable {
+public class Corpus implements Cloneable {
 
     /** Use this to serialize indices to JSON.
      *
@@ -412,19 +412,19 @@ public class Index implements Cloneable {
 
     // required for Jersey
     @SuppressWarnings("unused")
-    private Index() {}
+    private Corpus() {}
 
-    public Index(String indexName, FieldInfo fieldInfo,
+    public Corpus(String name, FieldInfo fieldInfo,
             List<AnnotatedField> annotatedFields, List<MetadataField> metadataFields) {
-        this.indexName = indexName;
+        this.indexName = name;
         this.fieldInfo = fieldInfo;
         this.annotatedFields = annotatedFields;
         this.metadataFields = metadataFields;
     }
 
     @Override
-    public Index clone() throws CloneNotSupportedException {
-        return (Index)super.clone();
+    public Corpus clone() throws CloneNotSupportedException {
+        return (Corpus)super.clone();
     }
 
     @Override

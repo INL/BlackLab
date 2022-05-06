@@ -33,22 +33,22 @@ public class Server implements Cloneable {
      *
      * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure .
      */
-    private static class ListIndexSummarySerializer extends JsonSerializer<List<IndexSummary>> {
+    private static class ListCorpusSummarySerializer extends JsonSerializer<List<CorpusSummary>> {
         @Override
-        public void serialize(List<IndexSummary> value, JsonGenerator jgen, SerializerProvider provider)
+        public void serialize(List<CorpusSummary> value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
 
             if (value == null)
                 return;
             jgen.writeStartObject();
-            for (IndexSummary index: value) {
-                jgen.writeObjectFieldStart(index.name);
-                jgen.writeStringField("displayName", index.displayName);
-                jgen.writeStringField("description", index.description);
-                jgen.writeStringField("status", index.status);
-                jgen.writeStringField("documentFormat", index.documentFormat);
-                jgen.writeStringField("timeModified", index.timeModified);
-                jgen.writeNumberField("tokenCount", index.tokenCount);
+            for (CorpusSummary corpus: value) {
+                jgen.writeObjectFieldStart(corpus.name);
+                jgen.writeStringField("displayName", corpus.displayName);
+                jgen.writeStringField("description", corpus.description);
+                jgen.writeStringField("status", corpus.status);
+                jgen.writeStringField("documentFormat", corpus.documentFormat);
+                jgen.writeStringField("timeModified", corpus.timeModified);
+                jgen.writeNumberField("tokenCount", corpus.tokenCount);
                 jgen.writeEndObject();
             }
             jgen.writeEndObject();
@@ -59,17 +59,17 @@ public class Server implements Cloneable {
      *
      * Necessary because we convert a JSON object structure to a list (because that's what the XML mapping uses).
      */
-    private static class ListIndexSummaryDeserializer extends JsonDeserializer<List<IndexSummary>> {
+    private static class ListCorpusSummaryDeserializer extends JsonDeserializer<List<CorpusSummary>> {
 
         @Override
-        public List<IndexSummary> deserialize(JsonParser parser, DeserializationContext deserializationContext)
+        public List<CorpusSummary> deserialize(JsonParser parser, DeserializationContext deserializationContext)
                 throws IOException {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
                 throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-            List<IndexSummary> result = new ArrayList<>();
+            List<CorpusSummary> result = new ArrayList<>();
             while (true) {
                 token = parser.nextToken();
                 if (token == JsonToken.END_OBJECT)
@@ -77,8 +77,8 @@ public class Server implements Cloneable {
 
                 if (token != JsonToken.FIELD_NAME)
                     throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                IndexSummary index = new IndexSummary();
-                index.name = parser.getCurrentName();
+                CorpusSummary corpus = new CorpusSummary();
+                corpus.name = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
@@ -93,16 +93,16 @@ public class Server implements Cloneable {
                     String fieldName = parser.getCurrentName();
                     parser.nextToken();
                     switch (fieldName) {
-                    case "displayName": index.displayName = parser.getValueAsString(); break;
-                    case "description": index.description = parser.getValueAsString(); break;
-                    case "status": index.status = parser.getValueAsString(); break;
-                    case "documentFormat": index.documentFormat = parser.getValueAsString(); break;
-                    case "timeModified": index.timeModified = parser.getValueAsString(); break;
-                    case "tokenCount": index.tokenCount = parser.getValueAsLong(); break;
-                    default: throw new RuntimeException("Unexpected field " + fieldName + " in IndexSummary");
+                    case "displayName": corpus.displayName = parser.getValueAsString(); break;
+                    case "description": corpus.description = parser.getValueAsString(); break;
+                    case "status": corpus.status = parser.getValueAsString(); break;
+                    case "documentFormat": corpus.documentFormat = parser.getValueAsString(); break;
+                    case "timeModified": corpus.timeModified = parser.getValueAsString(); break;
+                    case "tokenCount": corpus.tokenCount = parser.getValueAsLong(); break;
+                    default: throw new RuntimeException("Unexpected field " + fieldName + " in CorpusSummary");
                     }
                 }
-                result.add(index);
+                result.add(corpus);
             }
             return result;
         }
@@ -117,9 +117,9 @@ public class Server implements Cloneable {
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")
     @JsonProperty("indices")
-    @JsonSerialize(using=ListIndexSummarySerializer.class)
-    @JsonDeserialize(using=ListIndexSummaryDeserializer.class)
-    public List<IndexSummary> indices;
+    @JsonSerialize(using= ListCorpusSummarySerializer.class)
+    @JsonDeserialize(using= ListCorpusSummaryDeserializer.class)
+    public List<CorpusSummary> indices;
 
     @XmlElement
     public User user;
@@ -136,7 +136,7 @@ public class Server implements Cloneable {
     private Server() {}
 
     public Server(String blacklabBuildTime, String blacklabVersion,
-            List<IndexSummary> indices, User user) {
+            List<CorpusSummary> indices, User user) {
         this.blacklabBuildTime = blacklabBuildTime;
         this.blacklabVersion = blacklabVersion;
         this.indices = indices;
