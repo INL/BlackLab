@@ -27,6 +27,9 @@ services:
       - ./testdata/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
 
   aggregator:
+    # We normally test the aggregator from the IDE
+    profiles:
+      - aggregator
     build:
       context: ..
       dockerfile: aggregator/Dockerfile
