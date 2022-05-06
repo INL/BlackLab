@@ -1,23 +1,14 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.ivdnt.blacklab.aggregator.AggregatorConfig;
-import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.CorpusSummary;
+import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
 public class Aggregation {
+
     /**
      * Merge server info pages from two nodes.
      *
@@ -61,6 +52,11 @@ public class Aggregation {
         return cl;
     }
 
+    /**
+     * Merge corpus information from two nodes.
+     *
+     * Will add tokenCount and docCount for corpus.
+     */
     public static Corpus mergeCorpus(Corpus i1, Corpus i2) {
         Corpus cl;
         try {
@@ -73,60 +69,7 @@ public class Aggregation {
         return cl;
     }
 
-    public static <T> List<T> getNodeResponses(Client client, WebTargetFactory factory, Class<T> cls) {
-
-        // Send requests and collect futures
-        List<Future<Response>> futures = new ArrayList<>();
-        for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            Future<Response> futureResponse = factory.get(nodeUrl) //client.target(nodeUrl)
-                    .request(MediaType.APPLICATION_JSON)
-                    .async()
-                    .get();
-            futures.add(futureResponse);
-        }
-
-        // Wait for futures to complete and collect response objects
-        List<T> nodeResponses = new ArrayList<>();
-        for (Future<Response> f: futures) {
-            Response clientResponse = null;
-            try {
-                clientResponse = f.get();
-            } catch (InterruptedException|ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-            Response.Status status = Response.Status.fromStatusCode(clientResponse.getStatus());
-            Response.ResponseBuilder ourResponse;
-            if (status == Response.Status.OK)
-                nodeResponses.add(clientResponse.readEntity(cls));
-            else {
-                throw new BlsRequestException(status, clientResponse.readEntity(ErrorResponse.class));
-            }
-        }
-        return nodeResponses;
-    }
-
-    public interface WebTargetFactory {
-        WebTarget get(String nodeUrl);
-    }
-
-    public static class BlsRequestException extends RuntimeException {
-
-        private final Response.Status status;
-
-        private ErrorResponse response;
-
-        public BlsRequestException(Response.Status status, ErrorResponse response) {
-            super(response.getMessage());
-            this.status = status;
-            this.response = response;
-        }
-
-        public Response.Status getStatus() {
-            return status;
-        }
-
-        public ErrorResponse getResponse() {
-            return response;
-        }
+    public static SearchSummary mergeSearchSummary(SearchSummary a, SearchSummary b) {
+        // TODO implement
     }
 }

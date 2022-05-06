@@ -15,6 +15,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -26,6 +27,8 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import it.unimi.dsi.fastutil.BigList;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -132,8 +135,8 @@ public class HitsResults {
     @XmlElementWrapper(name="hits")
     @XmlElement(name = "hit")
     @JsonProperty("hits")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<Hit> hits;
+    @JsonInclude(Include.NON_NULL)
+    public BigList<Hit> hits;
 
     @XmlElementWrapper(name="docInfos")
     @XmlElement(name = "docInfo")
@@ -152,7 +155,7 @@ public class HitsResults {
     // required for Jersey
     public HitsResults() {}
 
-    public HitsResults(SearchSummary summary, List<Hit> hits,
+    public HitsResults(SearchSummary summary, BigList<Hit> hits,
             List<DocInfo> docInfos) {
         this.summary = summary;
         this.hits = hits;

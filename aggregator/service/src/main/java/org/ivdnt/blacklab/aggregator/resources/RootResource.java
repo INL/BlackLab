@@ -11,6 +11,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.aggregator.logic.Aggregation;
+import org.ivdnt.blacklab.aggregator.logic.Requests;
+import org.ivdnt.blacklab.aggregator.logic.Requests.BlsRequestException;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
 @Path("/")
@@ -32,8 +34,8 @@ public class RootResource {
         // Query each node and collect responses
         List<Server> nodeResponses;
         try {
-            nodeResponses = Aggregation.getNodeResponses(client, nodeUrl -> client.target(nodeUrl), Server.class);
-        } catch (Aggregation.BlsRequestException e) {
+            nodeResponses = Requests.getNodeResponses(client, target -> target, Server.class);
+        } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             // TODO: indicate which node returned the error
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
