@@ -5,6 +5,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWord extends PropertyValueContext {
     final int valueTokenId;

@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.NumericDocValuesCacher;
 import nl.inl.util.SortedDocValuesCacher;

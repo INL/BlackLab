@@ -1,4 +1,4 @@
-package org.ivdnt.blacklab.aggregator;
+package org.ivdnt.blacklab.aggregator.logic;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.CorpusSummary;

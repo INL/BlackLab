@@ -10,7 +10,7 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.ivdnt.blacklab.aggregator.Aggregation;
+import org.ivdnt.blacklab.aggregator.logic.Aggregation;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
 @Path("/")

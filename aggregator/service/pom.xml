@@ -149,6 +149,12 @@
             <artifactId>blacklab-jaxb</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-common</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
 
     </dependencies>
 </project>

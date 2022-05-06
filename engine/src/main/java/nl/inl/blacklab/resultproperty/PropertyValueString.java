@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.util.PropertySerializeUtil;
+
 public class PropertyValueString extends PropertyValue {
     final String value;
 

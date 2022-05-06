@@ -34,6 +34,10 @@ public class DocInfo {
         this.metadata = metadata;
     }
 
+    public MetadataValues get(String field) {
+        return metadata.get(field);
+    }
+
     @Override
     public String toString() {
         return "DocInfo{" +

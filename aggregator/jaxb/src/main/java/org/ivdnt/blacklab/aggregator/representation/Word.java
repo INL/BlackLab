@@ -17,14 +17,6 @@ public class Word {
     @XmlAnyAttribute
     public Map<QName, String> otherAnnotations;
 
-    @Override
-    public String toString() {
-        return "Word{" +
-                "mainAnnotation='" + mainAnnotation + '\'' +
-                ", otherAnnotations=" + otherAnnotations +
-                '}';
-    }
-
     public Word() {}
 
     public Word(Map<String, String> w) {
@@ -35,5 +27,21 @@ public class Word {
             else
                 otherAnnotations.put(new QName(e.getKey()), e.getValue());
         }
+    }
+
+    public int compareTo(Word word, String annotation, boolean sensitive) {
+        if (annotation.equals(MAIN_ANNOTATION_NAME))
+            return mainAnnotation.compareTo(word.mainAnnotation);
+        String a = otherAnnotations.getOrDefault(annotation, "");
+        String b = word.otherAnnotations.getOrDefault(annotation, "");
+        return sensitive ? a.compareTo(b) : a.compareToIgnoreCase(b);
+    }
+
+    @Override
+    public String toString() {
+        return "Word{" +
+                "mainAnnotation='" + mainAnnotation + '\'' +
+                ", otherAnnotations=" + otherAnnotations +
+                '}';
     }
 }

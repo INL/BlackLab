@@ -1,4 +1,4 @@
-package nl.inl.blacklab.resultproperty;
+package nl.inl.blacklab.util;
 
 import java.util.List;
 

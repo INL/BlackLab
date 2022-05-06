@@ -5,6 +5,7 @@ import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueMultiple extends PropertyValue {
     final PropertyValue[] value;

@@ -2,6 +2,7 @@ package org.ivdnt.blacklab.aggregator.representation;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -13,7 +14,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.namespace.QName;
 
-import com.fasterxml.jackson.core.JacksonException;
+import org.apache.commons.collections4.iterators.ReverseListIterator;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -39,9 +41,7 @@ public class ContextWords {
             Set<QName> annotations = new LinkedHashSet<>();
             annotations.add(new QName(Word.MAIN_ANNOTATION_NAME));
             for (Word w: value.words) {
-                for (QName a: w.otherAnnotations.keySet()) {
-                    annotations.add(a);
-                }
+                annotations.addAll(w.otherAnnotations.keySet());
             }
 
             jgen.writeStartObject();
@@ -65,7 +65,7 @@ public class ContextWords {
 
         @Override
         public ContextWords deserialize(JsonParser parser, DeserializationContext deserializationContext)
-                throws IOException, JacksonException {
+                throws IOException {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
@@ -116,10 +116,38 @@ public class ContextWords {
     @XmlElement(name="w")
     public List<Word> words;
 
+    @SuppressWarnings("unused")
     private ContextWords() {}
 
     public ContextWords(List<Word> w) {
         this.words = w;
+    }
+
+    public int compareTo(ContextWords other, String annotation, boolean sensitive, boolean reverse, boolean oneWordOnly) {
+        Iterator<Word> ai, bi;
+        if (!reverse) {
+            ai = words.iterator();
+            bi = other.words.iterator();
+        } else {
+            ai = new ReverseListIterator<>(words);
+            bi = new ReverseListIterator<>(other.words);
+        }
+        while (ai.hasNext() && bi.hasNext()) {
+            Word aw = ai.next();
+            Word bw = bi.next();
+            int result = aw.compareTo(bw, annotation, sensitive);
+            if (result != 0 || oneWordOnly)
+                return result;
+        }
+        if (!ai.hasNext() && !bi.hasNext()) {
+            // Same length and identical elements
+            return 0;
+        }
+        // Lists contain same elements but one is longer than the other
+        if (ai.hasNext())
+            return 1;
+        else
+            return -1;
     }
 
     @Override
