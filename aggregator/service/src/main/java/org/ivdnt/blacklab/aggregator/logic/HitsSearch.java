@@ -28,8 +28,14 @@ import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
-/** A distributed hits search. */
+/** A distributed hits search.
+ *
+ * Keeps track of results from the nodes and maintains a merged hits list.
+ */
 public class HitsSearch {
+
+    /** Use our caching mechanism or not? */
+    private static final boolean USE_CACHE = false;
 
     /** Keep cache entries for 5 minutes */
     private static final long MAX_CACHE_AGE_MS = 5 * 60 * 1000;
@@ -236,7 +242,6 @@ public class HitsSearch {
         synchronized (cache) {
             HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params));
             search.updateLastAccessTime();
-            boolean USE_CACHE = false;
             if (USE_CACHE)
                 removeOldSearches(MAX_CACHE_AGE_MS);
             else

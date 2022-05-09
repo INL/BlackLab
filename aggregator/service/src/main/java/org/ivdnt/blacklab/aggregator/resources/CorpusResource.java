@@ -63,7 +63,7 @@ public class CorpusResource {
     public Response hits(
     		@PathParam("corpusName") String corpusName,
     		@QueryParam("patt") String patt,
-            @DefaultValue("docid,hitposition") @QueryParam("sort") String sort,
+            @DefaultValue("") @QueryParam("sort") String sort,
             @DefaultValue("") @QueryParam("group") String group,
             @DefaultValue("0") @QueryParam("first") long first,
             @DefaultValue("20") @QueryParam("number") long number) {

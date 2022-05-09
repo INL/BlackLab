@@ -10,7 +10,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
-import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -97,6 +96,8 @@ public class Requests {
             String sort, String group, long first, long number) {
         ResponseBuilder ourResponse;
         if (StringUtils.isEmpty(group)) {
+            if (sort.isEmpty())
+                sort = "docid,hitposition";
             // Hits request
             // Request the search object
             HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort);
@@ -105,25 +106,22 @@ public class Requests {
             // Return the response
             ourResponse = Response.ok().entity(results);
         } else {
+            if (sort.isEmpty())
+                sort = "identity";
             // Group request.
-            // FIXME make distributed
-            String nodeUrl = AggregatorConfig.get().getFirstNodeUrl();
-            Response clientResponse = client.target(nodeUrl)
-                    .path(corpusName)
+            var s = sort;
+            HitsResults results = getNodeResponses(client, t -> {
+                return t.path(corpusName)
                     .path("hits")
                     .queryParam("patt", patt)
-                    .queryParam("sort", sort)
-                    .queryParam("group", group)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
-            Status status = Status.fromStatusCode(clientResponse.getStatus());
-            if (status == Status.OK)
-                ourResponse = Response.ok().entity(clientResponse.readEntity(HitsResults.class));
-            else {
-                ErrorResponse error = clientResponse.readEntity(ErrorResponse.class);
-                error.setNodeUrl(nodeUrl);
-                ourResponse = Response.status(status).entity(error);
-            }
+                    .queryParam("sort", s)
+                    .queryParam("group", group);
+                },
+                HitsResults.class
+            ).stream()
+                    .reduce(Aggregation::mergeHitsGrouped)
+                    .orElseThrow();
+            ourResponse = Response.ok().entity(results);
         }
         return ourResponse.build();
     }

@@ -1,9 +1,14 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.CorpusSummary;
+import org.ivdnt.blacklab.aggregator.representation.HitGroup;
+import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
@@ -88,8 +93,45 @@ public class Aggregation {
             result.largestGroupSize = Math.max(a.largestGroupSize, b.largestGroupSize);
 
         result.searchTime = Math.max(a.searchTime, b.searchTime);
-        result.countTime = Math.max(a.countTime, b.countTime);
+        if (a.countTime != null)
+            result.countTime = Math.max(a.countTime, b.countTime);
         result.stillCounting = a.stillCounting || b.stillCounting;
+        return result;
+    }
+
+    public static HitGroup mergeHitGroups(HitGroup a, HitGroup b) {
+        return new HitGroup(
+                a.identity,
+                a.identityDisplay,
+                a.size + b.size,
+                a.properties,
+                a.numberOfDocs + b.numberOfDocs
+        );
+    }
+
+    public static HitsResults mergeHitsGrouped(HitsResults a, HitsResults b) {
+        if (a.hits != null || b.hits != null)
+            throw new IllegalArgumentException("Merging grouped results but there are hits");
+
+        HitsResults result;
+        try {
+            result = a.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+        result.summary = mergeSearchSummary(a.summary, b.summary);
+
+        // Convert to a sorted map and merge
+        Collector<HitGroup, ?, ? extends Map> toMapper = Collectors.toMap(HitGroup::getIdentity,
+                g -> g, (x, y) -> x, () -> new TreeMap());
+        Map<String, HitGroup> ga = result.hitGroups.stream().collect(toMapper);
+        b.hitGroups.stream().forEach( g -> ga.compute(g.identity, (k, v) -> v == null ? g : mergeHitGroups(v, g) ) );
+
+        // TODO: merge without disturbing the existing sort
+
+        // Back to list
+        result.hitGroups = ga.values().stream().collect(Collectors.toList());
+
         return result;
     }
 }

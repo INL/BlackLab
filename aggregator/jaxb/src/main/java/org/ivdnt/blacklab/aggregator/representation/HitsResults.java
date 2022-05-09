@@ -32,7 +32,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class HitsResults {
+public class HitsResults implements Cloneable {
 
     private static class BigListSerializer extends JsonSerializer<BigList<Hit>> {
         @Override
@@ -204,6 +204,11 @@ public class HitsResults {
         this.hits = null;
         this.docInfos = null;
         this.hitGroups = groups;
+    }
+
+    @Override
+    public HitsResults clone() throws CloneNotSupportedException {
+        return (HitsResults)super.clone();
     }
 
     @Override
