@@ -20,6 +20,7 @@ import javax.ws.rs.core.Response.Status;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.logic.HitsSearch.NodeHitsSearch.HitIterator;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
+import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
@@ -139,7 +140,13 @@ public class HitsSearch {
                     getNextPageRequest();
                 }
             } else {
-                throw new WebApplicationException(response);
+                ErrorResponse error = response.readEntity(ErrorResponse.class);
+
+                ErrorResponse newError = new ErrorResponse(error.getError());
+                newError.setNodeUrl(webTarget.getUri().toString());
+                Response newResponse = Response.status(response.getStatus()).entity(newError).build();
+
+                throw new WebApplicationException(newResponse);
             }
         }
 
@@ -364,6 +371,7 @@ public class HitsSearch {
                 .map(h -> h.docPid)
                 .collect(Collectors.toSet()).stream()
                 .map(docInfos::get)
+                .filter(d -> d != null)
                 .collect(Collectors.toList());
         return new HitsResults(summary, hitWindow, relevantDocs);
     }

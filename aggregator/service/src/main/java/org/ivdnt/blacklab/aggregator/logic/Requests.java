@@ -13,6 +13,7 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -52,26 +53,29 @@ public class Requests {
      * @param client REST client
      * @param factory how to build our request
      * @param cls response class
-     * @return
+     * @return responses
      * @param <T> response type
      */
     public static <T> List<T> getNodeResponses(Client client, WebTargetDecorator factory, Class<T> cls) {
 
         // Send requests and collect futures
-        List<Future<Response>> futures = new ArrayList<>();
+        List<Pair<String, Future<Response>>> futures = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
             Future<Response> futureResponse = factory.get(client.target(nodeUrl)) //client.target(nodeUrl)
                     .request(MediaType.APPLICATION_JSON)
                     .async()
                     .get();
-            futures.add(futureResponse);
+            futures.add(Pair.of(nodeUrl, futureResponse));
         }
 
         // Wait for futures to complete and collect response objects
         List<T> nodeResponses = new ArrayList<>();
-        for (Future<Response> f: futures) {
+        for (Pair<String, Future<Response>> p: futures) {
+            String nodeUrl = p.getLeft();
+            Future<Response> f = p.getRight();
             Response clientResponse = null;
             try {
+                // TODO if one node returns an error, don't wait for the rest
                 clientResponse = f.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -81,7 +85,9 @@ public class Requests {
             if (status == Response.Status.OK)
                 nodeResponses.add(clientResponse.readEntity(cls));
             else {
-                throw new BlsRequestException(status, clientResponse.readEntity(ErrorResponse.class));
+                ErrorResponse response = clientResponse.readEntity(ErrorResponse.class);
+                response.setNodeUrl(nodeUrl);
+                throw new BlsRequestException(status, response);
             }
         }
         return nodeResponses;
@@ -101,7 +107,8 @@ public class Requests {
         } else {
             // Group request.
             // FIXME make distributed
-            Response clientResponse = client.target(AggregatorConfig.get().getFirstNodeUrl())
+            String nodeUrl = AggregatorConfig.get().getFirstNodeUrl();
+            Response clientResponse = client.target(nodeUrl)
                     .path(corpusName)
                     .path("hits")
                     .queryParam("patt", patt)
@@ -112,8 +119,11 @@ public class Requests {
             Status status = Status.fromStatusCode(clientResponse.getStatus());
             if (status == Status.OK)
                 ourResponse = Response.ok().entity(clientResponse.readEntity(HitsResults.class));
-            else
-                ourResponse = Response.status(status).entity(clientResponse.readEntity(ErrorResponse.class));
+            else {
+                ErrorResponse error = clientResponse.readEntity(ErrorResponse.class);
+                error.setNodeUrl(nodeUrl);
+                ourResponse = Response.status(status).entity(error);
+            }
         }
         return ourResponse.build();
     }

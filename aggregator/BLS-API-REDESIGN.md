@@ -57,6 +57,10 @@ General:
 - Don't include static info on dynamic (results) pages.<br>
   (e.g. don't send display names for all metadata fields with each hits results;
    the client can request those once if needed)
+- Be stricter about parameter values.<br>
+  (if an illegal value is passed, return an error instead of silently using a default value)
+- Return helpful error messages.<br>
+  (if an illegal value is passed, explain or list legal values, and/or refer to online docs)
 
 
 JSON-related:
