@@ -3,6 +3,7 @@ package org.ivdnt.blacklab.aggregator.resources;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -61,13 +62,13 @@ public class CorpusResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response hits(
     		@PathParam("corpusName") String corpusName,
-    		@QueryParam("patt") String cqlPattern,
-            @QueryParam("sort") String sort,
-            @QueryParam("group") String group,
-            @QueryParam("first") long first,
-            @QueryParam("number") long number) {
+    		@QueryParam("patt") String patt,
+            @DefaultValue("docid,hitposition") @QueryParam("sort") String sort,
+            @DefaultValue("") @QueryParam("group") String group,
+            @DefaultValue("0") @QueryParam("first") long first,
+            @DefaultValue("20") @QueryParam("number") long number) {
 
-        return Requests.getHitsResponse(client, corpusName, cqlPattern, sort,
+        return Requests.getHitsResponse(client, corpusName, patt, sort,
                 group, first, number);
     }
 

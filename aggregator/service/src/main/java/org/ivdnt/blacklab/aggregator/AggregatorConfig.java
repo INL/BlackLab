@@ -56,7 +56,7 @@ public class AggregatorConfig {
         this.nodes = nodes;
     }
 
-    public String getBlackLabServerUrl() {
+    public String getFirstNodeUrl() {
         return nodes.get(0);
     }
 }

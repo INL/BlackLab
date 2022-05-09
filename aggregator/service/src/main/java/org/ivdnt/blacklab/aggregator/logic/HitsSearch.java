@@ -2,15 +2,23 @@ package org.ivdnt.blacklab.aggregator.logic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
+import org.ivdnt.blacklab.aggregator.logic.HitsSearch.NodeHitsSearch.HitIterator;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -27,15 +35,13 @@ public class HitsSearch {
 
     /** Search parameters */
     private static class Params {
-        Client client;
         String corpusName;
-        String cqlPattern;
+        String patt;
         String sort;
 
-        public Params(Client client, String corpusName, String cqlPattern, String sort) {
-            this.client = client;
+        public Params(String corpusName, String patt, String sort) {
             this.corpusName = corpusName;
-            this.cqlPattern = cqlPattern;
+            this.patt = patt;
             this.sort = sort;
         }
 
@@ -46,38 +52,168 @@ public class HitsSearch {
             if (o == null || getClass() != o.getClass())
                 return false;
             Params params = (Params) o;
-            return Objects.equals(client, params.client) && Objects.equals(corpusName, params.corpusName)
-                    && Objects.equals(cqlPattern, params.cqlPattern) && Objects.equals(sort, params.sort);
+            return Objects.equals(corpusName, params.corpusName)
+                    && Objects.equals(patt, params.patt) && Objects.equals(sort, params.sort);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(client, corpusName, cqlPattern, sort);
+            return Objects.hash(corpusName, patt, sort);
         }
     }
 
     /** Results of this search from a single node */
-    private class NodeHitsSearch implements Iterable<Hit> {
+    static class NodeHitsSearch {
 
-        private final String nodeUrl;
+        private static final int PAGE_SIZE = 3;
+
+        private final WebTarget webTarget;
+
+        private final Params params;
 
         private SearchSummary latestSummary;
 
-        private BigList<Hit> hits = new ObjectBigArrayBigList<>();
+        private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
 
-        private Map<String, DocInfo> docInfos = new HashMap<>();
+        private final Map<String, DocInfo> docInfos = new HashMap<>();
 
-        public NodeHitsSearch(String nodeUrl, Params params) {
-            this.nodeUrl = nodeUrl;
+        private boolean stillFetchingHits = true;
+
+        /** If set, the next page has been requested and we're waiting for the response. */
+        private Future<Response> nextPageRequest;
+
+        public NodeHitsSearch(WebTarget webTarget, Params params) {
+            this.params = params;
+            this.webTarget = webTarget;
         }
 
         public SearchSummary getLatestSummary() {
-            return this.latestSummary;
+            return latestSummary;
         }
 
-        @Override
-        public Iterator<Hit> iterator() {
-            // TODO implement
+        /** Start a hits page request to the server. */
+        private synchronized Future<Response> getNextPageRequest() {
+            if (nextPageRequest == null) {
+                // Request the next page
+                nextPageRequest = webTarget
+                        .path(params.corpusName)
+                        .path("hits")
+                        .queryParam("patt", params.patt)
+                        .queryParam("sort", params.sort)
+                        .queryParam("first", hits.size64())
+                        .queryParam("number", PAGE_SIZE)
+                        .request(MediaType.APPLICATION_JSON)
+                        .async()
+                        .get();
+            }
+            return nextPageRequest;
+        }
+
+        /** Get the next page of hits from the server. */
+        private synchronized void processNextPage() {
+            if (!stillFetchingHits)
+                throw new IllegalArgumentException("getNextPage called but already done fetching hits");
+            Response response;
+            try {
+                response = getNextPageRequest().get();
+                nextPageRequest = null; // completed
+            } catch (InterruptedException|ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            if (response.getStatus() == Status.OK.getStatusCode()) {
+                // Add hits to the list
+                HitsResults hitsResults = response.readEntity(HitsResults.class);
+                latestSummary = hitsResults.summary;
+                hits.addAll(hitsResults.hits);
+                for (DocInfo docInfo: hitsResults.docInfos) {
+                    docInfos.put(docInfo.pid, docInfo);
+                }
+
+                // Was this the final page of hits?
+                if (!hitsResults.summary.windowHasNext) {
+                    // Yes, we're done.
+                    stillFetchingHits = false;
+                } else {
+                    // No, start fetching the next page of hits,
+                    // so it will hopefully be available when we need it.
+                    getNextPageRequest();
+                }
+            } else {
+                throw new WebApplicationException(response);
+            }
+        }
+
+        /** Ensures specified hit is available if it exists.
+         *
+         * @param i hit index
+         * @return true if the hit exists and is available, false if it doesn't exist
+         */
+        private synchronized boolean hitAvailable(long i) {
+            while (hits.size64() <= i && stillFetchingHits) {
+                    // Wait for another page of hits
+                    processNextPage();
+            }
+            return hits.size64() > i;
+        }
+
+        /** Get specified hit, or null if it doesn't exist. */
+        private Hit hit(long i) {
+            if (hitAvailable(i))
+                return hits.get(i);
+            return null;
+        }
+
+        /** Iterate through all the hits. */
+        class HitIterator {
+            private long index = -1;
+
+            /**
+             * Is there another hit?
+             * @return true if there is, false if not
+             */
+            public boolean hasNext() {
+                return hitAvailable(index + 1);
+            }
+
+            /** Has next() ever been called? */
+            public boolean wasNexted() {
+                return index >= 0;
+            }
+
+            /** Return the current hit.
+             *
+             * Returns null if not yet nexted (check using {@link #wasNexted()})
+             * or there are no more hits.
+             *
+             * @return current hit
+             */
+            public Hit current() {
+                return index < 0 ? null : hit(index);
+            }
+
+            /**
+             * Return next hit
+             *
+             * @return next hit, or null if no more hits.
+             */
+            public Hit next() {
+                index++;
+                return hit(index);
+            }
+
+            public DocInfo currentDocInfo() {
+                String pid = current().docPid;
+                return docInfos.get(pid);
+            }
+        }
+
+        /** An iterator for our hits, without having to deal with paging. */
+        public HitIterator iterator() {
+            // Make sure we'll have some hits available when we need them
+            if (hits.isEmpty())
+                getNextPageRequest();
+
+            return new HitIterator();
         }
     }
 
@@ -88,12 +224,16 @@ public class HitsSearch {
      *
      * Also makes sure old searches are removed from cache.
      */
-    public static HitsSearch get(Client client, String corpusName, String cqlPattern, String sort) {
-        Params params = new Params(client, corpusName, cqlPattern, sort);
+    public static HitsSearch get(Client client, String corpusName, String patt, String sort) {
+        Params params = new Params(corpusName, patt, sort);
         synchronized (cache) {
-            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(params));
+            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params));
             search.updateLastAccessTime();
-            removeOldSearches(MAX_CACHE_AGE_MS);
+            boolean USE_CACHE = false;
+            if (USE_CACHE)
+                removeOldSearches(MAX_CACHE_AGE_MS);
+            else
+                cache.clear();
             return search;
         }
     }
@@ -102,16 +242,24 @@ public class HitsSearch {
         long when = System.currentTimeMillis() - maxAge;
         List<Params> toRemove = cache.entrySet().stream()
                 .filter(e -> e.getValue().getLastAccessTime() < when)
-                .map(e -> e.getKey())
+                .map(Entry::getKey)
                 .collect(Collectors.toList());
-        toRemove.forEach(pid -> cache.remove(pid));
+        toRemove.forEach(cache::remove);
     }
 
-    private final Params params;
 
     private long lastAccessTime;
 
     private final List<NodeHitsSearch> nodeSearches;
+
+    /** Iterators on all the node's results.
+     *
+     * These always point to the current not-yet-consumed hit,
+     * unless {@link HitIterator#wasNexted()} returns false, in which
+     * case next() should be called to position it on the first hit.
+     * Otherwise, if {@link HitIterator#current()} returns null, this node has no more hits.
+     */
+    private final List<HitIterator> nodeSearchIterators;
 
     /** Merged hits results */
     private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
@@ -119,11 +267,13 @@ public class HitsSearch {
     /** Relevant docInfos */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
 
-    public HitsSearch(Params params) {
-        this.params = params;
+    public HitsSearch(Client client, Params params) {
         nodeSearches = new ArrayList<>();
+        nodeSearchIterators = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            nodeSearches.add(new NodeHitsSearch(nodeUrl, params));
+            NodeHitsSearch search = new NodeHitsSearch(client.target(nodeUrl), params);
+            nodeSearches.add(search);
+            nodeSearchIterators.add(search.iterator());
         }
         updateLastAccessTime();
     }
@@ -136,29 +286,85 @@ public class HitsSearch {
         return lastAccessTime;
     }
 
-    private boolean ensureResultsRead(long l) {
-        // TODO implement:
-        // - check each node's current hit
-        // - select the 'smallest' one (according to our sort)
-        // - add it to our hits
-        // - advance that node to the next hit (if available)
+    /**
+     * Ensure the requested number of hits is available.
+     *
+     * @param l number of hits we need
+     * @return true if available, false if no more hits
+     */
+    private synchronized boolean ensureResultsRead(long l) {
+        // TODO: maybe don't synchronize the whole method, or a request for 10 hits might be
+        //    waiting for another request that wants a million hits...
+        while (hits.size64() <= l) {
+            // - check each node's current hit
+            // - select the 'smallest' one (according to our sort)
+            // - add it to our hits
+            // - advance that node to the next hit (if available)
 
+            // Find the "smallest" hit from all the nodes' unconsumed hits
+            // (smallest = first occurring with current sort)
+            HitIterator smallestHitSource = null;
+            for (HitIterator it: nodeSearchIterators) {
+                if (!it.wasNexted()) {
+                    // Position iterator on the first hit
+                    if (!it.hasNext())
+                        continue;
+                    it.next();
+                }
+                Hit hit = it.current();
+                if (hit == null)
+                    continue; // no more hits from this node
+
+                // TODO use actual requested sort
+                if (smallestHitSource == null || hit.compareTo(smallestHitSource.current()) < 0) {
+                    smallestHitSource = it;
+                }
+            }
+            if (smallestHitSource == null) {
+                // No hits left anywhere
+                break;
+            }
+
+            // Add smallest hit to our list
+            Hit nextHit = smallestHitSource.current();
+            hits.add(nextHit);
+
+            // Make sure we have the docInfo for this doc
+            var it = smallestHitSource;
+            docInfos.computeIfAbsent(nextHit.docPid, pid -> it.currentDocInfo());
+
+            // Advance iterator to the next unused hit (or null if no more hits)
+            smallestHitSource.next();
+        }
+        return hits.size64() > l;
     }
 
     public HitsResults window(long first, long number) {
-        SearchSummary summary = nodeSearches.stream()
-                .map(node -> node.getLatestSummary())
-                .reduce(Aggregation::mergeSearchSummary)
-                .get();
+        // Make sure we have all the hits we need available
+        ensureResultsRead(first + number + 1); // + 1 to determine windowHasNext (see below)
 
-        ensureResultsRead(first + number);
+        // Did we run out of hits, or is this a full window?
+        long actualWindowSize = hits.size64() >= first + number ? number : hits.size64() - first;
+
+        // Determine summary
+        SearchSummary summary = nodeSearches.stream()
+                .map(NodeHitsSearch::getLatestSummary)
+                .filter(Objects::nonNull)
+                .reduce(Aggregation::mergeSearchSummary)
+                .orElseThrow();
+        summary.requestedWindowSize = number;
+        summary.actualWindowSize = actualWindowSize;
+        summary.windowFirstResult = first;
+        summary.windowHasNext = hits.size64() > first + number;
+        summary.windowHasPrevious = first > 0;
+
+        // Build the hits window and docInfos and return
         BigList<Hit> hitWindow = hits.subList((int)first, (int)(first + number));
         List<DocInfo> relevantDocs = hitWindow.stream()
                 .map(h -> h.docPid)
                 .collect(Collectors.toSet()).stream()
-                .map(pid -> docInfos.get(pid))
+                .map(docInfos::get)
                 .collect(Collectors.toList());
-
         return new HitsResults(summary, hitWindow, relevantDocs);
     }
 

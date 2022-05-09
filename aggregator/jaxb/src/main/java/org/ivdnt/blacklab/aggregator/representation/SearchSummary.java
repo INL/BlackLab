@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SearchSummary {
+public class SearchSummary implements Cloneable {
 
     public SearchParam searchParam = new SearchParam();
 
@@ -74,6 +74,11 @@ public class SearchSummary {
 
     public SearchSummary(SearchParam searchParam) {
         this.searchParam = searchParam;
+    }
+
+    @Override
+    public SearchSummary clone() throws CloneNotSupportedException {
+        return (SearchSummary)super.clone();
     }
 
     @Override

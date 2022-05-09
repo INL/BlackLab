@@ -21,14 +21,20 @@ public class SearchParam {
     @JsonInclude(Include.NON_EMPTY)
     public String group = "";
 
+    public long first = 0;
+
+    public long number = 20;
+
     public SearchParam() {
     }
 
-    public SearchParam(String indexname, String patt, String sort, String group) {
+    public SearchParam(String indexname, String patt, String sort, String group, long first, long number) {
         this.indexname = indexname;
         this.patt = patt;
         this.sort = sort;
         this.group = group;
+        this.first = first;
+        this.number = number;
     }
 
     @Override

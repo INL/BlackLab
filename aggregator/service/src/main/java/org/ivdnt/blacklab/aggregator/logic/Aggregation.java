@@ -70,6 +70,26 @@ public class Aggregation {
     }
 
     public static SearchSummary mergeSearchSummary(SearchSummary a, SearchSummary b) {
-        // TODO implement
+        SearchSummary result;
+        try {
+            result = a.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+
+        result.numberOfHits = a.numberOfHits + b.numberOfHits;
+        result.numberOfHitsRetrieved = a.numberOfHitsRetrieved + b.numberOfHitsRetrieved;
+        result.numberOfDocs = a.numberOfDocs + b.numberOfDocs;
+        result.numberOfDocsRetrieved = a.numberOfDocsRetrieved + b.numberOfDocsRetrieved;
+        result.stoppedCountingHits = a.stoppedCountingHits || b.stoppedCountingHits;
+        result.stoppedRetrievingHits = a.stoppedRetrievingHits || b.stoppedRetrievingHits;
+
+        if (a.largestGroupSize != null)
+            result.largestGroupSize = Math.max(a.largestGroupSize, b.largestGroupSize);
+
+        result.searchTime = Math.max(a.searchTime, b.searchTime);
+        result.countTime = Math.max(a.countTime, b.countTime);
+        result.stillCounting = a.stillCounting || b.stillCounting;
+        return result;
     }
 }

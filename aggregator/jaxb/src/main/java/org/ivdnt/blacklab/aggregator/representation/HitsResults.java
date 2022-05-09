@@ -17,7 +17,6 @@ import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
@@ -29,10 +28,45 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import it.unimi.dsi.fastutil.BigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitsResults {
+
+    private static class BigListSerializer extends JsonSerializer<BigList<Hit>> {
+        @Override
+        public void serialize(BigList<Hit> value, JsonGenerator jgen, SerializerProvider provider)
+                throws IOException {
+            if (value == null)
+                return;
+            jgen.writeStartArray();
+            for (Hit h: value) {
+                provider.defaultSerializeValue(h, jgen);
+            }
+            jgen.writeEndArray();
+        }
+    }
+
+    private static class BigListDeserializer extends JsonDeserializer<BigList<Hit>> {
+        @Override
+        public BigList<Hit> deserialize(JsonParser parser, DeserializationContext deserializationContext)
+                throws IOException {
+            JsonToken token = parser.getCurrentToken();
+            if (token != JsonToken.START_ARRAY)
+                throw new RuntimeException("Expected START_ARRAY, found " + token);
+
+            BigList<Hit> hits = new ObjectBigArrayBigList<>();
+            while (true) {
+                token = parser.nextToken();
+                if (token == JsonToken.END_ARRAY)
+                    break;
+                Hit h = deserializationContext.readValue(parser, Hit.class);
+                hits.add(h);
+            }
+            return hits;
+        }
+    }
 
     /** Use this to serialize this class to JSON */
     private static class Serializer extends JsonSerializer<List<DocInfo>> {
@@ -68,7 +102,7 @@ public class HitsResults {
     private static class Deserializer extends JsonDeserializer<List<DocInfo>> {
         @Override
         public List<DocInfo> deserialize(JsonParser parser, DeserializationContext deserializationContext)
-                throws IOException, JacksonException {
+                throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
                 throw new RuntimeException("Expected START_OBJECT, found " + token);
@@ -135,6 +169,8 @@ public class HitsResults {
     @XmlElementWrapper(name="hits")
     @XmlElement(name = "hit")
     @JsonProperty("hits")
+    @JsonSerialize(using = BigListSerializer.class)
+    @JsonDeserialize(using = BigListDeserializer.class)
     @JsonInclude(Include.NON_NULL)
     public BigList<Hit> hits;
 

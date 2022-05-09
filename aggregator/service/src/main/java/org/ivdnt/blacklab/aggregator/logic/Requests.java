@@ -12,6 +12,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -86,23 +87,24 @@ public class Requests {
         return nodeResponses;
     }
 
-    public static Response getHitsResponse(Client client, String corpusName, String cqlPattern,
+    public static Response getHitsResponse(Client client, String corpusName, String patt,
             String sort, String group, long first, long number) {
         ResponseBuilder ourResponse;
-        if (group.isEmpty()) {
+        if (StringUtils.isEmpty(group)) {
             // Hits request
             // Request the search object
-            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, cqlPattern, sort);
+            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort);
             // Requqest the window, waiting for it to be available
             HitsResults results = hitsSearch.window(first, number);
             // Return the response
             ourResponse = Response.ok().entity(results);
         } else {
             // Group request.
-            Response clientResponse = client.target(AggregatorConfig.get().getBlackLabServerUrl())
+            // FIXME make distributed
+            Response clientResponse = client.target(AggregatorConfig.get().getFirstNodeUrl())
                     .path(corpusName)
                     .path("hits")
-                    .queryParam("patt", cqlPattern)
+                    .queryParam("patt", patt)
                     .queryParam("sort", sort)
                     .queryParam("group", group)
                     .request(MediaType.APPLICATION_JSON)

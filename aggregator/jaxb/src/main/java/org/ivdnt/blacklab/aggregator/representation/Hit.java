@@ -4,7 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Hit {
+public class Hit implements Comparable<Hit> {
 
     public String docPid;
 
@@ -25,6 +25,15 @@ public class Hit {
         this.docPid = docPid;
         this.start = start;
         this.end = end;
+    }
+
+    public int compareTo(Hit other) {
+        if (docPid.equals(other.docPid)) {
+            if (start == other.start)
+                return Long.compare(end, other.end);
+            return Long.compare(end, other.end);
+        }
+        return docPid.compareTo(other.docPid);
     }
 
     @Override
