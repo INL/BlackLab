@@ -11,6 +11,9 @@ import javax.xml.namespace.QName;
 
 import org.w3c.dom.Element;
 
+/**
+ * Helps us to (de)serialize a map where the keys become element names in XML.
+ */
 public class MapAdapter extends XmlAdapter<MapWrapper, Map<String, Object>> {
     @Override
     public MapWrapper marshal(Map<String, Object> m) {

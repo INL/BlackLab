@@ -49,9 +49,7 @@ public class Corpus implements Cloneable {
                         jgen.writeStringField("name", annotationGroup.name);
                         jgen.writeArrayFieldStart("annotations");
                         {
-                            for (String a: annotationGroup.annotations) {
-                                jgen.writeString(a);
-                            }
+                            provider.defaultSerializeValue(annotationGroup.annotations, jgen);
                         }
                         jgen.writeEndArray();
                     }
@@ -130,7 +128,7 @@ public class Corpus implements Cloneable {
 
     /** Use this to serialize annotatedFields to JSON.
      *
-     * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure .
+     * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure.
      */
     private static class ListAnnotatedFieldSerializer extends JsonSerializer<List<AnnotatedField>> {
         @Override
@@ -141,6 +139,7 @@ public class Corpus implements Cloneable {
                 return;
             jgen.writeStartObject();
             for (AnnotatedField field: value) {
+                jgen.writeFieldName(field.name);
                 jgen.writeObjectFieldStart(field.name);
                 {
                     jgen.writeStringField("fieldName", field.fieldName);
@@ -414,6 +413,7 @@ public class Corpus implements Cloneable {
     @SuppressWarnings("unused")
     private Corpus() {}
 
+    @SuppressWarnings("unused")
     public Corpus(String name, FieldInfo fieldInfo,
             List<AnnotatedField> annotatedFields, List<MetadataField> metadataFields) {
         this.indexName = name;

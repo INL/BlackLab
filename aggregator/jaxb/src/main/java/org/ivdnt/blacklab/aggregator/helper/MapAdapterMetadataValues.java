@@ -13,7 +13,9 @@ import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 import org.w3c.dom.Element;
 
 /**
- * Serialize
+ * Helps us to (de)serialize a map of metadata values where the keys become element names in XML.
+ *
+ * Separate class because there may be more than one metadata value.
  */
 public class MapAdapterMetadataValues extends XmlAdapter<MapWrapperMetadataValues, Map<String, MetadataValues>> {
     @Override

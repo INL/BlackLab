@@ -14,11 +14,14 @@ public class Word {
     @XmlValue
     public String mainAnnotation = "theword";
 
+    // TODO: SHOULD NOT use QName as keys but should serialize to attributes!
     @XmlAnyAttribute
     public Map<QName, String> otherAnnotations;
 
-    public Word() {}
+    public Word() {
+    }
 
+    @SuppressWarnings("unused")
     public Word(Map<String, String> w) {
         otherAnnotations = new LinkedHashMap<>();
         for (Map.Entry<String, String> e: w.entrySet()) {

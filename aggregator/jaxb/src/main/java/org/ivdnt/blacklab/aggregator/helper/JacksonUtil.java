@@ -54,12 +54,7 @@ public class JacksonUtil {
         @Override
         public Map<String, String> deserialize(JsonParser parser, DeserializationContext deserializationContext)
                 throws IOException {
-            Map<String, String> map = readStringMap(parser);
-            /*MapWrapper wrapper = new MapWrapper();
-            wrapper.elements = map.entrySet().stream().map(e -> new JAXBElement<>(new QName(e.getKey()), String.class,
-                    e.getValue())).collect(Collectors.toList());
-            return wrapper;*/
-            return map;
+            return readStringMap(parser);
         }
     }
 

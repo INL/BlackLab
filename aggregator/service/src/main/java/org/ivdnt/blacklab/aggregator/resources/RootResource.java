@@ -37,7 +37,6 @@ public class RootResource {
             nodeResponses = Requests.getNodeResponses(client, target -> target, Server.class);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
-            // TODO: indicate which node returned the error
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
 

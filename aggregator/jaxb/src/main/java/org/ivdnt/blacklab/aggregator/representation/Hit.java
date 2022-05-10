@@ -2,11 +2,15 @@ package org.ivdnt.blacklab.aggregator.representation;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit implements Comparable<Hit> {
 
     public String docPid;
+
+    @XmlTransient
+    public DocInfo docInfo;
 
     public long start;
 

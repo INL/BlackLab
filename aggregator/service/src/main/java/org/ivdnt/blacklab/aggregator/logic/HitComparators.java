@@ -1,58 +1,28 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
+import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Map;
 
-import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
-public class HitComparators {
+class HitComparators {
 
-    public static Comparator<Hit> DOC_PID = Comparator.comparing(hit -> hit.docPid);
-
-    public static Comparator<Hit> HIT_POSITION = Comparator.comparingLong(hit -> hit.start);
-
-    public static Comparator<Hit> hitMatchedText(String annotation, boolean sensitive) {
-        return (a, b) -> {
-            return a.match.compareTo(b.match, annotation, sensitive, false, false);
-        };
-    }
-
-    public static Comparator<Hit> hitTextBefore(String annotation, boolean sensitive, boolean reverse, boolean stopAfterOne) {
-        return (a, b) -> {
-            return a.left.compareTo(b.left, annotation, sensitive, reverse, stopAfterOne);
-        };
-    }
-
-    public static Comparator<Hit> hitTextAfter(String annotation, boolean sensitive, boolean reverse, boolean stopAfterOne) {
-        return (a, b) -> {
-            return a.right.compareTo(b.right, annotation, sensitive, reverse, stopAfterOne);
-        };
-    }
-
-    /** String compare by metadata field */
-    public static Comparator<Hit> docField(String field, Map<String, DocInfo> docInfos) {
-        return (a, b) -> {
-                    String sa = docInfos.get(a.docPid).get(field).getValue().get(0);
-                    String sb = docInfos.get(b.docPid).get(field).getValue().get(0);
-                    return sa.compareTo(sb);
-                };
-    }
-
-    /** Compare by decade for metadata field containing year */
-    public static Comparator<Hit> docFieldDecade(String field, Map<String, DocInfo> docInfos) {
-        return (a, b) -> {
-                int da = Integer.parseInt(docInfos.get(a.docPid).get(field).getValue().get(0)) / 10;
-                int db = Integer.parseInt(docInfos.get(b.docPid).get(field).getValue().get(0)) / 10;
-                return Integer.compare(da, db);
-            };
-    }
-
-    public static Comparator<Hit> deserialize(String serialized, Map<String, DocInfo> docInfos) {
+    public static Comparator<Hit> deserialize(String serialized) {
         if (PropertySerializeUtil.isMultiple(serialized)) {
-            throw new UnsupportedOperationException("Multiple sort/group not supported");
+            boolean reverse = false;
+            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+                reverse = true;
+                serialized = serialized.substring(2, serialized.length() - 1);
+            }
+            Comparator<Hit> result = Arrays.asList(PropertySerializeUtil.splitMultiple(serialized))
+                    .stream().map(ser -> deserialize(ser))
+                    .reduce((a, b) -> a.thenComparing(b))
+                    .orElseThrow();
+            if (reverse)
+                result = result.reversed();
+            return result;
         }
 
         String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
@@ -66,8 +36,8 @@ public class HitComparators {
         Comparator<Hit> cmp;
         switch(type) {
         case "hitposition": cmp = HIT_POSITION; break;
-        case "decade": cmp = docFieldDecade(info, docInfos); break;
-        case "field": cmp = docField(info, docInfos); break;
+        case "decade": cmp = docFieldDecade(info); break;
+        case "field": cmp = docField(info); break;
         case "doc": case "docid": cmp = DOC_PID; break;
         default:
             // Context property. Find annotation and sensitivity.
@@ -87,10 +57,10 @@ public class HitComparators {
                 cmp = hitMatchedText(annotation, sensitive);
                 break;
             case "right":
-                cmp = hitTextBefore(annotation, sensitive, false, false);
+                cmp = hitTextAfter(annotation, sensitive, false, false);
                 break;
             case "wordright":
-                cmp = hitTextBefore(annotation, sensitive, false, true);
+                cmp = hitTextAfter(annotation, sensitive, false, true);
                 break;
             default:
                 throw new UnsupportedOperationException("Hit property not supported: " + type);
@@ -99,6 +69,49 @@ public class HitComparators {
         return reverse ? cmp.reversed() : cmp;
     }
 
-    private HitComparators() {}
+    private static Comparator<Hit> DOC_PID = (a, b) -> a.docPid.compareTo(b.docPid);
 
+    private static Comparator<Hit> HIT_POSITION = (a, b) -> Long.compare(a.start, b.start);
+
+    private static Comparator<Hit> hitMatchedText(String annotation, boolean sensitive) {
+        return (a, b) -> {
+            return a.match.compareTo(b.match, annotation, sensitive, false, false);
+        };
+    }
+
+    private static Comparator<Hit> hitTextBefore(String annotation, boolean sensitive, boolean reverse, boolean stopAfterOne) {
+        return (a, b) -> {
+            return a.left.compareTo(b.left, annotation, sensitive, reverse, stopAfterOne);
+        };
+    }
+
+    private static Comparator<Hit> hitTextAfter(String annotation, boolean sensitive, boolean reverse, boolean stopAfterOne) {
+        return (a, b) -> {
+            return a.right.compareTo(b.right, annotation, sensitive, reverse, stopAfterOne);
+        };
+    }
+
+    /** String compare by metadata field */
+    private static Comparator<Hit> docField(String field) {
+        return new Comparator<Hit>() {
+            @Override
+            public int compare(Hit a, Hit b) {
+                String sa = a.docInfo.get(field).getValue().get(0);
+                String sb = b.docInfo.get(field).getValue().get(0);
+                return sa.compareTo(sb);
+            }
+        };
+    }
+
+    /** Compare by decade for metadata field containing year */
+    private static Comparator<Hit> docFieldDecade(String field) {
+        return new Comparator<Hit>() {
+            @Override
+            public int compare(Hit a, Hit b) {
+                int da = Integer.parseInt(a.docInfo.get(field).getValue().get(0)) / 10;
+                int db = Integer.parseInt(b.docInfo.get(field).getValue().get(0)) / 10;
+                return Integer.compare(da, db);
+            }
+        };
+    }
 }

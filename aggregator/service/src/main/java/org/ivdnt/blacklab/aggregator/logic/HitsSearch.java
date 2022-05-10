@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -135,6 +136,8 @@ public class HitsSearch {
                 for (DocInfo docInfo: hitsResults.docInfos) {
                     docInfos.put(docInfo.pid, docInfo);
                 }
+                // Make sure each hit can access its docInfo, for e.g. sort by metadata field
+                hitsResults.hits.forEach(h -> h.docInfo = docInfos.get(h.docPid));
 
                 // Was this the final page of hits?
                 if (!hitsResults.summary.windowHasNext) {
@@ -238,9 +241,10 @@ public class HitsSearch {
      * Also makes sure old searches are removed from cache.
      */
     public static HitsSearch get(Client client, String corpusName, String patt, String sort) {
+        Comparator<Hit> comparator = HitComparators.deserialize(sort);
         Params params = new Params(corpusName, patt, sort);
         synchronized (cache) {
-            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params));
+            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params, comparator));
             search.updateLastAccessTime();
             if (USE_CACHE)
                 removeOldSearches(MAX_CACHE_AGE_MS);
@@ -276,10 +280,14 @@ public class HitsSearch {
     /** Merged hits results */
     private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
 
+    /** Our sort */
+    private final Comparator<Hit> comparator;
+
     /** Relevant docInfos */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
 
-    public HitsSearch(Client client, Params params) {
+    public HitsSearch(Client client, Params params, Comparator<Hit> comparator) {
+        this.comparator = comparator;
         nodeSearches = new ArrayList<>();
         nodeSearchIterators = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
@@ -311,7 +319,7 @@ public class HitsSearch {
             // - check each node's current hit
             // - select the 'smallest' one (according to our sort)
             // - add it to our hits
-            // - advance that node to the next hit (if available)
+            // - advance thatsmallest node to the next hit (if available)
 
             // Find the "smallest" hit from all the nodes' unconsumed hits
             // (smallest = first occurring with current sort)
@@ -328,7 +336,7 @@ public class HitsSearch {
                     continue; // no more hits from this node
 
                 // TODO use actual requested sort
-                if (smallestHitSource == null || hit.compareTo(smallestHitSource.current()) < 0) {
+                if (smallestHitSource == null || comparator.compare(hit, smallestHitSource.current()) < 0) {
                     smallestHitSource = it;
                 }
             }
