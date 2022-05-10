@@ -189,6 +189,7 @@ public class HitsResults implements Cloneable {
     public List<HitGroup> hitGroups;
 
     // required for Jersey
+    @SuppressWarnings("unused")
     public HitsResults() {}
 
     public HitsResults(SearchSummary summary, BigList<Hit> hits,
@@ -199,6 +200,7 @@ public class HitsResults implements Cloneable {
         this.hitGroups = null;
     }
 
+    @SuppressWarnings("unused")
     public HitsResults(SearchSummary summary, List<HitGroup> groups) {
         this.summary = summary;
         this.hits = null;

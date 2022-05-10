@@ -9,13 +9,13 @@ import javax.xml.bind.annotation.XmlElement;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@SuppressWarnings("unused")
 public class MetadataValues {
 
     @XmlElement(name = "value")
     @JsonValue
     public List<String> value;
 
+    @SuppressWarnings("unused")
     private MetadataValues() { }
 
     public MetadataValues(List<String> value) {

@@ -42,14 +42,8 @@ public class Server implements Cloneable {
                 return;
             jgen.writeStartObject();
             for (CorpusSummary corpus: value) {
-                jgen.writeObjectFieldStart(corpus.name);
-                jgen.writeStringField("displayName", corpus.displayName);
-                jgen.writeStringField("description", corpus.description);
-                jgen.writeStringField("status", corpus.status);
-                jgen.writeStringField("documentFormat", corpus.documentFormat);
-                jgen.writeStringField("timeModified", corpus.timeModified);
-                jgen.writeNumberField("tokenCount", corpus.tokenCount);
-                jgen.writeEndObject();
+                jgen.writeFieldName(corpus.name);
+                provider.defaultSerializeValue(corpus, jgen);
             }
             jgen.writeEndObject();
         }
@@ -77,31 +71,15 @@ public class Server implements Cloneable {
 
                 if (token != JsonToken.FIELD_NAME)
                     throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                CorpusSummary corpus = new CorpusSummary();
-                corpus.name = parser.getCurrentName();
+                //CorpusSummary corpus = new CorpusSummary();
+                String corpusName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
                     throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
-                while (true) {
-                    token = parser.nextToken();
-                    if (token == JsonToken.END_OBJECT)
-                        break;
 
-                    if (token != JsonToken.FIELD_NAME)
-                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                    String fieldName = parser.getCurrentName();
-                    parser.nextToken();
-                    switch (fieldName) {
-                    case "displayName": corpus.displayName = parser.getValueAsString(); break;
-                    case "description": corpus.description = parser.getValueAsString(); break;
-                    case "status": corpus.status = parser.getValueAsString(); break;
-                    case "documentFormat": corpus.documentFormat = parser.getValueAsString(); break;
-                    case "timeModified": corpus.timeModified = parser.getValueAsString(); break;
-                    case "tokenCount": corpus.tokenCount = parser.getValueAsLong(); break;
-                    default: throw new RuntimeException("Unexpected field " + fieldName + " in CorpusSummary");
-                    }
-                }
+                CorpusSummary corpus = deserializationContext.readValue(parser, CorpusSummary.class);
+                corpus.name = corpusName;
                 result.add(corpus);
             }
             return result;
@@ -124,11 +102,12 @@ public class Server implements Cloneable {
     @XmlElement
     public User user;
 
+    @SuppressWarnings("unused")
     @XmlElement
     public String helpPageUrl;
 
+    @SuppressWarnings("unused")
     @XmlTransient
-    //@XmlElement
     public Object cacheStatus;
 
     // required for Jersey

@@ -3,7 +3,6 @@ package org.ivdnt.blacklab.aggregator.representation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -262,33 +261,8 @@ public class Corpus implements Cloneable {
                 return;
             jgen.writeStartObject();
             for (MetadataField field: value) {
-                jgen.writeObjectFieldStart(field.name);
-                {
-                    jgen.writeStringField("fieldName", field.fieldName);
-                    jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
-                    jgen.writeStringField("displayName", field.displayName);
-                    jgen.writeStringField("description", field.description);
-                    jgen.writeStringField("uiType", field.uiType);
-                    jgen.writeStringField("type", field.type);
-                    jgen.writeStringField("analyzer", field.analyzer);
-                    jgen.writeStringField("unknownCondition", field.unknownCondition);
-                    jgen.writeStringField("unknownValue", field.unknownValue);
-
-                    jgen.writeObjectFieldStart("displayValues");
-                    for (Map.Entry<String, String> e: field.displayValues.entrySet()) {
-                        jgen.writeStringField(e.getKey(), e.getValue());
-                    }
-                    jgen.writeEndObject();
-
-                    jgen.writeObjectFieldStart("fieldValues");
-                    for (Map.Entry<String, Integer> e: field.fieldValues.entrySet()) {
-                        jgen.writeNumberField(e.getKey(), e.getValue());
-                    }
-                    jgen.writeEndObject();
-
-                    jgen.writeBooleanField("valueListComplete", field.valueListComplete);
-                }
-                jgen.writeEndObject();
+                jgen.writeFieldName(field.name);
+                provider.defaultSerializeValue(field, jgen);
             }
             jgen.writeEndObject();
         }
@@ -316,45 +290,15 @@ public class Corpus implements Cloneable {
 
                 if (token != JsonToken.FIELD_NAME)
                     throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                MetadataField field = new MetadataField();
-                field.name = parser.getCurrentName();
+                //MetadataField field = new MetadataField();
+                String fieldName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
-                while (true) {
-                    token = parser.nextToken();
-                    if (token == JsonToken.END_OBJECT)
-                        break;
+                    throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-                    if (token != JsonToken.FIELD_NAME)
-                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                    String fieldName = parser.getCurrentName();
-                    token = parser.nextToken();
-                    switch (fieldName) {
-                    case "fieldName": field.fieldName = parser.getValueAsString(); break;
-                    case "isAnnotatedField": field.isAnnotatedField = parser.getValueAsBoolean(); break;
-                    case "displayName": field.displayName = parser.getValueAsString(); break;
-                    case "description": field.description = parser.getValueAsString(); break;
-                    case "uiType": field.uiType = parser.getValueAsString(); break;
-                    case "type": field.type = parser.getValueAsString(); break;
-                    case "analyzer": field.analyzer = parser.getValueAsString(); break;
-                    case "unknownCondition": field.unknownCondition = parser.getValueAsString(); break;
-                    case "unknownValue": field.unknownValue = parser.getValueAsString(); break;
-                    case "displayValues":
-                        if (token != JsonToken.START_OBJECT)
-                            throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.displayValues = JacksonUtil.readStringMap(parser);
-                        break;
-                    case "fieldValues":
-                        if (token != JsonToken.START_OBJECT)
-                            throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.fieldValues = JacksonUtil.readIntegerMap(parser);
-                        break;
-                    case "valueListComplete": field.valueListComplete = parser.getValueAsBoolean(); break;
-                    default: throw new RuntimeException("Unexpected field " + fieldName + " in MetadataField");
-                    }
-                }
+                MetadataField field = deserializationContext.readValue(parser, MetadataField.class);
+                field.name = fieldName;
                 result.add(field);
             }
             return result;
