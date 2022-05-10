@@ -56,16 +56,8 @@ public class Requests {
      * @param <T> response type
      */
     public static <T> List<T> getNodeResponses(Client client, WebTargetDecorator factory, Class<T> cls) {
-
         // Send requests and collect futures
-        List<Pair<String, Future<Response>>> futures = new ArrayList<>();
-        for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            Future<Response> futureResponse = factory.get(client.target(nodeUrl)) //client.target(nodeUrl)
-                    .request(MediaType.APPLICATION_JSON)
-                    .async()
-                    .get();
-            futures.add(Pair.of(nodeUrl, futureResponse));
-        }
+        List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory);
 
         // Wait for futures to complete and collect response objects
         List<T> nodeResponses = new ArrayList<>();
@@ -90,6 +82,41 @@ public class Requests {
             }
         }
         return nodeResponses;
+    }
+
+    private static List<Pair<String, Future<Response>>> sendNodeRequests(Client client, WebTargetDecorator factory) {
+        List<Pair<String, Future<Response>>> futures = new ArrayList<>();
+        for (String nodeUrl: AggregatorConfig.get().getNodes()) {
+            Future<Response> futureResponse = factory.get(client.target(nodeUrl)) //client.target(nodeUrl)
+                    .request(MediaType.APPLICATION_JSON)
+                    .async()
+                    .get();
+            futures.add(Pair.of(nodeUrl, futureResponse));
+        }
+        return futures;
+    }
+
+    public static <T> Pair<String, T> getFirstSuccesfulResponse(Client client, WebTargetDecorator factory, Class<T> cls) {
+        // Send requests and collect futures
+        List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory);
+
+        // Wait for futures to complete and collect response objects
+        List<T> nodeResponses = new ArrayList<>();
+        for (Pair<String, Future<Response>> p: futures) {
+            String nodeUrl = p.getLeft();
+            Future<Response> f = p.getRight();
+            Response clientResponse = null;
+            try {
+                clientResponse = f.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+            Response.Status status = Response.Status.fromStatusCode(clientResponse.getStatus());
+            Response.ResponseBuilder ourResponse;
+            if (status == Response.Status.OK)
+                return Pair.of(nodeUrl, clientResponse.readEntity(cls));
+        }
+        return null;
     }
 
     public static Response getHitsResponse(Client client, String corpusName, String patt,

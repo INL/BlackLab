@@ -61,7 +61,6 @@ public class SearchSummary implements Cloneable {
     @JsonInclude(Include.NON_NULL)
     public FieldInfo docFields;
 
-    // (just include an empty element here)
     @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)

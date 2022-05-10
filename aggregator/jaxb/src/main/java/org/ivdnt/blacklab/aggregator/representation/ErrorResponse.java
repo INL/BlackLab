@@ -37,6 +37,10 @@ public class ErrorResponse {
         this.error = error;
     }
 
+    public ErrorResponse(String code, String message) {
+        this.error = new Desc(code, message);
+    }
+
     public String getMessage() {
         return error.code + "||" + error.message;
     }

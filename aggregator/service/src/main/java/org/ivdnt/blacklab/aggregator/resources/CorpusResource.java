@@ -13,10 +13,13 @@ import javax.ws.rs.client.Client;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.ivdnt.blacklab.aggregator.logic.Aggregation;
 import org.ivdnt.blacklab.aggregator.logic.Requests;
 import org.ivdnt.blacklab.aggregator.logic.Requests.BlsRequestException;
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
+import org.ivdnt.blacklab.aggregator.representation.DocOverview;
+import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 
 @Path("/{corpusName}")
 public class CorpusResource {
@@ -70,6 +73,31 @@ public class CorpusResource {
 
         return Requests.getHitsResponse(client, corpusName, patt, sort,
                 group, first, number);
+    }
+
+    /**
+     * Perform a /hits request.
+     */
+    @GET
+    @Path("/docs/{pid}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response docOverview(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String pid) {
+
+        // Query each node and collect responses
+        try {
+            Pair<String, DocOverview> response = Requests.getFirstSuccesfulResponse(client,
+                    target -> target.path(corpusName).path("docs").path(pid),
+                    DocOverview.class);
+            if (response == null)
+                return Response.status(404).entity(new ErrorResponse("FAIL_ON_ALL_NODES", "No node returned OK")).build();
+            System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
+            return Response.ok().entity(response.getValue()).build();
+        } catch (BlsRequestException e) {
+            // One of the node requests produced an error. Return it now.
+            return Response.status(e.getStatus()).entity(e.getResponse()).build();
+        }
     }
 
 }
