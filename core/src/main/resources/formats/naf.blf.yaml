@@ -1,0 +1,65 @@
+# For displaying in user interface (optional)
+displayName: "Basic NAF configuration"
+
+# For describing input format in user interface (optional)
+description: Simple indexing of the NAF Terms and Token layer
+
+type: content
+
+fileType: xml
+
+namespaces:
+  'xml': http://www.w3.org/XML/1998/namespace
+
+documentPath: //NAF
+
+annotatedFields:
+
+  contents:
+
+    displayName: Contents
+
+    description: Contents of the documents.
+
+    containerPath: .//text
+
+    wordPath: .//wf
+
+    tokenPositionIdPath: "@id"
+
+    annotations: # basic
+      - name: word
+        displayName: Word
+        valuePath: .
+        
+      - name: word_or_lemma
+        valuePath: .//text()|./@lemma
+        displayName: Word or lemma
+        multipleValues: true
+        forwardIndex: true
+
+    standoffAnnotations:
+      - path: terms/term      # Element containing what to index (relative to documentPath)
+        refTokenPositionIdPath: "./span/target/@id" # What token position(s) to index these values at
+          # (may have multiple matches per path element; values will
+        # be indexed at all those positions)
+        annotations:           # The actual annotations (structure identical to regular annotations)
+          - name: lemma
+            valuePath: "@lemma"
+          - name: pos
+            valuePath: "@pos"
+            uiType: select
+
+metadata:
+  containerPath: //metadata_info
+  fields:
+    - forEachPath: metadata
+      namePath: "@feature"
+      valuePath: "@value"
+
+    - name: title
+      valuePath: "//fileDesc/@title"
+
+    - name: publicId
+      valuePath: "//public/@publicId"
+

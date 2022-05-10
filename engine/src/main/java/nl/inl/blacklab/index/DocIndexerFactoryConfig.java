@@ -90,7 +90,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         // or this will override those classes.
         String[] formats = {
                 "chat", "cmdi", "csv",
-                "eaf", "folia", "sketch-wpl",
+                "eaf", "folia", "naf", "sketch-wpl",
                 "tcf", "tei-p5", "tei-p4-legacy",
                 "tei-p5-legacy", "tsv-frog", "tsv",
                 "txt" };
