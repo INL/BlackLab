@@ -1,33 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.util;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+import java.io.StringWriter;
+
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.Map;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class TestXmlUtil {
 
@@ -81,7 +61,7 @@ public class TestXmlUtil {
         ObjectNode readJsonRoot = (ObjectNode) readMapper.readTree(swriter.toString());
         Assert.assertEquals("valstring", Json.getString(readJsonRoot, keys[0], ""));
         Assert.assertEquals(20, Json.getInt(readJsonRoot, keys[1], 0));
-        Assert.assertEquals(true, Json.getBoolean(readJsonRoot, keys[2], false));
+        Assert.assertTrue(Json.getBoolean(readJsonRoot, keys[2], false));
         Assert.assertEquals("simple", Json.getString(readJsonRoot, keys[3], ""));
     }
 

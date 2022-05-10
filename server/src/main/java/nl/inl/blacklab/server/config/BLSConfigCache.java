@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 
 public class BLSConfigCache {
 
-    private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
+    private static final Logger logger = LogManager.getLogger(BLSConfigCache.class);
 
     /** Divide max heap size by how much to autodetect a value for targetFreeMemMegs? */
     private static final int TARGET_FREE_MEM_AUTO_DIVIDER = 10;
@@ -25,7 +25,10 @@ public class BLSConfigCache {
     @Deprecated
     int maxSizeMegs = 100;
 
-    @Deprecated
+    /** Maximum number of cache entries to keep.
+     *
+     * Please note that memory use per cache entry may vary wildly.
+     */
     int maxNumberOfJobs = 100;
 
     /** When to abort a search (seconds). */
@@ -57,14 +60,12 @@ public class BLSConfigCache {
         logger.warn("Ignoring deprecated configuration option: cache.maxSizeMegs (use targetFreeMemMegs instead)");
     }
 
-    @Deprecated
     public int getMaxNumberOfJobs() {
         return maxNumberOfJobs;
     }
 
-    @Deprecated
+    @SuppressWarnings("unused")
     public void setMaxNumberOfJobs(int maxNumberOfJobs) {
-        logger.warn("Configuration option cache.maxNumberOfJobs is deprecated (use targetFreeMemMegs instead)");
         this.maxNumberOfJobs = maxNumberOfJobs;
     }
 
@@ -72,6 +73,7 @@ public class BLSConfigCache {
         return maxJobAgeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxJobAgeSec(int maxJobAgeSec) {
         this.maxJobAgeSec = maxJobAgeSec;
     }
@@ -97,6 +99,7 @@ public class BLSConfigCache {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setTargetFreeMemMegs(int targetFreeMemMegs) {
         this.targetFreeMemMegs = targetFreeMemMegs;
     }
@@ -126,6 +129,7 @@ public class BLSConfigCache {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setMinFreeMemForSearchMegs(int minFreeMemForSearchMegs) {
         this.minFreeMemForSearchMegs = minFreeMemForSearchMegs;
     }
@@ -134,6 +138,7 @@ public class BLSConfigCache {
         return clientCacheTimeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setClientCacheTimeSec(int clientCacheTimeSec) {
         this.clientCacheTimeSec = clientCacheTimeSec;
     }
@@ -142,6 +147,7 @@ public class BLSConfigCache {
         return maxSearchTimeSec;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxSearchTimeSec(int maxSearchTimeSec) {
         this.maxSearchTimeSec = maxSearchTimeSec;
     }
@@ -150,6 +156,7 @@ public class BLSConfigCache {
         return maxQueuedSearches;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxQueuedSearches(int maxQueuedSearches) {
         this.maxQueuedSearches = maxQueuedSearches;
     }
@@ -158,6 +165,7 @@ public class BLSConfigCache {
         return denyAbortedSearchSec;
     }
 
+    @SuppressWarnings("unused")
     public void setDenyAbortedSearchSec(int denyAbortedSearchSec) {
         this.denyAbortedSearchSec = denyAbortedSearchSec;
     }
@@ -166,6 +174,7 @@ public class BLSConfigCache {
         return implementation;
     }
 
+    @SuppressWarnings("unused")
     public void setImplementation(String implementation) {
         this.implementation = implementation;
     }

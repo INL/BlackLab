@@ -5,9 +5,9 @@ import nl.inl.blacklab.search.results.ContextSize;
 
 public class ContextSettings {
 
-    private ContextSize size;
+    private final ContextSize size;
 
-    private ConcordanceType concType;
+    private final ConcordanceType concType;
 
     public ContextSettings(ContextSize size, ConcordanceType concType) {
         super();

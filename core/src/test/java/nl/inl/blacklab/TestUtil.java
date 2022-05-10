@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab;
 
 import java.io.IOException;
@@ -56,7 +41,7 @@ public class TestUtil {
                 if (first) {
                     // .nextDoc() should always place us in a document with at least 1 hit
                     first = false;
-                    Assert.assertFalse(actualStartPos == Spans.NO_MORE_POSITIONS);
+                    Assert.assertNotEquals(Spans.NO_MORE_POSITIONS, actualStartPos);
                 }
                 hitNumber++;
                 Assert.assertEquals(hitDesc(docNumber, hitNumber) + ": start pos", expected.nextStartPosition(),
@@ -97,12 +82,12 @@ public class TestUtil {
                 if (first) {
                     // .nextDoc() should always place us in a document with at least 1 bucket
                     first = false;
-                    Assert.assertFalse(nextBucketRv == SpansInBuckets.NO_MORE_BUCKETS);
+                    Assert.assertNotEquals(SpansInBuckets.NO_MORE_BUCKETS, nextBucketRv);
                 }
                 Assert.assertEquals(expected.nextBucket(), nextBucketRv);
                 if (nextBucketRv == SpansInBuckets.NO_MORE_BUCKETS)
                     break;
-                Assert.assertFalse(actual.bucketSize() == 0); // no empty buckets
+                Assert.assertNotEquals(0, actual.bucketSize()); // no empty buckets
                 Assert.assertEquals(expected.bucketSize(), actual.bucketSize());
                 for (int i = 0; i < actual.bucketSize(); i++) {
                     Assert.assertEquals(expected.startPosition(i), actual.startPosition(i));

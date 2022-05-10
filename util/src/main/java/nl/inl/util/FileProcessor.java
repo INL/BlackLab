@@ -62,7 +62,6 @@ public class FileProcessor implements AutoCloseable {
          *
          * @param path filename, including path inside archives (if the file is within
          *            an archive)
-         * @param is
          * @param file (optional, if known) the file from which the InputStream was
          *            built, or - if the InputStream is a file within an archive - the
          *            archive.
@@ -123,7 +122,7 @@ public class FileProcessor implements AutoCloseable {
      * Simple error handler that reports errors and can abort or continue.
      */
     public static class SimpleErrorHandler implements ErrorHandler {
-        private boolean continueOnError;
+        private final boolean continueOnError;
 
         public SimpleErrorHandler(boolean continueOnError) {
             this.continueOnError = continueOnError;
@@ -148,7 +147,7 @@ public class FileProcessor implements AutoCloseable {
                 byte[] file;
 
                 @Override
-                public void directory(File dir) throws Exception {
+                public void directory(File dir) {
                     //
                 }
 
@@ -276,16 +275,16 @@ public class FileProcessor implements AutoCloseable {
             executor = new ThreadPoolExecutor(actualThreadsToUse, actualThreadsToUse, Integer.MAX_VALUE, TimeUnit.DAYS,
                 // We don't need a long queue at all
                 // Every queued job holds a full document in memory, and documents can be *very* large (100Meg+)
-                new LinkedBlockingDeque<Runnable>(Math.max(1, actualThreadsToUse / 2)) {
-                    @Override
-                    public boolean offer(Runnable r) {
-                        try {
-                            return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
-                        } catch (InterruptedException e) {
-                            return false;
+                    new LinkedBlockingDeque<>(Math.max(1, actualThreadsToUse / 2)) {
+                        @Override
+                        public boolean offer(Runnable r) {
+                            try {
+                                return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
+                            } catch (InterruptedException e) {
+                                return false;
+                            }
                         }
                     }
-                }
             );
 
             // Never throw RejectedExecutionException in the main thread
@@ -302,7 +301,6 @@ public class FileProcessor implements AutoCloseable {
      * Only process files matching the glob. NOTE: this pattern is NOT applied to
      * directories.
      *
-     * @param glob
      */
     public void setFileNameGlob(String glob) {
         pattGlob = Pattern.compile(FileUtil.globToRegex(glob == null ? "*" : glob));
@@ -312,7 +310,6 @@ public class FileProcessor implements AutoCloseable {
      * Only process files matching the pattern. NOTE: this pattern is NOT applied to
      * directories.
      *
-     * @param pattGlob
      */
     public void setFileNamePattern(Pattern pattGlob) {
         this.pattGlob = pattGlob;
@@ -410,7 +407,6 @@ public class FileProcessor implements AutoCloseable {
                 processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
             } catch (IOException e) {
                 reportAndAbort(e, file.getAbsolutePath(), file);
-                return;
             }
         }
     }
@@ -461,7 +457,6 @@ public class FileProcessor implements AutoCloseable {
      *
      * @param path filename, optionally including path to the file or path within an
      *            archive
-     * @param contents
      * @param file (optional) the file backing the contents, or - if
      *            the contents array represents a file within an archive - the archive. This is
      *            only used for reporting to FileHandler and ErrorHandler
@@ -492,9 +487,6 @@ public class FileProcessor implements AutoCloseable {
      * irrecoverable, abort.
      * {@link ErrorHandler#errorOccurred(Throwable, String, File)}
      *
-     * @param e
-     * @param path
-     * @param f
      * @return always null, has return type to enable use as exception handler in
      *         CompletableFuture
      */

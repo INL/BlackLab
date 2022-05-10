@@ -5,21 +5,22 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 import org.apache.logging.log4j.Level;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 
 /** Export the original corpus from a BlackLab index. */
 public class ExportCorpus implements AutoCloseable {
 
-    public static void main(String[] args) throws ErrorOpeningIndex {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -72,16 +73,17 @@ public class ExportCorpus implements AutoCloseable {
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new DocTask() {
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             int docsDone = 0;
 
             @Override
-            public void perform(Doc doc) {
-                String fromInputFile = doc.luceneDoc().get("fromInputFile");
+            public void perform(BlackLabIndex index, int id) {
+                Document doc = index.luceneDoc(id);
+                String fromInputFile = doc.get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = doc.contents();
+                    String xml = DocUtil.contents(index, id, doc);
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {
@@ -119,7 +121,7 @@ public class ExportCorpus implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (index != null)
             index.close();
     }

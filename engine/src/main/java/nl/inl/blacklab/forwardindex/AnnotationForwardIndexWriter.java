@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
@@ -167,12 +152,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort(new Comparator<TocEntry>() {
-            @Override
-            public int compare(TocEntry o1, TocEntry o2) {
-                return o1.length - o2.length;
-            }
-        });
+        deletedTocEntries.sort(Comparator.comparingInt(o -> o.length));
     }
 
 
@@ -223,7 +203,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
             }
             try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
                     FileChannel fc = raf.getChannel()) {
-                long fileSize = SIZEOF_INT + (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+                long fileSize = SIZEOF_INT + (long) (SIZEOF_LONG + SIZEOF_INT + 1) * n;
                 fc.truncate(fileSize);
                 MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
                 buf.putInt(n);
@@ -366,7 +346,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
                 // No, remap it
                 writeBufOffset = newDocumentOffset;
                 ByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-                        writeBufOffset * SIZEOF_INT, (numberOfTokens + mapReserve)
+                        writeBufOffset * SIZEOF_INT, (long) (numberOfTokens + mapReserve)
                                 * SIZEOF_INT);
                 writeBuffer = byteBuffer.asIntBuffer();
             }
@@ -549,16 +529,6 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     }
 
     /**
-     * @return the number of free blocks in the forward index.
-     */
-    @Override
-    public int freeBlocks() {
-        if (!initialized)
-            initialize();
-        return deletedTocEntries.size();
-    }
-
-    /**
      * Gets the length (in tokens) of a document
      *
      * NOTE: this INCLUDES the extra closing token at the end.
@@ -578,7 +548,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
     public Set<Integer> idSet() {
         if (!initialized)
             initialize();
-        return new AbstractSet<Integer>() {
+        return new AbstractSet<>() {
             @Override
             public boolean contains(Object o) {
                 return !toc.get((Integer) o).deleted;
@@ -591,7 +561,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
 
             @Override
             public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
+                return new Iterator<>() {
                     int current = -1;
                     int next = -1;
 

@@ -4,7 +4,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 
 public class HitSortSettings {
 
-    private HitProperty sortBy;
+    private final HitProperty sortBy;
 
     public HitSortSettings(HitProperty sortBy) {
         super();

@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchCollocationsWindow extends SearchCollocations {
 
-    private SearchCollocations source;
-    private long first;
-    private long number;
+    private final SearchCollocations source;
+    private final long first;
+    private final long number;
 
     public SearchCollocationsWindow(QueryInfo queryInfo, SearchCollocations source, long first, long number) {
         super(queryInfo);

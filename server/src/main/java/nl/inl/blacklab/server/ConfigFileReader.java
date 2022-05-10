@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,7 +37,7 @@ class ConfigFileReader {
 
     private boolean configFileIsJson;
 
-    private JsonNode configFileJsonNode;
+    private final JsonNode configFileJsonNode;
 
     public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
         configFileIsJson = false;
@@ -80,14 +79,9 @@ class ConfigFileReader {
         if (configFileContents == null) {
             String descDirs = StringUtils.join(searchDirs, ", ");
             throw new ConfigurationException("Couldn't find blacklab-server.(json|yaml) in dirs " + descDirs
-                    + ", or on classpath. Please place " +
-                    "blacklab-server.json in one of these locations containing at least the following:\n" +
-                    "{\n" +
-                    "  \"indexCollections\": [\n" +
-                    "    \"/my/indices\" \n" +
-                    "  ]\n" +
-                    "}\n\n" +
-                    "With this configuration, one index could be in /my/indices/my-first-index/, for example.. For additional documentation, please see http://inl.github.io/BlackLab/");
+                    + ", or on classpath. Please place this configuration file in one of these locations. "
+                    + "See https://inl.github.io/BlackLab/configuration-files.html#minimal-config-file for a "
+                    + "minimal configuration file.");
         } else {
             ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             try {
@@ -100,21 +94,6 @@ class ConfigFileReader {
 
     public boolean isJson() {
         return configFileIsJson;
-    }
-
-    public String getConfigFileRead() {
-        return configFileRead;
-    }
-
-    /**
-     * Read JSON or YAML from config file, depending on type.
-     *
-     * @return config structure read
-     * @throws JsonProcessingException on Json error
-     * @throws IOException on any I/O error
-     */
-    public JsonNode getJsonConfig() throws JsonProcessingException, IOException {
-        return configFileJsonNode;
     }
 
     public BLSConfig getConfig() throws InvalidConfiguration {

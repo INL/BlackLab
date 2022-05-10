@@ -8,10 +8,10 @@ import nl.inl.blacklab.search.results.Result;
 public class TermFrequency implements Result<TermFrequency> {
 
     /** What token this frequency is for */
-    public String term;
+    public final String term;
 
     /** How many times the token occurs in the context */
-    public long frequency;
+    public final long frequency;
 
     /**
      * Construct a collocation

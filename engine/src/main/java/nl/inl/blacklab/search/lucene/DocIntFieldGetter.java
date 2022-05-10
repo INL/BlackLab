@@ -24,10 +24,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class DocIntFieldGetter implements Closeable {
 
     /** The Lucene index reader, for querying field length */
-    private LeafReader reader;
+    private final LeafReader reader;
 
     /** Field name to check for the length of the field in tokens */
-    private String intFieldName;
+    private final String intFieldName;
 
     /** Lengths may have been cached using FieldCache */
     private NumericDocValues docValues;
@@ -43,7 +43,6 @@ public class DocIntFieldGetter implements Closeable {
                 // Use UninvertingReader to simulate DocValues (slower)
                 Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                 fields.put(intFieldName, UninvertingReader.Type.INTEGER_POINT);
-                @SuppressWarnings("resource")
                 LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
                 docValues = uninv.getNumericDocValues(intFieldName);
             }
@@ -71,7 +70,7 @@ public class DocIntFieldGetter implements Closeable {
         		docValues.advanceExact(doc);
 				return (int)docValues.longValue();
 			} catch (IOException e) {
-				BlackLabRuntimeException.wrap(e);
+                throw BlackLabRuntimeException.wrap(e);
 			}
         }
 

@@ -13,94 +13,67 @@ import org.apache.lucene.search.DocIdSetIterator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 
-public class DocImpl implements Doc {
-    
-    /** Index the document is in */
-    private BlackLabIndex index;
-    
-    /** Lucene document id */
-    private int id;
-    
-    /** Lucene document (if cached) */
-    private Document document;
-    
-    public DocImpl(BlackLabIndex index, int id) {
-        this.index = index;
-        this.id = id;
+/**
+ * Several utility methods related to documents and highlighting.
+ */
+public class DocUtil {
+
+    private DocUtil() {
     }
 
-    @Override
-    public BlackLabIndex index() {
-        return index;
-    }
-
-    @Override
-    public int id() {
-        return id;
-    }
-    
-    @Override
-    public synchronized Document luceneDoc() {
-        if (document == null) {
-            try {
-                document = index.reader().document(id);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
-        return document;
-    }
-    
-    @Override
-    public boolean isLuceneDocCached() {
-        return document != null;
-    }
-
-    @Override
-    public void characterOffsets(Field field, int[] startsOfWords, int[] endsOfWords,
-            boolean fillInDefaultsIfNotFound) {
-
+    /**
+     * Given token start/end positions, get the corresponding character offsets.
+     *
+     * The field in question must have character offsets stored.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param field annotated or metadata field we want offsets for
+     * @param startsOfWords token positions we want the starting character offsets for
+     * @param endsOfWords token positions we want the ending character offsets for
+     * @param fillInDefaultsIfNotFound if some positions could not be found, fill in defaults
+     *                                 instead of throwing an exception?
+     */
+    public static void characterOffsets(BlackLabIndex index, int docId, Field field, int[] startsOfWords, int[] endsOfWords, boolean fillInDefaultsIfNotFound) {
         if (startsOfWords.length == 0)
             return; // nothing to do
         try {
             // Determine lowest and highest word position we'd like to know something about.
-            // This saves a little bit of time for large result sets.
+            // This saves a bit of time for large result sets.
             int minP = -1, maxP = -1;
-            int numStarts = startsOfWords.length;
-            int numEnds = endsOfWords.length;
-            for (int i = 0; i < numStarts; i++) {
-                if (startsOfWords[i] < minP || minP == -1)
-                    minP = startsOfWords[i];
-                if (startsOfWords[i] > maxP)
-                    maxP = startsOfWords[i];
+            for (int startsOfWord : startsOfWords) {
+                if (startsOfWord < minP || minP == -1)
+                    minP = startsOfWord;
+                if (startsOfWord > maxP)
+                    maxP = startsOfWord;
             }
-            for (int i = 0; i < numEnds; i++) {
-                if (endsOfWords[i] < minP || minP == -1)
-                    minP = endsOfWords[i];
-                if (endsOfWords[i] > maxP)
-                    maxP = endsOfWords[i];
+            for (int endsOfWord : endsOfWords) {
+                if (endsOfWord < minP || minP == -1)
+                    minP = endsOfWord;
+                if (endsOfWord > maxP)
+                    maxP = endsOfWord;
             }
             if (minP < 0 || maxP < 0)
                 throw new BlackLabRuntimeException("Can't determine min and max positions");
 
             String fieldPropName = field.offsetsField();
 
-            org.apache.lucene.index.Terms terms = index.reader().getTermVector(id, fieldPropName);
+            org.apache.lucene.index.Terms terms = index.reader().getTermVector(docId, fieldPropName);
             if (terms == null)
-                throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + id + " has no term vector");
+                throw new IllegalArgumentException("Field " + fieldPropName + " in doc " + docId + " has no term vector");
             if (!terms.hasPositions())
                 throw new IllegalArgumentException(
-                        "Field " + fieldPropName + " in doc " + id + " has no character postion information");
+                        "Field " + fieldPropName + " in doc " + docId + " has no character position information");
 
             //int lowestPos = -1, highestPos = -1;
             int lowestPosFirstChar = -1, highestPosLastChar = -1;
-            int total = numStarts + numEnds;
+            int total = startsOfWords.length + endsOfWords.length;
             boolean[] done = new boolean[total]; // NOTE: array is automatically initialized to zeroes!
             int found = 0;
 
@@ -138,16 +111,16 @@ public class DocImpl implements Doc {
                             continue;
                         }
 
-                        for (int m = 0; m < numStarts; m++) {
+                        for (int m = 0; m < startsOfWords.length; m++) {
                             if (!done[m] && position == startsOfWords[m]) {
                                 done[m] = true;
                                 startsOfWords[m] = startOffset;
                                 found++;
                             }
                         }
-                        for (int m = 0; m < numEnds; m++) {
-                            if (!done[numStarts + m] && position == endsOfWords[m]) {
-                                done[numStarts + m] = true;
+                        for (int m = 0; m < endsOfWords.length; m++) {
+                            if (!done[startsOfWords.length + m] && position == endsOfWords[m]) {
+                                done[startsOfWords.length + m] = true;
                                 endsOfWords[m] = endOffset;
                                 found++;
                             }
@@ -167,12 +140,12 @@ public class DocImpl implements Doc {
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
                     throw new BlackLabRuntimeException("Could not find default char positions!");
 
-                for (int m = 0; m < numStarts; m++) {
+                for (int m = 0; m < startsOfWords.length; m++) {
                     if (!done[m])
                         startsOfWords[m] = lowestPosFirstChar;
                 }
-                for (int m = 0; m < numEnds; m++) {
-                    if (!done[numStarts + m])
+                for (int m = 0; m < endsOfWords.length; m++) {
+                    if (!done[startsOfWords.length + m])
                         endsOfWords[m] = highestPosLastChar;
                 }
             }
@@ -182,40 +155,33 @@ public class DocImpl implements Doc {
         }
     }
 
-    /**
-     * Get character positions from a list of hits.
-     *
-     * Used by DocImpl to highlight content in a document.
-     *
-     * @param hits the hits for which we wish to find character positions
-     * @return a list of HitSpan objects containing the character positions for the
-     *         hits.
-     */
-    private List<HitCharSpan> getCharacterOffsets(Hits hits) {
-        if (hits.size() > Integer.MAX_VALUE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " hits in a single doc");
+    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
+        if (hits.size() > BlackLab.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
-        Iterator<Hit> hitsIt = hits.iterator();
+        Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
         for (int i = 0; i < starts.length; i++) {
-            Hit hit = hitsIt.next(); // hits.get(i);
-            starts[i] = hit.start();
-            ends[i] = hit.end() - 1; // end actually points to the first word not in the hit, so
+            EphemeralHit hit = hitsIt.next(); // hits.get(i);
+            starts[i] = hit.start;
+            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
 
-        characterOffsets(hits.field(), starts, ends, true);
+        characterOffsets(index, docId, hits.field(), starts, ends, true);
 
-        List<HitCharSpan> hitspans = new ArrayList<>(starts.length);
+        List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
-            hitspans.add(new HitCharSpan(starts[i], ends[i]));
+            hitSpans.add(new HitCharSpan(starts[i], ends[i]));
         }
-        return hitspans;
+        return hitSpans;
     }
 
     /**
      * Convert start/end word positions to char positions.
      *
+     * @param index our index
+     * @param docId document id
      * @param field field to use
      * @param startAtWord where to start getting the content (-1 for start of
      *            document, 0 for first word)
@@ -223,7 +189,7 @@ public class DocImpl implements Doc {
      * @return the start and end char position as a two element int array (with any
      *         -1's preserved)
      */
-    private int[] startEndWordToCharPos(Field field, int startAtWord, int endAtWord) {
+    private static int[] startEndWordToCharPos(BlackLabIndex index, int docId, Field field, int startAtWord, int endAtWord) {
         if (startAtWord == -1 && endAtWord == -1) {
             // No need to translate anything
             return new int[] { -1, -1 };
@@ -237,7 +203,7 @@ public class DocImpl implements Doc {
         boolean endAtEndOfDoc = endAtWord == -1;
         int[] starts = { startAtStartOfDoc ? 0 : startAtWord };
         int[] ends = { endAtEndOfDoc ? starts[0] : endAtWord };
-        characterOffsets(field, starts, ends, true);
+        characterOffsets(index, docId, field, starts, ends, true);
         if (startAtStartOfDoc)
             starts[0] = -1;
         if (endAtEndOfDoc)
@@ -245,9 +211,23 @@ public class DocImpl implements Doc {
         return new int[] { starts[0], ends[0] };
     }
 
-    @Override
-    public String contentsByCharPos(Field field, int startAtChar, int endAtChar) {
-        Document d = luceneDoc();
+    /**
+     * Get part of a field's contents.
+     *
+     * The field may be an annotated field with a content store, in which case
+     * that is used, or a metadata field where the value is stored.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param d Lucene document (or null if not yet loaded)
+     * @param field field to get contents for
+     * @param startAtChar first character of contents to return, or -1 for start of contents
+     * @param endAtChar character after last character of contents to return , or -1 for end of contents
+     * @return (part) of the contents
+     */
+    public static String contentsByCharPos(BlackLabIndex index, int docId, Document d, Field field, int startAtChar, int endAtChar) {
+        if (d == null)
+            d = index.luceneDoc(docId);
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
             return d.get(field.contentsFieldName()).substring(startAtChar, endAtChar);
@@ -255,33 +235,26 @@ public class DocImpl implements Doc {
         return index.contentAccessor(field).getSubstringsFromDocument(d, new int[] { startAtChar }, new int[] { endAtChar })[0];
     }
 
-    @Override
-    public String contents(Field field, int startAtWord, int endAtWord) {
-        Document d = luceneDoc();
-        if (!field.hasContentStore()) {
-            // No special content accessor set; assume a stored field
-            String content = d.get(field.contentsFieldName());
-            if (content == null)
-                throw new IllegalArgumentException("Field not found: " + field.name());
-            return BlackLabIndexImpl.getWordsFromString(content, startAtWord, endAtWord);
-        }
-
-        int[] startEnd = startEndWordToCharPos(field, startAtWord, endAtWord);
-        return index.contentAccessor(field).getSubstringsFromDocument(d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
-    }
-
-    @Override
-    public String highlightContent(Hits hits, int startAtWord, int endAtWord) {
-
+    /**
+     * Highlight hits in (part of) a field's contents.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param hits hits to highlight
+     * @param startAtWord starting token position in contents
+     * @param endAtWord ending token position in contents (first token not to be returned)
+     * @return (part of) the content with highlighting.
+     */
+    public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
         AnnotatedField field = hits.field();
-        int[] startEndCharPos = startEndWordToCharPos(field, startAtWord, lastWord);
+        int[] startEndCharPos = startEndWordToCharPos(index, docId, field, startAtWord, lastWord);
 
         // Get content by char positions
         int startAtChar = startEndCharPos[0];
         int endAtChar = startEndCharPos[1];
-        String content = contentsByCharPos(field, startAtChar, endAtChar);
+        String content = contentsByCharPos(index, docId, null, field, startAtChar, endAtChar);
 
         boolean wholeDocument = startAtWord == -1 && endAtWord == -1;
         boolean mustFixUnbalancedTags = !wholeDocument;
@@ -290,33 +263,20 @@ public class DocImpl implements Doc {
         ResultsStats hitsStats = hits.hitsStats();
         if (hitsStats.processedAtLeast(1) || mustFixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
-            List<HitCharSpan> hitspans = null;
+            List<HitCharSpan> hitSpans = null;
             if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
-                hitspans = getCharacterOffsets(hits);
+                hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
             if (startAtChar == -1)
                 startAtChar = 0;
-            content = hl.highlight(content, hitspans, startAtChar);
+            content = hl.highlight(content, hitSpans, startAtChar);
         }
         return content;
     }
 
-    /**
-     * Get a number of substrings from a certain field in a certain document.
-     *
-     * For larger documents, this is faster than retrieving the whole content first
-     * and then cutting substrings from that.
-     *
-     * @param d the document
-     * @param field the field
-     * @param starts start positions of the substring we want
-     * @param ends end positions of the substring we want; correspond to the starts
-     *            array.
-     * @return the substrings
-     */
-    private String[] getSubstringsFromDocument(Document d, Field field, int[] starts,
-            int[] ends) {
+    private static String[] getSubstringsFromDocument(BlackLabIndex index,
+            Document d, Field field, int[] starts, int[] ends) {
         if (!field.hasContentStore()) {
             String[] content;
             // No special content accessor set; assume a non-annotated stored field
@@ -331,9 +291,22 @@ public class DocImpl implements Doc {
         return index.contentAccessor(field).getSubstringsFromDocument(d, starts, ends);
     }
 
-    @Override
-    public List<Concordance> makeConcordancesFromContentStore(Field field, int[] startsOfWords,
-            int[] endsOfWords, XmlHighlighter hl) {
+    /**
+     * Use the content store instead of the forward index to make concordances.
+     *
+     * This ensures the concordances contain the full original content, not what could
+     * be reconstructed from the forward index. This is significantly slower though.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param field field to make concordances for
+     * @param startsOfWords token position for match starts
+     * @param endsOfWords token position for match ends
+     * @param hl highlighter to use
+     * @return concordances
+     */
+    public static List<Concordance> makeConcordancesFromContentStore(BlackLabIndex index, int docId,
+            Field field, int[] startsOfWords, int[] endsOfWords, XmlHighlighter hl) {
         // Determine starts and ends
         int n = startsOfWords.length / 2;
         int[] starts = new int[n];
@@ -344,8 +317,8 @@ public class DocImpl implements Doc {
         }
 
         // Retrieve 'em all
-        Document d = luceneDoc();
-        String[] content = getSubstringsFromDocument(d, field, starts, ends);
+        Document d = index.luceneDoc(docId);
+        String[] content = getSubstringsFromDocument(index, d, field, starts, ends);
 
         // Cut 'em up
         List<Concordance> rv = new ArrayList<>();
@@ -377,32 +350,28 @@ public class DocImpl implements Doc {
         return rv;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id;
-        result = prime * result + ((index == null) ? 0 : index.hashCode());
-        return result;
-    }
+    /**
+     * Get the contents of a document.
+     *
+     * @param index our index
+     * @param docId document id
+     * @param d Lucene document if available, otherwise null
+     * @return contents
+     */
+    public static String contents(BlackLabIndex index, int docId, Document d) {
+        Document d1 = d;
+        Field field = index.mainAnnotatedField();
+        if (d1 == null)
+            d1 = index.luceneDoc(docId);
+        if (!field.hasContentStore()) {
+            // No special content accessor set; assume a stored field
+            String content = d1.get(field.contentsFieldName());
+            if (content == null)
+                throw new IllegalArgumentException("Field not found: " + field.name());
+            return content;
+        }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        DocImpl other = (DocImpl) obj;
-        if (id != other.id)
-            return false;
-        if (index == null) {
-            if (other.index != null)
-                return false;
-        } else if (!index.equals(other.index))
-            return false;
-        return true;
+        int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
+        return index.contentAccessor(field).getSubstringsFromDocument(d1, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
     }
-
 }

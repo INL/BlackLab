@@ -1,12 +1,13 @@
 package nl.inl.blacklab.server.datastream;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
-
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class to stream out XML data.
@@ -16,7 +17,7 @@ import java.util.Set;
  */
 public class DataStreamXml extends DataStream {
 
-    List<String> tagStack = new ArrayList<>();
+    final List<String> tagStack = new ArrayList<>();
 
     public DataStreamXml(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
@@ -271,6 +272,18 @@ public class DataStreamXml extends DataStream {
     @Override
     public DataStream value(boolean value) {
         return indent().print(value).newline();
+    }
+
+    /**
+     * Output an XML fragment, either as a string
+     * value or as part of the XML structure.
+     *
+     * @param fragment
+     * @return data stream
+     */
+    public DataStream xmlFragment(String fragment) {
+        // Because we're outputting XML, we output the fragment plain (unquoted or -escaped)
+        return plain(fragment);
     }
 
 }

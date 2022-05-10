@@ -26,19 +26,19 @@ public class QueryExecutionContext {
     }
 
     /** The index object, representing the BlackLab index */
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
-    private String subpropPrefix;
+    private final String subpropPrefix;
 
     /** The sensitivity variant of our annotation we'll search. */
-    private AnnotationSensitivity sensitivity;
+    private final AnnotationSensitivity sensitivity;
     
     /** The originally requested match sensitivity.
      * 
      *  This might be different from the AnnotationSensitivity we search, because not all 
      *  fields support all sensitivities. */
-    private MatchSensitivity requestedSensitivity;
+    private final MatchSensitivity requestedSensitivity;
 
     /**
      * Construct a query execution context object.

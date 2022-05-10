@@ -1,24 +1,8 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
@@ -111,7 +94,7 @@ class IndexerImpl implements DocWriter, Indexer {
             try (
                     UnicodeStream inputStream = new UnicodeStream(is, DEFAULT_INPUT_ENCODING);
                     DocIndexer docIndexer = DocumentFormats.get(IndexerImpl.this.formatIdentifier, IndexerImpl.this, path,
-                            inputStream, inputStream.getEncoding());) {
+                            inputStream, inputStream.getEncoding())) {
                 impl(docIndexer, path);
             }
         }
@@ -143,16 +126,13 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-    private DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
+    private final DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
 
     /** Our index */
     private BlackLabIndexWriter indexWriter;
 
     /** Stop after indexing this number of docs. -1 if we shouldn't stop. */
     private int maxNumberOfDocsToIndex = -1;
-
-    /** Should we terminate indexing? (e.g. because of an error) */
-    private boolean terminateIndexing = false;
 
     /**
      * Where to report indexing progress.
@@ -194,7 +174,7 @@ class IndexerImpl implements DocWriter, Indexer {
     private FieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
-    private List<File> linkedFileDirs = new ArrayList<>();
+    private final List<File> linkedFileDirs = new ArrayList<>();
 
     /**
      * If a file cannot be found in the linkedFileDirs, use this to retrieve it (if
@@ -226,7 +206,7 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     IndexerImpl(File directory, boolean create)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        this(directory, create, (String) null, null);
+        this(directory, create, null, null);
     }
 
     /**
@@ -250,8 +230,6 @@ class IndexerImpl implements DocWriter, Indexer {
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
-     * @throws IOException
-     * @throws ErrorOpeningIndex
      */
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
@@ -333,9 +311,6 @@ class IndexerImpl implements DocWriter, Indexer {
                         formatError = "format not found";
                     throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                             formatError);
-//                    throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
-//                            + "' not found (or format config contains an error) when creating new index in "
-//                            + directory);
                 }
             } else if (DocumentFormats.isSupported(formatIdentifier)) {
                 this.formatIdentifier = formatIdentifier;
@@ -367,8 +342,6 @@ class IndexerImpl implements DocWriter, Indexer {
                     formatError = "format not found";
                 throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
                         formatError);
-//                throw new DocumentFormatNotFound("Input format config '" + formatIdentifier
-//                        + "' not found (or format config contains an error) when creating new index in " + directory);
             }
         } else { // opening an existing index
 
@@ -505,7 +478,6 @@ class IndexerImpl implements DocWriter, Indexer {
      * Add a Lucene document to the index
      *
      * @param document the document to add
-     * @throws IOException
      */
     @Override
     public void add(Document document) throws IOException {
@@ -536,16 +508,6 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
-    }
-
-    @Deprecated
-    @Override
-    public void index(String documentName, Reader reader) {
-    	try {
-    		index(documentName, IOUtils.toByteArray(reader, DEFAULT_INPUT_ENCODING), null); // convert to our default encoding
-    	} catch (IOException e) {
-    	    listener().errorOccurred(e, documentName, null);
-    	}
     }
 
     @Override
@@ -597,8 +559,6 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public synchronized boolean continueIndexing() {
         if (!indexWriter.isOpen())
-            return false;
-        if (terminateIndexing)
             return false;
         if (maxNumberOfDocsToIndex >= 0) {
             return docsToDoLeft() > 0;

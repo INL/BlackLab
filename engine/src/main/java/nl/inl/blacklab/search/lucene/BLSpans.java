@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -133,15 +118,14 @@ public abstract class BLSpans extends Spans {
     public static BLSpans optSortUniq(BLSpans spans, boolean sort, boolean removeDuplicates) {
         if (spans == null)
             return null;
-        BLSpans result = spans;
         if (!sort && removeDuplicates) {
             // Make already-sorted spans unique. 
-            return new SpansUnique(result);
+            return new SpansUnique(spans);
         }
         if (sort) {
             // Sort spans by document and start point, then optionally make them unique too.
-            return PerDocumentSortedSpans.startPoint(result, removeDuplicates);
+            return PerDocumentSortedSpans.startPoint(spans, removeDuplicates);
         }
-        return result;
+        return spans;
     }
 }

@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
@@ -102,9 +101,9 @@ public class TestIndex {
      */
     BlackLabIndex index;
 
-    private File indexDir;
+    private final File indexDir;
 
-    private Annotation word;
+    private final Annotation word;
 
     public TestIndex() {
         this(false);
@@ -163,7 +162,7 @@ public class TestIndex {
     }
 
     private static void deleteTree(File dir) {
-        for (File f : dir.listFiles()) {
+        for (File f: dir.listFiles()) {
             if (f.isFile())
                 f.delete();
             else if (f.isDirectory())
@@ -243,11 +242,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(BLSpanQuery query) {
-        try {
-            return getConcordances(index.find(query, null), word);
-        } catch (WildcardTermTooBroad e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return getConcordances(index.find(query, null), word);
     }
 
     /**

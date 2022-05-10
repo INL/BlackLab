@@ -22,7 +22,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
@@ -34,13 +33,13 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 /**
  * A Hits object that is filled from a BLSpanQuery.
  */
-public class HitsFromQuery extends Hits {
+public class HitsFromQuery extends HitsMutable {
 
     /** Settings such as max. hits to process/count. */
-    SearchSettings searchSettings;
+    final SearchSettings searchSettings;
 
     /** Did we exceed the maximums? */
-    MaxStats maxStats;
+    final MaxStats maxStats;
 
     /**
      * The SpanWeight for our SpanQuery, from which we can get the next Spans when
@@ -56,7 +55,7 @@ public class HitsFromQuery extends Hits {
     /**
      * What LeafReaderContext we're querying now.
      */
-    private int atomicReaderContextIndex = -1;
+    private int atomicReaderContextIndex;
 
     /**
      * Term contexts for the terms in the query.
@@ -76,9 +75,9 @@ public class HitsFromQuery extends Hits {
     /**
      * Did we completely read our Spans object?
      */
-    private boolean sourceSpansFullyRead = true;
+    private boolean sourceSpansFullyRead;
 
-    private Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /** Context of our query; mostly used to keep track of captured groups. */
     private HitQueryContext hitQueryContext;
@@ -96,10 +95,9 @@ public class HitsFromQuery extends Hits {
      * @param queryInfo query info
      * @param sourceQuery the query to execute to get the hits
      * @param searchSettings search settings
-     * @throws WildcardTermTooBroad if the query is overly broad (expands to too many terms)
      */
-    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) throws WildcardTermTooBroad {
-        super(queryInfo, false);
+    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        super(queryInfo);
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;
@@ -174,13 +172,13 @@ public class HitsFromQuery extends Hits {
     protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() > number))
+            if (sourceSpansFullyRead || (number >= 0 && hitsInternalMutable.size() > number))
                 return;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
-                number = hitsArrays.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsInternalMutable.size() < FETCH_HITS_MIN)
+                number = hitsInternalMutable.size() + FETCH_HITS_MIN;
 
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -189,14 +187,14 @@ public class HitsFromQuery extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (sourceSpansFullyRead || (number >= 0 && hitsArrays.size() >= number))
+                if (sourceSpansFullyRead || (number >= 0 && hitsInternalMutable.size() >= number))
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
                 long maxHitsToCount = searchSettings.maxHitsToCount();
                 long maxHitsToProcess = searchSettings.maxHitsToProcess();
-                while (readAllHits || hitsArrays.size() < number) {
+                while (readAllHits || hitsInternalMutable.size() < number) {
 
                     // Abort if asked
                     threadAborter.checkAbort();
@@ -209,7 +207,8 @@ public class HitsFromQuery extends Hits {
 
                     // Get the next hit from the spans, moving to the next
                     // segment when necessary.
-                    while (true) {
+                    // We're at the next hit.
+                    do {
                         while (currentSourceSpans == null) {
                             // Exhausted (or not started yet); get next segment spans.
 
@@ -237,8 +236,8 @@ public class HitsFromQuery extends Hits {
                                 //    and there won't be that many segments, so it's probably ok)
                                 hitQueryContext.setSpans(currentSourceSpans);
                                 currentSourceSpans.setHitQueryContext(hitQueryContext); // let captured groups register themselves
-                                if (capturedGroups == null && hitQueryContext.numberOfCapturedGroups() > 0) {
-                                    capturedGroups = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
+                                if (capturedGroupsMutable == null && hitQueryContext.numberOfCapturedGroups() > 0) {
+                                    capturedGroups = capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContext.getCapturedGroupNames());
                                 }
 
                                 int doc;
@@ -247,8 +246,8 @@ public class HitsFromQuery extends Hits {
                                     doc = currentSourceSpans.nextDoc();
                                     if (doc == DocIdSetIterator.NO_MORE_DOCS)
                                         currentSourceSpans = null; // no matching docs in this segment, try next
-                                    alive = liveDocs == null ? true : liveDocs.get(doc);
-                                } while(currentSourceSpans != null && !alive);
+                                    alive = liveDocs == null || liveDocs.get(doc);
+                                } while (currentSourceSpans != null && !alive);
                             }
                         }
 
@@ -258,17 +257,13 @@ public class HitsFromQuery extends Hits {
                             int doc = currentSourceSpans.nextDoc();
                             if (doc != DocIdSetIterator.NO_MORE_DOCS) {
                                 // Go to first hit in doc
-                                start = currentSourceSpans.nextStartPosition();
+                                currentSourceSpans.nextStartPosition();
                             } else {
                                 // This one is exhausted; go to the next one.
                                 currentSourceSpans = null;
                             }
                         }
-                        if (currentSourceSpans != null) {
-                            // We're at the next hit.
-                            break;
-                        }
-                    }
+                    } while (currentSourceSpans == null); // until at next hit
 
                     // Count the hit and add it (unless we've reached the maximum number of hits we
                     // want)
@@ -283,13 +278,13 @@ public class HitsFromQuery extends Hits {
                     }
                     if (!maxHitsProcessed) {
                         Hit hit = Hit.create(currentSourceSpans.docID() + currentDocBase, currentSourceSpans.startPosition(), currentSourceSpans.endPosition());
-                        if (capturedGroups != null) {
+                        if (capturedGroupsMutable != null) {
                             Span[] groups = new Span[hitQueryContext.numberOfCapturedGroups()];
                             hitQueryContext.getCapturedGroups(groups);
-                            capturedGroups.put(hit, groups);
+                            capturedGroupsMutable.put(hit, groups);
                         }
-                        hitsArrays.add(hit);
-                        if (maxHitsToProcess >= 0 && hitsArrays.size() >= maxHitsToProcess) {
+                        hitsInternalMutable.add(hit);
+                        if (maxHitsToProcess >= 0 && hitsInternalMutable.size() >= maxHitsToProcess) {
                             maxStats.setHitsProcessedExceededMaximum();
                         }
                     }

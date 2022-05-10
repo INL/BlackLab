@@ -1,23 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.contentstore;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
@@ -99,10 +83,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     /**
      * Keeps track of the block ids we've stored parts the current file in so far
      */
-    private IntArrayList blockIndicesWhileStoring;
+    private final IntArrayList blockIndicesWhileStoring;
 
     /** Keeps track of the char offsets of the blocks of the current file so far */
-    private IntArrayList blockCharOffsetsWhileStoring;
+    private final IntArrayList blockCharOffsetsWhileStoring;
 
     /** If true, the toc file should be updated dat the end */
     private boolean tocModified = false;
@@ -117,14 +101,13 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     protected static final int MAX_UNWRITTEN_INDEX = BLOCK_SIZE_BYTES * 8096;
 
     /** Used to pad blocks that are less than BLOCK_SIZE long */
-    private byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
+    private final byte[] blockPadding = new byte[BLOCK_SIZE_BYTES];
 
     SimpleResourcePool<Deflater> compresserPool;
 
     /**
      * @param dir content store dir
      * @param create if true, create a new content store
-     * @throws ErrorOpeningIndex
      */
     public ContentStoreFixedBlockWriter(File dir, boolean create) throws ErrorOpeningIndex {
         super(dir);
@@ -141,12 +124,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 throw new ErrorOpeningIndex("Could not delete contents file: " + contentsFile);
 
             // Also delete old content store format files if present
-            File[] dataFiles = dir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir1, String name) {
-                    return name.matches("data\\d+.dat");
-                }
-            });
+            File[] dataFiles = dir.listFiles((dir1, name) -> name.matches("data\\d+.dat"));
             if (dataFiles == null)
                 throw new ErrorOpeningIndex("Error finding old data files in content store dir: " + dir);
             for (File f : dataFiles) {
@@ -170,7 +148,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
         blockIndicesWhileStoring = new IntArrayList();
         blockCharOffsetsWhileStoring = new IntArrayList();
 
-        compresserPool = new SimpleResourcePool<Deflater>(POOL_SIZE) {
+        compresserPool = new SimpleResourcePool<>(POOL_SIZE) {
             @Override
             public Deflater createResource() {
                 return new Deflater();
@@ -185,7 +163,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     /**
      * Delete all content in the document store
-     * @throws IOException
      */
     @Override
     public void clear() throws IOException {

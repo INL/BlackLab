@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.results.Hits;
 
 public abstract class PropertyValueContext extends PropertyValue {
 
-    protected Terms terms;
+    protected final Terms terms;
 
-    protected Annotation annotation;
+    protected final Annotation annotation;
 
     public PropertyValueContext(Hits hits, Annotation annotation) {
         this(hits.index(), annotation);

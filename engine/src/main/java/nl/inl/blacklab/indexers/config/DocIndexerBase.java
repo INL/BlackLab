@@ -1,13 +1,16 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,7 +23,6 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
@@ -31,17 +33,18 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
+import nl.inl.util.UnicodeStream;
 
-public abstract class DocIndexerBase extends DocIndexer {
+public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     private static final boolean TRACE = false;
 
@@ -51,9 +54,9 @@ public abstract class DocIndexerBase extends DocIndexer {
      */
     static final class OpenTagInfo {
 
-        public String name;
+        public final String name;
 
-        public int index;
+        public final int index;
 
         public OpenTagInfo(String name, int index) {
             this.name = name;
@@ -62,7 +65,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     /** Annotated fields we're indexing. */
-    private Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
+    private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
 
     /**
      * A field named "contents", or, if that doesn't exist, the first annotated field
@@ -102,7 +105,7 @@ public abstract class DocIndexerBase extends DocIndexer {
      * Unique strings we store, so we avoid storing many copies of the same string
      * (e.g. punctuation).
      */
-    private Map<String, String> uniqueStrings = new HashMap<>();
+    private final Map<String, String> uniqueStrings = new HashMap<>();
 
     /**
      * If true, we're indexing into an existing Lucene document. Don't overwrite it
@@ -111,7 +114,7 @@ public abstract class DocIndexerBase extends DocIndexer {
     private boolean indexingIntoExistingLuceneDoc = false;
 
     /** Currently opened inline tags we still need to add length payload to */
-    private List<OpenTagInfo> openInlineTags = new ArrayList<>();
+    private final List<OpenTagInfo> openInlineTags = new ArrayList<>();
 
     /**
      * Store documents? Can be set to false in ConfigInputFormat to if no content
@@ -139,15 +142,9 @@ public abstract class DocIndexerBase extends DocIndexer {
     private int charsDoneAtLastReport = 0;
 
     /**
-     * External metadata fetcher (if any), responsible for looking up the metadata
-     * and adding it to the Lucene document.
-     */
-    private MetadataFetcher metadataFetcher;
-
-    /**
      * What annotations where skipped because they were not declared?
      */
-    Set<String> skippedAnnotations = new HashSet<>();
+    final Set<String> skippedAnnotations = new HashSet<>();
 
     protected String getContentStoreName() {
         return contentStoreName;
@@ -212,10 +209,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         return annotStartTag;
     }
 
-    protected AnnotationWriter propMain() {
-        return annotMain;
-    }
-
     protected AnnotationWriter propPunct() {
         return annotPunct;
     }
@@ -266,7 +259,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         try (DocIndexer docIndexer = DocumentFormats.get(inputFormatIdentifier, getDocWriter(), completePath, data,
                 Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
-                @SuppressWarnings("resource")
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
                 ldi.indexingIntoExistingLuceneDoc = true;
                 ldi.currentLuceneDoc = currentLuceneDoc;
@@ -300,7 +292,6 @@ public abstract class DocIndexerBase extends DocIndexer {
      *
      * @param inputFile URL or (relative) file reference
      * @return the file
-     * @throws IOException
      */
     protected File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
@@ -356,7 +347,6 @@ public abstract class DocIndexerBase extends DocIndexer {
         if (!indexingIntoExistingLuceneDoc) {
             currentLuceneDoc = new Document();
             addMetadataField("fromInputFile", documentName);
-            addMetadataFieldsFromParameters(); // DEPRECATED for these types of indexer, but still supported for now
         }
         if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
             getDocWriter().listener().documentStarted(documentName);
@@ -407,19 +397,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
         if (isStoreDocuments()) {
             storeDocument();
-        }
-
-        if (getDocWriter() != null) {
-            // If there's an external metadata fetcher, call it now so it can
-            // add the metadata for this document and (optionally) store the
-            // metadata
-            // document in the content store (and the corresponding id in the
-            // Lucene doc)
-            MetadataFetcher m = getMetadataFetcher();
-            if (m != null) {
-                m.addMetadata();
-            }
-
         }
 
         if (!indexingIntoExistingLuceneDoc)
@@ -493,7 +470,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
     }
 
-    protected void storeWholeDocument(byte[] content, int offset, int length, Charset cs) {
+    protected void storeWholeDocument(byte[] content, int offset, int length) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
         // (Note that we do this after adding the "extra closing token", so the character
@@ -515,7 +492,7 @@ public abstract class DocIndexerBase extends DocIndexer {
         int contentId = -1;
         if (getDocWriter() != null) {
             ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
-            contentId = contentStore.store(content, offset, length, cs);
+            contentId = contentStore.store(content, offset, length, StandardCharsets.UTF_8);
         }
         currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
@@ -572,10 +549,6 @@ public abstract class DocIndexerBase extends DocIndexer {
 
     protected void setAddDefaultPunctuation(boolean addDefaultPunctuation) {
         this.addDefaultPunctuation = addDefaultPunctuation;
-    }
-
-    public boolean shouldAddDefaultPunctuation() {
-        return addDefaultPunctuation;
     }
 
     /**
@@ -682,29 +655,54 @@ public abstract class DocIndexerBase extends DocIndexer {
     }
 
     /**
-     * Get the external metadata fetcher for this indexer, if any.
+     * @deprecated use {@link #setDocument(byte[], Charset)}
+     * Set the document to index.
      *
-     * The metadata fetcher can be configured through the "metadataFetcherClass"
-     * parameter.
+     * NOTE: you should generally prefer calling the File or byte[] versions of this
+     * method, as those can be more efficient (e.g. when using DocIndexer that
+     * parses using VTD-XML).
      *
-     * @return the metadata fetcher if any, or null if there is none.
+     * @param reader document
      */
-    protected MetadataFetcher getMetadataFetcher() {
-        if (metadataFetcher == null) {
-            @SuppressWarnings("deprecation")
-            String metadataFetcherClassName = getParameter("metadataFetcherClass");
-            if (metadataFetcherClassName != null) {
-                try {
-                    Class<? extends MetadataFetcher> metadataFetcherClass = Class.forName(metadataFetcherClassName)
-                            .asSubclass(MetadataFetcher.class);
-                    Constructor<? extends MetadataFetcher> ctor = metadataFetcherClass.getConstructor(DocIndexer.class);
-                    metadataFetcher = ctor.newInstance(this);
-                } catch (ReflectiveOperationException e) {
-                    throw BlackLabRuntimeException.wrap(e);
-                }
-            }
+    @Deprecated
+    public abstract void setDocument(Reader reader);
+
+    /**
+     * Set the document to index.
+     *
+     * @param is document contents
+     * @param cs charset to use if no BOM found, or null for the default (utf-8)
+     */
+    public void setDocument(InputStream is, Charset cs) {
+        try {
+            UnicodeStream unicodeStream = new UnicodeStream(is, cs);
+            Charset detectedCharset = unicodeStream.getEncoding();
+            setDocument(new InputStreamReader(unicodeStream, detectedCharset));
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
-        return metadataFetcher;
     }
 
+    /**
+     *
+     * Set the document to index.
+     *
+     * @param contents document contents
+     * @param cs charset to use if no BOM found, or null for the default (utf-8)
+     */
+    public void setDocument(byte[] contents, Charset cs) {
+        setDocument(new ByteArrayInputStream(contents), cs);
+    }
+
+    /**
+     * Set the document to index.
+     *
+     * @param file file to index
+     * @param charset charset to use if no BOM found, or null for the default
+     *            (utf-8)
+     * @throws FileNotFoundException if not found
+     */
+    public void setDocument(File file, Charset charset) throws FileNotFoundException {
+        setDocument(new FileInputStream(file), charset);
+    }
 }

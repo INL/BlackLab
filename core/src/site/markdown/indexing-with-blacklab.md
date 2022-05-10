@@ -88,9 +88,9 @@ If you choose the second option, specify the fully-qualified class name of your 
 
 ## Add support for your own custom format
 
-There's two approaches to adding support for a new input format in BlackLab. The preferred one starting from BlackLab 1.7.0 is to write an input format configuration file in either YAML or JSON format. See [How to configure indexing](how-to-configure-indexing.html).
+There's two approaches to adding support for a new input format in BlackLab. The preferred one is to write an input format configuration file in either YAML or JSON format. See [How to configure indexing](how-to-configure-indexing.html).
 
-The other way is considered somewhat legacy, although it may still be useful in rare cases. It offers slightly (i.e. likely less than 50%) better performance and complete control over the indexing process. This is documented below. You're probably better off with the configuration file approach, though.
+The other way is considered somewhat legacy, although it may still be useful in rare cases. It may offer slightly better performance and complete control over the indexing process. This is documented below. You're probably better off with the configuration file approach, though.
 
 <a id="using-legacy-docindexers"></a>
 

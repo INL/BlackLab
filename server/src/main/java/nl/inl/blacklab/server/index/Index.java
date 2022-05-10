@@ -67,25 +67,22 @@ public class Index {
      * Sort all public indices first, then sort alphabetically within all public and
      * private indices.
      */
-    public static final Comparator<Index> COMPARATOR = new Comparator<Index>() {
-        @Override
-        public int compare(Index o1, Index o2) {
-            // Sort public before private
-            boolean o1priv = o1.isUserIndex();
-            boolean o2priv = o2.isUserIndex();
-            if (o1priv != o2priv)
-                return o1priv ? 1 : -1;
+    public static final Comparator<Index> COMPARATOR = (o1, o2) -> {
+        // Sort public before private
+        boolean o1priv = o1.isUserIndex();
+        boolean o2priv = o2.isUserIndex();
+        if (o1priv != o2priv)
+            return o1priv ? 1 : -1;
 
-            // Sort rest case-insensitively
-            return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
-        }
+        // Sort rest case-insensitively
+        return o1.getId().toLowerCase().compareTo(o2.getId().toLowerCase());
     };
 
     private final String id;
 
     private final File dir;
 
-    private SearchManager searchMan;
+    private final SearchManager searchMan;
 
     /**
      * Only one of these can be set at a time. The index is closed and cleared
@@ -101,7 +98,7 @@ public class Index {
     private List<String> shareWithUsers = new ArrayList<>();
 
     /** File where the list of users to share with is stored */
-    private File shareWithUsersFile;
+    private final File shareWithUsersFile;
 
     /**
      * NOTE: Index does not support creating a new index from scratch for now,
@@ -111,8 +108,6 @@ public class Index {
      *            index
      * @param dir directory of this index
      * @param searchMan search manager
-     * @throws IllegalIndexName
-     * @throws FileNotFoundException
      */
     public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, FileNotFoundException {
         if (!isValidIndexName(indexId))
@@ -297,7 +292,6 @@ public class Index {
      * is not currently Indexing.
      *
      * @return the listener, or null when there is no ongoing indexing.
-     * @throws BlsException
      */
     public synchronized IndexListener getIndexerListener() throws BlsException {
         // Don't return inderListener for an Indexer that has been closed
@@ -356,7 +350,7 @@ public class Index {
      * beyond that, the indexname group, this is not optional so group 1 is always
      * the username, and group 2 is always the indexname
      */
-    private static final Pattern PATT_INDEXID = Pattern.compile("^(?:([\\w\\Q-.!$&'()*+,;=@\\E]+):)?([\\w\\-]+)$");
+    private static final Pattern PATT_INDEXID = Pattern.compile("^(?:([\\w\\Q-.!$&'()*+,;=@\\E]+):)?([\\w\\-.]+)$");
 
     /**
      * Check the index name part (not the user id part, if any) of the specified
@@ -372,9 +366,7 @@ public class Index {
     /**
      * Check if this indexId is owned by a user
      *
-     * @param indexId
      * @return true if this index is owned by a user
-     * @throws IllegalIndexName
      */
     public static boolean isUserIndex(String indexId) throws IllegalIndexName {
         return getUserId(indexId) != null;
@@ -394,9 +386,7 @@ public class Index {
     /**
      * Get the user that owns this index. Returns null if this is not a user index.
      *
-     * @param indexId
      * @return the username, or null if this is not a user index
-     * @throws IllegalIndexName
      */
     public static String getUserId(String indexId) throws IllegalIndexName {
         Matcher m = PATT_INDEXID.matcher(indexId);
@@ -451,27 +441,12 @@ public class Index {
     /**
      * Get the name portion of the indexId.
      *
-     * @param indexId
      * @return the indexname, never null
-     * @throws IllegalIndexName
      */
     public static String getIndexName(String indexId) throws IllegalIndexName {
         Matcher m = PATT_INDEXID.matcher(indexId);
         if (!m.matches())
             throw new IllegalIndexName("Index name " + indexId + " contains illegal characters.");
-        return m.group(2);
-    }
-
-    /**
-     * A version of {@link Index#getIndexName(String)} that doesn't throw, as the id
-     * cannot be invalid.
-     *
-     * @return the name of this index, never null.
-     */
-    public String getIndexName() {
-        Matcher m = PATT_INDEXID.matcher(this.getId());
-        if (!m.matches())
-            throw new RuntimeException();
         return m.group(2);
     }
 

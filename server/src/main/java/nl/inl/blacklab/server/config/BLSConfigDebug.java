@@ -21,6 +21,7 @@ public class BLSConfigDebug {
         return addresses;
     }
 
+    @SuppressWarnings("unused")
     public void setAddresses(List<String> addresses) {
         this.addresses = addresses;
     }
@@ -36,6 +37,7 @@ public class BLSConfigDebug {
         return alwaysAllowDebugInfo;
     }
 
+    @SuppressWarnings("unused")
     public void setAlwaysAllowDebugInfo(boolean alwaysAllowDebugInfo) {
         this.alwaysAllowDebugInfo = alwaysAllowDebugInfo;
     }
@@ -44,6 +46,7 @@ public class BLSConfigDebug {
         return metricsProvider;
     }
 
+    @SuppressWarnings("unused")
     public void setMetricsProviderName(String metricsProviderName) {
         this.metricsProvider = metricsProviderName;
     }
@@ -52,6 +55,7 @@ public class BLSConfigDebug {
         return requestInstrumentationProvider;
     }
 
+    @SuppressWarnings("unused")
     public void setRequestInstrumentationProvider(String requestInstrumentationProvider) {
         this.requestInstrumentationProvider = requestInstrumentationProvider;
     }

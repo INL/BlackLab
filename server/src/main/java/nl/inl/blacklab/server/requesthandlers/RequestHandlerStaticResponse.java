@@ -1,12 +1,11 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.jobs.User;
 
 public class RequestHandlerStaticResponse extends RequestHandler {
 
@@ -143,10 +142,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
     }
 
-    RequestHandlerStaticResponse(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
-            String urlResource,
-            String urlPathInfo) {
-        super(servlet, request, user, indexName, urlResource, urlPathInfo);
+    RequestHandlerStaticResponse(BlackLabServer servlet, HttpServletRequest request, User user, String indexName) {
+        super(servlet, request, user, indexName, null, null);
     }
 
     @Override
@@ -154,9 +151,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return false; // error/status should never be cached, can change
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DataStream ds) {
         if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
                 ds.internalError(exception, debugMode, internalErrorCode);

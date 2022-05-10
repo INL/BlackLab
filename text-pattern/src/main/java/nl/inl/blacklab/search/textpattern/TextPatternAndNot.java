@@ -1,21 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -34,14 +20,12 @@ import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
  */
 public class TextPatternAndNot extends TextPattern {
 
-    protected List<TextPattern> include = new ArrayList<>();
+    protected final List<TextPattern> include = new ArrayList<>();
 
-    protected List<TextPattern> exclude = new ArrayList<>();
+    protected final List<TextPattern> exclude = new ArrayList<>();
 
     public TextPatternAndNot(TextPattern... clauses) {
-        for (TextPattern clause : clauses) {
-            this.include.add(clause);
-        }
+        this.include.addAll(Arrays.asList(clauses));
     }
 
     public TextPatternAndNot(List<TextPattern> includeClauses, List<TextPattern> excludeClauses) {

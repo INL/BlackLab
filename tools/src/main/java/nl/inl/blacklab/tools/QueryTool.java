@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.tools;
 
 import java.io.BufferedReader;
@@ -24,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,7 +47,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.Doc;
+import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -76,6 +62,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -97,10 +84,10 @@ import nl.inl.util.XmlUtil;
  */
 public class QueryTool {
 
-    static final Charset INPUT_FILE_ENCODING = Charset.forName("utf-8");
+    static final Charset INPUT_FILE_ENCODING = StandardCharsets.UTF_8;
 
     /** Our output writer. */
-    public PrintWriter out;
+    public final PrintWriter out;
 
     /** Our error writer (if null, output errors to out as well) */
     public PrintWriter err;
@@ -153,7 +140,7 @@ public class QueryTool {
      * If true, describes time in minutes and seconds. If false, just gives the
      * number of milliseconds.
      */
-    boolean timeDisplayHumanFriendly = false;
+    final boolean timeDisplayHumanFriendly = false;
 
     /** The filter query, if any. */
     private Query filterQuery = null;
@@ -178,7 +165,7 @@ public class QueryTool {
     private int showWhichGroup = -1;
 
     /** Lists of words read from file to choose random word from (for batch mode) */
-    private Map<String, List<String>> wordLists = new HashMap<>();
+    private final Map<String, List<String>> wordLists = new HashMap<>();
 
     /** Generic command parser interface */
     abstract static class Parser {
@@ -289,12 +276,12 @@ public class QueryTool {
 
     }
 
-    private List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserContextQl());
+    private final List<Parser> parsers = Arrays.asList(new ParserCorpusQl(), new ParserContextQl());
 
     private int currentParserIndex = 0;
 
     /** Where to read commands from */
-    private BufferedReader in;
+    private final BufferedReader in;
 
     /** For stats output (batch mode), extra info (such as # hits) */
     private String statInfo;
@@ -390,7 +377,6 @@ public class QueryTool {
      *
      * @param indexDir the index to search
      * @param commandFile the command file to execute
-     * @throws ErrorOpeningIndex
      */
     public static void runBatch(File indexDir, File commandFile) throws ErrorOpeningIndex {
         run(indexDir, commandFile, Charset.defaultCharset().name());
@@ -424,9 +410,6 @@ public class QueryTool {
      * @param inputFile if specified, run in batch mode. If null, run in interactive
      *            mode
      * @param encoding the output encoding to use
-     * @throws UnsupportedEncodingException
-     * @throws CorruptIndexException
-     * @throws ErrorOpeningIndex
      */
     private static void run(File indexDir, File inputFile, String encoding) throws ErrorOpeningIndex {
         if (!indexDir.exists() || !indexDir.isDirectory()) {
@@ -486,10 +469,8 @@ public class QueryTool {
      * @param in where to read commands from
      * @param out where to write output to
      * @param err where to write errors to
-     * @throws CorruptIndexException
      */
-    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err)
-            throws CorruptIndexException {
+    public QueryTool(BlackLabIndex index, BufferedReader in, PrintWriter out, PrintWriter err) {
         this.index = index;
         this.contentsField = index.mainAnnotatedField();
         shouldCloseIndex = false; // caller is responsible
@@ -728,7 +709,7 @@ public class QueryTool {
                 } else {
                     int docId = currentHitSet.get(hitId).doc();
                     Hits hitsInDoc = hits.getHitsInDoc(docId);
-                    outprintln(WordUtils.wrap(index.doc(docId).highlightContent(hitsInDoc), 80));
+                    outprintln(WordUtils.wrap(DocUtil.highlightContent(index, docId, hitsInDoc, -1, -1), 80));
                 }
             } else if (lcased.startsWith("snippetsize ")) {
                 snippetSize = ContextSize.get(parseInt(lcased.substring(12), 0));
@@ -767,14 +748,22 @@ public class QueryTool {
             } else if (lcased.startsWith("sensitive ")) {
                 String v = lcased.substring(10);
                 MatchSensitivity sensitivity;
-                if (v.equals("on") || v.equals("yes") || v.equals("true")) {
+                switch (v) {
+                case "on":
+                case "yes":
+                case "true":
                     sensitivity = MatchSensitivity.SENSITIVE;
-                } else if (v.equals("case")) {
+                    break;
+                case "case":
                     sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
-                } else if (v.equals("diac") || v.equals("diacritics")) {
+                    break;
+                case "diac":
+                case "diacritics":
                     sensitivity = MatchSensitivity.CASE_INSENSITIVE;
-                } else {
+                    break;
+                default:
                     sensitivity = MatchSensitivity.INSENSITIVE;
+                    break;
                 }
                 index.setDefaultMatchSensitivity(sensitivity);
                 outprintln("Search defaults to "
@@ -802,7 +791,7 @@ public class QueryTool {
                     groupBy(parts[0], parts.length > 1 ? parts[1] : null);
                 }
             } else if (lcased.equals("groups") || lcased.equals("hits") || lcased.equals("docs")
-                    || lcased.startsWith("colloc") || lcased.startsWith("group ")) {
+                    || lcased.startsWith("colloc")) {
                 changeShowSettings(cmd);
             } else if (lcased.equals("switch") || lcased.equals("sw")) {
                 currentParserIndex++;
@@ -879,7 +868,7 @@ public class QueryTool {
             outprintln("Document " + docId + " was deleted.");
             return;
         }
-        Document doc = index.doc(docId).luceneDoc();
+        Document doc = index.luceneDoc(docId);
         Map<String, String> metadata = new TreeMap<>(); // sort by key
         for (IndexableField f : doc.getFields()) {
             metadata.put(f.name(), f.stringValue());
@@ -1059,7 +1048,7 @@ public class QueryTool {
 
             // See if we want to choose any random words
             if (query.contains("@@")) {
-                StringBuffer resultString = new StringBuffer();
+                StringBuilder resultString = new StringBuilder();
                 Pattern regex = Pattern.compile("@@[A-Za-z0-9_\\-]+");
                 Matcher regexMatcher = regex.matcher(query);
                 while (regexMatcher.find()) {
@@ -1085,13 +1074,12 @@ public class QueryTool {
             }
             //pattern = pattern.rewrite();
             if (verbose)
-                outprintln("TextPattern: " + pattern.toString());
+                outprintln("TextPattern: " + pattern);
 
             // If the query included filter clauses, use those. Otherwise use the global filter, if any.
-            Query filterForThisQuery = parser.getIncludedFilterQuery();
-            if (filterForThisQuery == null)
-                filterForThisQuery = filterQuery;
-            Query filter = filterForThisQuery == null ? null : filterForThisQuery;
+            Query filter = parser.getIncludedFilterQuery();
+            if (filter == null)
+                filter = filterQuery;
 
             // Execute search
             BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter);
@@ -1469,13 +1457,13 @@ public class QueryTool {
         MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
         long hitNr = window.windowStats().first() + 1;
         for (Group<Hit> result : window) {
-            Doc doc = ((PropertyValueDoc)result.identity()).value();
-            Document d = doc.luceneDoc();
+            int docId = ((PropertyValueDoc)result.identity()).value();
+            Document d = index.luceneDoc(docId);
             String title = d.get(titleField.name());
             if (title == null)
-                title = "(doc #" + doc.id() + ", no " + titleField.name() + " given)";
+                title = "(doc #" + docId + ", no " + titleField.name() + " given)";
             else
-                title = title + " (doc #" + doc.id() + ")";
+                title = title + " (doc #" + docId + ")";
             outprintf("%4d. %s\n", hitNr, title);
             hitNr++;
         }
@@ -1485,6 +1473,31 @@ public class QueryTool {
         if (determineTotalNumberOfHits && currentHitSet != null)
             docsCounted = currentHitSet.docsStats().countedTotal();
         outprintln(docsCounted + " docs");
+    }
+
+    /**
+     * A hit we're about to show.
+     *
+     * We need a separate structure because we filter out XML tags and need to know
+     * the longest left context before displaying.
+     */
+    static class HitToShow {
+        public final int doc;
+
+        public final String left;
+        public final String hitText;
+        public final String right;
+
+        public final Map<String, Span> capturedGroups;
+
+        public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
+            super();
+            this.doc = doc;
+            this.left = left;
+            this.hitText = hitText;
+            this.right = right;
+            this.capturedGroups = capturedGroups;
+        }
     }
 
     /**
@@ -1498,7 +1511,7 @@ public class QueryTool {
                 // Just show total number of hits, no concordances
                 outprintln(hitsToShow.size() + " hits");
             } else {
-                Iterator<Hit> it = hitsToShow.iterator();
+                Iterator<EphemeralHit> it = hitsToShow.ephemeralIterator();
                 int i;
                 for (i = 0; it.hasNext() && i < resultsPerPage; i++) {
                     it.next();
@@ -1506,29 +1519,6 @@ public class QueryTool {
                 outprintln((i == resultsPerPage ? "At least " : "") + i + " hits (total not determined)");
             }
             return;
-        }
-
-        /**
-         * A hit we're about to show.
-         *
-         * We need a separate structure because we filter out XML tags and need to know
-         * the longest left context before displaying.
-         */
-        class HitToShow {
-            public int doc;
-
-            public String left, hitText, right;
-
-            public Map<String, Span> capturedGroups;
-
-            public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
-                super();
-                this.doc = doc;
-                this.left = left;
-                this.hitText = hitText;
-                this.right = right;
-                this.capturedGroups = capturedGroups;
-            }
         }
 
         if (hitsToShow == null)
@@ -1570,7 +1560,7 @@ public class QueryTool {
                 if (currentDoc != -1)
                     outprintln("");
                 currentDoc = hit.doc;
-                Document d = index.doc(currentDoc).luceneDoc();
+                Document d = index.luceneDoc(currentDoc);
                 String title = d.get(titleField.name());
                 if (title == null)
                     title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";
@@ -1584,7 +1574,7 @@ public class QueryTool {
                 outprintf(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right);
             hitNr++;
             if (hit.capturedGroups != null)
-                outprintln("CAP: " + hit.capturedGroups.toString());
+                outprintln("CAP: " + hit.capturedGroups);
         }
 
         // Summarize

@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
-/**
- *
- */
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -103,13 +85,12 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         }
 
         // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
-        BLSpanQuery r = new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
-        return r;
+        return new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
 
     }
 
     @Override
-    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
         throw new UnsupportedOperationException("Query should have been rewritten");
     }
 
@@ -133,7 +114,6 @@ public class SpanFuzzyQuery extends BLSpanQuery {
      * representation that can be parsed by QueryParser.</li>
      * </ul>
      *
-     * @param field
      * @return the string representation
      */
     @Override

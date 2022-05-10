@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends Hits {
+public class HitsFiltered extends HitsMutable {
 
-    private Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /**
      * Document the previous hit was in, so we can count separate documents.
@@ -24,15 +24,15 @@ public class HitsFiltered extends Hits {
 
     private Hits source;
 
-    private HitProperty filterProperty;
+    private final HitProperty filterProperty;
 
-    private PropertyValue filterValue;
+    private final PropertyValue filterValue;
 
     private boolean doneFiltering = false;
 
     private int indexInSource = -1;
 
-    private boolean ascendingLuceneDocIds;
+    private final boolean ascendingLuceneDocIds;
 
     /**
      * Filter hits.
@@ -42,7 +42,7 @@ public class HitsFiltered extends Hits {
      * @param value value to filter with
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo(), false);
+        super(hits.queryInfo());
         this.source = hits;
         ascendingLuceneDocIds = source.hasAscendingLuceneDocIds();
 
@@ -78,13 +78,13 @@ public class HitsFiltered extends Hits {
     protected void ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (doneFiltering || number >= 0 && hitsArrays.size() > number)
+            if (doneFiltering || number >= 0 && hitsInternalMutable.size() > number)
                 return;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - hitsArrays.size() < FETCH_HITS_MIN)
-                number = hitsArrays.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsInternalMutable.size() < FETCH_HITS_MIN)
+                number = hitsInternalMutable.size() + FETCH_HITS_MIN;
 
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -93,22 +93,23 @@ public class HitsFiltered extends Hits {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (doneFiltering || number >= 0 && hitsArrays.size() >= number)
+                if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
                     return;
             }
             try {
                 boolean readAllHits = number < 0;
-                while (!doneFiltering && (readAllHits || hitsArrays.size() < number)) {
+                EphemeralHit hit = new EphemeralHit();
+                while (!doneFiltering && (readAllHits || hitsInternalMutable.size() < number)) {
                  // Abort if asked
                     threadAborter.checkAbort();
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.hitsProcessedAtLeast(indexInSource + 1)) {
-                        Hit hit = source.get(indexInSource);
+                    if (source.hitsStats().processedAtLeast(indexInSource + 1)) {
+                        source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
-                            hitsArrays.add(hit);
+                            hitsInternalMutable.add(hit);
                             hitsCounted++;
                             if (hit.doc() != previousHitDoc) {
                                 docsCounted++;

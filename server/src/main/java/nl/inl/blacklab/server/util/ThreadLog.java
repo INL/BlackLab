@@ -14,7 +14,7 @@ import java.util.Map;
 public class ThreadLog {
 
     /** Thread logs for all our threads */
-    static Map<Long, ThreadLog> threadLogs = new HashMap<>();
+    static final Map<Long, ThreadLog> threadLogs = new HashMap<>();
 
     /**
      * Get (or create) thread log for current thread.
@@ -69,9 +69,9 @@ public class ThreadLog {
         get().changeCounter(name, delta);
     }
 
-    List<String> messages = new ArrayList<>();
+    final List<String> messages = new ArrayList<>();
 
-    Map<String, Integer> counters = new LinkedHashMap<>();
+    final Map<String, Integer> counters = new LinkedHashMap<>();
 
     /**
      * Add a message to the sequential log.
@@ -95,25 +95,4 @@ public class ThreadLog {
         n += delta;
         counters.put(name, n);
     }
-//
-//	/**
-//	 * Dump the ThreadLog in DataObject format, so we can return it as JSON or XML.
-//	 * @return the DataObject representation
-//	 */
-//	public DataObject dump() {
-//		DataObjectMapElement result = new DataObjectMapElement();
-//
-//		DataObjectList m = new DataObjectList("message");
-//		for (String msg: messages) {
-//			m.add(msg);
-//		}
-//		result.put("messages", m);
-//
-//		DataObjectMapAttribute c = new DataObjectMapAttribute("counter", "name");
-//		for (Map.Entry<String, Integer> counter: counters.entrySet()) {
-//			c.put(counter.getKey(), counter.getValue());
-//		}
-//
-//		return result;
-//	}
 }

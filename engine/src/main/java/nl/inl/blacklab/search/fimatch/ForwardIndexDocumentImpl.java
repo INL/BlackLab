@@ -14,20 +14,20 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     private static final int CHUNK_SIZE = 10;
 
     /** Where to get our forward indices and forward index ids (fiids) */
-    private ForwardIndexAccessorLeafReader fiAccessor;
+    private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Lucene document id of the document we're looking at */
-    private int docId;
+    private final int docId;
 
     /** Number of tokens in document.
      *  NOTE: This does NOT include the extra closing token at the end.
      */
-    private int docLengthTokens;
+    private final int docLengthTokens;
 
     /**
      * Chunks of the document from the forward index, for each of the annotations.
      */
-    private List<List<int[]>> allAnnotChunks = new ArrayList<>();
+    private final List<List<int[]>> allAnnotChunks = new ArrayList<>();
 
     public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId) {
         this.fiAccessor = fiAccessor;
@@ -36,7 +36,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
 
         // Create empty lists of chunks for each annotation
         for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
-            allAnnotChunks.add(new ArrayList<int[]>());
+            allAnnotChunks.add(new ArrayList<>());
         }
     }
 

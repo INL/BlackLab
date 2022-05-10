@@ -24,7 +24,6 @@ import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.util.Bits;
 
@@ -111,7 +110,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** Where to save indexmetadata.json */
-    private File indexDir;
+    private final File indexDir;
 
     /** Index display name */
     private String displayName;
@@ -157,10 +156,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     private boolean saveAsJson = true;
 
     /** Our metadata fields */
-    private MetadataFieldsImpl metadataFields;
+    private final MetadataFieldsImpl metadataFields;
 
     /** Our annotated fields */
-    private AnnotatedFieldsImpl annotatedFields;
+    private final AnnotatedFieldsImpl annotatedFields;
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
@@ -192,7 +191,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
                 Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
@@ -233,7 +232,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             ObjectNode annotated = fieldInfo.putObject("complexFields");
 
             addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
-            extractFromJson(jsonRoot, null, true, false);
+            extractFromJson(jsonRoot, null, true);
             save();
         } else {
             // Read existing metadata or create empty new one
@@ -259,7 +258,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         annotatedFields = new AnnotatedFieldsImpl();
 
         // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(Arrays.asList(indexDir), METADATA_FILE_NAME,
+        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
                 Arrays.asList("json", "yaml", "yml"));
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
@@ -378,7 +377,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             if (g.addRemainingFields())
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.stream().map(f -> f.name()).collect(Collectors.toList()));
+            Json.arrayOfStrings(arr, g.stream().map(Field::name).collect(Collectors.toList()));
         }
         // Add annotation group info
         for (AnnotatedField f: annotatedFields()) {
@@ -391,7 +390,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (g.addRemainingAnnotations())
                         jsonGroup.put("addRemainingAnnotations", true);
                     ArrayNode arr = jsonGroup.putArray("annotations");
-                    Json.arrayOfStrings(arr, g.annotations().stream().map(ann -> ann.name()).collect(Collectors.toList()));
+                    Json.arrayOfStrings(arr, g.annotations().stream().map(Annotation::name).collect(Collectors.toList()));
                 }
             }
         }
@@ -700,12 +699,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * @param usedTemplate whether the JSON structure was read from a indextemplate
      *            file. If so, clear certain parts of it that aren't relevant
      *            anymore.
-     * @param initTimestamps whether or not to update blacklab build time, version,
-     *            and index creation/modification time
      * @throws IndexTooOld if the index is too old to open with this BlackLab version
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate,
-            boolean initTimestamps) throws IndexTooOld {
+    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexTooOld {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -720,16 +716,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
         indexFormat = Json.getString(versionInfo, "indexFormat", "");
-        if (initTimestamps) {
-            blackLabBuildTime = BlackLabIndexImpl.blackLabBuildTime();
-            blackLabVersion = BlackLabIndexImpl.blackLabVersion();
-            timeModified = timeCreated = IndexMetadataImpl.timestamp();
-        } else {
-            blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
-            blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
-            timeCreated = Json.getString(versionInfo, "timeCreated", "");
-            timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
-        }
+        blackLabBuildTime = Json.getString(versionInfo, "blackLabBuildTime", "UNKNOWN");
+        blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
+        timeCreated = Json.getString(versionInfo, "timeCreated", "");
+        timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
             throw new IndexTooOld(
@@ -755,8 +745,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 logger.error("non-default namingScheme setting found, but this is no longer supported");
         } else {
             // Not specified; detect it.
-            boolean hasNoFieldsYet = fis == null || fis.size() == 0;
-            boolean usingSpecialCharsAsSeparators = hasNoFieldsYet;
+            boolean usingSpecialCharsAsSeparators = fis == null || fis.size() == 0;
             boolean usingCharacterCodesAsSeparators = false;
             if (fis != null) {
                 for (int i1 = 0; i1 < fis.size(); i1++) {
@@ -819,7 +808,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 for (String f: fields) {
-                    ((MetadataFieldsImpl)metadataFields()).ensureFieldExists(f);
+                    metadataFields().ensureFieldExists(f);
                 }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
@@ -1060,14 +1049,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
             fieldInfo.putObject("metadataFields");
             fieldInfo.putObject("complexFields");
-            extractFromJson(jsonRoot, reader, false, false);
+            extractFromJson(jsonRoot, reader, false);
         } else {
             // Read the metadata file
             try {
                 boolean isJson = metadataFile.getName().endsWith(".json");
                 ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
                 ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
-                extractFromJson(jsonRoot, reader, usedTemplate, false);
+                extractFromJson(jsonRoot, reader, usedTemplate);
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -1376,11 +1365,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     }
 
     @Override
-    public IndexMetadata freeze() {
+    public void freeze() {
         this.frozen = true;
         annotatedFields.freeze();
         metadataFields.freeze();
-        return this;
     }
 
     @Override

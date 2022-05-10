@@ -22,11 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
  */
 public class Json {
 
-    static private JsonFactory jsonFactory;
-
     static private ObjectMapper jsonObjectMapper;
-
-    static private YAMLFactory yamlFactory;
 
     static private ObjectMapper yamlObjectMapper;
 
@@ -35,12 +31,12 @@ public class Json {
     }
 
     private static void initObjectMappers() {
-        jsonFactory = new JsonFactory();
+        JsonFactory jsonFactory = new JsonFactory();
         jsonFactory.enable(JsonParser.Feature.ALLOW_COMMENTS);
         jsonObjectMapper = new ObjectMapper(jsonFactory);
         jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
-        yamlFactory = new YAMLFactory();
+        YAMLFactory yamlFactory = new YAMLFactory();
         yamlFactory.configure(YAMLGenerator.Feature.CANONICAL_OUTPUT, true);
         yamlObjectMapper = new ObjectMapper(yamlFactory);
         yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);

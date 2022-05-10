@@ -8,9 +8,9 @@ public final class CorpusSize {
         return new CorpusSize(documents, tokens);
     }
 
-    private long documents;
+    private final long documents;
 
-    private long tokens;
+    private final long tokens;
 
     private CorpusSize(long documents, long tokens) {
         super();

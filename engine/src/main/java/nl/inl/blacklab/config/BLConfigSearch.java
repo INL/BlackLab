@@ -6,20 +6,27 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.SearchSettings;
 
 public class BLConfigSearch {
-    BLConfigCollator collator = new BLConfigCollator();
-    
-    int contextSize = 5;
-    
-    long maxHitsToRetrieve = 5_000_000;
+    private BLConfigCollator collator = new BLConfigCollator();
 
-    long maxHitsToCount = 10_000_000;
-    
-    long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
+    private int contextSize = 5;
+
+    private long maxHitsToRetrieve = 5_000_000;
+
+    private long maxHitsToCount = 10_000_000;
+
+    private long fiMatchFactor = ClauseCombinerNfa.defaultForwardIndexMatchingThreshold;
+
+    /** Should result sets larger than the maximum array size (roughly 2^31) be supported?
+     *
+     * If you don't need this, you can disable it for slightly better performance.
+     */
+    private boolean enableHugeResultSets = true;
 
     public BLConfigCollator getCollator() {
         return collator;
     }
 
+    @SuppressWarnings("unused")
     public void setCollator(BLConfigCollator collator) {
         this.collator = collator;
     }
@@ -36,6 +43,7 @@ public class BLConfigSearch {
         return maxHitsToRetrieve;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxHitsToRetrieve(int maxHitsToRetrieve) {
         this.maxHitsToRetrieve = maxHitsToRetrieve;
     }
@@ -44,6 +52,7 @@ public class BLConfigSearch {
         return maxHitsToCount;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxHitsToCount(long maxHitsToCount) {
         this.maxHitsToCount = maxHitsToCount;
     }
@@ -52,8 +61,18 @@ public class BLConfigSearch {
         return fiMatchFactor;
     }
 
+    @SuppressWarnings("unused")
     public void setFiMatchFactor(int fiMatchFactor) {
         this.fiMatchFactor = fiMatchFactor;
+    }
+
+    public boolean isEnableHugeResultSets() {
+        return enableHugeResultSets;
+    }
+
+    @SuppressWarnings("unused")
+    public void setEnableHugeResultSets(boolean enableHugeResultSets) {
+        this.enableHugeResultSets = enableHugeResultSets;
     }
 
     /**

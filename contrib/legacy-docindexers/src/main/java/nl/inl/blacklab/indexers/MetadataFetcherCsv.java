@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.commons.csv.CSVFormat;
@@ -13,7 +14,7 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.MetadataFetcher;
 
 /**
@@ -31,22 +32,21 @@ public class MetadataFetcherCsv extends MetadataFetcher {
     private Iterable<CSVRecord> metadata;
 
     @SuppressWarnings("deprecation")
-    public MetadataFetcherCsv(DocIndexer docIndexer) {
+    public MetadataFetcherCsv(DocIndexerLegacy docIndexer) {
         super(docIndexer);
 
         String metadataFileName = docIndexer.getParameter("metadataFile");
 
         try (
                 Reader reader = new InputStreamReader(new BOMInputStream(new FileInputStream(metadataFileName)),
-                        "UTF-8");
+                        StandardCharsets.UTF_8);
 
                 CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT
                         .withFirstRecordAsHeader()
                         .withIgnoreHeaderCase()
-                        .withTrim());) {
+                        .withTrim())) {
 
             metadata = csvParser.getRecords();
-            reader.close();
         } catch (FileNotFoundException ex) {
             System.err.println("Metadata file \"" + metadataFileName + "\" not found. Not adding metadata.");
         } catch (IOException ex) {

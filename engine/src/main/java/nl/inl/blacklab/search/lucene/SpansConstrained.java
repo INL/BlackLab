@@ -15,10 +15,10 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
 public class SpansConstrained extends BLSpans {
 
     /** The clause we're filtering */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** The constraint with which we're filtering the clause */
-    private MatchFilter constraint;
+    private final MatchFilter constraint;
 
     /** The hit query context, which contains captured group information */
     private HitQueryContext context;
@@ -27,7 +27,7 @@ public class SpansConstrained extends BLSpans {
     private Span[] capturedGroups;
 
     /** Maps from term strings to term indices for each annotation. */
-    private ForwardIndexAccessorLeafReader fiAccessor;
+    private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Where to get forward index tokens for the current doc */
     private ForwardIndexDocument currentFiDoc;
@@ -91,7 +91,6 @@ public class SpansConstrained extends BLSpans {
      * advance until we find a document with at least one valid match.
      *
      * @return the current doc id, or NO_MORE_DOCS if there are no more valid docs
-     * @throws IOException
      */
     private int ensureValidDoc() throws IOException {
         int currentDocId = clause.docID();
@@ -137,7 +136,6 @@ public class SpansConstrained extends BLSpans {
      *
      * @return current hit start position if valid, NO_MORE_POSITIONS if we're done
      *         in this document
-     * @throws IOException
      */
     protected int ensureValidHit() throws IOException {
         int startPos = clause.startPosition();

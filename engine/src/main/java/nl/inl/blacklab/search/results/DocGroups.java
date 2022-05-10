@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
@@ -25,6 +10,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * Applies grouping to the results in a DocResults object.
@@ -55,7 +41,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = Integer.MAX_VALUE / 2;
+    public final static int MAX_NUMBER_OF_GROUPS = BlackLab.JAVA_MAX_HASHMAP_SIZE;
 
     private long largestGroupSize = 0;
 
@@ -150,7 +136,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     
     @Override
     public DocGroups window(long first, long number) {
-        List<DocGroup> resultsWindow = Results.doWindow(this, first, number);
+        List<DocGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
         boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
@@ -164,7 +150,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     @Override
     public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = Integer.MAX_VALUE;
+            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
         List<DocGroup> truncatedGroups = new ArrayList<>();
         for (DocGroup group: results) {
             List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;
@@ -182,7 +168,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
      */
     @Override
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), Results.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
+        return DocGroups.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
     }
     
     @Override

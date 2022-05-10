@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryNoHits extends BLSpanQuery {
 
-    private String luceneField;
+    private final String luceneField;
 
     public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);
@@ -39,7 +39,7 @@ public class SpanQueryNoHits extends BLSpanQuery {
             }
 
             @Override
-            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+            public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) {
                 return null; // no hits
             }
         };
@@ -141,7 +141,7 @@ public class SpanQueryNoHits extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+    public BLSpanQuery rewrite(IndexReader reader) {
         return this;
     }
 }

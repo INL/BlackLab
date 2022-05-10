@@ -3,6 +3,8 @@ package nl.inl.blacklab.server.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,9 +16,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
@@ -25,6 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -65,10 +66,10 @@ public class IndexManager {
 
     private static final Logger logger = LogManager.getLogger(IndexManager.class);
 
-    private SearchManager searchMan;
+    private final SearchManager searchMan;
 
     /** Configured index collections directories */
-    private List<File> collectionsDirs;
+    private final List<File> collectionsDirs;
 
     /**
      * Logged-in users will have their own private collections dir. This is the
@@ -82,7 +83,7 @@ public class IndexManager {
      */
     private DocIndexerFactoryUserFormats userFormatManager;
 
-    private Map<String, Index> indices = new HashMap<>();
+    private final Map<String, Index> indices = new HashMap<>();
 
     public IndexManager(SearchManager searchMan, BLSConfig blsConfig) throws ConfigurationException {
         this.searchMan = searchMan;
@@ -149,13 +150,9 @@ public class IndexManager {
     private void checkAnyIndexesAvailable() throws ConfigurationException {
         if (indices.isEmpty() && collectionsDirs.isEmpty() && userCollectionsDir == null) {
             throw new ConfigurationException(
-                    "Configuration error: no readable index locations found. Create " +
-                            "/etc/blacklab/blacklab-server.json containing at least the following:\n" +
-                            "{\n" +
-                            "  \"indexCollections\": [\n" +
-                            "    \"/dir/containing/indices\"\n" +
-                            "  ]\n" +
-                            "}");
+                    "Configuration error: no readable indexLocations found. Check your configuration file, or see "
+                            + "https://inl.github.io/BlackLab/configuration-files.html#minimal-config-file for a "
+                            + "minimal configuration file.");
         }
     }
 
@@ -186,7 +183,6 @@ public class IndexManager {
      *
      * @param indexId the index we want to check for
      * @return true iff the index exists
-     * @throws BlsException
      */
     public synchronized boolean indexExists(String indexId) throws BlsException {
         try {
@@ -210,7 +206,6 @@ public class IndexManager {
      *
      * @param user the logged-in user
      * @param indexId the index name, including user prefix
-     * @param displayName
      * @param formatIdentifier the document format identifier (e.g. tei, folia, ..).
      *            See {@link DocumentFormats}
      * @throws BlsException if we're not allowed to create the index for whatever
@@ -302,7 +297,6 @@ public class IndexManager {
      * @throws NotAuthorized if this is not a user index
      * @throws IndexNotFound if no such index exists
      * @throws InternalServerError if the index is in an invalid state
-     * @throws IllegalIndexName
      */
     public synchronized void deleteUserIndex(String indexId)
             throws NotAuthorized, IndexNotFound, InternalServerError, IllegalIndexName {
@@ -369,7 +363,6 @@ public class IndexManager {
      * Get the Index with this id. Attempts to load public indices (if this index is
      * a user index, additionally tries to load the user's indices).
      *
-     * @param indexId
      * @return the Index, never null
      * @throws IndexNotFound when the index could not be found
      */
@@ -477,17 +470,43 @@ public class IndexManager {
 
                     @Override
                     public boolean accept(File pathName, String fileName) {
-                        return accept(pathName);
+                        return accept(new File(pathName, fileName));
                     }
                 };
-                for (File subDir : FileUtils.listFilesAndDirs(collection, FalseFileFilter.FALSE,
+                IOFileFilter symlinkToDirFilter = new IOFileFilter() {
+                    @Override
+                    public boolean accept(File pathName) {
+                        try {
+                            Path indexPath = pathName.toPath().toRealPath();
+                            return Files.isDirectory(indexPath);
+                        } catch (IOException e) {
+                            throw BlackLabRuntimeException.wrap(e);
+                        }
+                    }
+
+                    @Override
+                    public boolean accept(File pathName, String fileName) {
+                        return accept(new File(pathName, fileName));
+                    }
+                };
+                for (File subDir : FileUtils.listFilesAndDirs(collection, symlinkToDirFilter,
                         notUserDirFilter /* can't filter on name yet, or it will only recurse into dirs with that name */)) {
-                    if (/*!subDir.getName().equals("index") ||*/ !subDir.canRead() || !BlackLabIndex.isIndex(subDir)) {
-                        if (subDir.getParentFile().equals(collection)) {
-                            if (!subDir.canRead())
-                                logger.debug("  Cannot read direct subdir of collection dir: " + subDir);
+
+                    Path indexPath; // follow symlinks
+                    try {
+                        indexPath = subDir.toPath().toRealPath();
+                    } catch (IOException e) {
+                        throw BlackLabRuntimeException.wrap(e);
+                    }
+                    if (/*!subDir.getName().equals("index") ||*/ !Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
+                        // Not readable or not an index.
+                        // Warn about this only if this directory is a direct subdir of a collection dir.
+                        // (otherwise we get warnings about all forward index directories)
+                        if (indexPath.toFile().getParentFile().equals(collection)) {
+                            if (!Files.isReadable(indexPath))
+                                logger.debug("  Cannot read direct subdir of collection dir: " + indexPath);
                             else
-                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + subDir);
+                                logger.debug("  Direct subdir of collection dir not recognized as an index: " + indexPath);
                         }
                         continue;
                     }
@@ -503,8 +522,14 @@ public class IndexManager {
                         logger.warn("Replacing this with the parent directory name (" + indexName
                                 + "), but note that this behaviour is deprecated.");
                     }
-                    if (indices.containsKey(indexName))
+                    if (indices.containsKey(indexName)) {
+                        // Index was already loaded, or name collision
+                        File otherDir = indices.get(indexName).getDir();
+                        if (!otherDir.equals(subDir)) {
+                            logger.warn("  Skipping subdir " + subDir + " because another index (" + otherDir + ") is named '" + indexName + "' as well.");
+                        }
                         continue;
+                    }
 
                     try {
                         logger.debug("Index found: " + indexName + " (" + subDir + ")");
@@ -570,7 +595,6 @@ public class IndexManager {
      * @param directories to monitor
      * @param pollingIntervalInMs how ofter to monitor the directories
      * @return the monitor
-     * @throws Exception
      */
     public FileAlterationMonitor startRemovedIndicesMonitor(List<File> directories, long pollingIntervalInMs) throws Exception {
         logger.info("Installing index removal watcher on: {}", directories);

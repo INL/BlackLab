@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -32,7 +17,7 @@ import nl.inl.blacklab.search.fimatch.NfaState;
 class SpansFiSeq extends BLSpans {
 
     /** The spans we're (possibly) looking for */
-    private BLSpans anchor;
+    private final BLSpans anchor;
 
     /** What doc is the anchorSpans in? */
     private int anchorDoc = -1;
@@ -54,16 +39,16 @@ class SpansFiSeq extends BLSpans {
      * If true, match from the start of the anchor hit. Otherwise, match from the
      * end.
      */
-    private boolean startOfAnchor;
+    private final boolean startOfAnchor;
 
     /** The NFA to use to find matches in the forward index. */
-    private NfaState nfa;
+    private final NfaState nfa;
 
     /** The direction to match in (-1 / DIR_TO_LEFT = backward, 1 / DIR_TO_RIGHT = forward). */
-    private int direction;
+    private final int direction;
 
     /** Maps from term strings to term indices for each annotation. */
-    private ForwardIndexAccessorLeafReader fiAccessor;
+    private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Iterator over NFA-matched endpoints */
     private Iterator<Integer> matchEndPointIt;
@@ -177,7 +162,6 @@ class SpansFiSeq extends BLSpans {
      *
      * @return docID if found, NO_MORE_DOCS if no such anchor span exists (i.e.
      *         we're done)
-     * @throws IOException
      */
     private int findDocWithMatch() throws IOException {
         // Find the next "valid" container, if there is one.
@@ -212,7 +196,6 @@ class SpansFiSeq extends BLSpans {
      *
      * @return start position if found, NO_MORE_POSITIONS if no such anchor spans
      *         exists (i.e. we're done)
-     * @throws IOException
      */
     private int synchronizePos() throws IOException {
         // Find the next "valid" anchor spans, if there is one.

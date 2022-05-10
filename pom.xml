@@ -13,6 +13,11 @@
     <url>https://github.com/INL/BlackLab</url>
 
     <modules>
+
+        <!-- Contains config for checkstyle, PMD and findbugs. -->
+        <module>build-tools</module>
+
+        <!-- Smaller modules used by Java lib and webservice -->
         <module>util</module>
         <module>common</module>
         <module>content-store</module>
@@ -23,25 +28,42 @@
         <module>mocks</module>
         <module>convert-and-tag</module>
 
+        <!-- Java lib and webservice -->
         <module>core</module>
         <module>server</module>
 
-        <module>contrib/legacy-docindexers</module>
+        <!-- Optional instrumentation modules -->
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
+
+        <!-- Older DocIndexers -->
+        <module>contrib/legacy-docindexers</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <doclint>none</doclint>
-        <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
+
         <blacklab.version>${project.version}</blacklab.version>
-        <log4j.version>2.17.1</log4j.version>
+
+        <!-- Library versions -->
+        <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
+        <log4j.version>2.17.2</log4j.version>
         <jackson.version>2.11.1</jackson.version>
         <eclipse.collections.version>7.1.0</eclipse.collections.version>
-        <maven.compiler.source>9</maven.compiler.source>
-        <maven.compiler.target>9</maven.compiler.target>
-        <maven.compiler.release>9</maven.compiler.release>
+
+        <!-- Java versions -->
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.release>11</maven.compiler.release>
+
+        <!-- Plugin versions -->
+        <checkstyle.version>3.1.2</checkstyle.version>
+        <pmd.version>3.16.0</pmd.version>
+        <findbugs.version>3.0.5</findbugs.version>
+        <javadoc.version>3.4.0</javadoc.version>
+
+
     </properties>
 
     <licenses>
@@ -137,12 +159,34 @@
 
         <plugins>
 
-            <!-- Copies dependencies to target/lib, so we can run programs 
+            <!-- Enforces minimum Maven version -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>enforce-maven</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>3.2.5</version>
+                                </requireMavenVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Copies dependencies to target/lib, so we can run programs
                 from blacklab.jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -164,9 +208,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.2.2</version>
                 <configuration>
-                    <useDefaultManifestFile>true</useDefaultManifestFile>
                     <archive>
                         <manifest>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -184,7 +227,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.2</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -203,14 +246,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>3.10.1</version>
             </plugin>
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <!--<version>3.0.0-M1</version>-->
-                <version>2.22.1</version>
+                <version>3.0.0-M6</version>
                 <configuration>
                     <!-- deal with Debian openjdk-8 issue (see https://issues.apache.org/jira/browse/SUREFIRE-1588) -->
                     <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
@@ -228,7 +271,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.4</version>
+                <version>3.0.0</version>
                 <configuration>
                     <format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
                     <items>
@@ -249,7 +292,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>
-                <version>3.7.1</version>
+                <version>3.12.0</version>
                 <dependencies>
 
                     <!-- SSH/SCP (copy to local server) -->
@@ -263,41 +306,69 @@
                         <artifactId>wagon-ssh-external</artifactId>
                         <version>2.9</version>
                     </dependency>
-
                 </dependencies>
+                <configuration>
+                    <!-- Skip all except core, see there -->
+                    <skip>true</skip>
+                    <skipDeploy>true</skipDeploy>
+                </configuration>
             </plugin>
 
             <!-- Linkable source code -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jxr-plugin</artifactId>
-                <version>2.5</version>
+                <version>3.2.0</version>
             </plugin>
 
             <!-- Report on (possible) bugs -->
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
-                <version>3.0.5</version>
-                <configuration>
-                    <excludeFilterFile>${project.basedir}/findbugs-exclude.xml</excludeFilterFile>
-                </configuration>
+                <version>${findbugs.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
-            <!-- Project info -->
+            <!-- Report on possible bugs/style problems -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.0.0</version>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>${pmd.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Report on style problems -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${checkstyle.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>nl.inl.blacklab</groupId>
+                        <artifactId>build-tools</artifactId>
+                        <version>${project.version}</version>
+                    </dependency>
+                </dependencies>
             </plugin>
 
             <!-- Javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${javadoc.version}</version>
                 <configuration>
-                    <source>8</source>
                     <notimestamp>true</notimestamp>
                 </configuration>
             </plugin>
@@ -306,14 +377,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>2.18.1</version>
+                <version>3.0.0-M6</version>
             </plugin>
 
             <!-- Test code coverage -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.1</version>
+                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <id>prepare-agent</id>
@@ -354,7 +425,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
+                <version>3.0.0-M5</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
@@ -368,7 +439,7 @@
             <plugin>
                 <groupId>org.sonatype.plugins</groupId>
                 <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.3</version>
+                <version>1.6.12</version>
                 <extensions>true</extensions>
                 <configuration>
                     <serverId>ossrh</serverId>
@@ -376,6 +447,23 @@
                     <autoReleaseAfterClose>false</autoReleaseAfterClose>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.0.0-M2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.0.0-M1</version>
+            </plugin>
+
         </plugins>
     </build>
 
@@ -389,11 +477,12 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
+
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
@@ -404,9 +493,8 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.2.0</version>
+                        <version>${javadoc.version}</version>
                         <configuration>
-                            <source>8</source>
                             <notimestamp>true</notimestamp>
                         </configuration>
                         <executions>
@@ -423,7 +511,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -446,13 +534,13 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.20.1</version>
+            <version>4.5.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -489,7 +577,7 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.7</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -499,18 +587,18 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.9</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.4</version>
+            <version>1.9</version>
         </dependency>
         <!-- For indexing from tabular files: csv, tsv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.4</version>
+            <version>1.9.0</version>
         </dependency>
 
 
@@ -522,14 +610,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
+                <version>3.2.0</version>
             </plugin>
 
             <!-- Project info section of the project site -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.2</version>
                 <reportSets>
                     <reportSet>
                         <reports>
@@ -553,9 +641,8 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>${javadoc.version}</version>
                 <configuration>
-                    <source>8</source>
                     <notimestamp>true</notimestamp>
                 </configuration>
                 <reportSets>
@@ -568,16 +655,25 @@
                 </reportSets>
             </plugin>
 
+            <!-- Report on (possible) bugs -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>${findbugs.version}</version>
+                <configuration>
+                    <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+                </configuration>
+            </plugin>
+
             <!-- Report on possible bugs/style problems -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.12.0</version>
+                <version>${pmd.version}</version>
                 <configuration>
                     <rulesets>
-                        <ruleset>${project.basedir}/pmd-rules.xml</ruleset>
+                        <ruleset>pmd-rules.xml</ruleset>
                     </rulesets>
-                    <!-- <linkXref>true</linkXref>-->
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
                     <targetJdk>1.8</targetJdk>
@@ -591,9 +687,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>${checkstyle.version}</version>
                 <configuration>
-                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
+                    <configLocation>checkstyle.xml</configLocation>
                     <excludes>**/queryParser/**/*,**/util/json/**/*</excludes>
                 </configuration>
                 <reportSets>
@@ -609,7 +705,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>taglist-maven-plugin</artifactId>
-                <version>2.4</version>
+                <version>3.0.0</version>
                 <configuration>
                     <tagListOptions>
                         <tagClasses>
@@ -657,7 +753,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.2</version>
+                <version>2.10.0</version>
                 <reportSets>
                     <reportSet>
                         <reports>

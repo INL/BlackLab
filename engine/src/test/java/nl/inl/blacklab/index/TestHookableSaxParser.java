@@ -48,9 +48,9 @@ public class TestHookableSaxParser {
         hookHandler = new StringConcatenateHandler();
     }
 
-    class StringConcatenateHandler extends ElementHandler {
+    static class StringConcatenateHandler extends ElementHandler {
 
-        private StringBuilder builder = new StringBuilder();
+        private final StringBuilder builder = new StringBuilder();
 
         public StringConcatenateHandler() {
             //

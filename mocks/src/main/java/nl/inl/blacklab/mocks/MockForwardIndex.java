@@ -1,15 +1,15 @@
 package nl.inl.blacklab.mocks;
 
+import java.util.List;
+import java.util.Set;
+
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-import java.util.List;
-import java.util.Set;
-
 public class MockForwardIndex extends AnnotationForwardIndex {
 
-    private Terms terms;
+    private final Terms terms;
 
     public MockForwardIndex(Terms terms) {
         super(null, null, null);
@@ -54,12 +54,6 @@ public class MockForwardIndex extends AnnotationForwardIndex {
 
     @Override
     public long freeSpace() {
-        //
-        return 0;
-    }
-
-    @Override
-    public int freeBlocks() {
         //
         return 0;
     }

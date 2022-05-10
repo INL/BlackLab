@@ -14,11 +14,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class Collators {
 
-    private CollatorVersion version;
+    private final CollatorVersion version;
 
-    private Collator sensitive;
+    private final Collator sensitive;
 
-    private Collator insensitive;
+    private final Collator insensitive;
 
     public Collators(Collator base, CollatorVersion version) {
         super();

@@ -7,6 +7,7 @@ public class BLConfigLog {
         return trace;
     }
 
+    @SuppressWarnings("unused")
     public void setTrace(BLConfigTrace trace) {
         this.trace = trace;
     }

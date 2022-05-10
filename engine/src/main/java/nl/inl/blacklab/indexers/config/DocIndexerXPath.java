@@ -3,7 +3,6 @@ package nl.inl.blacklab.indexers.config;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -36,7 +35,6 @@ import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Indexer;
@@ -87,10 +85,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     private FragmentPosition fragPos = FragmentPosition.BEFORE_OPEN_TAG;
 
     /** Fragment positions in ancestors */
-    private List<FragmentPosition> fragPosStack = new ArrayList<>();
-
-    /** The config for the annotated field we're currently processing. */
-    private ConfigAnnotatedField currentAnnotatedFieldConfig;
+    private final List<FragmentPosition> fragPosStack = new ArrayList<>();
 
     @Override
     public void close() {
@@ -98,7 +93,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     @Override
-    public void setDocument(File file, Charset defaultCharset) throws FileNotFoundException {
+    public void setDocument(File file, Charset defaultCharset) {
         try {
             setDocument(FileUtils.readFileToByteArray(file), defaultCharset);
         } catch (IOException e) {
@@ -139,22 +134,21 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     /** Map from XPath expression to compiled XPath. */
-    private Map<String, AutoPilot> compiledXPaths = new HashMap<>();
+    private final Map<String, AutoPilot> compiledXPaths = new HashMap<>();
 
     /**
      * AutoPilots that are currently being used. We need to keep track of this to be
      * able to re-add them to compiledXpath with the correct XPath expression later.
      */
-    private Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
+    private final Map<AutoPilot, String> autoPilotsInUse = new HashMap<>();
 
     /**
      * Create AutoPilot and declare namespaces on it.
      *
      * @param xpathExpr xpath expression for the AutoPilot
      * @return the AutoPilot
-     * @throws XPathParseException
      */
-    private AutoPilot acquireAutoPilot(String xpathExpr) throws XPathParseException {
+    private AutoPilot acquireAutoPilot(String xpathExpr) {
         AutoPilot ap = compiledXPaths.remove(xpathExpr);
         if (ap == null) {
             ap = new AutoPilot(nav);
@@ -198,6 +192,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 vg.parse(config.isNamespaceAware());
 
                 nav = vg.getNav();
+                if (nav.getEncoding() != VTDNav.FORMAT_UTF8)
+                    throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding() + " (See VTD-XML's VTDNav.java for format codes)");
 
                 // Find all documents
                 AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
@@ -237,25 +233,21 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // Resolve value using XPath
                 AutoPilot apLinkPath = null;
                 String result = null;
-                try {
-                    apLinkPath = acquireAutoPilot(xpath);
-                    result = apLinkPath.evalXPathToString();
-                    if (result == null || result.isEmpty()) {
-                        switch (ld.getIfLinkPathMissing()) {
-                            case IGNORE:
-                                break;
-                            case WARN:
-                                getDocWriter().listener()
-                                        .warning("Link path " + xpath + " not found in document " + documentName);
-                                break;
-                            case FAIL:
-                                throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
-                        }
+                apLinkPath = acquireAutoPilot(xpath);
+                result = apLinkPath.evalXPathToString();
+                if (result == null || result.isEmpty()) {
+                    switch (ld.getIfLinkPathMissing()) {
+                        case IGNORE:
+                            break;
+                        case WARN:
+                            getDocWriter().listener()
+                                    .warning("Link path " + xpath + " not found in document " + documentName);
+                            break;
+                        case FAIL:
+                            throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
                     }
-                    releaseAutoPilot(apLinkPath);
-                } catch (XPathParseException e) {
-                    throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e);
                 }
+                releaseAutoPilot(apLinkPath);
                 return result;
             };
             processLinkedDocument(ld, xpathProcessor);
@@ -265,12 +257,12 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     protected void processAnnotatedField(ConfigAnnotatedField annotatedField)
-            throws XPathParseException, XPathEvalException, NavException, VTDException {
+            throws VTDException {
         Map<String, Integer> tokenPositionsMap = new HashMap<>();
 
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
-        setCurrentAnnotatedField(annotatedField);
+        setCurrentAnnotatedFieldName(annotatedField.getName());
 
         // Precompile XPaths for words, evalToString, inline tags, punct and (sub)annotations
         AutoPilot words = acquireAutoPilot(annotatedField.getWordsPath());
@@ -345,7 +337,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 b.setCursorPosition();
                 wordPositions.add(Pair.of(nav.getCurrentIndex(), b));
             }
-            wordPositions.sort((a, b) -> a.getKey().compareTo(b.getKey()));
+            wordPositions.sort(Entry.comparingByKey());
 
             for (Pair<Integer, BookMark> wordPosition : wordPositions) {
                 wordPosition.getValue().setCursorPosition();
@@ -475,9 +467,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             // For each configured metadata field...
             List<ConfigMetadataField> fields = b.getFields();
-            for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
-                ConfigMetadataField f = fields.get(i);
-
+            for (ConfigMetadataField f : fields) { // NOTE: fields may be added during loop, so can't iterate
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
                 // such as extra processing steps
@@ -558,7 +548,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                                 addMetadataField(f.getName(), value);
                             }
                         }
-                    } catch(XPathEvalException e) {
+                    } catch (XPathEvalException e) {
                         // An xpath like string(@value) will make evalXPath() fail.
                         // There is no good way to check whether this exception will occur
                         // When the exception occurs we try to evaluate the xpath as string
@@ -584,7 +574,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         navpop();
     }
 
-    private static Set<String> reportedSanitizedNames = new HashSet<>();
+    private static final Set<String> reportedSanitizedNames = new HashSet<>();
 
     synchronized static void warnSanitized(String origFieldName, String fieldName) {
         if (!reportedSanitizedNames.contains(origFieldName)) {
@@ -706,7 +696,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         boolean evalXml = annotation.isCaptureXml();
 
         if (reuseValueFromParentAnnot == null) {
-            reuseValueFromParentAnnot = new ArrayList<String>();
+            reuseValueFromParentAnnot = new ArrayList<>();
             navpush();
 
             AutoPilot apValuePath = acquireAutoPilot(valuePath);
@@ -774,6 +764,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             vg.parse(config.isNamespaceAware());
 
             nav = vg.getNav();
+            if (nav.getEncoding() != VTDNav.FORMAT_UTF8)
+                throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding() + " (See VTD-XML's VTDNav.java for format codes)");
 
             boolean docDone = false;
             if (documentXPath != null) {
@@ -809,7 +801,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add open and close InlineObject objects for the current element to the list.
      *
      * @param inlineObject list to add the new open/close tag objects to
-     * @throws NavException
      */
     private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
         // Get the element and content fragments
@@ -826,8 +817,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Regular element with separate open and close tags.
             int contentOffset = (int) contentFragment;
             int contentLength = (int) (contentFragment >> 32);
-            int contentEnd = contentOffset + contentLength;
-            endTagOffset = contentEnd;
+            endTagOffset = contentOffset + contentLength;
         }
 
         // Find element name
@@ -848,10 +838,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * Add InlineObject for a punctuation text node.
      *
      * @param inlineObjects list to add the punct object to
-     * @param text
-     * @throws NavException
      */
-    private void collectPunct(List<InlineObject> inlineObjects, String text) throws NavException {
+    private void collectPunct(List<InlineObject> inlineObjects, String text) {
         int i = nav.getCurrentIndex();
         int offset = nav.getTokenOffset(i);
 //		int length = nav.getTokenLength(i);
@@ -903,7 +891,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8);
+        storeWholeDocument(inputDocument, documentByteOffset, documentLengthBytes);
     }
 
     @Override
@@ -948,13 +936,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         return contOffset;
     }
 
-    protected void setCurrentAnnotatedField(ConfigAnnotatedField annotatedField) {
-        currentAnnotatedFieldConfig = annotatedField;
-        setCurrentAnnotatedFieldName(currentAnnotatedFieldConfig.getName());
-    }
-
-    /** Get the raw xml from the document at the current position
-     * @throws NavException */
+    /** Get the raw xml from the document at the current position   */
     private static String getXml(AutoPilot ap) throws NavException {
         long frag = ap.getNav().getContentFragment();
         if (frag == -1) {

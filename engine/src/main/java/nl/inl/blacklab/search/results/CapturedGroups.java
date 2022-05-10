@@ -5,7 +5,10 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.Span;
 
-/** Captured group information for a list of hits. */
+/** Captured group information for a list of hits.
+ *
+ * This interface is read-only.
+ */
 public interface CapturedGroups {
 
     /**
@@ -32,28 +35,6 @@ public interface CapturedGroups {
      * @return groups
      */
     Map<String, Span> getMap(Hit hit);
-
-    /**
-     * Add groups for a hit
-     *
-     * @param hit the hit
-     * @param groups groups for thishit
-     */
-    default void put(Hit hit, Span[] groups) {
-        throw new UnsupportedOperationException();
-    }
-
-    /** Copy all groups from other */
-    default void putAll(CapturedGroups other) {
-        throw new UnsupportedOperationException();
-    }
-
-    /** Copy all groups from other */
-    default void putAll(Map<Hit, Span[]> other) {
-        throw new UnsupportedOperationException();
-    }
-
-    Map<? extends Hit, ? extends Span[]> getAll();
 
     @Override
     String toString();

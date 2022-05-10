@@ -1,7 +1,6 @@
 package nl.inl.blacklab.index;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 /**
  * A metadata fetcher can fetch the metadata for a document from some external
@@ -9,9 +8,9 @@ import java.io.IOException;
  */
 abstract public class MetadataFetcher implements Closeable {
 
-    public DocIndexer docIndexer;
+    public final DocIndexer docIndexer;
 
-    public MetadataFetcher(DocIndexer docIndexer) {
+    public MetadataFetcher(DocIndexerLegacy docIndexer) {
         this.docIndexer = docIndexer;
     }
 
@@ -23,11 +22,10 @@ abstract public class MetadataFetcher implements Closeable {
 
     /**
      * Close the fetcher, releasing any resources it holds
-     * 
-     * @throws IOException if closing caused an error
+     *
      */
     @Override
-    public void close() throws IOException {
+    public void close() {
         // Nothing, by default
     }
 

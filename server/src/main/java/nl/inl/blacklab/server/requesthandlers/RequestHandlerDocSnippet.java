@@ -47,7 +47,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = blIndex.doc(luceneDocId).luceneDoc();
+        Document document = blIndex.luceneDoc(luceneDocId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
@@ -72,7 +72,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         // Clamp snippet to max size
         int snippetStart = Math.max(0, start - wordsAroundHit.left());
         int snippetEnd = end + wordsAroundHit.right();
-        int maxContextSize = searchMan.config().getParameters().getContextSize().getMax();
+        int maxContextSize = searchMan.config().getParameters().getContextSize().getMaxInt();
         if (snippetEnd - snippetStart > maxContextSize) {
             int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
             snippetStart = Math.max(0, start - clampedWindow);
@@ -112,14 +112,15 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 
         Hits singleHit = hits.window(hit);
         if (useOrigContent) {
+            // We're using original content.
             Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
             Concordance c = concordances.get(hit);
             if (!isFragment) {
-                ds.startEntry("left").plain(c.left()).endEntry()
-                        .startEntry("match").plain(c.match()).endEntry()
-                        .startEntry("right").plain(c.right()).endEntry();
+                ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                        .startEntry("match").xmlFragment(c.match()).endEntry()
+                        .startEntry("right").xmlFragment(c.right()).endEntry();
             } else {
-                ds.plain(c.match());
+                ds.xmlFragment(c.match());
             }
         } else {
             Kwics kwics = singleHit.kwics(wordsAroundHit);

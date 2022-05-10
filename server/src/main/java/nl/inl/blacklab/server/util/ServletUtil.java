@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.util;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -22,7 +23,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 public class ServletUtil {
     private static final Logger logger = LogManager.getLogger(ServletUtil.class);
 
-    static final Charset DEFAULT_ENCODING = Charset.forName("utf-8");
+    static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
 
     /**
      * Returns the value of a servlet parameter
@@ -179,7 +180,7 @@ public class ServletUtil {
     }
 
     /** The HTTP date format, to use for the cache header */
-    static DateFormat httpDateFormat;
+    static final DateFormat httpDateFormat;
 
     // Initialize the HTTP date format
     static {

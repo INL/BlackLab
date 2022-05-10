@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -37,7 +22,7 @@ import org.apache.lucene.search.Weight;
  */
 public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
-    private Query filter;
+    private final Query filter;
 
     /**
      * Filter a SpanQuery.
@@ -123,7 +108,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         }
         if (rewrite instanceof MatchNoDocsQuery)
             rewrite = new TermQuery(new Term("_nonexistentfield_", "_nonexistentvalue_")); // HACK. This "fixes" the 'Query does not implement createWeight issue'
-        Weight filterWeight = rewrite.createWeight(searcher, scoreMode.COMPLETE_NO_SCORES, boost);
+        Weight filterWeight = rewrite.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, boost);
         return new SpanWeightFiltered(weight, filterWeight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }
 
@@ -177,7 +162,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
    @Override
     public boolean isSingleAnyToken() {
-        return clauses.stream().allMatch(c -> c.isSingleAnyToken());
+        return clauses.stream().allMatch(BLSpanQuery::isSingleAnyToken);
     }
 
     @Override

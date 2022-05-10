@@ -1,22 +1,7 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -42,8 +27,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
             propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
                 : MatchSensitivity.SENSITIVE;
-//        ContextSize contextSize = parts.length > 2 ? ContextSize.get(Integer.parseInt(parts[2]))
-//                : index.defaultContextSize();
         Annotation annotation = field.annotation(propName);
         try {
             Constructor<T> ctor = cls.getConstructor(BlackLabIndex.class, Annotation.class, MatchSensitivity.class);
@@ -53,9 +36,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    protected Terms terms;
+    protected final Terms terms;
 
-    protected Annotation annotation;
+    protected final Annotation annotation;
 
     protected MatchSensitivity sensitivity;
 
@@ -97,18 +80,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     @Override
     public List<Annotation> needsContext() {
-        return Arrays.asList(annotation);
+        return annotation == null ? Collections.emptyList() : List.of(annotation);
     }
     
     @Override
     public List<MatchSensitivity> getSensitivities() {
-        return Arrays.asList(sensitivity);
+        return List.of(sensitivity);
     }
-
-//    @Override
-//    public ContextSize needsContextSize(BlackLabIndex index) {
-//        return contextSize;
-//    }
 
     @Override
     public String name() {
@@ -146,11 +124,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 return false;
         } else if (!annotation.equals(other.annotation))
             return false;
-//        if (contextSize == null) {
-//            if (other.contextSize != null)
-//                return false;
-//        } else if (!contextSize.equals(other.contextSize))
-//            return false;
         if (index == null) {
             if (other.index != null)
                 return false;

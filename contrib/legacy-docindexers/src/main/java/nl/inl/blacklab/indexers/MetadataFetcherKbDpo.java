@@ -28,7 +28,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 import nl.inl.blacklab.indexers.MetadataFetcherKbDpo.GetKbMetadata.Metadata;
@@ -57,13 +57,13 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     public static class GetKbMetadata {
 
         public static class Metadata {
-            public String title;
+            public final String title;
 
-            public String author;
+            public final String author;
 
-            public String date;
+            public final String date;
 
-            public String ppn;
+            public final String ppn;
 
             public Metadata(String title, String author, String date, String ppn) {
                 super();
@@ -83,17 +83,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
         static XPathExpression xpathAuthor;
         static XPathExpression xpathDate;
 
-        /**
-         * Apache HTTP components classes, ctors and methods (we use reflection to avoid
-         * static dependency on these libs)
-         */
-        private static Class<?> clsDefaultHttpClient;
-        private static Class<?> clsHttpUriRequest;
-        private static Class<?> clsHttpGet;
-        private static Class<?> clsHttpResponse;
-        private static Class<?> clsStatusLine;
-        private static Class<?> clsHttpEntity;
-        private static Class<?> clsEntityUtils;
         private static Constructor<?> ctorHttpGetUrl;
         private static Method methHttpClientExecute;
         private static Method methHttpResponseGetStatusLine;
@@ -107,7 +96,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
         static Object defaultHttpClient;
 
         /** Cached metadata (saves URL requests) */
-        static Map<String, Metadata> cached = new HashMap<>();
+        static final Map<String, Metadata> cached = new HashMap<>();
 
         private static void init() {
 
@@ -157,13 +146,15 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
             try {
                 // Use reflection to get handle to classes, ctors and methods
                 // (so we avoid static dependencies on the Apache HTTP libraries)
-                clsDefaultHttpClient = Class.forName("org.apache.http.impl.client.DefaultHttpClient");
-                clsHttpUriRequest = Class.forName("org.apache.http.client.methods.HttpUriRequest");
-                clsHttpGet = Class.forName("org.apache.http.client.methods.HttpGet");
-                clsHttpResponse = Class.forName("org.apache.http.HttpResponse");
-                clsStatusLine = Class.forName("org.apache.http.StatusLine");
-                clsHttpEntity = Class.forName("org.apache.http.HttpEntity");
-                clsEntityUtils = Class.forName("org.apache.http.util.EntityUtils");
+                // Apache HTTP components classes, ctors and methods (we use reflection to avoid
+                // static dependency on these libs)
+                Class<?> clsDefaultHttpClient = Class.forName("org.apache.http.impl.client.DefaultHttpClient");
+                Class<?> clsHttpUriRequest = Class.forName("org.apache.http.client.methods.HttpUriRequest");
+                Class<?> clsHttpGet = Class.forName("org.apache.http.client.methods.HttpGet");
+                Class<?> clsHttpResponse = Class.forName("org.apache.http.HttpResponse");
+                Class<?> clsStatusLine = Class.forName("org.apache.http.StatusLine");
+                Class<?> clsHttpEntity = Class.forName("org.apache.http.HttpEntity");
+                Class<?> clsEntityUtils = Class.forName("org.apache.http.util.EntityUtils");
                 ctorHttpGetUrl = clsHttpGet.getConstructor(String.class);
                 methHttpClientExecute = clsDefaultHttpClient.getMethod("execute", clsHttpUriRequest);
                 methHttpResponseGetStatusLine = clsHttpResponse.getMethod("getStatusLine");
@@ -324,7 +315,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     /** Pattern for getting DPO number from image file name */
     private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
-    public MetadataFetcherKbDpo(DocIndexer docIndexer) {
+    public MetadataFetcherKbDpo(DocIndexerLegacy docIndexer) {
         super(docIndexer);
     }
 
@@ -344,7 +335,6 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
             docIndexer.addMetadataField("ppn", metadata.ppn);
         } else {
             System.err.println("DPO number not found for imageFileName " + fileName);
-            return;
         }
 
     }

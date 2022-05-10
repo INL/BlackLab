@@ -3,17 +3,21 @@ package nl.inl.blacklab.search;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
 import java.text.Collator;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
+import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -47,6 +51,8 @@ public interface BlackLabIndex extends Closeable {
     
     /**
      * Does the specified directory contain a BlackLab index?
+     *
+     * NOTE: does NOT follow symlinks.
      * 
      * @param indexDir the directory
      * @return true if it's a BlackLab index, false if not.
@@ -56,8 +62,7 @@ public interface BlackLabIndex extends Closeable {
             if (VersionFile.exists(indexDir)) {
                 VersionFile vf = VersionFile.read(indexDir);
                 String version = vf.getVersion();
-                if (vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2")))
-                    return true;
+                return vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2"));
             }
             return false;
         } catch (FileNotFoundException e) {
@@ -66,12 +71,25 @@ public interface BlackLabIndex extends Closeable {
     }
 
     /**
+     * Does the specified directory contain a BlackLab index?
+     *
+     * NOTE: does NOT follow symlinks. Call {@link Path#toRealPath(LinkOption...)}
+     * yourself if you want this.
+     *
+     * @param indexDirPath the directory
+     * @return true if it's a BlackLab index, false if not.
+     */
+    static boolean isIndex(Path indexDirPath) {
+        return isIndex(indexDirPath.toFile());
+    }
+
+    /**
      * Open an index for reading ("search mode").
      * 
      * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @return index object
-     * @throw IndexTooOld if the index format is no longer supported
+     * @throws IndexTooOld if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
     static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {
@@ -109,14 +127,6 @@ public interface BlackLabIndex extends Closeable {
     boolean docExists(int docId);
 
     /**
-     * Get a BlackLab document.
-     * 
-     * @param docId document id
-     * @return document
-     */
-    Doc doc(int docId);
-
-    /**
      * Perform a task on each (non-deleted) Lucene Document.
      * 
      * @param task task to perform
@@ -134,11 +144,9 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param query the pattern to find
      * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    default Hits find(BLSpanQuery query) throws WildcardTermTooBroad {
-        return find(query, (SearchSettings)null);
+    default Hits find(BLSpanQuery query) {
+        return find(query, null);
     }
 
     /**
@@ -147,10 +155,8 @@ public interface BlackLabIndex extends Closeable {
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    Hits find(BLSpanQuery query, SearchSettings settings) throws WildcardTermTooBroad;
+    Hits find(BLSpanQuery query, SearchSettings settings);
 
     /**
      * Perform a document query only (no hits)
@@ -163,7 +169,7 @@ public interface BlackLabIndex extends Closeable {
     /**
      * Determine the term frequencies for an annotation sensitivity.
      * 
-     * @param annotSensitivity the annation + sensitivity indexing we want the term frequency for
+     * @param annotSensitivity the annotation + sensitivity indexing we want the term frequency for
      * @param filterQuery document filter, or null for all documents
      * @param terms a list of terms to retrieve frequencies for, or null/empty to retrieve frequencies for all terms
      * @return term frequencies
@@ -176,10 +182,8 @@ public interface BlackLabIndex extends Closeable {
      *
      * @param query the query to explain
      * @return the explanation
-     * @throws WildcardTermTooBroad if a wildcard or regular expression term
-     *             is overly broad
      */
-    QueryExplanation explain(BLSpanQuery query) throws WildcardTermTooBroad;
+    QueryExplanation explain(BLSpanQuery query);
     
     /**
      * Start building a Search.
@@ -233,7 +237,7 @@ public interface BlackLabIndex extends Closeable {
     ContentAccessor contentAccessor(Field field);
 
     /**
-     * Tries to get the ForwardIndex object for the specified fieldname.
+     * Tries to get the ForwardIndex object for the specified field name.
      *
      * Looks for an already-opened forward index first. If none is found, and if
      * we're in "create index" mode, may create a new forward index. Otherwise,
@@ -309,7 +313,14 @@ public interface BlackLabIndex extends Closeable {
     default MetadataFields metadataFields() {
         return metadata().metadataFields();
     }
-    
+
+    /**
+     * Get the specified metadata field config.
+     *
+     * @param fieldName metadata field name
+     * @return metadata field config
+     * @throws IllegalArgumentException if field not found
+     */
     default MetadataField metadataField(String fieldName) {
         return metadata().metadataField(fieldName);
     }
@@ -429,4 +440,11 @@ public interface BlackLabIndex extends Closeable {
      */
     BlackLabEngine blackLab();
 
+    default Document luceneDoc(int docId) {
+        try {
+            return reader().document(docId);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
 }

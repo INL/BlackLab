@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -56,7 +55,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
-        List<Annotation> annotations = Arrays.asList(annotation);
+        List<Annotation> annotations = List.of(annotation);
         List<FiidLookup> fiidLookups = FiidLookup.getList(annotations, hits.queryInfo().index().reader());
         Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
         MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
@@ -104,9 +103,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
-        if (wordFreq.size() >= Integer.MAX_VALUE) {
+        if (wordFreq.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         results = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
@@ -120,9 +119,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
         super(queryInfo);
-        if (list.size() >= Integer.MAX_VALUE) {
+        if (list.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Integer.MAX_VALUE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         this.results = list;
         calculateTotalFrequency();

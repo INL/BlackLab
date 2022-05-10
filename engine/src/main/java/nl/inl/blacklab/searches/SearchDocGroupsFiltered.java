@@ -3,18 +3,17 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /** A search that yields groups of documents. */
 public class SearchDocGroupsFiltered extends SearchDocGroups {
 
-    private SearchDocGroups source;
+    private final SearchDocGroups source;
 
-    private DocGroupProperty property;
+    private final DocGroupProperty property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchDocGroupsFiltered(QueryInfo queryInfo, SearchDocGroups source, DocGroupProperty property, PropertyValue value) {
         super(queryInfo);

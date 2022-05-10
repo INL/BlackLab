@@ -20,7 +20,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.input.TeeInputStream;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.StoredField;
 import org.xml.sax.Attributes;
@@ -30,7 +29,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.DocIndexer;
+import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
 
@@ -51,7 +50,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     private static final int INITIAL_CMDI_BYTEBUFFER_SIZE = 1000;
 
     @SuppressWarnings("deprecation")
-    private static void init(DocIndexer docIndexer) {
+    private static void init(DocIndexerLegacy docIndexer) {
         String zipFilePath = docIndexer.getParameter("metadataZipFile");
         if (zipFilePath == null) {
             zipFilePath = docIndexer.getParameter("metadataDir");
@@ -75,7 +74,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     private String metadataPathInZip;
 
     @SuppressWarnings("deprecation")
-    public MetadataFetcherCgnImdi(DocIndexer docIndexer) {
+    public MetadataFetcherCgnImdi(DocIndexerLegacy docIndexer) {
         super(docIndexer);
         if (metadataZipFile == null)
             init(docIndexer);
@@ -160,13 +159,13 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
      */
     class MetadataParser extends DefaultHandler {
 
-        private StringBuilder textContent = new StringBuilder();
+        private final StringBuilder textContent = new StringBuilder();
 
         private boolean hasChild = false;
 
-        Map<String, String> indexFieldAs = new HashMap<>();
+        final Map<String, String> indexFieldAs = new HashMap<>();
 
-        List<String> elementStack = new ArrayList<>();
+        final List<String> elementStack = new ArrayList<>();
 
         /**
          * Push the current element name onto the element stack

@@ -12,9 +12,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsSorted extends SearchHitGroups {
 
-    private SearchHitGroups source;
+    private final SearchHitGroups source;
 
-    private GroupProperty<Hit, HitGroup> property;
+    private final GroupProperty<Hit, HitGroup> property;
 
     public SearchHitGroupsSorted(QueryInfo queryInfo, SearchHitGroups source, GroupProperty<Hit, HitGroup> sortBy) {
         super(queryInfo);

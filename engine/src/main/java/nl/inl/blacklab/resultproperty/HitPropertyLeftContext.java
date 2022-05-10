@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -70,16 +55,15 @@ public class HitPropertyLeftContext extends HitPropertyContextBase {
         int contextLength = context[Contexts.LENGTH_INDEX];
 
         // Copy the desired part of the context
-        int n = contextHitStart;
-        if (n <= 0)
+        if (contextHitStart <= 0)
             return new PropertyValueContextWords(index, annotation, sensitivity, new int[0], true);
-        int[] dest = new int[n];
+        int[] dest = new int[contextHitStart];
         int contextStart = contextLength * contextIndices.getInt(0) + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-        System.arraycopy(context, contextStart, dest, 0, n);
+        System.arraycopy(context, contextStart, dest, 0, contextHitStart);
 
         // Reverse the order of the array, because we want to sort from right to left
-        for (int i = 0; i < n / 2; i++) {
-            int o = n - 1 - i;
+        for (int i = 0; i < contextHitStart / 2; i++) {
+            int o = contextHitStart - 1 - i;
             // Swap values
             int t = dest[i];
             dest[i] = dest[o];

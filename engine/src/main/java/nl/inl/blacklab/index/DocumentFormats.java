@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -45,7 +44,6 @@ public class DocumentFormats {
      * If an exception occurs during initialization of the factory, the factory will
      * not be added, and the exception is rethrown.
      * 
-     * @param fac
      * @throws RuntimeException rethrows exceptions occuring during factory
      *             initialization
      */
@@ -63,7 +61,7 @@ public class DocumentFormats {
     }
 
     // Convenience method to avoid applications always having to create a DocIndexerFactory instance
-    public static void registerFormat(String formatIdentifier, Class<? extends DocIndexerAbstract> docIndexerClass) {
+    public static void registerFormat(String formatIdentifier, Class<? extends DocIndexerLegacy> docIndexerClass) {
         builtinClassFactory.addFormat(formatIdentifier, docIndexerClass);
     }
 
@@ -82,7 +80,6 @@ public class DocumentFormats {
      * under this formatIdentifier. This method isn't used in BlackLab itself, but
      * it could be useful for client applications.
      *
-     * @param formatIdentifier
      * @return the factory if a valid formatIdentifier is provided, null otherwise
      */
     public static DocIndexerFactory getFactory(String formatIdentifier) {
@@ -147,33 +144,11 @@ public class DocumentFormats {
     /**
      * Returns a format descriptor for a specific format
      * 
-     * @param formatIdentifier
      * @return the descriptor, or null if not supported by any factory
      */
     public static Format getFormat(String formatIdentifier) {
         DocIndexerFactory factory = getFactory(formatIdentifier);
         return factory != null ? factory.getFormat(formatIdentifier) : null;
-    }
-
-    /**
-     * Convenience function.
-     *  
-     * Note that it is usually faster to offer the document as byte[] and charset, 
-     * because that allows the buffer to be passed on without copying. 
-     * 
-     * @param formatIdentifier format to get the DocIndexer for
-     * @param indexer our indexer
-     * @param documentName document name
-     * @param reader file contents
-     * @return the DocIndexer
-     * @throws UnsupportedOperationException 
-     * @deprecated (since 2.2) use byte[] version 
-     */
-    @Deprecated
-    public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, Reader reader)
-            throws UnsupportedOperationException {
-        DocIndexerFactory fac = getFactory(formatIdentifier);
-        return fac != null ? fac.get(formatIdentifier, indexer, documentName, reader) : null;
     }
 
     /** 
@@ -188,7 +163,6 @@ public class DocumentFormats {
      * @param is contents
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, InputStream is,
             Charset cs)
@@ -205,8 +179,6 @@ public class DocumentFormats {
      * @param f file
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
-     * @throws FileNotFoundException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, File f, Charset cs)
             throws UnsupportedOperationException, FileNotFoundException {
@@ -222,7 +194,6 @@ public class DocumentFormats {
      * @param b file contents
      * @param cs file encoding
      * @return the DocIndexer
-     * @throws UnsupportedOperationException 
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {

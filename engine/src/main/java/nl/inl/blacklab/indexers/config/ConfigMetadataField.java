@@ -26,9 +26,9 @@ public class ConfigMetadataField {
     private String forEachPath;
 
     /** How to process annotation values (if at all) */
-    private List<ConfigProcessStep> process = new ArrayList<>();
+    private final List<ConfigProcessStep> process = new ArrayList<>();
 
-    private Map<String, String> mapValues = new HashMap<>();
+    private final Map<String, String> mapValues = new HashMap<>();
 
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
@@ -55,10 +55,10 @@ public class ConfigMetadataField {
     private String uiType = "";
 
     /** Mapping from value to displayValue (optional) */
-    private Map<String, String> displayValues = new HashMap<>();
+    private final Map<String, String> displayValues = new HashMap<>();
 
     /** Order in which to display the values (optional) */
-    private List<String> displayOrder = new ArrayList<>();
+    private final List<String> displayOrder = new ArrayList<>();
 
     /**
      * Whether to sort multiple value alphabetically or preserve them in document order

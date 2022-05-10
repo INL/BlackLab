@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.jobs;
 import nl.inl.blacklab.resultproperty.DocProperty;
 
 public class DocSortSettings {
-    private DocProperty sortBy;
+    private final DocProperty sortBy;
 
     public DocSortSettings(DocProperty sortBy) {
         super();

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.contentstore;
 
 import java.io.File;
@@ -50,7 +35,6 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
 
     /**
      * @param dir content store dir
-     * @throws ErrorOpeningIndex 
      */
     public ContentStoreFixedBlockReader(File dir) throws ErrorOpeningIndex {
         super(dir);
@@ -59,7 +43,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         if (!tocFile.exists())
             throw new ErrorOpeningIndex("Toc file doesn't exist: " + tocFile);
 
-        decompresserPool = new SimpleResourcePool<Inflater>(POOL_SIZE) {
+        decompresserPool = new SimpleResourcePool<>(POOL_SIZE) {
             @Override
             public Inflater createResource() {
                 return new Inflater();
@@ -254,7 +238,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
-    public void clear() throws IOException {
+    public void clear() {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 

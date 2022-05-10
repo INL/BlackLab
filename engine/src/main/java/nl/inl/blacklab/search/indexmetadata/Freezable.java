@@ -9,7 +9,7 @@ package nl.inl.blacklab.search.indexmetadata;
  */
 public interface Freezable<T> {
     
-    T freeze();
+    void freeze();
     
     boolean isFrozen();
     

@@ -8,11 +8,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class SearchDocsWindow extends SearchDocs {
 
-    private SearchDocs source;
+    private final SearchDocs source;
 
-    private long first;
+    private final long first;
 
-    private long number;
+    private final long number;
 
     public SearchDocsWindow(QueryInfo queryInfo, SearchDocs docsSearch, long first, long number) {
         super(queryInfo);

@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public class SearchHitsWindow extends SearchHits {
 
-    private SearchHits source;
-    private long first;
-    private long number;
+    private final SearchHits source;
+    private final long first;
+    private final long number;
 
     SearchHitsWindow(QueryInfo queryInfo, SearchHits source, long first, long number) {
         super(queryInfo);

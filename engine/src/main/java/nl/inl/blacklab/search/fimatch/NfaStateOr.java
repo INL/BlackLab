@@ -1,12 +1,16 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class NfaStateOr extends NfaState {
 
-    List<NfaState> nextStates;
+    final List<NfaState> nextStates;
 
-    private boolean clausesAllSameLength;
+    private final boolean clausesAllSameLength;
 
     public NfaStateOr(List<NfaState> nextStates, boolean clausesAllSameLength) {
         this.nextStates = new ArrayList<>(nextStates);
@@ -148,7 +152,7 @@ public class NfaStateOr extends NfaState {
                 b.append(",");
             b.append(dump(s, stateNrs));
         }
-        return "OR(" + b.toString() + ")";
+        return "OR(" + b + ")";
     }
 
     @Override

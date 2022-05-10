@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -30,10 +15,10 @@ import nl.inl.blacklab.search.Span;
 class SpansCaptureGroup extends BLSpans {
 
     /** clause to capture as a group */
-    private BLSpans clause;
+    private final BLSpans clause;
 
     /** group name */
-    private String name;
+    private final String name;
 
     /**
      * group index (where in the Spans[] to place our start/end position in
@@ -46,22 +31,20 @@ class SpansCaptureGroup extends BLSpans {
      * because we try to internalize constant-length neighbouring clauses into our
      * clause to speed up matching)
      */
-    int leftAdjust;
+    final int leftAdjust;
 
     /**
      * How to adjust the right edge of the captured hits while matching. (necessary
      * because we try to internalize constant-length neighbouring clauses into our
      * clause to speed up matching)
      */
-    private int rightAdjust;
+    private final int rightAdjust;
 
     /**
      * Constructs a SpansCaptureGroup.
      * 
      * @param clause the clause to capture
      * @param name group name
-     * @param rightAdjust
-     * @param leftAdjust
      */
     public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
         this.clause = clause;
@@ -115,7 +98,6 @@ class SpansCaptureGroup extends BLSpans {
      *
      * @param doc the doc number to skip to (or past)
      * @return true if we're still pointing to a valid hit, false if we're done
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {

@@ -36,7 +36,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = blIndex.doc(luceneDocId).luceneDoc();
+        Document document = blIndex.luceneDoc(luceneDocId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_INFO");
 
@@ -50,13 +50,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         dataStreamDocumentInfo(ds, blIndex, document, getMetadataToWrite());
         ds.endEntry();
 
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
-        ds.endEntry();
-        
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
-        ds.endEntry();
+        datastreamMetadataFieldInfo(ds, blIndex);
 
         ds.endMap();
         return HTTP_OK;

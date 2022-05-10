@@ -29,15 +29,15 @@ public final class SearchSettings {
      * 
      * Even if we stop processing, we can still keep counting.
      */
-    private long maxHitsToProcess;
+    private final long maxHitsToProcess;
 
     /**
      * Stop counting hits after this number. (ResultsNO_LIMIT = don't stop counting)
      */
-    private long maxHitsToCount;
+    private final long maxHitsToCount;
     
     /** Override FI match NFA factor, or -1 for default */
-    private long fiMatchFactor;
+    private final long fiMatchFactor;
 
     /**
      * Get settings

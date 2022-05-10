@@ -41,7 +41,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         @Override
         public Iterator<Annotation> iterator() {
             Iterator<AnnotationImpl> it = annotationsDisplayOrder.iterator();
-            return new Iterator<Annotation>() {
+            return new Iterator<>() {
                 @Override
                 public boolean hasNext() {
                     return it.hasNext();
@@ -51,13 +51,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 public Annotation next() {
                     return it.next();
                 }
-                
+
             };
         }
 
         @Override
         public Stream<Annotation> stream() {
-            return annotationsDisplayOrder.stream().map(a -> (Annotation)a);
+            return annotationsDisplayOrder.stream().map(a -> a);
         }
 
         @Override
@@ -78,13 +78,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
 
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
     
     /** This field's annotations, sorted by name */
-    private Map<String, AnnotationImpl> annots;
+    private final Map<String, AnnotationImpl> annots;
     
     /** This field's annotations, in desired display order */
-    private List<AnnotationImpl> annotationsDisplayOrder;
+    private final List<AnnotationImpl> annotationsDisplayOrder;
 
     /** The field's main annotation */
     private AnnotationImpl mainAnnotation;
@@ -108,31 +108,28 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
     /** Annotation display order. If not specified, use reasonable defaults. */
-    private List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
+    private final List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
 
     /** Compares annotation names by displayOrder. */
-    private Comparator<AnnotationImpl> annotationOrderComparator;
+    private final Comparator<AnnotationImpl> annotationOrderComparator;
 
     private boolean frozen;
 
-    private AnnotationsImpl annotationsImpl;
+    private final AnnotationsImpl annotationsImpl;
 
     AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
         this.indexMetadata = indexMetadata;
         annots = new TreeMap<>();
         annotationsDisplayOrder = new ArrayList<>();
-        annotationOrderComparator = new Comparator<AnnotationImpl>() {
-            @Override
-            public int compare(AnnotationImpl a, AnnotationImpl b) {
-                int ai = displayOrder.indexOf(a.name());
-                if (ai < 0)
-                    ai = Integer.MAX_VALUE;
-                int bi = displayOrder.indexOf(b.name());
-                if (bi < 0)
-                    bi = Integer.MAX_VALUE;
-                return ai == bi ? 0 : (ai > bi ? 1 : -1);
-            }
+        annotationOrderComparator = (a, b) -> {
+            int ai = displayOrder.indexOf(a.name());
+            if (ai < 0)
+                ai = Integer.MAX_VALUE;
+            int bi = displayOrder.indexOf(b.name());
+            if (bi < 0)
+                bi = Integer.MAX_VALUE;
+            return Integer.compare(ai, bi);
         };
         
         contentStore = false;
@@ -173,20 +170,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return xmlTags;
     }
 
-    /**
-     * Checks if this field has a "punctuation" forward index, storing all the
-     * intra-word characters (whitespace and punctuation) so we can build
-     * concordances directly from the forward indices.
-     * 
-     * @return true iff there's a punctuation forward index.
-     */
-    @Override
-    public boolean hasPunctuationForwardIndex() {
-        AnnotationImpl pd = annots.get(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        return pd != null && pd.hasForwardIndex();
-    }
-
-    // (public because used in AnnotatedFieldWriter while indexing) 
+    // (public because used in AnnotatedFieldWriter while indexing)
     public Set<String> getNoForwardIndexAnnotations() {
         return noForwardIndexAnnotations;
     }
@@ -291,7 +275,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         for (AnnotationImpl pr : annots.values()) {
             if (firstAnnotation == null)
                 firstAnnotation = pr;
-            if (pr.detectOffsetsSensitivity(reader, fieldName)) {
+            if (pr.detectOffsetsSensitivity(reader)) {
                 // This field has offsets stored. Must be the main annotation field.
                 if (mainAnnotation == null) {
                     mainAnnotation = pr;
@@ -337,10 +321,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     @Override
-    synchronized public AnnotatedFieldImpl freeze() {
+    synchronized public void freeze() {
         this.frozen = true;
-        this.annots.values().forEach(annotation -> annotation.freeze());
-        return this;
+        this.annots.values().forEach(AnnotationImpl::freeze);
     }
     
     @Override

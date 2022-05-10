@@ -7,11 +7,14 @@ package nl.inl.blacklab.search.results;
  */
 public class ResultsStatsStatic extends ResultsStats {
 
-    private long processed;
+    /** Used to avoid NPE when ResultsStats is not available for whatever reason. */
+    public static final ResultsStats INVALID = new ResultsStatsStatic(-1, -1, new MaxStats(true, true));
 
-    private long counted;
+    private final long processed;
 
-    private MaxStats maxStats;
+    private final long counted;
+
+    private final MaxStats maxStats;
 
     public ResultsStatsStatic(long processed, long counted, MaxStats maxStats) {
         this.processed = processed;

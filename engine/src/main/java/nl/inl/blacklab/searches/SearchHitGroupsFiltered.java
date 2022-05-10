@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -12,11 +11,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchHitGroupsFiltered extends SearchHitGroups {
 
-    private SearchHitGroups source;
+    private final SearchHitGroups source;
 
-    private HitGroupProperty property;
+    private final HitGroupProperty property;
 
-    private PropertyValue value;
+    private final PropertyValue value;
 
     public SearchHitGroupsFiltered(QueryInfo queryInfo, SearchHitGroups source, HitGroupProperty property, PropertyValue value) {
         super(queryInfo);

@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-
-
-import javax.servlet.http.HttpServletResponse;
 
 public class Response {
     static final Logger logger = LogManager.getLogger(Response.class);
@@ -42,6 +42,11 @@ public class Response {
      */
     public static int error(DataStream ds, String code, String msg, int httpCode) {
         ds.error(code, msg);
+        return httpCode;
+    }
+
+    public static int error(DataStream ds, String code, String msg, int httpCode, Exception e) {
+        ds.error(code, msg, e);
         return httpCode;
     }
 
@@ -121,6 +126,6 @@ public class Response {
         return badRequest(ds, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
     }
 
-    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, underscores and dashes allowed, and must start with a letter)";
+    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, dots, underscores and dashes allowed, and must start with a letter)";
 
 }

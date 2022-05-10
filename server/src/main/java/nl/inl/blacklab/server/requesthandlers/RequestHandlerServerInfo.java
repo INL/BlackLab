@@ -86,13 +86,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
         }
         ds.endMap().endEntry();
 
-        ds.startEntry("user").startMap();
-        ds.entry("loggedIn", user.isLoggedIn());
-        if (user.isLoggedIn())
-            ds.entry("id", user.getUserId());
-        boolean canCreateIndex = user.isLoggedIn() ? indexMan.canCreateIndex(user) : false;
-        ds.entry("canCreateIndex", canCreateIndex);
-        ds.endMap().endEntry();
+        RequestHandler.datastreamUserInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
         ds.entry("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
         if (debugMode) {

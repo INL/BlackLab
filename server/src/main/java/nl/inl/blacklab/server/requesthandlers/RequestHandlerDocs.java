@@ -172,22 +172,16 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = searchParam.docsCount().executeAsync().peek();
-        addSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
+        datastreamSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
-            addNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
+            datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
+            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, blIndex.metadata());
-        ds.endEntry();
-
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, blIndex.metadata());
-        ds.endEntry();
+        datastreamMetadataFieldInfo(ds, blIndex);
 
         ds.endMap().endEntry();
 
@@ -197,8 +191,8 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.startItem("doc").startMap();
 
             // Find pid
-            Document document = result.identity().luceneDoc();
-            String pid = getDocumentPid(blIndex, result.identity().id(), document);
+            Document document = blIndex().luceneDoc(result.docId());
+            String pid = getDocumentPid(blIndex, result.identity().value(), document);
 
             // Combine all
             ds.entry("docPid", pid);
@@ -228,9 +222,9 @@ public class RequestHandlerDocs extends RequestHandler {
                     if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                         // Add concordance from original XML
                         Concordance c = concordances.get(hit);
-                        ds.startEntry("left").plain(c.left()).endEntry()
-                                .startEntry("match").plain(c.match()).endEntry()
-                                .startEntry("right").plain(c.right()).endEntry();
+                        ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                                .startEntry("match").xmlFragment(c.match()).endEntry()
+                                .startEntry("right").xmlFragment(c.right()).endEntry();
                     } else {
                         // Add KWIC info
                         Kwic c = kwics.get(hit);
@@ -248,7 +242,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, totalDocResults, searchParam.facets());
+            dataStreamFacets(ds, searchParam.facets());
             ds.endEntry();
         }
         ds.endMap();

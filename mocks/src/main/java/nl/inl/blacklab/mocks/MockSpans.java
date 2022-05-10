@@ -1,21 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
-/**
- *
- */
 package nl.inl.blacklab.mocks;
 
 import java.io.IOException;
@@ -47,7 +29,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int nextDoc() throws IOException {
+        public int nextDoc() {
             if (currentDoc != NO_MORE_DOCS) {
                 alreadyAtFirstMatch = false;
                 while (currentHit < doc.length && (currentHit == -1 || doc[currentHit] == currentDoc)) {
@@ -74,7 +56,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int advance(int target) throws IOException {
+        public int advance(int target) {
             if (currentDoc != NO_MORE_DOCS) {
                 alreadyAtFirstMatch = false;
                 do {
@@ -85,7 +67,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int startOffset() throws IOException {
+        public int startOffset() {
             if (currentHit < 0 || alreadyAtFirstMatch)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
@@ -94,7 +76,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int nextPosition() throws IOException {
+        public int nextPosition() {
             if (currentDoc == NO_MORE_DOCS)
                 return NO_MORE_POSITIONS;
             if (alreadyAtFirstMatch) {
@@ -111,7 +93,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public BytesRef getPayload() throws IOException {
+        public BytesRef getPayload() {
             if (payloads == null)
                 return null;
             if (currentHit < 0 || alreadyAtFirstMatch)
@@ -122,7 +104,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int freq() throws IOException {
+        public int freq() {
             // Find start of next document
             int i;
             for (i = currentHit + 1; i < doc.length && doc[i] == currentDoc; i++) {
@@ -132,7 +114,7 @@ public class MockSpans extends BLSpans {
         }
 
         @Override
-        public int endOffset() throws IOException {
+        public int endOffset() {
             if (currentHit < 0 || alreadyAtFirstMatch)
                 return -1;
             if (currentDoc == NO_MORE_DOCS || currentHit >= doc.length || doc[currentHit] != currentDoc)
@@ -141,15 +123,15 @@ public class MockSpans extends BLSpans {
         }
     }
 
-    int[] doc;
+    final int[] doc;
 
-    int[] start;
+    final int[] start;
 
-    int[] end;
+    final int[] end;
 
-    private MockPostingsEnum postings;
+    private final MockPostingsEnum postings;
 
-    private MyTermSpans spans;
+    private final MyTermSpans spans;
 
     private boolean noMoreDocs = false;
 

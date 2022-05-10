@@ -1,29 +1,30 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
-    private String groupName;
+    private final String groupName;
 
     private int groupIndex;
 
-    private String annotationName;
+    private final String annotationName;
 
     private int annotIndex = -1;
 
-    private String compareToTermString;
+    private final String compareToTermString;
 
     private int compareToTermId = -1;
 
     private MutableIntSet compareToTermIds;
 
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     public MatchFilterTokenPropertyEqualsString(String label, String annotationName, String termString,
                                                 MatchSensitivity sensitivity) {

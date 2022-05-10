@@ -72,6 +72,7 @@ public class BLSConfig {
         return indexLocations;
     }
 
+    @SuppressWarnings("unused")
     public void setIndexLocations(List<String> indexes) {
         this.indexLocations = indexes;
     }
@@ -80,6 +81,7 @@ public class BLSConfig {
         return userIndexes;
     }
 
+    @SuppressWarnings("unused")
     public void setUserIndexes(String userIndexes) {
         this.userIndexes = userIndexes;
     }
@@ -88,6 +90,7 @@ public class BLSConfig {
         return protocol;
     }
 
+    @SuppressWarnings("unused")
     public void setProtocol(BLSConfigProtocol protocol) {
         this.protocol = protocol;
     }
@@ -112,6 +115,7 @@ public class BLSConfig {
         return performance;
     }
 
+    @SuppressWarnings("unused")
     public void setPerformance(BLSConfigPerformance performance) {
         this.performance = performance;
     }
@@ -136,6 +140,7 @@ public class BLSConfig {
         return authentication;
     }
 
+    @SuppressWarnings("unused")
     public void setAuthentication(BLSConfigAuth authentication) {
         this.authentication = authentication;
     }
@@ -144,6 +149,7 @@ public class BLSConfig {
         return configVersion;
     }
 
+    @SuppressWarnings("unused")
     public void setConfigVersion(int configVersion) {
         this.configVersion = configVersion;
     }
@@ -160,6 +166,7 @@ public class BLSConfig {
         return indexing;
     }
 
+    @SuppressWarnings("unused")
     public void setIndexing(BLConfigIndexing indexing) {
         this.indexing = indexing;
     }
@@ -168,6 +175,7 @@ public class BLSConfig {
         return plugins;
     }
 
+    @SuppressWarnings("unused")
     public void setPlugins(BLConfigPlugins plugins) {
         this.plugins = plugins;
     }
@@ -184,6 +192,7 @@ public class BLSConfig {
         return blackLabConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setBLConfig(BlackLabConfig blackLabConfig) {
         this.blackLabConfig = blackLabConfig;
     }

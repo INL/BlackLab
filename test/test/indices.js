@@ -163,6 +163,7 @@ describe('Indexing tests', () => {
         assert.isTrue(resGetIndex.ok);
     });
     it('adds to index', async () => {
+
         indexName = createIndexName();
         const req = await createInputFormat();
         assert.isTrue(req.ok);
@@ -181,7 +182,7 @@ describe('Indexing tests', () => {
 
         var keys = ['summary', 'searchTime'];
         expect(clearKeys(keys, expectedContent)).to.be.deep.equal(clearKeys(keys, body));
-    });
+    }).timeout(3000); // allow a little more time for slower servers
 
     it('get index metadata', async () => {
         indexName = createIndexName();

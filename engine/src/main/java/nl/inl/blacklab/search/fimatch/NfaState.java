@@ -1,6 +1,13 @@
 package nl.inl.blacklab.search.fimatch;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -239,7 +246,7 @@ public abstract class NfaState {
     public abstract int hitsLengthMax(Set<NfaState> statesVisited);
 
     public static Set<NfaState> emptySet() {
-        return Collections.newSetFromMap(new IdentityHashMap<NfaState, Boolean>());
+        return Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
     public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {

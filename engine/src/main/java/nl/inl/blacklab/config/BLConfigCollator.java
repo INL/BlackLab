@@ -14,26 +14,17 @@ public class BLConfigCollator {
     
     String variant = null;
 
-    public String getLanguage() {
-        return language;
-    }
-
+    @SuppressWarnings("unused")
     public void setLanguage(String language) {
         this.language = language;
     }
 
-    public String getCountry() {
-        return country;
-    }
-
+    @SuppressWarnings("unused")
     public void setCountry(String country) {
         this.country = country;
     }
 
-    public String getVariant() {
-        return variant;
-    }
-
+    @SuppressWarnings("unused")
     public void setVariant(String variant) {
         this.variant = variant;
     }

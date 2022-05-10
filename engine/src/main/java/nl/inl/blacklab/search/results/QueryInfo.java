@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, (AnnotatedField)null, true);
+        return create(index, null, true);
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
@@ -20,13 +20,13 @@ public final class QueryInfo {
         return new QueryInfo(index, field, useCache);
     }
 
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     /** The field these hits came from (will also be used as concordance field) */
-    private AnnotatedField field;
+    private final AnnotatedField field;
 
     /** Should we use the cache for this query, or bypass it? */
-    private boolean useCache;
+    private final boolean useCache;
 
     private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
         super();

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
@@ -49,14 +34,14 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         return new DocPropertyAnnotatedFieldLength(index, PropertySerializeUtil.unescapePart(info));
     }
 
-    private String fieldName;
+    private final String fieldName;
     
-    private String friendlyName;
+    private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
     private Map<Integer, NumericDocValuesCacher> docValues = null;
     
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
     DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, boolean invert) {
         super(prop, invert);
@@ -78,7 +63,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     // Use UninvertingReader to simulate DocValues (slower)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                     fields.put(fieldName, UninvertingReader.Type.INTEGER_POINT);
-                    @SuppressWarnings("resource")
                     LeafReader uninv = UninvertingReader.wrap(r, fields::get);
                     numericDocValues = uninv.getNumericDocValues(fieldName);
                 }
@@ -91,7 +75,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                 docValues = null;
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 
@@ -120,29 +104,16 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         }
         
         // Not cached; find fiid by reading stored value from Document now
-        try {
-            return Long.parseLong(index.reader().document(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
     private long get(PropertyValueDoc identity) {
-        if (identity.value().isLuceneDocCached()) {
-            // if we already have the document, get the value from there
-            return Long.parseLong(identity.luceneDoc().get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
-        } else
-            return get(identity.id());
+        return get(identity.value());
     }
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        try {
-            long length = get(result.identity());
-            return new PropertyValueInt(length);
-        } catch (NumberFormatException e) {
-            return new PropertyValueInt(0);
-        }
+        return new PropertyValueInt(get(result.identity().value()));
     }
 
     /**
@@ -154,13 +125,9 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        try {
-            int ia = Integer.parseInt(a.identity().luceneDoc().get(fieldName));
-            int ib = Integer.parseInt(b.identity().luceneDoc().get(fieldName));
-            return reverse ? ib - ia : ia - ib;
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        long ia = get(a.identity().value());
+        long ib = get(b.identity().value());
+        return reverse ? Long.compare(ib, ia) : Long.compare(ia, ib);
     }
 
     @Override

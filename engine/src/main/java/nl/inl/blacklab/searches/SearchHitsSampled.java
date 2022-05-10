@@ -9,8 +9,8 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public class SearchHitsSampled extends SearchHits {
 
-    private SearchHits source;
-    private SampleParameters sampleParameters;
+    private final SearchHits source;
+    private final SampleParameters sampleParameters;
 
     SearchHitsSampled(QueryInfo queryInfo, SearchHits source, SampleParameters sampleParameters) {
         super(queryInfo);

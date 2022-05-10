@@ -1,22 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,16 +43,16 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
         public String toString() {
             return this == LEFT ? "L" : "R";
         }
-    };
+    }
 
     /** Whether to expand to left or right */
-    Direction direction;
+    final Direction direction;
 
     /** Minimum number of tokens to expand */
-    int min;
+    final int min;
 
     /** Maximum number of tokens to expand (MAX_UNLIMITED = infinite) */
-    int max;
+    final int max;
 
     /** Construct a startpoint-sorted SpanQueryExpansion query.
      *
@@ -76,7 +60,6 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
      * @param direction direction for the expansion
      * @param min minimum number of tokens to expand
      * @param max maximum number of tokens to expand
-     * @return resulting query object
      */
     public SpanQueryExpansion(BLSpanQuery clause, Direction direction, int min, int max) {
         super(clause);
@@ -250,7 +233,7 @@ public class SpanQueryExpansion extends BLSpanQueryAbstract {
             throw new UnsupportedOperationException("Unlimited expansion using forward index not implemented");
         Nfa nfa = clauses.get(0).getNfa(fiAccessor, nfaDirection);
         NfaState any = new NfaStateAnyToken(clauses.get(0).getRealField(), null);
-        Nfa frag = new Nfa(any, Arrays.asList(any));
+        Nfa frag = new Nfa(any, List.of(any));
         frag.repeat(min, max);
         if (direction == Direction.LEFT && nfaDirection == SpanQueryFiSeq.DIR_TO_RIGHT || direction == Direction.RIGHT && nfaDirection == SpanQueryFiSeq.DIR_TO_LEFT) {
             // Prepend nfa with stretch of anytokens

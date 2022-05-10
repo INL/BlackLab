@@ -3,9 +3,10 @@ package nl.inl.blacklab.search.results;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /**
- * A basic Hits object implemented with a list.
+ * An immutable list of hits.
  */
-public class HitsList extends Hits {
+public class HitsList extends HitsAbstract {
+
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
 
@@ -27,9 +28,11 @@ public class HitsList extends Hits {
         super(queryInfo, hits);
         this.capturedGroups = capturedGroups;
 
-        hitsCounted = this.hitsArrays.size();
+        hitsCounted = this.hitsInternal.size();
+
+        // Count docs and check if doc ids are ascending
         int prevDoc = -1;
-        IntIterator it = this.hitsArrays.docsIterator();
+        IntIterator it = this.hitsInternal.docsIterator();
         ascendingLuceneDocIds = true;
         while (it.hasNext()) {
             int docId = it.nextInt();
@@ -44,7 +47,7 @@ public class HitsList extends Hits {
     }
 
     /**
-     * Construct a HitsList from all its components.
+     * Construct a HitsImmutable from all its components.
      *
      * Should only be used internally.
      */
@@ -71,7 +74,7 @@ public class HitsList extends Hits {
 
     @Override
     public String toString() {
-        return "HitsList#" + hitsObjId + " (hits.size()=" + this.size() + "; isWindow=" + isWindow() + ")";
+        return "HitsImmutable#" + hitsObjId + " (hits.size()=" + size() + ")";
     }
 
     /**
@@ -82,8 +85,8 @@ public class HitsList extends Hits {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(long number) {
-        // subclasses may override
+    protected final void ensureResultsRead(long number) {
+        // immutable, results have always been read
     }
 
     @Override

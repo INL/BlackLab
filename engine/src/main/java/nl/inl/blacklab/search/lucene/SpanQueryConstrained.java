@@ -1,7 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -9,10 +12,8 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
 
 /**
  * Apply a global constraint (or "match filter") to our matches.
@@ -23,9 +24,9 @@ import java.util.Set;
  */
 public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
-    MatchFilter constraint;
+    final MatchFilter constraint;
 
-    ForwardIndexAccessor fiAccessor;
+    final ForwardIndexAccessor fiAccessor;
 
     public SpanQueryConstrained(BLSpanQuery clause, MatchFilter constraint, ForwardIndexAccessor fiAccessor) {
         super(BLSpanQuery.ensureSortedUnique(clause));
@@ -61,7 +62,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
 
         final BLSpanWeight prodWeight;
 
-        private MatchFilter constraint;
+        private final MatchFilter constraint;
 
         public SpanWeightConstrained(BLSpanWeight prodWeight2, MatchFilter constraint, IndexSearcher searcher,
                 Map<Term, TermStates> contexts, float boost) throws IOException {

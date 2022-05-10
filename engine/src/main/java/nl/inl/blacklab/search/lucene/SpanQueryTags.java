@@ -1,23 +1,11 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.results.QueryInfo;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -25,11 +13,9 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  *
@@ -40,15 +26,15 @@ import java.util.Set;
  */
 public class SpanQueryTags extends BLSpanQuery {
 
-    BLSpanTermQuery clause;
+    final BLSpanTermQuery clause;
 
-    private String tagName;
+    private final String tagName;
 
-    private String baseFieldName;
+    private final String baseFieldName;
 
-    private Map<String, String> attr;
+    private final Map<String, String> attr;
 
-    private String startTagFieldName;
+    private final String startTagFieldName;
 
     public SpanQueryTags(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
         super(queryInfo);
@@ -60,7 +46,7 @@ public class SpanQueryTags extends BLSpanQuery {
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+    public BLSpanQuery rewrite(IndexReader reader) {
         if (attr == null)
             return this;
 

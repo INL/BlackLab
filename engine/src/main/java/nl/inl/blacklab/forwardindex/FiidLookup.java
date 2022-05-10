@@ -29,13 +29,13 @@ public class FiidLookup {
      * Index reader, for getting documents (for translating from Lucene doc id to
      * fiid)
      */
-    private IndexReader reader;
+    private final IndexReader reader;
 
     /**
      * fiid field name in the Lucene index (for translating from Lucene doc id to
      * fiid)
      */
-    private String fiidFieldName;
+    private final String fiidFieldName;
 
     /** The DocValues per segment (keyed by docBase) */
     private Map<Integer, NumericDocValues> cachedFiids;
@@ -52,7 +52,6 @@ public class FiidLookup {
                     // Use UninvertingReader to simulate DocValues (slower)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                     fields.put(fiidFieldName, UninvertingReader.Type.INTEGER_POINT);
-                    @SuppressWarnings("resource")
                     LeafReader uninv = UninvertingReader.wrap(r, fields::get);
                     numericDocValues = uninv.getNumericDocValues(fiidFieldName);
                 }
@@ -65,7 +64,7 @@ public class FiidLookup {
                 cachedFiids = null;
             }
         } catch (IOException e) {
-            BlackLabRuntimeException.wrap(e);
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

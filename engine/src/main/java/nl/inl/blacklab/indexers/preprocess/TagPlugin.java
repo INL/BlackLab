@@ -4,7 +4,6 @@ import java.io.Reader;
 import java.io.Writer;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.Plugin;
 
 public interface TagPlugin extends Plugin {
@@ -32,7 +31,6 @@ public interface TagPlugin extends Plugin {
     /**
      * Unfortunate side-effect of docIndexers requiring a filename to do their work.
      * 
-     * @param inputFileName
      * @return a valid file name for an indexable file of the type as returned by
      *         {@link TagPlugin#getOutputFormatIdentifier()}
      */
@@ -43,7 +41,6 @@ public interface TagPlugin extends Plugin {
      *
      * @param reader input. Should not be closed by the implementation.
      * @param writer output. Should not be closed by the implementation.
-     * @throws PluginException
      */
     void perform(Reader reader, Writer writer) throws PluginException;
 }

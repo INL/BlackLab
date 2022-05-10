@@ -8,7 +8,7 @@ import java.util.NoSuchElementException;
 
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
-public abstract class ResultsList<T, P extends ResultProperty<T>> extends Results<T, P> {
+public abstract class ResultsList<T, P extends ResultProperty<T>> extends ResultsAbstract<T, P> {
 
     /**
      * The results.
@@ -31,17 +31,17 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
         // list, but can also take into account the Spans object that may not have
         // been fully read. This ensures we don't instantiate Hit objects for all hits
         // if we just want to display the first few.
-        return new Iterator<T>() {
-        
+        return new Iterator<>() {
+
             int index = -1;
-        
+
             @Override
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
                 ensureResultsRead(index + 2);
                 return results.size() >= index + 2;
             }
-        
+
             @Override
             public T next() {
                 // Check if there is a next, taking unread hits from Spans into account
@@ -51,7 +51,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
                 }
                 throw new NoSuchElementException();
             }
-        
+
             @Override
             public void remove() {
                 throw new UnsupportedOperationException();

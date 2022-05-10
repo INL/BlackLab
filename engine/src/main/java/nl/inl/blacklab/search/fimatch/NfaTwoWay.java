@@ -5,7 +5,7 @@ import java.util.Map;
 /** Stores a (partial) NFA and its reverse. */
 public class NfaTwoWay {
 
-    private Nfa nfa;
+    private final Nfa nfa;
 
     private Nfa nfaReverse;
 

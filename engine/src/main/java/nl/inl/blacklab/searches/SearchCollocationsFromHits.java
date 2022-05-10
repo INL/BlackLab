@@ -6,17 +6,16 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultsStats;
 
 /**
  * Search operation that yields collocations.
  */
 public class SearchCollocationsFromHits extends SearchCollocations {
 
-    private SearchHits source;
-    private Annotation annotation;
-    private ContextSize contextSize;
-    private MatchSensitivity sensitivity;
+    private final SearchHits source;
+    private final Annotation annotation;
+    private final ContextSize contextSize;
+    private final MatchSensitivity sensitivity;
 
     public SearchCollocationsFromHits(QueryInfo queryInfo, SearchHits source, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity) {
         super(queryInfo);

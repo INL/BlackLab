@@ -8,9 +8,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that yields groups of documents. */
 public class SearchDocGroupsSampled extends SearchDocGroups {
 
-    private SearchDocGroups source;
+    private final SearchDocGroups source;
 
-    private SampleParameters sampleParameters;
+    private final SampleParameters sampleParameters;
 
     public SearchDocGroupsSampled(QueryInfo queryInfo, SearchDocGroups source, SampleParameters sampleParameters) {
         super(queryInfo);

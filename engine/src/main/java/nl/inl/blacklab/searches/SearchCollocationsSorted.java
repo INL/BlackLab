@@ -11,8 +11,8 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SearchCollocationsSorted extends SearchCollocations {
 
-    private SearchCollocations source;
-    private ResultProperty<TermFrequency> property;
+    private final SearchCollocations source;
+    private final ResultProperty<TermFrequency> property;
 
     public SearchCollocationsSorted(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property) {
         super(queryInfo);

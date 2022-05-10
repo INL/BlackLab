@@ -22,7 +22,6 @@ import org.apache.lucene.index.IndexableField;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Doc;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.util.LogUtil;
 
@@ -33,7 +32,7 @@ public class ExportMetadata implements AutoCloseable {
         return str.replaceAll("\t", "\\t");
     }
 
-    public static void main(String[] args) throws ErrorOpeningIndex, FileNotFoundException {
+    public static void main(String[] args) {
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         if (args.length != 2) {
@@ -65,11 +64,11 @@ public class ExportMetadata implements AutoCloseable {
         }
     }
 
-    Set<String> fieldNames = new HashSet<>();
+    final Set<String> fieldNames = new HashSet<>();
 
     BlackLabIndex index;
 
-    List<Map<String, String>> values = new ArrayList<>();
+    final List<Map<String, String>> values = new ArrayList<>();
 
     public ExportMetadata(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
@@ -90,12 +89,12 @@ public class ExportMetadata implements AutoCloseable {
 
             int docsDone = 0;
 
-            int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
 
             @Override
-            public void perform(Doc doc) {
-                Document luceneDoc = doc.luceneDoc();
+            public void perform(BlackLabIndex index, int docId) {
                 Map<String, String> metadata = new HashMap<>();
+                Document luceneDoc = index.luceneDoc(docId);
                 for (IndexableField f: luceneDoc.getFields()) {
                     // If this is a regular metadata field, not a control field
                     if (!f.name().contains("#")) {
@@ -135,7 +134,7 @@ public class ExportMetadata implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         if (index != null)
             index.close();
     }

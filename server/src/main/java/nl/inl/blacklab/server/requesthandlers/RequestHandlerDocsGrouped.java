@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -81,11 +80,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        addSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
+        datastreamSummaryCommonFields(ds, searchParam, groupSearch.timeUserWaitedMs(), 0, groups, ourWindow);
         if (hitsStats == null)
-            addNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
+            datastreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            addNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 
@@ -94,13 +93,13 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
          * contain the sub properties and values in the same order.
          */
         boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
-        List<DocProperty> prop = isMultiValueGroup ? ((DocPropertyMultiple) groups.groupCriteria()).props() : Arrays.asList(groups.groupCriteria());
+        List<DocProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
 
         ds.startEntry("docGroups").startList();
         long last = Math.min(first + number, groups.size());
         for (long i = first; i < last; ++i) {
             DocGroup group = groups.get(i);
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : Arrays.asList(group.identity());
+            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : List.of(group.identity());
 
             ds.startItem("docgroup").startMap()
                     .entry("identity", group.identity().serialize())
@@ -125,8 +124,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                 if (hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues, true);
-                    addSubcorpusSize(ds, subcorpusSize);
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
+                    datastreamSubcorpusSize(ds, subcorpusSize);
                 }
             }
             ds.endMap().endItem();

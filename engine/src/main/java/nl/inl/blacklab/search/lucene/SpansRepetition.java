@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -31,7 +16,7 @@ import nl.inl.blacklab.search.Span;
  * configurable (to specifically support greedy matching, etc.)
  */
 class SpansRepetition extends BLSpans {
-    private SpansInBuckets source;
+    private final SpansInBuckets source;
 
     /**
      * If -1: not started yet. If NO_MORE_DOCS: done. Otherwise: doc id.
@@ -40,15 +25,13 @@ class SpansRepetition extends BLSpans {
 
     boolean moreBuckets = false;
 
-    private int min;
+    private final int min;
 
-    private int max;
+    private final int max;
 
     private int firstToken;
 
     private int numRepetitions;
-
-    private BLSpans spansSource;
 
     private boolean alreadyAtFirstMatch = false;
 
@@ -63,8 +46,7 @@ class SpansRepetition extends BLSpans {
      */
     public SpansRepetition(BLSpans source, int min, int max) {
         // Find all consecutive matches in this Spans
-        spansSource = source;
-        this.source = new SpansInBucketsConsecutive(spansSource);
+        this.source = new SpansInBucketsConsecutive(source);
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
@@ -110,7 +92,6 @@ class SpansRepetition extends BLSpans {
      * Go to the next matching bucket, not necessarily in the current doc.
      * 
      * @return the doc id, or NO_MORE_DOCS if there's no more buckets.
-     * @throws IOException
      */
     private int findDocWithMatchingBucket() throws IOException {
         while (currentDoc != NO_MORE_DOCS) {
@@ -134,7 +115,6 @@ class SpansRepetition extends BLSpans {
      *
      * @return the start position of the bucket, or NO_MORE_BUCKETS if there's no
      *         more matching buckets
-     * @throws IOException
      */
     private int nextBucket() throws IOException {
         moreBuckets = source.nextBucket() != SpansInBuckets.NO_MORE_BUCKETS;
@@ -157,7 +137,6 @@ class SpansRepetition extends BLSpans {
      * Go to the next match.
      *
      * @return true if we're on a valid match, false if we're done.
-     * @throws IOException
      */
     @Override
     public int nextStartPosition() throws IOException {
@@ -203,7 +182,6 @@ class SpansRepetition extends BLSpans {
      *
      * @param doc the document number to skip to / over
      * @return true if we're at a valid hit, false if not
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {
@@ -256,7 +234,7 @@ class SpansRepetition extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // Should be  source.collect(collector); but not currently supported and we don't use
         // payloads except in simple queries like SpanQueryTags.
     }

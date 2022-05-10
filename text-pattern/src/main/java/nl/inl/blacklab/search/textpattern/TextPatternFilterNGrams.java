@@ -8,19 +8,19 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
 public class TextPatternFilterNGrams extends TextPattern {
 
-    protected TextPattern clause;
+    protected final TextPattern clause;
 
-    protected Operation op;
+    protected final Operation op;
 
     /*
      * The minimum hit length
      */
-    protected int min;
+    protected final int min;
 
     /*
      * The maximum hit length
      */
-    protected int max;
+    protected final int max;
 
     public TextPatternFilterNGrams(TextPattern clause, Operation op, int min, int max) {
         this.clause = clause;

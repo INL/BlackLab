@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.textpattern;
 
 import java.util.regex.Pattern;
@@ -35,7 +20,6 @@ public class TextPatternRegex extends TextPatternTerm {
     /**
      * Instantiate a regex TextPattern.
      *
-     * @param value
      */
     public TextPatternRegex(String value) {
         super(value);
@@ -84,7 +68,7 @@ public class TextPatternRegex extends TextPatternTerm {
         // If there's a case-sensitivity toggle flag after a
         // start-of-string match, put the flag first so we can
         // easily detect it below.
-        String newValue = value.replaceAll("^\\^(\\(\\?\\-?\\w+\\))", "$1^");
+        String newValue = value.replaceAll("^\\^(\\(\\?-?\\w+\\))", "$1^");
 
         // Do we want to force an (in)sensitive search?
         boolean forceSensitive = false;

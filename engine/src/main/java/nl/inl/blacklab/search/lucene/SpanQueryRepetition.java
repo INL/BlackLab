@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -38,9 +23,9 @@ import nl.inl.blacklab.search.fimatch.Nfa;
  * configurable (to specifically support greedy/reluctant matching, etc.)
  */
 public class SpanQueryRepetition extends BLSpanQueryAbstract {
-    int min;
+    final int min;
 
-    int max;
+    final int max;
 
     public SpanQueryRepetition(BLSpanQuery clause, int min, int max) {
         super(clause);
@@ -63,13 +48,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
-                return r;
+                return new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
             } else if (min == max && tp.min == tp.max) {
                 // Exact number of any tokens
                 int n = min * tp.min;
-                BLSpanQuery r = new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
-                return r;
+                return new SpanQueryAnyToken(queryInfo, n, n, base.getRealField());
             }
         } else if (baseRewritten.isSingleTokenNot() && min > 0) {
             // Rewrite to anytokens-not-containing form so we can optimize it

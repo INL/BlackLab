@@ -1,43 +1,60 @@
 package nl.inl.blacklab.mocks;
 
-import nl.inl.blacklab.analysis.BLStandardAnalyzer;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.search.*;
-import nl.inl.blacklab.search.indexmetadata.*;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.*;
-import nl.inl.blacklab.searches.SearchCache;
-import nl.inl.blacklab.searches.SearchCacheDummy;
-import nl.inl.blacklab.searches.SearchEmpty;
-import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
-import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.BooleanQuery.TooManyClauses;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-
 import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanQuery.TooManyClauses;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
+
+import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ContentAccessor;
+import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.QueryExplanation;
+import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchCacheDummy;
+import nl.inl.blacklab.searches.SearchEmpty;
+import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
+
 public class MockBlackLabIndex implements BlackLabIndex {
 
-    private IndexMetadata indexMetadata;
+    private final IndexMetadata indexMetadata;
 
-    private SearchSettings searchSettings;
+    private final SearchSettings searchSettings;
 
-    private Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
+    private final Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
-    private Analyzer analyzer;
+    private final Analyzer analyzer;
 
     private IndexSearcher searcher;
 
-    private SearchCache cache = new SearchCacheDummy();
+    private final SearchCache cache = new SearchCacheDummy();
 
-    private BlackLabEngine blackLab;
+    private final BlackLabEngine blackLab;
 
     public MockBlackLabIndex() {
         super();
@@ -63,11 +80,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public boolean isEmpty() {
         return false;
-    }
-
-    @Override
-    public Doc doc(int docId) {
-        return new DocImpl(this, docId);
     }
 
     @Override
@@ -227,11 +239,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public SearchCache cache() {
         return cache;
     }
-
-//    @Override
-//    public BLSpanQuery createSpanQuery(QueryInfo queryInfo, TextPattern pattern, Query filter) throws RegexpTooLarge {
-//        throw new UnsupportedOperationException();
-//    }
 
     @Override
     public String toString() {

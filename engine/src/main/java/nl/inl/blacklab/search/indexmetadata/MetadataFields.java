@@ -26,6 +26,13 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
 	Stream<MetadataField> stream();
 
+	/**
+	 * Get the specified metadata field config.
+	 *
+	 * @param fieldName metadata field name
+	 * @return metadata field config
+	 * @throws IllegalArgumentException if field not found
+	 */
 	MetadataField get(String fieldName);
 	
 	MetadataFieldGroups groups();
@@ -50,7 +57,6 @@ public interface MetadataFields extends Iterable<MetadataField> {
 	/**
 	 * Does the specified field exist?
 	 * 
-	 * @param name
 	 * @return true if it exists, false if not
 	 */
     boolean exists(String name);

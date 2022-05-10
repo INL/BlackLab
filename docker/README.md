@@ -5,7 +5,7 @@ This is an experimental Docker image for BlackLab Server.
 To build it, run:
 
 ```bash
-docker build -f Dockerfile -t instituutnederlandsetaal/blacklab ..
+DOCKER_BUILDKIT=1 docker build -f Dockerfile -t instituutnederlandsetaal/blacklab ..
 ```
 
 This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`; if necessary, you can overwrite this with your own version.

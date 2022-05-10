@@ -1,9 +1,7 @@
 package nl.inl.blacklab.searches;
 
-import nl.inl.blacklab.search.results.DocResults;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -20,11 +18,15 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     @Override
-    public SearchResult executeInternal(Peekable<SearchResult> progressReporter) throws InvalidQuery {
+    public SearchResult executeInternal(Peekable<SearchResult> progressReporter) {
         throw new UnsupportedOperationException();
     }
 
     public SearchHits find(BLSpanQuery query, SearchSettings searchSettings) {
+        if (searchSettings == null) {
+            // If no settings given, use the default
+            searchSettings = queryInfo().index().searchSettings();
+        }
         return new SearchHitsFromBLSpanQuery(queryInfo(), query, searchSettings);
     }
 

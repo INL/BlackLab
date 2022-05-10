@@ -14,7 +14,6 @@ import java.util.concurrent.ExecutorService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field.Store;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StoredField;
@@ -33,31 +32,24 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
 
     private static final boolean AUTO_INIT_FORWARD_INDEXES = true;
     
-    private BlackLabIndex index;
+    private final BlackLabIndex index;
 
-    private AnnotatedField field;
+    private final AnnotatedField field;
 
-    private Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
-
-    private ExecutorService executorService;
+    private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
     public ForwardIndexImplSeparate(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
-        executorService = index.blackLab().initializationExecutorService();
+        ExecutorService executorService = index.blackLab().initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;
             AnnotationForwardIndex afi = get(annotation);
             if (AUTO_INIT_FORWARD_INDEXES) {
-                executorService.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        //logger.debug("START initialize AFI: " + annotation.name());
-                        afi.initialize();
-                        //logger.debug("END   initialize AFI: " + annotation.name());
-                    }
-                });
+                //logger.debug("START initialize AFI: " + annotation.name());
+                //logger.debug("END   initialize AFI: " + annotation.name());
+                executorService.execute(afi::initialize);
             }
         }
     }
@@ -156,7 +148,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.freeSpace()).sum();
+            return fis.values().stream().mapToLong(AnnotationForwardIndex::freeSpace).sum();
         }
     }
 
@@ -165,7 +157,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
         synchronized (fis) {
             if (fis.isEmpty())
                 return 0;
-            return fis.values().stream().mapToLong(afi -> afi.totalSize()).sum();
+            return fis.values().stream().mapToLong(AnnotationForwardIndex::totalSize).sum();
         }
     }
 

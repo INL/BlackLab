@@ -1,43 +1,29 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search;
-
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import org.apache.commons.text.StringEscapeUtils;
 
 import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.text.StringEscapeUtils;
+
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+
 /**
  * A "keyword in context" for a hit (left context, hit text, right context).
  *
- * The Hits class matches this to the Hit.
+ * This object may be converted to a {@link Concordance} object (with XML strings) by
+ * calling {@link #toConcordance()}.
  *
- * This object may be converted to a Concordance object (with XML strings) by
- * calling Kwic.toConcordance().
+ * Instances of this class are immutable.
  */
 public class Kwic {
 
-    private DocContentsFromForwardIndex fragment;
+    private final DocContentsFromForwardIndex fragment;
 
-    private int hitStart;
+    private final int hitStart;
 
-    private int hitEnd;
+    private final int hitEnd;
 
     public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 
@@ -150,7 +136,7 @@ public class Kwic {
         final int startIndex = start * nProp + annotIndex;
         if (annotIndex == -1)
             return null;
-        return new AbstractList<String>() {
+        return new AbstractList<>() {
             @Override
             public String get(int index) {
                 if (index >= size)

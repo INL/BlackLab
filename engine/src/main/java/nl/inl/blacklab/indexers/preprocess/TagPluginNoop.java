@@ -32,7 +32,7 @@ public class TagPluginNoop implements TagPlugin {
     }
 
     @Override
-    public void init(Map<String, String> config) throws PluginException {
+    public void init(Map<String, String> config) {
         // NO OP
     }
 

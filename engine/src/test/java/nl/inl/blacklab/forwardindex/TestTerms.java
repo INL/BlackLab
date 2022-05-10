@@ -1,23 +1,9 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.UtilsForTesting;
+import java.io.File;
+import java.text.Collator;
+import java.util.Locale;
+
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.After;
@@ -25,16 +11,14 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
-import java.text.Collator;
-import java.util.Locale;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
     private Terms t;
 
-    private File dir;
-
-    String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
+    final String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
     @Before
     public void setUp() {
@@ -43,7 +27,7 @@ public class TestTerms {
         UtilsForTesting.removeBlackLabTestDirs();
 
         // Create new test dir
-        dir = UtilsForTesting.createBlackLabTestDir("Terms");
+        File dir = UtilsForTesting.createBlackLabTestDir("Terms");
 
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
@@ -51,8 +35,8 @@ public class TestTerms {
         t = Terms.openForWriting(colls, null);
         if (t instanceof TermsWriter)
             ((TermsWriter) t).setMaxBlockSize(18);
-        for (int i = 0; i < str.length; i++) {
-            t.indexOf(str[i]);
+        for (String s : str) {
+            t.indexOf(s);
         }
         File f = new File(dir, "terms.dat");
         t.write(f); // close so everything is guaranteed to be written

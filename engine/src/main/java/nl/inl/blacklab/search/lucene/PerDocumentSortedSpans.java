@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -52,13 +37,11 @@ final class PerDocumentSortedSpans extends BLSpans {
 
     private int curEnd = -1;
 
-    private SpansInBuckets bucketedSpans;
+    private final SpansInBuckets bucketedSpans;
 
-    private boolean eliminateDuplicates;
+    private final boolean eliminateDuplicates;
 
-    private boolean sortByStartPoint;
-
-    private int prevStart, prevEnd;
+    private final boolean sortByStartPoint;
 
     private int indexInBucket = -2; // -2 == no bucket yet; -1 == just started a bucket
 
@@ -119,6 +102,8 @@ final class PerDocumentSortedSpans extends BLSpans {
             curEnd = bucketedSpans.endPosition(indexInBucket);
         } else {
             // Eliminate any duplicates
+            int prevEnd;
+            int prevStart;
             do {
                 if (indexInBucket == -2 || indexInBucket >= bucketedSpans.bucketSize() - 1) {
                     // Bucket exhausted or no bucket yet; get one
@@ -154,7 +139,7 @@ final class PerDocumentSortedSpans extends BLSpans {
     @Override
     public String toString() {
         String name = "sort" + (sortByStartPoint ? "Start" : "End") + (eliminateDuplicates ? "Uniq" : "");
-        return name + "(" + bucketedSpans.toString() + ")";
+        return name + "(" + bucketedSpans + ")";
     }
 
     @Override
@@ -175,7 +160,7 @@ final class PerDocumentSortedSpans extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // BucketedSpans should collect payload as well, but for now, we don't use
         // payload beyond a "simple" SpanQuery like SpanQueryTags.
         // bucketedSpans.collect(collector);

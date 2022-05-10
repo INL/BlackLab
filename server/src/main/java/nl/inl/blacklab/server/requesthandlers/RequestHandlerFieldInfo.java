@@ -4,7 +4,6 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -142,14 +141,11 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             }
             List<String> sortedLeft = new ArrayList<>(valuesLeft);
             final Collator defaultCollator = getValueSortCollator();
-            sortedLeft.sort(new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    String d1 = displayValues.containsKey(o1) ? displayValues.get(o1) : o1;
-                    String d2 = displayValues.containsKey(o2) ? displayValues.get(o2) : o2;
-                    //return d1.compareTo(d2);
-                    return defaultCollator.compare(d1, d2);
-                }
+            sortedLeft.sort((o1, o2) -> {
+                String d1 = displayValues.getOrDefault(o1, o1);
+                String d2 = displayValues.getOrDefault(o2, o2);
+                //return d1.compareTo(d2);
+                return defaultCollator.compare(d1, d2);
             });
             for (String value : sortedLeft) {
                 ds.attrEntry("value", "text", value, values.get(value));
@@ -196,7 +192,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
         ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
-        annotations.stream().map(f -> f.name()).forEach(id -> ds.item("fieldName", id));
+        annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
         ds.startEntry("annotations").startMap();

@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
@@ -42,25 +27,20 @@ class SpansNGrams extends BLSpans {
     /** Current hit end position */
     private int currentEnd = -1;
 
-    /**
-     * For testing, we don't have an IndexReader available, so we use test values
-     */
-    private boolean useTestValues = false;
-
     /** Used to get the field length in tokens for a document */
-    DocFieldLengthGetter lengthGetter;
+    final DocFieldLengthGetter lengthGetter;
 
     /** Highest document id plus one */
     private int maxDoc;
 
     /** Documents that haven't been deleted */
-    private Bits liveDocs;
+    private final Bits liveDocs;
 
     private boolean alreadyAtFirstMatch = false;
 
-    private int min;
+    private final int min;
 
-    private int max;
+    private final int max;
 
     /**
      * For testing, we don't have an IndexReader available, so we use test values.
@@ -68,14 +48,12 @@ class SpansNGrams extends BLSpans {
      * The test values are: there are 3 documents (0, 1 and 2) and each is 5 tokens
      * long.
      *
-     * @param test whether or not we want to use test values
      * @param maxDoc number of docs in the (mock) test set
      */
-    void setTest(boolean test, int maxDoc) {
-        useTestValues = test;
-        if (useTestValues)
-            this.maxDoc = maxDoc;
-        lengthGetter.setTest(test);
+    void setTest(int maxDoc) {
+        // For testing, we don't have an IndexReader available, so we use test values
+        this.maxDoc = maxDoc;
+        lengthGetter.setTest(true);
     }
 
     /**
@@ -113,7 +91,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public int nextDoc() throws IOException {
+    public int nextDoc() {
         alreadyAtFirstMatch = false;
         do {
             if (currentDoc >= maxDoc) {
@@ -145,10 +123,9 @@ class SpansNGrams extends BLSpans {
      * Go to next span.
      *
      * @return true if we're at the next span, false if we're done
-     * @throws IOException
      */
     @Override
-    public int nextStartPosition() throws IOException {
+    public int nextStartPosition() {
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             return currentStart;
@@ -176,7 +153,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public int advanceStartPosition(int target) throws IOException {
+    public int advanceStartPosition(int target) {
         if (alreadyAtFirstMatch) {
             alreadyAtFirstMatch = false;
             if (currentStart >= target)
@@ -198,7 +175,6 @@ class SpansNGrams extends BLSpans {
      *
      * @param doc the doc number to skip to (or past)
      * @return true if we're still pointing to a valid hit, false if we're done
-     * @throws IOException
      */
     @Override
     public int advance(int doc) throws IOException {
@@ -254,7 +230,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void collect(SpanCollector collector) throws IOException {
+    public void collect(SpanCollector collector) {
         // nothing to collect
     }
 

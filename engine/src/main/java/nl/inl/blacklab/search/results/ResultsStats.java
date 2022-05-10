@@ -5,6 +5,7 @@ import java.util.Map;
 
 public abstract class ResultsStats implements SearchResult {
 
+    /** Used to return from cache entry if search hasn't been started yet. */
     public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
         @Override
         public boolean processedAtLeast(long lowerBound) {
@@ -115,7 +116,6 @@ public abstract class ResultsStats implements SearchResult {
 
     /**
      * How many result objects are stored here?
-     * @return
      */
     @Override
     public long numberOfResultObjects() {

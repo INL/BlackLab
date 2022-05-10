@@ -1,22 +1,6 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
@@ -28,6 +12,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.AbstractSet;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -56,7 +41,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     private List<Long> tokensFileChunkOffsetBytes = null;
 
     /** Collators to use for terms file */
-    private Collators collators;
+    private final Collators collators;
 
     /** Offset of each document */
     long[] offset;
@@ -71,7 +56,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     List<Integer> deletedTocEntries = null;
 
     /** Build term indexes right away or lazily? */
-    private boolean buildTermIndexesOnInit;
+    private final boolean buildTermIndexesOnInit;
 
     AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean buildTermIndexesOnInit) {
         super(annotation, dir, collators);
@@ -152,8 +137,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
                 tokensFileChunkOffsetBytes.add(startOfNextMappingBytes);
                 mappedBytes = startOfNextMappingBytes + sizeBytes;
             }
-        } catch (FileNotFoundException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
         } catch (IOException e1) {
             throw BlackLabRuntimeException.wrap(e1);
         }
@@ -203,7 +186,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     protected void sortDeletedTocEntries() {
-        deletedTocEntries.sort( (o1, o2) -> length[o1] - length[o2] );
+        deletedTocEntries.sort(Comparator.comparingInt(o -> length[o]));
     }
 
 
@@ -263,8 +246,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
-                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
+                if (offsetBytes <= entryOffsetBytes + (long) start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + (long) end
                                 * SIZEOF_INT) {
                     // This one!
                     whichChunk = buffer;
@@ -346,8 +329,8 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + start * SIZEOF_INT
-                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + end
+                if (offsetBytes <= entryOffsetBytes + (long) start * SIZEOF_INT
+                        && offsetBytes + buffer.capacity() >= entryOffsetBytes + (long) end
                                 * SIZEOF_INT) {
                     // This one!
                     whichChunk = buffer;
@@ -405,16 +388,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     }
 
     /**
-     * @return the number of free blocks in the forward index.
-     */
-    @Override
-    public int freeBlocks() {
-        if (!initialized)
-            initialize();
-        return deletedTocEntries.size();
-    }
-
-    /**
      * Gets the length (in tokens) of a document.
      *
      * NOTE: this INCLUDES the extra closing token at the end.
@@ -435,10 +408,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
     public Set<Integer> idSet() {
         if (!initialized)
             initialize();
-        return new AbstractSet<Integer>() {
+        return new AbstractSet<>() {
             @Override
             public boolean contains(Object o) {
-                return deleted[(Integer)o] == 0;
+                return deleted[(Integer) o] == 0;
             }
 
             @Override
@@ -448,7 +421,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndex {
 
             @Override
             public Iterator<Integer> iterator() {
-                return new Iterator<Integer>() {
+                return new Iterator<>() {
                     int current = -1;
                     int next = -1;
 

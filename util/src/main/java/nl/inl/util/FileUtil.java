@@ -1,18 +1,3 @@
-/*******************************************************************************
- * Copyright (c) 2010, 2012 Institute for Dutch Lexicology
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *******************************************************************************/
 package nl.inl.util;
 
 import java.io.BufferedReader;
@@ -54,13 +39,10 @@ public class FileUtil {
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
      * Used by listFilesSorted().
      */
-    final public static Comparator<File> LIST_FILES_COMPARATOR = new Comparator<File>() {
-        @Override
-        public int compare(File a, File b) {
-            int ad = a.isDirectory() ? 0 : 1;
-            int bd = b.isDirectory() ? 0 : 1;
-            return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
-        }
+    final public static Comparator<File> LIST_FILES_COMPARATOR = (a, b) -> {
+        int ad = a.isDirectory() ? 0 : 1;
+        int bd = b.isDirectory() ? 0 : 1;
+        return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
     };
 
     /**
@@ -71,7 +53,6 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return write interface into the file
-     * @throws FileNotFoundException 
      */
     public static PrintWriter openForWriting(File file) throws FileNotFoundException {
         return openForWriting(file, DEFAULT_ENCODING);
@@ -86,7 +67,6 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return write interface into the file
-     * @throws FileNotFoundException 
      */
     public static PrintWriter openForWriting(File file, Charset encoding) throws FileNotFoundException {
         return new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), encoding)));
@@ -99,7 +79,6 @@ public class FileUtil {
      *
      * @param file the file to open
      * @return read interface into the file
-     * @throws FileNotFoundException 
      */
     public static BufferedReader openForReading(File file) throws FileNotFoundException {
         return openForReading(file, DEFAULT_ENCODING);
@@ -113,7 +92,6 @@ public class FileUtil {
      * @param file the file to open
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return read interface into the file
-     * @throws FileNotFoundException 
      */
     public static BufferedReader openForReading(File file, Charset encoding) throws FileNotFoundException {
         return new BufferedReader(new InputStreamReader(new FileInputStream(file), encoding));

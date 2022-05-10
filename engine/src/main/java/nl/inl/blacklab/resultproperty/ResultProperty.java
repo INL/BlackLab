@@ -26,33 +26,6 @@ public interface ResultProperty<T> extends Serializable {
     }
 
     /**
-     * Get the property value for a specific result.
-     * @param hit result to get property value for
-     * @return property value
-     */
-//    PropertyValue get(T hit);
-
-//    PropertyValue get(int index);
-    
-    /**
-     * Compares two hits on this property.
-     *
-     * The default implementation uses get() to compare the two hits. Subclasses may
-     * override this method to provide a more efficient implementation.
-     *
-     * Note that we use Object as the type instead of Hit to save on run-time type
-     * checking. We know (slash hope :-) that this method is only ever called to
-     * compare Hits.
-     *
-     * @param a first hit
-     * @param b second hit
-     * @return 0 if equal, negative if a < b, positive if a > b.
-     */
-//    @Override
-//    int compare(T a, T b);]
-//    int compare(int aIndex, int bIndex);
-
-    /**
      * Get the name of the property
      * @return name
      */

@@ -54,7 +54,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     private Locale locale = null;
 
     /** Fallback locale in case we can't parse the date */
-    private Locale usLocale = new Locale("en", "US");
+    private final Locale usLocale = new Locale("en", "US");
 
     private ConfigAnnotatedField currentAnnotatedField;
 
@@ -143,7 +143,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             log("processing " + documentName + "...");
 
             metadata = new HashMap<>();
-            currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^\\.]+$", "");
+            currentFileBaseName = new File(documentName).getName().replaceAll("\\.[^.]+$", "");
 
             int lineNumber = 0;
             int uttId = 0;
@@ -299,21 +299,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         return null; // (fixed tov origineel)
     }
 
-    // Find name of corpus in metadata structure.
-    // Used to determine parseFile
-//	private String getCorpus(Map<String, Object> metadata) {
-//        String spkr;
-//        if (metadata.containsKey("speaker"))
-//            spkr = metadata.get("speaker").toString();
-//        else
-//            spkr = "";
-//        @SuppressWarnings("unchecked")
-//        Map<String, Map<String, String>> mdid = (Map<String, Map<String, String>>)metadata.get("id");
-//        if (mdid != null && mdid.containsKey(spkr) && mdid.get(spkr).containsKey("corpus"))
-//            return mdid.get(spkr).get("corpus");
-//        return "Unknown_corpus";
-//    }
-
     // Convert date string to month number
     private int getMonths(String age) {
         // input format is 3;6.14 (y;m.d)
@@ -356,46 +341,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         return result;
     }
 
-    /*
-    public String[] getoutpaths(String fullname, String inpath, String outpath) {
-        String absinpath = new File(inpath).getAbsolutePath();    //absinpath = os.path.abspath(inpath)
-        String absoutpath = new File(outpath).getAbsolutePath();  //absoutpath = os.path.abspath(outpath)
-        String fullinpath = new File(fullname).getAbsoluteFile().getParentFile().getAbsolutePath();  //os.path.dirname(fullname);
-        reloutpath = os.path.relpath(fullinpath, start = absinpath);
-        fulloutpath = os.path.join(absoutpath, reloutpath);
-        return reloutpath, fulloutpath;
-    }
-    */
-
-    // Determine parsefile
-//	private String getParseFile(String corpus, String base, int uttid) {
-//        String uttidstr = String.format("u%011d", uttid); //"u{:011d}".format(uttid);
-//        String newbase = StringUtils.join(Arrays.asList(corpus, base, uttidstr), UNDERSCORE);
-//        String result = newbase + PARSE_EXT;
-//        return result;
-//    }
-
-//	private boolean isNotEmpty(String str) {
-//        return str != null && !str.isEmpty();
-//    }
-
-//	private String metaDate(String el, Map<String, Object> metadata) {
-//        Date d = (Date)metadata.get(el);
-//        String normalizeddate = toIsoFormat(d);
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "date", uel, "=", normalizeddate), SPACE);
-//    }
-//
-//	private String metaInt(String el, Map<String, Object> metadata) {
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "int", uel, "=", metadata.get(el).toString()), SPACE);
-//    }
-//
-//	private String metaTxt(String el, Map<String, Object> metadata) {
-//        String uel = despaceMetadataName(el);
-//        return StringUtils.join(Arrays.asList(META_KW, "text", uel, "=", metadata.get(el).toString()), SPACE);
-//    }
-
     private void addMetaDate(String el, Map<String, Object> metadata) {
         Date d = (Date) metadata.get(el);
         String normalizeddate = toIsoFormat(d);
@@ -419,10 +364,10 @@ public class DocIndexerChat extends DocIndexerConfig {
     private Date normalizeDate(String str) {
         Date date;
         try {
-            date = DateUtils.parseDate(str, locale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
+            date = DateUtils.parseDate(str, locale, "d-M-Y", "dd-MMM-yyyy");
         } catch (ParseException e) {
             try {
-                date = DateUtils.parseDate(str, usLocale, new String[] { "d-M-Y", "dd-MMM-yyyy" });
+                date = DateUtils.parseDate(str, usLocale, "d-M-Y", "dd-MMM-yyyy");
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
                 throw BlackLabRuntimeException.wrap(e1);
@@ -451,76 +396,13 @@ public class DocIndexerChat extends DocIndexerConfig {
         }
     }
 
-//	private void printHeaderMetadata(Map<String, Object> metadata) {
-//        for (String el: metadata.keySet()) {
-//            if (DO_NOT_PRINT_IN_HEADERS.contains(el)) {
-//                // (pass)
-//            } else if (ALL_HEADERS.contains(el)) {
-//                Object curval = metadata.get(el);
-//                if (curval instanceof String) {
-//                    output(metaTxt(el, metadata));
-//                } else if (curval instanceof Date) {
-//                	output(metaDate(el, metadata));
-//                } else if (curval instanceof Integer) {
-//                	output(metaInt(el, metadata));
-//                }
-//                if (!PRINT_IN_HEADERS.contains(el))
-//                    log("unknown metadata element encountered: "  + el);
-//            }
-//        }
-//    }
-
-//    @SuppressWarnings("unchecked")
-//    private void printUttMetadata(Map<String, Object> metadata) {
-//        String uttidline = metaInt("uttid", metadata);
-//        String spkrline = metaTxt("speaker", metadata);
-//        // parsefileline = metatxt("parsefile", metadata)
-//        String origuttline = metaTxt("origutt", metadata);
-//        output(uttidline);
-//        output(spkrline);
-//        // printToOutfile(parsefileline);
-//        output(origuttline);
-//        Object curcode = metadata.get("speaker");
-//        Map<String, Object> participants = (Map<String, Object>)metadata.get("participants");
-//        if (participants.containsKey(curcode)) {
-//            Map<String, Object> codeMap = (Map<String, Object>)participants.get(curcode);
-//            for (String el: codeMap.keySet()) {
-//                String theline = metaTxt(el, codeMap);
-//                output(theline);
-//            }
-//        }
-//        if (metadata.containsKey("id")) {
-//            Map<String, Object> mdid = (Map<String, Object>)metadata.get("id");
-//            if (mdid != null) {
-//                Map<String, Object> curcodeMap = (Map<String, Object>)mdid.get(curcode);
-//                if (curcodeMap != null) {
-//                    for (String el: curcodeMap.keySet()) {
-//                        Object curval = curcodeMap.get(el);
-//                        if (curval instanceof String) {
-//                            String theline = metaTxt(el, curcodeMap);
-//                            output(theline);
-//                        } else if (curval instanceof Integer) {
-//                            String theline = metaInt(el, curcodeMap);
-//                            output(theline);
-//                        } else if (curval instanceof Date) {
-//                            String theline = metaDate(el, curcodeMap);
-//                            output(theline);
-//                        } else {
-//                            log("print_uttmd: unknown type for " + el + " = " + curval);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     /**
      * Are we inside a "block"? Blocks have their own set of metadata, and are
      * indexed just like inline XML tags.
      */
-    boolean inBlock = false;
+    final boolean inBlock = false;
 
-    String blockTagName = "block";
+    final String blockTagName = "block";
 
     @SuppressWarnings("unchecked")
     private void startBlock() {
@@ -657,16 +539,18 @@ public class DocIndexerChat extends DocIndexerConfig {
         int headerNameEnd = headerLine.indexOf(HEADERLINE_END_SYMB);
         if (headerNameEnd < 0) {
             String cleanHeaderLine = headerLine.trim().toLowerCase();
-            if (cleanHeaderLine.equals("@utf8")) {
+            switch (cleanHeaderLine) {
+            case "@utf8":
                 metadata.put("charencoding", "UTF8");
-            } else if (cleanHeaderLine.equals("@begin")) {
+                break;
+            case "@begin":
+            case "@end":
+            case "@blank":
                 // (pass)
-            } else if (cleanHeaderLine.equals("@end")) {
-                // (pass)
-            } else if (cleanHeaderLine.equals("@blank")) {
-                // (pass)
-            } else {
+                break;
+            default:
                 log("Warning: unknown header " + headerLine + " encountered in line " + lineNumber);
+                break;
             }
 
         } else {
@@ -825,16 +709,6 @@ public class DocIndexerChat extends DocIndexerConfig {
         metadata.put("origutt", line.substring(endSpk + 1, line.length() - 1));
     }
 
-//    private void updateCharMap(String str, Map<Character, Integer> charmap) {
-//        for (int i = 0; i < str.length(); i++) {
-//            char curchar = str.charAt(i);
-//            if (charmap.containsKey(curchar))
-//                charmap.put(curchar, charmap.get(curchar) + 1);
-//            else
-//                charmap.put(curchar, 1);
-//        }
-//    }
-
     private void writeToCleanFile(String entry, String cleanEntry) {
         if (!entry.equals(cleanEntry)) {
             printToCleanfile(entry);
@@ -876,8 +750,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             "time start", "time duration", "tape location", "room layout",
             "recording quality", "number", "media");
     private static final List<String> SIMPLE_INT_HEADERNAMES = Arrays.asList("g", "page");
-    private static final List<String> SIMPLE_COUNTER_HEADERS = Arrays.asList("new episode");
-    private static final List<String> SKIP_HEADER_NAMES = Arrays.asList("exceptions");
+    private static final List<String> SIMPLE_COUNTER_HEADERS = List.of("new episode");
+    private static final List<String> SKIP_HEADER_NAMES = List.of("exceptions");
     private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of",
             "age of");
     private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker",
@@ -986,33 +860,33 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final Pattern ZERO_STR = Pattern.compile("0(\\w+)");
     static final Pattern BARE_ZERO = Pattern.compile("0");
     static final Pattern PLUS_DOT_DOT = Pattern.compile("\\+\\.\\.");
-    static final String LT_STR = "\\[<\\]";
+    static final String LT_STR = "\\[<]";
     static final Pattern LT_REGEX = Pattern.compile(LT_STR);
 
     // ltre1 = Pattern.compile(scoped(ltstr))
     // ltre2 = Pattern.compile(ltstr)
-    static final String DOUBLE_SLASH_STR = "\\[//\\]";
+    static final String DOUBLE_SLASH_STR = "\\[//]";
     static final Pattern DOUBLE_SLASH_SCOPED = Pattern.compile(scoped(DOUBLE_SLASH_STR));
     static final Pattern DOUBLE_SLASH_UNSCOPED = Pattern.compile(DOUBLE_SLASH_STR);
-    static final Pattern EXCLAM2 = Pattern.compile("\\[!\\]");
-    static final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!\\]");
-    static final String SLASH_STR = "\\[/\\]";
+    static final Pattern EXCLAM2 = Pattern.compile("\\[!]");
+    static final Pattern EXCLAM1 = Pattern.compile("<([^>]*)>\\s*\\[!]");
+    static final String SLASH_STR = "\\[/]";
     static final Pattern SLASH_SCOPED = Pattern.compile(scoped(SLASH_STR));
     static final Pattern SLASH_UNSCOPED = Pattern.compile(SLASH_STR);
-    static final String GT_STR = "\\[>\\]";
+    static final String GT_STR = "\\[>]";
     static final Pattern GT_REGEX = Pattern.compile(GT_STR);
     // gtre1 = Pattern.compile(scoped(gtstr))
     // gtre2 = Pattern.compile(gtstr)
-    static final String Q_STR = "\\[\\?\\]";
+    static final String Q_STR = "\\[\\?]";
     static final Pattern Q_REGEX_SCOPED = Pattern.compile(scoped(Q_STR));
     static final Pattern Q_REGEX_UNSCOPED = Pattern.compile(Q_STR);
-    static final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^\\]]*\\]");
-    static final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^\\]]*\\]");
-    static final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^\\]]*\\]");
-    static final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^\\]]*)\\]");
-    static final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!\\]");
-    static final Pattern PLUS3 = Pattern.compile("\\+\\/(\\/)?[\\.\\?]");
-    static final Pattern PLUS2 = Pattern.compile("\\+[\\.\\^<,\\+\"]");
+    static final Pattern EQ_EXCLAM = Pattern.compile("<([^>]*)>\\s*\\[ = ![^]]*]");
+    static final Pattern EQ_TEXT1 = Pattern.compile("<([^>]*)>\\s*\\[ = [^]]*]");
+    static final Pattern EQ_TEXT2 = Pattern.compile("\\[ = [^]]*]");
+    static final Pattern COLON_REGEX = Pattern.compile("[^ ]+\\s+\\[:([^]]*)]");
+    static final Pattern DOUBLE_EXCLAM = Pattern.compile("\\[!!]");
+    static final Pattern PLUS3 = Pattern.compile("\\+/(/)?[.?]");
+    static final Pattern PLUS2 = Pattern.compile("\\+[.^<,+\"]");
     static final Pattern PLUS_QUOTE = Pattern.compile("\\+(\\+\"\\.|!\\?)");
     // nesting = Pattern.compile(r"<([^<>]*(<[^<>]*>(\[>\]|\[<\]|[^<>])*)+)>")
     // nesting = Pattern.compile(r"<(([^<>]|\[<\]|\[>\])*)>")
@@ -1038,9 +912,9 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // JN fixed(?)
     private final Pattern CHECK_PATTERN = Pattern.compile(
-            "[\\]\\[\\\\(\\\\)&%@/ = ><_0^~\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E" +
+            "[]\\[\\\\()&%@/ =><_0^~\u2193\u2191\u21D7\u2197\u2192\u2198\u21D8\u221E" +
                     "\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9" +
-                    "\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u00B7\u0001]");
+                    "\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u0001]");
 
     // + should not occur except as compund marker black+board
     private final Pattern PLUS_PATTERN = Pattern.compile("\\W\\+|\\+\\W");
@@ -1063,31 +937,31 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final String NEST_STR = "(<" + regexStar(OTHER) + EMBED + regexStar(EMBED_OR_OTHER) + ">)";
     private static final Pattern NESTING = Pattern.compile(NEST_STR);
 
-    private static final String TIMES_STR = "\\[x[^\\]]*\\]";
+    private static final String TIMES_STR = "\\[x[^]]*]";
     private static final Pattern TIMES_UNSCOPED = Pattern.compile(TIMES_STR);
     private static final Pattern TIMES_SCOPED = Pattern.compile(scoped(TIMES_STR));
-    private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[\\% [^\\]]*\\]");
-    private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[\\% [^\\]]*\\]");
-    private static final String TRIPLE_SLASH = "\\[///\\]";
+    private static final Pattern INLINE_COM_SCOPED = Pattern.compile("<([^<>]*)>\\s*\\[% [^]]*]");
+    private static final Pattern INLINE_COM_UNSCOPED = Pattern.compile("\\[% [^]]*]");
+    private static final String TRIPLE_SLASH = "\\[///]";
     private static final Pattern REFORMUL_UNSCOPED = Pattern.compile(TRIPLE_SLASH);
     private static final Pattern REFORMUL_SCOPED = Pattern.compile(scoped(TRIPLE_SLASH));
     private static final Pattern END_QUOTE = Pattern.compile("\\+\"/\\.");
-    private static final String ERROR_MARK_STR = "\\[\\*\\]";
+    private static final String ERROR_MARK_STR = "\\[\\*]";
     private static final Pattern ERROR_MARK_UNSCOPED = Pattern.compile(ERROR_MARK_STR);
     private static final Pattern ERROR_MARK_SCOPED = Pattern.compile(scoped(ERROR_MARK_STR));
-    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^\\]]*\\]"); // JN fixed(?)
-    private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*\\]");
-    private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*\\]");
-    private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch\\]");
-    private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn\\]");
+    private static final Pattern DEPENDENT_TIER = Pattern.compile("\\[%(act|add|gpx|int|sit|spe):[^]]*]"); // JN fixed(?)
+    private static final Pattern POST_CODES = Pattern.compile("\\[\\+[^]]*]");
+    private static final Pattern PRE_CODES = Pattern.compile("\\[-[^]]*]");
+    private static final Pattern BCH = Pattern.compile("\\[\\+\\s*bch]");
+    private static final Pattern TRN = Pattern.compile("\\[\\+\\s*trn]");
     private static final Pattern SYLLABLE_PAUSE = Pattern.compile("(\\w)\\^");
-    private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^\\]]*\\]");
+    private static final Pattern COMPLEX_LOCAL_EVENT = Pattern.compile("\\[\\^[^]]*]");
     private static final Pattern CLITIC_LINK = Pattern.compile("~");
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
     private static final Pattern CHAT_CA_SYMS = Pattern.compile(
-            "[\u2193\u2191\u2191\u2193\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309" +
+            "[\u2193\u2191\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309" +
                     "\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7" +
-                    "\u223E\u21BB\u1F29\u201E\u2021\u0323\u0323\u02B0\u0304\u02940]");
+                    "\u223E\u21BB\u1F29\u201E\u2021\u0323\u02B0\u0304\u02940]");
     private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
 
     private String cleanText(String str) {

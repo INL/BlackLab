@@ -4,7 +4,7 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 
 public class DocGroupSortSettings {
 
-    private DocGroupProperty sortBy;
+    private final DocGroupProperty sortBy;
 
     public DocGroupSortSettings(DocGroupProperty sortBy) {
         super();
