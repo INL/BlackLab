@@ -97,7 +97,7 @@ public class Requests {
         ResponseBuilder ourResponse;
         if (StringUtils.isEmpty(group)) {
             if (sort.isEmpty())
-                sort = "docid,hitposition";
+                sort = "field:pid,hitposition";
             // Hits request
             // Request the search object
             HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort);

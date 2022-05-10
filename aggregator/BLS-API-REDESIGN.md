@@ -1,4 +1,4 @@
-# BlackLab Server API redesign
+# Blacklab Server API redesign
 
 The BLS API has quite a few quirks that can make it confusing and annoying to work with.
 If we break compatibility anyway (e.g. because we're integrating with Solr), how might
@@ -50,10 +50,12 @@ General:
   in a separate subobject, not alongside special values like `lengthInTokens` and `mayView`. Also, 
   `metadataFieldGroups` shouldn't be alongside DocInfo structures.)
 - Handle custom information better. <br>
-  Custom information, ignored by BlackLab but useful for e.g. the frontend,
+  Custom information, ignored by Blacklab but useful for e.g. the frontend,
   like displayName, uiType, etc. is polluting the response structure.
   We should isolate it (e.g. in a `custom` section for each field, annotation, etc.),
-  just pass it along unchecked, and include it only if requested.
+  just pass it along unchecked, and include it only if requested.<br>
+  This includes the so-called "special fields" except for `pidField` (so author, title, date).
+  (Blacklab uses the `pidField` to refer to documents)
 - Don't include static info on dynamic (results) pages.<br>
   (e.g. don't send display names for all metadata fields with each hits results;
    the client can request those once if needed)

@@ -43,7 +43,6 @@ import nl.inl.util.StringUtil;
  *  and each of those should only be used from one thread at a time)
  */
 public class DocPropertyStoredField extends DocProperty {
-    //private static final Logger logger = LogManager.getLogger(DocPropertyStoredField.class);
 
     /** Lucene field name */
     private final String fieldName;
@@ -72,6 +71,17 @@ public class DocPropertyStoredField extends DocProperty {
 
     public DocPropertyStoredField(BlackLabIndex index, String fieldName, String friendlyName) {
         this.index = index;
+
+        // Special case: if field "pid" was specified, but this corpus has no field
+        // named "pid", but it does have a pidField configured, use that.
+        if (fieldName.equals("pid") && !index.metadataFields().exists(fieldName)) {
+            MetadataField f = index.metadataFields().special("pid");
+            if (f != null) {
+                fieldName = f.name();
+                friendlyName = f.displayName();
+            }
+        }
+
         this.fieldName = fieldName;
         this.friendlyName = friendlyName;
 
