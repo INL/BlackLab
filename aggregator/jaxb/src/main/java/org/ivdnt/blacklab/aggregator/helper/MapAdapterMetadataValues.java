@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
+import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.namespace.QName;
 
@@ -17,14 +19,14 @@ import org.w3c.dom.Element;
  *
  * Separate class because there may be more than one metadata value.
  */
-public class MapAdapterMetadataValues extends XmlAdapter<MapWrapperMetadataValues, Map<String, MetadataValues>> {
+public class MapAdapterMetadataValues extends XmlAdapter<MapAdapterMetadataValues.MapWrapperMetadataValues, Map<String, MetadataValues>> {
     @Override
     public MapWrapperMetadataValues marshal(Map<String, MetadataValues> m) throws Exception {
         MapWrapperMetadataValues wrapper = new MapWrapperMetadataValues();
         List elements = new ArrayList();
         for (Map.Entry<String, MetadataValues> property : m.entrySet()) {
 
-            elements.add(new JAXBElement<>(new QName(getCleanLabel(property.getKey())),
+            elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
                     MetadataValues.class, property.getValue()));
         }
         wrapper.elements = elements;
@@ -48,10 +50,10 @@ public class MapAdapterMetadataValues extends XmlAdapter<MapWrapperMetadataValue
         return returnval;
     }
 
+    @XmlSeeAlso(MetadataValues.class)
+    static class MapWrapperMetadataValues {
 
-    // Return a XML-safe attribute.  Might want to add camel case support
-    private String getCleanLabel(String attributeLabel) {
-        attributeLabel = attributeLabel.replaceAll("[()]", "").replaceAll("[^\\w\\s]", "_").replaceAll(" ", "_");
-        return attributeLabel;
+        @XmlAnyElement
+        List<JAXBElement<MetadataValues>> elements;
     }
 }

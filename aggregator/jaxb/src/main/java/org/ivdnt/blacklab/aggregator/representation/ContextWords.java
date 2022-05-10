@@ -12,7 +12,6 @@ import java.util.Set;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.namespace.QName;
 
 import org.apache.commons.collections4.iterators.ReverseListIterator;
 
@@ -38,18 +37,18 @@ public class ContextWords {
                 throws IOException {
 
             // See what annotation there are (because not every word will have a value for every annotation)
-            Set<QName> annotations = new LinkedHashSet<>();
-            annotations.add(new QName(Word.MAIN_ANNOTATION_NAME));
+            Set<String> annotations = new LinkedHashSet<>();
+            annotations.add(Word.MAIN_ANNOTATION_NAME);
             for (Word w: value.words) {
                 annotations.addAll(w.otherAnnotations.keySet());
             }
 
             jgen.writeStartObject();
-            for (QName annotation: annotations) {
-                jgen.writeArrayFieldStart(annotation.getLocalPart());
+            for (String annotation: annotations) {
+                jgen.writeArrayFieldStart(annotation);
                 for (Word w: value.words) {
                     String x;
-                    if (annotation.getLocalPart().equals(Word.MAIN_ANNOTATION_NAME))
+                    if (annotation.equals(Word.MAIN_ANNOTATION_NAME))
                         x = w.mainAnnotation;
                     else
                         x = w.otherAnnotations.getOrDefault(annotation, "");
@@ -99,13 +98,13 @@ public class ContextWords {
             int n = wordsPerAnnot.values().iterator().next().size();
             for (int i = 0; i < n; i++) {
                 Word word = new Word();
-                Map<QName, String> m = word.otherAnnotations = new LinkedHashMap<>();
+                Map<String, String> m = word.otherAnnotations = new LinkedHashMap<>();
                 for (String name: wordsPerAnnot.keySet()) {
                     String w = wordsPerAnnot.get(name).get(i);
                     if (name.equals(Word.MAIN_ANNOTATION_NAME))
                         word.mainAnnotation = w;
                     else
-                        m.put(new QName(name), w);
+                        m.put(name, w);
                 }
                 result.add(word);
             }

@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
+import org.ivdnt.blacklab.aggregator.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -153,7 +153,7 @@ public class HitsResults implements Cloneable {
                         docInfo.mayView = parser.getValueAsBoolean();
                     } else if (token == JsonToken.START_ARRAY) {
                         // A list of metadata values
-                        List<String> values = JacksonUtil.readStringList(parser);
+                        List<String> values = SerializationUtil.readStringList(parser);
                         docInfo.metadata.put(fieldName, new MetadataValues(values));
                     }
                 }

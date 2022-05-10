@@ -3,20 +3,19 @@ package org.ivdnt.blacklab.aggregator.representation;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.bind.annotation.XmlAnyAttribute;
-import javax.xml.bind.annotation.XmlValue;
-import javax.xml.namespace.QName;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import org.ivdnt.blacklab.aggregator.helper.MapAdapterAnnotations;
+
+@XmlJavaTypeAdapter(MapAdapterAnnotations.class)
 public class Word {
 
     public static final String MAIN_ANNOTATION_NAME = "word";
 
-    @XmlValue
     public String mainAnnotation = "theword";
 
     // TODO: SHOULD NOT use QName as keys but should serialize to attributes!
-    @XmlAnyAttribute
-    public Map<QName, String> otherAnnotations;
+    public Map<String, String> otherAnnotations;
 
     public Word() {
     }
@@ -28,7 +27,7 @@ public class Word {
             if (e.getKey().equals(MAIN_ANNOTATION_NAME))
                 mainAnnotation = e.getValue();
             else
-                otherAnnotations.put(new QName(e.getKey()), e.getValue());
+                otherAnnotations.put(e.getKey(), e.getValue());
         }
     }
 

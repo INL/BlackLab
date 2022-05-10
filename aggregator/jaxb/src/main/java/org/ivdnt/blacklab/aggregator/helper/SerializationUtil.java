@@ -18,7 +18,19 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
-public class JacksonUtil {
+public class SerializationUtil {
+
+    /** Return a XML-safe attribute.
+     *
+     * Might want to add camel case support.
+     *
+     * @param attributeLabel proposed label
+     * @return sanitized version
+     */
+    public static String getCleanLabel(String attributeLabel) {
+        attributeLabel = attributeLabel.replaceAll("[()]", "").replaceAll("[^\\w\\s]", "_").replaceAll(" ", "_");
+        return attributeLabel;
+    }
 
     /** Use this to serialize a String map using MapAdapter to JSON.
      */
@@ -26,10 +38,10 @@ public class JacksonUtil {
         @Override
         public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
-            if (value instanceof MapWrapper) {
+            if (value instanceof MapAdapter.MapWrapper) {
                 // This happens because of using MapAdapter with Jersey
                 jgen.writeStartObject();
-                for (Object element: ((MapWrapper) value).elements) {
+                for (Object element: ((MapAdapter.MapWrapper) value).elements) {
                     JAXBElement el = (JAXBElement) element;
                     jgen.writeStringField(el.getName().getLocalPart(), el.getValue().toString());
                 }
@@ -58,7 +70,7 @@ public class JacksonUtil {
         }
     }
 
-    private JacksonUtil() {}
+    private SerializationUtil() {}
 
     public static List<String> readStringList(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();

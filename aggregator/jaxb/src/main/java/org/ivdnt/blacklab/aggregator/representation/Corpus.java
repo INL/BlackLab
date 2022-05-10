@@ -11,7 +11,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ivdnt.blacklab.aggregator.helper.JacksonUtil;
+import org.ivdnt.blacklab.aggregator.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -111,7 +111,7 @@ public class Corpus implements Cloneable {
                             group.name = parser.getValueAsString();
                             break;
                         case "annotations":
-                            group.annotations = JacksonUtil.readStringList(parser);
+                            group.annotations = SerializationUtil.readStringList(parser);
                             break;
                         default:
                             throw new RuntimeException("Unexpected field " + fieldName + " in AnnotationGroup");
@@ -231,12 +231,12 @@ public class Corpus implements Cloneable {
                     case "hasLengthTokens": field.hasLengthTokens = parser.getValueAsBoolean(); break;
                     case "mainAnnotation": field.mainAnnotation = parser.getValueAsString(); break;
                     case "displayOrder":
-                        field.displayOrder = JacksonUtil.readStringList(parser);
+                        field.displayOrder = SerializationUtil.readStringList(parser);
                         break;
                     case "annotations":
                         if (token != JsonToken.START_OBJECT)
                             throw new RuntimeException("Expected START_OBJECT, found " + token);
-                        field.annotations = JacksonUtil.readAnnotations(parser);
+                        field.annotations = SerializationUtil.readAnnotations(parser);
                         break;
                     default: throw new RuntimeException("Unexpected field " + fieldName + " in AnnotatedField");
                     }
