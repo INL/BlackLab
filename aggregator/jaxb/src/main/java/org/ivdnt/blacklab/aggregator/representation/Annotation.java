@@ -44,7 +44,8 @@ public class Annotation {
     @JsonInclude(Include.NON_NULL)
     public List<String> test = null;
 
-    public String parentAnnotation = "";
+    @JsonInclude(Include.NON_EMPTY)
+    public String parentAnnotation = null;
 
     @Override
     public String toString() {

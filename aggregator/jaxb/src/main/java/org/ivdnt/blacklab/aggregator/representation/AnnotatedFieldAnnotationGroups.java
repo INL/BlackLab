@@ -6,7 +6,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -16,7 +15,7 @@ public class AnnotatedFieldAnnotationGroups {
     @XmlAttribute
     public String name;
 
-    @XmlElementWrapper(name="annotationGroups")
+    //@XmlElementWrapper(name="annotationGroups")
     @XmlElement(name = "annotationGroup")
     @JsonProperty("annotationGroups")
     public List<AnnotationGroup> annotationGroups;

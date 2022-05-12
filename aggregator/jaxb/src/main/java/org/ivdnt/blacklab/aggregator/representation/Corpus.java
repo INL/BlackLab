@@ -46,7 +46,7 @@ public class Corpus implements Cloneable {
                     jgen.writeStartObject();
                     {
                         jgen.writeStringField("name", annotationGroup.name);
-                        jgen.writeArrayFieldStart("annotations");
+                        jgen.writeFieldName("annotations");
                         {
                             provider.defaultSerializeValue(annotationGroup.annotations, jgen);
                         }
@@ -248,7 +248,7 @@ public class Corpus implements Cloneable {
         }
     }
 
-    /** Use this to serialize indices to JSON.
+    /** Use this to serialize metadat fields to JSON.
      *
      * Necessary because we convert a list (needed for the XML mapping) to a JSON object structure .
      */
@@ -268,7 +268,7 @@ public class Corpus implements Cloneable {
         }
     }
 
-    /** Use this to deserialize indices from JSON.
+    /** Use this to deserialize metadata fields from JSON.
      *
      * Necessary because we convert a JSON object structure to a list (because that's what the XML mapping uses).
      */
@@ -346,7 +346,7 @@ public class Corpus implements Cloneable {
     @JsonProperty("metadataFieldGroups")
     public List<MetadataFieldGroup> metadataFieldGroups;
 
-    //@XmlElementWrapper(name="annotationGroups")
+    @XmlElementWrapper(name="annotationGroups")
     @XmlElement(name = "annotatedField")
     @JsonProperty("annotationGroups")
     @JsonSerialize(using = ListAnnotatedFieldAnnotationGroupsSerializer.class)
