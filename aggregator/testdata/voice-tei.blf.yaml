@@ -62,6 +62,8 @@ annotatedFields:
     - path: .//u   # Utterance
 
 corpusConfig:
+  contentViewable: true
+
   specialFields:
     pidField: pid
     titleField: title

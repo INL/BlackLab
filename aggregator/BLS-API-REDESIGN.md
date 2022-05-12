@@ -31,6 +31,9 @@ General:
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
   `reachedHitLimit` might be easier to understand, especially if it's directly 
   related to a configuration setting `hitLimit`)
+- Avoid ambiguous resource paths.
+  (`/blacklab-server/my-corpus` conflicts with e.g. `/blacklab-server/input-formats`; better would be
+  `/blacklab-server/corpus/my-corpus/`, so the corpora have a dedicated namespace)
 - Try to use consistent terminology between parameters, response and configuration files.<br>
   (e.g. use the term "hitLimit" everywhere for the same concept)
 - Use `corpus`/`corpora` in favor of `index`/`indices`.

@@ -379,7 +379,7 @@ public class HitsSearch {
         summary.windowHasPrevious = first > 0;
 
         // Build the hits window and docInfos and return
-        BigList<Hit> hitWindow = hits.subList((int)first, (int)(first + number));
+        BigList<Hit> hitWindow = hits.size64() >= first + number ? hits.subList((int)first, (int)(first + number)) : hits;
         List<DocInfo> relevantDocs = hitWindow.stream()
                 .map(h -> h.docPid)
                 .collect(Collectors.toSet()).stream()

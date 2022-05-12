@@ -85,10 +85,14 @@ public class Requests {
     }
 
     private static List<Pair<String, Future<Response>>> sendNodeRequests(Client client, WebTargetDecorator factory) {
+        return sendNodeRequests(client, factory, MediaType.APPLICATION_JSON_TYPE);
+    }
+
+    private static List<Pair<String, Future<Response>>> sendNodeRequests(Client client, WebTargetDecorator factory, MediaType mediaType) {
         List<Pair<String, Future<Response>>> futures = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
             Future<Response> futureResponse = factory.get(client.target(nodeUrl)) //client.target(nodeUrl)
-                    .request(MediaType.APPLICATION_JSON)
+                    .request(mediaType)
                     .async()
                     .get();
             futures.add(Pair.of(nodeUrl, futureResponse));
@@ -97,8 +101,12 @@ public class Requests {
     }
 
     public static <T> Pair<String, T> getFirstSuccesfulResponse(Client client, WebTargetDecorator factory, Class<T> cls) {
+        return getFirstSuccesfulResponse(client, factory, cls, MediaType.APPLICATION_JSON_TYPE);
+    }
+    
+    public static <T> Pair<String, T> getFirstSuccesfulResponse(Client client, WebTargetDecorator factory, Class<T> cls, MediaType mediaType) {
         // Send requests and collect futures
-        List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory);
+        List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory, mediaType);
 
         // Wait for futures to complete and collect response objects
         List<T> nodeResponses = new ArrayList<>();

@@ -44,8 +44,12 @@ public class CorpusResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName) {
 
-        if (corpusName.equals("input-formats")) {
+        switch (corpusName) {
+        case "input-formats":
             return Response.ok().entity(new InputFormats()).build();
+        case "cache-info":
+        case "help":
+            return resourceNotImplemented("/" + corpusName);
         }
 
         // Query each node and collect responses
@@ -59,8 +63,14 @@ public class CorpusResource {
         }
 
         // Merge responses
-        Corpus merged = nodeResponses.stream().reduce(Aggregation::mergeCorpus).get();
+        Corpus merged = nodeResponses.stream().reduce(Aggregation::mergeCorpus).orElseThrow();
         return Response.ok().entity(merged).build();
+    }
+
+    private static Response resourceNotImplemented(String resource) {
+        ErrorResponse error = new ErrorResponse("NOT_IMPLEMENTED",
+                "The " + resource + " resource hasn't been implemented on the aggregator.");
+        return Response.status(Response.Status.NOT_IMPLEMENTED).entity(error).build();
     }
 
     /**
@@ -104,6 +114,41 @@ public class CorpusResource {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
+    }
+
+    /**
+     * Perform a /hits request.
+     */
+    @GET
+    @Path("/docs/{pid}/contents")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response docContents(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String pid) {
+
+        // Query each node and collect responses
+        try {
+            Pair<String, String> response = Requests.getFirstSuccesfulResponse(client,
+                    target -> target.path(corpusName).path("docs").path(pid).path("contents"),
+                    String.class, MediaType.APPLICATION_XML_TYPE);
+            if (response == null)
+                return Response.status(404).entity(new ErrorResponse("FAIL_ON_ALL_NODES", "No node returned OK")).build();
+            System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
+            return Response.ok().type(MediaType.APPLICATION_XML).entity(response.getValue()).build();
+        } catch (BlsRequestException e) {
+            // One of the node requests produced an error. Return it now.
+            return Response.status(e.getStatus()).entity(e.getResponse()).build();
+        }
+    }
+
+    /**
+     * Perform a /hits request.
+     */
+    @GET
+    @Path("/{resource:debug|fields|status|termfreq|explain|autocomplete|sharing}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response notImplemented(@PathParam("resource") String resource) {
+        return resourceNotImplemented("/CORPUS/" + resource);
     }
 
 }
