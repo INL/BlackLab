@@ -1,8 +1,9 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
@@ -96,6 +97,16 @@ public class Aggregation {
         if (a.countTime != null)
             result.countTime = Math.max(a.countTime, b.countTime);
         result.stillCounting = a.stillCounting || b.stillCounting;
+
+        if (a.subcorpusSize != null || b.subcorpusSize != null) {
+            // Add the subcorpus sizes
+            result.subcorpusSize = new HashMap<>();
+            if (a.subcorpusSize != null)
+                result.subcorpusSize.putAll(a.subcorpusSize);
+            if (b.subcorpusSize != null)
+                b.subcorpusSize.forEach((key, value) -> result.subcorpusSize.merge(key, value, Long::sum));
+        }
+
         return result;
     }
 
@@ -122,15 +133,14 @@ public class Aggregation {
         result.summary = mergeSearchSummary(a.summary, b.summary);
 
         // Convert to a sorted map and merge
-        Collector<HitGroup, ?, ? extends Map> toMapper = Collectors.toMap(HitGroup::getIdentity,
-                g -> g, (x, y) -> x, () -> new TreeMap());
-        Map<String, HitGroup> ga = result.hitGroups.stream().collect(toMapper);
-        b.hitGroups.stream().forEach( g -> ga.compute(g.identity, (k, v) -> v == null ? g : mergeHitGroups(v, g) ) );
+        Map<String, HitGroup> ga = result.hitGroups.stream()
+                .collect(Collectors.toMap(HitGroup::getIdentity, g -> g, (x, y) -> x, TreeMap::new));
+        b.hitGroups.forEach( g -> ga.compute(g.identity, (k, v) -> v == null ? g : mergeHitGroups(v, g) ) );
 
         // TODO: merge without disturbing the existing sort
 
         // Back to list
-        result.hitGroups = ga.values().stream().collect(Collectors.toList());
+        result.hitGroups = new ArrayList<>(ga.values());
 
         return result;
     }

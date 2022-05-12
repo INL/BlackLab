@@ -29,7 +29,9 @@ SolrCloud integration project.
   - [ ] `/INDEX?listvalues=...` (necessary?)
   - [ ] MORE?
 - [ ] Sort options for hits\[grouped\]:
-  - [ ] use correct collator for sort
+  - [x] use collator for sort
+  - [ ] sort by metadata does not show up in selection list on corpus-frontend
+  - [ ] sort by e.g. metadata (letter sender) is not the same
   - [x] sort on context (match/(word) before/(word) after)
   - [x] sort by metadata field
   - [x] sort by group identity

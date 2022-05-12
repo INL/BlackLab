@@ -56,7 +56,7 @@ public class SearchSummary implements Cloneable {
     public long numberOfDocsRetrieved;
 
     @JsonInclude(Include.NON_NULL)
-    Map<String, Long> subcorpusSize;
+    public Map<String, Long> subcorpusSize;
 
     @JsonInclude(Include.NON_NULL)
     public FieldInfo docFields;
