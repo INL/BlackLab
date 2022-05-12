@@ -1,11 +1,13 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
+import java.text.Collator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.aggregator.helper.MapAdapterAnnotations;
+import org.ivdnt.blacklab.aggregator.helper.Util;
 
 @XmlJavaTypeAdapter(MapAdapterAnnotations.class)
 public class Word {
@@ -36,7 +38,8 @@ public class Word {
             return mainAnnotation.compareTo(word.mainAnnotation);
         String a = otherAnnotations.getOrDefault(annotation, "");
         String b = word.otherAnnotations.getOrDefault(annotation, "");
-        return sensitive ? a.compareTo(b) : a.compareToIgnoreCase(b);
+        Collator coll = sensitive ? Util.DEFAULT_COLLATOR : Util.DEFAULT_COLLATOR_INSENSITIVE;
+        return sensitive ? coll.compare(a, b) : a.compareToIgnoreCase(b);
     }
 
     @Override

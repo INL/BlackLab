@@ -29,7 +29,7 @@ public class Requests {
 
         private final Response.Status status;
 
-        private ErrorResponse response;
+        private final ErrorResponse response;
 
         public BlsRequestException(Response.Status status, ErrorResponse response) {
             super(response.getMessage());
@@ -64,7 +64,7 @@ public class Requests {
         for (Pair<String, Future<Response>> p: futures) {
             String nodeUrl = p.getLeft();
             Future<Response> f = p.getRight();
-            Response clientResponse = null;
+            Response clientResponse;
             try {
                 // TODO if one node returns an error, don't wait for the rest
                 clientResponse = f.get();
@@ -72,7 +72,6 @@ public class Requests {
                 throw new RuntimeException(e);
             }
             Response.Status status = Response.Status.fromStatusCode(clientResponse.getStatus());
-            Response.ResponseBuilder ourResponse;
             if (status == Response.Status.OK)
                 nodeResponses.add(clientResponse.readEntity(cls));
             else {
@@ -109,18 +108,16 @@ public class Requests {
         List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory, mediaType);
 
         // Wait for futures to complete and collect response objects
-        List<T> nodeResponses = new ArrayList<>();
         for (Pair<String, Future<Response>> p: futures) {
             String nodeUrl = p.getLeft();
             Future<Response> f = p.getRight();
-            Response clientResponse = null;
+            Response clientResponse;
             try {
                 clientResponse = f.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
             Response.Status status = Response.Status.fromStatusCode(clientResponse.getStatus());
-            Response.ResponseBuilder ourResponse;
             if (status == Response.Status.OK)
                 return Pair.of(nodeUrl, clientResponse.readEntity(cls));
         }
@@ -142,20 +139,21 @@ public class Requests {
             ourResponse = Response.ok().entity(results);
         } else {
             if (sort.isEmpty())
-                sort = "identity";
+                sort = "size";
             // Group request.
             var s = sort;
-            HitsResults results = getNodeResponses(client, t -> {
-                return t.path(corpusName)
-                    .path("hits")
-                    .queryParam("patt", patt)
-                    .queryParam("sort", s)
-                    .queryParam("group", group);
-                },
+            HitsResults results = getNodeResponses(client, t -> t.path(corpusName)
+                .path("hits")
+                .queryParam("patt", patt)
+                .queryParam("sort", s)
+                .queryParam("group", group),
                 HitsResults.class
             ).stream()
                     .reduce(Aggregation::mergeHitsGrouped)
                     .orElseThrow();
+
+            results.hitGroups.sort(HitGroupComparators.deserialize(sort));
+
             ourResponse = Response.ok().entity(results);
         }
         return ourResponse.build();

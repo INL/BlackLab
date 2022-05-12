@@ -20,19 +20,21 @@ SolrCloud integration project.
 
 - [ ] Aggregator with:
   - [x] `/`
+  - [x] `/input-formats` (returns empty list for now)
   - [x] `/INDEX`
-  - [ ] `/INDEX?listvalues=...`
   - [x] `/INDEX/hits` (with/without `group`)
+  - [ ] `/INDEX/hits` (with `group` and `viewgroup`)
   - [x] `/INDEX/docs/PID`
-  - [ ] `/INDEX/docs/PID/contents`
-  - [ ] `/input-formats` ?
-  - [ ] other requests needed for corpus-frontend..? (@KCMertens?)
+  - [x] `/INDEX/docs/PID/contents`
+  - [ ] `/INDEX?listvalues=...` (necessary?)
+  - [ ] MORE?
 - [ ] Sort options for hits\[grouped\]:
+  - [ ] use correct collator for sort
   - [x] sort on context (match/(word) before/(word) after)
-  - [ ] sort by metadata field
-  - [ ] 
-  - [ ] sort by group identity
-  - [ ] sort by group size
+  - [x] sort by metadata field
+  - [x] sort by group identity
+  - [x] sort by group size
+  - [ ] MORE?
 - [ ] `Access-Control-Allow-Origin: *`
 
 ## Approach
