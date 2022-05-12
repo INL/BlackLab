@@ -20,6 +20,7 @@ import org.ivdnt.blacklab.aggregator.logic.Requests.BlsRequestException;
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.DocOverview;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
+import org.ivdnt.blacklab.aggregator.representation.InputFormats;
 
 @Path("/{corpusName}")
 public class CorpusResource {
@@ -42,6 +43,11 @@ public class CorpusResource {
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName) {
+
+        if (corpusName.equals("input-formats")) {
+            return Response.ok().entity(new InputFormats()).build();
+        }
+
         // Query each node and collect responses
         List<Corpus> nodeResponses;
         try {

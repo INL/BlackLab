@@ -17,7 +17,7 @@ public class User {
 
     // required for Jersey
     @SuppressWarnings("unused")
-    private User() {}
+    public User() {}
 
     public User(boolean loggedIn, String id, boolean canCreateIndex) {
         this.loggedIn = loggedIn;

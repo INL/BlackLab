@@ -139,7 +139,7 @@ public class Corpus implements Cloneable {
             jgen.writeStartObject();
             for (AnnotatedField field: value) {
                 jgen.writeFieldName(field.name);
-                jgen.writeObjectFieldStart(field.name);
+                jgen.writeStartObject();
                 {
                     jgen.writeStringField("fieldName", field.fieldName);
                     jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);

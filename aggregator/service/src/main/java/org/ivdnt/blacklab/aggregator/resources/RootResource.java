@@ -15,7 +15,7 @@ import org.ivdnt.blacklab.aggregator.logic.Requests;
 import org.ivdnt.blacklab.aggregator.logic.Requests.BlsRequestException;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
-@Path("/")
+@Path("")
 public class RootResource {
 
     /** REST client */
@@ -27,7 +27,7 @@ public class RootResource {
     }
 
     @GET
-    @Path("")
+    @Path("/")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response serverInfo() {
 

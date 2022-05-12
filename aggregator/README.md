@@ -16,6 +16,25 @@ If the answers to these questions are positive, we will go ahead with the
 SolrCloud integration project.
 
 
+## Status
+
+- [ ] Aggregator with:
+  - [x] `/`
+  - [x] `/INDEX`
+  - [ ] `/INDEX?listvalues=...`
+  - [x] `/INDEX/hits` (with/without `group`)
+  - [x] `/INDEX/docs/PID`
+  - [ ] `/INDEX/docs/PID/contents`
+  - [ ] `/input-formats` ?
+  - [ ] other requests needed for corpus-frontend..? (@KCMertens?)
+- [ ] Sort options for hits\[grouped\]:
+  - [x] sort on context (match/(word) before/(word) after)
+  - [ ] sort by metadata field
+  - [ ] 
+  - [ ] sort by group identity
+  - [ ] sort by group size
+- [ ] `Access-Control-Allow-Origin: *`
+
 ## Approach
 
 We will implement a simple **BLS aggregation service** that forwards search 
