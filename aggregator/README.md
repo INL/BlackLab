@@ -22,22 +22,21 @@ SolrCloud integration project.
   - [x] `/`
   - [x] `/input-formats` (returns empty list for now)
   - [x] `/INDEX`
-  - [x] `/INDEX/hits` (with/without `group`)
-  - [ ] `/INDEX/hits` (with `group` and `viewgroup`)
+  - [x] `/INDEX/hits` with/without `group`
+  - [ ] `/INDEX/hits` with `group` and `viewgroup`
   - [x] `/INDEX/docs/PID`
   - [x] `/INDEX/docs/PID/contents`
   - [ ] `/INDEX?listvalues=...` (necessary?)
   - [ ] MORE?
 - [ ] Sort options for hits\[grouped\]:
   - [x] use collator for sort
-  - [ ] sort by metadata does not show up in selection list on corpus-frontend
+  - [ ] sort by metadata does not show up in selection list on corpus-frontend; why not?
   - [ ] sort by e.g. metadata (letter sender) is not the same
   - [x] sort on context (match/(word) before/(word) after)
   - [x] sort by metadata field
   - [x] sort by group identity
   - [x] sort by group size
   - [ ] MORE?
-- [ ] `Access-Control-Allow-Origin: *`
 
 ## Approach
 
