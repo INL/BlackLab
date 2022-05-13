@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
@@ -25,22 +26,22 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      * Create an empty HitsInternal with an initial capacity.
      *
      * @param initialCapacity initial hits capacity, or default if negative
-     * @param allowHugeLists if true, the object created can hold more than {@link BlackLab#JAVA_MAX_ARRAY_SIZE} hits
+     * @param allowHugeLists if true, the object created can hold more than {@link Constants#JAVA_MAX_ARRAY_SIZE} hits
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
     static HitsInternalMutable create(long initialCapacity, boolean allowHugeLists, boolean mustLock) {
-        return create(initialCapacity, allowHugeLists ? Long.MAX_VALUE : BlackLab.JAVA_MAX_ARRAY_SIZE, mustLock);
+        return create(initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
 
     static HitsInternalMutable create(long initialCapacity, long maxCapacity, boolean mustLock) {
-        if (maxCapacity > BlackLab.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
+        if (maxCapacity > Constants.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)
                 return new HitsInternalLock(initialCapacity);
             return new HitsInternalNoLock(initialCapacity);
         }
-        if (initialCapacity > BlackLab.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("initialCapacity=" + initialCapacity + " > " + BlackLab.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
+        if (initialCapacity > Constants.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
         if (mustLock)
             return new HitsInternalLock32((int)initialCapacity);
         return new HitsInternalNoLock32((int)initialCapacity);

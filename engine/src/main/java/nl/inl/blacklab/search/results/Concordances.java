@@ -8,8 +8,8 @@ import java.util.Map;
 import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.DocUtil;
@@ -83,8 +83,8 @@ public class Concordances {
         QueryInfo queryInfo = hits.queryInfo();
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
-        if (arrayLength > BlackLab.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+        if (arrayLength > Constants.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 

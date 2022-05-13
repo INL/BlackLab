@@ -20,6 +20,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -29,7 +30,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
@@ -59,10 +59,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) {
             int globalDocId = docId + docBase;
-            if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
+            if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-                throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
+                throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
@@ -202,10 +202,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     protected DocResults(QueryInfo queryInfo, List<DocResult> results, SampleParameters sampleParameters, WindowStats windowStats) {
         this(queryInfo);
-        if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
+        if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
         }
         this.results = results;
         this.sampleParameters = sampleParameters;
@@ -315,10 +315,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     }
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
-        if (results.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
+        if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " doc results");
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
         }
 
         DocResult docResult;
@@ -433,7 +433,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
     @Override
     public DocResults withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = Constants.JAVA_MAX_ARRAY_SIZE;
         List<DocResult> truncatedGroups = new ArrayList<>();
         for (DocResult group: results) {
             DocResult newGroup = DocResult.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

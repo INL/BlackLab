@@ -44,24 +44,6 @@ import nl.inl.util.FileUtil;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
-    /**
-     * Safe maximum size for a Java array.
-     *
-     * This is JVM-dependent, but the consensus seems to be that
-     * this is a safe limit. See e.g.
-     * https://stackoverflow.com/questions/3038392/do-java-arrays-have-a-maximum-size
-     */
-    public static final int JAVA_MAX_ARRAY_SIZE = Integer.MAX_VALUE - 8;
-
-    /**
-     * Safe maximum size for a Java HashMap.
-     *
-     * This is JVM dependent, but the consensus seems to be that
-     * this is a safe limit. See e.g.
-     * https://stackoverflow.com/questions/25609840/java-hashmap-max-size-of-5770/25610054
-     */
-    public static final int JAVA_MAX_HASHMAP_SIZE = Integer.MAX_VALUE / 4;
-
     /** If no explicit BlackLab instance is created, how many search threads should we use? */
     private static final int DEFAULT_NUM_SEARCH_THREADS = 4;
 

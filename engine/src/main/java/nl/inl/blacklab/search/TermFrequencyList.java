@@ -11,6 +11,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
 import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -103,9 +104,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
-        if (wordFreq.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
+        if (wordFreq.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         results = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
@@ -119,9 +120,9 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     TermFrequencyList(QueryInfo queryInfo, List<TermFrequency> list) {
         super(queryInfo);
-        if (list.size() >= BlackLab.JAVA_MAX_ARRAY_SIZE) {
+        if (list.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         this.results = list;
         calculateTotalFrequency();

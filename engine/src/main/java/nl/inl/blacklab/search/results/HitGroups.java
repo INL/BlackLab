@@ -10,12 +10,12 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -67,7 +67,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = BlackLab.JAVA_MAX_HASHMAP_SIZE;
+    public final static int MAX_NUMBER_OF_GROUPS = Constants.JAVA_MAX_HASHMAP_SIZE;
 
     /**
      * Total number of results in the source set of hits. 
@@ -278,7 +278,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
     @Override
     public HitGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
         if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = BlackLab.JAVA_MAX_ARRAY_SIZE;
+            maximumNumberOfResultsPerGroup = Constants.JAVA_MAX_ARRAY_SIZE;
         List<HitGroup> truncatedGroups = new ArrayList<>();
         for (HitGroup group: results) {
             HitGroup newGroup = HitGroup.fromHits(group.identity(), group.storedResults().window(0, maximumNumberOfResultsPerGroup), group.size());

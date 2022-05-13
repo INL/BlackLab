@@ -10,6 +10,7 @@ import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -156,8 +157,8 @@ public class DocUtil {
     }
 
     private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
-        if (hits.size() > BlackLab.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + BlackLab.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+        if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
+            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
         Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();

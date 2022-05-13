@@ -2,13 +2,13 @@ package nl.inl.blacklab.server.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.Constants;
 
 /**
  * Integer setting with a default and maximum value.
  * 
  * Please note that setting a max of -1 is interpreted as
- * {@link BlackLab#JAVA_MAX_ARRAY_SIZE} or {@link Long#MAX_VALUE},
+ * {@link Constants#JAVA_MAX_ARRAY_SIZE} or {@link Long#MAX_VALUE},
  * effectively setting no limit.
  */
 public class DefaultMax {
@@ -54,14 +54,14 @@ public class DefaultMax {
     /**
      * Get maximum value as an integer.
      *
-     * If max was set to -1, or exceeds {@link BlackLab#JAVA_MAX_ARRAY_SIZE},
+     * If max was set to -1, or exceeds {@link Constants#JAVA_MAX_ARRAY_SIZE},
      * return that value instead.
      *
      * @return maximum value
      */
     public int getMaxInt() {
-        return max == -1 || max > BlackLab.JAVA_MAX_ARRAY_SIZE ?
-                BlackLab.JAVA_MAX_ARRAY_SIZE : (int)max;
+        return max == -1 || max > Constants.JAVA_MAX_ARRAY_SIZE ?
+                Constants.JAVA_MAX_ARRAY_SIZE : (int)max;
     }
 
     public void setMax(long max) {

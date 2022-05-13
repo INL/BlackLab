@@ -15,6 +15,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -43,7 +44,7 @@ public class TermsReader extends Terms {
 
     /**
      * The character data for all terms. Two-dimensional array because it may be larger than
-     * the maximum array size ({@link BlackLab#JAVA_MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
+     * the maximum array size ({@link Constants#JAVA_MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
      */
     private byte[][] termCharData;
 
