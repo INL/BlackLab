@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
-import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -32,16 +32,17 @@ public class RootResource {
     public Response serverInfo() {
 
         // Query each node and collect responses
-        List<Server> nodeResponses;
+        Map<String, Server> nodeResponses;
         try {
-            nodeResponses = Requests.getNodeResponses(client, target -> target, Server.class);
+            nodeResponses = Requests.getResponses(client, target -> target, Server.class,
+                    MediaType.APPLICATION_JSON_TYPE);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
 
         // Merge responses
-        Server merged = nodeResponses.stream().reduce(Aggregation::mergeServer).get();
+        Server merged = nodeResponses.values().stream().reduce(Aggregation::mergeServer).orElseThrow();
         return Response.ok().entity(merged).build();
     }
 

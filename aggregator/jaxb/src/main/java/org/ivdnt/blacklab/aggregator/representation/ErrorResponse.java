@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 public class ErrorResponse {
 
     @XmlAccessorType(XmlAccessType.FIELD)
-    static class Desc {
+    public static class Desc {
         String code;
 
         String message;
@@ -22,6 +22,14 @@ public class ErrorResponse {
         public Desc(String code, String message) {
             this.code = code;
             this.message = message;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public String getMessage() {
+            return message;
         }
     }
 

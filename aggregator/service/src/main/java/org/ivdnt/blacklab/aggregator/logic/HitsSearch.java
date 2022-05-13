@@ -43,14 +43,18 @@ public class HitsSearch {
 
     /** Search parameters */
     private static class Params {
-        String corpusName;
-        String patt;
-        String sort;
+        final String corpusName;
+        final String patt;
+        final String sort;
+        final String group;
+        final String viewGroup;
 
-        public Params(String corpusName, String patt, String sort) {
+        public Params(String corpusName, String patt, String sort, String group, String viewGroup) {
             this.corpusName = corpusName;
             this.patt = patt;
             this.sort = sort;
+            this.group = group;
+            this.viewGroup = viewGroup;
         }
 
         @Override
@@ -60,13 +64,14 @@ public class HitsSearch {
             if (o == null || getClass() != o.getClass())
                 return false;
             Params params = (Params) o;
-            return Objects.equals(corpusName, params.corpusName)
-                    && Objects.equals(patt, params.patt) && Objects.equals(sort, params.sort);
+            return Objects.equals(corpusName, params.corpusName) && Objects.equals(patt, params.patt)
+                    && Objects.equals(sort, params.sort) && Objects.equals(group, params.group)
+                    && Objects.equals(viewGroup, params.viewGroup);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(corpusName, patt, sort);
+            return Objects.hash(corpusName, patt, sort, group, viewGroup);
         }
     }
 
@@ -108,6 +113,8 @@ public class HitsSearch {
                         .path("hits")
                         .queryParam("patt", params.patt)
                         .queryParam("sort", params.sort)
+                        .queryParam("group", params.group)
+                        .queryParam("viewgroup", params.viewGroup)
                         .queryParam("first", hits.size64())
                         .queryParam("number", PAGE_SIZE)
                         .request(MediaType.APPLICATION_JSON)
@@ -150,12 +157,17 @@ public class HitsSearch {
                 }
             } else {
                 ErrorResponse error = response.readEntity(ErrorResponse.class);
-
-                ErrorResponse newError = new ErrorResponse(error.getError());
-                newError.setNodeUrl(webTarget.getUri().toString());
-                Response newResponse = Response.status(response.getStatus()).entity(newError).build();
-
-                throw new WebApplicationException(newResponse);
+                if (error.getError().getCode().equals("GROUP_NOT_FOUND")) {
+                    // This happens when we use viewgroup but the group doesn't occur on all nodes.
+                    // Interpret this as an empty result set instead.
+                    stillFetchingHits = false;
+                } else {
+                    // A "real" unexpected error occurred.
+                    ErrorResponse newError = new ErrorResponse(error.getError());
+                    newError.setNodeUrl(webTarget.getUri().toString());
+                    Response newResponse = Response.status(response.getStatus()).entity(newError).build();
+                    throw new WebApplicationException(newResponse);
+                }
             }
         }
 
@@ -240,9 +252,10 @@ public class HitsSearch {
      *
      * Also makes sure old searches are removed from cache.
      */
-    public static HitsSearch get(Client client, String corpusName, String patt, String sort) {
+    public static HitsSearch get(Client client, String corpusName, String patt, String sort,
+            String group, String viewGroup) {
         Comparator<Hit> comparator = HitComparators.deserialize(sort);
-        Params params = new Params(corpusName, patt, sort);
+        Params params = new Params(corpusName, patt, sort, group, viewGroup);
         synchronized (cache) {
             HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params, comparator));
             search.updateLastAccessTime();
@@ -384,7 +397,7 @@ public class HitsSearch {
                 .map(h -> h.docPid)
                 .collect(Collectors.toSet()).stream()
                 .map(docInfos::get)
-                .filter(d -> d != null)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
         return new HitsResults(summary, hitWindow, relevantDocs);
     }

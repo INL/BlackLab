@@ -95,7 +95,7 @@ public class ContextWords {
 
             // Convert to per-Word (JSON is structured per-annotation)
             List<Word> result = new ArrayList<>();
-            int n = wordsPerAnnot.values().iterator().next().size();
+            int n = wordsPerAnnot.values().isEmpty() ? 0 : wordsPerAnnot.values().iterator().next().size();
             for (int i = 0; i < n; i++) {
                 Word word = new Word();
                 Map<String, String> m = word.otherAnnotations = new LinkedHashMap<>();

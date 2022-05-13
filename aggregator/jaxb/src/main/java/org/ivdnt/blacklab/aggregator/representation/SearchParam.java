@@ -21,6 +21,9 @@ public class SearchParam {
     @JsonInclude(Include.NON_EMPTY)
     public String group = "";
 
+    @JsonInclude(Include.NON_EMPTY)
+    public String viewgroup = "";
+
     public long first = 0;
 
     public long number = 20;

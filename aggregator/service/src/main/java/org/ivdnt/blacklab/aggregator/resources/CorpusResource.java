@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.aggregator.resources;
 
-import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -53,17 +53,17 @@ public class CorpusResource {
         }
 
         // Query each node and collect responses
-        List<Corpus> nodeResponses;
+        Map<String, Corpus> nodeResponses;
         try {
-            nodeResponses = Requests.getNodeResponses(client, target -> target.path(corpusName),
-                    Corpus.class);
+            nodeResponses = Requests.getResponses(client, target -> target.path(corpusName),
+                    Corpus.class, MediaType.APPLICATION_JSON_TYPE);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
 
         // Merge responses
-        Corpus merged = nodeResponses.stream().reduce(Aggregation::mergeCorpus).orElseThrow();
+        Corpus merged = nodeResponses.values().stream().reduce(Aggregation::mergeCorpus).orElseThrow();
         return Response.ok().entity(merged).build();
     }
 
@@ -85,10 +85,11 @@ public class CorpusResource {
             @DefaultValue("") @QueryParam("sort") String sort,
             @DefaultValue("") @QueryParam("group") String group,
             @DefaultValue("0") @QueryParam("first") long first,
-            @DefaultValue("20") @QueryParam("number") long number) {
+            @DefaultValue("20") @QueryParam("number") long number,
+            @DefaultValue("") @QueryParam("viewgroup") String viewGroup) {
 
         return Requests.getHitsResponse(client, corpusName, patt, sort,
-                group, first, number);
+                group, first, number, viewGroup);
     }
 
     /**
@@ -105,7 +106,7 @@ public class CorpusResource {
         try {
             Pair<String, DocOverview> response = Requests.getFirstSuccesfulResponse(client,
                     target -> target.path(corpusName).path("docs").path(pid),
-                    DocOverview.class);
+                    DocOverview.class, MediaType.APPLICATION_JSON_TYPE);
             if (response == null)
                 return Response.status(404).entity(new ErrorResponse("FAIL_ON_ALL_NODES", "No node returned OK")).build();
             System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
