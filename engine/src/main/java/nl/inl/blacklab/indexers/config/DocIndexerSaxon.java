@@ -227,7 +227,8 @@ public class DocIndexerSaxon extends DocIndexerConfig {
 
         for (NodeInfo header : saxonHelper.findNodes(b.getContainerPath(),doc)) {
             List<ConfigMetadataField> fields = b.getFields();
-            for (ConfigMetadataField f : fields) { // NOTE: fields may be added during loop, so can't iterate
+            for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
+                ConfigMetadataField f = fields.get(i);
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
                 // such as extra processing steps
