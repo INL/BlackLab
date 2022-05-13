@@ -138,9 +138,18 @@ public class Requests {
                 .orElse(null);
     }
 
-    public static <T> Map<String, T> getResponses(Client client, WebTargetDecorator factory, Class<T> cls,
-            MediaType mediaType) {
-        Map<String, Response> responses = getResponses(client, factory, mediaType, ErrorStrategy.THROW_ON_FAILURE);
+    /**
+     * Send requests to all nodes and return the responses if all succeed.
+     *
+     * @param client REST client
+     * @param factory how to build our requests
+     * @param cls response object type
+     * @return response objects indexed by nodeUrl
+     * @param <T> response object type
+     */
+    public static <T> Map<String, T> getResponses(Client client, WebTargetDecorator factory, Class<T> cls) {
+        Map<String, Response> responses = getResponses(client, factory, MediaType.APPLICATION_JSON_TYPE,
+                ErrorStrategy.THROW_ON_FAILURE);
         return responses.entrySet().stream()
                 .map(r -> Pair.of(r.getKey(), r.getValue().readEntity(cls)))
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> x));
@@ -172,8 +181,7 @@ public class Requests {
                 .queryParam("patt", patt)
                 .queryParam("sort", s)
                 .queryParam("group", group),
-                HitsResults.class,
-                MediaType.APPLICATION_JSON_TYPE
+                HitsResults.class
             ).values().stream()
                     .reduce(Aggregation::mergeHitsGrouped)
                     .orElseThrow();

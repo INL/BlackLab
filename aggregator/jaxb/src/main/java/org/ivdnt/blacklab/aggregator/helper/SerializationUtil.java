@@ -121,10 +121,10 @@ public class SerializationUtil {
                 case "sensitivity": annotation.sensitivity = parser.getValueAsString(); break;
                 case "offsetsAlternative": annotation.offsetsAlternative = parser.getValueAsString(); break;
                 case "isInternal": annotation.isInternal = parser.getValueAsBoolean(); break;
-                case "subannotations":
-                    annotation.subannotations = readStringList(parser);
-                    break;
+                case "subannotations": annotation.subannotations = readStringList(parser); break;
                 case "parentAnnotation": annotation.parentAnnotation = parser.getValueAsString(); break;
+                case "values": annotation.values = readStringList(parser); break;
+                case "valueListComplete": annotation.valueListComplete = parser.getValueAsBoolean(); break;
                 default: throw new RuntimeException("Unexpected field " + fieldName + " in Annotation");
                 }
             }

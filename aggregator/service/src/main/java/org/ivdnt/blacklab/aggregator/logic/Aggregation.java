@@ -2,14 +2,20 @@ package org.ivdnt.blacklab.aggregator.logic;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import org.ivdnt.blacklab.aggregator.representation.AnnotatedField;
+import org.ivdnt.blacklab.aggregator.representation.Annotation;
 import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.CorpusSummary;
 import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
+import org.ivdnt.blacklab.aggregator.representation.MetadataField;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 import org.ivdnt.blacklab.aggregator.representation.Server;
 
@@ -72,7 +78,71 @@ public class Aggregation {
         }
         cl.tokenCount = i1.tokenCount + i2.tokenCount;
         cl.documentCount = i1.documentCount + i2.documentCount;
+        cl.annotatedFields = mergeAnnotatedFields(i1.annotatedFields, i2.annotatedFields);
+        cl.metadataFields = mergeMetadataFields(i1.metadataFields, i2.metadataFields);
         return cl;
+    }
+
+    public static List<MetadataField> mergeMetadataFields(List<MetadataField> a, List<MetadataField> b) {
+        return a.stream().map(f -> {
+            // Find corresponding field and merge annotation
+            MetadataField af = f.clone();
+            MetadataField bf = b.stream().filter(bff -> bff.name.equals(f.name)).findFirst().orElse(null);
+            if (bf != null) {
+                af.fieldValues = mergeFieldValues(af.fieldValues, bf.fieldValues);
+                af.valueListComplete = af.valueListComplete && bf.valueListComplete;
+            }
+            return af;
+        }).collect(Collectors.toList());
+    }
+
+    private static Map<String, Integer> mergeFieldValues(Map<String, Integer> a, Map<String, Integer> b) {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        Map<String, Integer> c = new HashMap<>(b);
+        a.forEach( (k, v) -> c.merge(k, v, Integer::sum));
+        return c;
+    }
+
+    public static List<AnnotatedField> mergeAnnotatedFields(List<AnnotatedField> a, List<AnnotatedField> b) {
+        return a.stream().map(f -> {
+            // Find corresponding field and merge annotation
+            AnnotatedField af = f.clone();
+            AnnotatedField bf = b.stream().filter(bff -> bff.name.equals(f.name)).findFirst().orElse(null);
+            if (bf != null) {
+                af.annotations = mergeAnnotations(af.annotations, bf.annotations);
+            }
+            return af;
+        }).collect(Collectors.toList());
+    }
+
+    public static List<Annotation> mergeAnnotations(List<Annotation> a, List<Annotation> b) {
+        return a.stream().map(f -> {
+            // Find corresponding field and merge annotation
+            Annotation af = f.clone();
+            Annotation bf = b.stream().filter(bff -> bff.name.equals(f.name)).findFirst().orElse(null);
+            if (bf != null) {
+                af.values = mergeAnnotationValues(af.values, bf.values);
+                if (af.valueListComplete != null && bf.valueListComplete != null)
+                    af.valueListComplete = af.valueListComplete && bf.valueListComplete;
+                else if (af.valueListComplete == null)
+                    af.valueListComplete = bf.valueListComplete;
+            }
+            return af;
+        }).collect(Collectors.toList());
+    }
+
+    public static List<String> mergeAnnotationValues(List<String> a, List<String> b) {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        Set r = new HashSet<>();
+        r.addAll(a);
+        r.addAll(b);
+        return new ArrayList<>(r);
     }
 
     public static SearchSummary mergeSearchSummary(SearchSummary a, SearchSummary b) {
@@ -94,8 +164,10 @@ public class Aggregation {
             result.largestGroupSize = Math.max(a.largestGroupSize, b.largestGroupSize);
 
         result.searchTime = Math.max(a.searchTime, b.searchTime);
-        if (a.countTime != null)
+        if (a.countTime != null && b.countTime != null)
             result.countTime = Math.max(a.countTime, b.countTime);
+        else if (b.countTime != null)
+            result.countTime = b.countTime;
         result.stillCounting = a.stillCounting || b.stillCounting;
 
         if (a.subcorpusSize != null || b.subcorpusSize != null) {

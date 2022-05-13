@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Annotation {
+public class Annotation implements Cloneable {
 
     @XmlAttribute
     public String name;
@@ -32,6 +32,14 @@ public class Annotation {
 
     public boolean isInternal;
 
+    @XmlElementWrapper(name="values")
+    @XmlElement(name = "value")
+    @JsonInclude(Include.NON_NULL)
+    public List<String> values;
+
+    @JsonInclude(Include.NON_NULL)
+    public Boolean valueListComplete;
+
     @XmlElementWrapper(name="subannotations")
     @XmlElement(name = "subannotation")
     @JsonProperty("subannotations")
@@ -46,6 +54,15 @@ public class Annotation {
 
     @JsonInclude(Include.NON_EMPTY)
     public String parentAnnotation = null;
+
+    @Override
+    public Annotation clone() {
+        try {
+            return (Annotation)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public String toString() {

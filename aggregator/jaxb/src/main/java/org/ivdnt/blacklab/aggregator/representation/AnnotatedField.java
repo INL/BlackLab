@@ -12,7 +12,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class AnnotatedField {
+public class AnnotatedField implements Cloneable {
 
     @XmlAttribute
     public String name;
@@ -61,6 +61,15 @@ public class AnnotatedField {
     }
 
     private AnnotatedField() {}
+
+    @Override
+    public AnnotatedField clone() {
+        try {
+            return (AnnotatedField)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public AnnotatedField(String name) {
         this.name = this.fieldName = name;

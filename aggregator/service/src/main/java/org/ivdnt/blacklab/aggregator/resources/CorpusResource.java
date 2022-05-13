@@ -25,6 +25,12 @@ import org.ivdnt.blacklab.aggregator.representation.InputFormats;
 @Path("/{corpusName}")
 public class CorpusResource {
 
+    private static Response resourceNotImplemented(String resource) {
+        ErrorResponse error = new ErrorResponse("NOT_IMPLEMENTED",
+                "The " + resource + " resource hasn't been implemented on the aggregator.");
+        return Response.status(Response.Status.NOT_IMPLEMENTED).entity(error).build();
+    }
+
     /** REST client */
     private final Client client;
 
@@ -42,7 +48,8 @@ public class CorpusResource {
     @GET
     @Path("")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response corpusInfo(@PathParam("corpusName") String corpusName) {
+    public Response corpusInfo(@PathParam("corpusName") String corpusName,
+            @DefaultValue("") @QueryParam("listvalues") String listvalues) {
 
         switch (corpusName) {
         case "input-formats":
@@ -55,8 +62,8 @@ public class CorpusResource {
         // Query each node and collect responses
         Map<String, Corpus> nodeResponses;
         try {
-            nodeResponses = Requests.getResponses(client, target -> target.path(corpusName),
-                    Corpus.class, MediaType.APPLICATION_JSON_TYPE);
+            nodeResponses = Requests.getResponses(client, target -> target.path(corpusName)
+                    .queryParam("listvalues", listvalues), Corpus.class);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
@@ -65,12 +72,6 @@ public class CorpusResource {
         // Merge responses
         Corpus merged = nodeResponses.values().stream().reduce(Aggregation::mergeCorpus).orElseThrow();
         return Response.ok().entity(merged).build();
-    }
-
-    private static Response resourceNotImplemented(String resource) {
-        ErrorResponse error = new ErrorResponse("NOT_IMPLEMENTED",
-                "The " + resource + " resource hasn't been implemented on the aggregator.");
-        return Response.status(Response.Status.NOT_IMPLEMENTED).entity(error).build();
     }
 
     /**
@@ -108,13 +109,20 @@ public class CorpusResource {
                     target -> target.path(corpusName).path("docs").path(pid),
                     DocOverview.class, MediaType.APPLICATION_JSON_TYPE);
             if (response == null)
-                return Response.status(404).entity(new ErrorResponse("FAIL_ON_ALL_NODES", "No node returned OK")).build();
+                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.")).build();
             System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
             return Response.ok().entity(response.getValue()).build();
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
         }
+    }
+
+    @GET
+    @Path("/docs")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response docsNotImplemented() {
+        return resourceNotImplemented("/CORPUS/docs");
     }
 
     /**
@@ -133,7 +141,7 @@ public class CorpusResource {
                     target -> target.path(corpusName).path("docs").path(pid).path("contents"),
                     String.class, MediaType.APPLICATION_XML_TYPE);
             if (response == null)
-                return Response.status(404).entity(new ErrorResponse("FAIL_ON_ALL_NODES", "No node returned OK")).build();
+                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.")).build();
             System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
             return Response.ok().type(MediaType.APPLICATION_XML).entity(response.getValue()).build();
         } catch (BlsRequestException e) {

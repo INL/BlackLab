@@ -25,9 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" }) // this is the key of the object
-//@JsonSerialize(using = MetadataField.MetadataFieldSerializer.class)
-//@JsonDeserialize(using = MetadataField.MetadataFieldDeserializer.class)
-public class MetadataField {
+public class MetadataField implements Cloneable {
 
     public static class FieldValuesSerializer extends JsonSerializer<Object> {
         @Override
@@ -93,6 +91,15 @@ public class MetadataField {
     public Map<String, Integer> fieldValues = new LinkedHashMap<>();
 
     public boolean valueListComplete = true;
+
+    @Override
+    public MetadataField clone() {
+        try {
+            return (MetadataField)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public String toString() {
