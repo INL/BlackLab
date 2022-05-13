@@ -2,6 +2,7 @@ package nl.inl.util;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,7 @@ import java.util.zip.ZipFile;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.ZipHandleManager;
 
@@ -404,7 +406,14 @@ public class FileProcessor implements AutoCloseable {
             }
         } else {
             try {
-                processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
+                if (file.length() > Constants.JAVA_MAX_ARRAY_SIZE) {
+                    // Too large to read into a byte array. Use input stream.
+                    FileInputStream inputStream = FileUtils.openInputStream(file);
+                    processInputStream(file.getAbsolutePath(), inputStream, file);
+                } else {
+                    // Read entire file into byte array (more efficient).
+                    processFile(file.getAbsolutePath(), FileUtils.readFileToByteArray(file), file);
+                }
             } catch (IOException e) {
                 reportAndAbort(e, file.getAbsolutePath(), file);
             }
