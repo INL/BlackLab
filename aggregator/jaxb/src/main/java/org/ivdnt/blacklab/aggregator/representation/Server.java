@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"blacklabBuildTime", "blacklabVersion", "indices", "user", "helpPageUrl" })
+@XmlType(propOrder={"blacklabBuildTime", "blacklabVersion", "apiImplementation", "indices", "user", "helpPageUrl" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class Server implements Cloneable {
 
@@ -91,6 +91,9 @@ public class Server implements Cloneable {
 
     @XmlElement
     public String blacklabVersion;
+
+    @XmlElement
+    public String apiImplementation = "aggregator-experimental";
 
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")

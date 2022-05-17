@@ -150,11 +150,19 @@ public class CorpusResource {
         }
     }
 
+    @GET
+    @Path("/termfreq")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response termFreq(String annotation, String terms) {
+        // (TermFreqList resource exists, merge operation not yet, maybe implement later)
+        return resourceNotImplemented("/CORPUS/termfreq");
+    }
+
     /**
      * Perform a /hits request.
      */
     @GET
-    @Path("/{resource:debug|fields|status|termfreq|explain|autocomplete|sharing}")
+    @Path("/{resource:debug|fields|status|explain|autocomplete|sharing}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response notImplemented(@PathParam("resource") String resource) {
         return resourceNotImplemented("/CORPUS/" + resource);

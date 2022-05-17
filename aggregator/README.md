@@ -51,7 +51,7 @@ use it with corpus-frontend.
 Not a specific goal, but a side benefit of implementing part of the BLS API in
 JAX-RS is that we may be able to use this in the future, either to replace the 
 current `DataStream`-based approach and/or to be able to provide backwards 
-compatibility if we decide to [evolve the API](BLS-API-REDESIGN.md) to a incompatible version.
+compatibility if we decide to [evolve the API](api-redesign/README.md) to a incompatible version.
 .
 
 The service will communicate using JSON for now; if this is found to be a major 

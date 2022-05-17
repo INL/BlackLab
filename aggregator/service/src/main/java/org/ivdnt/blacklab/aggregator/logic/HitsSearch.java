@@ -176,7 +176,7 @@ public class HitsSearch {
          * @param i hit index
          * @return true if the hit exists and is available, false if it doesn't exist
          */
-        private synchronized boolean hitAvailable(long i) {
+        private synchronized boolean ensureHitAvailable(long i) {
             while (hits.size64() <= i && stillFetchingHits) {
                     // Wait for another page of hits
                     processNextPage();
@@ -186,7 +186,7 @@ public class HitsSearch {
 
         /** Get specified hit, or null if it doesn't exist. */
         private Hit hit(long i) {
-            if (hitAvailable(i))
+            if (ensureHitAvailable(i))
                 return hits.get(i);
             return null;
         }
@@ -200,7 +200,7 @@ public class HitsSearch {
              * @return true if there is, false if not
              */
             public boolean hasNext() {
-                return hitAvailable(index + 1);
+                return ensureHitAvailable(index + 1);
             }
 
             /** Has next() ever been called? */

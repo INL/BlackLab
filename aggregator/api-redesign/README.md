@@ -4,6 +4,8 @@ The BLS API has quite a few quirks that can make it confusing and annoying to wo
 If we break compatibility anyway (e.g. because we're integrating with Solr), how might
 we redesign the API?
 
+For example requests and responses, see [API.md](API.md).
+
 
 ## Maintain support for old API?
 
@@ -69,14 +71,6 @@ General:
 
 
 JSON-related:
-- Consider avoiding dynamic keys<br>
-(e.g. having annotatedFields be an object with the field name
-  as the key). There's no problems with encoding this (like in XML), but it does mean you can't 
-  easily specify a schema for the JSON structure. Also it makes (de)serialization messier (need 
-  custom (de)serializers, etc.).<br>
-  On the other hand, it can sometimes be convenient for the client to be able to 
-  look up fields by name. Iterating over fields on the other hand is a little less convient 
-  with objects than with arrays, so it might be a wash.
 - Consider adding a JSON request option in addition to regular query parameters.
   There should be an easy-to-use test interface so there's no need to
   manually type URL-encoded JSON requests into the browser address bar.
