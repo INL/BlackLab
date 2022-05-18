@@ -27,7 +27,6 @@ public class RootResource {
     }
 
     @GET
-    @Path("/")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response serverInfo() {
 
