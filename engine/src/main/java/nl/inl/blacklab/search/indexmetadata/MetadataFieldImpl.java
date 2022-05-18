@@ -198,7 +198,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         while (it.hasNext()) {
             Entry<String, JsonNode> entry = it.next();
             String value = entry.getKey();
-            int count = entry.getValue().intValue();
+            int count = entry.getValue().asInt();
             this.values.put(value, count);
         }
     }

@@ -5,7 +5,6 @@ import java.io.StringWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -52,7 +51,6 @@ public class TestXmlUtil {
         jsonRoot.put(keys[3], "simple");
 
         ObjectMapper yamlObjectMapper = Json.getYamlObjectMapper();
-        yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
         StringWriter swriter = new StringWriter();
 
         yamlObjectMapper.writeValue(swriter, jsonRoot);
