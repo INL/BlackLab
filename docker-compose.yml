@@ -29,7 +29,6 @@ services:
     command: >-
         /bin/bash -c 
         "cd /usr/local/lib/blacklab-tools &&
-        mkdir -p /data/index && mkdir -p /data/user-index && 
         java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/${INDEX_NAME} /input ${INDEX_FORMAT}"
     volumes:
       - "${BLACKLAB_FORMATS_DIR:-./formats}:/etc/blacklab/formats"
@@ -53,7 +52,7 @@ services:
       - JPDA_ADDRESS=*:5005
       - JPDA_TRANSPORT=dt_socket
     # Create test index. Run Tomcat with JPDA enabled
-    command: "/bin/bash /etc/blacklab/start-server.sh"
+    command: "/bin/bash /etc/blacklab/start-with-test-data.sh"
     ports:
       - "${BLACKLAB_TEST_PORT:-8080}:8080"
       - "5005:5005"

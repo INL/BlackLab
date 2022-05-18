@@ -25,11 +25,11 @@ COPY ${CONFIG_ROOT}/server.xml /usr/local/tomcat/conf/
 # Copy the configuration file
 COPY ${CONFIG_ROOT}/blacklab-server.yaml /etc/blacklab/
 
-# Copy the starup script
-COPY docker/start-server.sh /etc/blacklab/start-server.sh
+# Copy the startup scripts
+COPY docker/*.sh /etc/blacklab/
 
-# Create directory for formats
-RUN mkdir /etc/blacklab/formats
+# Create directories for formats and data
+RUN mkdir -p /etc/blacklab/formats /data/index /data/user-index
 
 # Copy the WAR file
 COPY --from=builder /app/server/target/blacklab-server-*.war /usr/local/tomcat/webapps/${TOMCAT_APP_NAME}.war

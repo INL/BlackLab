@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# This script is intended for use with the integration tests.
+# It will remove previous data, index the test data and start Tomcat.
+
 rm -rf /data/index
 rm -rf /data/user-index
 
