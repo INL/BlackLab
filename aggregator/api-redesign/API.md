@@ -10,8 +10,6 @@ could still be supported for a while until eventually being removed.
 
 Request: `/blacklab/v2/`
 
-
-
 Response:
 
 ```json
@@ -41,20 +39,20 @@ Response:
     "MyCorpus": {
       // Information BlackLab passes on without doing anything with it
       // Could e.g. be used by GUI application.
-      "customInfo": {
+      "tokenCount": 459354,
+      "documentCount": 1033, // added to summary
+      "timeCreated": "2020-12-08 10:06:26", // added to summary
+      "timeModified": "2020-12-08 10:06:26",
+      "pidField": "pid", // pulled up from fieldInfo
+      "contentViewable": true, // added to summary
+      "status": "available",
+      "indexFormat": "3.1", // pulled up from versionInfo
+      "custom": {
         "displayName": "Brieven als Buit",
         "description": "Approximately 40,000 Dutch letters sent by sailors from the second half of the 17th to the early 19th centuries.",
         "documentFormat": "zeebrieven",
         "textDirection": "ltr",
       },
-      "status": "available",
-      "timeCreated": "2020-12-08 10:06:26", // added to summary
-      "timeModified": "2020-12-08 10:06:26",
-      "tokenCount": 459354,
-      "documentCount": 1033, // added to summary
-      "contentViewable": true, // added to summary
-      "indexFormat": "3.1", // pulled up from versionInfo
-      "pidField": "pid", // pulled up from fieldInfo
     },
     
   },
@@ -90,26 +88,19 @@ Response:
 ```json
 {
   "name": "BaB",
-  
-  // Same as summary
-  "custom": {
-    "displayName": "Brieven als Buit",
-    "description": "Approximately 40,000 Dutch letters sent by sailors from the second half of the 17th to the early 19th centuries.",
-    "documentFormat": "zeebrieven",
-    "textDirection": "ltr",
-  },
-  "status": "available",
-  "timeCreated": "2020-12-08 10:06:26",
-  "timeModified": "2020-12-08 10:06:26",
+
   "tokenCount": 459354,
-  "documentCount": 1033,
-  "contentViewable": true,
-  "indexFormat": "3.1", // pulled up from versionInfo
+  "documentCount": 1033, // added to summary
+  "timeCreated": "2020-12-08 10:06:26", // added to summary
+  "timeModified": "2020-12-08 10:06:26",
   "pidField": "pid", // pulled up from fieldInfo
+  "contentViewable": true, // added to summary
+  "status": "available",
+  "indexFormat": "3.1", // pulled up from versionInfo
     
   // Software used to create this
   // (renamed from versionInfo)
-  "software": {
+  "createdBy": {
     "implementation": "blacklab",
     "version": "2.0.0-RC1",
     "buildTime": "2019-12-18 11:33:58"
@@ -148,45 +139,45 @@ Response:
           "pos_wordpart",
           "starttag",
           "punct"
-        ],
+        ]
       },
       "annotations": {
         "word_or_lemma": {
-          "displayName": "Word or lemma",
-          "description": "",
-          "uiType": "combobox",
+          "custom": {
+            "displayName": "Word or lemma",
+            "description": "",
+            "uiType": "combobox"
+          },
           "hasForwardIndex": true,
           "sensitivity": "ONLY_INSENSITIVE",
           "offsetsAlternative": "i",
           "isInternal": false
         },
         "word": {
-          "displayName": "Word",
-          "description": "",
-          "uiType": "combobox",
+          "custom": {
+            "displayName": "Word",
+            "description": "",
+            "uiType": "combobox"
+          },
           "hasForwardIndex": true,
           "sensitivity": "SENSITIVE_AND_INSENSITIVE",
           "offsetsAlternative": "",
           "isInternal": false
-        },
+        }
       }
     }
   },
 
   "metadataFields": {
     "adr_loc_land_norm": {
-      "fieldName": "adr_loc_land_norm",
-      "isAnnotatedField": false,
-      "displayName": "Country",
-      "description": "",
-      "uiType": "",
+      // Removed, duplicate
+      //"fieldName": "adr_loc_land_norm",
+      // Removed, superfluous
+      //"isAnnotatedField": false,
       "type": "TOKENIZED",
       "analyzer": "DEFAULT",
       "unknownCondition": "NEVER",
       "unknownValue": "unknown",
-      "displayValues": {
-
-      },
       "fieldValues": {
         "België": 27,
         "China": 3,
@@ -214,14 +205,28 @@ Response:
         "Thailand": 1,
         "Zuid-Afrika": 2
       },
-      "valueListComplete": true
-    },
+      "valueListComplete": true,
+      "custom": {
+        "displayName": "Country",
+        "description": "",
+        "uiType": "",
+        "displayValues": {
+          "Nederland": "NL"
+        }
+      }
+    }
   },
 
   // Any custom information for applications using
   // this index, such as information for generating a 
   // GUI, etc.
   "custom": {
+    // (pushed down from top-level)
+    "displayName": "Brieven als Buit",
+    "description": "Approximately 40,000 Dutch letters sent by sailors from the second half of the 17th to the early 19th centuries.",
+    "documentFormat": "zeebrieven",
+    "textDirection": "ltr",
+    
     // (pushed down from top-level; renamed from fieldInfo)
     "specialFields": {
       "titleField": "title",
@@ -300,4 +305,19 @@ Response:
   },
   
 }
+```
+
+## Hits request
+
+Path: `/blacklab/v2/corpora/CORPUS-NAME/hits`
+
+Parameters:
+- `patt`: CorpusQL pattern to search
+- 
+
+Example request: `/blacklab/v2/corpora/CORPUS-NAME/hits?patt="schip"`
+
+Response:
+
+```json
 ```
