@@ -5,6 +5,7 @@ import java.util.Comparator;
 
 import org.ivdnt.blacklab.aggregator.helper.Util;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
+import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -89,8 +90,10 @@ class HitComparators {
     /** String compare by metadata field */
     private static Comparator<Hit> docField(String field) {
         return (a, b) -> {
-            String sa = a.docInfo.get(field).getValue().get(0);
-            String sb = b.docInfo.get(field).getValue().get(0);
+            MetadataValues va = a.docInfo.get(field);
+            MetadataValues vb = b.docInfo.get(field);
+            String sa = va == null ? "" : va.getValue().get(0);
+            String sb = vb == null ? "" : vb.getValue().get(0);
             return Util.DEFAULT_COLLATOR.compare(sa, sb);
         };
     }
