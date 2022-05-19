@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.ivdnt.blacklab.aggregator.representation.AnnotatedField;
@@ -160,14 +161,13 @@ public class Aggregation {
         result.stoppedCountingHits = a.stoppedCountingHits || b.stoppedCountingHits;
         result.stoppedRetrievingHits = a.stoppedRetrievingHits || b.stoppedRetrievingHits;
 
-        if (a.largestGroupSize != null)
-            result.largestGroupSize = Math.max(a.largestGroupSize, b.largestGroupSize);
+        // Can't do this here because groups with same key will be merged
+        //result.numberOfGroups = ...
+        result.largestGroupSize = combine(a.largestGroupSize, b.largestGroupSize, Math::max);
 
         result.searchTime = Math.max(a.searchTime, b.searchTime);
-        if (a.countTime != null && b.countTime != null)
-            result.countTime = Math.max(a.countTime, b.countTime);
-        else if (b.countTime != null)
-            result.countTime = b.countTime;
+
+        result.countTime = combine(a.countTime, b.countTime, Math::max);
         result.stillCounting = a.stillCounting || b.stillCounting;
 
         if (a.subcorpusSize != null || b.subcorpusSize != null) {
@@ -180,6 +180,14 @@ public class Aggregation {
         }
 
         return result;
+    }
+
+    private static Long combine(Long x, Long y, BiFunction<Long, Long, Long> operation) {
+        if (x == null)
+            return y;
+        if (y == null)
+            return x;
+        return operation.apply(x, y);
     }
 
     public static HitGroup mergeHitGroups(HitGroup a, HitGroup b) {
@@ -208,6 +216,7 @@ public class Aggregation {
         Map<String, HitGroup> ga = result.hitGroups.stream()
                 .collect(Collectors.toMap(HitGroup::getIdentity, g -> g, (x, y) -> x, TreeMap::new));
         b.hitGroups.forEach( g -> ga.compute(g.identity, (k, v) -> v == null ? g : mergeHitGroups(v, g) ) );
+        result.summary.numberOfGroups = (long) ga.size();
 
         // TODO: merge without disturbing the existing sort
 

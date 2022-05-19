@@ -12,6 +12,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 class HitComparators {
 
     public static Comparator<Hit> deserialize(String serialized) {
+        if (serialized.isEmpty())
+            return null;
         if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {

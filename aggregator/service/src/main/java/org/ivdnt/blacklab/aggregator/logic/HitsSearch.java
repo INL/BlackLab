@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -78,13 +79,17 @@ public class HitsSearch {
     /** Results of this search from a single node */
     static class NodeHitsSearch {
 
-        private static final int PAGE_SIZE = 3;
+        private static final int PAGE_SIZE = 100;
+
+        private static final long MAX_SUMMARY_AGE_MS = 600;
 
         private final WebTarget webTarget;
 
         private final Params params;
 
         private SearchSummary latestSummary;
+
+        private long latestSummaryTime;
 
         private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
 
@@ -108,20 +113,24 @@ public class HitsSearch {
         private synchronized Future<Response> getNextPageRequest() {
             if (nextPageRequest == null) {
                 // Request the next page
-                nextPageRequest = webTarget
-                        .path(params.corpusName)
-                        .path("hits")
-                        .queryParam("patt", params.patt)
-                        .queryParam("sort", params.sort)
-                        .queryParam("group", params.group)
-                        .queryParam("viewgroup", params.viewGroup)
-                        .queryParam("first", hits.size64())
-                        .queryParam("number", PAGE_SIZE)
-                        .request(MediaType.APPLICATION_JSON)
-                        .async()
-                        .get();
+                nextPageRequest = createRequest(hits.size64(), PAGE_SIZE);
             }
             return nextPageRequest;
+        }
+
+        private Future<Response> createRequest(long first, long number) {
+            return webTarget
+                    .path(params.corpusName)
+                    .path("hits")
+                    .queryParam("patt", params.patt)
+                    .queryParam("sort", params.sort)
+                    .queryParam("group", params.group)
+                    .queryParam("viewgroup", params.viewGroup)
+                    .queryParam("first", first)
+                    .queryParam("number", number)
+                    .request(MediaType.APPLICATION_JSON)
+                    .async()
+                    .get();
         }
 
         /** Get the next page of hits from the server. */
@@ -139,6 +148,7 @@ public class HitsSearch {
                 // Add hits to the list
                 HitsResults hitsResults = response.readEntity(HitsResults.class);
                 latestSummary = hitsResults.summary;
+                latestSummaryTime = System.currentTimeMillis();
                 hits.addAll(hitsResults.hits);
                 for (DocInfo docInfo: hitsResults.docInfos) {
                     docInfos.put(docInfo.pid, docInfo);
@@ -191,6 +201,26 @@ public class HitsSearch {
             return null;
         }
 
+        public CompletableFuture<SearchSummary> ensureRecentSummary() {
+            long now = System.currentTimeMillis();
+            if (now - latestSummaryTime > MAX_SUMMARY_AGE_MS) {
+                // Summary is too old. Get a new one.
+                return CompletableFuture.supplyAsync( () -> {
+                    try {
+                        Response response = createRequest(0, 0).get();
+                        HitsResults results = response.readEntity(HitsResults.class);
+                        return results.summary;
+                    } catch (InterruptedException|ExecutionException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+            } else {
+                // Summary is new enough, just return it
+                return CompletableFuture.completedFuture(latestSummary);
+            }
+
+        }
+
         /** Iterate through all the hits. */
         class HitIterator {
             private long index = -1;
@@ -232,6 +262,10 @@ public class HitsSearch {
             public DocInfo currentDocInfo() {
                 String pid = current().docPid;
                 return docInfos.get(pid);
+            }
+
+            public long hitIndex() {
+                return index;
             }
         }
 
@@ -328,11 +362,14 @@ public class HitsSearch {
     private synchronized boolean ensureResultsRead(long l) {
         // TODO: maybe don't synchronize the whole method, or a request for 10 hits might be
         //    waiting for another request that wants a million hits...
+        String previousHitDoc = hits.isEmpty() ? "--NONE--" : hits.get(hits.size64() - 1).docPid;
         while (hits.size64() <= l) {
             // - check each node's current hit
             // - select the 'smallest' one (according to our sort)
+            //   (or if we don't have sort: select hit from same doc as previous,
+            //    or if there's no such hit, the node that has the most hits available)
             // - add it to our hits
-            // - advance thatsmallest node to the next hit (if available)
+            // - advance that smallest node to the next hit (if available)
 
             // Find the "smallest" hit from all the nodes' unconsumed hits
             // (smallest = first occurring with current sort)
@@ -348,19 +385,43 @@ public class HitsSearch {
                 if (hit == null)
                     continue; // no more hits from this node
 
-                // TODO use actual requested sort
-                if (smallestHitSource == null || comparator.compare(hit, smallestHitSource.current()) < 0) {
-                    smallestHitSource = it;
+                if (comparator == null) {
+                    // No sort specified. Check if this hit is in the same doc as the previous
+                    if (previousHitDoc.equals(hit.docPid)) {
+                        smallestHitSource = it;
+                    }
+                } else {
+                    // Sort specified, check if this hit is smaller than the one found so far
+                    if (smallestHitSource == null || comparator.compare(hit, smallestHitSource.current()) < 0) {
+                        smallestHitSource = it;
+                    }
                 }
             }
+
+            // If there's no sort, and no hit from the same doc as the previous hit:
+            // Find which node is at the lowest hit index, and return next hit from that,
+            // so we hit each node roughly equally.
+            if (comparator == null && smallestHitSource == null) {
+                long lowestIndex = Long.MAX_VALUE;
+                for (HitIterator it: nodeSearchIterators) {
+                    long index = it.hitIndex();
+                    if (index < lowestIndex) {
+                        lowestIndex = index;
+                        smallestHitSource = it;
+                    }
+                }
+            }
+
+            // Are we done?
             if (smallestHitSource == null) {
-                // No hits left anywhere
+                // Yes, no hits left on any node
                 break;
             }
 
             // Add smallest hit to our list
             Hit nextHit = smallestHitSource.current();
             hits.add(nextHit);
+            previousHitDoc = nextHit.docPid;
 
             // Make sure we have the docInfo for this doc
             var it = smallestHitSource;
@@ -378,6 +439,17 @@ public class HitsSearch {
 
         // Did we run out of hits, or is this a full window?
         long actualWindowSize = hits.size64() >= first + number ? number : hits.size64() - first;
+
+        if (number == 0) {
+            // If we requested 0 hits, we care about the running total; ensure it's up to date
+            CompletableFuture<SearchSummary>[] futures = nodeSearches.stream()
+                    .map(s -> s.ensureRecentSummary()).toArray(CompletableFuture[]::new);
+            try {
+                CompletableFuture.allOf(futures).get();
+            } catch (InterruptedException|ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         // Determine summary
         SearchSummary summary = nodeSearches.stream()

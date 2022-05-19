@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,9 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
+import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 
 public class Requests {
+
+    private static final int MAX_GROUPS_TO_GET = Integer.MAX_VALUE - 10;
 
     /** How to create the BLS request */
     public interface WebTargetDecorator {
@@ -162,8 +166,13 @@ public class Requests {
             String sort, String group, long first, long number, String viewGroup) {
         ResponseBuilder ourResponse;
         if (StringUtils.isEmpty(group) || !StringUtils.isEmpty(viewGroup)) {
-            if (sort.isEmpty())
-                sort = "field:pid,hitposition";
+            // Regular hits request, or viewing a single group in a group request.
+            // Response is a list of hits.
+
+            // Set default sort (disabled because we now support requests without a sort)
+            //if (sort.isEmpty())
+            //    sort = "field:pid,hitposition";
+
             // Hits request
             // Request the search object
             HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort, group, viewGroup);
@@ -172,6 +181,8 @@ public class Requests {
             // Return the response
             ourResponse = Response.ok().entity(results);
         } else {
+            // Grouped request.
+            // Response is a list of groups.
             if (sort.isEmpty())
                 sort = "size";
             // Group request.
@@ -180,13 +191,27 @@ public class Requests {
                 .path("hits")
                 .queryParam("patt", patt)
                 .queryParam("sort", s)
-                .queryParam("group", group),
+                .queryParam("group", group)
+                .queryParam("number", MAX_GROUPS_TO_GET),
                 HitsResults.class
             ).values().stream()
                     .reduce(Aggregation::mergeHitsGrouped)
                     .orElseThrow();
 
-            results.hitGroups.sort(HitGroupComparators.deserialize(sort));
+            Comparator<HitGroup> comparator = HitGroupComparators.deserialize(sort);
+            if (comparator != null)
+                results.hitGroups.sort(comparator);
+
+            // Only return requested window in the response
+            int end = (int)(first + number);
+            if (results.hitGroups.size() < end)
+                end = results.hitGroups.size();
+            results.hitGroups = results.hitGroups.subList((int)first, end);
+            results.summary.windowFirstResult = first;
+            results.summary.requestedWindowSize = number;
+            results.summary.actualWindowSize = end - first;
+            results.summary.windowHasPrevious = first > 0;
+            results.summary.windowHasNext = end < results.hitGroups.size();
 
             ourResponse = Response.ok().entity(results);
         }

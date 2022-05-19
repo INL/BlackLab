@@ -12,6 +12,8 @@ public class HitGroupComparators {
     private static final Comparator<HitGroup> CMP_SIZE = (a, b) -> Long.compare(b.size, a.size);
 
     public static Comparator<HitGroup> deserialize(String sort) {
+        if (sort.isEmpty())
+            return null;
         boolean reversed = sort.charAt(0) == '-';
         if (reversed)
             sort = sort.substring(1);

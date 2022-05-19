@@ -12,6 +12,7 @@ services:
       - "8081:8080"
     volumes:
       - /ssd3/linux-home-2022/opensonar/distrib-test/node1/index:/data/index/opensonar
+      - ./blacklab-server.yaml:/etc/blacklab/blacklab-server.yaml
 
   node2:
     image: instituutnederlandsetaal/blacklab:latest
@@ -23,6 +24,7 @@ services:
       - "8082:8080"
     volumes:
       - /ssd3/linux-home-2022/opensonar/distrib-test/node2/index:/data/index/opensonar
+      - ./blacklab-server.yaml:/etc/blacklab/blacklab-server.yaml
 
   node3:
     image: instituutnederlandsetaal/blacklab:latest
@@ -34,6 +36,7 @@ services:
       - "8083:8080"
     volumes:
       - /ssd3/linux-home-2022/opensonar/distrib-test/node3/index:/data/index/opensonar
+      - ./blacklab-server.yaml:/etc/blacklab/blacklab-server.yaml
 
   aggregator:
     profiles:
