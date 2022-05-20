@@ -28,16 +28,10 @@ public class SearchParam {
 
     public long number = 20;
 
-    public SearchParam() {
-    }
+    @JsonInclude(Include.NON_EMPTY)
+    public String usecache = "";
 
-    public SearchParam(String indexname, String patt, String sort, String group, long first, long number) {
-        this.indexname = indexname;
-        this.patt = patt;
-        this.sort = sort;
-        this.group = group;
-        this.first = first;
-        this.number = number;
+    public SearchParam() {
     }
 
     @Override
@@ -47,6 +41,10 @@ public class SearchParam {
                 ", patt='" + patt + '\'' +
                 ", sort='" + sort + '\'' +
                 ", group='" + group + '\'' +
+                ", viewgroup='" + viewgroup + '\'' +
+                ", first=" + first +
+                ", number=" + number +
+                ", usecache='" + usecache + '\'' +
                 '}';
     }
 }

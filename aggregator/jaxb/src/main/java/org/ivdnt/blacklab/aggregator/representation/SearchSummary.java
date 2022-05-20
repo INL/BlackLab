@@ -67,14 +67,6 @@ public class SearchSummary implements Cloneable {
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> metadataFieldDisplayNames = new LinkedHashMap<>();
 
-    public SearchSummary() {
-
-    }
-
-    public SearchSummary(SearchParam searchParam) {
-        this.searchParam = searchParam;
-    }
-
     @Override
     public SearchSummary clone() throws CloneNotSupportedException {
         return (SearchSummary)super.clone();

@@ -75,9 +75,6 @@ public class Requests {
 
         /** As soon as a request succeeds (returns non-200 response), stop waiting for other responses */
         RETURN_ON_SUCCESS,
-
-        /** Collect responses from all nodes regardless of failure or success */
-        COLLECT_ALL
     }
 
     /**
@@ -159,11 +156,38 @@ public class Requests {
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> x));
     }
 
+    enum UseCache {
+        YES,
+        NO,
+        NODES_ONLY; // use cache on nodes but not in aggregator
+
+        public static UseCache fromStringValue(String str) {
+            switch (str.toLowerCase()) {
+            case "nodes":
+                return NODES_ONLY;
+            case "no": case "false": case "0":
+                return NO;
+            case "yes": case "true": case "1": default:
+                return YES;
+            }
+        }
+
+        public boolean onAggregator() {
+            return this == YES;
+        }
+
+        public boolean onNodes() {
+            return this != NO;
+        }
+    }
+
     /**
      * Perform a hits request and get the requested hits window response.
      */
     public static Response getHitsResponse(Client client, String corpusName, String patt,
-            String sort, String group, long first, long number, String viewGroup) {
+            String sort, String group, long first, long number, String viewGroup, String strUseCache) {
+        UseCache useCache = UseCache.fromStringValue(strUseCache);
+
         ResponseBuilder ourResponse;
         if (StringUtils.isEmpty(group) || !StringUtils.isEmpty(viewGroup)) {
             // Regular hits request, or viewing a single group in a group request.
@@ -175,8 +199,8 @@ public class Requests {
 
             // Hits request
             // Request the search object
-            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort, group, viewGroup);
-            // Requqest the window, waiting for it to be available
+            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort, group, viewGroup, useCache, first + number);
+            // Request the window, waiting for it to be available
             HitsResults results = hitsSearch.window(first, number);
             // Return the response
             ourResponse = Response.ok().entity(results);

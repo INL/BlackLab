@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.logic.HitsSearch.NodeHitsSearch.HitIterator;
+import org.ivdnt.blacklab.aggregator.logic.Requests.UseCache;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
@@ -35,9 +36,6 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
  * Keeps track of results from the nodes and maintains a merged hits list.
  */
 public class HitsSearch {
-
-    /** Use our caching mechanism or not? */
-    private static final boolean USE_CACHE = false;
 
     /** Keep cache entries for 5 minutes */
     private static final long MAX_CACHE_AGE_MS = 5 * 60 * 1000;
@@ -79,30 +77,53 @@ public class HitsSearch {
     /** Results of this search from a single node */
     static class NodeHitsSearch {
 
-        private static final int PAGE_SIZE = 100;
+        /** Minimum page size to request. Very small pages cause too much request overhead. */
+        private static final int PAGE_SIZE_MIN = 20;
+
+        /** Maximum page size to request. Very large pages might slow us down because we're getting
+         *  more than we need, or we're waiting too long for the next page to be available. */
+        private static final int PAGE_SIZE_MAX = 500;
+
+        /** How much bigger should each subsequent page be than the last? */
+        private static final double PAGE_SIZE_GROWTH = 1.2;
 
         private static final long MAX_SUMMARY_AGE_MS = 600;
 
+        /** API endpoint we're sending request to */
         private final WebTarget webTarget;
 
+        /** Request (search) parameters */
         private final Params params;
 
+        private final boolean useCache;
+
+        /** Latest copy of the search summary in each response, giving us e.g. the running count. */
         private SearchSummary latestSummary;
 
+        /** Time of the latest search summary, so we can refresh it if needed. */
         private long latestSummaryTime;
 
+        /** The hits we've received so far. */
         private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
 
+        /** The docInfos we've received so far. */
         private final Map<String, DocInfo> docInfos = new HashMap<>();
 
+        /** Are we still fetching, or do we have all the hits? */
         private boolean stillFetchingHits = true;
+
+        /** What size page are we requesting? We start small (for a quick initial response)
+         *  and grows larger (for efficiency if we're requesting many hits).
+         */
+        private int pageSize = PAGE_SIZE_MIN;
 
         /** If set, the next page has been requested and we're waiting for the response. */
         private Future<Response> nextPageRequest;
 
-        public NodeHitsSearch(WebTarget webTarget, Params params) {
+        public NodeHitsSearch(WebTarget webTarget, Params params, boolean useCache) {
             this.params = params;
             this.webTarget = webTarget;
+            this.useCache = useCache;
         }
 
         public SearchSummary getLatestSummary() {
@@ -112,8 +133,8 @@ public class HitsSearch {
         /** Start a hits page request to the server. */
         private synchronized Future<Response> getNextPageRequest() {
             if (nextPageRequest == null) {
-                // Request the next page
-                nextPageRequest = createRequest(hits.size64(), PAGE_SIZE);
+                // Request the next page.
+                nextPageRequest = createRequest(hits.size64(), pageSize);
             }
             return nextPageRequest;
         }
@@ -128,6 +149,7 @@ public class HitsSearch {
                     .queryParam("viewgroup", params.viewGroup)
                     .queryParam("first", first)
                     .queryParam("number", number)
+                    .queryParam("usecache", useCache)
                     .request(MediaType.APPLICATION_JSON)
                     .async()
                     .get();
@@ -153,7 +175,8 @@ public class HitsSearch {
                 for (DocInfo docInfo: hitsResults.docInfos) {
                     docInfos.put(docInfo.pid, docInfo);
                 }
-                // Make sure each hit can access its docInfo, for e.g. sort by metadata field
+                // Make sure each hit can access its docInfo, for e.g.
+                // merging results sorted by metadata field
                 hitsResults.hits.forEach(h -> h.docInfo = docInfos.get(h.docPid));
 
                 // Was this the final page of hits?
@@ -162,19 +185,26 @@ public class HitsSearch {
                     stillFetchingHits = false;
                 } else {
                     // No, start fetching the next page of hits,
-                    // so it will hopefully be available when we need it.
+                    // so it will (hopefully) be available if/when we need it.
+                    // Make each subsequent page a little larger so we can efficiently process
+                    // large hit sets.
+                    pageSize = (int)Math.min(PAGE_SIZE_MAX, Math.round(pageSize * PAGE_SIZE_GROWTH));
                     getNextPageRequest();
                 }
             } else {
+                // An error occurred.
                 ErrorResponse error = response.readEntity(ErrorResponse.class);
                 if (error.getError().getCode().equals("GROUP_NOT_FOUND")) {
                     // This happens when we use viewgroup but the group doesn't occur on all nodes.
                     // Interpret this as an empty result set instead.
+                    // (strictly speaking, we should keep track of this and if all nodes returned
+                    //  GROUP_NOT_FOUND, we should too, as the group actually doesn't exist)
                     stillFetchingHits = false;
                 } else {
                     // A "real" unexpected error occurred.
+                    // Throw an exception that will result in an error response to the client.
                     ErrorResponse newError = new ErrorResponse(error.getError());
-                    newError.setNodeUrl(webTarget.getUri().toString());
+                    newError.setNodeUrl(webTarget.getUri().toString()); // keep track of what node caused the error
                     Response newResponse = Response.status(response.getStatus()).entity(newError).build();
                     throw new WebApplicationException(newResponse);
                 }
@@ -219,6 +249,18 @@ public class HitsSearch {
                 return CompletableFuture.completedFuture(latestSummary);
             }
 
+        }
+
+        /** Called to give us a hint to determine our initial page size. */
+        public void setInitialHitsRequest(long totalHitsNeeded, int numberOfNodes) {
+
+            // Guess how many hits we might need from each node to satisfy this request.
+            // In our case, twice as much as the ideal situation where each node contributes
+            // exactly as many hits.
+            long suggestedPageSize = totalHitsNeeded * 2 / numberOfNodes;
+
+            // Clamp to the min and max values.
+            pageSize = (int)Math.min(PAGE_SIZE_MAX, Math.max(PAGE_SIZE_MIN, suggestedPageSize));
         }
 
         /** Iterate through all the hits. */
@@ -287,16 +329,16 @@ public class HitsSearch {
      * Also makes sure old searches are removed from cache.
      */
     public static HitsSearch get(Client client, String corpusName, String patt, String sort,
-            String group, String viewGroup) {
+            String group, String viewGroup, UseCache useCache, long initialNumberOfHits) {
         Comparator<Hit> comparator = HitComparators.deserialize(sort);
         Params params = new Params(corpusName, patt, sort, group, viewGroup);
         synchronized (cache) {
-            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params, comparator));
-            search.updateLastAccessTime();
-            if (USE_CACHE)
-                removeOldSearches(MAX_CACHE_AGE_MS);
-            else
+            if (!useCache.onAggregator())
                 cache.clear();
+            HitsSearch search = cache.computeIfAbsent(params, __ -> new HitsSearch(client, params, comparator, initialNumberOfHits, useCache.onNodes()));
+            search.updateLastAccessTime();
+            if (useCache.onAggregator())
+                removeOldSearches(MAX_CACHE_AGE_MS);
             return search;
         }
     }
@@ -334,12 +376,15 @@ public class HitsSearch {
     /** Relevant docInfos */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
 
-    public HitsSearch(Client client, Params params, Comparator<Hit> comparator) {
+    public HitsSearch(Client client, Params params, Comparator<Hit> comparator, long initialNumberOfHits,
+            boolean useCache) {
         this.comparator = comparator;
         nodeSearches = new ArrayList<>();
         nodeSearchIterators = new ArrayList<>();
+        int numberOfNodes = AggregatorConfig.get().getNodes().size();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            NodeHitsSearch search = new NodeHitsSearch(client.target(nodeUrl), params);
+            NodeHitsSearch search = new NodeHitsSearch(client.target(nodeUrl), params, useCache);
+            search.setInitialHitsRequest(initialNumberOfHits, numberOfNodes); // hint for page size
             nodeSearches.add(search);
             nodeSearchIterators.add(search.iterator());
         }
@@ -363,6 +408,7 @@ public class HitsSearch {
     private synchronized boolean ensureResultsRead(long l) {
         // TODO: maybe don't synchronize the whole method, or a request for 10 hits might be
         //    waiting for another request that wants a million hits...
+
         String previousHitDoc = hits.isEmpty() ? "--NONE--" : hits.get(hits.size64() - 1).docPid;
         while (hits.size64() <= l) {
             // - check each node's current hit
