@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.collections4.iterators.ReverseListIterator;
 
@@ -36,11 +37,14 @@ public class ContextWords {
         public void serialize(ContextWords value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
 
-            // See what annotation there are (because not every word will have a value for every annotation)
-            Set<String> annotations = new LinkedHashSet<>();
-            annotations.add(Word.MAIN_ANNOTATION_NAME);
-            for (Word w: value.words) {
-                annotations.addAll(w.otherAnnotations.keySet());
+            // See what annotations there are (because not every word will have a value for every annotation)
+            Set<String> annotations = value.annotationNames;
+            if (annotations == null) {
+                annotations = new LinkedHashSet<>();
+                annotations.add(Word.MAIN_ANNOTATION_NAME);
+                for (Word w: value.words) {
+                    annotations.addAll(w.otherAnnotations.keySet());
+                }
             }
 
             jgen.writeStartObject();
@@ -82,6 +86,8 @@ public class ContextWords {
                 token = parser.nextToken();
                 if (token != JsonToken.START_ARRAY)
                     throw new RuntimeException("Expected START_ARRAY, found " + token);
+                List<String> words = new ArrayList<>();
+                wordsPerAnnot.put(annotationName, words);
                 while (true) {
                     token = parser.nextToken();
                     if (token == JsonToken.END_ARRAY)
@@ -89,7 +95,7 @@ public class ContextWords {
                     if (token != JsonToken.VALUE_STRING)
                         throw new RuntimeException("Expected END_ARRAY or VALUE_STRING, found " + token);
                     String value = parser.getValueAsString();
-                    wordsPerAnnot.computeIfAbsent(annotationName, __ -> new ArrayList<>()).add(value);
+                    words.add(value);
                 }
             }
 
@@ -108,18 +114,25 @@ public class ContextWords {
                 }
                 result.add(word);
             }
-            return new ContextWords(result);
+            return new ContextWords(result, wordsPerAnnot.keySet());
         }
     }
 
     @XmlElement(name="w")
     public List<Word> words;
 
+    /** Names of our annotations (or null).
+     * Needed if there are no words, so we produce an empty array for each annotation.
+     */
+    @XmlTransient
+    public Set<String> annotationNames;
+
     @SuppressWarnings("unused")
     private ContextWords() {}
 
-    public ContextWords(List<Word> w) {
+    public ContextWords(List<Word> w, Set<String> annotationNames) {
         this.words = w;
+        this.annotationNames = annotationNames;
     }
 
     public int compareTo(ContextWords other, String annotation, boolean sensitive, boolean reverse, boolean oneWordOnly) {
