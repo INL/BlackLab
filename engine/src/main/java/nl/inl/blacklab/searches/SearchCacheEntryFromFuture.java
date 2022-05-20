@@ -45,7 +45,7 @@ public class SearchCacheEntryFromFuture<R extends SearchResult> extends SearchCa
     @Override
     public R peek() {
         if (isCancelled())
-            throw new InterruptedSearch();
+            throw InterruptedSearch.cancelled();
         return peekValue;
     }
 

@@ -14,11 +14,15 @@ public class InterruptedSearch extends BlackLabRuntimeException {
 
     private static final String DEFAULT_MESSAGE = "Search was interrupted";
 
+    public static InterruptedSearch cancelled() {
+        return new InterruptedSearch(DEFAULT_MESSAGE + " (cancelled)");
+    }
+
     private SearchCacheEntry<?> cacheEntry;
 
-    public InterruptedSearch() {
-        super(DEFAULT_MESSAGE);
-    }
+//    public InterruptedSearch() {
+//        super(DEFAULT_MESSAGE);
+//    }
 
     public InterruptedSearch(Throwable e) {
         super(DEFAULT_MESSAGE, e);

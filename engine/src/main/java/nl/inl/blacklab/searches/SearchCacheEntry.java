@@ -68,7 +68,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
      */
     public R peek() {
         if (isCancelled())
-            throw new InterruptedSearch();
+            throw InterruptedSearch.cancelled();
         return null;
     }
 

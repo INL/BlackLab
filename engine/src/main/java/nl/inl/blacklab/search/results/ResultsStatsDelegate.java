@@ -41,7 +41,7 @@ public class ResultsStatsDelegate extends ResultsStats {
      */
     private ResultsStats stats() {
         if (future.isCancelled())
-            throw new InterruptedSearch();
+            throw InterruptedSearch.cancelled();
         try {
             if (future.isDone())
                 return future.get();
@@ -65,7 +65,7 @@ public class ResultsStatsDelegate extends ResultsStats {
 
                 // Check that the search hasn't been cancelled
                 if (future.isCancelled())
-                    throw new InterruptedSearch();
+                    throw InterruptedSearch.cancelled();
 
                 // If search is completely done, return the final stats.
                 if (future.isDone())
@@ -115,7 +115,7 @@ public class ResultsStatsDelegate extends ResultsStats {
     @Override
     public boolean isStatic() {
         if (future.isCancelled())
-            throw new InterruptedSearch();
+            throw InterruptedSearch.cancelled();
         if (future.isDone())
             return realStats().isStatic();
         return false;

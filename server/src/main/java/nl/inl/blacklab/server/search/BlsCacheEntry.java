@@ -258,7 +258,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             ms -= POLLING_TIME_MS;
         }
         if (isCancelled()) {
-            InterruptedSearch interruptedSearch = new InterruptedSearch();
+            InterruptedSearch interruptedSearch = InterruptedSearch.cancelled();
             interruptedSearch.setCacheEntry(this);
             throw interruptedSearch;
         }
@@ -463,7 +463,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      */
     public T peek() {
         if (isCancelled())
-            throw new InterruptedSearch();
+            throw InterruptedSearch.cancelled();
         return peekValue;
     }
 
