@@ -310,9 +310,10 @@ public class HitsSearch {
         toRemove.forEach(cache::remove);
     }
 
-
+    /** When was the search last accessed by a client? Used to remove it from cache. */
     private long lastAccessTime;
 
+    /** This search on each of our nodes. */
     private final List<NodeHitsSearch> nodeSearches;
 
     /** Iterators on all the node's results.
@@ -367,7 +368,8 @@ public class HitsSearch {
             // - check each node's current hit
             // - select the 'smallest' one (according to our sort)
             //   (or if we don't have sort: select hit from same doc as previous,
-            //    or if there's no such hit, the node that has the most hits available)
+            //    sp we keep hits from one document together. If there's no such hit,
+            //    we choose the "most lagging node", see below)
             // - add it to our hits
             // - advance that smallest node to the next hit (if available)
 
@@ -414,7 +416,8 @@ public class HitsSearch {
 
             // Are we done?
             if (smallestHitSource == null) {
-                // Yes, no hits left on any node
+                // Yes, no hits left on any node.
+                // (nodes may still be counting if the hit retrieval limit was reached)
                 break;
             }
 
@@ -442,8 +445,9 @@ public class HitsSearch {
 
         if (number == 0) {
             // If we requested 0 hits, we care about the running total; ensure it's up to date
-            CompletableFuture<SearchSummary>[] futures = nodeSearches.stream()
-                    .map(s -> s.ensureRecentSummary()).toArray(CompletableFuture[]::new);
+            CompletableFuture<?>[] futures = nodeSearches.stream()
+                    .map(NodeHitsSearch::ensureRecentSummary)
+                    .toArray(CompletableFuture[]::new);
             try {
                 CompletableFuture.allOf(futures).get();
             } catch (InterruptedException|ExecutionException e) {

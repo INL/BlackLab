@@ -47,10 +47,7 @@ public class Corpus implements Cloneable {
                     {
                         jgen.writeStringField("name", annotationGroup.name);
                         jgen.writeFieldName("annotations");
-                        {
-                            provider.defaultSerializeValue(annotationGroup.annotations, jgen);
-                        }
-                        jgen.writeEndArray();
+                        provider.defaultSerializeValue(annotationGroup.annotations, jgen);
                     }
                     jgen.writeEndObject();
                 }
