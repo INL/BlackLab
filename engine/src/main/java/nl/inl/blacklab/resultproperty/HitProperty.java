@@ -148,7 +148,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             this.reverse = !this.reverse;
         this.setContexts(contexts); // this will initialize contextIndices to default value...
         if (prop.contextIndices != null)
-            this.contextIndices = prop.contextIndices; // ...but if we already had different values, use those
+            this.contextIndices = new IntArrayList(prop.contextIndices); // ...but if we already had different values, use those
     }
 
     /**
@@ -177,7 +177,8 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             if (contexts != null) {
                 int numberOfAnnotations = contexts.annotations().size();
                 this.contextIndices = new IntArrayList(numberOfAnnotations);
-                for (int i = 0; i < numberOfAnnotations; ++i) this.contextIndices.add(i, i);
+                for (int i = 0; i < numberOfAnnotations; ++i)
+                    this.contextIndices.add(i, i);
             }
         }
     }
@@ -195,11 +196,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      *            needsContext().
      */
     protected void setContextIndices(IntArrayList contextIndices) {
-        if (this.contextIndices == null)
-            this.contextIndices = new IntArrayList();
-        else
-            this.contextIndices.clear();
-        this.contextIndices.addAll(contextIndices);
+        this.contextIndices = new IntArrayList(contextIndices);
     }
 
     public abstract PropertyValue get(long hitIndex);
