@@ -370,11 +370,11 @@ public class HitsSearch {
     /** Merged hits results */
     private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
 
-    /** Our sort */
-    private final Comparator<Hit> comparator;
-
     /** Relevant docInfos */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
+
+    /** Our sort */
+    private final Comparator<Hit> comparator;
 
     public HitsSearch(Client client, Params params, Comparator<Hit> comparator, long initialNumberOfHits,
             boolean useCache) {

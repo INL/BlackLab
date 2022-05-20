@@ -31,13 +31,13 @@ General:
    may give additional details). Fix `blacklabBuildTime` vs. `blackLabBuildTime` etc.)
 - Change confusing names.<br>
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
-  `reachedHitLimit` might be easier to understand, especially if it's directly 
+  `limitReached` might be easier to understand, especially if it's directly 
   related to a configuration setting `hitLimit`)
 - Avoid ambiguous resource paths.
   (`/blacklab-server/my-corpus` conflicts with e.g. `/blacklab-server/input-formats`; better would be
-  `/blacklab-server/corpus/my-corpus/`, so the corpora have a dedicated namespace)
+  `/blacklab-server/corpora/my-corpus/`, so the corpora have a dedicated namespace)
 - Try to use consistent terminology between parameters, response and configuration files.<br>
-  (e.g. use the term "hitLimit" everywhere for the same concept)
+  (e.g. use the term `hitLimit` everywhere for the same concept)
 - Use `corpus`/`corpora` in favor of `index`/`indices`.
 - Replace `left`/`right` with `before`/`after`<br>
   (makes more sense for RTL languages)
@@ -54,6 +54,8 @@ General:
   (e.g. in DocInfo, arbitrary document metadata values such as `title` or `author` should probably be
   in a separate subobject, not alongside special values like `lengthInTokens` and `mayView`. Also, 
   `metadataFieldGroups` shouldn't be alongside DocInfo structures.)
+- Don't send `mayView` for each document (until we implement such granular authorization),
+  include it in corpus info
 - Handle custom information better. <br>
   Custom information, ignored by Blacklab but useful for e.g. the frontend,
   like displayName, uiType, etc. is polluting the response structure.

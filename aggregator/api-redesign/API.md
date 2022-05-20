@@ -6,9 +6,20 @@ a possible new REST API for Blacklab.
 All new requests would get a `/v2/` prefix, and the old requests 
 could still be supported for a while until eventually being removed.
 
+Any information not generated or used by BlackLab, such as `displayName`, `description`, 
+`documentFormat`, `textDirection`, `uiType`, etc. was moved into `"custom": {}` 
+objects, that are only included if you specify `includeCustom=true`.
+
+Generic parameters:
+- `includeCustom`: include `"custom"` data? (boolean, default false)
+- `outputformat`: output type (`wt` also supported?)
+
 ## Server info
 
-Request: `/blacklab/v2/`
+Request:
+
+- `/blacklab/v2/` (no `"custom"` information included)
+- `/blacklab/v2/?includeCustom=true` (`"custom"` information included, see below)
 
 Response:
 
@@ -57,11 +68,9 @@ Response:
     
   },
   
-  // Logged-in user
-  // (unchanged)
   "user": {
     "loggedIn": false,
-    "canCreateIndex": false
+    "mayCreateCorpus": false // (changed from canCreateIndex)
   },
   
   // (REMOVE)
@@ -69,8 +78,8 @@ Response:
   
   // Previously top-level key.
   // Meant to be a free-for-all area where any useful
-  // debug info can temporarily be added.
-  // Can also occur in (parts of) other responses.
+  // debug info can temporarily be added. Only added in debug mode.
+  // Can also occur in (parts of) other responses?
   "debugInfo": {
     "cacheStatus": {
       // ...
@@ -81,7 +90,10 @@ Response:
 
 ## Corpus info
 
-Request: `/blacklab/v2/corpora/CORPUS-NAME`
+Request:
+
+- `/blacklab/v2/corpora/CORPUS-NAME` (no `"custom"` information included)
+- `/blacklab/v2/corpora/CORPUS-NAME?custom=true` (`"custom"` information included, see below)
 
 Response:
 
@@ -313,11 +325,146 @@ Path: `/blacklab/v2/corpora/CORPUS-NAME/hits`
 
 Parameters:
 - `patt`: CorpusQL pattern to search
-- 
+- `sort`: how to sort the hits
+- `first`: first row to return (`start` also supported?)
+- `number`: number of rows to return (`rows` also supported?)
+- `filter`: document filter query (`q` also supported?)
 
-Example request: `/blacklab/v2/corpora/CORPUS-NAME/hits?patt="schip"`
+Example request: `/blacklab/v2/corpora/CORPUS-NAME/hits?patt="schip"&start=0&rows=100&outputformat=json`
 
 Response:
 
 ```json
+{
+  "parameters": {
+    "first": "0",
+    "number": "100",
+    "indexname": "CORPUS-NAME",
+    "patt": "\"schip\"",
+    "outputformat": "json"
+  },
+  "stats": {
+    "time": {
+      "search": 4,
+      "count": 16003
+    },
+    "window": {
+      "first": 0,
+      "numberRequested": 2,
+      "number": 2,
+      "hasNext": true // (hasPrevious == first > 0)
+    },
+    "progress": {
+      "completed": true, // if false, we're still retrieving and/sor counting
+      "counted": {
+        "hits": 553766,
+        "docs": 281822,
+        "limitReached": false // == stoppedCountingHits
+      },
+      "retrieved": {
+        "hits": 553766,
+        "docs": 281822
+        "limitReached": false // == stoppedRetrievingHits
+      }
+    }
+  },
+  "hits": [
+    {
+      "doc": "WR-P-E-A-0000008964",
+      "start": 6,
+      "end": 7,
+      "before": {
+        "lemma": [
+          "nie"
+        ],
+        "pos": [
+          "BW()"
+        ],
+        "word": [
+          "nie"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "waar"
+        ],
+        "pos": [
+          "VNW(vb,adv-pron,obl,vol,3o,getal)"
+        ],
+        "word": [
+          "waar"
+        ]
+      },
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          ""
+        ]
+      }
+    },
+    {
+      "docPid": "WR-P-E-A-0000016858",
+      "start": 28,
+      "end": 29,
+      "before": {
+        "lemma": [
+          "kweenimeren"
+        ],
+        "pos": [
+          "WW(pv,tgw,ev)"
+        ],
+        "word": [
+          "kweenimeer"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "waar"
+        ],
+        "pos": [
+          "VNW(vb,adv-pron,obl,vol,3o,getal)"
+        ],
+        "word": [
+          "waar"
+        ]
+      },
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          ""
+        ]
+      }
+    }
+  ],
+  "docInfos": {
+    "WR-P-E-A-0000016858": {
+      "metadata": {
+        "OriginalLanguage": [ "Unspecified" ], 
+        "LicenseCode": [ "SoNaR.1-0.VL.031" ],
+        "AuthorNameOrPseudonym": [ "Unspecified" ],
+        "CollectionCode": [ "TMF - Topic: Actualiteit" ]
+      },
+      "lengthInTokens": 29,
+      "mayView": true  // omit unless we implement granular permissions?
+    },
+    "WR-P-E-A-0000008964": {
+      "metadata": {
+        "Continent": [ "Europe" ],
+        "PublicationPlace": [ "Unspecified" ],
+      },
+      "lengthInTokens": 7,
+      "mayView": true  // omit unless we implement granular permissions?
+    }
+  }
+}
 ```
