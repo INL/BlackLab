@@ -52,7 +52,7 @@ public abstract class DataStream {
      * @param msg the error message
      * @param e if specified, include stack trace
      */
-    public void error(String code, String msg, Exception e) {
+    public void error(String code, String msg, Throwable e) {
         startMap()
                 .startEntry("error")
                 .startMap()

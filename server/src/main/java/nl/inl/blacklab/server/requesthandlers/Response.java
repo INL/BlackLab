@@ -45,7 +45,7 @@ public class Response {
         return httpCode;
     }
 
-    public static int error(DataStream ds, String code, String msg, int httpCode, Exception e) {
+    public static int error(DataStream ds, String code, String msg, int httpCode, Throwable e) {
         ds.error(code, msg, e);
         return httpCode;
     }

@@ -305,7 +305,7 @@ public class BlackLabServer extends HttpServlet {
             } catch (BlsException e) {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
             } catch (InterruptedSearch e) {
-                httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
             } catch (RuntimeException e) {
                 httpCode = Response.internalError(es, e, debugMode, "INTERR_HANDLING_REQUEST");
             } finally {
