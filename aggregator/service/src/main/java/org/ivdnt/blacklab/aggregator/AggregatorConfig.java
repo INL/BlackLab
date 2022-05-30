@@ -40,6 +40,8 @@ public class AggregatorConfig {
             if (!configFile.exists())
                 configFile = new File("/etc/blacklab/aggregator.yaml");
             if (!configFile.exists())
+                configFile = new File("/vol1/etc/blacklab/aggregator.yaml");
+            if (!configFile.exists())
                 throw new RuntimeException("No config file found in $BLACKLAB_AGGREGATOR_CONFIG_FILE, ~/.blacklab/aggregator.yaml, or /etc/blacklab/aggregator.yaml");
         } else
             configFile = new File(path);

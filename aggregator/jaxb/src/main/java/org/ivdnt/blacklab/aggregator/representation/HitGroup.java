@@ -2,9 +2,13 @@ package org.ivdnt.blacklab.aggregator.representation;
 
 
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitGroup {
@@ -18,14 +22,19 @@ public class HitGroup {
 
     public long numberOfDocs;
 
+    @JsonInclude(Include.NON_NULL)
+    public Map<String, Long> subcorpusSize;
+
     public HitGroup() {}
 
-    public HitGroup(String identity, String identityDisplay, long size, List<Property> properties, long numberOfDocs) {
+    public HitGroup(String identity, String identityDisplay, long size, List<Property> properties, long numberOfDocs,
+            Map<String, Long> subcorpusSize) {
         this.identity = identity;
         this.identityDisplay = identityDisplay;
         this.size = size;
         this.properties = properties;
         this.numberOfDocs = numberOfDocs;
+        this.subcorpusSize = subcorpusSize;
     }
 
     @Override
@@ -36,6 +45,7 @@ public class HitGroup {
                 ", size=" + size +
                 ", properties=" + properties +
                 ", numberOfDocs=" + numberOfDocs +
+                ", subcorpusSize=" + subcorpusSize +
                 '}';
     }
 

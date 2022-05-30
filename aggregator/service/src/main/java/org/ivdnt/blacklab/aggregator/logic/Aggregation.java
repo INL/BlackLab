@@ -90,14 +90,14 @@ public class Aggregation {
             MetadataField af = f.clone();
             MetadataField bf = b.stream().filter(bff -> bff.name.equals(f.name)).findFirst().orElse(null);
             if (bf != null) {
-                af.fieldValues = mergeFieldValues(af.fieldValues, bf.fieldValues);
+                af.fieldValues = mergeCountMapInt(af.fieldValues, bf.fieldValues);
                 af.valueListComplete = af.valueListComplete && bf.valueListComplete;
             }
             return af;
         }).collect(Collectors.toList());
     }
 
-    private static Map<String, Integer> mergeFieldValues(Map<String, Integer> a, Map<String, Integer> b) {
+    private static Map<String, Integer> mergeCountMapInt(Map<String, Integer> a, Map<String, Integer> b) {
         if (a == null)
             return b;
         if (b == null)
@@ -107,14 +107,22 @@ public class Aggregation {
         return c;
     }
 
+    private static Map<String, Long> mergeCountMapLong(Map<String, Long> a, Map<String, Long> b) {
+        if (a == null)
+            return b;
+        if (b == null)
+            return a;
+        Map<String, Long> c = new HashMap<>(b);
+        a.forEach( (k, v) -> c.merge(k, v, Long::sum));
+        return c;
+    }
+
     public static List<AnnotatedField> mergeAnnotatedFields(List<AnnotatedField> a, List<AnnotatedField> b) {
         return a.stream().map(f -> {
             // Find corresponding field and merge annotation
             AnnotatedField af = f.clone();
-            AnnotatedField bf = b.stream().filter(bff -> bff.name.equals(f.name)).findFirst().orElse(null);
-            if (bf != null) {
-                af.annotations = mergeAnnotations(af.annotations, bf.annotations);
-            }
+            b.stream().filter(bff -> bff.name.equals(f.name)).findFirst()
+                    .ifPresent(bf -> af.annotations = mergeAnnotations(af.annotations, bf.annotations));
             return af;
         }).collect(Collectors.toList());
     }
@@ -140,7 +148,7 @@ public class Aggregation {
             return b;
         if (b == null)
             return a;
-        Set r = new HashSet<>();
+        Set<String> r = new HashSet<>();
         r.addAll(a);
         r.addAll(b);
         return new ArrayList<>(r);
@@ -196,7 +204,8 @@ public class Aggregation {
                 a.identityDisplay,
                 a.size + b.size,
                 a.properties,
-                a.numberOfDocs + b.numberOfDocs
+                a.numberOfDocs + b.numberOfDocs,
+                mergeCountMapLong(a.subcorpusSize, b.subcorpusSize)
         );
     }
 
