@@ -82,7 +82,7 @@ public class HitsSearch {
 
         /** Maximum page size to request. Very large pages might slow us down because we're getting
          *  more than we need, or we're waiting too long for the next page to be available. */
-        private static final int PAGE_SIZE_MAX = 500;
+        private static final int PAGE_SIZE_MAX = 300;
 
         /** How much bigger should each subsequent page be than the last? */
         private static final double PAGE_SIZE_GROWTH = 1.2;
@@ -120,6 +120,9 @@ public class HitsSearch {
         /** If set, the next page has been requested and we're waiting for the response. */
         private Future<Response> nextPageRequest;
 
+        /** Last request we sent to the server (corresponds to nextPageRequest) */
+        private WebTarget nextPageTarget;
+
         public NodeHitsSearch(WebTarget webTarget, Params params, boolean useCache) {
             this.params = params;
             this.webTarget = webTarget;
@@ -140,19 +143,18 @@ public class HitsSearch {
         }
 
         private Future<Response> createRequest(long first, long number) {
-            return webTarget
-                    .path(params.corpusName)
-                    .path("hits")
-                    .queryParam("patt", params.patt)
-                    .queryParam("sort", params.sort)
-                    .queryParam("group", params.group)
-                    .queryParam("viewgroup", params.viewGroup)
-                    .queryParam("first", first)
-                    .queryParam("number", number)
-                    .queryParam("usecache", useCache)
-                    .request(MediaType.APPLICATION_JSON)
-                    .async()
-                    .get();
+            nextPageTarget = Requests.optParams(webTarget.path(params.corpusName).path("hits"),
+                    "patt", params.patt,
+                    "sort", params.sort,
+                    "group", params.group,
+                    "viewgroup", params.viewGroup,
+                    "first", first,
+                    "number", number,
+                    "usecache", useCache);
+            return nextPageTarget
+                .request(MediaType.APPLICATION_JSON)
+                .async()
+                .get();
         }
 
         /** Get the next page of hits from the server. */
@@ -272,7 +274,12 @@ public class HitsSearch {
              * @return true if there is, false if not
              */
             public boolean hasNext() {
-                return ensureHitAvailable(index + 1);
+                try {
+                    return ensureHitAvailable(index + 1);
+                } catch (Exception e) {
+                    WebTarget t = nextPageTarget == null ? webTarget : nextPageTarget;
+                    throw Requests.translateNodeException(t.getUri().toString(), e);
+                }
             }
 
             /** Has next() ever been called? */
@@ -298,7 +305,12 @@ public class HitsSearch {
              */
             public Hit next() {
                 index++;
-                return hit(index);
+                try {
+                    return hit(index);
+                } catch (Exception e) {
+                    WebTarget t = nextPageTarget == null ? webTarget : nextPageTarget;
+                    throw Requests.translateNodeException(t.getUri().toString(), e);
+                }
             }
 
             public DocInfo currentDocInfo() {

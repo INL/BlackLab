@@ -1,5 +1,7 @@
 package org.ivdnt.blacklab.aggregator.logic;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -9,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
@@ -23,13 +26,58 @@ import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 
+/** Performs requests to the BLS nodes we're aggregating */
 public class Requests {
 
     private static final int MAX_GROUPS_TO_GET = Integer.MAX_VALUE - 10;
 
-    /** How to create the BLS request */
-    public interface WebTargetDecorator {
-        WebTarget get(WebTarget target);
+    /** Is the given value the default value for this parameter?
+     *
+     * Used to omit some default values for more readable URLs.
+     */
+    private static boolean isParamDefault(String key, String value) {
+        switch (key) {
+        case "usecache":
+            return value.equals("true");
+        }
+        return false;
+    }
+
+    /**
+     * Add query params if not empty or default value.
+     *
+     * @param src target to add params to
+     * @param params params to add (key, value, key, value, etc.)
+     * @return new target
+     */
+    public static WebTarget optParams(WebTarget src, Object... params) {
+        WebTarget result = src;
+        for (int i = 0; i < params.length; i += 2) {
+            if (params[i + 1] != null) {
+                String key = params[i].toString();
+                String value = params[i + 1].toString();
+                if (!value.isEmpty() && !isParamDefault(key, value)) {
+                    result = result.queryParam(key, value);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static RuntimeException translateNodeException(String url, Exception e) {
+        e.printStackTrace();
+        String msg = e.getMessage() + (e.getCause() != null ? " (" + e.getCause().getMessage() + ")" : "");
+        StringWriter stackTrace = new StringWriter();
+        e.printStackTrace(new PrintWriter(stackTrace));
+        ErrorResponse error = new ErrorResponse("ERROR_ON_NODE", msg, stackTrace.toString());
+        error.setNodeUrl(url);
+        Response resp = Response.status(Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        return new WebApplicationException(resp);
+    }
+
+    /** How to create the BLS request to a node */
+    public interface NodeRequestFactory {
+        WebTarget get(String nodeUrl);
     }
 
     /** Thrown when BLS returns an error response */
@@ -54,14 +102,16 @@ public class Requests {
         }
     }
 
-    private static List<Pair<String, Future<Response>>> sendNodeRequests(Client client, WebTargetDecorator factory, MediaType mediaType) {
+    /** Send requests to all nodes */
+    private static List<Pair<String, Future<Response>>> sendNodeRequests(NodeRequestFactory factory, MediaType mediaType) {
         List<Pair<String, Future<Response>>> futures = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            Future<Response> futureResponse = factory.get(client.target(nodeUrl)) //client.target(nodeUrl)
+            WebTarget webTarget = factory.get(nodeUrl);
+            Future<Response> futureResponse = webTarget //client.target(nodeUrl)
                     .request(mediaType)
                     .async()
                     .get();
-            futures.add(Pair.of(nodeUrl, futureResponse));
+            futures.add(Pair.of(webTarget.getUri().toString(), futureResponse));
         }
         return futures;
     }
@@ -84,16 +134,15 @@ public class Requests {
      * return on the first error (used if all nodes should succeed), or
      * return on the first success (used if only one node needs to succeed).
      *
-     * @param client REST client
      * @param factory creates our requests
      * @param mediaType request media type
      * @param strategy how to handle error/success
      * @return responses indexed by node URL
      */
-    public static Map<String, Response> getResponses(Client client, WebTargetDecorator factory,
+    public static Map<String, Response> getResponses(NodeRequestFactory factory,
             MediaType mediaType, ErrorStrategy strategy) {
         // Send requests and collect futures
-        List<Pair<String, Future<Response>>> futures = sendNodeRequests(client, factory, mediaType);
+        List<Pair<String, Future<Response>>> futures = sendNodeRequests(factory, mediaType);
 
         // Wait for futures to complete and collect response objects
         Map<String, Response> responses = new LinkedHashMap<>();
@@ -104,7 +153,7 @@ public class Requests {
             try {
                 clientResponse = f.get();
             } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+                throw translateNodeException(nodeUrl, e);
             }
             responses.put(nodeUrl, clientResponse);
 
@@ -129,9 +178,9 @@ public class Requests {
      * Useful for e.g. finding a document if we don't know the node it resides on.
      * (not the way to do it in a "real" distributed system)
      */
-    public static <T> Pair<String, T> getFirstSuccesfulResponse(Client client, WebTargetDecorator factory,
+    public static <T> Pair<String, T> getFirstSuccesfulResponse(NodeRequestFactory factory,
             Class<T> cls, MediaType mediaType) {
-        Map<String, Response> responses = getResponses(client, factory, mediaType, ErrorStrategy.RETURN_ON_SUCCESS);
+        Map<String, Response> responses = getResponses(factory, mediaType, ErrorStrategy.RETURN_ON_SUCCESS);
         return responses.entrySet().stream()
                 .filter(e -> e.getValue().getStatus() == Status.OK.getStatusCode())
                 .findFirst()
@@ -142,17 +191,22 @@ public class Requests {
     /**
      * Send requests to all nodes and return the responses if all succeed.
      *
-     * @param client REST client
      * @param factory how to build our requests
      * @param cls response object type
      * @return response objects indexed by nodeUrl
      * @param <T> response object type
      */
-    public static <T> Map<String, T> getResponses(Client client, WebTargetDecorator factory, Class<T> cls) {
-        Map<String, Response> responses = getResponses(client, factory, MediaType.APPLICATION_JSON_TYPE,
+    public static <T> Map<String, T> getResponses(NodeRequestFactory factory, Class<T> cls) {
+        Map<String, Response> responses = getResponses(factory, MediaType.APPLICATION_JSON_TYPE,
                 ErrorStrategy.THROW_ON_FAILURE);
         return responses.entrySet().stream()
-                .map(r -> Pair.of(r.getKey(), r.getValue().readEntity(cls)))
+                .map(r -> {
+                    try {
+                        return Pair.of(r.getKey(), r.getValue().readEntity(cls));
+                    } catch (Exception e) {
+                        throw translateNodeException(r.getKey(), e);
+                    }
+                })
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> x));
     }
 
@@ -193,11 +247,6 @@ public class Requests {
             // Regular hits request, or viewing a single group in a group request.
             // Response is a list of hits.
 
-            // Set default sort (disabled because we now support requests without a sort)
-            //if (sort.isEmpty())
-            //    sort = "field:pid,hitposition";
-
-            // Hits request
             // Request the search object
             HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort, group, viewGroup, useCache, first + number);
             // Request the window, waiting for it to be available
@@ -211,14 +260,16 @@ public class Requests {
                 sort = "size";
             // Group request.
             var s = sort;
-            HitsResults results = getResponses(client, t -> t.path(corpusName)
-                .path("hits")
-                .queryParam("patt", patt)
-                .queryParam("sort", s)
-                .queryParam("group", group)
-                .queryParam("number", MAX_GROUPS_TO_GET),
-                HitsResults.class
-            ).values().stream()
+            Map<String, HitsResults> responses = null;
+            responses = getResponses(
+                    url -> Requests.optParams(client.target(url).path(corpusName).path("hits"),
+                            "patt", patt,
+                            "sort", s,
+                            "group", group,
+                            "number", MAX_GROUPS_TO_GET),
+                    HitsResults.class
+            );
+            HitsResults results = responses.values().stream()
                     .reduce(Aggregation::mergeHitsGrouped)
                     .orElseThrow();
 

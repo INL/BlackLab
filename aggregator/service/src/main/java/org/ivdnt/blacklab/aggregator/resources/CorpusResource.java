@@ -27,7 +27,7 @@ public class CorpusResource {
 
     private static Response resourceNotImplemented(String resource) {
         ErrorResponse error = new ErrorResponse("NOT_IMPLEMENTED",
-                "The " + resource + " resource hasn't been implemented on the aggregator.");
+                "The " + resource + " resource hasn't been implemented on the aggregator.", null);
         return Response.status(Response.Status.NOT_IMPLEMENTED).entity(error).build();
     }
 
@@ -61,8 +61,9 @@ public class CorpusResource {
         // Query each node and collect responses
         Map<String, Corpus> nodeResponses;
         try {
-            nodeResponses = Requests.getResponses(client, target -> target.path(corpusName)
-                    .queryParam("listvalues", listvalues), Corpus.class);
+            nodeResponses = Requests.getResponses(
+                    url -> Requests.optParams(client.target(url).path(corpusName), "listvalues", listvalues),
+                    Corpus.class);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
@@ -105,11 +106,11 @@ public class CorpusResource {
 
         // Query each node and collect responses
         try {
-            Pair<String, DocOverview> response = Requests.getFirstSuccesfulResponse(client,
-                    target -> target.path(corpusName).path("docs").path(pid),
+            Pair<String, DocOverview> response = Requests.getFirstSuccesfulResponse(
+                    url -> client.target(url).path(corpusName).path("docs").path(pid),
                     DocOverview.class, MediaType.APPLICATION_JSON_TYPE);
             if (response == null)
-                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.")).build();
+                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.", null)).build();
             System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
             return Response.ok().entity(response.getValue()).build();
         } catch (BlsRequestException e) {
@@ -137,11 +138,11 @@ public class CorpusResource {
 
         // Query each node and collect responses
         try {
-            Pair<String, String> response = Requests.getFirstSuccesfulResponse(client,
-                    target -> target.path(corpusName).path("docs").path(pid).path("contents"),
+            Pair<String, String> response = Requests.getFirstSuccesfulResponse(
+                    url -> client.target(url).path(corpusName).path("docs").path(pid).path("contents"),
                     String.class, MediaType.APPLICATION_XML_TYPE);
             if (response == null)
-                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.")).build();
+                return Response.status(404).entity(new ErrorResponse("DOC_NOT_FOUND", "Document with pid '" + pid + "' wasn't found on any of the nodes.", null)).build();
             System.err.println("Found doc " + corpusName + "/" + pid + " on node " + response.getKey());
             return Response.ok().type(MediaType.APPLICATION_XML).entity(response.getValue()).build();
         } catch (BlsRequestException e) {

@@ -23,6 +23,10 @@ public class AppConfig extends ResourceConfig {
 
 		@Override
 		public Client provide() {
+//			ClientConfig configuration = new ClientConfig();
+//			configuration = configuration.property(ClientProperties.CONNECT_TIMEOUT, 1000);
+//			configuration = configuration.property(ClientProperties.READ_TIMEOUT, 1000);
+//			return ClientBuilder.newClient(configuration);
 			return ClientBuilder.newClient();
 		}
 

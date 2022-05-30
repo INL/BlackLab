@@ -17,11 +17,14 @@ public class ErrorResponse {
 
         String message;
 
+        String stackTrace;
+
         private Desc() {}
 
-        public Desc(String code, String message) {
+        public Desc(String code, String message, String stackTrace) {
             this.code = code;
             this.message = message;
+            this.stackTrace = stackTrace;
         }
 
         public String getCode() {
@@ -29,6 +32,10 @@ public class ErrorResponse {
         }
 
         public String getMessage() {
+            return message;
+        }
+
+        public String getStackTrace() {
             return message;
         }
     }
@@ -45,8 +52,8 @@ public class ErrorResponse {
         this.error = error;
     }
 
-    public ErrorResponse(String code, String message) {
-        this.error = new Desc(code, message);
+    public ErrorResponse(String code, String message, String stackTrace) {
+        this.error = new Desc(code, message, stackTrace);
     }
 
     public String getMessage() {
@@ -61,8 +68,8 @@ public class ErrorResponse {
         this.nodeUrl = nodeUrl;
     }
 
-    public void setError(String code, String message) {
-        error = new Desc(code, message);
+    public void setError(String code, String message, String stackTrace) {
+        error = new Desc(code, message, stackTrace);
     }
 
     public Desc getError() {

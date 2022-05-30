@@ -33,7 +33,7 @@ public class RootResource {
         // Query each node and collect responses
         Map<String, Server> nodeResponses;
         try {
-            nodeResponses = Requests.getResponses(client, target -> target, Server.class);
+            nodeResponses = Requests.getResponses(url -> client.target(url), Server.class);
         } catch (BlsRequestException e) {
             // One of the node requests produced an error. Return it now.
             return Response.status(e.getStatus()).entity(e.getResponse()).build();
