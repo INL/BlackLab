@@ -86,7 +86,7 @@ public class RequestHandlerDocContents extends RequestHandler {
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.", "INTERR_FETCHING_DOCUMENT_CONTENTS");
         if (!mayView(blIndex.metadata(), document)) {
-            return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed.");
+            return Response.unauthorized(ds, "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://inl.github.io/BlackLab/how-to-configure-indexing.html.");
         }
 
         Hits hits = null;
