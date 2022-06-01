@@ -104,7 +104,7 @@ Explanation of the various resources:
 	</tr>
 	<tr>
 		<td>docs/pid/contents </td>
-		<td>Contents of a document. This returns the original input XML. (see note below about the contentViewable setting)</td>
+		<td>Contents of a document. This returns the original input XML. (if allowed by the <code>contentViewable</code> setting; see below)</td>
 	</tr>
 	<tr>
 		<td>docs/pid/snippet </td>
@@ -120,16 +120,14 @@ Explanation of the various resources:
 	</tr>
     <tr>
         <td>termfreq </td>
-        <td>EXPERIMENTAL. Returns most frequent terms from the an annotation in main annotated field. Parameters: `annotation` selects the annotation to get term frequencies for; `number` indicates the maximum number to return; `sensitive` (true/false) indicates whether or not to list terms case/diacritics sensitively; `terms` is an optional comma-separated list of terms for which to get the frequencies; `filter` filters documents.</td>
+        <td>EXPERIMENTAL. Returns most frequent terms from the an annotation in main annotated field. Parameters: <code>annotation</code> selects the annotation to get term frequencies for; <code>number</code> indicates the maximum number to return; <code>sensitive</code> (true/false) indicates whether or not to list terms case/diacritics sensitively; <code>terms</code> is an optional comma-separated list of terms for which to get the frequencies; <code>filter</code> filters documents.</td>
     </tr>
 </table>
 
-NOTE: by default, users are not allowed to retrieve full document contents. In order to allow this, change the 'contentViewable' setting in the indexmetadata file in the index directory.
-You can also specify this setting in the corpusConfig part of an input format descripion file, see [Influencing index metadata](how-to-configure-indexing.html#influence-index-metadata). The contentViewable setting in the indexmetadata file may be overridden for a document by adding a boolean metadata field named "contentViewable". This can be configured in the input config file like any other metadata field. For example, if your documents contain a "license" element with an attribute status that must be equal to "public" for the content to be viewable, use an XPath query like "string(//license[1]/@status='public')".
+**NOTE:** by default, users are not allowed to retrieve full document contents. In order to allow this, change the `contentViewable` setting in the indexmetadata file in the index directory.
+You can also specify this setting in the corpusConfig part of an input format description file, see [Influencing index metadata](how-to-configure-indexing.html#influence-index-metadata). The `contentViewable` setting in the indexmetadata file may be overridden for a document by adding a boolean metadata field named `contentViewable`. This can be configured in the input config file like any other metadata field. For example, if your documents contain a "license" element with an attribute status that must be equal to "public" for the content to be viewable, use an XPath query like "string(//license[1]/@status='public')".
 
 Below is an overview of parameters that can be passed to the various resources. Default values for most parameters can be configured on the server; below are a few suggestions for defaults.
-
-(NOTE: parameters in italics haven't been implemented yet)
 
 <table>
 	<tr>
@@ -138,7 +136,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>patt </td>
-		<td>Pattern to search for. This normally uses <a href='corpus-query-language.html'>Corpus Query Language</a>. (different query languages are possible, see `pattlang`)</td>
+		<td>Pattern to search for. This normally uses <a href='corpus-query-language.html'>Corpus Query Language</a>. (different query languages are possible, see <code>pattlang</code>)</td>
 	</tr>
 	<tr>
 		<td>pattlang </td>
@@ -146,7 +144,13 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>pattgapdata </td>
-		<td>(Corpus Query Language only) Data (TSV, tab-separated values) to put in gaps in query. You may leave 'gaps' in the double-quoted strings in your query that can be filled in from tabular data. The gaps should be denoted by @@, e.g. [lemma="@@"] or [word="@@cat"]. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is "The" "@@" "@@" and your TSV data is "white\tcat\nblack\tdog", this will execute the query ("The" "white" "cat") | ("The" "black" "dog"). Please note that if you want to pass a large amount of data, you should use a POST request as the amount of data you can pass in a GET request is limited (with opinions on a safe maximum size varying between 255 and 2048 bytes). Large amounts of data </td>
+		<td>
+			(Corpus Query Language only; advanced feature) Data (TSV, tab-separated values) to put in gaps in query.
+			<details>
+				<summary>Show details</summary>
+You may leave 'gaps' in the double-quoted strings in your query that can be filled in from tabular data. The gaps should be denoted by @@, e.g. [lemma="@@"] or [word="@@cat"]. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is "The" "@@" "@@" and your TSV data is "white\tcat\nblack\tdog", this will execute the query ("The" "white" "cat") | ("The" "black" "dog"). Please note that if you want to pass a large amount of data, you should use a POST request as the amount of data you can pass in a GET request is limited (with opinions on a safe maximum size varying between 255 and 2048 bytes). Large amounts of data
+			</details>
+		</td>
 	</tr>
 	<tr>
 		<td>pattfield </td>
@@ -158,7 +162,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>filter </td>
-		<td>Document filter query in [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description), e.g. “publicationYear:1976” (default: none)</td>
+		<td>Document filter query in <a href="https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description">Lucene query syntax</a>), e.g. publicationYear:1976 (default: none)</td>
 	</tr>
 	<tr>
 		<td>filterlang </td>
@@ -182,7 +186,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>includegroupcontents </td>
-		<td>Whether to include the hits with each group (default: false).<br/>NOTE: only works for /hits requests for now.</td>
+		<td>Whether to include the hits with each group (default: false).<br/><b>NOTE:</b> only works for <code>/hits</code> requests for now.</td>
 	</tr>
 	<tr>
 		<td>viewgroup </td>
@@ -190,7 +194,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>hitfiltercrit </td>
-		<td>A criterium to filter hits on. Also needs hitfilterval to work. See below. (default: don't filter)<br/>This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially supersede the viewgroup parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to hitfiltercrit/hitfilterval, you can keep diving deeper into your result set. <b>NOTE:</b> this may be slow because it finds all hits, then filters them by this criterium.</td>
+		<td>A criterium to filter hits on. Also needs <code>hitfilterval</code> to work. See below. (default: don't filter)<br/>This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially supersede the viewgroup parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to hitfiltercrit/hitfilterval, you can keep diving deeper into your result set. <b>NOTE:</b> this may be slow because it finds all hits, then filters them by this criterium.</td>
 	</tr>
 	<tr>
 		<td>hitfilterval </td>
@@ -199,10 +203,6 @@ Below is an overview of parameters that can be passed to the various resources. 
 	<tr>
 		<td>facets </td>
 		<td>Document faceting criteria, comma-separated. See below.  (default: don’t do any faceting)</td>
-	</tr>
-	<tr>
-		<td><i>collator</i></td>
-		<td>What collator to use for sorting and grouping (default: nl)</td>
 	</tr>
 	<tr>
 		<td>first </td>
@@ -222,11 +222,11 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>wordstart </td>
-		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. NOTE: partial contents XML output will be wrapped in &#60;blacklabResponse/&#62; element to ensure a single root element. NOTE: when greater than -1 content before the first word will not be included in the response!</td>
+		<td>(snippet/contents operations) First word (0-based) of the snippet/part of the document we want. -1 for document start. <b>NOTE:</b> partial contents XML output will be wrapped in <code>&#60;blacklabResponse/&#62;</code> element to ensure a single root element. <b>NOTE:</b> when greater than -1 content before the first word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>wordend </td>
-		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end. NOTE when greater than -1 content after the last word will not be included in the response!</td>
+		<td>(snippet/contents operations) First word (0-based) after the snippet/part of the document we want. -1 for document end. <b>NOTE:</b> when greater than -1 content after the last word will not be included in the response!</td>
 	</tr>
 	<tr>
 		<td>block (deprecated)</td>
@@ -247,7 +247,7 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 	<tr>
 		<td>outputformat </td>
-		<td>“json”, “xml” or "csv". (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. NOTE: most browsers send a default Accept header including XML.<br/><br/>For "csv", two additional parameters are supported: "csvsummary=yes" will add a summary of the query to the CSV output; "csvsepline=yes" will add "sep=," as the first line, specifically for using the resulting CSV with Excel. Both default to "no".</td>
+		<td>“json”, “xml” or "csv". (Default: check the HTTP Accept header, or use the server default (usually xml) if none was specified. <b>NOTE:</b> most browsers send a default Accept header including XML.<br/><br/>For "csv", two additional parameters are supported: "csvsummary=yes" will add a summary of the query to the CSV output; "csvsepline=yes" will add "sep=," as the first line, specifically for using the resulting CSV with Excel. Both default to "no".</td>
 	</tr>
 	<tr>
 		<td>jsonp </td>
@@ -286,13 +286,13 @@ Below is an overview of parameters that can be passed to the various resources. 
 	</tr>
 </table>
 
-NOTE: using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore)
+**NOTE:** using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore)
 
 <a id="sorting-grouping-filtering-faceting"></a>
 
 ## Sorting, grouping, filtering & faceting
 
-NOTE: this is about sorting/grouping and filtering/faceting on groups. For basic filtering on document metadata, see the `filter` parameter above and the [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description).
+**NOTE:** this is about sorting/grouping and filtering/faceting on groups. For basic filtering on document metadata, see the `filter` parameter above and the [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description).
 
 The sort, group, hitfiltercrit and facets parameters receive one or more criteria (comma-separated) that indicate what to sort, group, filter or facet on.
 
@@ -359,7 +359,9 @@ A few more examples:
 
 There's code examples of using BlackLab Server from [a number of different programming languages](blacklab-server-different-languages.html).
 
-Below are examples of individual requests to BlackLab Server. NOTE: for clarity, double quotes have not been URL-encoded.
+Below are examples of individual requests to BlackLab Server.
+
+**NOTE:** for clarity, double quotes have not been URL-encoded.
 
 #### Searches
 
@@ -481,7 +483,7 @@ configVersion: 2
 # Where indexes can be found
 # (list directories whose subdirectories are indexes, or directories containing a single index)
 indexLocations:
-- /data/blacklab/indexes
+- /data/index
 ```
 
 (for more information about configuration BlackLab and BlackLab Server, see [Configuration files](configuration-files.html))
@@ -544,7 +546,7 @@ Operations that do not return status or error codes and messages (which is all s
 	<tr>
 		<td>400 Bad Request </td>
 		<td>FILTER_SYNTAX_ERROR </td>
-		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE <i>(NOTE: see [Lucene query syntax](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description))</i></td>
+		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE<br><i>(<b>NOTE:</b> see <a href="https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description">Lucene query syntax</a>)</i></td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>

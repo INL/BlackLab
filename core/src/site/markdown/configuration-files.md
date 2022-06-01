@@ -48,7 +48,7 @@ configVersion: 2
 # Where indexes can be found
 # (list directories whose subdirectories are indexes, or directories containing a single index)
 indexLocations:
-- /data/blacklab/indexes
+- /data/index
 ```
 
 This simply tells BlackLab Server where to find its indexes.
@@ -77,11 +77,11 @@ configVersion: 2
 # Where indexes can be found
 # (list directories whose subdirectories are indexes, or directories containing a single index)
 indexLocations:
-- /data/blacklab/indexes
+- /data/index
 
 # Directory containing each users' private indexes
 # (only works if you've configured an authentication system, see below)
-userIndexes: /data/blacklab/indexes/users
+userIndexes: /data/user-index
 
 # Settings related to BlackLab Server's protocol, i.e. requests and responses
 protocol:

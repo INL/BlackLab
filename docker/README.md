@@ -2,6 +2,8 @@
 
 This is an experimental Docker image for BlackLab Server.
 
+A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher).
+
 To build it, run:
 
 ```bash
@@ -33,13 +35,13 @@ docker run --rm \
     --mount 'type=volume,src=blacklab-data,dst=/data' \
     instituutnederlandsetaal/blacklab \
     /bin/bash -c "cd /usr/local/lib/blacklab-tools && \
-    java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/my-index /input/my-input-files/ my-file-format"
+    java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/my-index /input/my-input-files/ my-file-format"
 
 # Run a BlackLab server container with port 8080 mapped and the named volume with your index
 docker run -d -p 8080:8080 --name blacklab --mount 'type=volume,src=blacklab-data,dst=/data' instituutnederlandsetaal/blacklab
 ```
 
-Of course, it makes sense to capture this in a Docker Compose file. The included Compose file does just that. It can be configured using environment variables. The easiest is to create an environment variable file and pass that to Compose.
+Of course, it makes sense to capture this in a Docker Compose file. The included Compose file does just that (Compose version 1.27.1 or higher required). It can be configured using environment variables. The easiest is to create an environment variable file and pass that to Compose.
 
 Create a file named `test.env` with your indexing configuration:
 

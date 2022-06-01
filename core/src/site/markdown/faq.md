@@ -52,7 +52,7 @@ Sometimes, certain advanced queries may be slow as well. You can experiment with
 
 You may be getting "permission denied" or such when trying to view a whole document in corpus-frontend or via BlackLab Server. This is due to the `contentViewable` setting.
 
-@@@ TODO
+See the note about `contentViewable` on the [BlackLab Server overview](blacklab-server-overview.html#requests) page.
 
 
 ## Can I use BlackLab with Solr/ElasticSearch?

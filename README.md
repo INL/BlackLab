@@ -51,6 +51,8 @@ mvn site
 
 An experimental Docker setup is provided now. It will likely change in the future.
 
+A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher. 
+
 We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://inl.github.io/BlackLab/indexing-with-blacklab.html) to learn more.
 
 Create a file named `test.env` with your indexing configuration:
