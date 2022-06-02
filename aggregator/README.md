@@ -3,6 +3,20 @@
 This branch is intended as a proof of concept for a distributed search webservice. It is not intended to be merged. If succesful, we will integrate BlackLab with Solr(Cloud) to enable distributed indexing and search.
 
 
+## Curious?
+
+To try out this (VERY experimental!) aggregator:
+- Set up 3 BLS instances that have one or more corpora with the same name (but different documents)
+- Build and install the aggregator on another server
+- Configure the aggregator by creating a file `aggregator.yaml` in either `$HOME/.blacklab/`, `/etc/blacklab/` or `/vol1/etc/blacklab/`:
+  ```yaml
+  nodes:
+    - http://node1.example.com:8080/blacklab-server
+    - http://node2.example.com:8080/blacklab-server
+    - http://node2.example.com:8080/blacklab-server
+  ```
+
+
 ## Goals
 
 We want to be able to quickly answer these questions:
@@ -54,9 +68,10 @@ The service will do very simple caching of (partial) result sets for a short tim
 We will test the service for correctness and performance.
 
 
-## Open questions
+## Questions
 
 - How big a corpus do we need to effectively test performance?
+  
 - Does using our central SAN present a bottleneck? If so, could local SSDs solve this?
 - Is it enough to distribute a corpus over multiple (virtual) disk volumes, or do we need separate servers? 
 - How many nodes should the cluster have?
@@ -66,7 +81,7 @@ We will test the service for correctness and performance.
 
 ## single-machine specs
 
-CHN-intern current corpus size: 280G
+CHN-intern current corpus size: 280G (2.2 billion tokens)
 
 - svotmc10: 16 cores, 48G memory   
 - svatmc10: 12 cores, 48G memory
@@ -74,12 +89,12 @@ CHN-intern current corpus size: 280G
 
 ## cluster specs
 
-Start with 3 nodes.
+Start with 3 nodes, each with around 750M tokens.
 
 For each node:
 - 150G disk space
-- 8 cores    (increase if this is a bottleneck)
-- 24G memory (probably not a bottleneck)
+- 8 cores    (not a bottleneck with single-user testing)
+- 24G memory (16G turned out to be too low to have both enough JVM heap and significant OS disk cache)
 
 (total 24 cores, 72G memory)
 
