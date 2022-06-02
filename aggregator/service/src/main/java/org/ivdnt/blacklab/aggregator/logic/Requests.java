@@ -36,9 +36,8 @@ public class Requests {
      * Used to omit some default values for more readable URLs.
      */
     private static boolean isParamDefault(String key, String value) {
-        switch (key) {
-        case "usecache":
-            return value.equals("true");
+        if ("usecache".equals(key)) {
+            return value.equals("true") || value.equals("yes");
         }
         return false;
     }
@@ -260,13 +259,13 @@ public class Requests {
                 sort = "size";
             // Group request.
             var s = sort;
-            Map<String, HitsResults> responses = null;
-            responses = getResponses(
+            Map<String, HitsResults> responses = getResponses(
                     url -> Requests.optParams(client.target(url).path(corpusName).path("hits"),
                             "patt", patt,
                             "sort", s,
                             "group", group,
-                            "number", MAX_GROUPS_TO_GET),
+                            "number", MAX_GROUPS_TO_GET,
+                            "usecache", Boolean.toString(useCache.onNodes())),
                     HitsResults.class
             );
             HitsResults results = responses.values().stream()
