@@ -602,7 +602,10 @@ public class SearchParameters {
         SearchEmpty search = blIndex().search(null, getUseCache());
         try {
             Query filter = hasFilter() ? getFilterQuery() : null;
-            return search.find(getPattern().toQuery(search.queryInfo(), filter), getSearchSettings());
+            TextPattern pattern = getPattern();
+            if (pattern == null)
+                throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
+            return search.find(pattern.toQuery(search.queryInfo(), filter), getSearchSettings());
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }
