@@ -22,6 +22,7 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
+import org.ivdnt.blacklab.aggregator.logic.hits.HitsSearch;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.HitGroup;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -209,7 +210,7 @@ public class Requests {
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue, (x, y) -> x));
     }
 
-    enum UseCache {
+    public enum UseCache {
         YES,
         NO,
         NODES_ONLY; // use cache on nodes but not in aggregator

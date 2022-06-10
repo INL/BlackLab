@@ -1,4 +1,4 @@
-package org.ivdnt.blacklab.aggregator.logic;
+package org.ivdnt.blacklab.aggregator.logic.hits;
 
 import java.util.Arrays;
 import java.util.Comparator;
