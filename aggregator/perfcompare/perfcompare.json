@@ -1,0 +1,25 @@
+{
+  "corpora": [
+    "http://svowdu10.ivdnt.loc/blacklab-server/chn-intern",
+    "http://localhost/blacklab-server/chn-intern"
+  ],
+  "repeat": 2,
+  "runs": [
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "groupby": "wordleft:lemma:i"
+    },
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "groupby": "field:titleLevel2"
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "groupby": "field:titleLevel2"
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "groupby": "field:ipr"
+    }
+  ]
+}
