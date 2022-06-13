@@ -15,7 +15,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
- * Get information about the structure of an index.
+ * Get information about a document.
  */
 public class RequestHandlerDocInfo extends RequestHandler {
 
@@ -49,6 +49,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         ds.startEntry("docInfo");
         dataStreamDocumentInfo(ds, blIndex, document, getMetadataToWrite());
         ds.endEntry();
+        dataStreamMetadataGroupInfo(ds, blIndex);
 
         ds.startEntry("docFields");
         RequestHandler.dataStreamDocFields(ds, blIndex.metadata());

@@ -523,30 +523,33 @@ public abstract class RequestHandler {
      */
     public void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
         ds.startMap();
-        for (MetadataField f: metadataFieldsToList) {
-            if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
-                continue;
-            }
-            String[] values = document.getValues(f.name());
-            if (values.length == 0) {
-                continue;
+        {
+            for (MetadataField f: metadataFieldsToList) {
+                if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
+                    continue;
+                }
+                String[] values = document.getValues(f.name());
+                if (values.length == 0) {
+                    continue;
+                }
+
+                ds.startEntry(f.name()).startList();
+                {
+                    for (String v: values) {
+                        ds.item("value", v);
+                    }
+                }
+                ds.endList().endEntry();
             }
 
-            ds.startEntry(f.name()).startList();
-            for (String v : values) {
-                ds.item("value", v);
-            }
-            ds.endList().endEntry();
+            String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
+
+            if (tokenLengthField != null)
+                ds.entry("lengthInTokens",
+                        Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN);
+            ds.entry("mayView", mayView(index.metadata(), document));
         }
-
-        String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
-
-        if (tokenLengthField != null)
-            ds.entry("lengthInTokens", Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN);
-        ds.entry("mayView", mayView(index.metadata(), document))
-                .endMap();
-
-        dataStreamMetadataGroupInfo(ds,index);
+        ds.endMap();
     }
 
     protected static void dataStreamMetadataFieldDisplayNames(DataStream ds, IndexMetadata indexMetadata) {
