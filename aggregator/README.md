@@ -156,10 +156,10 @@ If no sort was requested, we have to make sure our merge algorithm for this case
 
 NOTE: for all of the above, but especially for the no-sort case, this trick relies on node responses being stable, i.e. the same request parameters always yielding the same hits in the same order. The "same hits" part is true, but the "same order" is not guaranteed (it is as long as the results are in the cache, but not when the query is run again). With the "no sort" option, the ordering depends on how the hits are produced from Lucene segments by several parallel threads. Each segment should produce a stable hits order (increasing document id), but currently these hits are collected in a global structure as they come in. To ensure a stable ordering, we would need to use a merging algorithm (i.e. one similar to how the aggregator merges unsorted results from the nodes). Even when a sort was specified, not all sort criteria are "complete": sorting hits by a document metadata field does not guarantee what order the individual hits from a document will come in. Also, sorting on context before match may place several hits at the start of a document as the first hits in the result set, without a defined ordering between them.
 
-TODO:
-- [x] keep track of merge table
-- [x] keep track of hits in merge table pages, not in single list
-- [ ] implement dropping results that haven't been used in a while (or just drop them as soon as we reply for now, and make sure our testing takes this into account)
+**STATUS:** IMPLEMENTED (keep track of hits in pages - no dropping of hits pages yet)
+
+LATER:
+- [ ] implement dropping results that haven't been used in a while and reconstructing them as needed (to limit memory usage - but may not be necessary for performance testing)
 - [ ] ensure node responses are stable (although we can hold off on this for performance testing, as it is unlikely to significantly impact the results)
 
 ### Less data per hit / approximate sort
@@ -170,13 +170,11 @@ Do we need all the context data? We do need it for the concordances in the windo
 
 A **global term sort index table** would be ideal, as we wouldn't have to transmit and store strings. But this is challenging to do in a distributed environment, especially in combination with incremental indexing. For example, if a document is added to a node, and it contains a previously unseen term (that doesn't yet have a sort index), it would have to be assigned the correct sort index in the table (potentially updating other terms' sort indexes to avoid collisions), and these changes would have to be communicated to all nodes before any queries including this term could be done. But what if those nodes have (potentially conflicting) changes of their own? And what if one or more nodes were temporarily unavailable during this synchronization process? When those nodes become available again, changes between the term sort index tables would need to be resolved. The term sort index table would keep growing even if a lot of documents are removed unless we keep careful track of what terms still actually occur in the index.
 
-It might be easier to keep an "approximate sort index" (ASI) for each hit, say an integer, with the following property: if two hits have different ASIs, their correct sort order follows from that. If two hits have the same ASI, it means they will sort close together, but we're not sure which comes first. This way we can keep "approximately sorted" hits in memory, and request additional data to refine the sort only for the requested window (or potentially slightly larger depending on how hits with the same ASI are clustered).
+It might be easier to keep an "approximate sort index" (ASI) for each hit with the following property: if two hits have different ASIs, their correct sort order follows from that. If two hits have the same ASI, it means they will sort close together, but we're not sure which comes first. This way we can keep "approximately sorted" hits in memory, and request additional data to refine the sort only for the requested window (or potentially slightly larger depending on how hits with the same ASI are clustered).
 
 The same ASI approach could work for all types of sort, not just the context ones. This means we don't need to store all metadata fields for all documents in the result set to enable sorting by a metadata field.
 
 A concern about the merge table approach described above: merging is done using the requested sort value, so if we switch to approximate sort, we'll have to sort by ASI. This means that the merge table indexes should always coincide with a new ASI value (that is, it shouldn't be in the middle of a list of hits with the same ASI). This way, we can ensure that the hits on each page in the merge table can still be correctly sorted if needed.
-
-An approximate sort index for a HitProperty of a hit could be created by (1) determining a string version of its "most significant part" (e.g. first few characters, or first property if multiple properties specified), (2) determining the CollationKey for that part and (3) getting the corresponding byte array, taking the first (most significant) 4-8 bytes and converting them to a numeric value.
 
 In cases where there's a lot of ASI collisions (e.g. many hits in the same document when sorting by document pid) that will make everything slower, but shouldn't break anything.
 
@@ -194,7 +192,7 @@ The aggregator's hits structure would look something like this:
 For grouping, the same technique could be applied, although there's probably less of a problem, because we usually don't have millions of groups.
 
 TODO:
-- [ ] implement 32-bit integer ASI for HitProperty that can be used to correctly sort hits as long as their ASIs differ; same-ASI hits will have to be correctly sorted later with the full sort information.
+- [ ] implement ASI for HitProperty that can be used to correctly sort hits as long as their ASIs differ; same-ASI hits will have to be correctly sorted later with the full sort information. ASI should probably be a short string, because most values are strings or can be converted (?) and it saves calculating a lot of CollationKeys.
 - [ ] add way for aggregator to request minimal hit info from nodes: only docid (for keeping documents together, see above) and ASI (also keep these together, and perform merge) for each hit. (could even be compacted to list of (docid + list of ASIs in that doc) ).
 - [ ] aggregator fetches minimal hit info to merge hits and build merge table. it also stores node+index for each hit (perhaps encoded together into a long, e.g. 1 byte for node number, 7 bytes for index). only requests "full" hits information for the requested window (plus adjacent same-ASI hits, to ensure correct sorting) and applies final sort to that.
 - [ ] use stored node+index to avoid unnecessary string comparisons
