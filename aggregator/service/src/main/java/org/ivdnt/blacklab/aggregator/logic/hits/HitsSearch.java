@@ -16,8 +16,8 @@ import javax.ws.rs.client.Client;
 
 import org.ivdnt.blacklab.aggregator.AggregatorConfig;
 import org.ivdnt.blacklab.aggregator.logic.Aggregation;
-import org.ivdnt.blacklab.aggregator.logic.hits.NodeHitsSearch.HitIterator;
 import org.ivdnt.blacklab.aggregator.logic.Requests.UseCache;
+import org.ivdnt.blacklab.aggregator.logic.hits.NodeHitsSearch.HitIterator;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
@@ -35,24 +35,62 @@ public class HitsSearch {
     /** Keep cache entries for 5 minutes */
     private static final long MAX_CACHE_AGE_MS = 5 * 60 * 1000;
 
-    /** Information about how a page of hits was assembled from the nodes */
+    /** Information about how a page of hits was assembled from the node responses,
+     * so we don't have to keep everything in memory but can reconstruct part of the
+     * hits when needed.
+     */
     static class MergeTablePage {
         /** index of the first hit in this page */
-        long startIndex;
+        private final long startIndex;
 
         /** size of the page */
-        long size;
+        private long size;
 
         /** at what index is each node's iterator at the start of this page? */
-        long[] startIndexOnNode;
+        private final long[] startIndexOnNode;
 
         ///** When was this page last used? () */
         //long timeLastUsed;
+
+        /** hits in this page (or null if they need to be reconstructed) */
+        private List<Hit> hits;
+
+        /** page following this one or null if none */
+        private MergeTablePage nextPage;
 
         public MergeTablePage(long startIndex, long size, long[] startIndexOnNode) {
             this.startIndex = startIndex;
             this.size = size;
             this.startIndexOnNode = startIndexOnNode;
+            hits = new ArrayList<>();
+        }
+
+        /**
+         * Add a hit to this page.
+         *
+         * Page size is incremented and hit is stored (if the hits on this page
+         * are in memory)
+         *
+         * @param hit hit to add
+         */
+        public void add(Hit hit) {
+            this.size++;
+            if (this.hits != null)
+                this.hits.add(hit);
+        }
+
+        /**
+         * Get hit by its index in the total results.
+         *
+         * @param i hit index
+         * @return hit
+         */
+        public Hit hitByGlobalIndex(long i) {
+            if (i < startIndex || i >= startIndex + size)
+                throw new IllegalArgumentException("Hit not on this page (not " + startIndex + " <= " + i + " < " + startIndex + size + ")");
+            if (hits == null)
+                throw new IllegalArgumentException("Hits for this page are not available (page " + startIndex + "-" + startIndex + size + ", hit " + i + ")");
+            return hits.get((int)(i - startIndex));
         }
     }
 
@@ -102,12 +140,15 @@ public class HitsSearch {
      */
     private final List<HitIterator> nodeSearchIterators;
 
-    /** How were our hits assembled from the individual node's hits? */
+    /**
+     * Our hits, separated into pages (at a document boundary).
+     * We keep track of the start and size of each page, and the start index
+     * on each node, so we can unload the actual hits and reconstruct them later.
+     */
     List<MergeTablePage> mergeTable = new ArrayList<>();
-    MergeTablePage mergeTableCurrentPage;
 
-    /** Merged hits results */
-    private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
+    /** Where are we currently adding hits (always points to the last page) */
+    MergeTablePage mergeTableCurrentPage;
 
     /** Relevant docInfos */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
@@ -150,8 +191,28 @@ public class HitsSearch {
         return mergeTableCurrentPage.startIndex + mergeTableCurrentPage.size;
     }
 
+    private MergeTablePage pageContaining(long hitIndex) {
+        if (hitIndex < 0 || hitIndex >= size())
+            throw new IllegalArgumentException("Hit index out of range: " + hitIndex);
+        // Use binary search to find page
+        int min = 0, max = mergeTable.size() - 1, index;
+        while (min <= max) {
+            index = (min + max) / 2;
+            MergeTablePage page = mergeTable.get(index);
+            if (page.startIndex > hitIndex) {
+                max = index - 1;
+            } else if (page.startIndex + page.size <= hitIndex){
+                min = index + 1;
+            } else {
+                return page;
+            }
+        }
+        throw new IllegalArgumentException("Error, min > max: " + min + " > " + max);
+    }
+
     private Hit get(long i) {
-        return hits.get(i);
+        MergeTablePage page = pageContaining(i);
+        return page.hitByGlobalIndex(i);
     }
 
     /**
@@ -230,16 +291,14 @@ public class HitsSearch {
             if (mergeTableCurrentPage.size >= 1000 && !previousHitDoc.equals(nextHit.docPid)) {
                 // Page has gotten large and we're at a document boundary.
                 // Add a new page.
-                mergeTableCurrentPage = new MergeTablePage(size(), 1, currentNodeIndexes());
-                mergeTable.add(mergeTableCurrentPage);
-            } else {
-                // Page not large enough or not at a document boundary.
-                // Just update the page size.
-                mergeTableCurrentPage.size++;
+                MergeTablePage newPage = new MergeTablePage(size(), 0, currentNodeIndexes());
+                mergeTableCurrentPage.nextPage = newPage;
+                mergeTable.add(newPage);
+                mergeTableCurrentPage = newPage;
             }
 
-            // Add to our hit list
-            hits.add(nextHit);
+            // Add hit to current page
+            mergeTableCurrentPage.add(nextHit);
 
             // Keep track of the last hit's document
             previousHitDoc = nextHit.docPid;
@@ -298,7 +357,7 @@ public class HitsSearch {
         summary.windowHasPrevious = first > 0;
 
         // Build the hits window and docInfos and return
-        BigList<Hit> hitWindow = hits.subList((int)first, (int)(first + actualWindowSize));
+        BigList<Hit> hitWindow = subList(first, actualWindowSize);
         List<DocInfo> relevantDocs = hitWindow.stream()
                 .map(h -> h.docPid)
                 .collect(Collectors.toSet()).stream()
@@ -308,4 +367,31 @@ public class HitsSearch {
         return new HitsResults(summary, hitWindow, relevantDocs);
     }
 
+    private BigList<Hit> subList(long first, long number) {
+        // WAS: return hits.subList(first, first + number);
+        if (first < 0 || first + number > size())
+            throw new IndexOutOfBoundsException("Asked for more hits than were available (" + first + ", " + number + " / " + size() + ")");
+        BigList<Hit> result = new ObjectBigArrayBigList<>();
+
+        // Find the first page to take hits from and determine start index
+        MergeTablePage page = pageContaining(first);
+        long indexInPage = first - page.startIndex;
+        long needHits = number;
+        while (result.size64() < number && page != null) {
+            // How many to take from this page?
+            long available = page.startIndex + page.size - indexInPage;
+            long numberFromThisPage = Math.min(needHits, available);
+
+            // Take the hits and update admin
+            result.addAll(page.hits.subList((int)indexInPage, (int)(indexInPage + numberFromThisPage)));
+            indexInPage = 0;
+            needHits -= numberFromThisPage;
+
+            // Go to next page
+            page = page.nextPage;
+        }
+        if (result.size64() < number)
+            throw new IndexOutOfBoundsException("Internal error! (" + result.size64() + " < " + number + ")");
+        return result;
+    }
 }

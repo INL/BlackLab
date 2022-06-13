@@ -158,7 +158,7 @@ NOTE: for all of the above, but especially for the no-sort case, this trick reli
 
 TODO:
 - [x] keep track of merge table
-- [ ] keep track of hits in merge table pages, not in single list
+- [x] keep track of hits in merge table pages, not in single list
 - [ ] implement dropping results that haven't been used in a while (or just drop them as soon as we reply for now, and make sure our testing takes this into account)
 - [ ] ensure node responses are stable (although we can hold off on this for performance testing, as it is unlikely to significantly impact the results)
 
