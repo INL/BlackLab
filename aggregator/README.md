@@ -33,7 +33,6 @@ If the answers to these questions are positive, we will go ahead with the SolrCl
   - [x] `/input-formats` (returns empty list for now)
   - [x] `/INDEX`
   - [x] `/INDEX/hits`
-    - [ ] `filter` parameter 
   - [x] `/INDEX/docs/PID`
   - [x] `/INDEX/docs/PID/contents`
 - [ ] Optimization

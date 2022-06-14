@@ -101,10 +101,10 @@ public class HitsSearch {
      *
      * Also makes sure old searches are removed from cache.
      */
-    public static HitsSearch get(Client client, String corpusName, String patt, String sort,
+    public static HitsSearch get(Client client, String corpusName, String patt, String filter, String sort,
             String group, String viewGroup, UseCache useCache, long initialNumberOfHits) {
         Comparator<Hit> comparator = HitComparators.deserialize(sort);
-        Params params = new Params(corpusName, patt, sort, group, viewGroup);
+        Params params = new Params(corpusName, patt, filter, sort, group, viewGroup);
         synchronized (cache) {
             if (!useCache.onAggregator())
                 cache.clear();
@@ -270,7 +270,7 @@ public class HitsSearch {
                 long lowestIndex = Long.MAX_VALUE;
                 for (HitIterator it: nodeSearchIterators) {
                     long index = it.hitIndex();
-                    if (index < lowestIndex) {
+                    if (index >= 0 && index < lowestIndex && it.current() != null) {
                         lowestIndex = index;
                         smallestHitSource = it;
                     }

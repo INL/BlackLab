@@ -83,6 +83,7 @@ public class CorpusResource {
     public Response hits(
     		@PathParam("corpusName") String corpusName,
     		@QueryParam("patt") String patt,
+            @DefaultValue("") @QueryParam("filter") String filter,
             @DefaultValue("") @QueryParam("sort") String sort,
             @DefaultValue("") @QueryParam("group") String group,
             @DefaultValue("0") @QueryParam("first") long first,
@@ -90,7 +91,7 @@ public class CorpusResource {
             @DefaultValue("") @QueryParam("viewgroup") String viewGroup,
             @DefaultValue("") @QueryParam("usecache") String useCache) {
 
-        return Requests.getHitsResponse(client, corpusName, patt, sort,
+        return Requests.getHitsResponse(client, corpusName, patt, filter, sort,
                 group, first, number, viewGroup, useCache);
     }
 

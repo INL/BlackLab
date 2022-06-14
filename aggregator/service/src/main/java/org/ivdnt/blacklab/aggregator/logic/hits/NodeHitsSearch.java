@@ -97,6 +97,7 @@ class NodeHitsSearch {
         nextPageTarget = Requests.optParams(webTarget.path(params.corpusName).path("hits"),
                 "patt", params.patt,
                 "sort", params.sort,
+                "filter", params.filter,
                 "group", params.group,
                 "viewgroup", params.viewGroup,
                 "first", first,

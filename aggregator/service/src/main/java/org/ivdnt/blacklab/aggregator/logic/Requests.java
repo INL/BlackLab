@@ -238,7 +238,7 @@ public class Requests {
     /**
      * Perform a hits request and get the requested hits window response.
      */
-    public static Response getHitsResponse(Client client, String corpusName, String patt,
+    public static Response getHitsResponse(Client client, String corpusName, String patt, String filter,
             String sort, String group, long first, long number, String viewGroup, String strUseCache) {
         UseCache useCache = UseCache.fromStringValue(strUseCache);
 
@@ -248,7 +248,7 @@ public class Requests {
             // Response is a list of hits.
 
             // Request the search object
-            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, sort, group, viewGroup, useCache, first + number);
+            HitsSearch hitsSearch = HitsSearch.get(client, corpusName, patt, filter, sort, group, viewGroup, useCache, first + number);
             // Request the window, waiting for it to be available
             HitsResults results = hitsSearch.window(first, number);
             // Return the response

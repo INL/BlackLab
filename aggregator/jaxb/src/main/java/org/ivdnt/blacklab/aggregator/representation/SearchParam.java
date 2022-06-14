@@ -16,6 +16,9 @@ public class SearchParam {
     public String patt = "";
 
     @JsonInclude(Include.NON_EMPTY)
+    public String filter = "";
+
+    @JsonInclude(Include.NON_EMPTY)
     public String sort = "";
 
     @JsonInclude(Include.NON_EMPTY)
@@ -39,6 +42,7 @@ public class SearchParam {
         return "SearchParam{" +
                 "indexname='" + indexname + '\'' +
                 ", patt='" + patt + '\'' +
+                ", filter='" + filter + '\'' +
                 ", sort='" + sort + '\'' +
                 ", group='" + group + '\'' +
                 ", viewgroup='" + viewgroup + '\'' +
