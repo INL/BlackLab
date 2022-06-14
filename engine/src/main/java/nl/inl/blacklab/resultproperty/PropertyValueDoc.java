@@ -2,6 +2,7 @@ package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.ASVUtil;
 
 /** Property value that represents a BlackLab document */
 public class PropertyValueDoc extends PropertyValue {
@@ -12,7 +13,12 @@ public class PropertyValueDoc extends PropertyValue {
     public Integer value() {
         return docId;
     }
-    
+
+    @Override
+    public String getApproximateSortValue() {
+        return ASVUtil.encode(docId);
+    }
+
     /*public Document luceneDoc() {
         return index.luceneDoc(docId);
     }*/

@@ -108,4 +108,9 @@ public class PropertyValueMultiple extends PropertyValue {
         }
         return a.length - b.length; // sort short arrays before long arrays when all values up to the trailing values in the longer array are the same
     }
+
+    @Override
+    public String getApproximateSortValue() {
+        return value[0].getApproximateSortValue();
+    }
 }

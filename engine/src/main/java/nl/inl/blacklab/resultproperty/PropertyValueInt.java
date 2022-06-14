@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.ASVUtil;
 
 public class PropertyValueInt extends PropertyValue {
     final long value;
@@ -54,5 +55,9 @@ public class PropertyValueInt extends PropertyValue {
     @Override
     public String serialize() {
         return PropertySerializeUtil.combineParts("int", Long.toString(value));
+    }
+
+    @Override public String getApproximateSortValue() {
+        return ASVUtil.encode(value);
     }
 }

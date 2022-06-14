@@ -66,6 +66,11 @@ public class PropertyValueContextWord extends PropertyValueContext {
     }
 
     @Override
+    public String getApproximateSortValue() {
+        return valueTokenId < 0 ? "" : sensitivity.desensitize(terms.get(valueTokenId));
+    }
+
+    @Override
     public String serialize() {
         String token = terms.serializeTerm(valueTokenId);
         return PropertySerializeUtil.combineParts(

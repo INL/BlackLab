@@ -265,7 +265,7 @@ public class HitsSearch {
 
             // If there's no sort, and no hit from the same doc as the previous hit:
             // Find which node is at the lowest hit index, and return next hit from that,
-            // so we hit each node roughly equally.
+            // so the merge is reproducible and we hit each node roughly equally.
             if (comparator == null && smallestHitSource == null) {
                 long lowestIndex = Long.MAX_VALUE;
                 for (HitIterator it: nodeSearchIterators) {

@@ -112,4 +112,10 @@ public class PropertyValueContextWords extends PropertyValueContext {
     public int[] value() {
         return valueTokenId;
     }
+
+    @Override
+    public String getApproximateSortValue() {
+        return valueTokenId.length == 0 || valueTokenId[0] < 0 ? "" :
+                sensitivity.desensitize(terms.get(valueTokenId[0]));
+    }
 }
