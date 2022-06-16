@@ -3,6 +3,8 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.util.Locale;
 
+import javax.xml.stream.events.Characters;
+
 import org.junit.Assert;
 import org.junit.Test;
 
