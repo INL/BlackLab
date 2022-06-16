@@ -188,7 +188,7 @@ The aggregator's hits structure would look something like this:
 | node  | node index this hit originated from (for requesting concordances and for fast comparison with others from this node) |
 | nodei | original index on originating node (for requesting concordances and for fast comparison with others from this node)  |
 
-> **CAUTION:** for this to work properly, it is essential that the collation on the nodes and the aggregator work exactly the same. Right now, sorting and grouping all use the same collator, but if this became configurable per property in the future (e.g. because different fields use different languages), the aggregator would need this information as well.
+> **CAUTION:** for this to work properly, it is essential that the collation on the nodes and the aggregator work exactly the same. Right now, sorting and grouping mostly use the same collator (configurable per index), but sorting/grouping on context uses a slightly different one to "insensitively" compare terms, which doesn't ignore dashes and spaces. The reason for this is that we use "desensitization" of terms (lowercasing and removing diacritics) so we can then use regular `equals()` to compare them. The collator must yield the same comparison result in this case, which means it cannot skip space and dash. This must be taken into account in the aggregator as well.
 
 For grouping, the same technique could be applied, although there's probably less of a problem, because we usually don't have millions of groups.
 

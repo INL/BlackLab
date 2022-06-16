@@ -22,7 +22,7 @@ public class TestPropertyValues {
 
     static {
         // Test using MockTerms with a sorted list of very similar words that should not be equal
-        List<String> strTerms = Arrays.asList("aap", "a ap", "aa p", " aap", "aap ", "a a p", "-aap", "a-ap", "aap-");
+        List<String> strTerms = Arrays.asList("a", "aa", "ap", "p", "aap", "a ap", "aa p", " aap", "aap ", "a a p", "-aap", "a-ap", "aap-");
         strTerms.sort(collator); // MockTerms requires that terms are already sorted
         terms = new MockTerms(strTerms.toArray(new String[0]));
     }
@@ -39,6 +39,10 @@ public class TestPropertyValues {
         Assert.assertEquals(1, twoThreeFive.compareTo(twoThreeThree));
     }
 
+    private static void testPropertyValueSortValue(Supplier<PropertyValue> generator) {
+        testPropertyValueSortValue(generator, 1000);
+    }
+
     /**
      * Tests that comparing the sort values yields the same result as direct comparison.
      *
@@ -46,15 +50,15 @@ public class TestPropertyValues {
      *
      * @param generator should generate a (repeatably) random PropertyValue of the right type to test
      */
-    private static void testPropertyValueSortValue(Supplier<PropertyValue> generator) {
-        for (int i = 0; i < 1000; i++) {
+    private static void testPropertyValueSortValue(Supplier<PropertyValue> generator, int tests) {
+        for (int i = 0; i < tests; i++) {
             PropertyValue a = generator.get();
             PropertyValue b = generator.get();
             String asv = a.getSortValue();
             String bsv = b.getSortValue();
             int cmpSortValue = collator.compare(asv, bsv);
             int cmpDirect = a.compareTo(b);
-            Assert.assertEquals("sort value comparison equals direct comparison: " + asv + ", " + bsv, cmpSortValue, cmpDirect);
+            Assert.assertEquals("sort value comparison equals direct comparison: '" + asv + "', '" + bsv + "'", cmpSortValue, cmpDirect);
         }
     }
 
@@ -75,10 +79,6 @@ public class TestPropertyValues {
 
     @Test
     public void testPropertyValueContextWordsSortValue() {
-        // Test using MockTerms with a sorted list of very similar words that should not be equal
-        List<String> strTerms = Arrays.asList("aap", "a ap", "aa p", " aap", "aap ", "a a p", "-aap", "a-ap", "aap-");
-        strTerms.sort(collator); // MockTerms requires that terms are already sorted
-        Terms terms = new MockTerms(strTerms.toArray(new String[0]));
         Random random = new Random(6783);
         testPropertyValueSortValue(() -> {
             int[] words = new int[] {
@@ -87,6 +87,19 @@ public class TestPropertyValues {
                     random.nextInt(terms.numberOfTerms())
             };
             return new PropertyValueContextWords(terms, "lemma", MatchSensitivity.INSENSITIVE, words, false);
-        });
+        }, 100_000);
+    }
+
+    @Test
+    public void termCollatorVsRegularCollator() {
+        //Assert.assertEquals(1, collator.compare("aap", "-aap"));
+
+        // Regular collator ignores all dashes and spaces...
+        Assert.assertEquals( 1, collator.compare(" aap | ap | ap", "-aap | a ap | p"));
+
+        // ...but Terms collator does not!
+        Collator termsCollator = terms.getCollator(MatchSensitivity.INSENSITIVE);
+        Assert.assertEquals(-1, termsCollator.compare(" aap | ap | ap", "-aap | a ap | p"));
+
     }
 }
