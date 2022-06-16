@@ -188,7 +188,7 @@ The aggregator's hits structure would look something like this:
 | node  | node index this hit originated from (for requesting concordances and for fast comparison with others from this node) |
 | nodei | original index on originating node (for requesting concordances and for fast comparison with others from this node)  |
 
-> **CAUTION:** for this to work properly, it is essential that the collation on the nodes and the aggregator work exactly the same! Right now, sorting and grouping all use the same collator, but if this became configurable per property in the future (e.g. because different fields use different languages), the aggregator would need this information as well!
+> **CAUTION:** for this to work properly, it is essential that the collation on the nodes and the aggregator work exactly the same. Right now, sorting and grouping all use the same collator, but if this became configurable per property in the future (e.g. because different fields use different languages), the aggregator would need this information as well.
 
 For grouping, the same technique could be applied, although there's probably less of a problem, because we usually don't have millions of groups.
 

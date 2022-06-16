@@ -1,7 +1,7 @@
 # Distributed Search (Proof of Concept)
 
 This branch contains a proof of concept for distributed search. It is not intended to be merged.
-If succesful, we will integrate BlackLab with Solr to enable distributed indexing and search.
+If successful, we will integrate BlackLab with Solr to enable distributed indexing and search.
 
 See [aggregator/](aggregator/README.md) for details.
 
