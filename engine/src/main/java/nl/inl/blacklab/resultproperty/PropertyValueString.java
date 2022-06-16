@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
-import nl.inl.util.ASVUtil;
+import nl.inl.util.SortValueUtil;
 
 public class PropertyValueString extends PropertyValue {
     final String value;
@@ -16,8 +16,8 @@ public class PropertyValueString extends PropertyValue {
     }
 
     @Override
-    public String getApproximateSortValue() {
-        return ASVUtil.abbreviate(value);
+    public String getSortValue() {
+        return value;
     }
 
     @Override

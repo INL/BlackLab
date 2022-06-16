@@ -115,5 +115,5 @@ public abstract class PropertyValue implements Comparable<Object> {
     
     public abstract Object value();
 
-    public abstract String getApproximateSortValue();
+    public abstract String getSortValue();
 }

@@ -37,7 +37,7 @@ If the answers to these questions are positive, we will go ahead with the SolrCl
   - [x] `/INDEX/docs/PID/contents`
 - [ ] Optimization
   - [ ] improve performance and reduce memory requirements using hit index lists
-  - [ ] improve performance and reduce memory requirements using approximate sort value
+  - [ ] improve performance and reduce memory requirements using sort value
 - [x] Sort options for hits\[grouped\]:
   - [x] no sort
   - [x] sort on context (match/(word) before/(word) after)
@@ -161,7 +161,7 @@ LATER:
 - [ ] implement dropping results that haven't been used in a while and reconstructing them as needed (to limit memory usage - but may not be necessary for performance testing)
 - [ ] ensure node responses are stable (although we can hold off on this for performance testing, as it is unlikely to significantly impact the results)
 
-### Less data per hit / approximate sort
+### Less data per hit / sort values
 
 Storing full context (before/match/after) for each hit in string form will require a lot of memory for large result sets, as well as a lot of network traffic for information that we don't always need. Also, merging results from the nodes would rely on string comparisons instead of the quick sort order index comparison we use now.
 

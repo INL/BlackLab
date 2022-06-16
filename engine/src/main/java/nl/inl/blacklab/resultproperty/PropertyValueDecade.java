@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
-import nl.inl.util.ASVUtil;
+import nl.inl.util.SortValueUtil;
 
 public class PropertyValueDecade extends PropertyValueInt {
 
@@ -31,8 +31,8 @@ public class PropertyValueDecade extends PropertyValueInt {
     }
 
     @Override
-    public String getApproximateSortValue() {
-        return ASVUtil.encodeYear((int)value);
+    public String getSortValue() {
+        return SortValueUtil.encodeYear((int)value);
     }
 
     @Override

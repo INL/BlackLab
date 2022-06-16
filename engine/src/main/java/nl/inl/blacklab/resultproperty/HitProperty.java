@@ -204,21 +204,20 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     public abstract PropertyValue get(long hitIndex);
 
     /**
-     * Get a hit's approximate sort value (ASV), for distributed sort.
+     * Get a hit's sort value, for distributed sort.
      *
      * This is used in distributed search to make merging sorted hits from
-     * several nodes possible without transmitting all the details (context words,
-     * document metadata) about every hit.
+     * several nodes possible without transmitting all the details (context
+     * for all annotations, document metadata) about every hit.
      *
-     * An ASV is a short string with the following property: hits with a different
-     * ASV can be correctly sorted by that ASV. Hits with the same ASV will sort
-     * together, but we don't know their correct sort until we get more details.
+     * Instead, the value to sort on is distilled to a single string that will
+     * still produce the correct sort.
      *
-     * @param hitIndex hit to get the ASV for
-     * @return the hit's ASV
+     * @param hitIndex hit to get the sort value
+     * @return the sort value
      */
-    public String getApproximateSortValue(long hitIndex) {
-        return get(hitIndex).getApproximateSortValue();
+    public String getSortValue(long hitIndex) {
+        return get(hitIndex).getSortValue();
     }
 
     // A default implementation is nice, but slow.
