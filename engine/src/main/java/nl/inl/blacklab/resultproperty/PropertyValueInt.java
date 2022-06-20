@@ -57,7 +57,8 @@ public class PropertyValueInt extends PropertyValue {
         return PropertySerializeUtil.combineParts("int", Long.toString(value));
     }
 
-    @Override public String getSortValue() {
-        return SortValueUtil.encode(value);
+    @Override
+    public String[] getSortValue() {
+        return new String[] { SortValueUtil.encode(value) };
     }
 }

@@ -31,8 +31,8 @@ public class PropertyValueDecade extends PropertyValueInt {
     }
 
     @Override
-    public String getSortValue() {
-        return SortValueUtil.encodeYear((int)value);
+    public String[] getSortValue() {
+        return new String[] { SortValueUtil.encodeYear((int)value) };
     }
 
     @Override

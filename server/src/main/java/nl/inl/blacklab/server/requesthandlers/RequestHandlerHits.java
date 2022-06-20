@@ -193,7 +193,9 @@ public class RequestHandlerHits extends RequestHandler {
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        datastreamMetadataFieldInfo(ds, index);
+        boolean isAggregatorRequest = request.getParameter("aggregator") != null && request.getParameter("aggregator").equalsIgnoreCase("true");
+        if (!isAggregatorRequest)
+            datastreamMetadataFieldInfo(ds, index);
 
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();
@@ -210,9 +212,18 @@ public class RequestHandlerHits extends RequestHandler {
         }
         ds.endMap().endEntry();
 
-        Map<Integer, Document> luceneDocs = new HashMap<>();
-        datastreamHits(ds, window, concordanceContext, luceneDocs);
-        datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
+        if (isAggregatorRequest) {
+            // The aggregator only needs doc id and sort value to merge results.
+            // It will later request more information for a specific window of hits
+            // the user wants to see.
+            HitProperty sortedBy = searchParam.hitsSortSettings() == null ? null : searchParam.hitsSortSettings().sortBy();
+            super.datastreamHitsAggregator(ds, window, sortedBy);
+        } else {
+            // Produce a regular response with all the annotations and metadata included.
+            Map<Integer, Document> luceneDocs = new HashMap<>();
+            datastreamHits(ds, window, concordanceContext, luceneDocs);
+            datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
+        }
 
         if (searchParam.hasFacets()) {
             // Now, group the docs according to the requested facets.

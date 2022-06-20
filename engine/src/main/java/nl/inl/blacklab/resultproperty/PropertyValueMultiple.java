@@ -110,7 +110,7 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     @Override
-    public String getSortValue() {
+    public String[] getSortValue() {
         return value[0].getSortValue();
     }
 }

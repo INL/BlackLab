@@ -105,6 +105,7 @@ public class SearchParameters {
         defaultParameterValues.put("subprops", "");
         defaultParameterValues.put("csvsummary", "no");
         defaultParameterValues.put("csvsepline", "no");
+        defaultParameterValues.put("aggregator", "no"); // minimal aggregator hits output? [no]
     }
 
     private static String getDefault(String paramName) {

@@ -15,8 +15,8 @@ public class PropertyValueDoc extends PropertyValue {
     }
 
     @Override
-    public String getSortValue() {
-        return SortValueUtil.encode(docId);
+    public String[] getSortValue() {
+        return new String[] { SortValueUtil.encode(docId) };
     }
 
     public PropertyValueDoc(BlackLabIndex index, int id) {

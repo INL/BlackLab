@@ -28,6 +28,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
@@ -65,6 +66,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -934,7 +936,29 @@ public abstract class RequestHandler {
         }
     }
 
-    public void datastreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, Document> luceneDocs) throws BlsException {
+    public void datastreamHitsAggregator(DataStream ds, Hits hits, HitProperty sortedBy) {
+        if (sortedBy != null)
+            sortedBy = sortedBy.copyWith(hits);
+        long i = 0;
+        ds.startEntry("hits").startList();
+        for (Hit hit : hits) {
+            ds.startItem("h").startList();
+            {
+                ds.item("i", hit.doc()); // NOT the PID, the Lucene doc id (only used to keep hits together)
+                if (sortedBy != null) {
+                    ds.startItem("s");
+                    ds.list("v", sortedBy.getSortValue(i));
+                    ds.endItem();
+                }
+            }
+            ds.endList().endItem();
+            i++;
+        }
+        ds.endList().endEntry();
+    }
+
+    public void datastreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext,
+            Map<Integer, Document> luceneDocs) throws BlsException {
         BlackLabIndex index = hits.index();
 
         ds.startEntry("hits").startList();

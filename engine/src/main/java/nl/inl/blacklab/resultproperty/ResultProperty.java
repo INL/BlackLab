@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.util.PropertySerializeUtil;
+
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
  * @param <T> type of result
@@ -23,6 +25,14 @@ public interface ResultProperty<T> extends Serializable {
         if (info.endsWith(":s") || info.endsWith(":i"))
             return info.substring(0, info.length() - 2);
         return info;
+    }
+
+    static String serializeMultiple(boolean reverse, List<? extends ResultProperty<?>> properties) {
+        String[] values = new String[properties.size()];
+        for (int i = 0; i < properties.size(); i++) {
+            values[i] = properties.get(i).serialize();
+        }
+        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
     }
 
     /**

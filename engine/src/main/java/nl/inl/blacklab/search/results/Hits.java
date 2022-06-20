@@ -338,5 +338,5 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     HitsInternal getInternalHits();
 
-
+    HitProperty sortProperty();
 }

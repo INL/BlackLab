@@ -136,7 +136,7 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
 
     @Override
     public String serialize() {
-        return PropertySerializeUtil.serializeMultiple(reverse, criteria);
+        return ResultProperty.serializeMultiple(reverse, criteria);
     }
 
     @Override

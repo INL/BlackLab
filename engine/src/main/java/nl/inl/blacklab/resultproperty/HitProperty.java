@@ -216,7 +216,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * @param hitIndex hit to get the sort value
      * @return the sort value
      */
-    public String getSortValue(long hitIndex) {
+    public String[] getSortValue(long hitIndex) {
         return get(hitIndex).getSortValue();
     }
 

@@ -130,7 +130,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
     @Override
     public String serialize() {
-        return PropertySerializeUtil.serializeMultiple(reverse, criteria);
+        return ResultProperty.serializeMultiple(reverse, criteria);
     }
     
     @Override

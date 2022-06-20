@@ -66,8 +66,9 @@ public class PropertyValueContextWord extends PropertyValueContext {
     }
 
     @Override
-    public String getSortValue() {
-        return valueTokenId < 0 ? "" : sensitivity.desensitize(terms.get(valueTokenId));
+    public String[] getSortValue() {
+        String val = valueTokenId < 0 ? "" : sensitivity.desensitize(terms.get(valueTokenId));
+        return new String[] { val };
     }
 
     @Override

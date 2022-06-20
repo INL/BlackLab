@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -115,9 +114,9 @@ public class PropertyValueContextWords extends PropertyValueContext {
     }
 
     @Override
-    public String getSortValue() {
+    public String[] getSortValue() {
         return Arrays.stream(valueTokenId)
                 .mapToObj(id -> id < 0 ? ""  : sensitivity.desensitize(terms.get(id)))
-                .collect(Collectors.joining(" | "));
+                .toArray(String[]::new);
     }
 }

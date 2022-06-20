@@ -298,6 +298,11 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
     }
 
+    @Override
+    public HitProperty sortProperty() {
+        return null;
+    }
+
     /**
      * Return a Hits object with these hits in ascending Lucene doc id order.
      *

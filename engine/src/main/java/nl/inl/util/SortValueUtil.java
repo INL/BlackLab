@@ -1,5 +1,7 @@
 package nl.inl.util;
 
+import java.text.Collator;
+
 /**
  * Utility methods for generating a sortable string from various values.
  *
@@ -40,5 +42,19 @@ public class SortValueUtil {
         if (year.length() != 4)
             throw new IllegalArgumentException("Year must be 4 characters long, not " + year);
         return Integer.parseInt(year);
+    }
+
+    public static int compare(Collator collator, String[] aw, String[] bw) {
+        int n = Math.min(aw.length, bw.length);
+        for (int i = 0; i < n; i++) {
+            int cmp = collator.compare(aw[i], bw[i]);
+            if (cmp != 0)
+                return cmp;
+        }
+        if (aw.length > n)
+            return 1;
+        else if (bw.length > n)
+            return -1;
+        return 0;
     }
 }
