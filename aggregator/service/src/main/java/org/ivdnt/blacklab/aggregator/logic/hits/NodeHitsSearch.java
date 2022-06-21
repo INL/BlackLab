@@ -17,6 +17,7 @@ import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
+import org.ivdnt.blacklab.aggregator.representation.HitsResultsMinimal;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 
 import it.unimi.dsi.fastutil.BigList;
@@ -24,6 +25,8 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 /** Results of this search from a single node */
 class NodeHitsSearch {
+
+    private static final boolean USE_MINIMAL_HITS_RESPONSE = false;
 
     /** Minimum page size to request. Very small pages cause too much request overhead. */
     private static final int PAGE_SIZE_MIN = 20;
@@ -53,8 +56,11 @@ class NodeHitsSearch {
     /** Time of the latest search summary, so we can refresh it if needed. */
     private long latestSummaryTime;
 
-    /** The hits we've received so far. */
+    /** The (full-fat) hits we've received so far. */
     private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
+
+    /** The minimal hits we've received so far (if using minimal hits responses */
+    private final BigList<MinHit> hitsMin = new ObjectBigArrayBigList<>();
 
     /** The docInfos we've received so far. */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
@@ -88,12 +94,12 @@ class NodeHitsSearch {
     private synchronized Future<Response> getNextPageRequest() {
         if (nextPageRequest == null) {
             // Request the next page.
-            nextPageRequest = createRequest(hits.size64(), pageSize);
+            nextPageRequest = createRequest(hits.size64(), pageSize, USE_MINIMAL_HITS_RESPONSE);
         }
         return nextPageRequest;
     }
 
-    private Future<Response> createRequest(long first, long number) {
+    private Future<Response> createRequest(long first, long number, boolean minimal) {
         nextPageTarget = Requests.optParams(webTarget.path(params.corpusName).path("hits"),
                 "patt", params.patt,
                 "sort", params.sort,
@@ -102,11 +108,33 @@ class NodeHitsSearch {
                 "viewgroup", params.viewGroup,
                 "first", first,
                 "number", number,
-                "usecache", useCache);
+                "usecache", useCache,
+                "aggregator", minimal);
         return nextPageTarget
                 .request(MediaType.APPLICATION_JSON)
                 .async()
                 .get();
+    }
+
+    void addHitsToListMinimal(Response response) {
+        // Add hits to the list
+        HitsResultsMinimal hitsResults = response.readEntity(HitsResultsMinimal.class);
+        latestSummary = hitsResults.summary;
+        latestSummaryTime = System.currentTimeMillis();
+        hitsMin.addAll(hitsResults.hits);
+
+        // Was this the final page of hits?
+        if (!hitsResults.summary.windowHasNext) {
+            // Yes, we're done.
+            stillFetchingHits = false;
+        } else {
+            // No, start fetching the next page of hits,
+            // so it will (hopefully) be available if/when we need it.
+            // Make each subsequent page a little larger so we can efficiently process
+            // large hit sets.
+            pageSize = (int) Math.min(PAGE_SIZE_MAX, Math.round(pageSize * PAGE_SIZE_GROWTH));
+            getNextPageRequest();
+        }
     }
 
     /** Get the next page of hits from the server. */
@@ -121,6 +149,11 @@ class NodeHitsSearch {
             throw new RuntimeException(e);
         }
         if (response.getStatus() == Status.OK.getStatusCode()) {
+
+            if (USE_MINIMAL_HITS_RESPONSE) {
+                addHitsToListMinimal(response);
+            }
+
             // Add hits to the list
             HitsResults hitsResults = response.readEntity(HitsResults.class);
             latestSummary = hitsResults.summary;
@@ -192,7 +225,7 @@ class NodeHitsSearch {
             // Summary is too old. Get a new one.
             return CompletableFuture.supplyAsync(() -> {
                 try {
-                    Response response = createRequest(0, 0).get();
+                    Response response = createRequest(0, 0, true).get();
                     HitsResults results = response.readEntity(HitsResults.class);
                     return results.summary;
                 } catch (InterruptedException | ExecutionException e) {

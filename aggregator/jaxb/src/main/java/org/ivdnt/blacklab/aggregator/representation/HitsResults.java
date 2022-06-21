@@ -34,7 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitsResults implements Cloneable {
 
-    private static class BigListSerializer extends JsonSerializer<BigList<Hit>> {
+    private static class HitListSerializer extends JsonSerializer<BigList<Hit>> {
         @Override
         public void serialize(BigList<Hit> value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
@@ -48,7 +48,7 @@ public class HitsResults implements Cloneable {
         }
     }
 
-    private static class BigListDeserializer extends JsonDeserializer<BigList<Hit>> {
+    private static class HitListDeserializer extends JsonDeserializer<BigList<Hit>> {
         @Override
         public BigList<Hit> deserialize(JsonParser parser, DeserializationContext deserializationContext)
                 throws IOException {
@@ -69,7 +69,7 @@ public class HitsResults implements Cloneable {
     }
 
     /** Use this to serialize this class to JSON */
-    private static class Serializer extends JsonSerializer<List<DocInfo>> {
+    private static class DocInfosSerializer extends JsonSerializer<List<DocInfo>> {
         @Override
         public void serialize(List<DocInfo> value, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
@@ -99,7 +99,7 @@ public class HitsResults implements Cloneable {
         }
     }
 
-    private static class Deserializer extends JsonDeserializer<List<DocInfo>> {
+    private static class DocInfosDeserializer extends JsonDeserializer<List<DocInfo>> {
         @Override
         public List<DocInfo> deserialize(JsonParser parser, DeserializationContext deserializationContext)
                 throws IOException {
@@ -169,16 +169,16 @@ public class HitsResults implements Cloneable {
     @XmlElementWrapper(name="hits")
     @XmlElement(name = "hit")
     @JsonProperty("hits")
-    @JsonSerialize(using = BigListSerializer.class)
-    @JsonDeserialize(using = BigListDeserializer.class)
+    @JsonSerialize(using = HitListSerializer.class)
+    @JsonDeserialize(using = HitListDeserializer.class)
     @JsonInclude(Include.NON_NULL)
     public BigList<Hit> hits;
 
     @XmlElementWrapper(name="docInfos")
     @XmlElement(name = "docInfo")
     @JsonProperty("docInfos")
-    @JsonSerialize(using = Serializer.class)
-    @JsonDeserialize(using = Deserializer.class)
+    @JsonSerialize(using = DocInfosSerializer.class)
+    @JsonDeserialize(using = DocInfosDeserializer.class)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<DocInfo> docInfos;
 
