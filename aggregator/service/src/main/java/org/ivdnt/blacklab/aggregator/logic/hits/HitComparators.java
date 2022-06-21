@@ -5,22 +5,28 @@ import java.util.Comparator;
 
 import org.ivdnt.blacklab.aggregator.helper.Util;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
+import org.ivdnt.blacklab.aggregator.representation.HitMin;
 import org.ivdnt.blacklab.aggregator.representation.MetadataValues;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 class HitComparators {
 
-    public static Comparator<Hit> deserialize(String serialized) {
-        if (serialized.isEmpty())
+    public static Comparator<HitMin> deserializeMin(String hitProp) {
+        // FIXME: use correct collator
+        return Comparator.naturalOrder();
+    }
+
+    public static Comparator<Hit> deserialize(String hitProp) {
+        if (hitProp.isEmpty())
             return null;
-        if (PropertySerializeUtil.isMultiple(serialized)) {
+        if (PropertySerializeUtil.isMultiple(hitProp)) {
             boolean reverse = false;
-            if (serialized.startsWith("-(") && serialized.endsWith(")")) {
+            if (hitProp.startsWith("-(") && hitProp.endsWith(")")) {
                 reverse = true;
-                serialized = serialized.substring(2, serialized.length() - 1);
+                hitProp = hitProp.substring(2, hitProp.length() - 1);
             }
-            Comparator<Hit> result = Arrays.stream(PropertySerializeUtil.splitMultiple(serialized))
+            Comparator<Hit> result = Arrays.stream(PropertySerializeUtil.splitMultiple(hitProp))
                     .map(HitComparators::deserialize)
                     .reduce(Comparator::thenComparing)
                     .orElseThrow();
@@ -29,7 +35,7 @@ class HitComparators {
             return result;
         }
 
-        String[] parts = PropertySerializeUtil.splitPartFirstRest(serialized);
+        String[] parts = PropertySerializeUtil.splitPartFirstRest(hitProp);
         String type = parts[0].toLowerCase();
         boolean reverse = false;
         if (type.length() > 0 && type.charAt(0) == '-') {

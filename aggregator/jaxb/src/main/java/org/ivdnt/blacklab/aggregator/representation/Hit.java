@@ -5,7 +5,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Hit implements Comparable<Hit> {
+public class Hit  {
 
     public String docPid;
 

@@ -6,6 +6,10 @@ import java.util.Objects;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.ivdnt.blacklab.aggregator.helper.Util;
+
+import nl.inl.util.SortValueUtil;
+
 /** Hit with minimal information for aggregator */
 @XmlAccessorType(XmlAccessType.FIELD)
 public class HitMin implements Comparable<HitMin> {
@@ -14,7 +18,7 @@ public class HitMin implements Comparable<HitMin> {
     public int nodeId;
 
     /** What was this hit's index in the node's results? (for requesting concordances, etc.) */
-    public int indexOnNode;
+    public long indexOnNode;
 
     /** What's the document id on the node? (really only used to keep hits from same doc together) */
     public int docIdOnNode;
@@ -25,7 +29,7 @@ public class HitMin implements Comparable<HitMin> {
     // required for Jersey
     public HitMin() {}
 
-    public HitMin(int nodeId, int indexOnNode, int docIdOnNode, String[] sortValues) {
+    public HitMin(int nodeId, long indexOnNode, int docIdOnNode, String[] sortValues) {
         this.nodeId = nodeId;
         this.indexOnNode = indexOnNode;
         this.docIdOnNode = docIdOnNode;
@@ -33,8 +37,17 @@ public class HitMin implements Comparable<HitMin> {
     }
 
     @Override
-    public int compareTo(HitMin hitMin) {
-        return 0; // FIXME SortValueUtil.;
+    public int compareTo(HitMin other) {
+        if (sortValues == null || other.sortValues == null) {
+            // No sort values. Sort by nodeId + indexOnNode (shouldn't be used).
+            if (nodeId == other.nodeId) {
+                return Long.compare(indexOnNode, other.indexOnNode);
+            }
+            return Integer.compare(nodeId, other.nodeId);
+        }
+        // Note that this doesn't use the appropriate collator, so we probably cannot
+        // use this compareTo but have to explicitly do it elsewhere.
+        return SortValueUtil.compare(Util.DEFAULT_COLLATOR, sortValues, other.sortValues);
     }
 
     @Override
@@ -63,5 +76,13 @@ public class HitMin implements Comparable<HitMin> {
                 ", docIdOnNode=" + docIdOnNode +
                 ", sortValues=" + Arrays.toString(sortValues) +
                 '}';
+    }
+
+    /**
+     * Combine node id and doc id to create unique document number
+     * @return unique document id
+     */
+    public long uniqueDocId() {
+        return (((long)nodeId) << 32) | (long)docIdOnNode;
     }
 }

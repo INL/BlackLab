@@ -20,6 +20,7 @@ import org.ivdnt.blacklab.aggregator.logic.Requests.UseCache;
 import org.ivdnt.blacklab.aggregator.logic.hits.NodeHitsSearch.HitIterator;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.Hit;
+import org.ivdnt.blacklab.aggregator.representation.HitMin;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
 
@@ -49,11 +50,8 @@ public class HitsSearch {
         /** at what index is each node's iterator at the start of this page? */
         private final long[] startIndexOnNode;
 
-        ///** When was this page last used? () */
-        //long timeLastUsed;
-
-        /** hits in this page (or null if they need to be reconstructed) */
-        private List<Hit> hits;
+        /** minimal hits in this page (or null if they need to be reconstructed or we're using fullfat hits) */
+        private List<HitMin> hitsMin;
 
         /** page following this one or null if none */
         private MergeTablePage nextPage;
@@ -62,21 +60,21 @@ public class HitsSearch {
             this.startIndex = startIndex;
             this.size = size;
             this.startIndexOnNode = startIndexOnNode;
-            hits = new ArrayList<>();
+            hitsMin = new ArrayList<>();
         }
 
         /**
-         * Add a hit to this page.
+         * Add a (minimal) hit to this page.
          *
          * Page size is incremented and hit is stored (if the hits on this page
          * are in memory)
          *
          * @param hit hit to add
          */
-        public void add(Hit hit) {
+        public void add(HitMin hit) {
             this.size++;
-            if (this.hits != null)
-                this.hits.add(hit);
+            if (this.hitsMin != null)
+                this.hitsMin.add(hit);
         }
 
         /**
@@ -85,12 +83,12 @@ public class HitsSearch {
          * @param i hit index
          * @return hit
          */
-        public Hit hitByGlobalIndex(long i) {
+        public HitMin hitByGlobalIndex(long i) {
             if (i < startIndex || i >= startIndex + size)
                 throw new IllegalArgumentException("Hit not on this page (not " + startIndex + " <= " + i + " < " + startIndex + size + ")");
-            if (hits == null)
+            if (hitsMin == null)
                 throw new IllegalArgumentException("Hits for this page are not available (page " + startIndex + "-" + startIndex + size + ", hit " + i + ")");
-            return hits.get((int)(i - startIndex));
+            return hitsMin.get((int)(i - startIndex));
         }
     }
 
@@ -103,7 +101,7 @@ public class HitsSearch {
      */
     public static HitsSearch get(Client client, String corpusName, String patt, String filter, String sort,
             String group, String viewGroup, UseCache useCache, long initialNumberOfHits) {
-        Comparator<Hit> comparator = HitComparators.deserialize(sort);
+        Comparator<HitMin> comparator = HitComparators.deserializeMin(sort);
         Params params = new Params(corpusName, patt, filter, sort, group, viewGroup);
         synchronized (cache) {
             if (!useCache.onAggregator())
@@ -150,13 +148,10 @@ public class HitsSearch {
     /** Where are we currently adding hits (always points to the last page) */
     MergeTablePage mergeTableCurrentPage;
 
-    /** Relevant docInfos */
-    private final Map<String, DocInfo> docInfos = new HashMap<>();
-
     /** Our sort */
-    private final Comparator<Hit> comparator;
+    private final Comparator<HitMin> comparator;
 
-    private HitsSearch(Client client, Params params, Comparator<Hit> comparator, long initialNumberOfHits,
+    private HitsSearch(Client client, Params params, Comparator<HitMin> comparator, long initialNumberOfHits,
             boolean useCache) {
         this.comparator = comparator;
 
@@ -164,11 +159,13 @@ public class HitsSearch {
         nodeSearches = new ArrayList<>();
         nodeSearchIterators = new ArrayList<>();
         int numberOfNodes = AggregatorConfig.get().getNodes().size();
+        int nodeId = 0;
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
-            NodeHitsSearch search = new NodeHitsSearch(client.target(nodeUrl), params, useCache);
+            NodeHitsSearch search = new NodeHitsSearch(nodeId, client.target(nodeUrl), params, useCache);
             search.setInitialHitsRequest(initialNumberOfHits, numberOfNodes); // hint for page size
             nodeSearches.add(search);
             nodeSearchIterators.add(search.iterator());
+            nodeId++;
         }
         updateLastAccessTime();
 
@@ -210,7 +207,7 @@ public class HitsSearch {
         throw new IllegalArgumentException("Error, min > max: " + min + " > " + max);
     }
 
-    private Hit get(long i) {
+    private HitMin get(long i) {
         MergeTablePage page = pageContaining(i);
         return page.hitByGlobalIndex(i);
     }
@@ -226,7 +223,7 @@ public class HitsSearch {
         // TODO: maybe don't synchronize the whole method, or a request for 10 hits might be
         //    waiting for another request that wants a million hits...
 
-        String previousHitDoc = size() == 0 ? "--NONE--" : get(size() - 1).docPid;
+        long previousHitDoc = size() == 0 ? -1 : get(size() - 1).uniqueDocId();
         while (size() <= l) {
             // - check each node's current hit
             // - select the 'smallest' one (according to our sort)
@@ -246,13 +243,13 @@ public class HitsSearch {
                         continue;
                     it.next();
                 }
-                Hit hit = it.current();
+                HitMin hit = it.current();
                 if (hit == null)
                     continue; // no more hits from this node
 
                 if (comparator == null) {
                     // No sort specified. Check if this hit is in the same doc as the previous
-                    if (previousHitDoc.equals(hit.docPid)) {
+                    if (previousHitDoc == hit.uniqueDocId()) {
                         smallestHitSource = it;
                     }
                 } else {
@@ -285,10 +282,10 @@ public class HitsSearch {
             }
 
             // Get the smallest hit
-            Hit nextHit = smallestHitSource.current();
+            HitMin nextHit = smallestHitSource.current();
 
             // Update merge table
-            if (mergeTableCurrentPage.size >= 1000 && !previousHitDoc.equals(nextHit.docPid)) {
+            if (mergeTableCurrentPage.size >= 1000 && previousHitDoc != nextHit.uniqueDocId()) {
                 // Page has gotten large and we're at a document boundary.
                 // Add a new page.
                 MergeTablePage newPage = new MergeTablePage(size(), 0, currentNodeIndexes());
@@ -301,14 +298,7 @@ public class HitsSearch {
             mergeTableCurrentPage.add(nextHit);
 
             // Keep track of the last hit's document
-            previousHitDoc = nextHit.docPid;
-
-            // Make sure we have the docInfo for this doc
-            var it = smallestHitSource;
-            docInfos.computeIfAbsent(nextHit.docPid, pid -> it.currentDocInfo());
-
-            // Advance iterator to the next unused hit (or null if no more hits)
-            smallestHitSource.next();
+            previousHitDoc = nextHit.uniqueDocId();
         }
     }
 
@@ -345,11 +335,7 @@ public class HitsSearch {
         }
 
         // Determine summary
-        SearchSummary summary = nodeSearches.stream()
-                .map(NodeHitsSearch::getLatestSummary)
-                .filter(Objects::nonNull)
-                .reduce(Aggregation::mergeSearchSummary)
-                .orElseThrow();
+        SearchSummary summary = getSearchSummary();
         summary.requestedWindowSize = number;
         summary.actualWindowSize = actualWindowSize;
         summary.windowFirstResult = first;
@@ -357,21 +343,93 @@ public class HitsSearch {
         summary.windowHasPrevious = first > 0;
 
         // Build the hits window and docInfos and return
-        BigList<Hit> hitWindow = subList(first, actualWindowSize);
-        List<DocInfo> relevantDocs = hitWindow.stream()
-                .map(h -> h.docPid)
-                .collect(Collectors.toSet()).stream()
-                .map(docInfos::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        return new HitsResults(summary, hitWindow, relevantDocs);
+        BigList<HitMin> hitWindow = subList(first, actualWindowSize);
+        return fullHitsWindow(summary, hitWindow);
     }
 
-    private BigList<Hit> subList(long first, long number) {
+    private SearchSummary getSearchSummary() {
+        return nodeSearches.stream()
+                .map(NodeHitsSearch::getLatestSummary)
+                .filter(Objects::nonNull)
+                .reduce(Aggregation::mergeSearchSummary)
+                .orElseThrow();
+    }
+
+    /**
+     * Simple struct to keep track of a request for full hits from a node.
+     *
+     * Full hits include all annotations and document metadata. They are
+     * only requested when absolutely necessary for efficiency.
+     */
+    private static class NodeFullHitsRequest {
+        public NodeHitsSearch search;
+        public long first = Long.MAX_VALUE;
+        public long last = Long.MIN_VALUE;
+        public CompletableFuture<HitsResults> future;
+        public HitsResults hits;
+
+        public NodeFullHitsRequest(NodeHitsSearch search) {
+            this.search = search;
+        }
+    }
+
+    private HitsResults fullHitsWindow(SearchSummary summary, BigList<HitMin> minimalHits) {
+        // Determine what to request from each node
+        Map<Integer, NodeFullHitsRequest> reqs = new HashMap<>();
+        for (NodeHitsSearch n: nodeSearches) {
+            reqs.put(n.getNodeId(), new NodeFullHitsRequest(n));
+        }
+        for (HitMin h: minimalHits) {
+            NodeFullHitsRequest n = reqs.get(h.nodeId);
+            if (h.indexOnNode < n.first)
+                n.first = h.indexOnNode;
+            if (h.indexOnNode > n.last)
+                n.last = h.indexOnNode;
+        }
+
+        // Send requests to the nodes
+        for (NodeFullHitsRequest n: reqs.values()) {
+            if (n.first < Long.MAX_VALUE && n.last >= n.first) {
+                long firstFromNode = n.first;
+                long numberFromNode = n.last - n.first + 1;
+                n.future = n.search.getFullHits(firstFromNode, numberFromNode);
+            }
+        }
+
+        // Wait for requests to complete and gather hits
+        CompletableFuture[] futures = reqs.values().stream()
+                .map(n -> n.future).filter(Objects::nonNull)
+                .toArray(CompletableFuture[]::new);
+        CompletableFuture.allOf(futures);
+        for (NodeFullHitsRequest n: reqs.values()) {
+            try {
+                if (n.future != null)
+                    n.hits = n.future.get();
+            } catch (InterruptedException|ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        // Gather the full hits and docinfos
+        BigList<Hit> hits = new ObjectBigArrayBigList<>();
+        Map<String,DocInfo> docInfos = new HashMap<>();
+        for (HitMin hitMin: minimalHits) {
+            NodeFullHitsRequest n = reqs.get(hitMin.nodeId);
+            long indexInList = hitMin.indexOnNode - n.first;
+            Hit h = n.hits.hits.get(indexInList);
+            hits.add(h);
+            docInfos.put(h.docPid, h.docInfo);
+        }
+
+        // 5. return the results page
+        return new HitsResults(summary, hits, new ArrayList<>(docInfos.values()));
+    }
+
+    private BigList<HitMin> subList(long first, long number) {
         // WAS: return hits.subList(first, first + number);
         if (first < 0 || first + number > size())
             throw new IndexOutOfBoundsException("Asked for more hits than were available (" + first + ", " + number + " / " + size() + ")");
-        BigList<Hit> result = new ObjectBigArrayBigList<>();
+        BigList<HitMin> result = new ObjectBigArrayBigList<>();
 
         // Find the first page to take hits from and determine start index
         MergeTablePage page = pageContaining(first);
@@ -383,7 +441,7 @@ public class HitsSearch {
             long numberFromThisPage = Math.min(needHits, available);
 
             // Take the hits and update admin
-            result.addAll(page.hits.subList((int)indexInPage, (int)(indexInPage + numberFromThisPage)));
+            result.addAll(page.hitsMin.subList((int)indexInPage, (int)(indexInPage + numberFromThisPage)));
             indexInPage = 0;
             needHits -= numberFromThisPage;
 

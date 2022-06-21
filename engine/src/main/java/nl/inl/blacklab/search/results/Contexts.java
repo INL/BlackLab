@@ -258,14 +258,6 @@ public class Contexts implements Iterable<int[]> {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        // If our hits weren't sorted by Lucene id, get a copy that is
-        // (required for FiidLookup to work, because it uses DocValues)
-        // FIXME: re-ordering hits here is wrong because we use the original hit index to match the context
-        //  to the hit. Might not be an issue because this is generally called before hits are sorted.
-        if (!hits.hasAscendingLuceneDocIds())
-            throw new IllegalArgumentException("Can only find contexts for hits with ascending lucene doc ids!");
-        hits = hits.withAscendingLuceneDocIds();
-
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();
 

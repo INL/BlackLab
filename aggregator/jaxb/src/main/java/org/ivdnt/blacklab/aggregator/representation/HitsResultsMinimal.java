@@ -1,6 +1,8 @@
 package org.ivdnt.blacklab.aggregator.representation;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -78,10 +80,15 @@ public class HitsResultsMinimal implements Cloneable {
     @SuppressWarnings("unused")
     public HitsResultsMinimal() {}
 
-    public HitsResultsMinimal(SearchSummary summary, BigList<List<Object>> hits,
-            List<DocInfo> docInfos) {
+    public HitsResultsMinimal(SearchSummary summary, BigList<HitMin> hits) {
         this.summary = summary;
-        this.hits = hits;
+        this.hits = new ObjectBigArrayBigList<>();
+        for (HitMin h: hits) {
+            List<Object> l = new ArrayList<>();
+            l.add(h.uniqueDocId());
+            Collections.addAll(l, h.sortValues);
+            this.hits.add(l);
+        }
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.aggregator.logic.hits;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -15,7 +16,7 @@ import javax.ws.rs.core.Response.Status;
 import org.ivdnt.blacklab.aggregator.logic.Requests;
 import org.ivdnt.blacklab.aggregator.representation.DocInfo;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
-import org.ivdnt.blacklab.aggregator.representation.Hit;
+import org.ivdnt.blacklab.aggregator.representation.HitMin;
 import org.ivdnt.blacklab.aggregator.representation.HitsResults;
 import org.ivdnt.blacklab.aggregator.representation.HitsResultsMinimal;
 import org.ivdnt.blacklab.aggregator.representation.SearchSummary;
@@ -25,8 +26,6 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 /** Results of this search from a single node */
 class NodeHitsSearch {
-
-    private static final boolean USE_MINIMAL_HITS_RESPONSE = false;
 
     /** Minimum page size to request. Very small pages cause too much request overhead. */
     private static final int PAGE_SIZE_MIN = 20;
@@ -45,6 +44,9 @@ class NodeHitsSearch {
     /** API endpoint we're sending request to */
     private final WebTarget webTarget;
 
+    /** Our node id */
+    private final int nodeId;
+
     /** Request (search) parameters */
     private final Params params;
 
@@ -56,11 +58,8 @@ class NodeHitsSearch {
     /** Time of the latest search summary, so we can refresh it if needed. */
     private long latestSummaryTime;
 
-    /** The (full-fat) hits we've received so far. */
-    private final BigList<Hit> hits = new ObjectBigArrayBigList<>();
-
-    /** The minimal hits we've received so far (if using minimal hits responses */
-    private final BigList<MinHit> hitsMin = new ObjectBigArrayBigList<>();
+    /** The hits we've received so far */
+    private final BigList<HitMin> hits = new ObjectBigArrayBigList<>();
 
     /** The docInfos we've received so far. */
     private final Map<String, DocInfo> docInfos = new HashMap<>();
@@ -80,10 +79,15 @@ class NodeHitsSearch {
     /** Last request we sent to the server (corresponds to nextPageRequest) */
     private WebTarget nextPageTarget;
 
-    public NodeHitsSearch(WebTarget webTarget, Params params, boolean useCache) {
+    public NodeHitsSearch(int nodeId, WebTarget webTarget, Params params, boolean useCache) {
+        this.nodeId = nodeId;
         this.params = params;
         this.webTarget = webTarget;
         this.useCache = useCache;
+    }
+
+    public int getNodeId() {
+        return nodeId;
     }
 
     public SearchSummary getLatestSummary() {
@@ -94,7 +98,7 @@ class NodeHitsSearch {
     private synchronized Future<Response> getNextPageRequest() {
         if (nextPageRequest == null) {
             // Request the next page.
-            nextPageRequest = createRequest(hits.size64(), pageSize, USE_MINIMAL_HITS_RESPONSE);
+            nextPageRequest = createRequest(hits.size64(), pageSize, true);
         }
         return nextPageRequest;
     }
@@ -116,13 +120,22 @@ class NodeHitsSearch {
                 .get();
     }
 
-    void addHitsToListMinimal(Response response) {
+    void processResponse(Response response) {
         // Add hits to the list
         HitsResultsMinimal hitsResults = response.readEntity(HitsResultsMinimal.class);
         latestSummary = hitsResults.summary;
         latestSummaryTime = System.currentTimeMillis();
-        hitsMin.addAll(hitsResults.hits);
-
+        long indexOnNode = hitsResults.summary.windowFirstResult;
+        for (List<Object> hit: hitsResults.hits) {
+            int docIdOnNode = (int)hit.get(0);
+            String[] sortValue = null;
+            if (hit.size() > 1) {
+                List<Object> sv = (List<Object>) hit.get(1);
+                sortValue = sv.stream().map(o -> (String) o).toArray(String[]::new);
+            }
+            hits.add(new HitMin(nodeId, indexOnNode, docIdOnNode, sortValue));
+            indexOnNode++;
+        }
         // Was this the final page of hits?
         if (!hitsResults.summary.windowHasNext) {
             // Yes, we're done.
@@ -149,35 +162,7 @@ class NodeHitsSearch {
             throw new RuntimeException(e);
         }
         if (response.getStatus() == Status.OK.getStatusCode()) {
-
-            if (USE_MINIMAL_HITS_RESPONSE) {
-                addHitsToListMinimal(response);
-            }
-
-            // Add hits to the list
-            HitsResults hitsResults = response.readEntity(HitsResults.class);
-            latestSummary = hitsResults.summary;
-            latestSummaryTime = System.currentTimeMillis();
-            hits.addAll(hitsResults.hits);
-            for (DocInfo docInfo: hitsResults.docInfos) {
-                docInfos.put(docInfo.pid, docInfo);
-            }
-            // Make sure each hit can access its docInfo, for e.g.
-            // merging results sorted by metadata field
-            hitsResults.hits.forEach(h -> h.docInfo = docInfos.get(h.docPid));
-
-            // Was this the final page of hits?
-            if (!hitsResults.summary.windowHasNext) {
-                // Yes, we're done.
-                stillFetchingHits = false;
-            } else {
-                // No, start fetching the next page of hits,
-                // so it will (hopefully) be available if/when we need it.
-                // Make each subsequent page a little larger so we can efficiently process
-                // large hit sets.
-                pageSize = (int) Math.min(PAGE_SIZE_MAX, Math.round(pageSize * PAGE_SIZE_GROWTH));
-                getNextPageRequest();
-            }
+            processResponse(response);
         } else {
             // An error occurred.
             ErrorResponse error = response.readEntity(ErrorResponse.class);
@@ -213,10 +198,30 @@ class NodeHitsSearch {
     }
 
     /** Get specified hit, or null if it doesn't exist. */
-    private Hit hit(long i) {
+    private HitMin hit(long i) {
         if (ensureHitAvailable(i))
             return hits.get(i);
         return null;
+    }
+
+    public CompletableFuture<HitsResults> getFullHits(long first, long  number) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                Response response = createRequest(first, number, false).get();
+                if (response.getStatus() == Status.OK.getStatusCode()) {
+                    HitsResults results = response.readEntity(HitsResults.class);
+                    return results;
+                } else {
+                    ErrorResponse error = response.readEntity(ErrorResponse.class);
+                    ErrorResponse newError = new ErrorResponse(error.getError());
+                    newError.setNodeUrl(webTarget.getUri().toString()); // keep track of what node caused the error
+                    Response newResponse = Response.status(response.getStatus()).entity(newError).build();
+                    throw new WebApplicationException(newResponse);
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     public CompletableFuture<SearchSummary> ensureRecentSummary() {
@@ -282,7 +287,7 @@ class NodeHitsSearch {
          *
          * @return current hit
          */
-        public Hit current() {
+        public HitMin current() {
             return index < 0 ? null : hit(index);
         }
 
@@ -297,11 +302,6 @@ class NodeHitsSearch {
                 WebTarget t = nextPageTarget == null ? webTarget : nextPageTarget;
                 throw Requests.translateNodeException(t.getUri().toString(), e);
             }
-        }
-
-        public DocInfo currentDocInfo() {
-            String pid = current().docPid;
-            return docInfos.get(pid);
         }
 
         public long hitIndex() {
