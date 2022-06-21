@@ -204,12 +204,20 @@ class NodeHitsSearch {
         return null;
     }
 
+    // @@@@ FIXME hier morgen verder
+    //    het lijkt of alle hits altijd in hetzelfde document zitten, ongeacht wat je zoekt !?
+
     public CompletableFuture<HitsResults> getFullHits(long first, long  number) {
         return CompletableFuture.supplyAsync(() -> {
             try {
                 Response response = createRequest(first, number, false).get();
                 if (response.getStatus() == Status.OK.getStatusCode()) {
                     HitsResults results = response.readEntity(HitsResults.class);
+                    Map<String, DocInfo> docInfos = new HashMap<>();
+                    for (DocInfo docInfo: results.docInfos) {
+                        docInfos.put(docInfo.pid, docInfo);
+                    }
+                    results.hits.forEach(h -> h.docInfo = docInfos.get(h.docPid));
                     return results;
                 } else {
                     ErrorResponse error = response.readEntity(ErrorResponse.class);
