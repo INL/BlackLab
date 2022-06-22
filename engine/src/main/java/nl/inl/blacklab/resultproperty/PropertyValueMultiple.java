@@ -1,6 +1,8 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -111,6 +113,11 @@ public class PropertyValueMultiple extends PropertyValue {
 
     @Override
     public String[] getSortValue() {
-        return value[0].getSortValue();
+        List<String> result = new ArrayList<>();
+        for (PropertyValue v: value) {
+            String[] sv = v.getSortValue();
+            Collections.addAll(result, sv);
+        }
+        return result.toArray(String[]::new);
     }
 }
