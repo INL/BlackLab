@@ -380,4 +380,20 @@ public abstract class DataStream {
     public DataStream xmlFragment(String fragment) {
         return value(fragment);
     }
+
+    public <T> void list(String itemName, T[] items) {
+        startList();
+        for (T i: items) {
+            item(itemName, i);
+        }
+        endList();
+    }
+
+    public <T> void list(String itemName, Iterable<T> items) {
+        startList();
+        for (T i: items) {
+            item(itemName, i);
+        }
+        endList();
+    }
 }

@@ -59,6 +59,16 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Some of our tests depend on engine's test classes (e.g. MockTerms) -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-engine</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 

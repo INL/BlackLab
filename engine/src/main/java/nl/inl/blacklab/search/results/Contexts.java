@@ -191,7 +191,7 @@ public class Contexts implements Iterable<int[]> {
             List<int[]> words;
             if (forwardIndex != null) {
                 // We have a forward index for this field. Use it.
-                int fiid = fiidLookup.advance(doc);
+                int fiid = fiidLookup.get(doc);
                 words = forwardIndex.retrievePartsInt(fiid, startsOfSnippets, endsOfSnippets);
             } else {
                 throw new BlackLabRuntimeException("Cannot get context without a forward index");
@@ -247,6 +247,8 @@ public class Contexts implements Iterable<int[]> {
     /**
      * Retrieve context words for the hits.
      *
+     * NOTE: fiidLookups should allow random access if hits are not in ascending doc id order!
+     *
      * @param hits hits to find contexts for
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
@@ -255,10 +257,6 @@ public class Contexts implements Iterable<int[]> {
     public Contexts(Hits hits, List<Annotation> annotations, ContextSize contextSize, List<FiidLookup> fiidLookups) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
-
-        // If our hits weren't sorted by Lucene id, get a copy that is
-        // (required for FiidLookup to work, because it uses DocValues)
-        hits = hits.withAscendingLuceneDocIds();
 
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();

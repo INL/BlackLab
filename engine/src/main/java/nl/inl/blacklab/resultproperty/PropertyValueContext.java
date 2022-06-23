@@ -3,28 +3,28 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits;
 
 public abstract class PropertyValueContext extends PropertyValue {
 
     protected final Terms terms;
 
-    protected final Annotation annotation;
-
-    public PropertyValueContext(Hits hits, Annotation annotation) {
-        this(hits.index(), annotation);
-    }
+    protected final String annotationName;
 
     public PropertyValueContext(BlackLabIndex index, Annotation annotation) {
-        this.annotation = annotation;
+        this.annotationName = annotation.name();
         this.terms = index == null ? null : index.annotationForwardIndex(annotation).terms();
+    }
+
+    public PropertyValueContext(Terms terms, String annotationName) {
+        this.annotationName = annotationName;
+        this.terms = terms;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
+        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
         return result;
     }
 
@@ -37,12 +37,12 @@ public abstract class PropertyValueContext extends PropertyValue {
         if (getClass() != obj.getClass())
             return false;
         PropertyValueContext other = (PropertyValueContext) obj;
-        if (annotation == null) {
-            if (other.annotation != null)
+        if (annotationName == null) {
+            if (other.annotationName != null)
                 return false;
-        } else if (!annotation.equals(other.annotation))
+        } else if (!annotationName.equals(other.annotationName))
             return false;
         return true;
     }
-    
+
 }

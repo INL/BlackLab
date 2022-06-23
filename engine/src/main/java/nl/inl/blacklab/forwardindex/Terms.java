@@ -244,4 +244,13 @@ public abstract class Terms {
         return token;
     }
 
+    public Collator getCollator(MatchSensitivity sensitivity) {
+        switch(sensitivity) {
+        case INSENSITIVE: return collatorInsensitive;
+        case SENSITIVE: return collator;
+        default:
+            throw new UnsupportedOperationException("Only sensitive and insensitive collators are supported.");
+        }
+    }
+
 }

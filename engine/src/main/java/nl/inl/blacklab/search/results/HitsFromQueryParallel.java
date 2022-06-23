@@ -264,9 +264,19 @@ public class HitsFromQueryParallel extends HitsMutable {
                         if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
                             // We've built up a batch of hits. Add them to the global results.
                             // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
+                            //
                             // [NOTE JN: does this matter? and if so, doesn't it also matter that docId increases throughout the
-                            //           master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
-                            //           require these properties to hold.]
+                            //     master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
+                            //     require these properties to hold.]
+                            //     Contexts, used for sort/group by context words, does need increasing doc ids
+                            //     per leaf reader, but that property is guaranteed to hold because we don't
+                            //     re-order hits from a single leaf reader, we just randomly merge them with hits
+                            //     from other leafreaders without changing their order.
+                            //
+                            //     Still, all of the above is a smell indicating that we should try to perform more
+                            //     operations per leaf reader instead of merging results from leaf readers at an early
+                            //     stage like we do here.]
+
                             addToGlobalResults(results, capturedGroups);
                             results.clear();
                         }
@@ -616,6 +626,6 @@ public class HitsFromQueryParallel extends HitsMutable {
 
     @Override
     public boolean hasAscendingLuceneDocIds() {
-        return true;
+        return true; // not strictly true, but per-leafreader it is true, which is what matters (for DocValues).
     }
 }

@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,9 +41,13 @@ public class FiidLookup {
     /** The DocValues per segment (keyed by docBase) */
     private Map<Integer, NumericDocValues> cachedFiids;
 
-    public FiidLookup(IndexReader reader, Annotation annotation) {
-        this.fiidFieldName = annotation.forwardIndexIdField();
+    /** Any cached mappings from Lucene docId to forward index id (fiid) or null if not using cache */
+    private Map<Integer, Long> docIdToFiidCache;
+
+    public FiidLookup(IndexReader reader, Annotation annotation, boolean enableRandomAccess) {
         this.reader = reader;
+        this.fiidFieldName = annotation.forwardIndexIdField();
+        this.docIdToFiidCache = enableRandomAccess ? new HashMap<>() : null;
         cachedFiids = new TreeMap<>();
         try {
             for (LeafReaderContext rc : reader.leaves()) {
@@ -79,7 +84,14 @@ public class FiidLookup {
      * @param docId Lucene doc id
      * @return forward index id (fiid)
      */
-    public int advance(int docId) {
+    public int get(int docId) {
+        if (docIdToFiidCache != null) {
+            // We've previouslt seen this doc id; return the fiid from the cache.
+            Long fiid = docIdToFiidCache.get(docId);
+            if (fiid != null)
+                return (int)(long)fiid;
+        }
+
         if (cachedFiids != null) {
             // Find the fiid in the correct segment
             Entry<Integer, NumericDocValues> prev = null;
@@ -89,41 +101,67 @@ public class FiidLookup {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValues prevDocValues = prev.getValue();
-                    try {
-                        prevDocValues.advanceExact(docId - prevDocBase);
-                        return (int)prevDocValues.longValue(); // should change to long
-					} catch (IOException e1) {
-						throw BlackLabRuntimeException.wrap(e1);
-					}
+                    return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValues prevDocValues = prev.getValue();
-            try {
-            	prevDocValues.advanceExact(docId - prevDocBase);
-				return (int)prevDocValues.longValue();// should change to long
-			} catch (IOException e1) {
-				throw BlackLabRuntimeException.wrap(e1);
-			}
+            return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
         }
 
         // Not cached; find fiid by reading stored value from Document now
         try {
-            return (int)Long.parseLong(reader.document(docId).get(fiidFieldName));
+            long v = Long.parseLong(reader.document(docId).get(fiidFieldName));
+            if (docIdToFiidCache != null) {
+                docIdToFiidCache.put(docId, v);
+            }
+            return (int)v;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-
     }
 
-    public static List<FiidLookup> getList(List<Annotation> annotations, IndexReader reader) {
+    /**
+     * Get the requested forward index id from the DocValues object.
+     *
+     * Optionally caches any skipped values for later.
+     *
+     * @param docBase doc base for this segement
+     * @param docValues doc values for this segment
+     * @param docId document to get the fiid for
+     * @return forward index id
+     */
+    private int getFiidFromDocValues(int docBase, NumericDocValues docValues, int docId) {
+        try {
+            if (docIdToFiidCache == null) {
+                // Not caching (because we know our docIds are always increasing)
+                docValues.advanceExact(docId - docBase);
+                return (int) docValues.longValue();
+            } else {
+                // Caching; gather all fiid values in our cache until we find the requested one.
+                do {
+                    docValues.nextDoc();
+                    docIdToFiidCache.put(docValues.docID() + docBase, docValues.longValue());
+                    if (docValues.docID() == docId - docBase) {
+                        // Requested docvalue found.
+                        return (int) docValues.longValue();
+                    }
+                } while (docValues.docID() <= docId - docBase);
+                throw new BlackLabRuntimeException("not found in docvalues");
+            }
+        } catch (IOException e1) {
+            throw BlackLabRuntimeException.wrap(e1);
+        }
+    }
+
+    public static List<FiidLookup> getList(List<Annotation> annotations, IndexReader reader, boolean enableRandomAccess) {
         if (annotations == null)
             return null; // HitPoperty.needsContext() can return null
         List<FiidLookup> fiidLookups = new ArrayList<>();
         for (Annotation annotation: annotations) {
-            fiidLookups.add(annotation == null ? null : new FiidLookup(reader, annotation));
+            fiidLookups.add(annotation == null ? null : new FiidLookup(reader, annotation, enableRandomAccess));
         }
         return fiidLookups;
     }

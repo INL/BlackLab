@@ -1,14 +1,11 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A Hits object that filters another.
@@ -46,19 +43,10 @@ public class HitsFiltered extends HitsMutable {
         this.source = hits;
         ascendingLuceneDocIds = source.hasAscendingLuceneDocIds();
 
-        // If the filter property requires contexts, fetch them now.
-        List<Annotation> contextsNeeded = property.needsContext();
-        if (contextsNeeded != null) {
-            // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
-            // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigates by
-            // implementing a ForwardIndex that stores documents linearly, making it just a single read.
-            List<FiidLookup> fiidLookups = FiidLookup.getList(contextsNeeded, queryInfo().index().reader());
-            Contexts contexts = new Contexts(hits, contextsNeeded, property.needsContextSize(queryInfo().index()), fiidLookups);
-            filterProperty = property.copyWith(hits, contexts);
-        } else {
-            filterProperty = property.copyWith(hits, null);
-        }
-
+        // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
+        // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by
+        // implementing a ForwardIndex that stores documents linearly, making it just a single read.
+        filterProperty = property.copyWith(hits);
         this.filterValue = value;
     }
 

@@ -20,6 +20,13 @@ public class PropertyValueContextWord extends PropertyValueContext {
         valueSortOrder = value < 0 ? value : terms.idToSortPosition(value, sensitivity);
     }
 
+    public PropertyValueContextWord(Terms terms, String annotationName, MatchSensitivity sensitivity, int value) {
+        super(terms, annotationName);
+        this.valueTokenId = value;
+        this.sensitivity = sensitivity;
+        valueSortOrder = value < 0 ? value : terms.idToSortPosition(value, sensitivity);
+    }
+
     @Override
     public int compareTo(Object o) {
         int a = valueSortOrder, b = ((PropertyValueContextWord) o).valueSortOrder;
@@ -61,7 +68,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
     public String serialize() {
         String token = terms.serializeTerm(valueTokenId);
         return PropertySerializeUtil.combineParts(
-                "cwo", annotation.name(),
+                "cwo", annotationName,
                 sensitivity.luceneFieldSuffix(),
                 token);
     }

@@ -92,10 +92,10 @@ public class Kwics {
         // Get FiidLookups for all required forward indexes
         IndexReader reader = hits.queryInfo().index().reader();
         Map<Annotation, FiidLookup> fiidLookups = new HashMap<>();
-        fiidLookups.put(wordAnnot, new FiidLookup(reader, wordAnnot));
-        fiidLookups.put(punctAnnot, new FiidLookup(reader, punctAnnot));
+        fiidLookups.put(wordAnnot, new FiidLookup(reader, wordAnnot, !hits.hasAscendingLuceneDocIds()));
+        fiidLookups.put(punctAnnot, new FiidLookup(reader, punctAnnot, !hits.hasAscendingLuceneDocIds()));
         for (Map.Entry<Annotation, AnnotationForwardIndex> e: attrForwardIndices.entrySet()) {
-            fiidLookups.put(e.getKey(), new FiidLookup(reader, e.getKey()));
+            fiidLookups.put(e.getKey(), new FiidLookup(reader, e.getKey(), !hits.hasAscendingLuceneDocIds()));
         }
         
         Map<Hit, Kwic> conc1 = new HashMap<>();

@@ -20,20 +20,19 @@ public class PropertyValueContextWords extends PropertyValueContext {
      * front to back (e.g. right to left for English), but display should still
      * be from back to front.
      */
-    private boolean reverseOnDisplay = false;
+    private boolean reverseOnDisplay;
 
     public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
-        super(index, annotation);
+        this(index.annotationForwardIndex(annotation).terms(), annotation.name(), sensitivity, value, reverseOnDisplay);
+    }
+
+    public PropertyValueContextWords(Terms terms, String annotationName, MatchSensitivity sensitivity, int[] value, boolean reverseOnDisplay) {
+        super(terms, annotationName);
         this.sensitivity = sensitivity;
         this.valueTokenId = value;
         this.valueSortOrder = new int[value.length];
         terms.toSortOrder(value, valueSortOrder, sensitivity);
         this.reverseOnDisplay = reverseOnDisplay;
-    }
-
-    public PropertyValueContextWords(int[] valueSortOrder) {
-        super((BlackLabIndex)null, null);
-        this.valueSortOrder = valueSortOrder;
     }
 
     @Override
@@ -99,7 +98,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
     public String serialize() {
         String[] parts = new String[valueTokenId.length + 3];
         parts[0] = reverseOnDisplay ? "cwsr" : "cws";
-        parts[1] = annotation.name();
+        parts[1] = annotationName;
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
             String term = terms.serializeTerm(valueTokenId[i]);

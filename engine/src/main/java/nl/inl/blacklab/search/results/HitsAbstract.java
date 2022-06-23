@@ -281,7 +281,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = sortProp.needsContext();
-        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, queryInfo().index().reader());
+        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, queryInfo().index().reader(), !hasAscendingLuceneDocIds());
         sortProp = sortProp.copyWith(this,
             requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index()), fiidLookups));
 
@@ -293,7 +293,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         long hitsCounted = hitsCountedSoFar();
         long docsRetrieved = docsProcessedSoFar();
         long docsCounted = docsCountedSoFar();
-        boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId;
+        boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId && !sortProp.isReverse();
         return Hits.list(queryInfo(), sorted, null, null,
                 hitsCounted, docsRetrieved, docsCounted, capturedGroups, ascendingLuceneDocIds);
     }

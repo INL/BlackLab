@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -256,6 +257,28 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     @Override
     public HitProperty reverse() {
         return copyWith(hits, contexts, true);
+    }
+
+    /**
+     * Produce a copy of this HitProperty object with a different Hits object.
+     *
+     * Will automatically fetch any necessary Contexts as well.
+     *
+     * @param hits new Hits to use
+     * @return the new HitProperty object
+     */
+    public HitProperty copyWith(Hits hits) {
+        // If the filter property requires contexts, fetch them now.
+        List<Annotation> contextsNeeded = needsContext();
+        HitProperty result;
+        if (contextsNeeded != null) {
+            List<FiidLookup> fiidLookups = FiidLookup.getList(contextsNeeded, hits.index().reader(), !hits.hasAscendingLuceneDocIds());
+            Contexts contexts = new Contexts(hits, contextsNeeded, needsContextSize(hits.index()), fiidLookups);
+            result = copyWith(hits, contexts, false);
+        } else {
+            result = copyWith(hits, null, false);
+        }
+        return result;
     }
 
     /**
