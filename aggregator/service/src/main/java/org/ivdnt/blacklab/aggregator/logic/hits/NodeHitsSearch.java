@@ -34,7 +34,7 @@ class NodeHitsSearch {
      * Maximum page size to request. Very large pages might slow us down because we're getting
      * more than we need, or we're waiting too long for the next page to be available.
      */
-    private static final int PAGE_SIZE_MAX = 300;
+    private static final int PAGE_SIZE_MAX = 200000;
 
     /** How much bigger should each subsequent page be than the last? */
     private static final double PAGE_SIZE_GROWTH = 1.2;
@@ -204,9 +204,6 @@ class NodeHitsSearch {
         return null;
     }
 
-    // @@@@ FIXME hier morgen verder
-    //    het lijkt of alle hits altijd in hetzelfde document zitten, ongeacht wat je zoekt !?
-
     public CompletableFuture<HitsResults> getFullHits(long first, long  number) {
         return CompletableFuture.supplyAsync(() -> {
             try {
@@ -240,7 +237,9 @@ class NodeHitsSearch {
                 try {
                     Response response = createRequest(0, 0, true).get();
                     HitsResults results = response.readEntity(HitsResults.class);
-                    return results.summary;
+                    latestSummary = results.summary;
+                    latestSummaryTime = System.currentTimeMillis();
+                    return latestSummary;
                 } catch (InterruptedException | ExecutionException e) {
                     throw new RuntimeException(e);
                 }

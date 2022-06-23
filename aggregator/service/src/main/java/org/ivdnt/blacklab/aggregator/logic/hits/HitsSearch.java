@@ -281,8 +281,9 @@ public class HitsSearch {
                 break;
             }
 
-            // Get the smallest hit
+            // Get the smallest hit and advance that node to the next hit
             HitMin nextHit = smallestHitSource.current();
+            smallestHitSource.next();
 
             // Update merge table
             if (mergeTableCurrentPage.size >= 1000 && previousHitDoc != nextHit.uniqueDocId()) {
@@ -437,7 +438,7 @@ public class HitsSearch {
         long needHits = number;
         while (result.size64() < number && page != null) {
             // How many to take from this page?
-            long available = page.startIndex + page.size - indexInPage;
+            long available = page.size - indexInPage;
             long numberFromThisPage = Math.min(needHits, available);
 
             // Take the hits and update admin
