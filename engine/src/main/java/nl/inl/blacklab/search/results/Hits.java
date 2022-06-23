@@ -337,6 +337,4 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return internal hits object.
      */
     HitsInternal getInternalHits();
-
-    HitProperty sortProperty();
 }
