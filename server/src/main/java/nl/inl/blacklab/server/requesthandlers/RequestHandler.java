@@ -461,14 +461,16 @@ public abstract class RequestHandler {
      * @param ds output stream
      * @param index our index
      */
-    static void datastreamMetadataFieldInfo(DataStream ds, BlackLabIndex index) {
+    static void datastreamMetadataFieldInfo(DataStream ds, BlackLabIndex index, boolean isAggregatorRequest) {
         ds.startEntry("docFields");
         RequestHandler.dataStreamDocFields(ds, index.metadata());
         ds.endEntry();
 
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
-        ds.endEntry();
+        if (!isAggregatorRequest) {
+            ds.startEntry("metadataFieldDisplayNames");
+            RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
+            ds.endEntry();
+        }
     }
 
     protected void setRequestId(String requestId) {

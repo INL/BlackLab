@@ -194,8 +194,7 @@ public class RequestHandlerHits extends RequestHandler {
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
         boolean isAggregatorRequest = request.getParameter("aggregator") != null && request.getParameter("aggregator").equalsIgnoreCase("true");
-        if (!isAggregatorRequest)
-            datastreamMetadataFieldInfo(ds, index);
+        datastreamMetadataFieldInfo(ds, index, isAggregatorRequest);
 
         if (searchParam.getBoolean("explain")) {
             TextPattern tp = searchParam.getPattern();

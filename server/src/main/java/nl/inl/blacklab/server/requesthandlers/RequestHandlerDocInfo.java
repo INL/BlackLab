@@ -51,7 +51,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         ds.endEntry();
         dataStreamMetadataGroupInfo(ds, blIndex);
 
-        datastreamMetadataFieldInfo(ds, blIndex);
+        datastreamMetadataFieldInfo(ds, blIndex, false);
 
         ds.endMap();
         return HTTP_OK;

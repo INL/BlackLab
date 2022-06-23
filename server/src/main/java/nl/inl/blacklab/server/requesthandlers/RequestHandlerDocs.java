@@ -182,7 +182,7 @@ public class RequestHandlerDocs extends RequestHandler {
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        datastreamMetadataFieldInfo(ds, blIndex);
+        datastreamMetadataFieldInfo(ds, blIndex, false);
 
         ds.endMap().endEntry();
 
