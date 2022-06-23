@@ -342,13 +342,12 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
 
     @Override
     protected boolean resultsProcessedAtLeast(long lowerBound) {
-        return this.hitsInternal.size() >= lowerBound;
+        return hitsProcessedAtLeast(lowerBound);
     }
 
     @Override
     protected long resultsProcessedTotal() {
-        ensureAllResultsRead();
-        return this.hitsInternal.size();
+        return hitsProcessedTotal();
     }
 
     @Override
@@ -487,11 +486,25 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         return resultsStats();
     }
 
+    /**
+     * Block until this many hits have been processed.
+     *
+     * Returns false if there's not enough hits to process.
+     *
+     * @param lowerBound number of hits to wait for
+     * @return true if this many hits are now available, false if not
+     */
     protected boolean hitsProcessedAtLeast(long lowerBound) {
+        ensureResultsRead(lowerBound);
         return this.hitsInternal.size() >= lowerBound;
     }
 
     protected long hitsProcessedSoFar() {
+        return this.hitsInternal.size();
+    }
+
+    protected long hitsProcessedTotal() {
+        ensureAllResultsRead();
         return this.hitsInternal.size();
     }
 

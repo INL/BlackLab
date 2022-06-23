@@ -264,6 +264,14 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
         return resultsStats;
     }
 
+    /**
+     * Block until this many results have been processed.
+     *
+     * Returns false if there's not enough results to process.
+     *
+     * @param lowerBound number of results to wait for
+     * @return true if this many results are now available, false if not
+     */
     protected abstract boolean resultsProcessedAtLeast(long lowerBound);
 
     /**

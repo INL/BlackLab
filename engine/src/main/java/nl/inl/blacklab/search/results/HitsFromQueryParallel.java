@@ -574,7 +574,8 @@ public class HitsFromQueryParallel extends HitsMutable {
         return this.globalHitsProcessed.get();
     }
 
-    private long hitsProcessedTotal() {
+    @Override
+    protected long hitsProcessedTotal() {
         ensureAllResultsRead();
         return this.globalHitsProcessed.get();
     }

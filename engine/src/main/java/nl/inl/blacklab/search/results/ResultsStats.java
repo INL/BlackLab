@@ -9,7 +9,7 @@ public abstract class ResultsStats implements SearchResult {
     public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
         @Override
         public boolean processedAtLeast(long lowerBound) {
-            return false;
+            throw new RuntimeException("cannot access results so far, search not started");
         }
 
         @Override
@@ -48,6 +48,14 @@ public abstract class ResultsStats implements SearchResult {
         }
     };
 
+    /**
+     * Block until this many hits have been processed.
+     *
+     * Returns false if there's not enough hits to process.
+     *
+     * @param lowerBound number of hits to wait for
+     * @return true if this many hits are now available, false if not
+     */
     public abstract boolean processedAtLeast(long lowerBound);
 
     /**
