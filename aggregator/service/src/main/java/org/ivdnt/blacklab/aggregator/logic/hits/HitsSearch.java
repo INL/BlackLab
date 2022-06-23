@@ -342,6 +342,8 @@ public class HitsSearch {
         summary.windowFirstResult = first;
         summary.windowHasNext = size() > first + number;
         summary.windowHasPrevious = first > 0;
+        summary.searchParam.first = summary.windowFirstResult;
+        summary.searchParam.number = summary.requestedWindowSize;
 
         // Build the hits window and docInfos and return
         BigList<HitMin> hitWindow = subList(first, actualWindowSize);
