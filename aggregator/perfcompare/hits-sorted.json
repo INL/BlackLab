@@ -6,15 +6,17 @@
   "repeat": 2,
   "runs": [
     {
-      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "words": ["kater", "menselijk", "kinderachtig", "overdreven", "voorzichtig"],
       "first": 1000,
       "number": 100,
+      "sort": "left:lemma:i",
       "usecache": "no"
     },
     {
-      "words": ["over", "voor", "in", "op", "de"],
-      "first": 10000,
+      "words": ["kat", "mens", "kind", "over", "voor"],
+      "first": 1000,
       "number": 100,
+      "sort": "field:titleLevel2",
       "usecache": "no"
     }
   ]

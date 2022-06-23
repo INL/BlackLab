@@ -17,7 +17,7 @@ def timeRequest(corpus_url, repeat, request):
     """
     result = urlencode(request, quote_via=quote_plus)
     url = f'{corpus_url}/hits?{result}'
-    print(url)
+    #print(f'# {url}')
     duration = []
     for i in range(repeat + 1):  # 1 extra for warmup
         start = time.time()
