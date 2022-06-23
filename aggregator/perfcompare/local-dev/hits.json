@@ -1,0 +1,19 @@
+{
+  "corpora": [
+    "http://localhost:8080/blacklab-server/opensonar",
+    "https://corpora.ato.ivdnt.org/blacklab-server/opensonar"
+  ],
+  "repeat": 2,
+  "runs": [
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "first": 1000,
+      "number": 100
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "first": 10000,
+      "number": 100
+    }
+  ]
+}

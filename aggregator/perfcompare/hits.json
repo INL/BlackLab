@@ -1,0 +1,19 @@
+{
+  "corpora": [
+    "http://svowdu10.ivdnt.loc/blacklab-server/chn-intern",
+    "http://svotmc10.ivdnt.loc/blacklab-server/chn-intern"
+  ],
+  "repeat": 2,
+  "runs": [
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "first": 1000,
+      "number": 100
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "first": 10000,
+      "number": 100
+    }
+  ]
+}

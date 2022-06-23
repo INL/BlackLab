@@ -1,0 +1,29 @@
+{
+  "corpora": [
+    "http://localhost:8080/blacklab-server/opensonar",
+    "https://corpora.ato.ivdnt.org/blacklab-server/opensonar"
+  ],
+  "repeat": 2,
+  "runs": [
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "group": "wordleft:lemma:i",
+      "usecache": "no"
+    },
+    {
+      "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
+      "group": "field:titleLevel2",
+      "usecache": "no"
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "group": "field:titleLevel2",
+      "usecache": "no"
+    },
+    {
+      "words": ["over", "voor", "in", "op", "de"],
+      "group": "field:ipr",
+      "usecache": "no"
+    }
+  ]
+}

@@ -1,25 +1,29 @@
 {
   "corpora": [
     "http://svowdu10.ivdnt.loc/blacklab-server/chn-intern",
-    "http://localhost/blacklab-server/chn-intern"
+    "http://svotmc10.ivdnt.loc/blacklab-server/chn-intern"
   ],
   "repeat": 2,
   "runs": [
     {
       "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
-      "groupby": "wordleft:lemma:i"
+      "group": "wordleft:lemma:i",
+      "usecache": "no"
     },
     {
       "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
-      "groupby": "field:titleLevel2"
+      "group": "field:titleLevel2",
+      "usecache": "no"
     },
     {
       "words": ["over", "voor", "in", "op", "de"],
-      "groupby": "field:titleLevel2"
+      "group": "field:titleLevel2",
+      "usecache": "no"
     },
     {
       "words": ["over", "voor", "in", "op", "de"],
-      "groupby": "field:ipr"
+      "group": "field:ipr",
+      "usecache": "no"
     }
   ]
 }
