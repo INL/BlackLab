@@ -9,13 +9,13 @@
       "words": ["kat", "mens", "kind", "over", "voor", "in", "op", "de"],
       "first": 1000,
       "number": 100,
-      "usecache": "no"
+      "usecache": "nodes"
     },
     {
       "words": ["over", "voor", "in", "op", "de"],
       "first": 10000,
       "number": 100,
-      "usecache": "no"
+      "usecache": "nodes"
     }
   ]
 }

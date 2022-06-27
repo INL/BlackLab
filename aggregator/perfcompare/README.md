@@ -25,7 +25,17 @@ Configuration is done with a file `perfcompare.json` (no comments allowed in act
       "words": ["quick", "brown", "fox", "jumps", "lazy", "dog"],
       
       // Property to group by
-      "groupby": "wordleft:lemma:i"
+      "group": "wordleft:lemma:i",
+      
+      // Disable cache
+      "usecache": "no"
+    },
+    
+    {
+      // You can also specify CQL directly using the patts property.
+      "patts": ["[lemma='cow']", "[pos='ADJ']"],
+      "sort": "left:lemma:i",
+      "usecache": "no"
     },
   ]
 }
@@ -34,13 +44,13 @@ Configuration is done with a file `perfcompare.json` (no comments allowed in act
 Output will look like this:
 
 ```tsv
-# group by wordleft:lemma:i
-quick	0.76	2.16
-brown	0.92	1.88
-fox	0.98	1.99
-jumps	6.27	10.28
-lazy	12.12	23.55
-dog	28.9	65.32
+# {'group': 'wordleft:lemma:i', 'usecache': 'no'}
+"quick"	0.76	2.16
+"brown"	0.92	1.88
+"fox"	0.98	1.99
+"jumps"	6.27	10.28
+"lazy"	12.12	23.55
+"dog"	28.9	65.32
 ```
 
-Each run will start with a comment that indicates the grouping property. Then a tab-separated line is printed with the word, followed by average timings per corpus (in the order they were specified in the `"corpora"` key). 
+Each run will start with a comment that shows the request. Then a tab-separated line is printed with the CQL query, followed by average timings per corpus (in the order they were specified in the `"corpora"` key). 
