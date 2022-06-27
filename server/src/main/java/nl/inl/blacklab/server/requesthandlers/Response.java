@@ -117,10 +117,10 @@ public class Response {
                 HttpServletResponse.SC_CONFLICT);
     }
 
-    public static int indexNotFound(DataStream ds, String indexName) {
-        return error(ds, "CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
-                HttpServletResponse.SC_NOT_FOUND);
-    }
+//    public static int indexNotFound(DataStream ds, String indexName) {
+//        return error(ds, "CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
+//                HttpServletResponse.SC_NOT_FOUND);
+//    }
 
     public static int illegalIndexName(DataStream ds, String shortName) {
         return badRequest(ds, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);

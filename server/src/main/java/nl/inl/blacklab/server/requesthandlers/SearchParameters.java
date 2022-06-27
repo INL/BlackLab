@@ -376,7 +376,7 @@ public class SearchParameters {
     }
 
     boolean getUseCache() {
-        return !debugMode || getBoolean("usecache");
+        return !debugMode || getString("usecache").equals("nodes")/*aggregator*/ || getBoolean("usecache");
     }
 
     public SearchSettings getSearchSettings() {

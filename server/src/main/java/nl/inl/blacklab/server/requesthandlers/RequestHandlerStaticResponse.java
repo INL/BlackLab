@@ -133,10 +133,10 @@ public class RequestHandlerStaticResponse extends RequestHandler {
                 HttpServletResponse.SC_CONFLICT);
     }
 
-    public RequestHandlerStaticResponse indexNotFound(String indexName) {
-        return error("CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
-                HttpServletResponse.SC_NOT_FOUND);
-    }
+//    public RequestHandlerStaticResponse indexNotFound(String indexName) {
+//        return error("CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
+//                HttpServletResponse.SC_NOT_FOUND);
+//    }
 
     public RequestHandlerStaticResponse illegalIndexName(String shortName) {
         return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
