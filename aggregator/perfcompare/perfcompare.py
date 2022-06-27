@@ -9,6 +9,19 @@ import json
 import statistics
 from urllib.parse import urlencode, quote_plus
 
+def clearCache(url):
+    i = url.rindex('/')
+    clear_url = url[:i] + '/cache-clear'
+    #print(clear_url)
+
+    # Perform a HTTP request with the POST method using clear_url as the url
+    try:
+        req =  urllib.request.Request(clear_url, method='POST')
+        urllib.request.urlopen(req)
+    except:
+        print(f'Failed to clear cache on {clear_url}')
+        raise
+
 def timeRequest(corpus_url, repeat, request):
     """ Returns average time for a grouping query on a server.
 
@@ -19,7 +32,13 @@ def timeRequest(corpus_url, repeat, request):
     url = f'{corpus_url}/hits?{result}'
     print(f'# {url}')
     duration = []
+
     for i in range(repeat + 1):  # 1 extra for warmup
+        # Clear the cache on each node;
+        # otherwise we get instant results but aren't measuring anything
+        clearCache(corpus_url)
+
+        print(f'#   req {i+1}')
         start = time.time()
         try:
             with urllib.request.urlopen(url) as response:
@@ -28,20 +47,22 @@ def timeRequest(corpus_url, repeat, request):
             print(f'URL {url}\nHTTPError: {e.code}\nRESPONSE: {e.read().decode()}')
             raise e
         d = round(time.time() - start, 2)
+        print(f'#   took {d}s')
         if i > 0: # first is warmup
             duration.append(d)
 
     # return average duration
     return round(statistics.mean(duration), 2)
 
+
 def timeCompareRequests(corpora, repeat, req):
     """ Prints tab-separated average response time for a grouping query on different servers """
     duration = []
     for url in corpora:
         duration.append(timeRequest(url, repeat, req))
-        time.sleep(0.5)
     str_dur = "\t".join(map(str, duration))
     print(f'{req["patt"]}\t{str_dur}')
+
 
 def executeRun(corpora, repeat, run):
     """ Performs comparisons of grouping queries and prints tab-separated results """
@@ -56,6 +77,7 @@ def executeRun(corpora, repeat, run):
             request = { **config, 'patt': patt }
             timeCompareRequests(corpora, repeat, request)
 
+
 def main():
     if len(sys.argv) < 1:
         print('Usage: perfcompare.py <config.json>')
@@ -64,20 +86,6 @@ def main():
     # Read config file
     with open(sys.argv[1]) as f:
        config = json.load(f)
-
-    # Clear the cache on each node
-    for url in config['corpora']:
-        i = url.rindex('/')
-        clear_url = url[:i] + '/cache-clear'
-        print(clear_url)
-
-        # Perform a HTTP request with the POST method using clear_url as the url
-        try:
-            req =  urllib.request.Request(clear_url, method='POST')
-            urllib.request.urlopen(req)
-        except:
-            print(f'Failed to clear cache on {clear_url}')
-            raise
 
     # Perform the configured runs
     for run in config['runs']:
