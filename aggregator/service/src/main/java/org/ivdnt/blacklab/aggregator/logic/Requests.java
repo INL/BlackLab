@@ -103,14 +103,14 @@ public class Requests {
     }
 
     /** Send requests to all nodes */
-    private static List<Pair<String, Future<Response>>> sendNodeRequests(NodeRequestFactory factory, MediaType mediaType) {
+    private static List<Pair<String, Future<Response>>> sendNodeRequestsMethod(NodeRequestFactory factory, MediaType mediaType, String method) {
         List<Pair<String, Future<Response>>> futures = new ArrayList<>();
         for (String nodeUrl: AggregatorConfig.get().getNodes()) {
             WebTarget webTarget = factory.get(nodeUrl);
             Future<Response> futureResponse = webTarget //client.target(nodeUrl)
                     .request(mediaType)
                     .async()
-                    .get();
+                    .method(method);
             futures.add(Pair.of(webTarget.getUri().toString(), futureResponse));
         }
         return futures;
@@ -127,6 +127,11 @@ public class Requests {
         RETURN_ON_SUCCESS,
     }
 
+    public static Map<String, Response> getResponses(NodeRequestFactory factory,
+            MediaType mediaType, ErrorStrategy strategy) {
+        return getResponsesMethod(factory, mediaType, strategy, "GET");
+    }
+
     /**
      * Send requests to all nodes and collect responses.
      *
@@ -139,10 +144,10 @@ public class Requests {
      * @param strategy how to handle error/success
      * @return responses indexed by node URL
      */
-    public static Map<String, Response> getResponses(NodeRequestFactory factory,
-            MediaType mediaType, ErrorStrategy strategy) {
+    public static Map<String, Response> getResponsesMethod(NodeRequestFactory factory,
+            MediaType mediaType, ErrorStrategy strategy, String method) {
         // Send requests and collect futures
-        List<Pair<String, Future<Response>>> futures = sendNodeRequests(factory, mediaType);
+        List<Pair<String, Future<Response>>> futures = sendNodeRequestsMethod(factory, mediaType, method);
 
         // Wait for futures to complete and collect response objects
         Map<String, Response> responses = new LinkedHashMap<>();
@@ -188,6 +193,14 @@ public class Requests {
                 .orElse(null);
     }
 
+    public static <T> Map<String, T> getResponses(NodeRequestFactory factory, Class<T> cls) {
+        return getResponsesMethod(factory, cls, "GET");
+    }
+
+    public static <T> Map<String, T> getResponsesPost(NodeRequestFactory factory, Class<T> cls) {
+        return getResponsesMethod(factory, cls, "POST");
+    }
+
     /**
      * Send requests to all nodes and return the responses if all succeed.
      *
@@ -196,9 +209,9 @@ public class Requests {
      * @return response objects indexed by nodeUrl
      * @param <T> response object type
      */
-    public static <T> Map<String, T> getResponses(NodeRequestFactory factory, Class<T> cls) {
-        Map<String, Response> responses = getResponses(factory, MediaType.APPLICATION_JSON_TYPE,
-                ErrorStrategy.THROW_ON_FAILURE);
+    private static <T> Map<String, T> getResponsesMethod(NodeRequestFactory factory, Class<T> cls, String method) {
+        Map<String, Response> responses = getResponsesMethod(factory, MediaType.APPLICATION_JSON_TYPE,
+                ErrorStrategy.THROW_ON_FAILURE, method);
         return responses.entrySet().stream()
                 .map(r -> {
                     try {

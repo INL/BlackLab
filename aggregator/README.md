@@ -35,9 +35,9 @@ If the answers to these questions are positive, we will go ahead with the SolrCl
   - [x] `/INDEX/hits`
   - [x] `/INDEX/docs/PID`
   - [x] `/INDEX/docs/PID/contents`
-- [ ] Optimization
-  - [ ] improve performance and reduce memory requirements using hit index lists
-  - [ ] improve performance and reduce memory requirements using sort value
+- [x] Optimization
+  - [x] keep track of merge table
+  - [x] minimal hit info with only sort values
 - [x] Sort options for hits\[grouped\]:
   - [x] no sort
   - [x] sort on context (match/(word) before/(word) after)
@@ -169,22 +169,16 @@ Do we need all the context data? We do need it for the concordances in the windo
 
 A **global term sort index table** would be ideal, as we wouldn't have to transmit and store strings. But this is challenging to do in a distributed environment, especially in combination with incremental indexing. For example, if a document is added to a node, and it contains a previously unseen term (that doesn't yet have a sort index), it would have to be assigned the correct sort index in the table (potentially updating other terms' sort indexes to avoid collisions), and these changes would have to be communicated to all nodes before any queries including this term could be done. But what if those nodes have (potentially conflicting) changes of their own? And what if one or more nodes were temporarily unavailable during this synchronization process? When those nodes become available again, changes between the term sort index tables would need to be resolved. The term sort index table would keep growing even if a lot of documents are removed unless we keep careful track of what terms still actually occur in the index.
 
-It might be easier to keep an "approximate sort value" (ASV) for each hit with the following property: if two hits have different ASIs, their correct sort order follows from that. If two hits have the same ASV, it means they will sort close together, but we're not sure which comes first. This way we can keep "approximately sorted" hits in memory, and request additional data to refine the sort only for the requested window (or potentially slightly larger depending on how hits with the same ASV are clustered).
+It might be easier to just send a "sort value" (the value of whatever property we want to sort by) for each hit instead of sending all annotations and document metadata values.
 
-The same ASV approach could work for all types of sort, not just the context ones. This means we don't need to store all metadata fields for all documents in the result set to enable sorting by a metadata field.
-
-A concern about the merge table approach described above: merging is done using the requested sort value, so if we switch to approximate sort, we'll have to sort by ASV. This means that the merge table indexes should always coincide with a new ASV value (that is, it shouldn't be in the middle of a list of hits with the same ASV). This way, we can ensure that the hits on each page in the merge table can still be correctly sorted if needed.
-
-One problem is cases where there's a lot of ASV collisions. This can happen if you sort by document pid and there's many hits in the same document. Or when sorting by matched text but you've searched for a common prefix such as `[word="pre.*"]`). In theory this shouldn't break anything, just slow things down and make them require more memory.
-
-If we remember each hit's originating node and its index in that node's result set, we could use that to sort hits from the same node with identical ASIs. This works because each node produces hits sorted using that node's sort index table, so hits from the same node are already guaranteed to be in the correct order. This could save a number of string comparisons with the final sort, at the cost of a bit of additional memory.
+Sort value would have to be an array of values, to take multi-word contexts into account. We'll use an array of strings for everything and pad numbers with zeroes to make sure sorting works correctly. We could switch to using actual numbers as that's probably more efficient, but it makes the code more complex. 
 
 The aggregator's hits structure would look something like this:
 
 | field | meaning                                                                                                              |
 |-------|----------------------------------------------------------------------------------------------------------------------|
 | doc   | document id (because we need to keep hits from same document together for no-sort merge)                             |
-| asi   | approximate sort value (for approximate-merge)                                                                       |
+| sv    | sort value (for merge)                                                                                               |
 | node  | node index this hit originated from (for requesting concordances and for fast comparison with others from this node) |
 | nodei | original index on originating node (for requesting concordances and for fast comparison with others from this node)  |
 
@@ -192,12 +186,30 @@ The aggregator's hits structure would look something like this:
 
 For grouping, the same technique could be applied, although there's probably less of a problem, because we usually don't have millions of groups.
 
-TODO:
+**STATUS:** IMPLEMENTED
+
+> **NOTE:** Right now, sort information is retrieved twice on each node: once during the original sort, and again to send the hits to the aggregator. It would be better to only retrieve these values once, especially because retrieving the values seems to be what makes sorting/grouping slow, not the actual sorting/grouping. But this would require changes to how sorting/grouping works and we should be careful that sort values don't eat up a large amount of memory indefinitely.
+
+## Approximate Sort Values (ASVs)?
+
+We considered "approximate sort values" (ASVs) that would have the following property: if two hits have different ASIs, their correct sort order follows from that. If two hits have the same ASV, it means they will sort close together, but we're not sure which comes first. This way we could keep "approximately sorted" hits in memory, and request additional data to refine the sort only for the requested window (or potentially slightly larger depending on how hits with the same ASV are clustered).
+
+This idea was shelved because it seems too complex for now, but we may want to revisit it in the future. Here's some more thoughts about this.
+
+A concern about the merge table approach described above: merging is done using the requested sort value, so if we switch to approximate sort, we'll have to sort by ASV. This means that the merge table indexes should always coincide with a new ASV value (that is, it shouldn't be in the middle of a list of hits with the same ASV). This way, we can ensure that the hits on each page in the merge table can still be correctly sorted if needed.
+
+One problem is cases where there's a lot of ASV collisions. This can happen if you sort by document pid and there's many hits in the same document. Or when sorting by matched text but you've searched for a common prefix such as `[word="pre.*"]`). In theory this shouldn't break anything, just slow things down and make them require more memory.
+
+If we remember each hit's originating node and its index in that node's result set, we could use that to sort hits from the same node with identical ASIs. This works because each node produces hits sorted using that node's sort index table, so hits from the same node are already guaranteed to be in the correct order. This could save a number of string comparisons with the final sort, at the cost of a bit of additional memory.
+
 - [ ] implement ASV for HitProperty that can be used to correctly sort hits as long as their ASIs differ; same-ASV hits will have to be correctly sorted later with the full sort information.
   - ASV should probably be a short string, not a number, because most values are strings so we'd need to calculate a lot of CollationKeys.
   - a long can easily be serialized to 8 bytes and encoded to an 11 byte base64 string; an int would only need 6 bytes
   - for context words, instead of transmitting the entire content we could only transmit (part of) the first word to sort on.
   - for metadata values, a prefix of the value could be used.
-- [ ] add way for aggregator to request minimal hit info from nodes: only docid (for keeping documents together, see above) and ASV (also keep these together, and perform merge) for each hit. (could even be compacted to list of (docid + list of ASIs in that doc) ).
-- [ ] aggregator fetches minimal hit info to merge hits and build merge table. it also stores node+index for each hit (perhaps encoded together into a long, e.g. 1 byte for node number, 7 bytes for index). only requests "full" hits information for the requested window (plus adjacent same-ASV hits, to ensure correct sorting) and applies final sort to that.
+- [ ] add way for aggregator to request minimal hits with ASVs.
+- [ ] update merge table approach to deal with ASVs. Only requests "full" hits information for the requested window (plus adjacent same-ASV hits, to ensure correct sorting) and applies final sort to that.
 - [ ] use stored node+index to avoid unnecessary string comparisons
+
+
+**STATUS:** NOT IMPLEMENTD FOR NOW, MAYBE LATER

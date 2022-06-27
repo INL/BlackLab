@@ -61,9 +61,6 @@ class NodeHitsSearch {
     /** The hits we've received so far */
     private final BigList<HitMin> hits = new ObjectBigArrayBigList<>();
 
-    /** The docInfos we've received so far. */
-    private final Map<String, DocInfo> docInfos = new HashMap<>();
-
     /** Are we still fetching, or do we have all the hits? */
     private boolean stillFetchingHits = true;
 

@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -21,6 +22,7 @@ import org.ivdnt.blacklab.aggregator.representation.Corpus;
 import org.ivdnt.blacklab.aggregator.representation.DocOverview;
 import org.ivdnt.blacklab.aggregator.representation.ErrorResponse;
 import org.ivdnt.blacklab.aggregator.representation.InputFormats;
+import org.ivdnt.blacklab.aggregator.representation.StatusResponse;
 
 @Path("/{corpusName}")
 public class CorpusResource {
@@ -37,6 +39,28 @@ public class CorpusResource {
     @Inject
     public CorpusResource(Client client) {
         this.client = client;
+    }
+
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response corpusInfo(@PathParam("corpusName") String corpusName) {
+
+        switch (corpusName) {
+        case "cache-clear":
+            return clearCacheOnNodes();
+        }
+
+        return Response.status(Response.Status.BAD_REQUEST).build();
+    }
+
+    private Response clearCacheOnNodes() {
+        try {
+            Requests.getResponsesPost(url -> client.target(url).path("cache-clear"), StatusResponse.class);
+            return Response.ok().build();
+        } catch (BlsRequestException e) {
+            // One of the node requests produced an error. Return it now.
+            return Response.status(e.getStatus()).entity(e.getResponse()).build();
+        }
     }
 
     /**
@@ -56,6 +80,8 @@ public class CorpusResource {
         case "cache-info":
         case "help":
             return resourceNotImplemented("/" + corpusName);
+        case "cache-clear":
+            return clearCacheOnNodes();
         }
 
         // Query each node and collect responses

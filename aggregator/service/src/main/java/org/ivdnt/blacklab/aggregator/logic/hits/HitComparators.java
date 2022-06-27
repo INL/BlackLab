@@ -12,9 +12,17 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 
 class HitComparators {
 
+    // FIXME: use correct collator
+    final static Comparator<HitMin> baseComparator = Comparator.naturalOrder();
+
     public static Comparator<HitMin> deserializeMin(String hitProp) {
-        // FIXME: use correct collator
-        return Comparator.naturalOrder();
+        return (a, b) -> {
+            if (a.nodeId == b.nodeId) {
+                // Hits from the same node are already in the correct order.
+                return Long.compare(a.indexOnNode, b.indexOnNode);
+            }
+            return baseComparator.compare(a, b);
+        };
     }
 
     public static Comparator<Hit> deserialize(String hitProp) {
