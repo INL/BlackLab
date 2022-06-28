@@ -42,6 +42,7 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -136,7 +137,7 @@ public class SearchParameters {
                 continue;
             param.put(name, value);
         }
-        param.setDebugMode(searchMan.config().getDebug().isDebugMode(request.getRemoteAddr()));
+        param.setDebugMode(searchMan.config().getDebug().isDebugMode(BlackLabServer.getOriginatingAddress(request)));
         return param;
     }
 

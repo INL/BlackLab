@@ -216,7 +216,7 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj
-                                .unauthorized("You (" + request.getRemoteAddr() + ") are not authorized to do this.");
+                                .unauthorized("You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
@@ -258,7 +258,7 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj.unauthorized(
-                                "You (" + request.getRemoteAddr() + ") are not authorized to see this information.");
+                                "You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
@@ -423,7 +423,7 @@ public abstract class RequestHandler {
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
-            logger.info(ServletUtil.shortenIpv6(request.getRemoteAddr()) + " " + user.uniqueIdShort() + " "
+            logger.info(ServletUtil.shortenIpv6(BlackLabServer.getOriginatingAddress(request)) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
 

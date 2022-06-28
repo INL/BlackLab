@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.util;
 
+import java.util.List;
+
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
@@ -88,6 +90,24 @@ public class TestBlsUtils {
         Assert.assertEquals("1s", BlsUtils.describeIntervalSec(1));
         Assert.assertEquals("5m", BlsUtils.describeIntervalSec(300));
         Assert.assertEquals("5m01s", BlsUtils.describeIntervalSec(301));
+    }
+
+    @Test
+    public void testWildcardIpMatches() {
+        Assert.assertTrue(BlsUtils.wildcardIpMatches("1.2.3.*", "1.2.3.4"));
+        Assert.assertTrue(BlsUtils.wildcardIpMatches("1.2.*.4", "1.2.3.4"));
+        Assert.assertTrue(BlsUtils.wildcardIpMatches("*.2.3.4", "1.2.3.4"));
+        Assert.assertTrue(BlsUtils.wildcardIpMatches("1.2.3.4", "1.2.3.4"));
+
+        Assert.assertFalse(BlsUtils.wildcardIpMatches("1.2.3.*", "112.3.4"));
+        Assert.assertFalse(BlsUtils.wildcardIpMatches("1.2.3.4", "112.3.4"));
+        Assert.assertFalse(BlsUtils.wildcardIpMatches("1.2.3.4", "1.2.3.5"));
+
+        final String ipv6local = "0:0:0:0:0:0:0:1";
+        Assert.assertTrue(BlsUtils.wildcardIpMatches(ipv6local, ipv6local));
+
+        List<String> adr = List.of("127.0.0.1", ipv6local, "172.16.10.19");
+        Assert.assertTrue(BlsUtils.wildcardIpsContain(adr, ipv6local));
     }
 
 }
