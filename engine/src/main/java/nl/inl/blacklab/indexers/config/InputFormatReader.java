@@ -39,9 +39,9 @@ import nl.inl.util.Json;
  */
 public class InputFormatReader extends YamlJsonReader {
 
-    protected static final Logger logger = LogManager.getLogger(InputFormatReader.class);
+    private static final Logger logger = LogManager.getLogger(InputFormatReader.class);
 
-    public interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
+    interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
     }
 
@@ -60,9 +60,10 @@ public class InputFormatReader extends YamlJsonReader {
         try {
             root = mapper.readTree(r);
         } catch (JsonParseException e) {
-            throw new InvalidInputFormatConfig("Could not parse config file: " + e.getMessage());
+            throw new InvalidInputFormatConfig("Could not parse config " + cfg.getName() + ": " + e.getMessage());
         }
-        read(root, cfg, finder);
+        InputFormatReader ifr = new InputFormatReader(cfg);
+        ifr.read(root, finder);
     }
 
     /**
@@ -78,7 +79,32 @@ public class InputFormatReader extends YamlJsonReader {
         cfg.setReadFromFile(file);
     }
 
-    protected static void read(JsonNode root, ConfigInputFormat cfg,
+    /** The input format we're reading. */
+    private final ConfigInputFormat cfg;
+
+    private InputFormatReader(ConfigInputFormat cfg) {
+        this.cfg = cfg;
+    }
+
+    /** Describe the format we're reading, for e.g. error messages. */
+    private String descFormat() {
+        File f = cfg.getReadFromFile();
+        if (f != null) {
+            return f.getPath();
+        }
+        return StringUtils.defaultString(cfg.getName(), "(unnamed)");
+    }
+
+    /** Describe the format we're reading, for e.g. error messages. */
+    private String inFormat() {
+        File f = cfg.getReadFromFile();
+        if (f != null) {
+            return " in format file " + f.getPath();
+        }
+        return " in format " + StringUtils.defaultString(cfg.getName(), "(unnamed)");
+    }
+
+    private void read(JsonNode root,
             Function<String, Optional<ConfigInputFormat>> finder) {
         obj(root, "root node");
         Iterator<Entry<String, JsonNode>> it = root.fields();
@@ -98,12 +124,12 @@ public class InputFormatReader extends YamlJsonReader {
                 String formatIdentifier = str(e);
                 if (finder == null)
                     throw new InvalidInputFormatConfig(
-                            "Format depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
+                            "Format " + descFormat() + " depends on base format " + formatIdentifier + " but no BaseFormatFinder provided.");
 
                 ConfigInputFormat baseFormat = finder
                         .apply(formatIdentifier)
                         .orElseThrow(() -> new InvalidInputFormatConfig(
-                                "Base format " + formatIdentifier + " not found for format " + cfg.getName()));
+                                "Base format " + formatIdentifier + " not found" + inFormat()));
 
                 cfg.setBaseFormat(baseFormat);
                 break;
@@ -161,7 +187,7 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setVisible(bool(e));
                 break;
             default:
-                throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey());
+                throw new InvalidInputFormatConfig("Unknown top-level key " + e.getKey() + inFormat());
             }
         }
 
@@ -175,7 +201,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readCorpusConfig(Entry<String, JsonNode> ccEntry, ConfigCorpus corpusConfig) {
+    private void readCorpusConfig(Entry<String, JsonNode> ccEntry, ConfigCorpus corpusConfig) {
         ObjectNode node = obj(ccEntry.getValue(), "");
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
@@ -203,13 +229,13 @@ public class InputFormatReader extends YamlJsonReader {
                 readAllAnnotationGroups(e, corpusConfig);
                 break;
             default:
-                throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in corpusConfig");
+                throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in corpusConfig" + inFormat());
             }
         }
 
     }
 
-    private static void readFileTypeOptions(Entry<String, JsonNode> ftOptEntry, ConfigInputFormat cfg) {
+    private void readFileTypeOptions(Entry<String, JsonNode> ftOptEntry, ConfigInputFormat cfg) {
         ObjectNode node = obj(ftOptEntry);
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
@@ -218,7 +244,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {
+    private void readStringMap(Entry<String, JsonNode> strMapEntry, Map<String, String> addToMap) {
         ObjectNode node = obj(strMapEntry.getValue(), null);
         Iterator<Entry<String, JsonNode>> it = node.fields();
         while (it.hasNext()) {
@@ -227,13 +253,13 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readStringList(Entry<String, JsonNode> strListEntry, List<String> addToList) {
+    private void readStringList(Entry<String, JsonNode> strListEntry, List<String> addToList) {
         Iterator<JsonNode> it = array(strListEntry).elements();
         while (it.hasNext())
             addToList.add(str(it.next(), strListEntry.getKey() + " element"));
     }
 
-    private static void readMetadataFieldGroups(Entry<String, JsonNode> mfgEntry, ConfigCorpus cfg) {
+    private void readMetadataFieldGroups(Entry<String, JsonNode> mfgEntry, ConfigCorpus cfg) {
         Iterator<JsonNode> itGroups = array(mfgEntry).elements();
         while (itGroups.hasNext()) {
             JsonNode group = itGroups.next();
@@ -255,14 +281,14 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
+                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName() + inFormat());
                 }
             }
             cfg.addMetadataFieldGroup(g);
         }
     }
 
-    private static void readAllAnnotationGroups(Entry<String, JsonNode> afagEntry, ConfigCorpus cfg) {
+    private void readAllAnnotationGroups(Entry<String, JsonNode> afagEntry, ConfigCorpus cfg) {
         Iterator<Entry<String, JsonNode>> itFields = obj(afagEntry.getValue(), "annotated fields annotation groupings").fields();
         while (itFields.hasNext()) {
             Entry<String, JsonNode> entry = itFields.next();
@@ -272,7 +298,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readAnnotationGroups(Entry<String, JsonNode> entry, ConfigAnnotationGroups cfg) {
+    private void readAnnotationGroups(Entry<String, JsonNode> entry, ConfigAnnotationGroups cfg) {
         Iterator<JsonNode> itGroups = array(entry.getValue(), "annotated field annotation groups").elements();
         while (itGroups.hasNext()) {
             JsonNode group = itGroups.next();
@@ -294,14 +320,14 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName());
+                            "Unknown key " + e.getKey() + " in metadata field group " + g.getName() + inFormat());
                 }
             }
             cfg.addGroup(g);
         }
     }
 
-    private static void readAnnotatedFields(Entry<String, JsonNode> afsEntry, ConfigInputFormat cfg) {
+    private void readAnnotatedFields(Entry<String, JsonNode> afsEntry, ConfigInputFormat cfg) {
         Iterator<Entry<String, JsonNode>> itFields = obj(afsEntry).fields();
         while (itFields.hasNext()) {
             Entry<String, JsonNode> field = itFields.next();
@@ -340,27 +366,27 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in annotated field " + fieldName);
+                            "Unknown key " + e.getKey() + " in annotated field " + fieldName + inFormat());
                 }
             }
         }
     }
 
-    private static void readAnnotations(Entry<String, JsonNode> annotsEntry, ConfigWithAnnotations af) {
+    private void readAnnotations(Entry<String, JsonNode> annotsEntry, ConfigWithAnnotations af) {
         Iterator<JsonNode> itAnnotations = array(annotsEntry).elements();
         while (itAnnotations.hasNext()) {
             af.addAnnotation(readAnnotation(null, itAnnotations.next()));
         }
     }
 
-    private static void readSubAnnotations(Entry<String, JsonNode> saEntry, ConfigAnnotation annot) {
+    private void readSubAnnotations(Entry<String, JsonNode> saEntry, ConfigAnnotation annot) {
         Iterator<JsonNode> itAnnotations = array(saEntry).elements();
         while (itAnnotations.hasNext()) {
             annot.addSubAnnotation(readAnnotation(annot, itAnnotations.next()));
         }
     }
 
-    protected static ConfigAnnotation readAnnotation(ConfigAnnotation parentAnnot, JsonNode a) {
+    private ConfigAnnotation readAnnotation(ConfigAnnotation parentAnnot, JsonNode a) {
         Iterator<Entry<String, JsonNode>> itAnnotation = obj(a, "annotation").fields();
         ConfigAnnotation annot = new ConfigAnnotation();
         while (itAnnotation.hasNext()) {
@@ -384,12 +410,12 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "forEachPath":
                 if (!isSubannotation)
-                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
+                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath" + inFormat());
                 annot.setForEachPath(str(e));
                 break;
             case "namePath":
                 if (!isSubannotation)
-                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath");
+                    throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath" + inFormat());
                 annot.setName(str(e));
                 break;
             case "process":
@@ -406,7 +432,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "sensitivity":
                 if (isSubannotation)
-                    throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings");
+                    throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings" + inFormat());
                 annot.setSensitivity(SensitivitySetting.fromStringValue(str(e)));
                 break;
             case "uiType":
@@ -414,7 +440,7 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "subannotations":
                 if (isSubannotation)
-                    throw new InvalidInputFormatConfig("Subannotations may not have their own subannotations");
+                    throw new InvalidInputFormatConfig("Subannotations may not have their own subannotations" + inFormat());
                 readSubAnnotations(e, annot);
                 break;
             case "forwardIndex":
@@ -446,11 +472,11 @@ public class InputFormatReader extends YamlJsonReader {
      * @param s fixed string the XPath should evaluate to
      * @return XPath expression
      */
-    public static String fixedStringToXpath(String s) {
+    private String fixedStringToXpath(String s) {
         return "\"" + s.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"") + "\"";
     }
 
-    private static void readStandoffAnnotations(Entry<String, JsonNode> sasEntry, ConfigAnnotatedField af) {
+    private void readStandoffAnnotations(Entry<String, JsonNode> sasEntry, ConfigAnnotatedField af) {
         Iterator<JsonNode> itAnnotations = array(sasEntry).elements();
         while (itAnnotations.hasNext()) {
             JsonNode as = itAnnotations.next();
@@ -477,7 +503,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readInlineTags(Entry<String, JsonNode> itsEntry, ConfigAnnotatedField af) {
+    private void readInlineTags(Entry<String, JsonNode> itsEntry, ConfigAnnotatedField af) {
         Iterator<JsonNode> itTags = array(itsEntry).elements();
         while (itTags.hasNext()) {
             JsonNode as = itTags.next();
@@ -500,7 +526,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readMetadata(Entry<String, JsonNode> mdEntry, ConfigInputFormat cfg) {
+    private void readMetadata(Entry<String, JsonNode> mdEntry, ConfigInputFormat cfg) {
         JsonNode node = mdEntry.getValue();
         if (node instanceof ObjectNode) {
             // Single metadata block
@@ -517,7 +543,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readMetadataBlock(JsonNode as, ConfigInputFormat cfg) {
+    private void readMetadataBlock(JsonNode as, ConfigInputFormat cfg) {
         ConfigMetadataBlock b = cfg.createMetadataBlock();
         Iterator<Entry<String, JsonNode>> it = obj(as, "metadata block").fields();
         while (it.hasNext()) {
@@ -538,14 +564,14 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static String warnSanitizeXmlElementName(String name) {
+    private String warnSanitizeXmlElementName(String name) {
         String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
         if (!sanitized.equals(name))
-            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'");
+            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'" + inFormat());
         return sanitized;
     }
 
-    private static void readMetadataFields(Entry<String, JsonNode> mfsEntry, ConfigMetadataBlock b) {
+    private void readMetadataFields(Entry<String, JsonNode> mfsEntry, ConfigMetadataBlock b) {
         Iterator<JsonNode> itFields = array(mfsEntry).elements();
         while (itFields.hasNext()) {
             JsonNode fld = itFields.next();
@@ -624,7 +650,7 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 default:
                     throw new InvalidInputFormatConfig(
-                            "Unknown key " + e.getKey() + " in metadata field " + StringUtils.defaultString(f.getName(), "(unnamed)"));
+                            "Unknown key " + e.getKey() + " in metadata field " + descFormat());
                 }
             }
             if (!existingField)
@@ -632,7 +658,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static void readLinkedDocuments(Entry<String, JsonNode> ldsEntry, ConfigInputFormat cfg) {
+    private void readLinkedDocuments(Entry<String, JsonNode> ldsEntry, ConfigInputFormat cfg) {
         Iterator<Entry<String, JsonNode>> itLinkedDocs = obj(ldsEntry).fields();
         while (itLinkedDocs.hasNext()) {
             Entry<String, JsonNode> linkedDoc = itLinkedDocs.next();
@@ -670,7 +696,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    protected static void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
+    private void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
         // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
         String formatIdentifier = str(e);
         Format format = DocumentFormats.getFormat(formatIdentifier);
@@ -681,7 +707,7 @@ public class InputFormatReader extends YamlJsonReader {
         ld.setInputFormatIdentifier(formatIdentifier);
     }
 
-    private static void readLinkValues(Entry<String, JsonNode> lvsEntry, ConfigLinkedDocument ld) {
+    private void readLinkValues(Entry<String, JsonNode> lvsEntry, ConfigLinkedDocument ld) {
         Iterator<JsonNode> itLinkValues = array(lvsEntry).elements();
         while (itLinkValues.hasNext()) {
             JsonNode linkValue = itLinkValues.next();
@@ -711,7 +737,7 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private static List<ConfigProcessStep> readProcess(Entry<String, JsonNode> prEntry) {
+    private List<ConfigProcessStep> readProcess(Entry<String, JsonNode> prEntry) {
         Iterator<JsonNode> itSteps = array(prEntry).elements();
         List<ConfigProcessStep> p = new ArrayList<>();
         while (itSteps.hasNext()) {

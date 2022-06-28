@@ -95,15 +95,16 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                 "tei-p5-legacy", "tsv-frog", "tsv",
                 "txt" };
         for (String formatIdentifier : formats) {
+            String fileNameRelative = "formats/" + formatIdentifier + ".blf.yaml";
             try (InputStream is = DocumentFormats.class.getClassLoader()
-                    .getResourceAsStream("formats/" + formatIdentifier + ".blf.yaml")) {
+                    .getResourceAsStream(fileNameRelative)) {
                 if (is == null)
                     continue; // not found
 
                 try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                     ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
 
-                    format.setReadFromFile(new File("$BLACKLAB_JAR/formats/" + formatIdentifier + ".blf.yaml"));
+                    format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
                     InputFormatReader.read(reader, false, format, finder);
                     addFormat(format);
                 }
@@ -230,8 +231,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
     protected Optional<ConfigInputFormat> load(String formatIdentifier, File f) throws IOException {
         try {
             ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
-            InputFormatReader.read(f, format, finder);
             format.setReadFromFile(f);
+            InputFormatReader.read(f, format, finder);
 
             addFormat(format);
             return Optional.of(format);
