@@ -28,7 +28,7 @@ If the answers to these questions are positive, we will go ahead with the SolrCl
 
 ## Status
 
-- [ ] Aggregator with:
+- [x] Aggregator with:
   - [x] `/`
   - [x] `/input-formats` (returns empty list for now)
   - [x] `/INDEX`
@@ -45,6 +45,31 @@ If the answers to these questions are positive, we will go ahead with the SolrCl
   - [x] sort by group identity
   - [x] sort by group size
 
+
+## Plan: integrate with Solr
+
+Based on the aggregator results, it seems like a distributed approach helps us to better utilize available hardware, as well as be more flexible in scaling up or down.
+
+The next step is to actually integrate BlackLab with Solr, to make use of Solr's mature support for distributed collections.
+
+This will involve the following steps:
+- [ ] Prepare for Solr integration
+  - [ ] Make the forward index part of the Lucene index
+  - [ ] Make indexmetada.yaml part of the Lucene index
+  - [ ] Study how Mtas integrates with Solr
+- [ ] Integrate with Solr (standalone)
+  - [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
+  - [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
+  - [ ] Enable indexing via Solr (custom or via standard import mechanisms?)
+- [ ] Enable Solr distributed
+  - [ ] Experiment with non-BlackLab distributed Solr, to learn more about e.g. ZooKeeper
+  - [ ] Enable distributed indexing
+  - [ ] Make one of the search operations (e.g. group hits) work in distributed mode
+  - [ ] Make other search operations work in distributed mode
+- [ ] Other
+  - [ ] Make content store optional and investigate alternatives (e.g. content webservice) (OPTIONAL BUT RECOMMENDED)
+
+These tasks will not necessarily be discretely executed in this order, but some tasks might overlap (e.g. we might tackle group hits standalone, then distributed, then do the other operations). 
 
 ## Approach
 
