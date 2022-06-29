@@ -96,6 +96,7 @@ annotatedFields:
     annotations:
 
       # Text of the <w/> element contains the word form
+      # (first annotation becomes the main annotation)
     - name: word
       valuePath: .
 
@@ -134,7 +135,13 @@ metadata:
 
 To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of `$BLACKLAB_CONFIG_DIR/formats/` (if this environment variable is set), `$HOME/.blacklab/formats/` or `/etc/blacklab/formats/`.
 
-This page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
+Please note that when declaring annotations, the first annotation you declare will become the _main annotation_. The main annotion will:
+
+- be searched when omitting annotation name in CQL (e.g. search for `"ship"` and it searches the main annotation). 
+- be used to generate concordances (the KWIC view).
+- be returned as the value (text content) of the `<w>` tag (in the XML response).
+
+The rest of this page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
 
 <a id="working-with-yaml"></a>
 
@@ -329,7 +336,7 @@ annotatedFields:
     containerPath: text
     wordPath: .//w
     annotations:
-    - name: word
+    - name: word    # First annotation becomes the main annotation
       valuePath: t
     - name: lemma
       valuePath: lemma
@@ -405,7 +412,7 @@ annotatedFields:
     tokenPositionIdPath: "@id"
 
     annotations:
-    - name: word
+    - name: word  # First annotation becomes the main annotation
       valuePath: .
     standoffAnnotations:
     - path: standoff/annotation      # Element containing what to index (relative to documentPath)
@@ -501,7 +508,7 @@ annotatedFields:
     wordPath: .//w
 
     annotations:
-    - name: word
+    - name: word  # First annotation becomes the main annotation
       valuePath: t
     - name: lemma
       valuePath: lemma/@class
@@ -594,7 +601,7 @@ fileTypeOptions:
 annotatedFields:
   contents:
     annotations:
-    - name: word
+    - name: word  # First annotation becomes the main annotation
       valuePath: 2    # (1-based) column number or column name (if file has them) 
     - name: lemma
       valuePath: 3
@@ -642,7 +649,7 @@ documentPath: doc   # looks for document elements such as in Sketch WPL format
 annotatedFields:
   contents:
     annotations:
-    - name: word
+    - name: word  # First annotation becomes the main annotation
       valuePath: 1
     - name: lemma
       valuePath: 3
@@ -1147,6 +1154,7 @@ annotatedFields:
     # (valuePaths relative to word path)
     annotations:
 
+    # First annotation is the main annotation
     - name: word
       displayName: Words in the text
       description: The word forms occurring in the document text.

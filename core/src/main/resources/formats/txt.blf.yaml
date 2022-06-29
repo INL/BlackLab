@@ -7,6 +7,7 @@ fileType: text
 annotatedFields:
   contents:
     annotations:
+    # First annotation is the main annotation
     - name: word
       displayName: Word
       valuePath: .

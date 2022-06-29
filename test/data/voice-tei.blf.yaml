@@ -46,6 +46,7 @@ annotatedFields:
     # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
     #       and with forEachPath you could run in to an unknown new annotation mid-way through.
     annotations:
+    # First annotation is the main annotation
     - name: word
       displayName: Word
       valuePath: .

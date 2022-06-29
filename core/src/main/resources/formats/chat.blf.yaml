@@ -6,6 +6,7 @@ fileType: chat
 
 annotatedFields:
   contents:
+    # First annotation is the main annotation
     annotations:
     - name: word
       displayName: Word

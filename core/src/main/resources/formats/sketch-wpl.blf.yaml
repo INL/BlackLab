@@ -12,6 +12,7 @@ documentPath: doc   # looks for document elements such as in Sketch WPL format
                     # (attributes are automatically indexed as metadata)
 annotatedFields:
   contents:
+    # First annotation is the main annotation
     annotations:
     - name: word
       displayName: Word

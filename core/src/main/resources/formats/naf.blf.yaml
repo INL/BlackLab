@@ -28,6 +28,7 @@ annotatedFields:
     tokenPositionIdPath: "@id"
 
     annotations: # basic
+      # First annotation is the main annotation
       - name: word
         displayName: Word
         valuePath: .
