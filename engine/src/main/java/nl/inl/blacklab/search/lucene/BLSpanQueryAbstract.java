@@ -7,6 +7,8 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.QueryVisitor;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -116,6 +118,13 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
                 someRewritten = true;
         }
         return someRewritten ? rewritten : null;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            clauses.forEach(cl -> cl.visit(visitor.getSubVisitor(Occur.MUST, this)));
+        }
     }
 
     public String clausesToString(String field) {

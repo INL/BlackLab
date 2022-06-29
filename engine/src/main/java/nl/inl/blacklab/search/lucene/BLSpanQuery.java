@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
@@ -132,6 +133,9 @@ public abstract class BLSpanQuery extends SpanQuery {
 
     @Override
     public abstract boolean equals(Object obj);
+
+    @Override
+    public abstract void visit(QueryVisitor visitor);
 
     /**
      * Called before rewrite() to optimize certain parts of the query before they

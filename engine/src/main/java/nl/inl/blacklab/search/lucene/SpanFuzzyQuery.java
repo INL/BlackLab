@@ -10,6 +10,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TermQuery;
 
@@ -87,6 +88,13 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         // Not a BooleanQuery, just a TermQuery. Convert to a SpanTermQuery.
         return new BLSpanTermQuery(queryInfo, ((TermQuery) rewrittenFuzzyQuery).getTerm());
 
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            visitor.visitLeaf(this);
+        }
     }
 
     @Override

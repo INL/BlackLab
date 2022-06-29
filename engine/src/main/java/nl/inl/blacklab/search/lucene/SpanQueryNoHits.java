@@ -9,6 +9,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -23,6 +24,13 @@ public class SpanQueryNoHits extends BLSpanQuery {
     public SpanQueryNoHits(QueryInfo queryInfo, String luceneField) {
         super(queryInfo);
         this.luceneField = luceneField;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            visitor.visitLeaf(this);
+        }
     }
 
     @Override

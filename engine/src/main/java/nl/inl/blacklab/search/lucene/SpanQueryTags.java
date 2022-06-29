@@ -10,7 +10,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -69,6 +71,13 @@ public class SpanQueryTags extends BLSpanQuery {
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
         r.setQueryInfo(queryInfo);
         return r;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            clause.visit(visitor.getSubVisitor(Occur.MUST, this));
+        }
     }
 
     @Override

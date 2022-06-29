@@ -12,7 +12,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanWeight;
 
@@ -191,6 +193,14 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 : new BLSpanOrQuery(rewrNotCl.toArray(new BLSpanQuery[0]));
         return new SpanQueryPositionFilter(includeResult, excludeResult, SpanQueryPositionFilter.Operation.MATCHES,
                 true).rewrite(reader);
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            include.forEach(cl -> cl.visit(visitor.getSubVisitor(Occur.MUST, this)));
+            exclude.forEach(cl -> cl.visit(visitor.getSubVisitor(Occur.MUST_NOT, this)));
+        }
     }
 
     @Override
@@ -451,5 +461,4 @@ public class SpanQueryAndNot extends BLSpanQuery {
             cl.setQueryInfo(queryInfo);
         }
     }
-
 }

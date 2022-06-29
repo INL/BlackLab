@@ -7,10 +7,12 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.AutomatonQuery;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.WildcardQuery;
@@ -76,6 +78,13 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
             }
         }
         return result;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(query.getField())) {
+            query.visit(visitor.getSubVisitor(Occur.MUST, this));
+        }
     }
 
     @Override

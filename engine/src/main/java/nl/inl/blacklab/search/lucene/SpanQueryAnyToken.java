@@ -10,6 +10,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -79,6 +80,13 @@ public class SpanQueryAnyToken extends BLSpanQuery {
         if (min != other.min)
             return false;
         return true;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            visitor.visitLeaf(this);
+        }
     }
 
     @Override

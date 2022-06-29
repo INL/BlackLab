@@ -29,6 +29,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanTermQuery;
 import org.apache.lucene.search.spans.SpanTermQuery.SpanTermWeight;
@@ -130,6 +131,13 @@ public class BLSpanTermQuery extends BLSpanQuery {
                 weight.extractTerms(terms);
             }
         };
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getTerm().field())) {
+            visitor.consumeTerms(this, getTerm());
+        }
     }
 
     @Override

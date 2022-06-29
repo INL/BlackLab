@@ -28,10 +28,12 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.DisiPriorityQueue;
 import org.apache.lucene.search.DisiWrapper;
 import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
@@ -211,6 +213,17 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             return BLSpanQuery.wrap(queryInfo, inner.getClauses()[0]);
         }
         return this;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField()) == false) {
+            return;
+        }
+        QueryVisitor v = visitor.getSubVisitor(BooleanClause.Occur.SHOULD, this);
+        for (SpanQuery q : getClauses()) {
+            q.visit(v);
+        }
     }
 
     @Override
@@ -782,5 +795,4 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     public void setClausesAreSimpleTermsInSameAnnotation(boolean b) {
         clausesAreSimpleTermsInSameAnnotation = b;
     }
-
 }

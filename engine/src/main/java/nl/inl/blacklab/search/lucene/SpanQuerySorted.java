@@ -8,7 +8,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -45,6 +47,13 @@ class SpanQuerySorted extends BLSpanQuery {
             return r;
         }
         return this;
+    }
+
+    @Override
+    public void visit(QueryVisitor visitor) {
+        if (visitor.acceptField(getField())) {
+            src.visit(visitor.getSubVisitor(Occur.MUST, this));
+        }
     }
 
     @Override
