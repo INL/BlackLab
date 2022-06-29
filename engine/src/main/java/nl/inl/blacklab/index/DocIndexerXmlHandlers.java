@@ -394,9 +394,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         super(docWriter, fileName, reader);
 
         // Define the properties that make up our annotated field
-        String mainPropName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+        String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
-                getSensitivitySetting(mainPropName), false);
+                SensitivitySetting.defaultForAnnotation(mainPropName), false);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag

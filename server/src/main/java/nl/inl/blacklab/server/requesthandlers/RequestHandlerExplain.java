@@ -5,7 +5,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -36,7 +35,7 @@ public class RequestHandlerExplain extends RequestHandler {
         BlackLabIndex blIndex = blIndex();
         String patt = searchParam.getString("patt");
         try {
-            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
+            TextPattern tp = searchParam.getPattern();
             BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
             QueryExplanation explanation = blIndex.explain(q);
 

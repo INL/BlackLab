@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -20,6 +19,7 @@ import org.apache.lucene.document.StoredField;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -187,7 +187,7 @@ public class ForwardIndexImplSeparate implements ForwardIndex {
     }
 
     /** For common annotations, always build term indexes right away. For less common ones, do it on demand. Saves memory and startup time. */
-    private static final Set<String> BUILD_TERMINDEXES_ON_INIT = new HashSet<>(Arrays.asList("word", "lemma", "pos")); 
+    private static final Set<String> BUILD_TERMINDEXES_ON_INIT = new HashSet<>(AnnotatedFieldNameUtil.COMMON_ANNOTATIONS);
 
     private static boolean buildTermIndexesOnInit(Annotation annotation) {
         return BUILD_TERMINDEXES_ON_INIT.contains(annotation.name());

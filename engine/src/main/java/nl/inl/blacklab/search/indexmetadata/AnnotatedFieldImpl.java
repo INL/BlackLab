@@ -108,7 +108,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
     /** Annotation display order. If not specified, use reasonable defaults. */
-    private final List<String> displayOrder = new ArrayList<>(Arrays.asList("word", "lemma", "pos"));
+    private final List<String> displayOrder = new ArrayList<>(AnnotatedFieldNameUtil.COMMON_ANNOTATIONS);
 
     /** Compares annotation names by displayOrder. */
     private final Comparator<AnnotationImpl> annotationOrderComparator;

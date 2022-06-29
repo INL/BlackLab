@@ -11,24 +11,25 @@ public final class AnnotatedFieldNameUtil {
 
     public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
+    /**
+     * Most commonly used annotations. Used to decide whether or not to build a term index
+     * right away (vs. when needed), and as default display order if none is provided.
+     *
+     * (probably move away from this kind of special case)
+     */
+    public static final List<String> COMMON_ANNOTATIONS = Arrays.asList("word", "lemma", "pos");
+
     private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
 
     private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
 
-    private static final String DEFAULT_MAIN_ANNOT_NAME = "word";
+    /** Used as a default value if no name has been specified (legacy indexers only) */
+    public static final String DEFAULT_MAIN_ANNOT_NAME = "word";
 
     public static final String TAGS_ANNOT_NAME = "starttag";
 
-    public static final String WORD_ANNOT_NAME = "word";
-
     /** Annotation name for the spaces and punctuation between words */
     public static final String PUNCTUATION_ANNOT_NAME = "punct";
-
-    /**
-     * Annotation name for lemma/headword (optional, not every input format will have
-     * this)
-     */
-    public static final String LEMMA_ANNOT_NAME = "lemma";
 
     /**
      * Subannotations are indexed in a separate field, prefixed with their main
@@ -98,6 +99,13 @@ public final class AnnotatedFieldNameUtil {
             LENGTH_TOKENS_BOOKKEEP_NAME);
 
     private AnnotatedFieldNameUtil() {
+    }
+
+    public static boolean defaultSensitiveInsensitive(String name) {
+        // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
+        // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
+        // We warn users if their configuration relies on this, so we can eventually remove it.
+        return name.equals("lemma") || name.equals("word");
     }
 
     public enum BookkeepFieldType {
@@ -319,10 +327,6 @@ public final class AnnotatedFieldNameUtil {
             throw new IllegalArgumentException("Illegal field name: " + luceneFieldName);
         }
         return luceneFieldName;
-    }
-
-    public static String getDefaultMainAnnotationName() {
-        return DEFAULT_MAIN_ANNOT_NAME;
     }
 
     public static MatchSensitivity sensitivity(String luceneField) {

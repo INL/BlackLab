@@ -1,20 +1,13 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -26,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * This class is instantiated and used by a single Spans to get lengths for a single
  * index segment. It does not need to be thread-safe.
  */
-class DocFieldLengthGetter implements Closeable {
+class DocFieldLengthGetter {
     /**
      * We check some cache entries to see if document lengths were saved in the
      * index or not. (These days, they should always be saved, but we do this in
@@ -60,61 +53,24 @@ class DocFieldLengthGetter implements Closeable {
     /** Lengths may have been cached using FieldCache */
     private NumericDocValues cachedFieldLengths;
 
-    private UninvertingReader uninv;
-
     public DocFieldLengthGetter(LeafReader reader, String fieldName) {
         this.reader = reader;
         this.fieldName = fieldName;
         lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         lengthTokensFieldVisitor = new DocumentStoredFieldVisitor(lengthTokensFieldName);
 
-        if (fieldName.equals(Indexer.DEFAULT_CONTENTS_FIELD_NAME)) {
-            // Cache the lengths for this field to speed things up
+        // Cache the lengths to speed things up
+        if (reader != null) {
             try {
-
                 cachedFieldLengths = reader.getNumericDocValues(lengthTokensFieldName);
-                if (cachedFieldLengths == null) {
-                    // Use UninvertingReader to simulate DocValues (slower)
-                    Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                    fields.put(lengthTokensFieldName, UninvertingReader.Type.INTEGER_POINT);
-                    LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
-                    cachedFieldLengths = uninv.getNumericDocValues(lengthTokensFieldName);
-                }
-
-                // Check if the cache was retrieved OK
-                boolean allZeroes = true;
-                int numToCheck = Math.min(NUMBER_OF_CACHE_ENTRIES_TO_CHECK, reader.maxDoc());
-                //DocIdSetIterator docIdIterator = cachedFieldLengths.all(numToCheck);
-                for (int i = 0; i < numToCheck; i++) {
-                    // (NOTE: we don't check if document wasn't deleted, but that shouldn't matter here)
-                	try {
-                        if (cachedFieldLengths.advanceExact(i) && cachedFieldLengths.longValue() != 0) {
-                            allZeroes = false;
-                            break;
-                        }
-        			} catch (IOException e) {
-                        throw BlackLabRuntimeException.wrap(e);
-        			}
-
-                }
-                if (allZeroes) {
-                    // Tokens lengths weren't saved in the index, skip cache
-                    cachedFieldLengths = null;
-                }
+                if (cachedFieldLengths == null)
+                    throw new BlackLabRuntimeException("No DocValues for field " + lengthTokensFieldName);
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
-        }
-    }
-
-    @Override
-    public void close() {
-        if (uninv != null) {
-            try {
-                uninv.close();
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
+        } else {
+            // Only used for test (all lengths are the same)
+            cachedFieldLengths = null;
         }
     }
 
@@ -147,14 +103,12 @@ class DocFieldLengthGetter implements Closeable {
         if (useTestValues)
             return 6; // while testing, all documents have same length
 
-        if (cachedFieldLengths != null) {
-        	try {
-        		if (cachedFieldLengths.advanceExact(doc)){
-        			return (int)cachedFieldLengths.longValue(); 
-        		}
-			} catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-			}
+        try {
+            if (cachedFieldLengths.advanceExact(doc)){
+                return (int)cachedFieldLengths.longValue();
+            }
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
 
         if (!lookedForLengthField || lengthFieldIsStored) {
@@ -178,19 +132,6 @@ class DocFieldLengthGetter implements Closeable {
             }
         }
 
-        // Calculate the total field length by adding all the term frequencies.
-        // (much slower, and not actually correct if there's not a value for every word. but should happen anymore, we should always have a length field nowadays)
-        try {
-            Terms vector = reader.getTermVector(doc, AnnotatedFieldNameUtil.annotationField(fieldName, AnnotatedFieldNameUtil.WORD_ANNOT_NAME, "i"));
-            TermsEnum termsEnum = vector.iterator();
-            int termFreq = 0;
-            while (termsEnum.next() != null) {
-                termFreq += termsEnum.totalTermFreq();
-            }
-            return termFreq;
-
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        throw new BlackLabRuntimeException("Could not get field length for document " + doc);
     }
 }

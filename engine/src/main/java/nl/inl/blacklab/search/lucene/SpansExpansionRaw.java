@@ -77,7 +77,6 @@ class SpansExpansionRaw extends BLSpans {
             Direction direction, int min, int max) {
         if (direction == Direction.RIGHT) {
             // We need to know document length to properly do expansion to the right
-            // TODO: cache this in BlackLabIndex..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
         this.clause = clause;

@@ -55,7 +55,7 @@ public class TestSpansExpandToNGram {
 
         SpansFilterNGramsRaw spans = new SpansFilterNGramsRaw(null, "test", a,
                 SpanQueryPositionFilter.Operation.CONTAINING_AT_START, 2, 3, 0, 0);
-        spans.setTest(true); // for test, all documents are 5 long
+        spans.setTest(true); // for test, all documents have the same length
 
         Spans exp = new MockSpans(
                 new int[] { 1, 1, 2, 2 },

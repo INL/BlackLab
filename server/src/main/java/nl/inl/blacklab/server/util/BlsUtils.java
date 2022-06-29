@@ -101,8 +101,7 @@ public class BlsUtils {
                         + "'. Supported: luceneql, contextql.");
     }
 
-    public static TextPattern parsePatt(BlackLabIndex index, String pattern,
-            String language, boolean required) throws BlsException {
+    public static TextPattern parsePatt(BlackLabIndex index, String defaultAnnotation, String pattern, String language, boolean required) throws BlsException {
         if (pattern == null || pattern.length() == 0) {
             if (required)
                 throw new BadRequest("NO_PATTERN_GIVEN",
@@ -112,15 +111,14 @@ public class BlsUtils {
 
         if (language.equals("corpusql")) {
             try {
-                return CorpusQueryLanguageParser.parse(pattern);
+                return CorpusQueryLanguageParser.parse(pattern, defaultAnnotation);
             } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in CorpusQL pattern: " + e.getMessage());
             }
         } else if (language.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(index,
-                        pattern);
+                CompleteQuery q = ContextualQueryLanguageParser.parse(index, pattern);
                 return q.pattern();
             } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
@@ -131,11 +129,6 @@ public class BlsUtils {
         throw new BadRequest("UNKNOWN_PATT_LANG",
                 "Unknown pattern language '" + language
                         + "'. Supported: corpusql, contextql, luceneql.");
-    }
-
-    public static TextPattern parsePatt(BlackLabIndex index, String pattern,
-            String language) throws BlsException {
-        return parsePatt(index, pattern, language, true);
     }
 
     /**

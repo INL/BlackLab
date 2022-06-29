@@ -87,6 +87,12 @@ public class AnnotationWriter {
                         + " (should be default|sensitive|insensitive|sensitive_insensitive|case_diacritics_separate or s|i|si|all)");
             }
         }
+
+        public static SensitivitySetting defaultForAnnotation(String name) {
+            return AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name) ?
+                    SensitivitySetting.SENSITIVE_AND_INSENSITIVE :
+                    SensitivitySetting.ONLY_INSENSITIVE;
+        }
     }
 
     private final AnnotatedFieldWriter fieldWriter;

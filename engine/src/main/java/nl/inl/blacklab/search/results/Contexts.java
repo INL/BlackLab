@@ -109,7 +109,7 @@ public class Contexts implements Iterable<int[]> {
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();
         Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
-        Annotation concWordFI = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
+        Annotation concWordFI = field.mainAnnotation();
         int hitIndex = -1;
         for (Hit h: hits) {
             hitIndex++;
@@ -149,7 +149,7 @@ public class Contexts implements Iterable<int[]> {
             if (attrContext != null) {
                 annotations.addAll(Arrays.asList(attrName));
             }
-            annotations.add(concWordFI);
+            annotations.add(concWordFI); // NOTE: final one is used as main annotation in XML responses!
             Kwic kwic = new Kwic(annotations, tokens, contextHitStart, contextRightStart);
             theKwics.put(h, kwic);
         }

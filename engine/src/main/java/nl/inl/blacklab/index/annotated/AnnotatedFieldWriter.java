@@ -84,8 +84,6 @@ public class AnnotatedFieldWriter {
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
-        if (mainAnnotationName == null)
-            mainAnnotationName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
         mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets, mainPropHasPayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
     }

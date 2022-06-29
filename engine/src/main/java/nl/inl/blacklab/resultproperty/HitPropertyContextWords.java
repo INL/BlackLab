@@ -113,7 +113,7 @@ public class HitPropertyContextWords extends HitProperty {
         String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+            propName = field.mainAnnotation().name();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1]) : MatchSensitivity.SENSITIVE;
         List<ContextPart> whichWords = null;
         if (parts.length > 2)

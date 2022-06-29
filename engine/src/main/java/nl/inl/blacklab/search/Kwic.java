@@ -27,8 +27,6 @@ public class Kwic {
 
     public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 
-    public static final String DEFAULT_CONC_WORD_PROP = AnnotatedFieldNameUtil.WORD_ANNOT_NAME;
-
     /**
      * Construct a Kwic object
      *

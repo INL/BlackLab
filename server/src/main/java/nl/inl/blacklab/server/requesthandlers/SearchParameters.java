@@ -319,7 +319,8 @@ public class SearchParameters {
                                 "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
                     }
                 } else {
-                    pattern = BlsUtils.parsePatt(blIndex(), patt, pattLang);
+                    String defaultAnnotation = blIndex().mainAnnotatedField().mainAnnotation().name();
+                    pattern = BlsUtils.parsePatt(blIndex(), defaultAnnotation, patt, pattLang, true);
                 }
             }
         }

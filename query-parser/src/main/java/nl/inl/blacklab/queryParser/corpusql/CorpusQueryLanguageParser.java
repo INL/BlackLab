@@ -4,7 +4,7 @@ import java.io.StringReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
@@ -18,15 +18,20 @@ public class CorpusQueryLanguageParser {
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static TextPattern parse(String query) throws InvalidQuery {
+    public static TextPattern parse(String query, String defaultAnnotation) throws InvalidQuery {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
+        parser.setDefaultAnnotation(defaultAnnotation);
         return parser.parseQuery(query);
+    }
+
+    public static TextPattern parse(String query) throws InvalidQuery {
+        return parse(query, AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME);
     }
 
     /** Allow strings to be quoted using single quotes? */
     private boolean allowSingleQuotes = true;
 
-    private String defaultAnnotation = "word";
+    private String defaultAnnotation;
 
     public CorpusQueryLanguageParser() {
     }
@@ -80,10 +85,10 @@ public class CorpusQueryLanguageParser {
         return allowSingleQuotes;
     }
 
-    public void setDefaultAnnotation(IndexMetadata indexMetadata, String fieldName) {
-        defaultAnnotation = indexMetadata.annotatedField(fieldName).mainAnnotation().name();
-    }
-
+    /**
+     * Set the default annotation.
+     * @param annotation default annotation
+     */
     public void setDefaultAnnotation(String annotation) {
         defaultAnnotation = annotation;
     }

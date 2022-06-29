@@ -135,9 +135,9 @@ metadata:
 
 To use this configuration, you should save it with a name like "simple-input-format.blf.yaml" ('blf' stands for BlackLab Format) in either directory from which you will be using it, or alternatively one of `$BLACKLAB_CONFIG_DIR/formats/` (if this environment variable is set), `$HOME/.blacklab/formats/` or `/etc/blacklab/formats/`.
 
-Please note that when declaring annotations, the first annotation you declare will become the _main annotation_. The main annotion will:
+Please note that when declaring annotations, the first annotation you declare will become the _main annotation_. The main annotation will:
 
-- be searched when omitting annotation name in CQL (e.g. search for `"ship"` and it searches the main annotation). 
+- be searched when omitting annotation name in CQL (e.g. search for `"ship"` and it searches the main annotation).
 - be used to generate concordances (the KWIC view).
 - be returned as the value (text content) of the `<w>` tag (in the XML response).
 

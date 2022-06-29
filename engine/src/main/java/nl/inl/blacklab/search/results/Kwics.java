@@ -77,18 +77,18 @@ public class Kwics {
 //        }
 
         // All FIs except word and punct are attributes
-        Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();
         BlackLabIndex index = hits.index();
-        for (Annotation annotation: field.annotations()) {
-            if (annotation.hasForwardIndex() && !annotation.name().equals(Kwic.DEFAULT_CONC_WORD_PROP) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
-                attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
-            }
-        }
-        Annotation wordAnnot = field.annotation(Kwic.DEFAULT_CONC_WORD_PROP);
+        Annotation wordAnnot = field.mainAnnotation();
         AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(wordAnnot);
         Annotation punctAnnot = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
         AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(punctAnnot);
-        
+        Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();
+        for (Annotation annotation: field.annotations()) {
+            if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
+                attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
+            }
+        }
+
         // Get FiidLookups for all required forward indexes
         IndexReader reader = hits.queryInfo().index().reader();
         Map<Annotation, FiidLookup> fiidLookups = new HashMap<>();

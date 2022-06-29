@@ -17,6 +17,7 @@ import org.apache.lucene.document.Field;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.UnicodeStream;
@@ -268,10 +269,10 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
 
         // Not in parameter (or unrecognized value), use default based on
         // annotationName
-        if (annotationName.equals(AnnotatedFieldNameUtil.getDefaultMainAnnotationName())
-                || annotationName.equals(AnnotatedFieldNameUtil.LEMMA_ANNOT_NAME)) {
-            // Word: default to sensitive/insensitive
-            return AnnotationWriter.SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+        if (SensitivitySetting.defaultForAnnotation(annotationName) != SensitivitySetting.ONLY_INSENSITIVE) {
+            // Word or lemma: default to sensitive/insensitive
+            // (deprecated, will be removed eventually)
+            return SensitivitySetting.defaultForAnnotation(annotationName);
         }
         if (annotationName.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
             // Punctuation: default to only insensitive

@@ -8,7 +8,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Contexts;
@@ -24,7 +23,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         String[] parts = PropertySerializeUtil.splitParts(info);
         String propName = parts[0];
         if (propName.length() == 0)
-            propName = AnnotatedFieldNameUtil.getDefaultMainAnnotationName();
+            propName = field.mainAnnotation().name();
         MatchSensitivity sensitivity = parts.length > 1 ? MatchSensitivity.fromLuceneFieldSuffix(parts[1])
                 : MatchSensitivity.SENSITIVE;
         Annotation annotation = field.annotation(propName);

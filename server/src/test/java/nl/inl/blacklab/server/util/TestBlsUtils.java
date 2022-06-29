@@ -40,24 +40,23 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternRegex("^the$");
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "corpusql"));
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "corpusql", true));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "corpusql", true));
     }
 
     @Test
     public void testParsePattContextQL() throws BlsException {
         TextPattern pattThe = new TextPatternAnnotation("word", new TextPatternWildcard("the"));
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "contextql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "contextql", true));
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattWrongLanguage() throws BlsException {
-        BlsUtils.parsePatt(index, "\"the\"", "swahili");
+        BlsUtils.parsePatt(index, "word", "\"the\"", "swahili", true);
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattNoPattern() throws BlsException {
-        BlsUtils.parsePatt(index, "", "corpusql", true);
+        BlsUtils.parsePatt(index, "word", "", "corpusql", true);
     }
 
     @Test

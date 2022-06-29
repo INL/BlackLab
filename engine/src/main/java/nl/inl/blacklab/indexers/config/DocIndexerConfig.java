@@ -100,14 +100,19 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     protected SensitivitySetting getSensitivitySetting(ConfigAnnotation mainAnnotation) {
         SensitivitySetting sensitivity = mainAnnotation.getSensitivity();
         if (sensitivity == SensitivitySetting.DEFAULT) {
-            // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
-            // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
-            // Unfortunately, many existing configurations rely on this.
             String name = mainAnnotation.getName();
-            if (name.equals(AnnotatedFieldNameUtil.LEMMA_ANNOT_NAME) || name.equals(AnnotatedFieldNameUtil.getDefaultMainAnnotationName()))
-                sensitivity = SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
-            else
-                sensitivity = SensitivitySetting.ONLY_INSENSITIVE;
+            sensitivity = SensitivitySetting.defaultForAnnotation(name);
+            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
+                // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
+                // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
+                // Warn users about this so they can make their config files explicit before this special case is removed.
+                logger.warn("Configuration " + config.getName()
+                        + "relies on special default sensitivity 'sensitive_insensitive' for annotation " + name
+                        + " (); this behaviour "
+                        + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
+                        + "without explicit sensitivity will default to 'insensitive'.");
+            }
+            return sensitivity;
         }
         return sensitivity;
     }

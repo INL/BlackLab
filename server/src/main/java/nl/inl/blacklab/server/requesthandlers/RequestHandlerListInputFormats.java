@@ -269,7 +269,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
                 continue; // No annotations for this word at all? can't display anything...
 
             // By default attempt to display the annotations of the word named "lemma" and "word"
-            ConfigAnnotation wordAnnot = f.getAnnotations().get("word");
+            // TODO: if BlackLab is supposed be able to generate this kind of XSLT, we should allow users to configure
+            //   how this is done. Only start guessing if no configuration has been provided.
+            ConfigAnnotation wordAnnot = f.getAnnotations().get("word");   // TODO: better use mainAnnotation() ?
             ConfigAnnotation lemmaAnnot = f.getAnnotations().get("lemma");
 
             // Since the annotation can be named anything there is no guarantee there is a "word" annotation
