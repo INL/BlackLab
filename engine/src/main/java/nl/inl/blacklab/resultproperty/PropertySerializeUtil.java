@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
 /**
  * Takes care of serializing/deserializing Hit/DocProperties and -Values with
  * proper escaping.
@@ -77,4 +79,11 @@ public final class PropertySerializeUtil {
         return serialized.contains(PropertySerializeUtil.MULTIPLE_SEPARATOR);
     }
 
+    public static String serializeMultiple(boolean reverse, List<? extends ResultProperty<?>> properties) {
+        String[] values = new String[properties.size()];
+        for (int i = 0; i < properties.size(); i++) {
+            values[i] = properties.get(i).serialize();
+        }
+        return (reverse ? "-(" : "") + combineMultiple(values) + (reverse ? ")" : "");
+    }
 }

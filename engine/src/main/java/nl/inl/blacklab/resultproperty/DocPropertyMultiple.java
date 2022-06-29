@@ -70,10 +70,6 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         return true;
     }
 
-    public void addCriterium(DocProperty crit) {
-        criteria.add(crit);
-    }
-
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -133,11 +129,7 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
 
     @Override
     public String serialize() {
-        String[] values = new String[criteria.size()];
-        for (int i = 0; i < criteria.size(); i++) {
-            values[i] = criteria.get(i).serialize();
-        }
-        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+        return PropertySerializeUtil.serializeMultiple(reverse, criteria);
     }
     
     @Override

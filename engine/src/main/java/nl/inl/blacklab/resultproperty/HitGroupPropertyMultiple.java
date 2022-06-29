@@ -76,10 +76,6 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
         return true;
     }
 
-    public void addCriterium(HitGroupProperty crit) {
-        criteria.add(crit);
-    }
-
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder();
@@ -139,11 +135,7 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
 
     @Override
     public String serialize() {
-        String[] values = new String[criteria.size()];
-        for (int i = 0; i < criteria.size(); i++) {
-            values[i] = criteria.get(i).serialize();
-        }
-        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+        return PropertySerializeUtil.serializeMultiple(reverse, criteria);
     }
 
     @Override
@@ -154,17 +146,6 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
     @Override
     public List<HitGroupProperty> props() {
         return Collections.unmodifiableList(criteria);
-    }
-
-    public static HitGroupPropertyMultiple deserialize(String info) {
-        String[] strValues = PropertySerializeUtil.splitMultiple(info);
-        HitGroupProperty[] values = new HitGroupProperty[strValues.length];
-        int i = 0;
-        for (String strValue : strValues) {
-            values[i] = HitGroupProperty.deserialize(strValue);
-            i++;
-        }
-        return new HitGroupPropertyMultiple(values);
     }
 
     @Override

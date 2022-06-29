@@ -24,13 +24,17 @@ import nl.inl.blacklab.search.results.Hits;
  */
 public class HitPropertyMultiple extends HitProperty implements Iterable<HitProperty> {
     
-    static HitPropertyMultiple deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
+    static HitProperty deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         String[] strValues = PropertySerializeUtil.splitMultiple(info);
-        HitProperty[] values = new HitProperty[strValues.length];
-        int i = 0;
+        List<HitProperty> values = new ArrayList<>();
         for (String strValue: strValues) {
-            values[i] = HitProperty.deserialize(index, field, strValue);
-            i++;
+            if (!strValue.isEmpty()) {
+                values.add(HitProperty.deserialize(index, field, strValue));
+            }
+        }
+        if (values.size() == 1) {
+            // E.g. "docid,"
+            return values.get(0);
         }
         return new HitPropertyMultiple(values);
     }
@@ -64,6 +68,27 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
             }
             this.properties.add(nprop);
         }
+    }
+
+    /**
+     * Quick way to create group criteria. Just call this method with the
+     * GroupCriterium object(s) you want.
+     *
+     * @param properties the desired criteria
+     */
+    public HitPropertyMultiple(List<HitProperty> properties) {
+        this(false, properties);
+    }
+
+    /**
+     * Quick way to create group criteria. Just call this method with the
+     * GroupCriterium object(s) you want.
+     *
+     * @param reverse reverse sort?
+     * @param properties the desired criteria
+     */
+    public HitPropertyMultiple(boolean reverse, List<HitProperty> properties) {
+        this(reverse, properties.toArray(HitProperty[]::new));
     }
 
     /**
@@ -236,11 +261,11 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public String serialize() {
-        String[] values = new String[properties.size()];
-        for (int i = 0; i < properties.size(); i++) {
-            values[i] = properties.get(i).serialize();
-        }
-        return (reverse ? "-(" : "") + PropertySerializeUtil.combineMultiple(values) + (reverse ? ")" : "");
+        return getString();
+    }
+
+    private String getString() {
+        return PropertySerializeUtil.serializeMultiple(reverse, properties);
     }
 
     @Override
