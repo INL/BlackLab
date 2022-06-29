@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.blacklab.util.PropertySerializeUtil.SerializableProperty;
 
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
  * @param <T> type of result
  */
-public interface ResultProperty<T> extends Serializable {
+public interface ResultProperty<T> extends Serializable, SerializableProperty {
 
     /**
      * Strip sensitivity information.
