@@ -6,11 +6,6 @@ package nl.inl.blacklab.server.requesthandlers;
 public class SearchTimings {
 
     /**
-     * How much time it took to respond to this request.
-     */
-    private long responseTime;
-
-    /**
      * How much time each required search task originally took to produce this response.
      */
     private long searchTaskTime;
@@ -20,18 +15,9 @@ public class SearchTimings {
      */
     private long countTime;
 
-    public SearchTimings(long responseTime, long searchTaskTime, long countTime) {
-        this.responseTime = responseTime;
+    public SearchTimings(long searchTaskTime, long countTime) {
         this.searchTaskTime = searchTaskTime;
         this.countTime = countTime;
-    }
-
-    public static SearchTimings searchAndCount(long searchTime, long countTime) {
-        return new SearchTimings(searchTime, searchTime, countTime);
-    }
-
-    public long getResponseTime() {
-        return responseTime;
     }
 
     public long getSearchTaskTime() {

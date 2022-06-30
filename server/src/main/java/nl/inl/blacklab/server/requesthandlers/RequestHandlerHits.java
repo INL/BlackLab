@@ -172,7 +172,7 @@ public class RequestHandlerHits extends RequestHandler {
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
         ContextSettings contextSettings = searchParam.getContextSettings();
-        ContextForHits contextForHits = ContextForHits.get(hits, contextSettings.concType(), contextSettings.size());
+        ContextForHits contextForHits = ContextForHits.get(window, contextSettings.concType(), contextSettings.size());
         long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
         // Search is done; construct the results object
@@ -184,10 +184,10 @@ public class RequestHandlerHits extends RequestHandler {
         ds.startEntry("summary").startMap();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
-        long searchTime = (cacheEntryWindow == null ? cacheEntry.processingTimeMs() : cacheEntryWindow.processingTimeMs()) + kwicTimeMs;
-        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.processingTimeMs();
+        long searchTime = (cacheEntryWindow == null ? cacheEntry.timer().time() : cacheEntryWindow.timer().time()) + kwicTimeMs;
+        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
         logger.info("Total search time is:{} ms", searchTime);
-        SearchTimings timings = SearchTimings.searchAndCount(searchTime, countTime);
+        SearchTimings timings = new SearchTimings(searchTime, countTime);
         datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
         datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)

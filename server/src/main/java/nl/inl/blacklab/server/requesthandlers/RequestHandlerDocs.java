@@ -124,7 +124,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
-        totalTime = docGroupFuture.processingTimeMs();
+        totalTime = docGroupFuture.timer().time();
         return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), true);
     }
 
@@ -148,7 +148,7 @@ public class RequestHandlerDocs extends RequestHandler {
             totalDocResults.size();
 
         docResults = totalDocResults;
-        totalTime = total.threwException() ? 0 : total.processingTimeMs();
+        totalTime = total.threwException() ? 0 : total.timer().time();
 
         return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), waitForTotal);
     }
@@ -172,7 +172,7 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = searchParam.docsCount().executeAsync().peek();
-        SearchTimings timings = SearchTimings.searchAndCount(search.processingTimeMs(), totalTime);
+        SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)

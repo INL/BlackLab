@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.util.TaskTimer;
 
 /**
  * An entry in BlackLab's search cache.
@@ -14,39 +15,15 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, SearchTask<R> {
 
-    /** When was our processing timer started? */
-    private long timerStart = -1;
+    /** Keep track of how long this task and subtasks took to (originally) execute. */
+    private TaskTimer taskTimer = new TaskTimer();
 
-    /** Total processing time for this task (ms), including that of subtasks. */
-    private long processingTime = 0;
-
-    /** Get the total processing time for this task (ms).
-     *
-     * This includes processing time for other tasks it used (e.g. a "sorted hits" task calculates
-     * its processing time by adding the time it took to retrieve all the hits and the time it took
-     * to sort them, even though the task itself only does the actual sorting).
-     *
-     * Processing time is intended to be independent from the cache: it keeps track only of the actual
-     * time processing (originally) took. So even if a request is almost instant, processing time can
-     * be much higher if the original search took that long.
+    /**
+     * Get the timer keeping track of how long this search (originally) executed.
+     * @return the search's task timer
      */
-    public long processingTimeMs() {
-        return processingTime;
-    }
-
-    /** (Re)start the task's processing timer, adding to its total. */
-    public void startTimer() {
-        timerStart = System.currentTimeMillis();
-    }
-
-    /** Stop the task's processing timer, (temporarily) not keeping track of time elapsed. */
-    public void stopTimer() {
-        processingTime += System.currentTimeMillis() - timerStart;
-    }
-
-    /** Add the processing time for the subtask to this tasks's processing time. */
-    public void addSubtaskTime(SearchTask<?> subtask) {
-        processingTime += subtask.processingTimeMs();
+    public TaskTimer timer() {
+        return taskTimer;
     }
 
     /**
@@ -86,8 +63,21 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
         return "";
     }
 
+    /**
+     * How long since this search was created?
+     *
+     * This is used for cache management (e.g. aborting a search that's been
+     * running too long), not for reporting processing time (because this value
+     * is directly influences by what's in the cache).
+     *
+     * @return how long the user has waited for this result (ms)
+     */
     public abstract long timeUserWaitedMs();
 
+    /**
+     * Did this task throw an exception?
+     * @return whether an exception was thrown
+     */
     public boolean threwException() {
         return false;
     }

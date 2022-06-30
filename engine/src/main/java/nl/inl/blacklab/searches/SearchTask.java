@@ -1,5 +1,18 @@
 package nl.inl.blacklab.searches;
 
+import nl.inl.util.TaskTimer;
+
+/**
+ * Most basic interface for a search task ("cache entry").
+ *
+ * This is passed to the Search.executeInternal() method so it has access
+ * to the running task object. This enables it to update the running count
+ * during execution, as well as manage the timer (stopping it before executing
+ * a subtask, adding the subtask's processing time, and re-starting it for the
+ * rest of the execution)
+ *
+ * @param <T> type of result this task will yield
+ */
 public interface SearchTask<T> {
     /**
      * Peek at the result.
@@ -7,24 +20,9 @@ public interface SearchTask<T> {
      */
     default T peek() { return null; }
 
-    /** Get the total processing time for this task (ms).
-     *
-     * This includes processing time for other tasks it used (e.g. a "sorted hits" task calculates
-     * its processing time by adding the time it took to retrieve all the hits and the time it took
-     * to sort them, even though the task itself only does the actual sorting).
-     *
-     * Processing time is intended to be independent from the cache: it keeps track only of the actual
-     * time processing (originally) took. So even if a request is almost instant, processing time can
-     * be much higher if the original search took that long.
+    /**
+     * Timer instance for this task.
+     * @return tasks's timer
      */
-    long processingTimeMs();
-
-    /** (Re)start the task's processing timer, adding to its total. */
-    void startTimer();
-
-    /** Stop the task's processing timer, (temporarily) not keeping track of time elapsed. */
-    void stopTimer();
-
-    /** Add the processing time for the subtask to this tasks's processing time. */
-    void addSubtaskTime(SearchTask<?> subtask);
+    TaskTimer timer();
 }
