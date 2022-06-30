@@ -1,52 +1,10 @@
-# Distributed Search (Proof of Concept)
+# Distributed Search
 
-This branch is intended as a proof of concept for a distributed search webservice. It is not intended to be merged. If succesful, we will integrate BlackLab with Solr(Cloud) to enable distributed indexing and search.
+This branch is intended as research for a distributed version of BlackLab. It is not intended to be merged wholesale (although parts may prove useful in the future).
 
+We've developed a succesful proof of concept (see below) and are moving forward to integrate BlackLab with Solr(Cloud) for distributed indexing and search.
 
-## Curious?
-
-To try out this (VERY experimental!) aggregator:
-- Set up 3 BLS instances that have one or more corpora with the same name (but different documents)
-- Build and install the aggregator on another server
-- Configure the aggregator by creating a file `aggregator.yaml` in either `$HOME/.blacklab/`, `/etc/blacklab/` or `/vol1/etc/blacklab/`:
-  ```yaml
-  nodes:
-    - http://node1.local:8080/blacklab-server
-    - http://node2.local:8080/blacklab-server
-    - http://node2.local:8080/blacklab-server
-  ```
-
-
-## Goals
-
-We want to be able to quickly answer these questions:
-- does implementing basic distributed search present any major issues?
-- how does distributed search affect search performance for different operations?
-
-If the answers to these questions are positive, we will go ahead with the SolrCloud integration project.
-
-
-## Status
-
-- [x] Aggregator with:
-  - [x] `/`
-  - [x] `/input-formats` (returns empty list for now)
-  - [x] `/INDEX`
-  - [x] `/INDEX/hits`
-  - [x] `/INDEX/docs/PID`
-  - [x] `/INDEX/docs/PID/contents`
-- [x] Optimization
-  - [x] keep track of merge table
-  - [x] minimal hit info with only sort values
-- [x] Sort options for hits\[grouped\]:
-  - [x] no sort
-  - [x] sort on context (match/(word) before/(word) after)
-  - [x] sort by metadata field
-  - [x] sort by group identity
-  - [x] sort by group size
-
-
-## Plan: integrate with Solr
+## Solr integration plan
 
 Based on the aggregator results, it seems like a distributed approach helps us to better utilize available hardware, as well as be more flexible in scaling up or down.
 
@@ -72,11 +30,57 @@ This will involve the following steps:
   - [ ] Enable distributed indexing
   - [ ] Make one of the search operations (e.g. group hits) work in distributed mode
   - [ ] Make other search operations work in distributed mode
-- [ ] Other
 
 These tasks will not necessarily be discretely executed in this order, but some tasks might overlap (e.g. we might tackle group hits standalone, then distributed, then do the other operations). 
 
-## Approach
+## Proof of concept aggregator
+
+Some notes about our proof of concept for a distributed search webservice.
+
+### Curious?
+
+To try out this (VERY experimental!) aggregator:
+- Set up 3 BLS instances that have one or more corpora with the same name (but different documents)
+- Build and install the aggregator on another server
+- Configure the aggregator by creating a file `aggregator.yaml` in either `$HOME/.blacklab/`, `/etc/blacklab/` or `/vol1/etc/blacklab/`:
+  ```yaml
+  nodes:
+    - http://node1.local:8080/blacklab-server
+    - http://node2.local:8080/blacklab-server
+    - http://node2.local:8080/blacklab-server
+  ```
+
+
+### Goals
+
+We want to be able to quickly answer these questions:
+- does implementing basic distributed search present any major issues?
+- how does distributed search affect search performance for different operations?
+
+If the answers to these questions are positive, we will go ahead with the SolrCloud integration project.
+
+
+### Status
+
+- [x] Aggregator with:
+  - [x] `/`
+  - [x] `/input-formats` (returns empty list for now)
+  - [x] `/INDEX`
+  - [x] `/INDEX/hits`
+  - [x] `/INDEX/docs/PID`
+  - [x] `/INDEX/docs/PID/contents`
+- [x] Optimization
+  - [x] keep track of merge table
+  - [x] minimal hit info with only sort values
+- [x] Sort options for hits\[grouped\]:
+  - [x] no sort
+  - [x] sort on context (match/(word) before/(word) after)
+  - [x] sort by metadata field
+  - [x] sort by group identity
+  - [x] sort by group size
+
+
+### Approach
 
 We will implement a simple **BLS aggregation service** that forwards search requests to several BLS nodes and combines the results. Not all operations will be supported, just enough to test if the basic approach works and get some idea of how this could affect performance.
 
@@ -97,7 +101,7 @@ The service will do very simple caching of (partial) result sets for a short tim
 We will test the service for correctness and performance.
 
 
-## Questions
+### Questions
 
 - How big a corpus do we need to effectively test performance?
   
@@ -106,9 +110,9 @@ We will test the service for correctness and performance.
 - How many nodes should the cluster have?
 
 
-## Test hardware (chn-intern corpus)
+### Test hardware (chn-intern corpus)
 
-## single-machine specs
+#### single-machine specs
 
 CHN-intern current corpus size: 280G (2.2 billion tokens)
 
@@ -116,7 +120,7 @@ CHN-intern current corpus size: 280G (2.2 billion tokens)
 - svatmc10: 12 cores, 48G memory
 - svowmc01: 8 cores, 64G memory
 
-## cluster specs
+#### cluster specs
 
 Start with 3 nodes, each with around 750M tokens.
 
@@ -129,8 +133,6 @@ For each node:
 
 (aggregator can run on one of the nodes or on svotmc10)
 
-
-## Implementation details
 
 ### Merging hits results
 
@@ -220,7 +222,7 @@ For grouping, the same technique could be applied, although there's probably les
 
 > **NOTE:** Right now, sort information is retrieved twice on each node: once during the original sort, and again to send the hits to the aggregator. It would be better to only retrieve these values once, especially because retrieving the values seems to be what makes sorting/grouping slow, not the actual sorting/grouping. But this would require changes to how sorting/grouping works and we should be careful that sort values don't eat up a large amount of memory indefinitely.
 
-## Approximate Sort Values (ASVs)?
+### Approximate Sort Values (ASVs)?
 
 We considered "approximate sort values" (ASVs) that would have the following property: if two hits have different ASIs, their correct sort order follows from that. If two hits have the same ASV, it means they will sort close together, but we're not sure which comes first. This way we could keep "approximately sorted" hits in memory, and request additional data to refine the sort only for the requested window (or potentially slightly larger depending on how hits with the same ASV are clustered).
 
