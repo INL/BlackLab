@@ -15,7 +15,7 @@ public class SearchDocsFromQuery extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(SearchTask<DocResults> searchTask) {
+    public DocResults executeInternal(ActiveSearch<DocResults> activeSearch) {
         return queryInfo().index().queryDocuments(query);
     }
     

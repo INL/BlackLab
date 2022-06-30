@@ -20,8 +20,8 @@ public class SearchFacets extends AbstractSearch<Facets> {
     }
 
     @Override
-    public Facets executeInternal(SearchTask<Facets> searchTask) throws InvalidQuery {
-        return new Facets(executeChildSearch(searchTask, source), properties);
+    public Facets executeInternal(ActiveSearch<Facets> activeSearch) throws InvalidQuery {
+        return new Facets(executeChildSearch(activeSearch, source), properties);
     }
 
     @Override

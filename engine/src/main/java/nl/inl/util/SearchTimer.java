@@ -8,8 +8,8 @@ import org.apache.logging.log4j.Logger;
  *
  * Used to keep track of how long a search task (originally) took, including subtasks.
  */
-public class TaskTimer {
-    private static final Logger logger = LogManager.getLogger(TaskTimer.class);
+public class SearchTimer {
+    private static final Logger logger = LogManager.getLogger(SearchTimer.class);
 
     /**
      * When was our processing timer started?

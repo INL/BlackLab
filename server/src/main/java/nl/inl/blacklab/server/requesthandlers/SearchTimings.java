@@ -8,20 +8,20 @@ public class SearchTimings {
     /**
      * How much time each required search task originally took to produce this response.
      */
-    private long searchTaskTime;
+    private long processingTime;
 
     /**
      * How long it took to count all the results.
      */
     private long countTime;
 
-    public SearchTimings(long searchTaskTime, long countTime) {
-        this.searchTaskTime = searchTaskTime;
+    public SearchTimings(long processingTime, long countTime) {
+        this.processingTime = processingTime;
         this.countTime = countTime;
     }
 
-    public long getSearchTaskTime() {
-        return searchTaskTime;
+    public long getProcessingTime() {
+        return processingTime;
     }
 
     public long getCountTime() {

@@ -4,7 +4,7 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
-import nl.inl.util.TaskTimer;
+import nl.inl.util.SearchTimer;
 
 /**
  * An entry in BlackLab's search cache.
@@ -13,17 +13,17 @@ import nl.inl.util.TaskTimer;
  *
  * @param <R> the type of search result this search will yield
  */
-public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, SearchTask<R> {
+public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, ActiveSearch<R> {
 
     /** Keep track of how long this task and subtasks took to (originally) execute. */
-    private TaskTimer taskTimer = new TaskTimer();
+    private SearchTimer searchTimer = new SearchTimer();
 
     /**
      * Get the timer keeping track of how long this search (originally) executed.
      * @return the search's task timer
      */
-    public TaskTimer timer() {
-        return taskTimer;
+    public SearchTimer timer() {
+        return searchTimer;
     }
 
     /**

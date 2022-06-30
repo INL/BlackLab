@@ -24,8 +24,8 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).group(property, maxDocs);
+    public DocGroups executeInternal(ActiveSearch<DocGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).group(property, maxDocs);
     }
 
     @Override

@@ -77,12 +77,12 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     /**
      * Actually execute this search operation.
      *
-     * @param searchTask represents the search being executed (also the "cache entry"), allows us to
+     * @param activeSearch represents the search being executed (also the "cache entry"), allows us to
      *                   report progress (running count) and how long the task (originally) took
      * @return results of the search operation
      */
     @Override
-    public abstract R executeInternal(SearchTask<R> searchTask) throws InvalidQuery;
+    public abstract R executeInternal(ActiveSearch<R> activeSearch) throws InvalidQuery;
 
     /**
      * Execute a child search whose results we need.
@@ -97,7 +97,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
      * @return results from the child search
      * @param <R> result type
      */
-    protected static <R extends SearchResult> R executeChildSearch(SearchTask<?> task, Search<R> childSearch) throws InvalidQuery {
+    protected static <R extends SearchResult> R executeChildSearch(ActiveSearch<?> task, Search<R> childSearch) throws InvalidQuery {
         // Don't time subtask now, because it could be in the cache.
         // Instead, pause our timer and ask the subtask to report its original processing time (see below).
         if (task != null)

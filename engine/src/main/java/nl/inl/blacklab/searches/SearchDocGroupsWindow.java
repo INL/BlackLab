@@ -21,8 +21,8 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).window(first, number);
+    public DocGroups executeInternal(ActiveSearch<DocGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).window(first, number);
     }
 
     @Override

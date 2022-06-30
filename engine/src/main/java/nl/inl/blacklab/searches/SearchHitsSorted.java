@@ -19,8 +19,8 @@ public class SearchHitsSorted extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(SearchTask<Hits> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sort(property);
+    public Hits executeInternal(ActiveSearch<Hits> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sort(property);
     }
 
     @Override

@@ -21,8 +21,8 @@ public class SearchCollocationsSorted extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal(SearchTask<TermFrequencyList> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sort(property);
+    public TermFrequencyList executeInternal(ActiveSearch<TermFrequencyList> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sort(property);
     }
 
     @Override

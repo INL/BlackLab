@@ -22,8 +22,8 @@ public class SearchHitsWindow extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(SearchTask<Hits> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).window(first, number);
+    public Hits executeInternal(ActiveSearch<Hits> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).window(first, number);
     }
 
     @Override

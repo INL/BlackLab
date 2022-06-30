@@ -23,8 +23,8 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).filter(property, value);
+    public DocGroups executeInternal(ActiveSearch<DocGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).filter(property, value);
     }
 
     @Override

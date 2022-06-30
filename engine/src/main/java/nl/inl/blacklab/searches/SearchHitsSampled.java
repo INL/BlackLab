@@ -19,8 +19,8 @@ public class SearchHitsSampled extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(SearchTask<Hits> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sample(sampleParameters);
+    public Hits executeInternal(ActiveSearch<Hits> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sample(sampleParameters);
     }
 
     @Override

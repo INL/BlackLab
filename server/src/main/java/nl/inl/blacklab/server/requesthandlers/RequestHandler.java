@@ -832,7 +832,7 @@ public abstract class RequestHandler {
         }
 
         // Information about search progress
-        ds.entry("searchTime", timings.getSearchTaskTime());
+        ds.entry("searchTime", timings.getProcessingTime());
         if (timings.getCountTime() != 0)
             ds.entry("countTime", timings.getCountTime());
 

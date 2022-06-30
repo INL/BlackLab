@@ -19,8 +19,8 @@ public class SearchDocGroupsSorted extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sort(property);
+    public DocGroups executeInternal(ActiveSearch<DocGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sort(property);
     }
 
     @Override

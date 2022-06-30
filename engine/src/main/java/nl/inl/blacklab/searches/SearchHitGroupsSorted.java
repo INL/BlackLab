@@ -23,8 +23,8 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal(SearchTask<HitGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sort(property);
+    public HitGroups executeInternal(ActiveSearch<HitGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sort(property);
     }
 
     @Override

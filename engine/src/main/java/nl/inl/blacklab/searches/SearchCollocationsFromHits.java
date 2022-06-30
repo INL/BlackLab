@@ -26,8 +26,8 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal(SearchTask<TermFrequencyList> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).collocations(annotation, contextSize, sensitivity);
+    public TermFrequencyList executeInternal(ActiveSearch<TermFrequencyList> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).collocations(annotation, contextSize, sensitivity);
     }
 
     @Override

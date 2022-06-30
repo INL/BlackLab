@@ -18,8 +18,8 @@ public class SearchDocsSampled extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(SearchTask<DocResults> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sample(sampleParameters);
+    public DocResults executeInternal(ActiveSearch<DocResults> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sample(sampleParameters);
     }
 
     @Override

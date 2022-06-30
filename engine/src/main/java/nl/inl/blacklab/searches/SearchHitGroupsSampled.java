@@ -21,8 +21,8 @@ public class SearchHitGroupsSampled extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal(SearchTask<HitGroups> searchTask) throws InvalidQuery {
-        return executeChildSearch(searchTask, source).sample(sampleParameters);
+    public HitGroups executeInternal(ActiveSearch<HitGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sample(sampleParameters);
     }
 
     @Override
