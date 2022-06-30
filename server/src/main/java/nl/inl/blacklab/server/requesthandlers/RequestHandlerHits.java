@@ -172,7 +172,7 @@ public class RequestHandlerHits extends RequestHandler {
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
         ContextSettings contextSettings = searchParam.getContextSettings();
-        ContextForHits contextForHits = ContextForHits.get(window, contextSettings.concType(), contextSettings.size());
+        ConcordanceContext concordanceContext = ConcordanceContext.get(window, contextSettings.concType(), contextSettings.size());
         long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
         // Search is done; construct the results object
@@ -211,7 +211,7 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry();
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
-        datastreamHits(ds, window, contextForHits, luceneDocs);
+        datastreamHits(ds, window, concordanceContext, luceneDocs);
         datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
 
         if (searchParam.hasFacets()) {

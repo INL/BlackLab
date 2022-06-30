@@ -934,7 +934,7 @@ public abstract class RequestHandler {
         }
     }
 
-    public void datastreamHits(DataStream ds, Hits hits, ContextForHits contextForHits, Map<Integer, Document> luceneDocs) throws BlsException {
+    public void datastreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, Document> luceneDocs) throws BlsException {
         BlackLabIndex index = hits.index();
 
         ds.startEntry("hits").startList();
@@ -980,9 +980,9 @@ public abstract class RequestHandler {
 
             ContextSize contextSize = searchParam.getContextSettings().size();
             boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
-            if (contextForHits.isConcordances()) {
+            if (concordanceContext.isConcordances()) {
                 // Add concordance from original XML
-                Concordance c = contextForHits.getConcordance(hit);
+                Concordance c = concordanceContext.getConcordance(hit);
                 if (includeContext) {
                     ds.startEntry("left").xmlFragment(c.left()).endEntry()
                             .startEntry("match").xmlFragment(c.match()).endEntry()
@@ -992,7 +992,7 @@ public abstract class RequestHandler {
                 }
             } else {
                 // Add KWIC info
-                Kwic c = contextForHits.getKwic(hit);
+                Kwic c = concordanceContext.getKwic(hit);
                 if (includeContext) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                             .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()

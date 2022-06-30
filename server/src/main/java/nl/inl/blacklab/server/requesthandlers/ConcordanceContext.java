@@ -9,31 +9,31 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 
-public class ContextForHits {
+public class ConcordanceContext {
 
-    public static ContextForHits kwics(Kwics kwics) {
-        return new ContextForHits(kwics, null);
+    public static ConcordanceContext kwics(Kwics kwics) {
+        return new ConcordanceContext(kwics, null);
     }
 
-    public static ContextForHits concordances(Concordances concordances) {
-        return new ContextForHits(null, concordances);
+    public static ConcordanceContext concordances(Concordances concordances) {
+        return new ConcordanceContext(null, concordances);
     }
 
-    public static ContextForHits get(Hits hits, ConcordanceType concordanceType, ContextSize contextSize) {
-        ContextForHits contextForHits;
+    public static ConcordanceContext get(Hits hits, ConcordanceType concordanceType, ContextSize contextSize) {
+        ConcordanceContext concordanceContext;
         if (concordanceType == ConcordanceType.CONTENT_STORE)
-            contextForHits = ContextForHits.concordances(
+            concordanceContext = ConcordanceContext.concordances(
                     hits.concordances(contextSize, ConcordanceType.CONTENT_STORE));
         else
-            contextForHits = ContextForHits.kwics(hits.kwics(contextSize));
-        return contextForHits;
+            concordanceContext = ConcordanceContext.kwics(hits.kwics(contextSize));
+        return concordanceContext;
     }
 
     private Concordances concordances = null;
 
     private Kwics kwics = null;
 
-    private ContextForHits(Kwics kwics, Concordances concordances) {
+    private ConcordanceContext(Kwics kwics, Concordances concordances) {
         this.kwics = kwics;
         this.concordances = concordances;
     }

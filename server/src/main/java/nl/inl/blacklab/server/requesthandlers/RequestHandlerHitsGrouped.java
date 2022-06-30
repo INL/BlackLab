@@ -146,8 +146,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 if (searchParam.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
                     ContextSettings contextSettings = searchParam.getContextSettings();
-                    ContextForHits contextForHits = ContextForHits.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
-                    datastreamHits(ds, hitsInGroup, contextForHits, luceneDocs);
+                    ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
+                    datastreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
                 }
 
                 ds.endMap().endItem();
