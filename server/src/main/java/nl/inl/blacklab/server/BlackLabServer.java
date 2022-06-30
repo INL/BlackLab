@@ -249,7 +249,7 @@ public class BlackLabServer extends HttpServlet {
         }
 
         // === Create RequestHandler object
-        boolean debugMode = searchManager.config().getDebug().isDebugMode(request.getRemoteAddr());
+        boolean debugMode = searchManager.config().getDebug().isDebugMode(getOriginatingAddress(request));
 
         // The outputType handling is a bit iffy:
         // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
@@ -338,6 +338,22 @@ public class BlackLabServer extends HttpServlet {
             // This is okay, don't raise the alarm.
             logger.debug("(couldn't send response, client probably cancelled the request)");
         }
+    }
+
+    /**
+     * Get the originating address.
+     *
+     * This is either the "normal" remote address or, in the case of
+     * a reverse proxy setup, the value of the X-Forwarded-For header.
+     *
+     * @param request request
+     * @return originating address
+     */
+    public static String getOriginatingAddress(HttpServletRequest request) {
+        String remoteAddr = request.getHeader("X-Forwarded-For");
+        if (StringUtils.isEmpty(remoteAddr))
+            remoteAddr = request.getRemoteAddr();
+        return remoteAddr;
     }
 
     @Override

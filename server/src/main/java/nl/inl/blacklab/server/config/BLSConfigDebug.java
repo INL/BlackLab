@@ -1,8 +1,9 @@
 package nl.inl.blacklab.server.config;
 
-
 import java.util.Collections;
 import java.util.List;
+
+import nl.inl.blacklab.server.util.BlsUtils;
 
 public class BLSConfigDebug {
     /** Explicit list of debug addresses */
@@ -30,7 +31,7 @@ public class BLSConfigDebug {
         if (alwaysAllowDebugInfo) {
             return true;
         }
-        return addresses.contains(ip);
+        return BlsUtils.wildcardIpsContain(addresses, ip);
     }
 
     public boolean isAlwaysAllowDebugInfo() {

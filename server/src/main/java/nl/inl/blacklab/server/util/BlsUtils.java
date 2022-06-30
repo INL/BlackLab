@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -236,5 +237,19 @@ public class BlsUtils {
         if (sec == 0)
             return min + "m";
         return String.format("%dm%02ds", min, sec);
+    }
+
+    public static boolean wildcardIpMatches(String wildcardIpExpr, String ip) {
+        if (wildcardIpExpr.contains("*") || wildcardIpExpr.contains("?")) {
+            wildcardIpExpr = wildcardIpExpr.replaceAll("\\.", "\\\\.");
+            wildcardIpExpr = wildcardIpExpr.replaceAll("\\*", ".*");
+            wildcardIpExpr = wildcardIpExpr.replaceAll("\\?", ".");
+            return ip.matches(wildcardIpExpr);
+        }
+        return wildcardIpExpr.equals(ip);
+    };
+
+    public static boolean wildcardIpsContain(List<String> addresses, String ip) {
+        return addresses.stream().anyMatch(adr -> wildcardIpMatches(adr, ip));
     }
 }
