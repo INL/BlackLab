@@ -184,7 +184,8 @@ public class RequestHandlerHits extends RequestHandler {
         long searchTime = (cacheEntryWindow == null ? cacheEntry.timeUserWaitedMs() : cacheEntryWindow.timeUserWaitedMs()) + kwicTimeMs;
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
         logger.info("Total search time is:{} ms", searchTime);
-        datastreamSummaryCommonFields(ds, searchParam, searchTime, countTime, null, window.windowStats());
+        SearchTimings timings = SearchTimings.searchAndCount(searchTime, countTime);
+        datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
         datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);

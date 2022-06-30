@@ -172,7 +172,8 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = searchParam.docsCount().executeAsync().peek();
-        datastreamSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), totalTime, null, window.windowStats());
+        SearchTimings timings = SearchTimings.searchAndCount(search.timeUserWaitedMs(), totalTime);
+        datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
             datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);

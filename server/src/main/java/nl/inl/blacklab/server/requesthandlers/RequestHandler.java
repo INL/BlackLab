@@ -803,16 +803,14 @@ public abstract class RequestHandler {
      *
      * @param ds where to output XML/JSON
      * @param searchParam original search parameters
-     * @param searchTime time the search took
-     * @param countTime time the count took
+     * @param timings various timings related to this request
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
      */
     protected <T> void datastreamSummaryCommonFields(
             DataStream ds,
             SearchParameters searchParam,
-            long searchTime,
-            long countTime,
+            SearchTimings timings,
             ResultGroups<T> groups,
             WindowStats window
             ) throws BlsException {
@@ -838,9 +836,9 @@ public abstract class RequestHandler {
         }
 
         // Information about search progress
-        ds.entry("searchTime", searchTime);
-        if (countTime != 0)
-            ds.entry("countTime", countTime);
+        ds.entry("searchTime", timings.getSearchTaskTime());
+        if (timings.getCountTime() != 0)
+            ds.entry("countTime", timings.getCountTime());
 
         // Information about grouping operation
         if (groups != null) {
