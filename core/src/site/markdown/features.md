@@ -13,6 +13,6 @@ BlackLab features include:
 -   **Accurate highlighting** of hits in a document and fast KWIC (keyword in context) view of hits.
 -   **Active open source project** written in Java, based on Apache Lucene. Almost 300 commits in the past year. Many [future plans](roadmap.html).
 
-[Get started with BlackLab](getting-starting.html)
+[Get started with BlackLab](getting-started.html)
 
 [Who uses BlackLab?](who-uses-blacklab.html)
