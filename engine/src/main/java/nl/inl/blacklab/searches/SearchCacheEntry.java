@@ -14,6 +14,40 @@ import nl.inl.blacklab.search.results.SearchResult;
  */
 public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, Peekable<R> {
 
+    /** When was our processing timer started? */
+    private long timerStart = -1;
+
+    /** Total processing time for this task (ms), including that of subtasks. */
+    private long processingTime = 0;
+
+    /** Get the total processing time for this task (ms).
+     *
+     * This includes processing time for other tasks it used (e.g. a "sorted hits" task calculates
+     * its processing time by adding the time it took to retrieve all the hits and the time it took
+     * to sort them, even though the task itself only does the actual sorting).
+     *
+     * Processing time is intended to be independent from the cache: it keeps track only of the actual
+     * time processing (originally) took. So even if a request is almost instant, processing time can
+     * be much higher if the original search took that long.
+     */
+    public long processingTimeMs() {
+        return processingTime;
+    }
+
+    /** (Re)start the task's processing timer, adding to its total. */
+    protected void startTimer() {
+        timerStart = System.currentTimeMillis();
+    }
+
+    /** Stop the task's processing timer, (temporarily) not keeping track of time elapsed. */
+    protected void stopTimer() {
+        processingTime += System.currentTimeMillis() - timerStart;
+    }
+
+    protected void addSubtaskTime(SearchCacheEntry subtask) {
+        processingTime += subtask.processingTimeMs();
+    }
+
     /**
      * Has this search been started?
      *
@@ -51,9 +85,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
         return "";
     }
 
-    public long timeUserWaitedMs() {
-        return -1;
-    }
+    public abstract long timeUserWaitedMs();
 
     public boolean threwException() {
         return false;
