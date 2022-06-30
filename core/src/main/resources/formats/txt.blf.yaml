@@ -11,3 +11,4 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: .
+      sensitivity: sensitive_insensitive

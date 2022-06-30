@@ -28,6 +28,7 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: ANNOTATION_VALUE
+      sensitivity: sensitive_insensitive
 
     standoffAnnotations:
     - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='Lemma']/ANNOTATION/REF_ANNOTATION"
@@ -36,6 +37,7 @@ annotatedFields:
       - name: lemma
         displayName: Lemma
         valuePath: ANNOTATION_VALUE
+        sensitivity: sensitive_insensitive
 
     - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='PoS']/ANNOTATION/REF_ANNOTATION"
       refTokenPositionIdPath: "@ANNOTATION_REF"

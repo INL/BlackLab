@@ -38,12 +38,14 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: .
+      sensitivity: sensitive_insensitive
 
     - name: lemma
       displayName: Lemma
       captureValuePaths:
       - "@ID"
       valuePath: "/d:D-Spin/tc:TextCorpus/tc:lemmas/tc:lemma[contains(concat(' ', @tokenIDs, ' '), ' $1 ')][1]"
+      sensitivity: sensitive_insensitive
 
     - name: pos
       displayName: PoS

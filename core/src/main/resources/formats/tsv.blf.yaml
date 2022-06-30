@@ -14,9 +14,11 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: word
+      sensitivity: sensitive_insensitive
     - name: lemma
       displayName: Lemma
       valuePath: lemma
+      sensitivity: sensitive_insensitive
     - name: pos
       displayName: PoS
       valuePath: pos

@@ -32,7 +32,8 @@ annotatedFields:
       - name: word
         displayName: Word
         valuePath: .
-        
+        sensitivity: sensitive_insensitive
+
       - name: word_or_lemma
         valuePath: .//text()|./@lemma
         displayName: Word or lemma
@@ -47,6 +48,7 @@ annotatedFields:
         annotations:           # The actual annotations (structure identical to regular annotations)
           - name: lemma
             valuePath: "@lemma"
+            sensitivity: sensitive_insensitive
           - name: pos
             valuePath: "@pos"
             uiType: select

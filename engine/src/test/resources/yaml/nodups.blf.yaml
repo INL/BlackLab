@@ -24,13 +24,14 @@ annotatedFields:
 
     - name: word
       valuePath: "normalize-space(concat(text()[1],text()[2],text()[3]))"
+      sensitivity: sensitive_insensitive
 
     - name: lemma
       captureValuePaths:
       - "@xml:id"
       valuePath: "@lemma | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@lemma"
-      
-        
+      sensitivity: sensitive_insensitive
+
     - name: abbr
       captureValuePaths: 
       - "@xml:id"

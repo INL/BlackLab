@@ -99,10 +99,12 @@ annotatedFields:
       # (first annotation becomes the main annotation)
     - name: word
       valuePath: .
+      sensitivity: sensitive_insensitive
 
       # lemma attribute contains the lemma (headword)
     - name: lemma
       valuePath: "@lemma"
+      sensitivity: sensitive_insensitive
 
       # pos attribute contains the part of speech
     - name: pos
@@ -248,7 +250,7 @@ Valid values for sensitivity are:
 What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching. Each alternative increases index size.
 
 If you don't configure these, BlackLab will pick default values:
-* annotations named "word" or "lemma" get "sensitive_insensitive"
+* annotations named "word" or "lemma" get `sensitive_insensitive` (*THIS IS DEPRECATED!* Please explicitly declare sensitivity for these annotations. Eventually the default for all user-defined annotations will be `insensitive`)
 * (internal property "punct" (punctuation between words, if any) always gets "insensitive" and internal property "starttag" (inline tags like p, s or b) always gets "sensitive")
 * all other annotations get "insensitive"
 
@@ -338,9 +340,11 @@ annotatedFields:
     annotations:
     - name: word    # First annotation becomes the main annotation
       valuePath: t
+      sensitivity: sensitive_insensitive
     - name: lemma
       valuePath: lemma
       multipleValues: true
+      sensitivity: sensitive_insensitive
 ```
           
 If you don't specify multipleValues, only the first value will be used. The reason you explicitly have to specify it is that this is relatively rare and could slow down the indexing process if automatically applied to all annotations.
@@ -414,6 +418,7 @@ annotatedFields:
     annotations:
     - name: word  # First annotation becomes the main annotation
       valuePath: .
+      sensitivity: sensitive_insensitive
     standoffAnnotations:
     - path: standoff/annotation      # Element containing what to index (relative to documentPath)
       refTokenPositionIdPath: "@ref" # What token position(s) to index these values at
@@ -422,6 +427,7 @@ annotatedFields:
       annotations:           # The actual annotations (structure identical to regular annotations)
       - name: lemma
         valuePath: "@lemma"
+        sensitivity: sensitive_insensitive
       - name: pos
         valuePath: "@pos"
 ```
@@ -510,8 +516,10 @@ annotatedFields:
     annotations:
     - name: word  # First annotation becomes the main annotation
       valuePath: t
+      sensitivity: sensitive_insensitive
     - name: lemma
       valuePath: lemma/@class
+      sensitivity: sensitive_insensitive
     - name: pos
       basePath: pos         # "base element" to match for this annotation.
                             # (other XPath expressions for this annotation are relative to this)
@@ -603,8 +611,10 @@ annotatedFields:
     annotations:
     - name: word  # First annotation becomes the main annotation
       valuePath: 2    # (1-based) column number or column name (if file has them) 
+      sensitivity: sensitive_insensitive
     - name: lemma
       valuePath: 3
+      sensitivity: sensitive_insensitive
     - name: pos
       valuePath: 5
 ```
@@ -651,8 +661,10 @@ annotatedFields:
     annotations:
     - name: word  # First annotation becomes the main annotation
       valuePath: 1
+      sensitivity: sensitive_insensitive
     - name: lemma
       valuePath: 3
+      sensitivity: sensitive_insensitive
     - name: pos
       valuePath: 2
 ```
@@ -682,6 +694,7 @@ annotatedFields:
     annotations:
     - name: word
       valuePath: .
+      sensitivity: sensitive_insensitive
 ```
 
 Note that a plain text format may only have a single annotated field. You cannot specify containerPath or wordPath. For each annotation you define, valuePath must be "." ("the current word"), but you can specify different processing steps for different annotations if you want.
@@ -1160,7 +1173,8 @@ annotatedFields:
       description: The word forms occurring in the document text.
       valuePath: t
       sensitivity: sensitive_insensitive  # sensitive|s|insensitive|i|sensitive_insensitive|si|all
-                                          # (if omitted, reasonable default is chosen based on name)
+                                          # (please explicitly declare this for at least "word" and 
+                                          #  "lemma"; all other annotations will default to insensitive)
       uiType: text                        # (optional) hint for use interface
       createForwardIndex: true            # should this annotation get a forward index [true]
 

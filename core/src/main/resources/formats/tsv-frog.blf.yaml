@@ -30,10 +30,12 @@ annotatedFields:
     - name: word
       displayName: Word
       valuePath: 2
+      sensitivity: sensitive_insensitive
 
     - name: lemma
       displayName: Lemma
       valuePath: 3
+      sensitivity: sensitive_insensitive
 
     - name: pos
       displayName: PoS

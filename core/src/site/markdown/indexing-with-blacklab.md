@@ -126,7 +126,7 @@ Configuring an external metadata fetcher (see "Metadata from an external source"
 
 You can also configure what "sensitivity alternatives" (case/diacritics sensitivity) to index for each annotation, using the "PROPNAME_sensitivity" parameter. Accepted values are "i" (both only insensitive), "s" (both only sensitive), "si" (sensitive and insensitive) and "all" (case/diacritics sensitive and insensitive, so 4 alternatives). What alternatives are indexed determines how specifically you can specify the desired sensitivity when searching.
 
-If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i").
+If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", starttag gets "s", others get "i"). (CAUTION: the special behaviour for word/lemma is deprecated. Please explictly configure the sensitivity for these annotations. Eventually they too will default to "i")
 
 <a id="index-struct"></a>
 
