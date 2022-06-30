@@ -80,7 +80,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        SearchTimings timings = SearchTimings.searchAndCount(groupSearch.timeUserWaitedMs(), 0);
+        SearchTimings timings = SearchTimings.searchAndCount(groupSearch.processingTimeMs(), 0);
         datastreamSummaryCommonFields(ds, searchParam, timings, groups, ourWindow);
         if (hitsStats == null)
             datastreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);

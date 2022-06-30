@@ -50,14 +50,14 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @throws InvalidQuery if the query is invalid
      */
     @Override
-    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
+    public HitGroups executeInternal(SearchTask<HitGroups> searchTask) throws InvalidQuery {
         if (HitGroupsTokenFrequencies.canUse(mustStoreHits, source, property)) {
             // Any token query, group by hit text or doc metadata! Choose faster path that just "looks up"
             // token frequencies in the forward index(es).
             return HitGroupsTokenFrequencies.get(source, property);
         } else {
             // Just find all the hits and group them.
-            return HitGroups.fromHits(source.executeNoQueue(), property, maxResultsToStorePerGroup);
+            return HitGroups.fromHits(executeChildSearch(searchTask, source), property, maxResultsToStorePerGroup);
         }
     }
 

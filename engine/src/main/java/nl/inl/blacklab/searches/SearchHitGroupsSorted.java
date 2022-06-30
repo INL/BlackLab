@@ -23,8 +23,8 @@ public class SearchHitGroupsSorted extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().sort(property);
+    public HitGroups executeInternal(SearchTask<HitGroups> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).sort(property);
     }
 
     @Override

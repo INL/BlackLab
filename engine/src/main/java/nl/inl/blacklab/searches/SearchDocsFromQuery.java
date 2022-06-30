@@ -15,7 +15,7 @@ public class SearchDocsFromQuery extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(Peekable<DocResults> progressReporter) {
+    public DocResults executeInternal(SearchTask<DocResults> searchTask) {
         return queryInfo().index().queryDocuments(query);
     }
     

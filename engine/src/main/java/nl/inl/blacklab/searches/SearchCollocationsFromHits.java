@@ -26,8 +26,8 @@ public class SearchCollocationsFromHits extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().collocations(annotation, contextSize, sensitivity);
+    public TermFrequencyList executeInternal(SearchTask<TermFrequencyList> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).collocations(annotation, contextSize, sensitivity);
     }
 
     @Override

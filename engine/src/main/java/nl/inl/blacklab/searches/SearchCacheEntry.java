@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.SearchResult;
  *
  * @param <R> the type of search result this search will yield
  */
-public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, Peekable<R> {
+public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, SearchTask<R> {
 
     /** When was our processing timer started? */
     private long timerStart = -1;
@@ -35,16 +35,17 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
     }
 
     /** (Re)start the task's processing timer, adding to its total. */
-    protected void startTimer() {
+    public void startTimer() {
         timerStart = System.currentTimeMillis();
     }
 
     /** Stop the task's processing timer, (temporarily) not keeping track of time elapsed. */
-    protected void stopTimer() {
+    public void stopTimer() {
         processingTime += System.currentTimeMillis() - timerStart;
     }
 
-    protected void addSubtaskTime(SearchCacheEntry subtask) {
+    /** Add the processing time for the subtask to this tasks's processing time. */
+    public void addSubtaskTime(SearchTask<?> subtask) {
         processingTime += subtask.processingTimeMs();
     }
 

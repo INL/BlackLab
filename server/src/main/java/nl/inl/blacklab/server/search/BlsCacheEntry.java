@@ -130,6 +130,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      * {@link #start()} submits a Runnable to the search executor service that calls this.
      */
     public void executeSearch() {
+        // keep track of processing time, taking child searches into account
+        // (child searches already in cache will add their original processing time)
+        startTimer();
         try {
             result = search.executeInternal(this);
         } catch (Throwable e) {
@@ -148,6 +151,11 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             //  as they "should".
             exceptionThrown = e;
         } finally {
+
+            // Stop keeping track of processing time for this task.
+            stopTimer();
+
+            // Record the time the task was done, for e.g. cache management.
             doneTime = now();
         }
     }
@@ -376,6 +384,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         if (!StringUtils.isEmpty(reason))
             stats.put("cancelReason", reason);
         stats.put("numberOfStoredHits", numberOfStoredHits());
+        stats.put("processingTime", processingTimeMs() / 1000.0);
         stats.put("userWaitTime", timeUserWaitedMs() / 1000.0);
         stats.put("notAccessedFor", timeSinceLastAccessMs() / 1000.0);
 

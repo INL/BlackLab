@@ -23,8 +23,8 @@ public class SearchDocGroupsFiltered extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(Peekable<DocGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().filter(property, value);
+    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).filter(property, value);
     }
 
     @Override

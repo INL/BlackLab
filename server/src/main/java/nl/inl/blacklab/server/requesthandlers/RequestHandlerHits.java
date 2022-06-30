@@ -56,6 +56,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -170,6 +171,8 @@ public class RequestHandlerHits extends RequestHandler {
         // Find KWICs/concordances from forward index or original XML
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
+        ContextSettings contextSettings = searchParam.getContextSettings();
+        ContextForHits contextForHits = ContextForHits.get(hits, contextSettings.concType(), contextSettings.size());
         long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
         // Search is done; construct the results object
@@ -181,8 +184,8 @@ public class RequestHandlerHits extends RequestHandler {
         ds.startEntry("summary").startMap();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
-        long searchTime = (cacheEntryWindow == null ? cacheEntry.timeUserWaitedMs() : cacheEntryWindow.timeUserWaitedMs()) + kwicTimeMs;
-        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timeUserWaitedMs();
+        long searchTime = (cacheEntryWindow == null ? cacheEntry.processingTimeMs() : cacheEntryWindow.processingTimeMs()) + kwicTimeMs;
+        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.processingTimeMs();
         logger.info("Total search time is:{} ms", searchTime);
         SearchTimings timings = SearchTimings.searchAndCount(searchTime, countTime);
         datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
@@ -208,7 +211,7 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry();
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
-        datastreamHits(ds, window, luceneDocs, searchParam.getContextSettings());
+        datastreamHits(ds, window, contextForHits, luceneDocs);
         datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
 
         if (searchParam.hasFacets()) {

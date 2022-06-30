@@ -19,8 +19,8 @@ public class SearchDocsFromHits extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(Peekable<DocResults> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().perDocResults(maxHits);
+    public DocResults executeInternal(SearchTask<DocResults> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).perDocResults(maxHits);
     }
 
     @Override

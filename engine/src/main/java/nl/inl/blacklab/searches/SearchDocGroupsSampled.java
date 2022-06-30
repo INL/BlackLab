@@ -19,8 +19,8 @@ public class SearchDocGroupsSampled extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(Peekable<DocGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().sample(sampleParameters);
+    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).sample(sampleParameters);
     }
 
     @Override

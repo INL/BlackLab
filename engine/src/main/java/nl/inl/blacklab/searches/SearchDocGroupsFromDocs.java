@@ -24,8 +24,8 @@ public class SearchDocGroupsFromDocs extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(Peekable<DocGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().group(property, maxDocs);
+    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).group(property, maxDocs);
     }
 
     @Override

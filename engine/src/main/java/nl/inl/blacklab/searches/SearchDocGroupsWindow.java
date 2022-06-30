@@ -21,8 +21,8 @@ public class SearchDocGroupsWindow extends SearchDocGroups {
     }
 
     @Override
-    public DocGroups executeInternal(Peekable<DocGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().window(first, number);
+    public DocGroups executeInternal(SearchTask<DocGroups> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).window(first, number);
     }
 
     @Override

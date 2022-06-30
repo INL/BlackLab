@@ -28,7 +28,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
      * @return result of the operation
      */
     @Override
-    public Hits executeInternal(Peekable<Hits> progressReporter) {
+    public Hits executeInternal(SearchTask<Hits> searchTask) {
         return queryInfo().index().find(spanQuery, searchSettings);
     }
 

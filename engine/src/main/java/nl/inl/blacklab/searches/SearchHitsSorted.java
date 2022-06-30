@@ -19,8 +19,8 @@ public class SearchHitsSorted extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(Peekable<Hits> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().sort(property);
+    public Hits executeInternal(SearchTask<Hits> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).sort(property);
     }
 
     @Override

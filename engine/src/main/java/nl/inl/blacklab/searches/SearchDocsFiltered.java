@@ -22,8 +22,8 @@ public class SearchDocsFiltered extends SearchDocs {
     }
 
     @Override
-    public DocResults executeInternal(Peekable<DocResults> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().filter(property, value);
+    public DocResults executeInternal(SearchTask<DocResults> searchTask) throws InvalidQuery {
+        return executeChildSearch(searchTask, source).filter(property, value);
     }
 
     @Override
