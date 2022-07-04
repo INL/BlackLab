@@ -249,4 +249,9 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public BlackLabEngine blackLab() {
         return blackLab;
     }
+
+    @Override
+    public boolean allFilesInIndex() {
+        return false;
+    }
 }

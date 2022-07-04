@@ -446,4 +446,15 @@ public interface BlackLabIndex extends Closeable {
             throw new BlackLabRuntimeException(e);
         }
     }
+
+    /**
+     * Are all files contained within the Lucene index, or are there
+     * separate files for e.g. forward indexes?
+     *
+     * Separate files is the legacy format, everything integrated
+     * is the modern one.
+     *
+     * @return true iff all files are in the Lucene index
+     */
+    boolean allFilesInIndex();
 }

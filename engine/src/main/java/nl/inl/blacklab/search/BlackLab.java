@@ -225,7 +225,18 @@ public final class BlackLab {
         }
         return blackLabConfig;
     }
-    
+
+    public static String featureFlag(String name) {
+        String value = System.getenv("BLACKLAB_FEATURE_" + name);
+        if (value == null)
+            value = config().getFeatureFlags().get(name);
+        return value;
+    }
+
+    public static boolean isFeatureEnabled(String name) {
+        return Boolean.parseBoolean(featureFlag(name));
+    }
+
     /**
      * Read blacklab.yaml and set the configuration from that.
      * 
@@ -310,5 +321,4 @@ public final class BlackLab {
     }
     
     private BlackLab() { }
-    
 }

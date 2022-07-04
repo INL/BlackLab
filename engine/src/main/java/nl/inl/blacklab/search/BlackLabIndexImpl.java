@@ -288,9 +288,14 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      */
     private boolean isEmptyIndex = false;
 
+    /** Are our forward indexes and other previously external files integrated into the Lucene index
+     *  (true) or separate files (false)? */
+    private boolean allFilesInIndex = false;
+
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
 
+    /** How many words of context around matches to return by default */
     private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
 
     /** Search cache to use */
@@ -537,7 +542,19 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         if (!indexMode && createNewIndex)
             throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
 
+        // See if we should create a fully-integrated Lucene index, or
+        // if we're opening an existing index, what type it is.
+        allFilesInIndex = BlackLab.isFeatureEnabled("integrateExternalFiles");
         if (!createNewIndex) {
+            if (VersionFile.exists(indexDir)) {
+                // Existing index with a version file.
+                // Legacy index with external files.
+                allFilesInIndex = false;
+            }
+        }
+
+        // If there's a version file (non-integrated index), check it now.
+        if (!createNewIndex && !allFilesInIndex) {
             if (!indexMode || VersionFile.exists(indexDir)) {
                 if (!BlackLabIndex.isIndex(indexDir)) {
                     throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
@@ -782,8 +799,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(150); // faster indexing
-        config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
-        config.setUseCompoundFile(false); // @@@ TEST
+        if (allFilesInIndex) {
+            config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
+            config.setUseCompoundFile(false); // @@@ TEST
+        }
 
         IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
@@ -964,4 +983,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         return indexWriter.isOpen();
     }
 
+    @Override
+    public boolean allFilesInIndex() {
+        return allFilesInIndex;
+    }
 }

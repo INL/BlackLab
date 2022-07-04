@@ -146,11 +146,11 @@ public class BlackLabConfig {
         this.log = log;
     }
 
-    public String featureFlag(String name) {
-        return this.featureFlags.get(name);
+    public Map<String, String> getFeatureFlags() {
+        return featureFlags;
     }
 
-    public boolean enableFeature(String name) {
-        return Boolean.parseBoolean(featureFlag(name));
+    public void setFeatureFlags(Map<String, String> featureFlags) {
+        this.featureFlags = featureFlags;
     }
 }

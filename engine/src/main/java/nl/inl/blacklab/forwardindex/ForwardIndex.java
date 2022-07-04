@@ -29,17 +29,11 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      * @return the forward index object
      */
     static ForwardIndex open(BlackLabIndex index, AnnotatedField field) {
-        return new ForwardIndexImplSeparate(index, field);
+        return index.allFilesInIndex() ?
+                new ForwardIndexIntegrated(index, field) :
+                new ForwardIndexExternal(index, field);
     }
 
-    /**
-     * Get a document from the forward index.
-     * 
-     * @param fiid forward index id
-     * @return forward index document
-     */
-    FIDoc doc(int fiid);
-    
     /**
      * Close the forward index. Writes the table of contents to disk if modified.
      */

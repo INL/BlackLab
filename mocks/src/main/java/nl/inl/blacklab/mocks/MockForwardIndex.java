@@ -3,11 +3,11 @@ package nl.inl.blacklab.mocks;
 import java.util.List;
 import java.util.Set;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalAbstract;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-public class MockForwardIndex extends AnnotationForwardIndex {
+public class MockForwardIndex extends AnnotationForwardIndexExternalAbstract {
 
     private final Terms terms;
 

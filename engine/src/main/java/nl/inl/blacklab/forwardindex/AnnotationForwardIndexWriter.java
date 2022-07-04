@@ -32,7 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
-class AnnotationForwardIndexWriter extends AnnotationForwardIndex {
+class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstract {
 
     protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexWriter.class);
 

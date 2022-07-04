@@ -4,6 +4,7 @@ import java.io.File;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalAbstract;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.Timer;
@@ -59,7 +60,7 @@ public class BatchForwardIndex {
         }
 
         System.err.print("Opening forward index... ");
-        AnnotationForwardIndex fi = AnnotationForwardIndex.open(indexDir, false, null, false, null, true);
+        AnnotationForwardIndex fi = AnnotationForwardIndexExternalAbstract.open(indexDir, false, null, false, null, true);
         System.err.println("done. [#docs: " + fi.numDocs() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");
