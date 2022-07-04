@@ -15,7 +15,8 @@ This will involve the following steps:
   - [ ] Make content store optional and investigate alternatives (e.g. content webservice)<br>(OPTIONAL BUT RECOMMENDED - Lucene is not intended for storing large documents and keeping the content on the same server could thrash the disk cache. A webservice on another host is probably be better. Only downside is that making concordances from the original content instead of the forward index won't be very feasible anymore, so an integrated content store as an option is still nice and not that hard to do.)
   - [ ] Perform more hits operations per index segment instead of "globally"<br> Filtering, sorting and grouping could be done per segment instead of how it is done now. Of course a merge step would be needed to combine sorted/grouped results from each segment, just as with distributed search.<br>
     (OPTIONAL BUT RECOMMENDED - Because the forward index is now part of a segment, it makes sense to try to do everything related to this segment before merging segment results, as this minimizes resource contention, makes disk reads less disjointed, and is more efficient in general (because it stays closer to Lucene's design))
-  - [ ] [Other open issues](https://github.com/INL/BlackLab/issues) 
+  - [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
+    (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 - [ ] Incorporate all information into the Lucene index
   - [ ] Make the forward index part of the Lucene index
   - [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
