@@ -7,6 +7,8 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -99,6 +101,11 @@ public class BlackLabConfig {
 
     BLConfigLog log = new BLConfigLog();
 
+    /**
+     * Feature flags: enable/disable certain (experimental) features.
+     */
+    Map<String, String> featureFlags = new HashMap<>();
+
     public int getConfigVersion() {
         return configVersion;
     }
@@ -137,5 +144,13 @@ public class BlackLabConfig {
 
     public void setLog(BLConfigLog log) {
         this.log = log;
+    }
+
+    public String featureFlag(String name) {
+        return this.featureFlags.get(name);
+    }
+
+    public boolean enableFeature(String name) {
+        return Boolean.parseBoolean(featureFlag(name));
     }
 }
