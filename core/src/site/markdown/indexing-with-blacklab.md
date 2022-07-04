@@ -3,6 +3,7 @@
 * <a href="#index-supported-format">Indexing documents in a supported format</a>
 * <a href="#supported-formats">Supported formats</a>
 * <a href="#add-custom-format">Add support for your own custom format</a>
+* <a href="#multithreaded-indexing">Indexing multiple documents at once</a>
 * <a href="#using-legacy-docindexers">Using legacy DocIndexers</a>
     * <a href="#passing-indexing-parameters">Passing indexing parameters</a>
     * <a href="#sensitivity">Configuring case- and diacritics sensitivity per annotation</a>
@@ -91,6 +92,14 @@ If you choose the second option, specify the fully-qualified class name of your 
 There's two approaches to adding support for a new input format in BlackLab. The preferred one is to write an input format configuration file in either YAML or JSON format. See [How to configure indexing](how-to-configure-indexing.html).
 
 The other way is considered somewhat legacy, although it may still be useful in rare cases. It may offer slightly better performance and complete control over the indexing process. This is documented below. You're probably better off with the configuration file approach, though.
+
+<a id="multithreaded-indexing"></a>
+
+## Indexing multiple documents at once
+
+IndexTool will try to index two documents at the same time by default. If you have enough CPU cores and memory, you can increase this number by setting the `--threads n` option, where n is the number of threads to use (i.e. documents to index at the same time).
+
+If you find that IndexTool is running out of memory, or becoming very slow, try a lower number of threads instead.
 
 <a id="using-legacy-docindexers"></a>
 
