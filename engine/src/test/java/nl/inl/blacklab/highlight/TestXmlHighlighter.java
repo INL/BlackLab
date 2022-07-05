@@ -13,7 +13,7 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public class TestXmlHighlighter {
 
-    XmlHighlighter hl;
+    private XmlHighlighter hl;
 
     @Before
     public void setUp() {

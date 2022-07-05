@@ -2,17 +2,17 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
 
 public class TestPerDocumentSortedSpans {
-    private PerDocumentSortedSpans hpd;
+    private static PerDocumentSortedSpans hpd;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         int[] doc = { 1, 1, 1, 2, 2 };
         int[] start = { 1, 1, 4, 2, 2 };
         int[] end = { 8, 6, 5, 4, 3 };

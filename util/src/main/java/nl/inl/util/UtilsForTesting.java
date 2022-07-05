@@ -27,16 +27,19 @@ public final class UtilsForTesting {
         // (may not be possible because of memory mapping lock on Windows;
         //  in this case we just leave the files and continue)
         for (File testDir : tempDir.listFiles((parentDir, name) -> name.startsWith("BlackLabTest_"))) {
-
-            // Recursively delete this temp dir
-            FileUtil.processTree(testDir, new FileTask() {
-                @Override
-                public void process(File f) {
-                    f.delete();
-                }
-            });
-            testDir.delete();
+            removeBlackLabTestDir(testDir);
         }
+    }
+
+    public static void removeBlackLabTestDir(File dir) {
+        // Recursively delete this temp dir
+        FileUtil.processTree(dir, new FileTask() {
+            @Override
+            public void process(File f) {
+                f.delete();
+            }
+        });
+        dir.delete();
     }
 
     /**
@@ -55,5 +58,4 @@ public final class UtilsForTesting {
         file.mkdir();
         return file;
     }
-
 }

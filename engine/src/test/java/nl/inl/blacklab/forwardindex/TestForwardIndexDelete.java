@@ -14,6 +14,8 @@ import nl.inl.util.UtilsForTesting;
 public class TestForwardIndexDelete {
     private AnnotationForwardIndex fi;
 
+    private File testDir;
+
     @Before
     public void setUpForwardIndex() {
 
@@ -23,13 +25,10 @@ public class TestForwardIndexDelete {
         // Whether or not to delete the documents again
         boolean[] delDoc = { true, false, true, false, true, false };
 
-        // Remove any previously left over temp test dirs
-        UtilsForTesting.removeBlackLabTestDirs();
-
         // Create new test dir
-        File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
+        testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new AnnotationForwardIndexWriter(null, dir, Collators.defaultCollator(), true);
+        fi = new AnnotationForwardIndexWriter(null, testDir, Collators.defaultCollator(), true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {
@@ -71,7 +70,7 @@ public class TestForwardIndexDelete {
         if (fi != null)
             fi.close();
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDirs();
+        UtilsForTesting.removeBlackLabTestDir(testDir);
     }
 
     /** Adding a document the exact length of a gap. */

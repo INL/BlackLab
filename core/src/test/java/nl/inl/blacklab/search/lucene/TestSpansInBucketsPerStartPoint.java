@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
@@ -10,10 +10,10 @@ import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.mocks.MockSpansInBuckets;
 
 public class TestSpansInBucketsPerStartPoint {
-    private SpansInBuckets hpd;
+    private static SpansInBuckets hpd;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         int[] doc = { 1, 1, 1, 2, 2, 2 };
         int[] start = { 1, 1, 3, 3, 5, 5 };
         int[] end = { 2, 3, 4, 5, 6, 7 };

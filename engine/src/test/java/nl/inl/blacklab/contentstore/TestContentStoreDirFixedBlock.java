@@ -25,7 +25,7 @@ public class TestContentStoreDirFixedBlock {
     
     private ContentStore store;
 
-    private File dir;
+    private File testDir;
 
     String[] str = { "The quick brown fox ", "jumps over the lazy ", "dog.      ", "Leentje leerde Lotje lopen lan" };
 
@@ -36,14 +36,11 @@ public class TestContentStoreDirFixedBlock {
     @Before
     public void setUp() {
 
-        // Remove any previously left over temp test dirs
-        UtilsForTesting.removeBlackLabTestDirs();
-
         // Create new test dir
-        dir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
+        testDir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
 
         try {
-            store = new ContentStoreFixedBlockWriter(dir, true);
+            store = new ContentStoreFixedBlockWriter(testDir, true);
             try {
 
                 // Create four different documents that span different numbers of 4K blocks.
@@ -64,7 +61,7 @@ public class TestContentStoreDirFixedBlock {
             } finally {
                 store.close(); // close so everything is guaranteed to be written
             }
-            store = new ContentStoreFixedBlockWriter(dir, false);
+            store = new ContentStoreFixedBlockWriter(testDir, false);
             currentlyWriteMode = true;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -76,7 +73,7 @@ public class TestContentStoreDirFixedBlock {
         if (store != null)
             store.close();
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDirs();
+        UtilsForTesting.removeBlackLabTestDir(testDir);
     }
 
     @Test
@@ -199,7 +196,7 @@ public class TestContentStoreDirFixedBlock {
             return;
         try {
             store.close();
-            store = ContentStore.open(dir, write, false);
+            store = ContentStore.open(testDir, write, false);
             currentlyWriteMode = write;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);

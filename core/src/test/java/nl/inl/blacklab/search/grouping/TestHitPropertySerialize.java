@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
@@ -32,16 +32,16 @@ import nl.inl.blacklab.search.results.Hits;
 
 public class TestHitPropertySerialize {
 
-    private final MetadataField decadeField = new MockMetadataField("decade");
+    private static final MetadataField decadeField = new MockMetadataField("decade");
 
-    private final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
+    private static final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private final Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
+    private static final Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
 
-    private Annotation lemmaAnnotation;
+    private static Annotation lemmaAnnotation;
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void setUp() {
         lemmaAnnotation = mockIndex.mainAnnotatedField().annotation("lemma");
         mockIndex.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
     }

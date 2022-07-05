@@ -258,7 +258,8 @@
                     <!-- deal with Debian openjdk-8 issue (see https://issues.apache.org/jira/browse/SUREFIRE-1588) -->
                     <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
                     <!--
-                    NOTE: this should enable parallel testing, but it causes errors. Look into this.
+                    NOTE: this enables parallel testing, but it doesn't seem to be faster;
+                    presumable compilation takes up the bulk of the time.
                     <parallel>classes</parallel>
                     <useUnlimitedThreads>true</useUnlimitedThreads>
                     <forkCount>3</forkCount>

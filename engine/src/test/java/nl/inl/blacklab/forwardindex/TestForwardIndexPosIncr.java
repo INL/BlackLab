@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import nl.inl.util.UtilsForTesting;
@@ -20,14 +21,15 @@ public class TestForwardIndexPosIncr {
     // (only the first should be stored) and a gap (empty tokens should be added)
     final Integer[][] pi = { { 1, 1, 0, 0, 3 } };
 
-    private void setUpForwardIndex() {
-        // Remove any previously left over temp test dirs
-        UtilsForTesting.removeBlackLabTestDirs();
+    private File testDir;
+
+    @Before
+    public void setUpForwardIndex() {
 
         // Create new test dir
-        File dir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
+        testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        fi = AnnotationForwardIndex.open(dir, true, Collator.getInstance(), true, null, true);
+        fi = AnnotationForwardIndex.open(testDir, true, Collator.getInstance(), true, null, true);
         try {
             // Store strings
             for (int i = 0; i < str.length; i++) {
@@ -36,7 +38,7 @@ public class TestForwardIndexPosIncr {
         } finally {
             fi.close(); // close so everything is guaranteed to be written
         }
-        fi = AnnotationForwardIndex.open(dir, false, Collator.getInstance(), false, null, true);
+        fi = AnnotationForwardIndex.open(testDir, false, Collator.getInstance(), false, null, true);
     }
 
     @After
@@ -44,7 +46,7 @@ public class TestForwardIndexPosIncr {
         if (fi != null)
             fi.close();
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDirs();
+        UtilsForTesting.removeBlackLabTestDir(testDir);
     }
 
     public int[] retrievePart(int id, int start, int end) {
@@ -53,8 +55,6 @@ public class TestForwardIndexPosIncr {
 
     @Test
     public void testRetrieve() {
-        setUpForwardIndex();
-
         // Retrieve strings
         String[][] expected = { { "How", "much", "", "", "wood" } };
         for (int i = 0; i < str.length; i++) {

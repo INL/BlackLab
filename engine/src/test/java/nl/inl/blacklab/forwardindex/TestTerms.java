@@ -6,9 +6,9 @@ import java.util.Locale;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
@@ -16,18 +16,17 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
-    private Terms t;
+    private static Terms t;
 
-    final String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
+    final static String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
-    @Before
-    public void setUp() {
+    private static File testDir;
 
-        // Remove any previously left over temp test dirs
-        UtilsForTesting.removeBlackLabTestDirs();
+    @BeforeClass
+    public static void setUp() {
 
         // Create new test dir
-        File dir = UtilsForTesting.createBlackLabTestDir("Terms");
+        testDir = UtilsForTesting.createBlackLabTestDir("Terms");
 
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
@@ -38,17 +37,17 @@ public class TestTerms {
         for (String s : str) {
             t.indexOf(s);
         }
-        File f = new File(dir, "terms.dat");
+        File f = new File(testDir, "terms.dat");
         t.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
         t = Terms.openForReading(colls, f, true);
     }
 
-    @After
-    public void tearDown() {
+    @AfterClass
+    public static void tearDown() {
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDirs();
+        UtilsForTesting.removeBlackLabTestDir(testDir);
     }
 
     /**

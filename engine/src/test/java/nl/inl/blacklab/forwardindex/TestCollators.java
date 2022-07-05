@@ -4,7 +4,6 @@ import java.text.Collator;
 import java.util.Locale;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
@@ -25,10 +24,6 @@ public class TestCollators {
         //Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
         return colls.get(MatchSensitivity.INSENSITIVE);
-    }
-
-    @Before
-    public void setUp() {
     }
 
     private void testInsensitiveCollatorIgnoresChars(char... chars) {
