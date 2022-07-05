@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 /**
  * Supports reading/writing JSON and YAML files.
@@ -37,7 +36,6 @@ public class Json {
         jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
         YAMLFactory yamlFactory = new YAMLFactory();
-        yamlFactory.configure(YAMLGenerator.Feature.CANONICAL_OUTPUT, true);
         yamlObjectMapper = new ObjectMapper(yamlFactory);
         yamlObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
     }
