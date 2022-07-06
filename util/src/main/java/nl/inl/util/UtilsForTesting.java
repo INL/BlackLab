@@ -3,8 +3,6 @@ package nl.inl.util;
 import java.io.File;
 import java.util.UUID;
 
-import nl.inl.util.FileUtil.FileTask;
-
 /**
  * Misc. testing utilities.
  */
@@ -27,19 +25,8 @@ public final class UtilsForTesting {
         // (may not be possible because of memory mapping lock on Windows;
         //  in this case we just leave the files and continue)
         for (File testDir : tempDir.listFiles((parentDir, name) -> name.startsWith("BlackLabTest_"))) {
-            removeBlackLabTestDir(testDir);
+            FileUtil.deleteTree(testDir);
         }
-    }
-
-    public static void removeBlackLabTestDir(File dir) {
-        // Recursively delete this temp dir
-        FileUtil.processTree(dir, new FileTask() {
-            @Override
-            public void process(File f) {
-                f.delete();
-            }
-        });
-        dir.delete();
     }
 
     /**

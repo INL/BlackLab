@@ -13,6 +13,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
@@ -47,7 +48,7 @@ public class TestTerms {
     @AfterClass
     public static void tearDown() {
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDir(testDir);
+        FileUtil.deleteTree(testDir);
     }
 
     /**

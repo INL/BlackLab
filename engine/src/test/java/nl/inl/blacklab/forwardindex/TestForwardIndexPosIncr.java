@@ -11,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexPosIncr {
@@ -52,7 +53,7 @@ public class TestForwardIndexPosIncr {
         if (fi != null)
             fi.close();
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDir(testDir);
+        FileUtil.deleteTree(testDir);
     }
 
     public int[] retrievePart(int id, int start, int end) {

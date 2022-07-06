@@ -31,6 +31,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
@@ -158,17 +159,7 @@ public class TestIndex {
     public void close() {
         if (index != null)
             index.close();
-        deleteTree(indexDir);
-    }
-
-    private static void deleteTree(File dir) {
-        for (File f: dir.listFiles()) {
-            if (f.isFile())
-                f.delete();
-            else if (f.isDirectory())
-                deleteTree(f);
-        }
-        dir.delete();
+        FileUtil.deleteTree(indexDir);
     }
 
     /**

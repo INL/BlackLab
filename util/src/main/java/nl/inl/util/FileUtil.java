@@ -130,6 +130,22 @@ public class FileUtil {
     }
 
     /**
+     * Recursively delete an entire directory tree.
+     *
+     * @param dir directory tree to delete.
+     */
+    public static void deleteTree(File dir) {
+        // Recursively delete this temp dir
+        processTree(dir, new FileTask() {
+            @Override
+            public void process(File f) {
+                f.delete();
+            }
+        });
+        dir.delete();
+    }
+
+    /**
      * A task to execute on a file. Used by processTree().
      */
     public static abstract class FileTask {

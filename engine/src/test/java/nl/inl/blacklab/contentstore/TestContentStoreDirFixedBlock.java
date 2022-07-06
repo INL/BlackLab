@@ -16,6 +16,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirFixedBlock {
@@ -73,7 +74,7 @@ public class TestContentStoreDirFixedBlock {
         if (store != null)
             store.close();
         // Try to remove (some files may be locked though)
-        UtilsForTesting.removeBlackLabTestDir(testDir);
+        FileUtil.deleteTree(testDir);
     }
 
     @Test
