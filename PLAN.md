@@ -19,16 +19,32 @@ These tasks will not necessarily be discretely executed in this order, but some 
 ## Enable trunk-based development
 
 - [x] Make it possible to configure feature flags
-- [ ] Make it possible to rerun tests with different flag values (probably by re-running all tests with different flags, set via env.vars)
+- [ ] Make it possible to run integration tests with both values of `integrateExternalFiles` (probably by re-running with env. var)
+- [ ] Make it possible to run the same unit tests twice, with and without `integrateExternalFiles`. (arguably not the point of unit tests..?)
 - [ ] Make it easier and more obvious how to configure BlackLab programmatically, instead of requiring config file(s) in specific locations, having settings copied (ensureGlobalConfigApplied), and having config be global instead of per-Engine (although that may not be a huge deal). (improves testability, e.g. change feature flag for certain tests).<br>(OPTIONAL BUT RECOMMENDED)
 
 ## Incorporate all information into the Lucene index
 
 - [ ] Make the forward index part of the Lucene index
-- [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
+  - [ ] Detect which annotations have forward index (fieldsproducer)
 - [ ] Make indexmetada.yaml part of the Lucene index
-- [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)
+- [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)<br>How do we add the content to the index? Could we create a custom field type for this or something (or otherwise register the field to be a content store field, maybe via a field attribute..?), which we store in such a way that it allows us random access..? Or do we simply obtain a reference to the FieldsConsumer and call a separate method to add the content to the store?
 - [ ] Eliminate index version files (replaced by codec version)
+
+## Optimization opportunities
+
+The first implementation of the integrated index is slow, because we just want to make it work for now. There are a number of opportunities for optimizing it.
+
+Because this is a completely new index format, we are free to change its layout on disk to be more efficient.
+
+- [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil
+- [ ] In addition to the traditional global `ForwardIndex` and `Terms` APIs, also add per-leafreader APIs that can be used to optimize operations on integrated indexes. But do keep non-integrated indexes working as well.
+- [ ] In `BLFieldsProducer`, we clone `IndexInput` for every method call that needs access to a file. The reason is threadsafety. But too much cloning could be slow, so we could instead create objects that clone the required `IndexInput`s once for a thread and then use those for every method call.
+- [ ] `TermsIntegrated` doesn't read the terms files we wrote but gets the turms using `TermsEnum` from Lucene. It seems good not to store the terms twice (once by Lucene and once by us), but this does mean we can't use memory-mapped random access to the term strings. So switching to our own terms file might be necessary.
+- [ ] Investigate if there is a more efficient way to read from Lucene's `IndexInput` than calling `readInt()` etc. repeatedly. How does Lucene read larger blocks of data from its files?
+- [ ] Interesting (if old) [article](https://blog.thetaphi.de/2012/07/use-lucenes-mmapdirectory-on-64bit.html) about Lucene and memory-mapping. Recommends 1/4 of physical memory should be Java heap, rest for OS cache. Use `iotop` to check how much I/O swapping is occurring.
+- [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
+
 
 ## Integrate with Solr (standalone)
 

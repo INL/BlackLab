@@ -36,22 +36,21 @@ public class TestForwardIndexPosIncr {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        fi = AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
+        AnnotationForwardIndexWriter fiw = (AnnotationForwardIndexWriter)AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
         try {
             // Store strings
             String[] words = tokens.stream().map(t -> t.getLeft()).toArray(String[]::new);
             Integer[] posIncrements = tokens.stream().map(t -> t.getRight()).toArray(Integer[]::new);
-            Assert.assertEquals(0, fi.addDocument(Arrays.asList(words), Arrays.asList(posIncrements)));
+            Assert.assertEquals(0, fiw.addDocument(Arrays.asList(words), Arrays.asList(posIncrements)));
         } finally {
-            fi.close(); // close so everything is guaranteed to be written
+            fiw.close(); // close so everything is guaranteed to be written
         }
         fi = AnnotationForwardIndexExternalAbstract.open(testDir, false, Collator.getInstance(), false, null);
     }
 
     @After
     public void tearDown() {
-        if (fi != null)
-            fi.close();
+        fi = null;
         // Try to remove (some files may be locked though)
         FileUtil.deleteTree(testDir);
     }

@@ -9,6 +9,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -16,6 +17,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * <p>
  * Not thread-safe.
  */
+@NotThreadSafe
 public class SortedDocValuesCacher {
 
     /**

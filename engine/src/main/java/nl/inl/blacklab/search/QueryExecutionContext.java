@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -65,7 +64,7 @@ public class QueryExecutionContext {
     }
 
     public QueryExecutionContext withXmlTagsAnnotation() {
-        Annotation annotation = sensitivity.annotation().field().annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        Annotation annotation = sensitivity.annotation().field().tagsAnnotation();
         return new QueryExecutionContext(index, annotation, requestedSensitivity);
     }
 

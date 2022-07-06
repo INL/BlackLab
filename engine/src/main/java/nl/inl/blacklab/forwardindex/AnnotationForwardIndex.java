@@ -1,53 +1,20 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.util.List;
-import java.util.Set;
 
-import org.apache.lucene.document.Document;
-
+import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * A forward index for a single annotation on a field.
  */
+@ThreadSafe
 public interface AnnotationForwardIndex {
 
+    /**
+     * Initialize this forward index (to be run in the background).
+     */
     void initialize();
-
-    /**
-     * Close the forward index. Writes the table of contents to disk if modified.
-     */
-    void close();
-
-    /**
-     * Store the given content and assign an id to it.
-     *
-     * Note that if more than one token occurs at any position, we only store the
-     * first in the forward index.
-     *
-     * @param content the content to store
-     * @param posIncr the associated position increments, or null if position
-     *         increment is always 1.
-     * @return the id assigned to the content
-     */
-    int addDocument(List<String> content, List<Integer> posIncr);
-
-    /**
-     * Store the given content and assign an id to it
-     *
-     * @param content the content to store
-     * @return the id assigned to the content
-     */
-    int addDocument(List<String> content);
-
-    /**
-     * Delete a document from the forward index
-     *
-     * @param fiid id of the document to delete
-     */
-    void deleteDocument(int fiid);
-
-    void deleteDocumentByLuceneDoc(Document d);
 
     /**
      * Retrieve one or more parts from the specified content, in the form of token
@@ -77,11 +44,13 @@ public interface AnnotationForwardIndex {
 
     /**
      * Retrieve token ids for the entire document.
-     *
      * @param fiid forward index id
      * @return token ids for the entire document.
      */
-    int[] getDocument(int fiid);
+    default int[] getDocument(int fiid) {
+        int[] fullDoc = new int[] { -1 };
+        return retrievePartsInt(fiid, fullDoc, fullDoc).get(0);
+    }
 
     /**
      * Get the Terms object in order to translate ids to token strings
@@ -96,16 +65,6 @@ public interface AnnotationForwardIndex {
     int numDocs();
 
     /**
-     * @return the amount of space in free blocks in the forward index.
-     */
-    long freeSpace();
-
-    /**
-     * @return total size in bytes of the tokens file.
-     */
-    long totalSize();
-
-    /**
      * Gets the length (in tokens) of a document.
      *
      * NOTE: this INCLUDES the extra closing token at the end of the document!
@@ -115,7 +74,10 @@ public interface AnnotationForwardIndex {
      */
     int docLength(int fiid);
 
-    int getToken(int fiid, int pos);
+    default int getToken(int fiid, int pos) {
+        // Slow/naive implementation, subclasses should override
+        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
+    }
 
     /**
      * The annotation for which this is the forward index
@@ -124,22 +86,10 @@ public interface AnnotationForwardIndex {
      */
     Annotation annotation();
 
-    /** @return the set of all forward index ids */
-    Set<Integer> idSet();
-
     boolean canDoNfaMatching();
 
     @Override
     String toString();
 
-    /** Different versions of insensitive collator */
-    public enum CollatorVersion {
-        V1, // ignored dash and space
-        V2 // doesn't ignore dash and space
-    }
-
-    /** A task to perform on a document in the forward index. */
-    public interface ForwardIndexDocTask {
-        void perform(int fiid, int[] tokenIds);
-    }
+    Collators collators();
 }

@@ -95,6 +95,8 @@ public class TestIndex {
                     + "</doc>",
     };
 
+    public static final int[] DOC_LENGTHS_TOKENS = { 9, 6, 10, 12 };
+
     final static String testFormat = "testformat";
 
     /**
@@ -114,12 +116,6 @@ public class TestIndex {
 
         // Get a temporary directory for our test index
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
-        if (indexDir.exists()) {
-            // Delete the old example dir
-            // (NOTE: we also try to do this on exit but it may fail due to
-            // memory mapping (on Windows))
-            deleteTree(indexDir);
-        }
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);

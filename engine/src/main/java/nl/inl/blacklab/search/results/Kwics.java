@@ -1,15 +1,18 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import org.apache.lucene.index.IndexReader;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /** KWICs ("key words in context") for a list of hits.
@@ -80,24 +83,25 @@ public class Kwics {
         BlackLabIndex index = hits.index();
         Annotation wordAnnot = field.mainAnnotation();
         AnnotationForwardIndex wordForwardIndex = index.annotationForwardIndex(wordAnnot);
-        Annotation punctAnnot = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
+        Annotation punctAnnot = field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         AnnotationForwardIndex punctForwardIndex = index.annotationForwardIndex(punctAnnot);
         Map<Annotation, AnnotationForwardIndex> attrForwardIndices = new HashMap<>();
         for (Annotation annotation: field.annotations()) {
-            if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(Kwic.DEFAULT_CONC_PUNCT_PROP)) {
+            if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(
+                    AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 attrForwardIndices.put(annotation, index.annotationForwardIndex(annotation));
             }
         }
 
         // Get FiidLookups for all required forward indexes
-        IndexReader reader = hits.queryInfo().index().reader();
-        Map<Annotation, FiidLookup> fiidLookups = new HashMap<>();
-        fiidLookups.put(wordAnnot, new FiidLookup(reader, wordAnnot, !hits.hasAscendingLuceneDocIds()));
-        fiidLookups.put(punctAnnot, new FiidLookup(reader, punctAnnot, !hits.hasAscendingLuceneDocIds()));
-        for (Map.Entry<Annotation, AnnotationForwardIndex> e: attrForwardIndices.entrySet()) {
-            fiidLookups.put(e.getKey(), new FiidLookup(reader, e.getKey(), !hits.hasAscendingLuceneDocIds()));
-        }
-        
+        List<Annotation> fiidAnnotations = new ArrayList<>();
+        fiidAnnotations.add(wordAnnot);
+        fiidAnnotations.add(punctAnnot);
+        fiidAnnotations.addAll(attrForwardIndices.keySet());
+        List<FiidLookup> fiidLookupList = FiidLookup.getList(fiidAnnotations, index, !hits.hasAscendingLuceneDocIds());
+        Map<Annotation, FiidLookup> fiidLookups = IntStream.range(0, fiidAnnotations.size()).boxed()
+                .collect(Collectors.toMap(fiidAnnotations::get, fiidLookupList::get));
+
         Map<Hit, Kwic> conc1 = new HashMap<>();
         
         /*

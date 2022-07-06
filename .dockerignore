@@ -1,4 +1,5 @@
 # Ignore these subdirs when building Docker image
+.env
 **/target
 **/bin
 **/.settings

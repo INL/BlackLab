@@ -2,11 +2,9 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.File;
 import java.text.Collator;
-import java.util.List;
-
-import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
 
@@ -39,8 +37,8 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
 
     /**
      * Java has as limit of 2GB for MappedByteBuffer. But this could be worked
-     * around using arrays of MappedByteBuffers, see:
-     * http://stackoverflow.com/questions/5675748/java-memorymapping-big-files
+     * around using arrays of MappedByteBuffers, see
+     * <a href="http://stackoverflow.com/questions/5675748/java-memorymapping-big-files">this stackoverflow question</a>.
      */
     private static final int MAX_DIRECT_BUFFER_SIZE = Integer.MAX_VALUE;
 
@@ -53,20 +51,10 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      */
     static final int preferredChunkSizeBytes = MAX_DIRECT_BUFFER_SIZE / 2;
 
-    /** Size of a long in bytes. */
-    static final int SIZEOF_LONG = Long.SIZE / Byte.SIZE;
-
-    /**
-     * Size of an int in bytes. This will always be 4, according to the standard.
-     */
-    static final int SIZEOF_INT = Integer.SIZE / Byte.SIZE;
-
     /**
      * The number of integer positions to reserve when mapping the file for writing.
      */
     static final int WRITE_MAP_RESERVE = 250_000; // 250K integers = 1M bytes
-
-
 
     /**
      * Open an external forward index.
@@ -82,7 +70,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
      * @return the forward index object
      */
-    public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create,
+    public static AnnotationForwardIndexExternalAbstract open(File dir, boolean indexMode, Collator collator, boolean create,
             Annotation annotation) {
         if (annotation != null && !annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
@@ -113,7 +101,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
             VersionFile.write(dir, "fi", CURRENT_VERSION);
         }
 
-        AnnotationForwardIndex fi;
+        AnnotationForwardIndexExternalAbstract fi;
         CollatorVersion collVersion = CollatorVersion.V2;
         switch (version) {
         case "4":
@@ -144,9 +132,6 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
     /** The terms file (stores unique terms) */
     final File termsFile;
 
-    /** The unique terms in our index */
-    Terms terms = null;
-
     /**
      * The position (in ints) in the tokens file after the last token written. Note
      * that the actual file may be larger because we reserve space at the end.
@@ -162,11 +147,15 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
     /** The annotation for which we're the forward index */
     final Annotation annotation;
 
+    /** Collators to use for sorting terms */
+    private final Collators collators;
+
     /** Has the tokens file been mapped? */
     protected boolean initialized = false;
 
     public AnnotationForwardIndexExternalAbstract(Annotation annotation, File dir, Collators collators) {
         this.annotation = annotation;
+        this.collators = collators;
         canDoNfaMatching = collators != null && collators.version() != CollatorVersion.V1;
 
         termsFile = new File(dir, "terms.dat");
@@ -178,62 +167,6 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
     public void initialize() {
         // NOP, subclasses may override
         initialized = true;
-    }
-
-    /**
-     * Store the given content and assign an id to it
-     *
-     * @param content the content to store
-     * @return the id assigned to the content
-     */
-    @Override
-    public int addDocument(List<String> content) {
-        return addDocument(content, null);
-    }
-
-    @Override
-    public void deleteDocumentByLuceneDoc(Document d) {
-        deleteDocument(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
-    }
-
-    /**
-     * Retrieve token ids for the entire document.
-     * @param fiid forward index id
-     * @return token ids for the entire document.
-     */
-    @Override
-    public int[] getDocument(int fiid) {
-        int[] fullDoc = new int[] { -1 };
-        return retrievePartsInt(fiid, fullDoc, fullDoc).get(0);
-    }
-
-    /**
-     * Get the Terms object in order to translate ids to token strings
-     * 
-     * @return the Terms object
-     */
-    @Override
-    public Terms terms() {
-        if (!initialized)
-            initialize();
-        return terms;
-    }
-
-
-    /**
-     * @return total size in bytes of the tokens file.
-     */
-    @Override
-    public long totalSize() {
-        if (!initialized)
-            initialize();
-        return tokenFileEndPosition;
-    }
-
-    @Override
-    public int getToken(int fiid, int pos) {
-        // Slow/naive implementation, subclasses should override
-        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
     }
 
     /**
@@ -256,4 +189,8 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         return this.getClass().getSimpleName() + "(" + tocFile.getParentFile() + ")";
     }
 
+    @Override
+    public Collators collators() {
+        return collators;
+    }
 }

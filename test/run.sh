@@ -13,16 +13,26 @@ export DOCKER_BUILDKIT=1
 
 # Build and run BlackLab Server
 # (--force-recreate to avoid error 'network not found')
+export BLACKLAB_FEATURE_integrateExternalFiles=true
 $COMPOSE up --force-recreate -d --build testserver
 
 # Build and run the test suite
 $COMPOSE build test
 $COMPOSE run --rm test
 
+# Re-run to test non-integrated index as well
+$COMPOSE stop testserver
+docker container rm blacklab-testserver-1
+docker volume rm blacklab_blacklab-data
+docker network rm blacklab_default
+export BLACKLAB_FEATURE_integrateExternalFiles=false
+$COMPOSE run --rm test
+
+
 # Clean up
 # (stop then down to avoid warning about network in use)
 $COMPOSE stop testserver
 #$COMPOSE down -v
-docker container rm blacklab_testserver_1
+docker container rm blacklab-testserver-1
 docker volume rm blacklab_blacklab-data
 docker network rm blacklab_default

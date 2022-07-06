@@ -54,7 +54,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
         MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[1]);
         String term = parts[2];
         Terms termsObj = index.annotationForwardIndex(annotation).terms();
-        int termId = termsObj.deserializeToken(term);
+        int termId = deserializeToken(termsObj, term);
         return new PropertyValueContextWord(index, annotation, sensitivity, termId);
     }
 
@@ -66,7 +66,7 @@ public class PropertyValueContextWord extends PropertyValueContext {
 
     @Override
     public String serialize() {
-        String token = terms.serializeTerm(valueTokenId);
+        String token = serializeTerm(terms, valueTokenId);
         return PropertySerializeUtil.combineParts(
                 "cwo", annotationName,
                 sensitivity.luceneFieldSuffix(),

@@ -19,6 +19,7 @@ import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -108,7 +109,7 @@ public class Contexts implements Iterable<int[]> {
 
         // Make the concordances from the context
         AnnotatedField field = forwardIndex.annotation().field();
-        Annotation concPunctFI = field.annotation(Kwic.DEFAULT_CONC_PUNCT_PROP);
+        Annotation concPunctFI = field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         Annotation concWordFI = field.mainAnnotation();
         int hitIndex = -1;
         for (Hit h: hits) {

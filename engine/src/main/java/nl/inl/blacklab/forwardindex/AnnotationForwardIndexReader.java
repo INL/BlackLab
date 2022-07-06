@@ -10,13 +10,9 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +29,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstract {
 
     protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexReader.class);
+    /** The unique terms in our index */
+    TermsReader terms = null;
 
     /** Mapping into the tokens file */
     private List<ByteBuffer> tokensFileChunks = null;
@@ -75,18 +73,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         if (initialized)
             return;
 
-        //logger.debug("  START read TOC " + tocFile);
         readToc();
-        //logger.debug("  END   read TOC " + tocFile);
 
-        //logger.debug("  START read Terms " + tocFile);
-        terms = Terms.openForReading(collators, termsFile);
-        //logger.debug("  END   read Terms " + tocFile);
-        //logger.debug("  START Terms.initialize() " + tocFile);
-        terms.initialize();
-        //logger.debug("  END   Terms.initialize() " + tocFile);
+        terms = TermsExternalUtil.openForReading(collators, termsFile);
 
-        //logger.debug("  START map tokens file " + tocFile);
         try (RandomAccessFile tokensFp = new RandomAccessFile(tokensFile, "r");
                 FileChannel tokensFileChannel = tokensFp.getChannel()) {
             // Map the tokens file in chunks of 2GB each. When retrieving documents, we always
@@ -97,7 +87,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
             tokensFileChunks = new ArrayList<>();
             tokensFileChunkOffsetBytes = new ArrayList<>();
             long mappedBytes = 0;
-            long tokenFileEndBytes = tokenFileEndPosition * SIZEOF_INT;
+            long tokenFileEndBytes = tokenFileEndPosition * Integer.BYTES;
             while (mappedBytes < tokenFileEndBytes) {
                 // Find the last TOC entry start point that's also in the previous mapping
                 // (or right the first byte after the previous mapping).
@@ -113,14 +103,14 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
                 int min = 0, max = offset.length;
                 while (max - min > 1) {
                     int middle = (min + max) / 2;
-                    long middleVal = offset[middle] * SIZEOF_INT;
+                    long middleVal = offset[middle] * Integer.BYTES;
                     if (middleVal <= mappedBytes) {
                         min = middle;
                     } else {
                         max = middle;
                     }
                 }
-                long startOfNextMappingBytes = offset[min] * SIZEOF_INT;
+                long startOfNextMappingBytes = offset[min] * Integer.BYTES;
 
                 // Map this chunk
                 long sizeBytes = tokenFileEndBytes - startOfNextMappingBytes;
@@ -136,15 +126,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         } catch (IOException e1) {
             throw BlackLabRuntimeException.wrap(e1);
         }
-        //logger.debug("  END map tokens file " + tocFile);
-
-        //logger.debug("END initialize AFI " + tocFile.getParent());
         initialized = true;
-    }
-
-    @Override
-    public void close() {
-        // NOP
     }
 
     /**
@@ -161,10 +143,10 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
             deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + Long.BYTES * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
             buf.get(deleted);
             deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {
@@ -185,12 +167,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         deletedTocEntries.sort(Comparator.comparingInt(o -> length[o]));
     }
 
-
-    @Override
-    public int addDocument(List<String> content, List<Integer> posIncr) {
-        throw new UnsupportedOperationException("Not supported in search mode");
-    }
-
     @Override
     public List<int[]> retrievePartsInt(int fiid, int[] starts, int[] ends) {
         if (!initialized)
@@ -205,32 +181,16 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         List<int[]> result = new ArrayList<>(n);
 
         for (int i = 0; i < n; i++) {
-            int start = starts[i]; // don't modify the start/end array contents!
-            int end = ends[i];
-            
+            int start = starts[i];
             if (start == -1)
                 start = 0;
-            if (end == -1)
+            int end = ends[i];
+            if (end == -1 || end > length[fiid]) // Can happen while making KWICs because we don't know the doc length until here
                 end = length[fiid];
-            if (start < 0 || end < 0) {
-                throw new IllegalArgumentException("Illegal values, start = " + start + ", end = "
-                        + end);
-            }
-            if (end > length[fiid]) // Can happen while making KWICs because we don't know the
-                                   // doc length until here
-                end = length[fiid];
-            if (start > length[fiid] || end > length[fiid]) {
-                throw new IllegalArgumentException("Value(s) out of range, start = " + start
-                        + ", end = " + end + ", content length = " + length[fiid]);
-            }
-            if (end <= start) {
-                throw new IllegalArgumentException(
-                        "Tried to read empty or negative length snippet (from " + start
-                                + " to " + end + ")");
-            }
+            ForwardIndexAbstract.validateSnippetParameters(length[fiid], start, end);
 
             // Get an IntBuffer to read the desired content
-            IntBuffer ib = null;
+            IntBuffer ib;
 
             // The tokens file has has been mapped to memory.
             // Get an int buffer into the file.
@@ -238,13 +198,13 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
             // Figure out which chunk to access.
             ByteBuffer whichChunk = null;
             long chunkOffsetBytes = -1;
-            long entryOffsetBytes = offset[fiid] * SIZEOF_INT;
+            long entryOffsetBytes = offset[fiid] * Integer.BYTES;
             for (int j = 0; j < tokensFileChunkOffsetBytes.size(); j++) {
                 long offsetBytes = tokensFileChunkOffsetBytes.get(j);
                 ByteBuffer buffer = tokensFileChunks.get(j);
-                if (offsetBytes <= entryOffsetBytes + (long) start * SIZEOF_INT
+                if (offsetBytes <= entryOffsetBytes + (long) start * Integer.BYTES
                         && offsetBytes + buffer.capacity() >= entryOffsetBytes + (long) end
-                                * SIZEOF_INT) {
+                                * Integer.BYTES) {
                     // This one!
                     whichChunk = buffer;
                     chunkOffsetBytes = offsetBytes;
@@ -258,7 +218,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
             synchronized (whichChunk) {
-                ((Buffer) whichChunk).position((int) (offset[fiid] * SIZEOF_INT - chunkOffsetBytes));
+                ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
                 ib = whichChunk.asIntBuffer();
 
                 // The file is mem-mapped (search mode).
@@ -275,11 +235,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         return result;
     }
 
-    @Override
-    public void deleteDocument(int fiid) {
-        throw new UnsupportedOperationException("Not supported in search mode");
-    }
-
     /**
      * @return the number of documents in the forward index
      */
@@ -288,20 +243,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         if (!initialized)
             initialize();
         return offset.length;
-    }
-
-    /**
-     * @return the amount of space in free blocks in the forward index.
-     */
-    @Override
-    public long freeSpace() {
-        if (!initialized)
-            initialize();
-        long freeSpace = 0;
-        for (Integer e : deletedTocEntries) {
-            freeSpace += length[e];
-        }
-        return freeSpace;
     }
 
     /**
@@ -319,68 +260,15 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         return length[fiid];
     }
 
-
-    /** @return the set of all forward index ids */
+    /**
+     * Get the Terms object in order to translate ids to token strings
+     *
+     * @return the Terms object
+     */
     @Override
-    public Set<Integer> idSet() {
+    public Terms terms() {
         if (!initialized)
             initialize();
-        return new AbstractSet<>() {
-            @Override
-            public boolean contains(Object o) {
-                return deleted[(Integer) o] == 0;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return offset.length == deletedTocEntries.size();
-            }
-
-            @Override
-            public Iterator<Integer> iterator() {
-                return new Iterator<>() {
-                    int current = -1;
-                    int next = -1;
-
-                    @Override
-                    public boolean hasNext() {
-                        if (next < 0)
-                            findNext();
-                        return next < offset.length;
-                    }
-
-                    private void findNext() {
-                        next = current + 1;
-                        while (next < offset.length && deleted[next] != 0) {
-                            next++;
-                        }
-                    }
-
-                    @Override
-                    public Integer next() {
-                        if (next < 0)
-                            findNext();
-                        if (next >= offset.length)
-                            throw new NoSuchElementException();
-                        current = next;
-                        next = -1;
-                        return current;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-
-            @Override
-            public int size() {
-                return offset.length - deletedTocEntries.size();
-            }
-        };
+        return terms;
     }
-
-
-
 }

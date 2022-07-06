@@ -48,8 +48,8 @@ import nl.inl.util.BlockTimer;
  */
 public class HitGroupsTokenFrequencies {
 
-    public static final boolean TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED = true;
-    public static final boolean DEBUG = false;
+    /** When true, performs extra checking that we never overwrite a previously created group */
+    public static final boolean DEBUG_DUPLICATE_GROUPS = false;
 
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
@@ -100,7 +100,7 @@ public class HitGroupsTokenFrequencies {
      * @return true if this path can be used
      */
     public static boolean canUse(boolean mustStoreHits, SearchHits hitsSearch, HitProperty property) {
-        return !mustStoreHits && HitGroupsTokenFrequencies.TOKEN_FREQUENCIES_FAST_PATH_IMPLEMENTED && hitsSearch.isAnyTokenQuery() && property.isDocPropOrHitText();
+        return !mustStoreHits && hitsSearch.isAnyTokenQuery() && property.isDocPropOrHitText();
     }
 
     /** Counts of hits and docs while grouping. */
@@ -216,7 +216,7 @@ public class HitGroupsTokenFrequencies {
                 for (HitProperty p : props) {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
-                        if (DEBUG && asDocPropIfApplicable.props() != null) {
+                        if (asDocPropIfApplicable.props() != null) {
                             throw new RuntimeException("Nested PropertyMultiples detected, should never happen (when this code was originally written)");
                         }
                         final int positionInUnpackedList = docProperties.size();
@@ -224,7 +224,7 @@ public class HitGroupsTokenFrequencies {
                         originalOrderOfUnpackedProperties.add(PropInfo.doc(positionInUnpackedList));
                     } else { // Property couldn't be converted to DocProperty (is null). The current property is an actual HitProperty (applies to annotation/token/hit value)
                         List<Annotation> annot = p.needsContext();
-                        if (DEBUG && (annot == null || annot.size() != 1)) {
+                        if (annot == null || annot.size() != 1) {
                             throw new RuntimeException("Grouping property does not apply to singular annotation (nested propertymultiple? non-annotation grouping?) should never happen.");
                         }
 
@@ -341,8 +341,13 @@ public class HitGroupsTokenFrequencies {
                             try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                                 for (AnnotInfo annot : hitProperties) {
                                     final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                                    final String annotationFIName = afi.annotation().forwardIndexIdField();
-                                    final int fiid = doc.getField(annotationFIName).numericValue().intValue();
+                                    final int fiid;
+                                    if (index.allFilesInIndex()) {
+                                        fiid = docId;
+                                    } else {
+                                        final String annotationFIName = afi.annotation().forwardIndexIdField();
+                                        fiid = doc.getField(annotationFIName).numericValue().intValue();
+                                    }
                                     final int[] tokenValues = afi.getDocument(fiid);
                                     tokenValuesPerAnnotation.add(tokenValues);
 
@@ -434,7 +439,7 @@ public class HitGroupsTokenFrequencies {
                 }
             }
 
-            Set<PropertyValue> duplicateGroupsDebug = DEBUG ? new HashSet<>() : null;
+            Set<PropertyValue> duplicateGroupsDebug = DEBUG_DUPLICATE_GROUPS ? new HashSet<>() : null;
 
             List<HitGroup> groups;
             try (final BlockTimer ignored = BlockTimer.create("Resolve string values for tokens")) {
@@ -465,7 +470,7 @@ public class HitGroupsTokenFrequencies {
                     }
 
                     PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
-                    if (DEBUG) {
+                    if (DEBUG_DUPLICATE_GROUPS) {
                         synchronized (duplicateGroupsDebug) {
                             if (!duplicateGroupsDebug.add(groupId)) {
                                 throw new RuntimeException("Identical groups - should never happen");

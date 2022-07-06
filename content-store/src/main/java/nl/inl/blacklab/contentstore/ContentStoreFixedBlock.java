@@ -36,9 +36,6 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     /** Name of the file containing all the original file contents (zipped) */
     protected static final String CONTENTS_FILE_NAME = "file-contents.dat";
 
-    /** How many bytes an int consists of (used when repositioning file pointers) */
-    protected static final int BYTES_PER_INT = Integer.SIZE / Byte.SIZE;
-
     /**
      * Block size for the contents file.
      *
@@ -125,7 +122,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.put(blockIndices);
             ib.put(blockCharOffsets);
-            ((Buffer)buf).position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
+            ((Buffer)buf).position(buf.position() + blockIndices.length * Integer.BYTES * 2);
         }
 
         /**
@@ -145,7 +142,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.get(blockIndices);
             ib.get(blockCharOffsets);
-            ((Buffer)buf).position(buf.position() + blockIndices.length * BYTES_PER_INT * 2);
+            ((Buffer)buf).position(buf.position() + blockIndices.length * Integer.BYTES * 2);
             return new TocEntry(id, length, charLength, deleted, blockIndices, blockCharOffsets);
         }
 
@@ -165,7 +162,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
          * @return the size in bytes
          */
         public int sizeBytes() {
-            return 4 * BYTES_PER_INT + blockIndices.length * BYTES_PER_INT * 2;
+            return 4 * Integer.BYTES + blockIndices.length * Integer.BYTES * 2;
         }
     }
 

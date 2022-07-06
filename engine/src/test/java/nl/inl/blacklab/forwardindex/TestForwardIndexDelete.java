@@ -13,7 +13,7 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
-    private AnnotationForwardIndex fi;
+    private AnnotationForwardIndexWriter fi;
 
     private File testDir;
 
@@ -34,7 +34,7 @@ public class TestForwardIndexDelete {
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {
             int length = docLengths[j];
-            int fiid = addDocumentOfLength(length);
+            int fiid = addDocumentOfLength(length, false);
 
             // See if we want to delete the doc again
             if (delDoc[j])
@@ -47,6 +47,10 @@ public class TestForwardIndexDelete {
     }
 
     private int addDocumentOfLength(int length) {
+        return addDocumentOfLength(length, true);
+    }
+
+    private int addDocumentOfLength(int length, boolean testRetrieve) {
         List<String> content = new ArrayList<>();
         // Make test doc: first token is 0, each subsequent
         // token is one more. Corresponds to term ids.
@@ -55,12 +59,14 @@ public class TestForwardIndexDelete {
         }
         int fiid = fi.addDocument(content);
 
-        // Test retrieve
-        int[] start = { 0 };
-        int[] end = { length };
-        int[] test = fi.retrievePartsInt(fiid, start, end).get(0);
-        for (int i = 0; i < length; i++) {
-            Assert.assertEquals(i, test[i]);
+        if (testRetrieve) {
+            // Test retrieve
+            int[] start = { 0 };
+            int[] end = { length };
+            int[] test = fi.retrievePartsInt(fiid, start, end).get(0);
+            for (int i = 0; i < length; i++) {
+                Assert.assertEquals(i, test[i]);
+            }
         }
 
         return fiid;

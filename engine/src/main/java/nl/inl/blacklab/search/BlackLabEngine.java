@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search;
 
-import java.io.Closeable;
 import java.io.File;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -24,7 +23,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
  * Instantiating this explicitly has the advantage of being able to pass
  * parameters, such as the number of search thread you want (default 4).
  */
-public final class BlackLabEngine implements Closeable {
+public final class BlackLabEngine implements AutoCloseable {
 
     /**
      * Map from IndexReader to BlackLabIndex, for use from inside SpanQuery/Spans classes

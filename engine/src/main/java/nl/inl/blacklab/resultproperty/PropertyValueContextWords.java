@@ -62,7 +62,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         int[] ids = new int[parts.length - 2];
         Terms termsObj = index.annotationForwardIndex(annotation).terms();
         for (int i = 2; i < parts.length; i++) {
-            ids[i - 2] = termsObj.deserializeToken(parts[i]);
+            ids[i - 2] = deserializeToken(termsObj, parts[i]);
         }
         return new PropertyValueContextWords(index, annotation, sensitivity, ids, reverseOnDisplay);
     }
@@ -101,7 +101,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         parts[1] = annotationName;
         parts[2] = sensitivity.luceneFieldSuffix();
         for (int i = 0; i < valueTokenId.length; i++) {
-            String term = terms.serializeTerm(valueTokenId[i]);
+            String term = serializeTerm(terms, valueTokenId[i]);
             parts[i + 3] = term;
         }
         return PropertySerializeUtil.combineParts(parts);

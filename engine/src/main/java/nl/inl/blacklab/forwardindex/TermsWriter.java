@@ -10,12 +10,16 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.text.CollationKey;
+import java.text.Collator;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -33,12 +37,12 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
-class TermsWriter extends Terms {
+class TermsWriter implements Terms {
 
     protected static final Logger logger = LogManager.getLogger(TermsWriter.class);
 
     /** Maximum size for blocks of term strings. */
-    private static final int DEFAULT_MAX_BLOCK_SIZE = DEFAULT_MAX_MAP_SIZE;
+    private static final int DEFAULT_MAX_BLOCK_SIZE = TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE;
 
     /**
      * Number of sort buffers we store in the terms file (case-sensitive/insensitive
@@ -58,6 +62,16 @@ class TermsWriter extends Terms {
      */
     private int maxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
 
+    /**
+     * Collator to use for string comparisons
+     */
+    Collator collator;
+
+    /**
+     * Collator to use for insensitive string comparisons
+     */
+    Collator collatorInsensitive;
+
     TermsWriter(Collators collators, File termsFile) {
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
@@ -66,15 +80,18 @@ class TermsWriter extends Terms {
         // (used later to get the terms in sort order)
         this.termIndex = new TreeMap<>();
 
-        if (termsFile != null && termsFile.exists())
-            read(termsFile);
+        String[] terms;
+        if (termsFile != null && termsFile.exists()) {
+            terms = readTermStrings(termsFile);
+        } else {
+            terms = new String[0];
+        }
 
         // We need to find id for term quickly while indexing
         // Build the case-sensitive term index.
-        for (int i = 0; i < numberOfTerms; i++) {
+        for (int i = 0; i < terms.length; i++) {
             termIndex.put(collator.getCollationKey(terms[i]), i);
         }
-        terms = null; // useless in index mode because we can't add to it, and we don't need it anyway
     }
 
     @Override
@@ -101,18 +118,13 @@ class TermsWriter extends Terms {
         throw new UnsupportedOperationException("Not available during indexing");
     }
 
-    @Override
-    public synchronized void clear() {
-        termIndex.clear();
-    }
-
-    private synchronized void read(File termsFile) {
-        termIndex.clear();
+    private synchronized String[] readTermStrings(File termsFile) {
         try {
             try (RandomAccessFile raf = new RandomAccessFile(termsFile, "r")) {
                 try (FileChannel fc = raf.getChannel()) {
                     long fileLength = termsFile.length();
-                    readFromFileChannel(fc, fileLength);
+                    Pair<IntBuffer, String[]> termsResult = TermsExternalUtil.readTermsFromFileChannel(fc, fileLength);
+                    return termsResult.getRight();
                 }
             }
         } catch (IOException e) {
@@ -120,7 +132,6 @@ class TermsWriter extends Terms {
         }
     }
 
-    @Override
     public synchronized void write(File termsFile) {
         try {
             // Open the terms file
@@ -129,7 +140,7 @@ class TermsWriter extends Terms {
                     int n = termIndex.size();
 
                     // Fill the terms[] array
-                    terms = new String[n];
+                    String[] terms = new String[n];
                     long termStringsByteSize = 0;
                     for (Map.Entry<CollationKey, Integer> entry : termIndex.entrySet()) {
                         String term = entry.getKey().getSourceString();
@@ -144,11 +155,11 @@ class TermsWriter extends Terms {
                     // "block-based" version of terms file that can grow larger than 2 GB.
                     // (this is now the only supported version)
 
-                    long fileMapStart = 0, fileMapLength = maxMapSize;
+                    long fileMapStart = 0, fileMapLength = TermsExternalUtil.MAX_FILE_MAP_SIZE;
                     buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
                     buf.putInt(n); // Start with the number of terms      //@4
                     ib = buf.asIntBuffer();
-                    long fileLength = BYTES_PER_INT;
+                    long fileLength = Integer.BYTES;
 
                     // Terms file is too large to fit in a single byte array.
                     // Use the new code.
@@ -162,11 +173,11 @@ class TermsWriter extends Terms {
                         // Calculate byte offsets for all the terms and fill data array
                         int currentOffset = 0;
                         byte[] termStrings = new byte[blockSize];
-                        long blockSizeBytes = 2 * BYTES_PER_INT;
+                        long blockSizeBytes = 2 * Integer.BYTES;
                         while (currentTerm < n) {
                             termStringOffsets[currentTerm] = currentOffset;
                             byte[] termBytes = terms[currentTerm].getBytes(DEFAULT_CHARSET);
-                            long newBlockSizeBytes = blockSizeBytes + BYTES_PER_INT + termBytes.length; // block grows by 1 offset and this term's bytes
+                            long newBlockSizeBytes = blockSizeBytes + Integer.BYTES + termBytes.length; // block grows by 1 offset and this term's bytes
                             if (newBlockSizeBytes > maxBlockSize) {
                                 // Block is full. Write it and continue with next block.
                                 break;
@@ -195,7 +206,7 @@ class TermsWriter extends Terms {
                         ib.put(termStringOffsets, firstTermInBlock, numTermsThisBlock); //@4 * numTermsThisBlock
                         ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
                                                // (doubles as the size of the data block to follow) //@4
-                        int newPosition = buf.position() + BYTES_PER_INT * (2 + numTermsThisBlock);
+                        int newPosition = buf.position() + Integer.BYTES * (2 + numTermsThisBlock);
                         ((Buffer)buf).position(newPosition); // advance past offsets array
                         if (fileMapLength - buf.position() < blockSize) {
                             //throw new RuntimeException("Not enough space in file mapping to write term strings!");
@@ -205,7 +216,6 @@ class TermsWriter extends Terms {
                             buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
                         }
                         buf.put(termStrings, 0, currentOffset); //@blockSize (max. maxBlockSize)
-                        ib = buf.asIntBuffer();
                         fileLength += blockSizeBytes;
 
                         // Re-map a new part of the file before we write the next block.
@@ -219,7 +229,7 @@ class TermsWriter extends Terms {
                     // running total) and truncate the file if necessary
                     // (we can do this now, even though we still have to write the sort buffers,
                     // because we know how large the file will eventually be)
-                    fileLength += NUM_SORT_BUFFERS * BYTES_PER_INT * (long)n;
+                    fileLength += NUM_SORT_BUFFERS * Integer.BYTES * (long)n;
 
                     if (fileLength < 0) { // DEBUG, SHOULD NEVER HAPPEN
                         logger.error("***** fileLength < 0 !!!");
@@ -271,14 +281,12 @@ class TermsWriter extends Terms {
 
     @Override
     public String get(int index) {
-        assert index >= 0 && index < numberOfTerms : "Term index out of range (" + index + ", numterms = "
-                + numberOfTerms + ")";
-        return terms[index];
+        throw new UnsupportedOperationException("Not available during indexing");
     }
 
     @Override
     public int numberOfTerms() {
-        return numberOfTerms;
+        return termIndex.size();
     }
 
     @Override
@@ -297,9 +305,13 @@ class TermsWriter extends Terms {
     }
 
     public void setMaxBlockSize(int maxBlockSize) {
-        if ((long) maxBlockSize > ((long) DEFAULT_MAX_MAP_SIZE))
-            throw new BlackLabRuntimeException("Max. block size too large, max. " + DEFAULT_MAX_MAP_SIZE);
+        if ((long) maxBlockSize > ((long) TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE))
+            throw new BlackLabRuntimeException("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
         this.maxBlockSize = maxBlockSize;
     }
 
+    @Override
+    public List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
+        throw new UnsupportedOperationException("Not available during indexing");
+    }
 }

@@ -10,6 +10,7 @@ import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextWords;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
+import nl.inl.blacklab.resultproperty.PropertyValueContext;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -100,11 +101,11 @@ public class TestHitProperties {
         String[] expected = { "aap", "~~", "~~~", "" };
         MockTerms mockTerms = new MockTerms(words);
         for (int i = 0; i < mockTerms.numberOfTerms(); i++) {
-            Assert.assertEquals(expected[i], mockTerms.serializeTerm(i));
-            Assert.assertEquals(expected[i], mockTerms.serializeTerm(mockTerms.deserializeToken(expected[i])));
+            Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, i));
+            Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, expected[i])));
         }
-        Assert.assertEquals("~", mockTerms.serializeTerm(Terms.NO_TERM));
-        Assert.assertEquals("~", mockTerms.serializeTerm(mockTerms.deserializeToken("~")));
+        Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, Terms.NO_TERM));
+        Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, "~")));
     }
 
 }

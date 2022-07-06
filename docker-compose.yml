@@ -47,10 +47,12 @@ services:
         args:
           # Allow for custom configuration of tomcat/blacklab server if necessary
           CONFIG_ROOT: ${CONFIG_ROOT:-docker/config}
-    # JPDA settings, to allow remote debugging
     environment:
+      # JPDA settings, to allow remote debugging
       - JPDA_ADDRESS=*:5005
       - JPDA_TRANSPORT=dt_socket
+      # Pass overridden feature flag(s) directly to the container (for testing both values)
+      - BLACKLAB_FEATURE_integrateExternalFiles
     # Create test index. Run Tomcat with JPDA enabled
     command: "/bin/bash /etc/blacklab/start-with-test-data.sh"
     ports:

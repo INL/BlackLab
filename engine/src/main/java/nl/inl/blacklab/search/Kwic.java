@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -24,8 +23,6 @@ public class Kwic {
     private final int hitStart;
 
     private final int hitEnd;
-
-    public static final String DEFAULT_CONC_PUNCT_PROP = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
 
     /**
      * Construct a Kwic object

@@ -20,6 +20,36 @@ public abstract class PropertyValueContext extends PropertyValue {
         this.terms = terms;
     }
 
+    public static int deserializeToken(Terms terms, String term) {
+        int termId;
+        if (term.equals("~"))
+            termId = Terms.NO_TERM; // no token, effectively a "null" value
+        else {
+            if (term.startsWith("~~")) {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                term = term.substring(1);
+            }
+            termId = terms.indexOf(term);
+        }
+        return termId;
+    }
+
+    public static String serializeTerm(Terms terms, int valueTokenId) {
+        String token;
+        if (valueTokenId < 0)
+            token = "~"; // no token, effectively a "null" value
+        else {
+            token = terms.get(valueTokenId);
+            if (token.length() > 0 && token.charAt(0) == '~') {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                token = "~" + token;
+            }
+        }
+        return token;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

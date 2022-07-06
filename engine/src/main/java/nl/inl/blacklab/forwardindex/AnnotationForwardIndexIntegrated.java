@@ -2,11 +2,18 @@ package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 
-import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BLFieldsProducer;
+import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Forward index for single annotation (FIs integrated).
@@ -18,6 +25,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex {
 
+    private final TermsIntegrated terms;
+
     /**
      * Open an integrated forward index.
      *
@@ -25,57 +34,90 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
      * @param collator collator to use
      * @return forward index
      */
-    public static AnnotationForwardIndex open(Annotation annotation, Collator collator) {
-        if (annotation != null && !annotation.hasForwardIndex())
+    public static AnnotationForwardIndex open(IndexReader reader, Annotation annotation, Collator collator) {
+        if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
         Collators collators = new Collators(collator, CollatorVersion.V2);
-        return new AnnotationForwardIndexIntegrated(annotation, collators);
+        return new AnnotationForwardIndexIntegrated(reader, annotation, collators);
     }
+
+    private final IndexReader indexReader;
 
     private final Annotation annotation;
 
+    /** Collators to use for comparisons */
     private final Collators collators;
 
-    public AnnotationForwardIndexIntegrated(Annotation annotation, Collators collators) {
+    /** The Lucene field that contains our forward index */
+    private final String luceneField;
+
+    /** Index of segments by their doc base (the number to add to get global docId) */
+    private final Map<Integer, LeafReaderContext> leafReadersByDocBase = new TreeMap<>();
+
+    public AnnotationForwardIndexIntegrated(IndexReader indexReader, Annotation annotation, Collators collators) {
         super();
+        this.indexReader = indexReader;
         this.annotation = annotation;
         this.collators = collators;
+        AnnotationSensitivity annotSens = annotation.hasSensitivity(
+                MatchSensitivity.SENSITIVE) ?
+                annotation.sensitivity(MatchSensitivity.SENSITIVE) :
+                annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+        this.luceneField = annotSens.luceneField();
+
+        // Ensure quick lookup of the segment we need
+        for (LeafReaderContext rc : indexReader.leaves()) {
+            leafReadersByDocBase.put(rc.docBase, rc);
+        }
+        terms = new TermsIntegrated(collators, indexReader, luceneField);
     }
 
     @Override
     public void initialize() {
-        // Handled by Lucene
+        // ...
     }
 
-    @Override
-    public void close() {
-        // Handled by Lucene
-    }
-
-    @Override
-    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
-        throw new UnsupportedOperationException("TODO");
-    }
-
-    @Override
-    public int[] getDocument(int docId) {
-        throw new UnsupportedOperationException("TODO");
+    /**
+     * Find the leafReader a given docId occurs in.
+     *
+     * @param docId (global) docId we're looking for
+     * @return matching leafReaderContext, which gives us the leaf reader and docBase
+     */
+    private LeafReaderContext getLeafReader(int docId) {
+        Entry<Integer, LeafReaderContext> prev = null;
+        for (Entry<Integer, LeafReaderContext> e : leafReadersByDocBase.entrySet()) {
+            Integer docBase = e.getKey();
+            if (docBase > docId) {
+                // Previous segment (the highest docBase lower than docId) is the right one
+                assert prev != null;
+                return prev.getValue();
+            }
+            prev = e;
+        }
+        // Last segment is the right one
+        assert prev != null;
+        return prev.getValue();
     }
 
     @Override
     public Terms terms() {
-        throw new UnsupportedOperationException("TODO");
+        return terms;
     }
 
     @Override
-    public int docLength(int docID) {
-        throw new UnsupportedOperationException("TODO");
+    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
+        LeafReaderContext lrc = getLeafReader(docId);
+        ForwardIndexSegmentReader fi = BLFieldsProducer.get(lrc, luceneField).forwardIndex();
+        List<int[]> segmentResults = fi.retrievePartsInt(luceneField, docId - lrc.docBase, start, end);
+        return terms.segmentIdsToGlobalIds(lrc, segmentResults);
     }
 
     @Override
-    public int getToken(int docId, int pos) {
-        throw new UnsupportedOperationException("TODO");
+    public int docLength(int docId) {
+        LeafReaderContext lrc = getLeafReader(docId);
+        ForwardIndexSegmentReader fi = BLFieldsProducer.get(lrc, luceneField).forwardIndex();
+        return (int)fi.docLength(luceneField, docId - lrc.docBase);
     }
 
     @Override
@@ -84,47 +126,17 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     }
 
     @Override
+    public Collators collators() {
+        return collators;
+    }
+
+    @Override
     public boolean canDoNfaMatching() {
         return true; // depends on collator version, and integrated always uses V2
     }
 
     @Override
-    public int addDocument(List<String> content, List<Integer> posIncr) {
-        throw new UnsupportedOperationException("Handled by Lucene");
-    }
-
-    @Override
-    public int addDocument(List<String> content) {
-        throw new UnsupportedOperationException("Handled by Lucene");
-    }
-
-    @Override
     public int numDocs() {
-        throw new UnsupportedOperationException("Handled by Lucene");
-    }
-
-    @Override
-    public long freeSpace() {
-        throw new UnsupportedOperationException("Handled by Lucene");
-    }
-
-    @Override
-    public long totalSize() {
-        throw new UnsupportedOperationException("Handled by Lucene");
-    }
-
-    @Override
-    public void deleteDocument(int docId) {
-        // Handled by Lucene
-    }
-
-    @Override
-    public void deleteDocumentByLuceneDoc(Document d) {
-        // Handled by Lucene
-    }
-
-    @Override
-    public Set<Integer> idSet() {
-        throw new UnsupportedOperationException("Handled by Lucene");
+        return indexReader.numDocs();
     }
 }

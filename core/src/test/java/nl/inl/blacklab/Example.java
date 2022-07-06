@@ -4,7 +4,6 @@ package nl.inl.blacklab;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
@@ -24,7 +23,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.FileUtil;
-import nl.inl.util.FileUtil.FileTask;
 
 /**
  * Simple test program to demonstrate index & search functionality.
@@ -132,13 +130,7 @@ public class Example {
             // Delete the old example dir
             // (NOTE: we cannot do this on exit because memory mappings may
             //  prevent deletion on Windows)
-            FileUtil.processTree(indexDir, new FileTask() {
-                @Override
-                public void process(File f) {
-                    if (!f.delete())
-                        throw new BlackLabRuntimeException("Could not delete file: " + f);
-                }
-            });
+            FileUtil.deleteTree(indexDir, true);
         }
     }
 

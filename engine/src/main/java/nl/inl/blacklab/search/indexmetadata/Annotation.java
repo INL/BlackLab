@@ -145,5 +145,4 @@ public interface Annotation {
     }
 
     void setSubAnnotation(Annotation parentAnnotation);
-    
 }

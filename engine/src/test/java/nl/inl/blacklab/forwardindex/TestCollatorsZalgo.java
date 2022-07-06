@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestCollatorsZalgo {

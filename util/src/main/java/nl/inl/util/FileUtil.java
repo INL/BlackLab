@@ -135,14 +135,30 @@ public class FileUtil {
      * @param dir directory tree to delete.
      */
     public static void deleteTree(File dir) {
+        deleteTree(dir, false);
+    }
+
+    /**
+     * Recursively delete an entire directory tree.
+     *
+     * @param dir directory tree to delete.
+     * @param throwOnError if true, throw an exception if a file could not be deleted.
+     */
+    public static void deleteTree(File dir, boolean throwOnError) {
         // Recursively delete this temp dir
         processTree(dir, new FileTask() {
             @Override
             public void process(File f) {
-                f.delete();
+                if (!f.delete() && throwOnError) {
+                    if (f.isDirectory())
+                        throw new RuntimeException("Could not delete directory: " + f);
+                    else
+                        throw new RuntimeException("Could not delete file: " + f);
+                }
             }
         });
-        dir.delete();
+        if (!dir.delete() && throwOnError)
+            throw new RuntimeException("Could not delete directory: " + dir);
     }
 
     /**
@@ -175,6 +191,7 @@ public class FileUtil {
                 task.process(f);
             else if (f.isDirectory()) {
                 processTree(f, task);
+                task.process(f);
             }
         }
     }

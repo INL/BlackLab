@@ -51,6 +51,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -454,6 +455,12 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         subannots.add(subannotName);
                     }
                 }
+                if (BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES)) {
+                    // NOTE: if adding to an existing index with external forward index, we may still
+                    // write this to the config, but that doesn't create any problems for older BlackLab versions
+                    // reading this index.
+                    annot.put("hasForwardIndex", annotation.hasForwardIndex());
+                }
             }
         }
 
@@ -735,40 +742,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
         FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
-        if (fieldInfo.has("namingScheme")) {
-            // Yes.
-            namingScheme = fieldInfo.get("namingScheme").textValue();
-            if (!namingScheme.equals("DEFAULT") && !namingScheme.equals("NO_SPECIAL_CHARS")) {
-                throw new BlackLabRuntimeException("Unknown value for namingScheme: " + namingScheme);
-            }
-            if (!namingScheme.equals("DEFAULT"))
-                logger.error("non-default namingScheme setting found, but this is no longer supported");
-        } else {
-            // Not specified; detect it.
-            boolean usingSpecialCharsAsSeparators = fis == null || fis.size() == 0;
-            boolean usingCharacterCodesAsSeparators = false;
-            if (fis != null) {
-                for (int i1 = 0; i1 < fis.size(); i1++) {
-                    FieldInfo fi = fis.fieldInfo(i1);
-                    String name1 = fi.name;
-                    if (name1.contains("%") || name1.contains("@") || name1.contains("#")) {
-                        usingSpecialCharsAsSeparators = true;
-                    }
-                    if (name1.contains("_PR_") || name1.contains("_AL_") || name1.contains("_BK_")) {
-                        usingCharacterCodesAsSeparators = true;
-                    }
-                }
-            }
-            if (usingCharacterCodesAsSeparators)
-                throw new BlackLabRuntimeException(
-                        "Your index uses _PR_, _AL_, _BK_ as separators (namingScheme). This is no longer supported. Use version 1.7.1 or re-index your data..");
-            if (!usingSpecialCharsAsSeparators && !usingCharacterCodesAsSeparators) {
-                throw new BlackLabRuntimeException(
-                        "Could not detect index naming scheme. If your index was created with an old version of " +
-                                "BlackLab, it may use the old naming scheme and cannot be opened with this version. " +
-                                "Please re-index your data, or use a BlackLab version from before August 2014.");
-            }
-        }
         metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
         metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
@@ -896,6 +869,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             case "subannotations":
                                 subannotationsStoredWithMain = false; // new-style index
                                 annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
+                                break;
+                            case "hasForwardIndex":
+                                // (used to be detected, now stored in metadata)
+                                boolean hasForwardIndex = opt.getValue().booleanValue();
+                                annotation.setForwardIndex(hasForwardIndex);
                                 break;
                             default:
                                 logger.warn("Unknown key " + opt.getKey() + " in annotation for field '" + fieldName

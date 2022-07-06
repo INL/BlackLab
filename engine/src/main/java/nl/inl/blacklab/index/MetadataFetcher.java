@@ -1,12 +1,10 @@
 package nl.inl.blacklab.index;
 
-import java.io.Closeable;
-
 /**
  * A metadata fetcher can fetch the metadata for a document from some external
  * source (a file, the network, etc.) and add it to the Lucene document.
  */
-abstract public class MetadataFetcher implements Closeable {
+abstract public class MetadataFetcher implements AutoCloseable {
 
     public final DocIndexer docIndexer;
 

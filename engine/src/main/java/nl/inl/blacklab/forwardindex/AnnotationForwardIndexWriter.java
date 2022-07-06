@@ -10,16 +10,14 @@ import java.nio.LongBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.util.AbstractSet;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.document.Document;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -32,9 +30,66 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
-class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstract {
+public class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstract {
 
     protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexWriter.class);
+
+    /** Table of contents entry; stored in docs.dat */
+    private static class TocEntry implements Comparable<TocEntry> {
+        /** token offset in tokens.dat */
+        public long offset;
+
+        /** Number of tokens in document.
+         *  NOTE: this INCLUDES the extra closing token at the end.
+         */
+        public int length;
+
+        /** was this entry deleted? (remove in next compacting run) */
+        public boolean deleted;
+
+        public TocEntry(long offset, int length, boolean deleted) {
+            super();
+            this.offset = offset;
+            this.length = length;
+            this.deleted = deleted;
+        }
+
+        /**
+         * Compare this entry to another (for sorting).
+         *
+         * @param o the entry to compare with
+         * @return the comparison result
+         */
+        @Override
+        public int compareTo(TocEntry o) {
+            return Long.compare(offset, o.offset);
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + (deleted ? 1231 : 1237);
+            result = prime * result + length;
+            result = prime * result + (int) (offset ^ (offset >>> 32));
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TocEntry other = (TocEntry) obj;
+            return deleted == other.deleted && length == other.length && offset == other.offset;
+        }
+    }
+
+    /** The unique terms in our index */
+    TermsWriter terms;
 
     /** The memory mapped write int buffer */
     private IntBuffer writeBuffer;
@@ -52,7 +107,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
     private FileChannel writeTokensFileChannel;
 
     /** Has the table of contents been modified? */
-    private boolean tocModified = false;
+    private boolean tocModified;
 
     /**
      * The table of contents (where documents start in the tokens file and how long
@@ -84,10 +139,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
         try {
             if (tocFile.exists()) {
                 readToc();
-                terms = Terms.openForWriting(collators, termsFile);
+                terms = TermsExternalUtil.openForWriting(collators, termsFile);
                 tocModified = false;
             } else {
-                terms = Terms.openForWriting(collators, null);
+                terms = TermsExternalUtil.openForWriting(collators, null);
                 if (!tokensFile.createNewFile())
                     throw new BlackLabRuntimeException("Could not create file: " + tokensFile);
                 tocModified = true;
@@ -128,10 +183,10 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
             byte[] deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
+            ((Buffer)buf).position(buf.position() + Long.BYTES * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
+            ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
             buf.get(deleted);
             toc = new ArrayList<>(n);
             deletedTocEntries = new ArrayList<>();
@@ -203,16 +258,16 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
             }
             try (RandomAccessFile raf = new RandomAccessFile(tocFile, "rw");
                     FileChannel fc = raf.getChannel()) {
-                long fileSize = SIZEOF_INT + (long) (SIZEOF_LONG + SIZEOF_INT + 1) * n;
+                long fileSize = Integer.BYTES + (long) (Long.BYTES + Integer.BYTES + 1) * n;
                 fc.truncate(fileSize);
                 MappedByteBuffer buf = fc.map(MapMode.READ_WRITE, 0, fileSize);
                 buf.putInt(n);
                 LongBuffer lb = buf.asLongBuffer();
                 lb.put(offset);
-                ((Buffer)buf).position(buf.position() + SIZEOF_LONG * n);
+                ((Buffer)buf).position(buf.position() + Long.BYTES * n);
                 IntBuffer ib = buf.asIntBuffer();
                 ib.put(length);
-                ((Buffer)buf).position(buf.position() + SIZEOF_INT * n);
+                ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
                 buf.put(deleted);
             }
         } catch (IOException e) {
@@ -221,7 +276,6 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
         tocModified = false;
     }
 
-    @Override
     public void close() {
         try {
             if (tocModified) {
@@ -233,7 +287,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
             if (writeTokensFileChannel != null) {
                 // Cannot truncate if still mapped; cannot force demapping.
                 if (File.separatorChar != '\\')
-                    writeTokensFileChannel.truncate(tokenFileEndPosition * SIZEOF_INT);
+                    writeTokensFileChannel.truncate(tokenFileEndPosition * Integer.BYTES);
                 writeTokensFileChannel.close();
             }
             if (writeTokensFp != null)
@@ -273,7 +327,27 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
         return deletedTocEntries.get(bestFitSoFar);
     }
 
-    @Override
+    /**
+      * Store the given content and assign an id to it
+      *
+      * @param content the content to store
+      * @return the id assigned to the content
+      */
+    int addDocument(List<String> content) {
+        return addDocument(content, null);
+    }
+
+    /**
+     * Store the given content and assign an id to it.
+     *
+     * Note that if more than one token occurs at any position, we only store the
+     * first in the forward index.
+     *
+     * @param content the content to store
+     * @param posIncr the associated position increments, or null if position
+     *         increment is always 1.
+     * @return the id assigned to the content
+     */
     public synchronized int addDocument(List<String> content, List<Integer> posIncr) {
         // Calculate the total number of tokens we need to store, based on the number
         // of positions (we store 1 token per position, regardless of whether we have
@@ -346,8 +420,8 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
                 // No, remap it
                 writeBufOffset = newDocumentOffset;
                 ByteBuffer byteBuffer = writeTokensFileChannel.map(FileChannel.MapMode.READ_WRITE,
-                        writeBufOffset * SIZEOF_INT, (long) (numberOfTokens + mapReserve)
-                                * SIZEOF_INT);
+                        writeBufOffset * Integer.BYTES, (long) (numberOfTokens + mapReserve)
+                                * Integer.BYTES);
                 writeBuffer = byteBuffer.asIntBuffer();
             }
 
@@ -395,6 +469,9 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
 
     @Override
     public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+        // Ideally we shouldn't have this duplicate here, but we use this during tests.
+        // Better to refactor reader/writer to share this code.
+        //throw new UnsupportedOperationException("Writer doesn't read!");
         try {
             TocEntry e = toc.get(fiid);
             if (e == null || e.deleted)
@@ -428,7 +505,7 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
                 }
 
                 // Get an IntBuffer to read the desired content
-                IntBuffer ib = null;
+                IntBuffer ib;
 
                 int snippetLength = end[i] - start[i];
                 int[] snippet = new int[snippetLength];
@@ -436,9 +513,9 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
                 // Explicitly read the part we require from disk into an int buffer.
                 long offset = e.offset + start[i];
 
-                int bytesToRead = snippetLength * SIZEOF_INT;
+                int bytesToRead = snippetLength * Integer.BYTES;
                 ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
-                int bytesRead = writeTokensFileChannel.read(buffer, offset * SIZEOF_INT);
+                int bytesRead = writeTokensFileChannel.read(buffer, offset * Integer.BYTES);
                 if (bytesRead < bytesToRead) {
                     throw new BlackLabRuntimeException("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
@@ -455,13 +532,16 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
         }
     }
 
-    @Override
     public void deleteDocument(int fiid) {
         TocEntry tocEntry = toc.get(fiid);
         tocEntry.deleted = true;
         deletedTocEntries.add(tocEntry); // NOTE: mergeAdjacentDeletedEntries takes care of re-sorting
         mergeAdjacentDeletedEntries();
         tocModified = true;
+    }
+
+    public void deleteDocumentByLuceneDoc(Document d) {
+        deleteDocument(Integer.parseInt(d.get(annotation().forwardIndexIdField())));
     }
 
     /**
@@ -515,20 +595,6 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
     }
 
     /**
-     * @return the amount of space in free blocks in the forward index.
-     */
-    @Override
-    public long freeSpace() {
-        if (!initialized)
-            initialize();
-        long freeSpace = 0;
-        for (TocEntry e : deletedTocEntries) {
-            freeSpace += e.length;
-        }
-        return freeSpace;
-    }
-
-    /**
      * Gets the length (in tokens) of a document
      *
      * NOTE: this INCLUDES the extra closing token at the end.
@@ -543,67 +609,16 @@ class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstrac
         return toc.get(fiid).length;
     }
 
-    /** @return the set of all forward index ids */
+    /**
+     * Get the Terms object in order to translate ids to token strings
+     *
+     * @return the Terms object
+     */
     @Override
-    public Set<Integer> idSet() {
+    public Terms terms() {
         if (!initialized)
             initialize();
-        return new AbstractSet<>() {
-            @Override
-            public boolean contains(Object o) {
-                return !toc.get((Integer) o).deleted;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return toc.size() == deletedTocEntries.size();
-            }
-
-            @Override
-            public Iterator<Integer> iterator() {
-                return new Iterator<>() {
-                    int current = -1;
-                    int next = -1;
-
-                    @Override
-                    public boolean hasNext() {
-                        if (next < 0)
-                            findNext();
-                        return next < toc.size();
-                    }
-
-                    private void findNext() {
-                        next = current + 1;
-                        while (next < toc.size() && toc.get(next).deleted) {
-                            next++;
-                        }
-                    }
-
-                    @Override
-                    public Integer next() {
-                        if (next < 0)
-                            findNext();
-                        if (next >= toc.size())
-                            throw new NoSuchElementException();
-                        current = next;
-                        next = -1;
-                        return current;
-                    }
-
-                    @Override
-                    public void remove() {
-                        throw new UnsupportedOperationException();
-                    }
-                };
-            }
-
-            @Override
-            public int size() {
-                return toc.size() - deletedTocEntries.size();
-            }
-        };
+        return terms;
     }
-
-
 
 }

@@ -48,4 +48,11 @@ public interface AnnotatedField extends Field {
         return annotations().isEmpty();
     }
 
+	default Annotation tagsAnnotation() {
+		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME): null;
+	}
+
+	default Annotation punctAnnotation() {
+		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME): null;
+	}
 }

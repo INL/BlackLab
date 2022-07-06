@@ -107,7 +107,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         this.criteria = criteria;
 
         List<Annotation> requiredContext = criteria.needsContext();
-        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index().reader(), !hits.hasAscendingLuceneDocIds());
+        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index(), !hits.hasAscendingLuceneDocIds());
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();

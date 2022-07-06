@@ -7,8 +7,9 @@ services:
 
   server:
 
-    # JPDA settings, to enable remote debugging
+    # Environment variables to pass to the container
     environment:
+      # JPDA settings, to enable remote debugging
       - JPDA_ADDRESS=*:5005
       - JPDA_TRANSPORT=dt_socket
 
@@ -18,3 +19,4 @@ services:
     # Map JPDA port
     ports:
       - "5005:5005"
+

@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -72,6 +73,7 @@ public abstract class ForwardIndexAccessor {
      * CAUTION: the methods like advanceForwardIndexDoc() that take a Lucene doc id
      * MUST be called with ascending doc ids! Only work with one ForwardIndexDocument at a time!
      */
+    @NotThreadSafe
     public abstract class ForwardIndexAccessorLeafReader {
 
         protected final LeafReader reader;

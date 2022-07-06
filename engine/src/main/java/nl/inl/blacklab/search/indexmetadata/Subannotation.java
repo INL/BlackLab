@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collection;
 import java.util.Set;
 
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+
 /**
  * Subannotation descriptor.
  * 
@@ -12,7 +14,7 @@ final class Subannotation implements Annotation {
     
     private final IndexMetadata indexMetadata;
 
-    private final AnnotationImpl mainAnnotation;
+    private final Annotation mainAnnotation;
     
     private final String subName;
 

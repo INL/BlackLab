@@ -45,7 +45,6 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.util.FileUtil;
-import nl.inl.util.FileUtil.FileTask;
 
 public class IndexManager {
 
@@ -331,13 +330,7 @@ public class IndexManager {
 
         // Can we even delete the whole tree? If not, don't even try.
         try {
-            FileUtil.processTree(indexDir, new FileTask() {
-                @Override
-                public void process(File f) {
-                    if (!f.canWrite())
-                        throw new RuntimeException("Cannot delete " + f);
-                }
-            });
+            FileUtil.deleteTree(indexDir, true);
         } catch (Exception e) {
             throw new InternalServerError("Could not delete index. Can't delete all files/dirs.", "INTERR_DELETING_INDEX7");
         }

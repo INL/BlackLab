@@ -53,7 +53,9 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndexWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -544,7 +546,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
         // See if we should create a fully-integrated Lucene index, or
         // if we're opening an existing index, what type it is.
-        allFilesInIndex = BlackLab.isFeatureEnabled("integrateExternalFiles");
+        allFilesInIndex = BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES);
         if (!createNewIndex) {
             if (VersionFile.exists(indexDir)) {
                 // Existing index with a version file.
@@ -726,13 +728,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                 contentStores = null;
             }
 
-            // Close the forward indices
-            if (forwardIndices != null) {
+            // Close the (external) forward indices
+            if (!allFilesInIndex && forwardIndices != null) {
                 for (ForwardIndex fi: forwardIndices.values()) {
-                    fi.close();
+                    ((ForwardIndexAbstract)fi).close();
                 }
-                forwardIndices = null;
             }
+            forwardIndices = null;
 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -806,12 +808,14 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
         IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
-        if (create)
-            VersionFile.write(indexDir, "blacklab", "2");
-        else {
-            if (!BlackLabIndex.isIndex(indexDir)) {
-                throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
-                        + VersionFile.report(indexDir) + ": " + indexDir);
+        if (!allFilesInIndex) {
+            if (create) {
+                VersionFile.write(indexDir, "blacklab", "2");
+            } else {
+                if (!BlackLabIndex.isIndex(indexDir)) {
+                    throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
+                            + VersionFile.report(indexDir) + ": " + indexDir);
+                }
             }
         }
 
@@ -829,13 +833,15 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void deleteFromForwardIndices(Document d) {
+        if (allFilesInIndex)
+            return;
         // Delete this document in all forward indices
         for (Map.Entry<AnnotatedField, ForwardIndex> e: forwardIndices.entrySet()) {
             AnnotatedField field = e.getKey();
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
                 if (annotation.hasForwardIndex())
-                    fi.get(annotation).deleteDocumentByLuceneDoc(d);
+                    ((AnnotationForwardIndexWriter)fi.get(annotation)).deleteDocumentByLuceneDoc(d);
             }
         }
     }

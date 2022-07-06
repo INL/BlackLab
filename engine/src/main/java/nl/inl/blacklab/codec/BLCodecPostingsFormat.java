@@ -40,11 +40,34 @@ public class BLCodecPostingsFormat extends PostingsFormat {
     /** Current postings version */
     public static final int VERSION_CURRENT = 1;
 
+    /** Extension for the fields file. This stores the annotated field name and the offset
+        in the term index file where the term offsets ares stored.*/
+    static final String FIELDS_EXT = "fields";
+
+    /** Extension for the term index file, that stores the offset in the terms file where
+        the term strings start for each term (in each annotated field). */
+    static final String TERMINDEX_EXT = "termindex";
+
+    /** Extension for the terms file, where the term strings are stored. */
+    static final String TERMS_EXT = "terms";
+
+    /** Extension for the tokens index file, that stores the offsets in the tokens file
+        where the tokens for each document are stored. */
+    static final String TOKENS_INDEX_EXT = "tokensindex";
+
+    /** Extension for the tokens file, where a term id is stored for each position in each document. */
+    static final String TOKENS_EXT = "tokens";
+
+    /** Extension for the temporary term vector file that will be converted later.
+     * The term vector file contains the occurrences for each term in each doc (and each annotated field)
+     */
+    static final String TERMVEC_TMP_EXT = "termvec.tmp";
+
     /** Name of the PostingsFormat we delegate most requests to. */
-    private String delegateCodecName = null;
+    private final String delegateCodecName;
 
     /** The PostingsFormat we're wrapping and we delegate most requests to. */
-    private PostingsFormat delegatePostingsFormat = null;
+    private final PostingsFormat delegatePostingsFormat;
 
     public BLCodecPostingsFormat() {
         this(BLCodec.CODEC_NAME);
@@ -54,38 +77,12 @@ public class BLCodecPostingsFormat extends PostingsFormat {
         super(BLCodec.CODEC_NAME);
         delegateCodecName = delegate.getName();
         delegatePostingsFormat = delegate;
-//        // preload to prevent NoClassDefFoundErrors
-//        try {
-//            Class.forName("mtas.codec.payload.BLPayloadDecoder");
-//            Class.forName("mtas.codec.payload.BLBitInputStream");
-//            Class.forName("mtas.analysis.token.BLPosition");
-//            Class.forName("mtas.analysis.token.BLOffset");
-//            Class.forName("mtas.codec.tree.BLRBTree");
-//            Class.forName("mtas.codec.BLTerms");
-//            Class.forName("mtas.codec.util.CodecInfo");
-//            Class.forName("mtas.codec.tree.BLTreeNodeId");
-//        } catch (ClassNotFoundException e) {
-//            log.error(e);
-//        }
     }
 
     public BLCodecPostingsFormat(String codecName) {
         super(codecName);
         delegateCodecName = codecName;
         delegatePostingsFormat = null;
-//        // preload to prevent NoClassDefFoundErrors
-//        try {
-//            Class.forName("mtas.codec.payload.BLPayloadDecoder");
-//            Class.forName("mtas.codec.payload.BLBitInputStream");
-//            Class.forName("mtas.analysis.token.BLPosition");
-//            Class.forName("mtas.analysis.token.BLOffset");
-//            Class.forName("mtas.codec.tree.BLRBTree");
-//            Class.forName("mtas.codec.BLTerms");
-//            Class.forName("mtas.codec.util.CodecInfo");
-//            Class.forName("mtas.codec.tree.BLTreeNodeId");
-//        } catch (ClassNotFoundException e) {
-//            log.error(e);
-//        }
     }
 
     @Override

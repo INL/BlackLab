@@ -151,5 +151,5 @@ public class MockAnnotation implements Annotation {
     public void setSubAnnotation(Annotation parentAnnotation) {
         throw new UnsupportedOperationException();
     }
-    
+
 }

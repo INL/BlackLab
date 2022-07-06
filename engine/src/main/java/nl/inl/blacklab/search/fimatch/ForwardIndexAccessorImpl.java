@@ -8,6 +8,7 @@ import java.util.Map;
 import org.apache.lucene.index.LeafReader;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -110,6 +111,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
      *
      * CAUTION: the getDocLength() and getChunk() methods can only be called with ascending doc ids!
      */
+    @NotThreadSafe
     class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
         private final List<DocIntFieldGetter> fiidGetters;
@@ -147,7 +149,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         protected int getDocLength(int docId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return fis.get(0).docLength(getFiid(0, docId)) - 1;
+            return fis.get(0).docLength(getFiid(0, docId)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
         final int[] starts = { 0 };

@@ -75,6 +75,8 @@ public final class BlackLab {
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
+    public static final String FEATURE_INTEGRATE_EXTERNAL_FILES = "integrateExternalFiles";
+
     public static BlackLabEngine createEngine(int searchThreads, int maxThreadsPerSearch) {
         if (implicitInstance != null)
             throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");

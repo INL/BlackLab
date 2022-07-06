@@ -18,10 +18,9 @@ public class ForwardIndexIntegrated extends ForwardIndexAbstract {
         super(index, field);
     }
 
-    protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
-        AnnotationForwardIndex afi = AnnotationForwardIndexIntegrated.open(annotation, index.collator());
+    protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation, BlackLabIndex index) {
+        AnnotationForwardIndex afi = AnnotationForwardIndexIntegrated.open(index.reader(), annotation, index.collator());
         add(annotation, afi);
         return afi;
     }
-
 }

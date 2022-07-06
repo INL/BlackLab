@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -196,9 +195,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         if (parts.length == 1)
             throw new IllegalArgumentException("Annotated field with just basename given, error!");
     
-        String annotPart = parts[1];
+        String annotName = parts[1];
     
-        if (annotPart == null && parts.length >= 3) {
+        if (annotName == null && parts.length >= 3) {
             // Bookkeeping field
             BookkeepFieldType bookkeepingFieldIndex = AnnotatedFieldNameUtil
                     .whichBookkeepingSubfield(parts[3]);
@@ -209,6 +208,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 return;
             case FORWARD_INDEX_ID:
                 // Main annotation has forward index
+                // [should never happen anymore, because main annotation always has a name now]
                 getOrCreateAnnotation("").setForwardIndex(true);
                 return;
             case LENGTH_TOKENS:
@@ -221,17 +221,18 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         }
     
         // Not a bookkeeping field; must be a annotation (alternative).
-        AnnotationImpl pd = getOrCreateAnnotation(annotPart);
-        if (pd.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+        AnnotationImpl annotation = getOrCreateAnnotation(annotName);
+        if (annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
-                // Alternative
-                pd.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(parts[2]));
+                // Sensitivity alternative for this annotation
+                MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[2]);
+                annotation.addAlternative(sensitivity);
             } else {
                 // Annotation bookkeeping field
                 if (parts[3].equals(AnnotatedFieldNameUtil.FORWARD_INDEX_ID_BOOKKEEP_NAME)) {
-                    pd.setForwardIndex(true);
+                    annotation.setForwardIndex(true);
                 } else
                     throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
             }

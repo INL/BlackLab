@@ -1,30 +1,19 @@
 package nl.inl.blacklab.mocks;
 
-import java.io.File;
-import java.text.Collator;
+import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
-import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-public class MockTerms extends Terms {
+public class MockTerms implements Terms {
 
     final String[] words;
 
-    final Collators collators;
-
     public MockTerms(String... words) {
         this.words = words;
-        collators = new Collators(BlackLabIndexImpl.defaultCollator(), CollatorVersion.V2);
-    }
-
-    @Override
-    public Collator getCollator(MatchSensitivity sensitivity) {
-        return collators.get(sensitivity);
     }
 
     @Override
@@ -50,18 +39,6 @@ public class MockTerms extends Terms {
     }
 
     @Override
-    public void clear() {
-        //
-
-    }
-
-    @Override
-    public void write(File termsFile) {
-        //
-
-    }
-
-    @Override
     public String get(int id) {
         return words[id];
     }
@@ -79,6 +56,11 @@ public class MockTerms extends Terms {
 
     @Override
     public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
         throw new UnsupportedOperationException();
     }
 

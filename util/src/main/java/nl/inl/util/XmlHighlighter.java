@@ -8,11 +8,14 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * Performs highlighting of the contents of XML elements that we found hits in.
  *
  * NOTE: this class is not threadsafe. Use a separate instance per thread.
  */
+@NotThreadSafe
 public class XmlHighlighter {
     /**
      * How to deal with non-well-formed snippets: by e.g. adding an open tag at the

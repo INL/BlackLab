@@ -6,6 +6,7 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.eclipse.collections.impl.map.mutable.primitive.IntLongHashMap;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -13,6 +14,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  * <p>
  * Not thread-safe.
  */
+@NotThreadSafe
 public class NumericDocValuesCacher {
 
     /**

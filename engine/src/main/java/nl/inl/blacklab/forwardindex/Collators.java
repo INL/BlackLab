@@ -5,7 +5,6 @@ import java.text.ParseException;
 import java.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -13,6 +12,12 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * settings.
  */
 public class Collators {
+
+    /** Different versions of insensitive collator */
+    public enum CollatorVersion {
+        V1, // ignored dash and space
+        V2 // doesn't ignore dash and space
+    }
 
     private final CollatorVersion version;
 

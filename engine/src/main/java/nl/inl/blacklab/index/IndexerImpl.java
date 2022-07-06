@@ -27,6 +27,8 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -493,16 +495,20 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, Document currentLuceneDoc) {
-        Map<Annotation, List<String>> annotations = new HashMap<>();
-        Map<Annotation, List<Integer>> posIncr = new HashMap<>();
-        for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
-            if (annotationWriter.hasForwardIndex()) {
-                Annotation annotation = annotationWriter.annotation();
-                annotations.put(annotation, annotationWriter.values());
-                posIncr.put(annotation, annotationWriter.positionIncrements());
+        ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
+        if (fi instanceof ForwardIndexExternal) {
+            // External forward index: add to it (with the integrated forward index, this is handled in the codec)
+            Map<Annotation, List<String>> annotations = new HashMap<>();
+            Map<Annotation, List<Integer>> posIncr = new HashMap<>();
+            for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
+                if (annotationWriter.hasForwardIndex()) {
+                    Annotation annotation = annotationWriter.annotation();
+                    annotations.put(annotation, annotationWriter.values());
+                    posIncr.put(annotation, annotationWriter.positionIncrements());
+                }
             }
+            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, currentLuceneDoc);
         }
-        indexWriter().forwardIndex(fieldWriter.field()).addDocument(annotations, posIncr, currentLuceneDoc);
     }
 
     @Override

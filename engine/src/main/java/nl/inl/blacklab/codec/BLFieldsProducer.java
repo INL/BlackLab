@@ -13,144 +13,170 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.IndexFormatTooOldException;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
 
+import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+
 /**
- * BlackLab FieldsProducer: opens our custom index files to access
- * our forward index, (optional) content store, etc.
+ * Adds forward index reading to default FieldsProducer.
+ *
+ * Each index segment has an instance of BLFieldsProducer.
+ * It opens the custom segment files for the forward index
+ * (and any other custom files).
+ *
+ * Delegates all other methods to the default FieldsProducer.
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
+ *
+ * Thread-safe. It does store IndexInput which contains state, but those
+ * are cloned whenever a thread needs to use them.
  */
+@ThreadSafe
 public class BLFieldsProducer extends FieldsProducer {
 
     protected static final Logger logger = LogManager.getLogger(BLFieldsProducer.class);
 
-    /** The delegate whose functionality we're extending */
-    private FieldsProducer delegateFieldsProducer;
-
-    /** Index format version */
-    @SuppressWarnings("unused")
-    private int version;
-
-    public BLFieldsProducer(SegmentReadState state, String name)
-            throws IOException {
-        String postingsFormatName = "Lucene50";
-        version = BLCodecPostingsFormat.VERSION_CURRENT;
-
-        // Load the delegate postingsFormatName from this file
-        this.delegateFieldsProducer = PostingsFormat.forName(postingsFormatName).fieldsProducer(state);
+    /**
+     * Get the BLFieldsProducer for the given leafreader.
+     *
+     * The luceneField must be any existing Lucene field in the index.
+     * It doesn't matter which. This is because BLTerms is used as an
+     * intermediate to get access to BLFieldsProducer.
+     *
+     * The returned BLFieldsProducer is not specific for the specified field,
+     * but can be used to read information related to any field from the segment.
+     *
+     * @param lrc leafreader to get the BLFieldsProducer for
+     * @param luceneField name of any Lucene field in the index
+     * @return BLFieldsProducer for this leafreader
+     */
+    public static BLFieldsProducer get(LeafReaderContext lrc, String luceneField) {
+        try {
+            BLTerms terms = (BLTerms)(lrc.reader().terms(luceneField));
+            return terms.getFieldsProducer();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.index.Fields#iterator()
-     */
+    /** Our codec name (BLCodec) */
+    private final String postingsFormatName;
+
+    /** Name of PF we delegate to (the one from Lucene) */
+    private String delegatePostingsFormatName;
+
+    /** The delegate whose functionality we're extending */
+    private final FieldsProducer delegateFieldsProducer;
+
+    /** The forward index */
+    private final SegmentForwardIndex forwardIndex;
+
+    public BLFieldsProducer(SegmentReadState state, String postingsFormatName)
+            throws IOException {
+        this.postingsFormatName = postingsFormatName;
+
+        // NOTE: opening the forward index calls openInputFile, which reads
+        //       delegatePostingsFormatName, so this must be done first.
+        forwardIndex = new SegmentForwardIndex(this, state);
+
+        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(this.delegatePostingsFormatName);
+        this.delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+    }
+
     @Override
     public Iterator<String> iterator() {
         return delegateFieldsProducer.iterator();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.codecs.FieldsProducer#close()
-     */
     @Override
     public void close() throws IOException {
+        forwardIndex.close();
         delegateFieldsProducer.close();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.index.Fields#terms(java.lang.String)
-     */
     @Override
     public Terms terms(String field) throws IOException {
-        return delegateFieldsProducer.terms(field);
-        //return new BLTerms(delegateFieldsProducer.terms(field), indexInputList, indexInputOffsetList, version);
+        return new BLTerms(delegateFieldsProducer.terms(field), this);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.index.Fields#size()
-     */
     @Override
     public int size() {
         return delegateFieldsProducer.size();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.util.Accountable#ramBytesUsed()
-     */
     @Override
     public long ramBytesUsed() {
         // return BASE_RAM_BYTES_USED + delegateFieldsProducer.ramBytesUsed();
+
+        // TODO: copied from mtas, improve this estimate?
         return 3 * delegateFieldsProducer.ramBytesUsed();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.util.Accountable#getChildResources()
-     */
     @Override
     public Collection<Accountable> getChildResources() {
-        List<Accountable> resources = new ArrayList<>();
-        if (delegateFieldsProducer != null) {
-            resources.add(Accountables.namedAccountable("delegate", delegateFieldsProducer));
-        }
+        List<Accountable> resources = new ArrayList<>(delegateFieldsProducer.getChildResources());
+        resources.add(Accountables.namedAccountable("delegate", delegateFieldsProducer));
         return Collections.unmodifiableList(resources);
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.apache.lucene.codecs.FieldsProducer#checkIntegrity()
-     */
     @Override
     public void checkIntegrity() throws IOException {
         delegateFieldsProducer.checkIntegrity();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see java.lang.Object#toString()
-     */
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
     }
 
-    private static IndexInput openIndexFile(SegmentReadState state, String name, String extension,
-            Integer minimum, Integer maximum) throws IOException {
-        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        IndexInput object = state.directory.openInput(fileName, state.context);
-        int minVersion = (minimum == null) ? BLCodecPostingsFormat.VERSION_START : minimum.intValue();
-        int maxVersion = (maximum == null) ? BLCodecPostingsFormat.VERSION_CURRENT : maximum.intValue();
+    /**
+     * Open a custom file for reading and check the header.
+     *
+     * @param state segment read state
+     * @param extension extension of the file to open (will automatically be prefixed with "bl")
+     * @return handle to the opened segment file
+     */
+    IndexInput openIndexFile(SegmentReadState state, String extension) throws IOException {
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, "bl" + extension);
+        IndexInput input = state.directory.openInput(fileName, state.context);
         try {
-            CodecUtil.checkIndexHeader(object, name, minVersion, maxVersion, state.segmentInfo.getId(), state.segmentSuffix);
-        } catch (IndexFormatTooOldException e) {
-            object.close();
-            logger.debug(e);
-            throw new IndexFormatTooOldException(e.getMessage(), e.getVersion(), e.getMinVersion(), e.getMaxVersion());
+            // Check index header
+            CodecUtil.checkIndexHeader(input, postingsFormatName, BLCodecPostingsFormat.VERSION_START,
+                    BLCodecPostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+
+            // Check delegate postings format name
+            String delegatePFN = input.readString();
+            if (delegatePostingsFormatName == null)
+                delegatePostingsFormatName = delegatePFN;
+            if (!delegatePostingsFormatName.equals(delegatePFN))
+                throw new IOException("Segment file " + fileName +
+                        " contains wrong delegate postings format name: " + delegatePFN +
+                        " (expected " + delegatePostingsFormatName + ")");
+
+            return input;
+        } catch (Exception e) {
+            input.close();
+            throw e;
         }
-        return object;
     }
 
-    @SuppressWarnings("unused")
-    private static IndexInput openIndexFile(SegmentReadState state, String name, String extension) throws IOException {
-        return openIndexFile(state, name, extension, null, null);
+    /**
+     * Create a forward index reader for this segment.
+     *
+     * The returned reader is not threadsafe and shouldn't be stored.
+     * A single thread may use it for reading from this segment. It
+     * can then be discarded.
+     *
+     * @return forward index segment reader
+     */
+    public ForwardIndexSegmentReader forwardIndex() {
+        return forwardIndex.reader();
     }
 
 }

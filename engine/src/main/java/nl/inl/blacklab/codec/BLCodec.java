@@ -15,7 +15,7 @@ import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
  * codec (usually the default Solr codec) and simply proxies
  * most requests to that codec. It will handle specific requests
  * itself, though, in this case the {@link #postingsFormat()} method
- * that returns the {@link BlackLabCodecPostingsFormat} object responsible for
+ * that returns the {@link BLCodecPostingsFormat} object responsible for
  * saving/loading postings data (the actual inverted index, with
  * frequencies, offsets, payloads, etc.).
  *
@@ -71,9 +71,7 @@ public class BLCodec extends Codec {
                         || (defaultPostingsFormat instanceof PerFieldPostingsFormat)) {
                     // fallback option
                     defaultPostingsFormat = PostingsFormat.forName(LUCENE_DEFAULT_POSTINGS_FORMAT_NAME);
-                    return new BLCodecPostingsFormat(defaultPostingsFormat);
                 }
-                return new BLCodecPostingsFormat(defaultPostingsFormat);
             }
             return new BLCodecPostingsFormat(defaultPostingsFormat);
         }

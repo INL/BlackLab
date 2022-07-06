@@ -11,13 +11,13 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex.CollatorVersion;
+import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
-    private static Terms t;
+    private static TermsReader t;
 
     final static String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
@@ -32,17 +32,16 @@ public class TestTerms {
         // Store some terms
         Collator coll = Collator.getInstance(new Locale("en", "GB"));
         Collators colls = new Collators(coll, CollatorVersion.V2);
-        t = Terms.openForWriting(colls, null);
-        if (t instanceof TermsWriter)
-            ((TermsWriter) t).setMaxBlockSize(18);
-        for (String s : str) {
-            t.indexOf(s);
+        TermsWriter tw = TermsExternalUtil.openForWriting(colls, null);
+        tw.setMaxBlockSize(18);
+        for (String s: str) {
+            tw.indexOf(s);
         }
         File f = new File(testDir, "terms.dat");
-        t.write(f); // close so everything is guaranteed to be written
+        tw.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
-        t = Terms.openForReading(colls, f);
+        t = TermsExternalUtil.openForReading(colls, f);
     }
 
     @AfterClass
@@ -93,9 +92,6 @@ public class TestTerms {
         }
     }
 
-    /**
-     * Test if the "reverse sort positions" are determined correctly.
-     */
     @Test
     public void testIndexOf() {
         String[] input = {
@@ -107,9 +103,6 @@ public class TestTerms {
         }
     }
 
-    /**
-     * Test if the "reverse sort positions" are determined correctly.
-     */
     @Test
     public void testIndexOfInsensitive() {
         String[] input = {

@@ -1,8 +1,6 @@
 package nl.inl.blacklab.search;
 
-import java.io.Closeable;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -11,9 +9,12 @@ import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -38,7 +39,7 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
-public interface BlackLabIndex extends Closeable {
+public interface BlackLabIndex extends AutoCloseable {
 
     /** Document length in Lucene and forward index is always reported as one
      *  higher due to punctuation being a trailing value. We call this the
@@ -63,8 +64,17 @@ public interface BlackLabIndex extends Closeable {
                 String version = vf.getVersion();
                 return vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2"));
             }
+
+            if (BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES)) {
+                // Just see if it's a Lucene index and assume it's a BlackLab index if so.
+                // (Lucene index always has a segments_* file)
+                try (Directory dir = FSDirectory.open(indexDir.toPath())){
+                    return DirectoryReader.indexExists(dir);
+                }
+            }
+
             return false;
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }

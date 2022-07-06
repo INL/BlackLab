@@ -12,24 +12,6 @@ public final class UtilsForTesting {
     }
 
     /**
-     * Removes temporary test directories that may be left over from previous test
-     * runs because of memory mapping file locking on Windows.
-     *
-     * It is good practice to start and end a test run by calling
-     * removeBlackLabTestDirs().
-     */
-    public static void removeBlackLabTestDirs() {
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-
-        // Remove old ContentStore test dirs from temp dir, if possible
-        // (may not be possible because of memory mapping lock on Windows;
-        //  in this case we just leave the files and continue)
-        for (File testDir : tempDir.listFiles((parentDir, name) -> name.startsWith("BlackLabTest_"))) {
-            FileUtil.deleteTree(testDir);
-        }
-    }
-
-    /**
      * Create a temporary directory for BlackLab testing. A GUID is used to avoid
      * collisions. Note that because of memory mapping and file locking issues, temp
      * dirs may hang around. It is good practice to start and end a test run by

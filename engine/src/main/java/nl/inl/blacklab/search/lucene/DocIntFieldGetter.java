@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.TreeMap;
@@ -10,6 +9,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.solr.uninverting.UninvertingReader;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -21,7 +21,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * CAUTION: the advance() method can only be called with ascending doc ids!
  */
-public class DocIntFieldGetter implements Closeable {
+@NotThreadSafe
+public class DocIntFieldGetter implements AutoCloseable {
 
     /** The Lucene index reader, for querying field length */
     private final LeafReader reader;

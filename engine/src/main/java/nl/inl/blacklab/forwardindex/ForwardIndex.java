@@ -1,10 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-import java.util.Map;
-
-import org.apache.lucene.document.Document;
-
+import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -16,6 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This allows access to all annotations for a document, as opposed to {@link AnnotationForwardIndex},
  * which allows access to just one.
  */
+@ThreadSafe
 public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
 
     /**
@@ -35,45 +32,12 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
     }
 
     /**
-     * Close the forward index. Writes the table of contents to disk if modified.
-     */
-    void close();
-
-    /**
-     * Store the given content and assign an id to it.
-     *
-     * Note that if more than one token occurs at any position, we only store the
-     * first in the forward index.
-     *
-     * @param content the content to store
-     * @param posIncr the associated position increments, or null if position
-     *            increment is always 1.
-     * @param currentLuceneDoc Lucene document
-     */
-    void addDocument(Map<Annotation, List<String>> content, Map<Annotation, List<Integer>> posIncr, Document currentLuceneDoc);
-
-    /**
      * Get the Terms object in order to translate ids to token strings
      * 
      * @param annotation annotation to get terms for 
      * @return the Terms object
      */
     Terms terms(Annotation annotation);
-
-    /**
-     * @return the number of documents in the forward index
-     */
-    int numDocs();
-
-    /**
-     * @return the amount of space in free blocks in the forward index.
-     */
-    long freeSpace();
-
-    /**
-     * @return total size in bytes of the tokens file.
-     */
-    long totalSize();
 
     /**
      * The field for which this is the forward index
@@ -97,8 +61,6 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      * @param forwardIndex forward index to add
      */
     void put(Annotation annotation, AnnotationForwardIndex forwardIndex);
-
-    boolean hasAnyForwardIndices();
 
     boolean canDoNfaMatching();
 

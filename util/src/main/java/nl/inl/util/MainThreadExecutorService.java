@@ -6,10 +6,13 @@ import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 
+import net.jcip.annotations.NotThreadSafe;
+
 /**
  * Mock executorService that actually just runs all submitted tasks on the main
  * thread. Note: unlike regular ExecutorService, this class is NOT thread-safe.
  */
+@NotThreadSafe
 public class MainThreadExecutorService extends AbstractExecutorService {
 
     @FunctionalInterface
