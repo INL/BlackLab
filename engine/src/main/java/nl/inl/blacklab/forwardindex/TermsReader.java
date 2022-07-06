@@ -54,7 +54,7 @@ public class TermsReader extends Terms {
      */
     private long[] termId2CharDataOffset;
 
-    public TermsReader(Collators collators, File termsFile, boolean buildTermIndexesOnInit) {
+    public TermsReader(Collators collators, File termsFile) {
         this.termsFile = termsFile;
         this.collator = collators.get(MatchSensitivity.SENSITIVE);
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);

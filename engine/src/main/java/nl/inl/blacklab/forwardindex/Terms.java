@@ -204,8 +204,8 @@ public abstract class Terms {
         return idToSortPosition(termId1, sensitivity) - idToSortPosition(termId2, sensitivity);
     }
 
-    public static Terms openForReading(Collators collators, File termsFile, boolean buildTermIndexesOnInit) {
-        return new TermsReader(collators, termsFile, buildTermIndexesOnInit);
+    public static Terms openForReading(Collators collators, File termsFile) {
+        return new TermsReader(collators, termsFile);
     }
 
     public static Terms openForWriting(Collators collators, File termsFile) {

@@ -80,11 +80,10 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      * @param collator collator to use for sorting
      * @param create if true, create a new forward index
      * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
-     * @param buildTermIndexesOnInit whether to build term indexes right away or lazily
      * @return the forward index object
      */
     public static AnnotationForwardIndex open(File dir, boolean indexMode, Collator collator, boolean create,
-            Annotation annotation, boolean buildTermIndexesOnInit) {
+            Annotation annotation) {
         if (annotation != null && !annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
@@ -131,7 +130,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(annotation, dir, collators, buildTermIndexesOnInit);
+            fi = new AnnotationForwardIndexReader(annotation, dir, collators);
         }
         return fi;
     }

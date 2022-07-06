@@ -55,10 +55,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
     /** Deleted TOC entries. Always sorted by size. */
     List<Integer> deletedTocEntries = null;
 
-    /** Build term indexes right away or lazily? */
-    private final boolean buildTermIndexesOnInit;
-
-    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators, boolean buildTermIndexesOnInit) {
+    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators) {
         super(annotation, dir, collators);
 
         if (!dir.exists()) {
@@ -68,7 +65,6 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         if (!tocFile.exists())
             throw new IllegalArgumentException("No TOC found, and not in index mode: " + tocFile);
         this.collators = collators; // for reading terms file in initialize()
-        this.buildTermIndexesOnInit = buildTermIndexesOnInit;
     }
 
     /**
@@ -84,7 +80,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
         //logger.debug("  END   read TOC " + tocFile);
 
         //logger.debug("  START read Terms " + tocFile);
-        terms = Terms.openForReading(collators, termsFile, buildTermIndexesOnInit);
+        terms = Terms.openForReading(collators, termsFile);
         //logger.debug("  END   read Terms " + tocFile);
         //logger.debug("  START Terms.initialize() " + tocFile);
         terms.initialize();

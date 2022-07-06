@@ -28,14 +28,10 @@ public class ForwardIndexExternal extends ForwardIndexAbstract {
         return new File(indexDir, "fi_" + annotation.luceneFieldPrefix());
     }
 
-    private static boolean buildTermIndexesOnInit(Annotation annotation) {
-        return BUILD_TERMINDEXES_ON_INIT.contains(annotation.name());
-    }
-
     protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation) {
         File dir = determineAfiDir(index.indexDirectory(), annotation);
         boolean create = index.indexMode() && index.isEmpty();
-        AnnotationForwardIndex afi = AnnotationForwardIndexExternalAbstract.open(dir, index.indexMode(), index.collator(), create, annotation, buildTermIndexesOnInit(annotation));
+        AnnotationForwardIndex afi = AnnotationForwardIndexExternalAbstract.open(dir, index.indexMode(), index.collator(), create, annotation);
         add(annotation, afi);
         return afi;
     }
