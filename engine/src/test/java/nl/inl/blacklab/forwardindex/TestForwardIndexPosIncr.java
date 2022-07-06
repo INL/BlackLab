@@ -3,7 +3,9 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -14,12 +16,16 @@ import nl.inl.util.UtilsForTesting;
 public class TestForwardIndexPosIncr {
     private AnnotationForwardIndex fi;
 
-    // The tokens to add
-    final String[][] str = { { "How", "much", "many", "lots", "wood" } };
-
-    // The tokens' position increments: multiple tokens at one position
-    // (only the first should be stored) and a gap (empty tokens should be added)
-    final Integer[][] pi = { { 1, 1, 0, 0, 3 } };
+    // Words and position increments to store in forward index.
+    // When multiple words occur at the same position, only the first one will be stored.
+    // When a gap occurs, empty words will be added in between.
+    final List<Pair<String, Integer>> tokens = List.of(
+        Pair.of("How",  1), // (posincr at start is ignored) (pos 0)
+        Pair.of("much", 1), // directly follows previous token (pos 1)
+        Pair.of("many", 0), // same position as previous token (pos 1)
+        Pair.of("lots", 0), // same position as previous token (pos 1)
+        Pair.of("wood", 3)  // three positions after previous token (pos 4)
+    );
 
     private File testDir;
 
@@ -32,9 +38,9 @@ public class TestForwardIndexPosIncr {
         fi = AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
         try {
             // Store strings
-            for (int i = 0; i < str.length; i++) {
-                Assert.assertEquals(i, fi.addDocument(Arrays.asList(str[i]), Arrays.asList(pi[i])));
-            }
+            String[] words = tokens.stream().map(t -> t.getLeft()).toArray(String[]::new);
+            Integer[] posIncrements = tokens.stream().map(t -> t.getRight()).toArray(Integer[]::new);
+            Assert.assertEquals(0, fi.addDocument(Arrays.asList(words), Arrays.asList(posIncrements)));
         } finally {
             fi.close(); // close so everything is guaranteed to be written
         }
@@ -56,13 +62,11 @@ public class TestForwardIndexPosIncr {
     @Test
     public void testRetrieve() {
         // Retrieve strings
-        String[][] expected = { { "How", "much", "", "", "wood" } };
-        for (int i = 0; i < str.length; i++) {
-            int[] retrieved = retrievePart(i, -1, -1);
-            for (int j = 0; j < retrieved.length; j++) {
-                Assert.assertEquals(expected[i][j], fi.terms().get(retrieved[j]));
-            }
+        String[] expected = { "How", "much", "", "", "wood" };
+
+        int[] retrieved = retrievePart(0, -1, -1);
+        for (int j = 0; j < retrieved.length; j++) {
+            Assert.assertEquals(expected[j], fi.terms().get(retrieved[j]));
         }
     }
-
 }
