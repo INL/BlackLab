@@ -17,7 +17,6 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.IndexTooOld;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -89,10 +88,10 @@ public interface BlackLabIndex extends Closeable {
      * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @return index object
-     * @throws IndexTooOld if the index format is no longer supported
+     * @throw IndexVersionMismatch if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
-    static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {
+    static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex  {
         return new BlackLabIndexImpl(blackLab, indexDir, false, false, (File) null);
     }
 

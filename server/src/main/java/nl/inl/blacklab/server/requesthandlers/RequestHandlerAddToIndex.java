@@ -16,7 +16,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -53,8 +53,8 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         IndexMetadata indexMetadata;
         try {
             indexMetadata = index.getIndexMetadata();
-        } catch (IndexTooOld e) {
-            throw BlsException.indexTooOld(e);
+        } catch (IndexVersionMismatch e) {
+            throw BlsException.indexVersionMismatch(e);
         }
 
         // Read uploaded files before checking for errors, or the client won't see our response :(

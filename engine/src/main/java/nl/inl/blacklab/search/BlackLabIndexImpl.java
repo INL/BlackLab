@@ -21,6 +21,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
+import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
@@ -46,7 +47,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -305,8 +306,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * @param createNewIndex if true, delete existing index in this location if it
      *         exists.
      * @param config input format config to use as template for index structure /
-     *         metadata (if creating new index)
-     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
+     *            metadata (if creating new index)
+     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
@@ -366,8 +367,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
-        } catch (IndexFormatTooOldException e) {
-            throw new IndexTooOld(e);
+        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) { 
+            throw new IndexVersionMismatch(e);
         } catch (IOException e) {
             throw new ErrorOpeningIndex(e);
         }

@@ -4,8 +4,8 @@ package nl.inl.blacklab.server.exceptions;
  * Thrown when the requested index was not available or could not be opened
  */
 public class BlsException extends Exception {
-
-    public static InternalServerError indexTooOld(Throwable e) {
+    
+    public static InternalServerError indexVersionMismatch(Throwable e) {
         return new InternalServerError("Index too old to open with this BlackLab version", "INTERR_INDEX_TOO_OLD", e);
     }
 

@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -35,8 +35,8 @@ public class RequestHandlerIndexStatus extends RequestHandler {
             IndexMetadata indexMetadata;
             try {
                 indexMetadata = index.getIndexMetadata();
-            } catch (IndexTooOld e) {
-                throw BlsException.indexTooOld(e);
+            } catch (IndexVersionMismatch e) {
+                throw BlsException.indexVersionMismatch(e);
             }
 
             // Assemble response

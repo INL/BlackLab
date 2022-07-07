@@ -33,7 +33,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
@@ -182,9 +182,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * @param createNewIndex whether we're creating a new index
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
-     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
+     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexTooOld {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -249,9 +249,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * @param createNewIndex whether we're creating a new index
      * @param indexTemplateFile JSON file to use as template for index structure /
      *            metadata (if creating new index)
-     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
+     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexTooOld {
+    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -699,9 +699,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * @param usedTemplate whether the JSON structure was read from a indextemplate
      *            file. If so, clear certain parts of it that aren't relevant
      *            anymore.
-     * @throws IndexTooOld if the index is too old to open with this BlackLab version
+     * @throws IndexVersionMismatch if the index is too old or too new to open with this BlackLab version
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexTooOld {
+    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -722,12 +722,12 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
         boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
         if (!alwaysHasClosingToken)
-            throw new IndexTooOld(
+            throw new IndexVersionMismatch(
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
         if (!tagLengthInPayload) {
             logger.warn("Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
-            //throw new IndexTooOld("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
+            //throw new IndexVersionMismatch("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
         }
 
         // Specified in index metadata file?
@@ -1035,7 +1035,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     }
 
     private void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
-            boolean usedTemplate) throws IndexTooOld {
+            boolean usedTemplate) throws IndexVersionMismatch {
         ensureNotFrozen();
 
         // Read and interpret index metadata file

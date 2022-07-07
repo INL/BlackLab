@@ -18,7 +18,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
@@ -192,8 +192,8 @@ public class Index {
     public synchronized BlackLabIndex blIndex() throws InternalServerError, ServiceUnavailable {
         try {
             openForSearching();
-        } catch (IndexTooOld e) {
-            throw BlsException.indexTooOld(e);
+        } catch (IndexVersionMismatch e) {
+            throw BlsException.indexVersionMismatch(e);
         }
         return index;
     }
@@ -205,9 +205,9 @@ public class Index {
      *
      * @return the index metadata
      * @throws InternalServerError if index couldn't be opened
-     * @throws IndexTooOld if the index was too old to open by this versio of BlackLab
+     * @throws IndexVersionMismatch if the index was too old or too new to open by this versio of BlackLab
      */
-    public synchronized IndexMetadata getIndexMetadata() throws InternalServerError, IndexTooOld {
+    public synchronized IndexMetadata getIndexMetadata() throws InternalServerError, IndexVersionMismatch {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {
@@ -240,9 +240,9 @@ public class Index {
      * @throws ServiceUnavailable if the index could not be opened due to currently
      *             ongoing indexing
      * @throws InternalServerError if there was some other error opening the index
-     * @throws IndexTooOld if the index was too old to open by this version of BlackLab
+     * @throws IndexVersionMismatch if the index was too old or too new to open by this version of BlackLab
      */
-    private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError, IndexTooOld {
+    private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError, IndexVersionMismatch {
         cleanupClosedIndexerOrThrow();
 
         if (this.index != null)
@@ -253,7 +253,7 @@ public class Index {
             index = searchMan.blackLabInstance().open(this.dir);
             index.setCache(searchMan.getBlackLabCache());
             //logger.debug("Done opening index '" + id + "'");
-        } catch (IndexTooOld e) {
+        } catch (IndexVersionMismatch e) {
             throw e;
         } catch (ErrorOpeningIndex e) {
             throw new InternalServerError("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
