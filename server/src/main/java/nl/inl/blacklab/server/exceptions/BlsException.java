@@ -8,12 +8,12 @@ import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
  */
 public class BlsException extends Exception {
     
-    public static InternalServerError indexTooOld() {
-        return indexTooOld(null);
+    public static InternalServerError indexVersionMismatch() {
+        return indexVersionMismatch(null);
     }
 
-    public static InternalServerError indexTooOld(Throwable e) {
-        return new InternalServerError("Index too old to open with this BlackLab version", "INTERR_INDEX_TOO_OLD", e);
+    public static InternalServerError indexVersionMismatch(Throwable e) {
+        return new InternalServerError("Index too old or too new to open with this BlackLab version", "INTERR_INDEX_VERSION_MISMATCH", e);
     }
 
     public static BadRequest wildcardTermTooBroad(WildcardTermTooBroad e) {

@@ -311,7 +311,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      *            exists.
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
-     * @throws IndexTooOld if the index is too old to be opened by this BlackLab version
+     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex, ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -372,6 +372,8 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
+        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) { 
+            throw new IndexVersionMismatch(e);
         } catch (IOException e) {
             throw new ErrorOpeningIndex(e);
         }

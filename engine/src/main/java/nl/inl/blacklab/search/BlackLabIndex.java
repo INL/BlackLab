@@ -71,7 +71,7 @@ public interface BlackLabIndex extends Closeable {
      * @param blackLab our BlackLab instance
      * @param indexDir the index directory
      * @return index object
-     * @throw IndexTooOld if the index format is no longer supported
+     * @throw IndexVersionMismatch if the index format is no longer supported
      * @throws ErrorOpeningIndex on any error
      */
     static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex {

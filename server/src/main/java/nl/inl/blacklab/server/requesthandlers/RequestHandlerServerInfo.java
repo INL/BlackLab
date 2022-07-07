@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.IndexTooOld;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -78,11 +78,10 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.endAttrEntry();
                 }
 
-            } catch (IndexTooOld e) {
+            } catch (ErrorOpeningIndex e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }
-
         }
         ds.endMap().endEntry();
 
