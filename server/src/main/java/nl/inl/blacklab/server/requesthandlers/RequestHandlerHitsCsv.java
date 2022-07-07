@@ -279,7 +279,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
-            Kwics kwics = hits.kwics(blIndex().defaultContextSize());
+            Kwics kwics = hits.kwics(searchParam.getContextSettings().size());
             for (Hit hit : hits) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
