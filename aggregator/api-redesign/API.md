@@ -14,6 +14,13 @@ Generic parameters:
 - `includeCustom`: include `"custom"` data? (boolean, default false)
 - `outputformat`: output type (`wt` also supported?)
 
+## TODO
+
+- when grouping, at least `identityDisplay` should be a list of values, so grouping
+  by multiple context parts can be displayed properly. Maybe rethink how these values
+  are encoded altogether while we're at it. Standard encodings such as JSON are almost
+  always better than a custom encoding.
+
 ## Server info
 
 Request:

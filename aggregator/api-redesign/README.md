@@ -68,6 +68,8 @@ General:
    the client can request those once if needed)
 - Be stricter about parameter values.<br>
   (if an illegal value is passed, return an error instead of silently using a default value)
+- Avoid custom encodings (e.g. strings with specific separator characters, such as used for HitProperty 
+  and related values); prefer a standard encoding such as JSON.
 - Return helpful error messages.<br>
   (if an illegal value is passed, explain or list legal values, and/or refer to online docs)
 
