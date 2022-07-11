@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
+import nl.inl.util.SearchTimer;
 
 /**
  * An entry in BlackLab's search cache.
@@ -12,7 +13,18 @@ import nl.inl.blacklab.search.results.SearchResult;
  *
  * @param <R> the type of search result this search will yield
  */
-public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, Peekable<R> {
+public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, ActiveSearch<R> {
+
+    /** Keep track of how long this task and subtasks took to (originally) execute. */
+    private SearchTimer searchTimer = new SearchTimer();
+
+    /**
+     * Get the timer keeping track of how long this search (originally) executed.
+     * @return the search's task timer
+     */
+    public SearchTimer timer() {
+        return searchTimer;
+    }
 
     /**
      * Has this search been started?
@@ -51,10 +63,21 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
         return "";
     }
 
-    public long timeUserWaitedMs() {
-        return -1;
-    }
+    /**
+     * How long since this search was created?
+     *
+     * This is used for cache management (e.g. aborting a search that's been
+     * running too long), not for reporting processing time (because this value
+     * is directly influences by what's in the cache).
+     *
+     * @return how long the user has waited for this result (ms)
+     */
+    public abstract long timeUserWaitedMs();
 
+    /**
+     * Did this task throw an exception?
+     * @return whether an exception was thrown
+     */
     public boolean threwException() {
         return false;
     }

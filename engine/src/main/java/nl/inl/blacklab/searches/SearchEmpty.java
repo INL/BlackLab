@@ -18,7 +18,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
     }
 
     @Override
-    public SearchResult executeInternal(Peekable<SearchResult> progressReporter) {
+    public SearchResult executeInternal(ActiveSearch<SearchResult> activeSearch) {
         throw new UnsupportedOperationException();
     }
 

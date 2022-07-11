@@ -21,8 +21,8 @@ public class SearchCollocationsSampled extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().sample(sampleParameters);
+    public TermFrequencyList executeInternal(ActiveSearch<TermFrequencyList> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).sample(sampleParameters);
     }
 
     @Override

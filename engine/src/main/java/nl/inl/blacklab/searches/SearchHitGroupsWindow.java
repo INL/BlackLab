@@ -23,8 +23,8 @@ public class SearchHitGroupsWindow extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().window(first, number);
+    public HitGroups executeInternal(ActiveSearch<HitGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).window(first, number);
     }
 
     @Override

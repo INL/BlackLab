@@ -33,11 +33,11 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
     }
 
     @Override
-    public ResultsStats executeInternal(Peekable<ResultsStats> progressReporter) throws InvalidQuery {
+    public ResultsStats executeInternal(ActiveSearch<ResultsStats> activeSearch) throws InvalidQuery {
         // Start the search and construct the count object
-        ResultsStats resultCount = new ResultCount(source.executeNoQueue(), type);
-        if (progressReporter != null && progressReporter.peek() != null)
-            ((ResultsStatsDelegate) progressReporter.peek()).setRealStats(resultCount);
+        ResultsStats resultCount = new ResultCount(executeChildSearch(activeSearch, source), type);
+        if (activeSearch != null && activeSearch.peek() != null)
+            ((ResultsStatsDelegate) activeSearch.peek()).setRealStats(resultCount);
 
         // Gather all the hits.
         // This runs synchronously, so SearchCountFromResults will not be finished until

@@ -25,8 +25,8 @@ public class SearchHitGroupsFiltered extends SearchHitGroups {
     }
 
     @Override
-    public HitGroups executeInternal(Peekable<HitGroups> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().filter(property, value);
+    public HitGroups executeInternal(ActiveSearch<HitGroups> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).filter(property, value);
     }
 
     @Override

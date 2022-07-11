@@ -30,7 +30,6 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -41,7 +40,6 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -51,7 +49,6 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Facets;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsStatic;
@@ -68,7 +65,6 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -803,16 +799,14 @@ public abstract class RequestHandler {
      *
      * @param ds where to output XML/JSON
      * @param searchParam original search parameters
-     * @param searchTime time the search took
-     * @param countTime time the count took
+     * @param timings various timings related to this request
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
      */
     protected <T> void datastreamSummaryCommonFields(
             DataStream ds,
             SearchParameters searchParam,
-            long searchTime,
-            long countTime,
+            SearchTimings timings,
             ResultGroups<T> groups,
             WindowStats window
             ) throws BlsException {
@@ -838,9 +832,9 @@ public abstract class RequestHandler {
         }
 
         // Information about search progress
-        ds.entry("searchTime", searchTime);
-        if (countTime != 0)
-            ds.entry("countTime", countTime);
+        ds.entry("searchTime", timings.getProcessingTime());
+        if (timings.getCountTime() != 0)
+            ds.entry("countTime", timings.getCountTime());
 
         // Information about grouping operation
         if (groups != null) {
@@ -940,16 +934,8 @@ public abstract class RequestHandler {
         }
     }
 
-    public void datastreamHits(DataStream ds, Hits hits, Map<Integer, Document> luceneDocs,
-                               ContextSettings contextSettings) throws BlsException {
+    public void datastreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, Document> luceneDocs) throws BlsException {
         BlackLabIndex index = hits.index();
-
-        Concordances concordances = null;
-        Kwics kwics = null;
-        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-            concordances = hits.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-        else
-            kwics = hits.kwics(contextSettings.size());
 
         ds.startEntry("hits").startList();
         Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
@@ -994,10 +980,9 @@ public abstract class RequestHandler {
 
             ContextSize contextSize = searchParam.getContextSettings().size();
             boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
-            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
+            if (concordanceContext.isConcordances()) {
                 // Add concordance from original XML
-                assert concordances != null;
-                Concordance c = concordances.get(hit);
+                Concordance c = concordanceContext.getConcordance(hit);
                 if (includeContext) {
                     ds.startEntry("left").xmlFragment(c.left()).endEntry()
                             .startEntry("match").xmlFragment(c.match()).endEntry()
@@ -1007,8 +992,7 @@ public abstract class RequestHandler {
                 }
             } else {
                 // Add KWIC info
-                assert kwics != null;
-                Kwic c = kwics.get(hit);
+                Kwic c = concordanceContext.getKwic(hit);
                 if (includeContext) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                             .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()

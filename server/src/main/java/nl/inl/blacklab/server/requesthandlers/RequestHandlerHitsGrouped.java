@@ -30,6 +30,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.util.BlockTimer;
@@ -71,7 +72,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
-        datastreamSummaryCommonFields(ds, searchParam, search.timeUserWaitedMs(), 0, groups, ourWindow);
+        SearchTimings timings = new SearchTimings(search.timer().time(), 0);
+        datastreamSummaryCommonFields(ds, searchParam, timings, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
@@ -143,7 +145,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
                 if (searchParam.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
-                    datastreamHits(ds, hitsInGroup, luceneDocs, searchParam.getContextSettings());
+                    ContextSettings contextSettings = searchParam.getContextSettings();
+                    ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
+                    datastreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
                 }
 
                 ds.endMap().endItem();

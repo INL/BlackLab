@@ -23,8 +23,8 @@ public class SearchCollocationsWindow extends SearchCollocations {
     }
 
     @Override
-    public TermFrequencyList executeInternal(Peekable<TermFrequencyList> progressReporter) throws InvalidQuery {
-        return source.executeNoQueue().window(first, number);
+    public TermFrequencyList executeInternal(ActiveSearch<TermFrequencyList> activeSearch) throws InvalidQuery {
+        return executeChildSearch(activeSearch, source).window(first, number);
     }
 
     @Override

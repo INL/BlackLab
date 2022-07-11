@@ -31,9 +31,17 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
         return queryInfo.index().cache().getAsync(this, allowQueue);
     }
 
-    @Override
-    public final R execute(boolean allowQueue) throws InvalidQuery {
-        SearchCacheEntry<R> future = executeAsync(allowQueue);
+    /**
+     * Wait for the result from a search task.
+     *
+     * Will throw InvalidQuery if the query couldn't executed, or an AssertionError in
+     * case of other errors.
+     *
+     * @param future search task
+     * @return result
+     * @param <R> result type
+     */
+    private static <R extends SearchResult> R getResult(SearchCacheEntry<R> future) throws InvalidQuery {
         try {
             return future.get();
         } catch (ExecutionException e) {
@@ -61,7 +69,54 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
-    public abstract R executeInternal(Peekable<R> progressReporter) throws InvalidQuery;
+    public final R execute(boolean allowQueue) throws InvalidQuery {
+        SearchCacheEntry<R> future = executeAsync(allowQueue);
+        return getResult(future);
+    }
+
+    /**
+     * Actually execute this search operation.
+     *
+     * @param activeSearch represents the search being executed (also the "cache entry"), allows us to
+     *                   report progress (running count) and how long the task (originally) took
+     * @return results of the search operation
+     */
+    @Override
+    public abstract R executeInternal(ActiveSearch<R> activeSearch) throws InvalidQuery;
+
+    /**
+     * Execute a child search whose results we need.
+     *
+     * Will block until the results are available. Will not queue the child search.
+     *
+     * Will pause our timer, add the processing time from the child search, and
+     * resume our timer.
+     *
+     * @param task parent task that needs the child search's result
+     * @param childSearch child search to execute
+     * @return results from the child search
+     * @param <R> result type
+     */
+    protected static <R extends SearchResult> R executeChildSearch(ActiveSearch<?> task, Search<R> childSearch) throws InvalidQuery {
+        // Don't time subtask now, because it could be in the cache.
+        // Instead, pause our timer and ask the subtask to report its original processing time (see below).
+        if (task != null)
+            task.timer().stop();
+        try {
+
+            // Get the subtask results and add its original processing time to our own
+            SearchCacheEntry<R> childSearchEntry = childSearch.executeAsync(false);
+            R result = getResult(childSearchEntry);
+            if (task != null)
+                task.timer().add(childSearchEntry.timer().time());
+            return result;
+
+        } finally {
+            // Resume our own timer
+            if (task != null)
+                task.timer().start();
+        }
+    }
 
     @Override
     public QueryInfo queryInfo() {
