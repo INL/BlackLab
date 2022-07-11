@@ -41,7 +41,7 @@ public class ForwardIndexExternal extends ForwardIndexAbstract {
             Map<Annotation, List<String>> content, Map<Annotation, List<Integer>> posIncr, Document document) {
         for (Entry<Annotation, List<String>> e: content.entrySet()) {
             Annotation annotation = e.getKey();
-            AnnotationForwardIndexWriter afi = (AnnotationForwardIndexWriter)get(annotation);
+            AnnotationForwardIndexExternalWriter afi = (AnnotationForwardIndexExternalWriter)get(annotation);
             List<Integer> posIncrThisAnnot = posIncr.get(annotation);
             int fiid = afi.addDocument(e.getValue(), posIncrThisAnnot);
             String fieldName = annotation.forwardIndexIdField();

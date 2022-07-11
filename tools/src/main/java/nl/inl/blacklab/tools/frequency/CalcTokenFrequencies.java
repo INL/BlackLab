@@ -18,6 +18,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -79,10 +80,9 @@ class CalcTokenFrequencies {
             final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
             // Determine all the fields we want to be able to load, so we don't need to load the entire document
-            final List<String> annotationFINames = hitProperties.stream().map(tr -> tr.getAnnotationForwardIndex().annotation().forwardIndexIdField()).collect(Collectors.toList());
             final Set<String> fieldsToLoad = new HashSet<>();
             fieldsToLoad.add(lengthTokensFieldName);
-            fieldsToLoad.addAll(annotationFINames);
+            index.prepareForGetFiidCall(annotations, fieldsToLoad);
             fieldsToLoad.addAll(metadataFields);
 
             final IndexReader reader = index.reader();
@@ -101,8 +101,7 @@ class CalcTokenFrequencies {
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                         for (AnnotInfo annot : hitProperties) {
                             final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                            final String annotationFIName = afi.annotation().forwardIndexIdField();
-                            final int fiid = doc.getField(annotationFIName).numericValue().intValue();
+                            final int fiid = index.getFiid(afi.annotation(), docId, doc);
                             final int[] tokenValues = afi.getDocument(fiid);
                             tokenValuesPerAnnotation.add(tokenValues);
 
@@ -121,7 +120,7 @@ class CalcTokenFrequencies {
                     }
 
                     // Step 2: retrieve the to-be-grouped metadata for this document
-                    int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                    int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                     //final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), docId), 0, docLength);
                     final String[] metadataValuesForGroup = !docProperties.isEmpty() ? new String[docProperties.size()] : null;
                     for (int i = 0; i < docProperties.size(); ++i)

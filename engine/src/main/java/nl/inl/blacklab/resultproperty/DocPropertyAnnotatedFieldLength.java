@@ -13,6 +13,7 @@ import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.util.LuceneUtil;
@@ -93,18 +94,18 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     // Previous segment (the highest docBase lower than docId) is the right one
                     Integer prevDocBase = prev.getKey();
                     NumericDocValuesCacher prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                    return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                 }
                 prev = e;
             }
             // Last segment is the right one
             Integer prevDocBase = prev.getKey();
             NumericDocValuesCacher prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
         
         // Not cached; find fiid by reading stored value from Document now
-        return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+        return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
     private long get(PropertyValueDoc identity) {

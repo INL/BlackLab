@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -14,22 +13,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 @ThreadSafe
 public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
-
-    /**
-     * Open a forward index.
-     *
-     * Automatically figures out the forward index version and instantiates the
-     * right class.
-     * 
-     * @param index our index 
-     * @param field field for which this is the forward index
-     * @return the forward index object
-     */
-    static ForwardIndex open(BlackLabIndex index, AnnotatedField field) {
-        return index.allFilesInIndex() ?
-                new ForwardIndexIntegrated(index, field) :
-                new ForwardIndexExternal(index, field);
-    }
 
     /**
      * Get the Terms object in order to translate ids to token strings

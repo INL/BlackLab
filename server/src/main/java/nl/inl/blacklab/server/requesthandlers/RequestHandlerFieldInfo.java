@@ -12,8 +12,8 @@ import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -46,7 +46,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
      */
     static Collator getValueSortCollator() {
         if (valueSortCollator == null) {
-            valueSortCollator = (RuleBasedCollator) BlackLabIndexImpl.defaultCollator();
+            valueSortCollator = (RuleBasedCollator) BlackLab.defaultCollator();
             try {
                 // Make sure it ignores parentheses when comparing
                 String rules = valueSortCollator.getRules();

@@ -26,11 +26,12 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  *
  * This implementation is thread-safe.
  */
-class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstract {
+class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExternalAbstract {
 
-    protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexReader.class);
+    protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexExternalReader.class);
+
     /** The unique terms in our index */
-    TermsReader terms = null;
+    private TermsReader terms = null;
 
     /** Mapping into the tokens file */
     private List<ByteBuffer> tokensFileChunks = null;
@@ -53,7 +54,7 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
     /** Deleted TOC entries. Always sorted by size. */
     List<Integer> deletedTocEntries = null;
 
-    AnnotationForwardIndexReader(Annotation annotation, File dir, Collators collators) {
+    AnnotationForwardIndexExternalReader(Annotation annotation, File dir, Collators collators) {
         super(annotation, dir, collators);
 
         if (!dir.exists()) {
@@ -217,18 +218,18 @@ class AnnotationForwardIndexReader extends AnnotationForwardIndexExternalAbstrac
             }
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
-            synchronized (whichChunk) {
-                ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
-                ib = whichChunk.asIntBuffer();
 
-                // The file is mem-mapped (search mode).
-                // Position us at the correct place in the file.
-                if (start > ib.limit()) {
-                    logger.debug("  start=" + start + ", ib.limit()=" + ib.limit());
-                }
-                ib.position(start);
-                ib.get(snippet);
+            ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
+            ib = whichChunk.asIntBuffer();
+
+            // The file is mem-mapped (search mode).
+            // Position us at the correct place in the file.
+            if (start > ib.limit()) {
+                logger.debug("  start=" + start + ", ib.limit()=" + ib.limit());
             }
+            ib.position(start);
+            ib.get(snippet);
+
             result.add(snippet);
         }
 

@@ -13,7 +13,7 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
-    private AnnotationForwardIndexWriter fi;
+    private AnnotationForwardIndexExternalWriter fi;
 
     private File testDir;
 
@@ -29,7 +29,7 @@ public class TestForwardIndexDelete {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new AnnotationForwardIndexWriter(null, testDir, Collators.defaultCollator(), true);
+        fi = new AnnotationForwardIndexExternalWriter(null, testDir, Collators.defaultCollator(), true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {

@@ -15,8 +15,6 @@ import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-
 /**
  * Manages downloaded files.
  *
@@ -27,19 +25,25 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class DownloadCache {
 
     /**
-     * Is DocIndexerBase allowed to download files? (defaults to false for security;
-     * explicitly set it to true if you want this)
+     * How this class can be configured.
      */
-    private static boolean fileDownloadAllowed = false;
+    public interface Config {
+        boolean isDownloadAllowed();
 
-    /** Maximum size of (linked, e.g. metadata) files downloaded */
-    private static long maxDownloadedFileSize = 10_000_000;
+        String getDir();
+
+        long getSize();
+
+        long getMaxFileSize();
+    }
+
+    private static Config config;
 
     /** Maximum age of downloaded file in sec */
     private static final int maxDownloadAgeSec = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static int maxDownloadFolderSize = 100_000_000;
+    private static long maxDownloadFolderSize = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;
@@ -110,13 +114,17 @@ public class DownloadCache {
 
         public void delete() {
             if (file.exists() && !file.delete())
-                throw new BlackLabRuntimeException("Unable to delete downloaded file: " + file);
+                throw new RuntimeException("Unable to delete downloaded file: " + file);
         }
 
         public long size() {
             return file.length();
         }
 
+    }
+
+    public static void setConfig(Config config) {
+        DownloadCache.config = config;
     }
 
     /**
@@ -181,9 +189,9 @@ public class DownloadCache {
         if (download == null) {
             URL url = new URL(inputFile);
             int urlSize = getUrlSize(url);
-            if (urlSize > maxDownloadedFileSize)
+            if (urlSize > getMaxDownloadedFileSize())
                 throw new UnsupportedOperationException(
-                        "File too large (" + urlSize + " > " + maxDownloadedFileSize + ")");
+                        "File too large (" + urlSize + " > " + getMaxDownloadedFileSize() + ")");
             String ext = inputFile.replaceAll("^.+(\\.[^.]+)$", "$1");
             if (ext == null || ext.isEmpty())
                 ext = ".xml";
@@ -200,39 +208,26 @@ public class DownloadCache {
     }
 
     public static boolean isFileDownloadAllowed() {
-        return fileDownloadAllowed;
+        return config.isDownloadAllowed();
     }
 
-    public static void setDownloadAllowed(boolean fileDownloadAllowed) {
-        DownloadCache.fileDownloadAllowed = fileDownloadAllowed;
-    }
-
-    public static void setMaxFileSizeMegs(int maxDownloadedFileSizeMegs) {
-        maxDownloadedFileSize = maxDownloadedFileSizeMegs * 1_000_000L;
-        if (maxDownloadFolderSize < maxDownloadedFileSize)
-            maxDownloadedFileSize = maxDownloadFolderSize;
+    private static long getMaxDownloadedFileSize() {
+        return Math.min(maxDownloadFolderSize, config.getMaxFileSize());
     }
 
     public synchronized static File getDownloadTempDir() {
         if (downloadTempDir == null) {
-            downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
+            if (config.getDir() != null) {
+                downloadTempDir = new File(config.getDir());
+            } else {
+                downloadTempDir = new File(System.getProperty("java.io.tmpdir"), "bls-download-cache");
+            }
         }
         if (!downloadTempDir.exists()) {
             if (!downloadTempDir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + downloadTempDir);
+                throw new RuntimeException("Could not create dir: " + downloadTempDir);
             downloadTempDir.deleteOnExit();
         }
         return downloadTempDir;
     }
-
-    public static void setDir(File downloadTempDir) {
-        DownloadCache.downloadTempDir = downloadTempDir;
-    }
-
-    public static void setSizeMegs(int maxDownloadFolderSizeMegs) {
-        maxDownloadFolderSize = maxDownloadFolderSizeMegs * 1_000_000;
-        if (maxDownloadFolderSize < maxDownloadedFileSize)
-            maxDownloadedFileSize = maxDownloadFolderSize;
-    }
-
 }

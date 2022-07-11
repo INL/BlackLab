@@ -52,7 +52,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 
@@ -1002,8 +1001,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             // version)
 
             // Reset version info
-            blackLabBuildTime = BlackLabIndexImpl.blackLabBuildTime();
-            blackLabVersion = BlackLabIndexImpl.blackLabVersion();
+            blackLabBuildTime = BlackLab.buildTime();
+            blackLabVersion = BlackLab.version();
             indexFormat = LATEST_INDEX_FORMAT;
             timeModified = timeCreated = IndexMetadataImpl.timestamp();
 
@@ -1210,8 +1209,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     private static void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
-        versionInfo.put("blackLabBuildTime", BlackLabIndexImpl.blackLabBuildTime());
-        versionInfo.put("blackLabVersion", BlackLabIndexImpl.blackLabVersion());
+        versionInfo.put("blackLabBuildTime", BlackLab.buildTime());
+        versionInfo.put("blackLabVersion", BlackLab.version());
         versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
         versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
         versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);

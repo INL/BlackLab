@@ -22,8 +22,8 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -114,15 +114,16 @@ public class HitsFromQuery extends HitsMutable {
             }
 
             sourceQuery.setQueryInfo(queryInfo);
-            if (BlackLabIndexImpl.traceOptimization())
+            boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+            if (traceOptimization)
                 logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
             BLSpanQuery optimize = sourceQuery.optimize(reader);
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("Query after optimize(): " + optimize);
 
             BLSpanQuery spanQuery = optimize.rewrite(reader);
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("Query after rewrite(): " + spanQuery);
 
             // Restore previous FI match threshold

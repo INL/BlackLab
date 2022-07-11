@@ -8,8 +8,8 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -22,7 +22,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     /**
      * Collator to use for string comparison while sorting/grouping
      */
-    static final Collator collator = BlackLabIndexImpl.defaultCollator();
+    static final Collator collator = BlackLab.defaultCollator();
 
     /**
      * Convert the String representation of a HitPropValue back into the

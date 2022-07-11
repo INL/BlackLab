@@ -29,6 +29,7 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
@@ -598,7 +599,7 @@ public abstract class RequestHandler {
 
             if (tokenLengthField != null)
                 ds.entry("lengthInTokens",
-                        Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN);
+                        Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
             ds.entry("mayView", mayView(index.metadata(), document));
         }
         ds.endMap();

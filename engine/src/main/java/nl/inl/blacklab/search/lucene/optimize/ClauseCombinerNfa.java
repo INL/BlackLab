@@ -5,7 +5,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -168,7 +167,8 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
         //fp1 bp1 rf242624 rb2568 fil5 fir1 nl27114064 nr57411
         //factor == -2569, abs(factor) > nfaThreshold (2000)
-        if (BlackLabIndexImpl.traceOptimization()) {
+        boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+        if (traceOptimization) {
             logger.debug(String.format("(CCNFA: fp%d bp%d rf%d rb%d fil%d fir%d nl%d nr%d)",
                     forwardPossible ? 1 : 0,
                     backwardPossible ? 1 : 0,
@@ -205,23 +205,24 @@ public class ClauseCombinerNfa extends ClauseCombiner {
 
     @Override
     public int priority(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
+        boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
         if (!isForwardIndexMatchingEnabled()) {
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("(CCNFA: nfa matching switched off)");
             return CANNOT_COMBINE;
         }
 
         long factor = getFactor(left, right, reader);
-        if (BlackLabIndexImpl.traceOptimization())
+        if (traceOptimization)
             logger.debug("(CCNFA: factor == " + factor + ")");
         if (factor == 0) {
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("(CCNFA: cannot combine)");
             return CANNOT_COMBINE;
         }
         long absFactor = Math.abs(factor);
         if (absFactor > nfaThreshold) {
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("(CCNFA: abs(factor) > nfaThreshold (" + nfaThreshold + "))");
             return CANNOT_COMBINE;
         }
@@ -229,7 +230,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
         if (onlyUseNfaForManyUniqueTerms) {
             long maxTermsRight = LuceneUtil.getMaxTermsPerLeafReader(reader, right.getRealField());
             long maxTermsLeft = LuceneUtil.getMaxTermsPerLeafReader(reader, left.getRealField());
-            if (BlackLabIndexImpl.traceOptimization())
+            if (traceOptimization)
                 logger.debug("(CCNFA: maxTermsLeft=" + maxTermsLeft + ", maxTermsRight=" + maxTermsRight + ")");
             if (factor > 0 && maxTermsRight < 10_000 ||
                 factor < 0 && maxTermsLeft < 10_000) {
@@ -256,7 +257,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
+            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.indexFromReader(reader),
                     right.getField());
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
             return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
@@ -268,7 +269,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.fromIndexReader(reader),
+        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(BlackLab.indexFromReader(reader),
                 left.getField());
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
         return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);

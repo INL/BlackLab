@@ -1,5 +1,6 @@
 package nl.inl.blacklab.config;
 
+import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 
 public class BLConfigIndexing {
@@ -18,6 +19,30 @@ public class BLConfigIndexing {
     int numberOfThreads = 2;
 
     int maxNumberOfIndicesPerUser = 10;
+
+    public DownloadCache.Config downloadCacheConfig() {
+        return new DownloadCache.Config() {
+            @Override
+            public boolean isDownloadAllowed() {
+                return BLConfigIndexing.this.isDownloadAllowed();
+            }
+
+            @Override
+            public String getDir() {
+                return getDownloadCacheDir();
+            }
+
+            @Override
+            public long getSize() {
+                return getDownloadCacheSizeMegs() * 1_000_000L;
+            }
+
+            @Override
+            public long getMaxFileSize() {
+                return getDownloadCacheMaxFileSizeMegs() * 1_000_000L;
+            }
+        };
+    }
 
     public boolean isDownloadAllowed() {
         return downloadAllowed;

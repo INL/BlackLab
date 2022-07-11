@@ -125,6 +125,8 @@ public class BLFieldsConsumer extends FieldsConsumer {
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
 
+        // implement custom type of stored field?
+
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
 

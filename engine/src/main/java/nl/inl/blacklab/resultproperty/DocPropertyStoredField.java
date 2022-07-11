@@ -20,9 +20,9 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResult;
@@ -281,7 +281,7 @@ public class DocPropertyStoredField extends DocProperty {
         if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
             String strValue = "\"" + value.toString().replaceAll("\"", "\\\\\"") + "\"";
             try {
-                Analyzer analyzer = BlackLabIndexImpl.analyzerInstance(metadataField.analyzerName());
+                Analyzer analyzer = BuiltinAnalyzers.fromString(metadataField.analyzerName()).getAnalyzer();
                 return LuceneUtil.parseLuceneQuery(strValue, analyzer, fieldName);
             } catch (ParseException e) {
                 return null;

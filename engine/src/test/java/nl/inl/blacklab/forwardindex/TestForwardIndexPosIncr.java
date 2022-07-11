@@ -36,7 +36,7 @@ public class TestForwardIndexPosIncr {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        AnnotationForwardIndexWriter fiw = (AnnotationForwardIndexWriter)AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
+        AnnotationForwardIndexExternalWriter fiw = (AnnotationForwardIndexExternalWriter)AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
         try {
             // Store strings
             String[] words = tokens.stream().map(t -> t.getLeft()).toArray(String[]::new);

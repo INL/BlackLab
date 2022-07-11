@@ -8,7 +8,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -122,7 +122,7 @@ class SpansNot extends BLSpans {
             else if (clauseDoc < currentDoc)
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         alreadyAtFirstMatch = true;

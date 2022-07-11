@@ -13,7 +13,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
  * Managers read access to forward indexes for a single segment.
@@ -147,7 +147,7 @@ class SegmentForwardIndex implements AutoCloseable {
                 long docTokensOffset = tokensIndex.readLong();
                 long nextDocTokensOffset = tokensIndex.readLong(); // (always exists because we write an extra value at the end)
                 int docLength = (int) (nextDocTokensOffset - docTokensOffset) / Integer.BYTES
-                        - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
 
                 int n = starts.length;
                 if (n != ends.length)

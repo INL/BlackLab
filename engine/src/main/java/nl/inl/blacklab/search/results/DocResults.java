@@ -30,7 +30,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -353,7 +353,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 group.add(r);
             Integer groupSize = groupSizes.get(groupId);
             Long groupTokenSize = groupTokenSizes.get(groupId);
-            long docLengthTokens = fieldLengthProp.get(r.identity().value()) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            long docLengthTokens = fieldLengthProp.get(r.identity().value()) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             if (groupSize == null) {
                 groupSize = 1;
                 groupTokenSize = docLengthTokens;
@@ -522,7 +522,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                 numberOfDocuments++;
                                 if (countTokens){
                                 	tokenLengthValues.advanceExact(docId);
-                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+                                    numberOfTokens += tokenLengthValues.longValue() - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                                 }
                             }
                         }

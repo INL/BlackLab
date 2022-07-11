@@ -11,12 +11,12 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestPropertyValues {
 
-    private static final Collator regularCollator = BlackLabIndexImpl.defaultCollator();
+    private static final Collator regularCollator = BlackLab.defaultCollator();
 
     /** A different collator is used for terms so that if a and b are equal after desensitizing, collator.compare(a, b) == 0 */
     private static final Collator termsCollator = (new Collators(regularCollator, CollatorVersion.V2)).get(

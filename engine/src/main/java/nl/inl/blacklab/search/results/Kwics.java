@@ -98,7 +98,7 @@ public class Kwics {
         fiidAnnotations.add(wordAnnot);
         fiidAnnotations.add(punctAnnot);
         fiidAnnotations.addAll(attrForwardIndices.keySet());
-        List<FiidLookup> fiidLookupList = FiidLookup.getList(fiidAnnotations, index, !hits.hasAscendingLuceneDocIds());
+        List<FiidLookup> fiidLookupList = index.getFiidLookups(fiidAnnotations, !hits.hasAscendingLuceneDocIds());
         Map<Annotation, FiidLookup> fiidLookups = IntStream.range(0, fiidAnnotations.size()).boxed()
                 .collect(Collectors.toMap(fiidAnnotations::get, fiidLookupList::get));
 

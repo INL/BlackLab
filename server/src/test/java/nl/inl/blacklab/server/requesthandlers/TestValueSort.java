@@ -9,7 +9,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestValueSort {
@@ -69,7 +69,7 @@ public class TestValueSort {
             "test",
             "tested"
         );
-        Collator coll = new Collators(BlackLabIndexImpl.defaultCollator(), CollatorVersion.V1).get(MatchSensitivity.INSENSITIVE);
+        Collator coll = new Collators(BlackLab.defaultCollator(), CollatorVersion.V1).get(MatchSensitivity.INSENSITIVE);
         list.sort(coll);
         Assert.assertEquals(list, expected);
     }
@@ -120,7 +120,7 @@ public class TestValueSort {
             "test",
             "tested"
         );
-        Collator coll = new Collators(BlackLabIndexImpl.defaultCollator(), CollatorVersion.V2).get(MatchSensitivity.INSENSITIVE);
+        Collator coll = new Collators(BlackLab.defaultCollator(), CollatorVersion.V2).get(MatchSensitivity.INSENSITIVE);
         list.sort(coll);
         Assert.assertEquals(list, expected);
     }

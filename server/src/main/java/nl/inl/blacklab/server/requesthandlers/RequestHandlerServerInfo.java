@@ -6,7 +6,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.IndexListener;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -35,8 +35,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
         Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
 
         ds.startMap()
-                .entry("blacklabBuildTime", BlackLabIndexImpl.blackLabBuildTime())
-                .entry("blacklabVersion", BlackLabIndexImpl.blackLabVersion());
+                .entry("blacklabBuildTime", BlackLab.buildTime())
+                .entry("blacklabVersion", BlackLab.version());
 
         ds.startEntry("indices").startMap();
 

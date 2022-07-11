@@ -25,17 +25,17 @@ public abstract class TermsReaderAbstract implements Terms {
     protected final ThreadLocal<int[]> arrayAndOffsetAndLength = ThreadLocal.withInitial(() -> new int[3]);
 
     /** How many terms total are there? (always valid) */
-    int numberOfTerms = 0;
+    private int numberOfTerms;
 
     /**
      * Collator to use for string comparisons
      */
-    Collator collator;
+    protected final Collator collator;
 
     /**
      * Collator to use for insensitive string comparisons
      */
-    Collator collatorInsensitive;
+    protected final Collator collatorInsensitive;
 
     /** Insensitive sort position to start index of group in groupId2TermIds */
     private int[] insensitivePosition2GroupId;

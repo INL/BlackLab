@@ -114,38 +114,38 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         }
         Collators collators = new Collators(collator, collVersion);
         if (indexMode)
-            fi = new AnnotationForwardIndexWriter(annotation, dir, collators, create);
+            fi = new AnnotationForwardIndexExternalWriter(annotation, dir, collators, create);
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexReader(annotation, dir, collators);
+            fi = new AnnotationForwardIndexExternalReader(annotation, dir, collators);
         }
         return fi;
     }
 
     /** The table of contents (TOC) file, docs.dat */
-    final File tocFile;
+    protected final File tocFile;
 
     /** The tokens file (stores indexes into terms.dat) */
-    final File tokensFile;
+    protected final File tokensFile;
 
     /** The terms file (stores unique terms) */
-    final File termsFile;
+    protected final File termsFile;
 
     /**
      * The position (in ints) in the tokens file after the last token written. Note
      * that the actual file may be larger because we reserve space at the end.
      */
-    long tokenFileEndPosition = 0;
+    protected long tokenFileEndPosition = 0;
 
     /**
      * If true, our Terms can be used for NFA matching (Collator is consistent with
      * other comparisons)
      */
-    final boolean canDoNfaMatching;
+    protected final boolean canDoNfaMatching;
 
     /** The annotation for which we're the forward index */
-    final Annotation annotation;
+    protected final Annotation annotation;
 
     /** Collators to use for sorting terms */
     private final Collators collators;

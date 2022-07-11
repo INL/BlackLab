@@ -54,7 +54,7 @@ class TermsWriter implements Terms {
      * Mapping from term to its unique index number. We use a SortedMap because we
      * wish to store the sorted index numbers later (to speed up sorting).
      */
-    final Map<CollationKey, Integer> termIndex;
+    private final Map<CollationKey, Integer> termIndex;
 
     /**
      * The maximum block size to use while writing the terms file. Usually around
@@ -65,12 +65,12 @@ class TermsWriter implements Terms {
     /**
      * Collator to use for string comparisons
      */
-    Collator collator;
+    private final Collator collator;
 
     /**
      * Collator to use for insensitive string comparisons
      */
-    Collator collatorInsensitive;
+    private final Collator collatorInsensitive;
 
     TermsWriter(Collators collators, File termsFile) {
         this.collator = collators.get(MatchSensitivity.SENSITIVE);

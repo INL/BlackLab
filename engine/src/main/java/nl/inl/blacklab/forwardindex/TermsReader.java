@@ -20,7 +20,7 @@ import nl.inl.util.BlockTimer;
  */
 public class TermsReader extends TermsReaderAbstract {
 
-    protected final File termsFile;
+    private final File termsFile;
 
     public TermsReader(Collators collators, File termsFile) {
         super(collators);
@@ -53,7 +53,6 @@ public class TermsReader extends TermsReaderAbstract {
             ib.get(termId2SensitivePosition);
             ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
             ib.get(termId2InsensitivePosition);
-            ib = null; // garbage collect option
 
             finishInitialization(terms, termId2SensitivePosition, termId2InsensitivePosition);
 

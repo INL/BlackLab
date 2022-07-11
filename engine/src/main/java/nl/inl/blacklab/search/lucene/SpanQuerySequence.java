@@ -20,7 +20,7 @@ import org.apache.lucene.search.spans.SpanWeight;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -218,11 +218,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // Rewrite adjacent clauses according to rewriting precedence rules
         boolean anyRewrittenThisCycle = true;
         int pass = 0;
-        BLSpanQuery searchLogger = !cl.isEmpty() && BlackLabIndexImpl.traceOptimization() ? cl.get(0) : null;
-        if (BlackLabIndexImpl.traceOptimization())
+        boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+        BLSpanQuery searchLogger = !cl.isEmpty() && traceOptimization ? cl.get(0) : null;
+        if (traceOptimization)
             logger.debug("SpanQuerySequence.combineAdjacentClauses() start");
         while (anyRewrittenThisCycle) {
-            if (BlackLabIndexImpl.traceOptimization()) {
+            if (traceOptimization) {
                 logger.debug("Clauses before " + ord(pass) + " pass: " + StringUtils.join(cl, ", "));
                 pass++;
             }
@@ -257,7 +258,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 // Yes, execute the highest-prio combiner
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
-                if (BlackLabIndexImpl.traceOptimization())
+                if (traceOptimization)
                     logger.info("Execute lowest prio number combiner: " + highestPrioCombiner + "(" + left + ", " + right + ")");
                 left = cl.get(highestPrioIndex - 1);
                 right = cl.get(highestPrioIndex);
@@ -270,7 +271,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             if (anyRewrittenThisCycle)
                 anyRewritten = true;
         }
-        if (BlackLabIndexImpl.traceOptimization())
+        if (traceOptimization)
             logger.info("Cannot combine any other clauses. Result: " + StringUtils.join(cl, ", "));
 
         return anyRewritten;
@@ -279,10 +280,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        BlackLabIndex index = BlackLab.fromIndexReader(reader);
+        BlackLabIndex index = BlackLab.indexFromReader(reader);
         boolean canDoNfaMatching = false;
-        if (index instanceof BlackLabIndexImpl) {
-            canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();
+        if (index instanceof BlackLabIndexAbstract) {
+            canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();
         }
         boolean anyRewritten = false;
 
@@ -322,10 +323,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        BlackLabIndex index = BlackLab.fromIndexReader(reader);
+        BlackLabIndex index = BlackLab.indexFromReader(reader);
         boolean canDoNfaMatching = false;
-        if (index instanceof BlackLabIndexImpl) {
-            canDoNfaMatching = ((BlackLabIndexImpl)index).canDoNfaMatching();
+        if (index instanceof BlackLabIndexAbstract) {
+            canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();
         }
         boolean anyRewritten = false;
 

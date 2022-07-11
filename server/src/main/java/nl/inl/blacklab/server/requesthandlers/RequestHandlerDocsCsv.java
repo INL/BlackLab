@@ -16,7 +16,7 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -241,7 +241,7 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
 
                 // Length field, if applicable
                 if (tokenLengthField != null)
-                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN)); // lengthInTokens
+                    row.add(Integer.toString(Integer.parseInt(doc.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN)); // lengthInTokens
 
                 // other fields in order of appearance
                 for (String fieldId : metadataFieldIds) {

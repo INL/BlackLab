@@ -41,9 +41,8 @@ public class SearchManager {
         this.config = config;
 
         // Create BlackLab instance with the desired number of search threads
-        int numberOfSearchThreads = config.getPerformance().getMaxConcurrentSearches();
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
-        blackLab = BlackLab.createEngine(numberOfSearchThreads, maxThreadsPerSearch);
+        blackLab = BlackLab.createEngine(maxThreadsPerSearch);
 
         // Create the cache
         String cacheClass = config.getCache().getImplementation();

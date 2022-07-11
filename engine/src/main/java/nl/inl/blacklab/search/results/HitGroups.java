@@ -16,6 +16,7 @@ import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -107,7 +108,8 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         this.criteria = criteria;
 
         List<Annotation> requiredContext = criteria.needsContext();
-        List<FiidLookup> fiidLookups = FiidLookup.getList(requiredContext, hits.queryInfo().index(), !hits.hasAscendingLuceneDocIds());
+        BlackLabIndex index = hits.queryInfo().index();
+        List<FiidLookup> fiidLookups = index.getFiidLookups(requiredContext, !hits.hasAscendingLuceneDocIds());
         criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
         
         //Thread currentThread = Thread.currentThread();

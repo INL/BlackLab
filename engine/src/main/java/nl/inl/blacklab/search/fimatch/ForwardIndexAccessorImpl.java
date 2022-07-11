@@ -12,6 +12,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -127,7 +128,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
             DocIntFieldGetter g = fiidGetters.get(annotIndex);
             if (g == null) {
                 Annotation annotation = annotationNames.get(annotIndex);
-                g = new DocIntFieldGetter(reader, annotation.forwardIndexIdField());
+                g = index.createFiidGetter(reader, annotation);
                 fiidGetters.set(annotIndex, g);
             }
             return g;
@@ -149,7 +150,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         protected int getDocLength(int docId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return fis.get(0).docLength(getFiid(0, docId)) - BlackLabIndex.IGNORE_EXTRA_CLOSING_TOKEN;
+            return fis.get(0).docLength(getFiid(0, docId)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
         final int[] starts = { 0 };

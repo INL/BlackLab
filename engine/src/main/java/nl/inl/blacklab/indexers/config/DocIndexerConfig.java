@@ -24,7 +24,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 
@@ -598,7 +598,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         this.sortedMetadataValues.computeIfAbsent(name, __ -> {
             ConfigMetadataField conf = this.config.getMetadataField(name);
             if (conf != null && conf.getSortValues()) {
-                return new TreeSet<>(BlackLabIndexImpl.defaultCollator()::compare);
+                return new TreeSet<>(BlackLab.defaultCollator()::compare);
             } else {
                 return new ArrayList<>();
             }

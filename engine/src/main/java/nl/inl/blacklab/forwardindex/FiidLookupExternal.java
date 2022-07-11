@@ -40,7 +40,10 @@ public class FiidLookupExternal implements FiidLookup {
     private final String fiidFieldName;
 
     /** The DocValues per segment (keyed by docBase) */
-    private Map<Integer, NumericDocValues> cachedFiids;
+    private final Map<Integer, NumericDocValues> cachedFiids = new TreeMap<>();
+
+    /** Do we have DocValues for the fiid? */
+    private final boolean docValuesAvailable;
 
     /** Any cached mappings from Lucene docId to forward index id (fiid) or null if not using cache */
     private final Map<Integer, Long> docIdToFiidCache;
@@ -49,13 +52,13 @@ public class FiidLookupExternal implements FiidLookup {
         this.reader = reader;
         this.fiidFieldName = annotation.forwardIndexIdField();
         this.docIdToFiidCache = enableRandomAccess ? new HashMap<>() : null;
-        cachedFiids = new TreeMap<>();
         try {
             for (LeafReaderContext rc : reader.leaves()) {
                 LeafReader r = rc.reader();
                 NumericDocValues numericDocValues = r.getNumericDocValues(fiidFieldName);
                 if (numericDocValues == null) {
                     // Use UninvertingReader to simulate DocValues (slower)
+                    // (should never happen)
                     Map<String, UninvertingReader.Type> fields = new TreeMap<>();
                     fields.put(fiidFieldName, UninvertingReader.Type.INTEGER_POINT);
                     LeafReader uninv = UninvertingReader.wrap(r, fields::get);
@@ -65,10 +68,7 @@ public class FiidLookupExternal implements FiidLookup {
                     cachedFiids.put(rc.docBase, numericDocValues);
                 }
             }
-            if (cachedFiids.isEmpty()) {
-                // We don't actually have DocValues.
-                cachedFiids = null;
-            }
+            docValuesAvailable = !cachedFiids.isEmpty();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -87,14 +87,15 @@ public class FiidLookupExternal implements FiidLookup {
      */
     @Override
     public int get(int docId) {
+        // Is the fiid in the cache (if we have one)?
         if (docIdToFiidCache != null) {
-            // We've previouslt seen this doc id; return the fiid from the cache.
+            // Yes; return value from the cache.
             Long fiid = docIdToFiidCache.get(docId);
             if (fiid != null)
                 return (int)(long)fiid;
         }
 
-        if (cachedFiids != null) {
+        if (docValuesAvailable) {
             // Find the fiid in the correct segment
             Entry<Integer, NumericDocValues> prev = null;
             for (Entry<Integer, NumericDocValues> e : cachedFiids.entrySet()) {
@@ -115,7 +116,8 @@ public class FiidLookupExternal implements FiidLookup {
             return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
         }
 
-        // Not cached; find fiid by reading stored value from Document now
+        // Not cached, no DocValues; find fiid by reading stored value from Document now
+        // (should never happen)
         try {
             long v = Long.parseLong(reader.document(docId).get(fiidFieldName));
             if (docIdToFiidCache != null) {

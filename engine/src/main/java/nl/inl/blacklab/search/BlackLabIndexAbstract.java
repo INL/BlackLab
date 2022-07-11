@@ -2,18 +2,12 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,10 +35,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.analysis.BLDutchAnalyzer;
-import nl.inl.blacklab.analysis.BLNonTokenizingAnalyzer;
-import nl.inl.blacklab.analysis.BLStandardAnalyzer;
-import nl.inl.blacklab.analysis.BLWhitespaceAnalyzer;
+import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.BLCodec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
@@ -53,7 +44,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndexWriter;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -79,171 +70,34 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
-public class BlackLabIndexImpl implements BlackLabIndexWriter {
+public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
+    /** Document length in Lucene and forward index is always reported as one
+     *  higher due to punctuation being a trailing value. We call this the
+     *  "extra closing token". */
+    public static final int IGNORE_EXTRA_CLOSING_TOKEN = 1;
 
     // Class variables
     //---------------------------------------------------------------
 
-    protected static final Logger logger = LogManager.getLogger(BlackLabIndexImpl.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLabIndexAbstract.class);
 
-    /** Analyzer based on WhitespaceTokenizer */
-    protected static final Analyzer WHITESPACE_ANALYZER = new BLWhitespaceAnalyzer();
-
-    /** Analyzer for Dutch and other Latin script languages */
-    protected static final Analyzer DEFAULT_ANALYZER = new BLDutchAnalyzer();
-
-    /** Analyzer based on StandardTokenizer */
-    protected static final Analyzer STANDARD_ANALYZER = new BLStandardAnalyzer();
-
-    /** Analyzer that doesn't tokenize */
-    protected static final Analyzer NONTOKENIZING_ANALYZER = new BLNonTokenizingAnalyzer();
-
-    private static final ContextSize DEFAULT_CONTEXT_SIZE = ContextSize.get(5);
-
-    /** Log detailed debug messages about opening an index? */
-    static boolean traceIndexOpening = false;
-
-    /** Log detailed debug messages about query optimization? */
-    static boolean traceOptimization = false;
-
-    /**
-     * Log debug messages about query execution at various stages, to analyze what
-     * makes a query slow?
-     */
-    static boolean traceQueryExecution = false;
-
-    /** The collator to use for sorting. Defaults to English collator. */
-    private static Collator defaultCollator = Collator.getInstance(new Locale("en", "GB"));
-
-
-    // Static methods
-    //---------------------------------------------------------------
-
-    public static Collator defaultCollator() {
-        return defaultCollator;
-    }
-
-    public static void setDefaultCollator(Collator defaultCollator) {
-        BlackLabIndexImpl.defaultCollator = defaultCollator;
-    }
-
-    /**
-     * Return a timestamp for when BlackLab was built.
-     *
-     * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if the
-     *         timestamp could not be found for some reason (i.e. not running from a
-     *         JAR, or key not found in manifest).
-     */
-    public static String blackLabBuildTime() {
-        return valueFromManifest("Build-Time", "UNKNOWN");
-    }
-
-    /**
-     * Return the BlackLab version.
-     *
-     * @return BlackLab version, or UNKNOWN if the version could not be found for
-     *         some reason (i.e. not running from a JAR, or key not found in
-     *         manifest).
-     */
-    public static String blackLabVersion() {
-        return valueFromManifest("Implementation-Version", "UNKNOWN");
-    }
-
-    /**
-     * Get a value from the manifest file, if available.
-     *
-     * @param key key to get the value for, e.g. "Build-Time".
-     * @param defaultValue value to return if no manifest found or key not found
-     * @return value from the manifest, or the default value if not found
-     */
-    static String valueFromManifest(String key, String defaultValue) {
-        try {
-            URL res = BlackLabIndexImpl.class.getResource(BlackLabIndexImpl.class.getSimpleName() + ".class");
-            URLConnection conn = res.openConnection();
-            if (!(conn instanceof JarURLConnection)) {
-                // Not running from a JAR, no manifest to read
-                return defaultValue;
-            }
-            JarURLConnection jarConn = (JarURLConnection) res.openConnection();
-            Manifest mf = jarConn.getManifest();
-            String value = null;
-            if (mf != null) {
-                Attributes atts = mf.getMainAttributes();
-                if (atts != null) {
-                    value = atts.getValue(key);
-                }
-            }
-            return value == null ? defaultValue : value;
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException("Could not read '" + key + "' from manifest", e);
-        }
-    }
-
-    /**
-     * Instantiate analyzer based on an analyzer alias.
-     *
-     * @param analyzerName type of analyzer
-     *         (default|whitespace|standard|nontokenizing)
-     * @return the analyzer, or null if the name wasn't recognized
-     */
-    public static Analyzer analyzerInstance(String analyzerName) {
-        analyzerName = analyzerName.toLowerCase();
-        if (analyzerName.equals("whitespace")) {
-            return WHITESPACE_ANALYZER;
-        } else if (analyzerName.equals("default")) {
-            return DEFAULT_ANALYZER;
-        } else if (analyzerName.equals("standard")) {
-            return STANDARD_ANALYZER;
-        } else if (analyzerName.matches("(non|un)tokeniz(ing|ed)")) {
-            return NONTOKENIZING_ANALYZER;
-        }
-        return null;
-    }
-
-    public static void setTraceIndexOpening(boolean traceIndexOpening) {
-        logger.debug("Trace index opening: " + traceIndexOpening);
-        BlackLabIndexImpl.traceIndexOpening = traceIndexOpening;
-    }
-
-    public static void setTraceOptimization(boolean traceOptimization) {
-        logger.debug("Trace optimization: " + traceOptimization);
-        BlackLabIndexImpl.traceOptimization = traceOptimization;
-    }
-
-    public static void setTraceQueryExecution(boolean traceQueryExecution) {
-        logger.debug("Trace query execution: " + traceQueryExecution);
-        BlackLabIndexImpl.traceQueryExecution = traceQueryExecution;
-    }
-
-    public static boolean traceOptimization() {
-        return traceOptimization;
-    }
-
-    public static boolean traceIndexOpening() {
-        return traceIndexOpening;
-    }
-
-    public static boolean traceQueryExecution() {
-        return traceQueryExecution;
-    }
 
     // Instance variables
     //---------------------------------------------------------------
 
-
     /** BlackLab instance used to create us */
-    private BlackLabEngine blackLab;
+    private final BlackLabEngine blackLab;
 
     /** The collator to use for sorting. Defaults to English collator. */
-    private Collator collator = BlackLabIndexImpl.defaultCollator;
+    private Collator collator = BlackLab.defaultCollator();
 
     /** Analyzer used for indexing our metadata fields */
-    protected Analyzer analyzer = new BLStandardAnalyzer();
+    private Analyzer analyzer = BuiltinAnalyzers.STANDARD.getAnalyzer();
 
     /** Structure of our index */
-    protected IndexMetadataWriter indexMetadata;
+    private final IndexMetadataWriter indexMetadata;
 
-    protected ContentStoresManager contentStores = new ContentStoresManager();
+    private final ContentStoresManager contentStores = new ContentStoresManager();
 
     /**
      * ForwardIndices allow us to quickly find what token occurs at a specific
@@ -252,26 +106,26 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      *
      * Indexed by annotation.
      */
-    protected Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
+    private final Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
 
-    protected SearchSettings searchSettings;
+    private SearchSettings searchSettings;
 
     /** Should we default to case-/diacritics-sensitive searching? [default: both insensitive] */
-    protected MatchSensitivity defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
+    private MatchSensitivity defaultMatchSensitivity = MatchSensitivity.INSENSITIVE;
 
     /**
      * How we fix well-formedness for snippets of XML: by adding or removing
      * unbalanced tags
      */
-    private UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
+    private final UnbalancedTagsStrategy defaultUnbalancedTagsStrategy = UnbalancedTagsStrategy.ADD_TAG;
 
     /** If true, we want to add/delete documents. If false, we're just searching. */
-    protected boolean indexMode = false;
+    private final boolean indexMode;
 
     /**
      * The Lucene index reader
      */
-    IndexReader reader;
+    private IndexReader reader;
 
     /**
      * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document
@@ -282,7 +136,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     /**
      * Directory where our index resides
      */
-    private File indexLocation;
+    private final File indexLocation;
 
     /**
      * If true, we've just created a new index. New indices cannot be searched, only
@@ -290,18 +144,17 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      */
     private boolean isEmptyIndex = false;
 
-    /** Are our forward indexes and other previously external files integrated into the Lucene index
-     *  (true) or separate files (false)? */
-    private boolean allFilesInIndex = false;
-
     /** The index writer. Only valid in indexMode. */
     private IndexWriter indexWriter = null;
 
     /** How many words of context around matches to return by default */
-    private ContextSize defaultContextSize = DEFAULT_CONTEXT_SIZE;
+    private ContextSize defaultContextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
 
     /** Search cache to use */
     private SearchCache cache = new SearchCacheDummy();
+
+    /** Was this index closed? */
+    private boolean closed;
 
 
     // Constructors
@@ -311,6 +164,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     /**
      * Open an index.
      *
+     * @param blackLab BlackLab engine
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
@@ -320,9 +174,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
+        this.indexLocation = indexDir;
         searchSettings = SearchSettings.defaults();
         try {
             this.indexMode = indexMode;
@@ -333,10 +188,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
                 throw new InvalidConfiguration(e.getMessage() + " (BlackLab configuration file)", e.getCause());
             }
 
-            openIndex(indexDir, indexMode, createNewIndex);
+            reader = openIndex(indexMode, createNewIndex);
 
             // Determine the index structure
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
             indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
             if (!indexMode)
@@ -358,19 +213,20 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
      *         exists.
      * @param indexTemplateFile index template file to use to create index
      */
-    BlackLabIndexImpl(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
+        this.indexLocation = indexDir;
         searchSettings = SearchSettings.defaults();
         this.indexMode = indexMode;
 
         try {
             BlackLab.applyConfigToIndex(this);
 
-            openIndex(indexDir, indexMode, createNewIndex);
+            reader = openIndex(indexMode, createNewIndex);
 
             // Determine the index structure
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
             indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
             if (!indexMode)
@@ -382,6 +238,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         } catch (IOException e) {
             throw new ErrorOpeningIndex(e);
         }
+    }
+
+    private boolean traceIndexOpening() {
+        return BlackLab.config().getLog().getTrace().isIndexOpening();
     }
 
     // Methods for querying the index
@@ -401,11 +261,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     @Override
     public UnbalancedTagsStrategy defaultUnbalancedTagsStrategy() {
         return defaultUnbalancedTagsStrategy;
-    }
-
-    @Override
-    public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
-        this.defaultUnbalancedTagsStrategy = strategy;
     }
 
     @Override
@@ -490,8 +345,6 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
         // Start reading the content store's TOC in the background, so it doesn't
         // trigger on the first search
-        //logger.debug("START initialize CS: " + field.name());
-        //logger.debug("END   initialize CS: " + field.name());
         blackLab.initializationExecutorService().execute(contentStore::initialize);
     }
 
@@ -500,7 +353,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         synchronized (forwardIndices) {
             ForwardIndex forwardIndex = forwardIndices.get(field);
             if (forwardIndex == null) {
-                forwardIndex = ForwardIndex.open(this, field);
+                forwardIndex = createForwardIndex(field);
                 forwardIndices.put(field, forwardIndex);
             }
             return forwardIndex;
@@ -539,60 +392,44 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         return fi.canDoNfaMatching();
     }
 
-    protected void openIndex(File indexDir, boolean indexMode, boolean createNewIndex)
+    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex)
             throws IOException {
         if (!indexMode && createNewIndex)
             throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
 
-        // See if we should create a fully-integrated Lucene index, or
-        // if we're opening an existing index, what type it is.
-        allFilesInIndex = BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES);
-        if (!createNewIndex) {
-            if (VersionFile.exists(indexDir)) {
-                // Existing index with a version file.
-                // Legacy index with external files.
-                allFilesInIndex = false;
-            }
-        }
-
         // If there's a version file (non-integrated index), check it now.
-        if (!createNewIndex && !allFilesInIndex) {
-            if (!indexMode || VersionFile.exists(indexDir)) {
-                if (!BlackLabIndex.isIndex(indexDir)) {
+        if (!createNewIndex && !allFilesInIndex()) {
+            if (!indexMode || VersionFile.exists(indexLocation)) {
+                if (!BlackLabIndex.isIndex(indexLocation)) {
                     throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
-                            + VersionFile.report(indexDir));
+                            + VersionFile.report(indexLocation));
                 }
             }
         }
 
-        if (traceIndexOpening)
+        if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
 
         if (indexMode) {
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
-            indexWriter = openIndexWriter(indexDir, createNewIndex, null);
-            if (traceIndexOpening)
+            indexWriter = openIndexWriter(indexLocation, createNewIndex, null);
+            if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
-            reader = DirectoryReader.open(indexWriter, false, false);
+            return DirectoryReader.open(indexWriter, false, false);
         } else {
             // Open Lucene index
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Following symlinks...");
-            Path indexPath = indexDir.toPath().toRealPath();
+            Path indexPath = indexLocation.toPath().toRealPath();
             while (Files.isSymbolicLink(indexPath)) {
                 // Resolve symlinks, as FSDirectory.open() can't handle them
                 indexPath = Files.readSymbolicLink(indexPath);
             }
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Opening IndexReader...");
-            reader = DirectoryReader.open(FSDirectory.open(indexPath));
+            return DirectoryReader.open(FSDirectory.open(indexPath));
         }
-        this.indexLocation = indexDir;
-
-//      logger.debug("TOTAL TERM FREQ contents%lemma@i: " + reader.getSumTotalTermFreq("contents%lemma@i"));
-//      logger.debug("TOTAL TERM FREQ test: " + reader.getSumTotalTermFreq("test"));
-
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
@@ -603,31 +440,29 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         //   we can't change the analyzer attached to the IndexWriter (and passing a different
         //   analyzer in addDocument() went away in Lucene 5.x).
         //   For now, if we're in index mode, we re-open the index with the analyzer we determined.
-        if (traceIndexOpening)
+        if (traceIndexOpening())
             logger.debug("  Creating analyzers...");
         createAnalyzers();
 
         if (indexMode) {
             // Re-open the IndexWriter with the analyzer we've created above (see comment above)
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Re-opening IndexWriter with newly created analyzers...");
             reader.close();
-            reader = null;
             indexWriter.close();
-            indexWriter = null;
             indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  IndexReader too...");
             reader = DirectoryReader.open(indexWriter, false, false);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
-        blackLab.registerSearcher(reader, this);
+        blackLab.registerIndex(reader, this);
 
         // Detect and open the ContentStore for the contents field
         if (!createNewIndex) {
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Determining main contents field name...");
             AnnotatedField mainContentsField = indexMetadata.mainAnnotatedField();
             if (mainContentsField == null) {
@@ -638,13 +473,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             }
 
             // Register content stores
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Opening content stores...");
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
                 if (field.hasContentStore()) {
                     File dir = new File(indexDir, "cs_" + field.name());
                     if (dir.exists()) {
-                        if (traceIndexOpening)
+                        if (traceIndexOpening())
                             logger.debug("    " + dir + "...");
                         registerContentStore(field, ContentStore.open(dir, indexMode, false));
                     }
@@ -652,24 +487,24 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             }
         }
 
-        if (traceIndexOpening)
+        if (traceIndexOpening())
             logger.debug("  Opening IndexSearcher...");
         indexSearcher = new IndexSearcher(reader);
 
         // Make sure large wildcard/regex expansions succeed
-        if (traceIndexOpening)
+        if (traceIndexOpening())
             logger.debug("  Setting maxClauseCount...");
         BooleanQuery.setMaxClauseCount(100_000);
 
         // Open the forward indices
         if (!createNewIndex) {
-            if (traceIndexOpening)
+            if (traceIndexOpening())
                 logger.debug("  Opening forward indices...");
             for (AnnotatedField field: annotatedFields()) {
                 for (Annotation annotation: field.annotations()) {
                     if (annotation.hasForwardIndex()) {
                         // This annotation has a forward index. Make sure it is open.
-                        if (traceIndexOpening)
+                        if (traceIndexOpening())
                             logger.debug("    " + annotation.luceneFieldPrefix() + "...");
                         annotationForwardIndex(annotation);
                     }
@@ -685,14 +520,15 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
     private void createAnalyzers() {
         Map<String, Analyzer> fieldAnalyzers = new HashMap<>();
-        fieldAnalyzers.put("fromInputFile", analyzerInstance("nontokenizing"));
-        Analyzer baseAnalyzer = analyzerInstance(indexMetadata.metadataFields().defaultAnalyzerName());
+        fieldAnalyzers.put("fromInputFile", BuiltinAnalyzers.fromString("nontokenizing").getAnalyzer());
+        Analyzer baseAnalyzer = BuiltinAnalyzers.fromString(indexMetadata.metadataFields().defaultAnalyzerName())
+                .getAnalyzer();
         for (MetadataField field: indexMetadata.metadataFields()) {
             String analyzerName = field.analyzerName();
             if (field.type() == FieldType.UNTOKENIZED)
                 analyzerName = "nontokenizing";
             if (analyzerName.length() > 0 && !analyzerName.equalsIgnoreCase("default")) {
-                Analyzer fieldAnalyzer = analyzerInstance(analyzerName);
+                Analyzer fieldAnalyzer = BuiltinAnalyzers.fromString(analyzerName).getAnalyzer();
                 if (fieldAnalyzer == null) {
                     logger.error("Unknown analyzer name " + analyzerName + " for field " + field.name());
                 } else {
@@ -707,34 +543,26 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
 
     @Override
     public void close() {
+        synchronized(this) {
+            if (closed)
+                return;
+            closed = true;
+        }
         try {
-            if (blackLab != null) {
-                blackLab.removeSearcher(this);
-                blackLab = null;
-            }
-
-            if (reader != null) {
-                reader.close();
-                reader = null;
-            }
+            blackLab.removeIndex(this);
+            reader.close();
             if (indexWriter != null) {
                 indexWriter.commit();
                 indexWriter.close();
-                indexWriter = null;
             }
-
-            if (contentStores != null) {
-                contentStores.close();
-                contentStores = null;
-            }
+            contentStores.close();
 
             // Close the (external) forward indices
-            if (!allFilesInIndex && forwardIndices != null) {
+            if (!allFilesInIndex()) {
                 for (ForwardIndex fi: forwardIndices.values()) {
                     ((ForwardIndexAbstract)fi).close();
                 }
             }
-            forwardIndices = null;
 
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -754,11 +582,10 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         return reader;
     }
 
-    protected ContentStore openContentStore(Field field) throws ErrorOpeningIndex {
+    private void openContentStore(Field field) throws ErrorOpeningIndex {
         File contentStoreDir = new File(indexLocation, "cs_" + field.name());
         ContentStore contentStore = ContentStore.open(contentStoreDir, indexMode, isEmptyIndex);
         registerContentStore(field, contentStore);
-        return contentStore;
     }
 
     @Override
@@ -796,19 +623,19 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         }
         Directory indexLuceneDir = FSDirectory.open(indexPath);
         if (useAnalyzer == null)
-            useAnalyzer = new BLDutchAnalyzer();
+            useAnalyzer = BuiltinAnalyzers.DUTCH.getAnalyzer();
 
         IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(150); // faster indexing
-        if (allFilesInIndex) {
+        if (allFilesInIndex()) {
             config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
             config.setUseCompoundFile(false); // @@@ TEST
         }
 
         IndexWriter writer = new IndexWriter(indexLuceneDir, config);
 
-        if (!allFilesInIndex) {
+        if (!allFilesInIndex()) {
             if (create) {
                 VersionFile.write(indexDir, "blacklab", "2");
             } else {
@@ -833,7 +660,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     protected void deleteFromForwardIndices(Document d) {
-        if (allFilesInIndex)
+        if (allFilesInIndex())
             return;
         // Delete this document in all forward indices
         for (Map.Entry<AnnotatedField, ForwardIndex> e: forwardIndices.entrySet()) {
@@ -841,7 +668,7 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
             ForwardIndex fi = e.getValue();
             for (Annotation annotation: field.annotations()) {
                 if (annotation.hasForwardIndex())
-                    ((AnnotationForwardIndexWriter)fi.get(annotation)).deleteDocumentByLuceneDoc(d);
+                    ((AnnotationForwardIndexExternalWriter)fi.get(annotation)).deleteDocumentByLuceneDoc(d);
             }
         }
     }
@@ -921,20 +748,13 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
+    public boolean equals(Object o) {
+        if (this == o)
             return true;
-        if (obj == null)
+        if (!(o instanceof BlackLabIndexAbstract))
             return false;
-        if (getClass() != obj.getClass())
-            return false;
-        BlackLabIndexImpl other = (BlackLabIndexImpl) obj;
-        if (indexLocation == null) {
-            if (other.indexLocation != null)
-                return false;
-        } else if (!indexLocation.equals(other.indexLocation))
-            return false;
-        return true;
+        BlackLabIndexAbstract that = (BlackLabIndexAbstract) o;
+        return indexLocation.equals(that.indexLocation);
     }
 
     @Override
@@ -989,8 +809,4 @@ public class BlackLabIndexImpl implements BlackLabIndexWriter {
         return indexWriter.isOpen();
     }
 
-    @Override
-    public boolean allFilesInIndex() {
-        return allFilesInIndex;
-    }
 }

@@ -1,6 +1,6 @@
 # BL CODEC FILES
 
-**NOTE:** a "field annotation" is a Lucene field that belongs to an annotated field. An example is the "lemma" annotation for the "contents" field (Lucene field name: contents%lemam).
+**NOTE:** a "field annotation" is a Lucene field that belongs to an annotated field. An example is the "lemma" annotation for the "contents" field (Lucene field name: contents%lemma).
 
 ## fields - where to find information about each Lucene field (BlackLab annotation).
 

@@ -6,7 +6,7 @@ import java.util.Map;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.analysis.BLDutchAnalyzer;
+import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.search.BlackLab;
@@ -44,7 +44,7 @@ public class TokensPerMetaValue {
                     for (Map.Entry<String, Integer> entry : field.valueDistribution().entrySet()) {
                         // Determine token count for this value
                         Query filter = LuceneUtil.parseLuceneQuery("\"" + entry.getKey().toLowerCase() + "\"",
-                                new BLDutchAnalyzer(), field.name());
+                                BuiltinAnalyzers.DUTCH.getAnalyzer(), field.name());
                         DocResults docs = index.queryDocuments(filter);
                         int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(index, annotatedFieldName));
                         System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"

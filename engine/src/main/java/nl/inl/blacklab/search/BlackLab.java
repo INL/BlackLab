@@ -2,19 +2,23 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.JarURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.config.BLConfigIndexing;
-import nl.inl.blacklab.config.BLConfigLog;
 import nl.inl.blacklab.config.BlackLabConfig;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
@@ -44,9 +48,6 @@ import nl.inl.util.FileUtil;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
-    /** If no explicit BlackLab instance is created, how many search threads should we use? */
-    private static final int DEFAULT_NUM_SEARCH_THREADS = 4;
-
     /** If no explicit BlackLab instance is created, how many threads per search should we use? */
     private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 2;
 
@@ -54,18 +55,13 @@ public final class BlackLab {
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
      * automatically.
      */
-    static BlackLabEngine implicitInstance = null;
+    private static BlackLabEngine implicitInstance = null;
     
     /**
      * Have we called create()? If so, don't create an implicit instance, but throw an exception.
      */
     private static boolean explicitlyCreated = false;
     
-    /**
-     * Map from IndexReader to BlackLab, for use from inside SpanQuery/Spans classes
-     */
-    static final Map<IndexReader, BlackLabEngine> blackLabFromIndexReader = new IdentityHashMap<>();
-
     /** Cache for getConfigDirs() */
     private static List<File> configDirs;
 
@@ -77,15 +73,33 @@ public final class BlackLab {
 
     public static final String FEATURE_INTEGRATE_EXTERNAL_FILES = "integrateExternalFiles";
 
+    /**
+     * Create a new engine instance.
+     *
+     * @param searchThreads (ignored)
+     * @param maxThreadsPerSearch max. threads per search.
+     * @deprecated use {@link #createEngine(int)}
+     */
+    @SuppressWarnings("unused")
+    @Deprecated
     public static BlackLabEngine createEngine(int searchThreads, int maxThreadsPerSearch) {
+        return createEngine(maxThreadsPerSearch);
+    }
+
+    /**
+     * Create a new engine instance.
+     *
+     * @param maxThreadsPerSearch max. threads per search.
+     */
+    public static BlackLabEngine createEngine(int maxThreadsPerSearch) {
         if (implicitInstance != null)
             throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
         explicitlyCreated = true;
-        return new BlackLabEngine(searchThreads, maxThreadsPerSearch);
+        return new BlackLabEngine(maxThreadsPerSearch);
     }
-    
+
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
-        return BlackLabIndex.open(implicitInstance(), dir);
+        return implicitInstance().open(dir);
     }
     
     /**
@@ -111,7 +125,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
             throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(implicitInstance(), indexDir, true, createNewIndex, indexTemplateFile);
+        return implicitInstance().openForWriting(indexDir, createNewIndex, indexTemplateFile);
     }
 
     /**
@@ -126,7 +140,7 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return new BlackLabIndexImpl(BlackLab.implicitInstance(), indexDir, true, createNewIndex, config);
+        return BlackLab.implicitInstance().openForWriting(indexDir, createNewIndex, config);
     }
 
     /**
@@ -155,9 +169,17 @@ public final class BlackLab {
         if (explicitlyCreated)
             throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
         if (implicitInstance == null) {
-            implicitInstance = new BlackLabEngine(DEFAULT_NUM_SEARCH_THREADS, DEFAULT_MAX_THREADS_PER_SEARCH);
+            implicitInstance = new BlackLabEngine(DEFAULT_MAX_THREADS_PER_SEARCH);
         }
         return implicitInstance;
+    }
+
+    public static synchronized void discardImplicitInstance() {
+        implicitInstance = null;
+    }
+
+    public static boolean isImplicitInstance(BlackLabEngine blackLabEngine) {
+        return blackLabEngine == implicitInstance;
     }
 
     /**
@@ -167,12 +189,63 @@ public final class BlackLab {
      * @param reader index reader that was opened using BlackLab
      * @return BlackLab index object
      */
-    public static synchronized BlackLabIndex fromIndexReader(IndexReader reader) {
-        BlackLabEngine blackLabEngine = blackLabFromIndexReader.get(reader);
-        if (blackLabEngine == null) {
-            return null;
+    public static synchronized BlackLabIndex indexFromReader(IndexReader reader) {
+        return BlackLabEngine.indexFromReader(reader);
+    }
+
+    /**
+     * Return a timestamp for when BlackLab was built.
+     *
+     * @return build timestamp (format: yyyy-MM-dd HH:mm:ss), or UNKNOWN if the
+     *         timestamp could not be found for some reason (i.e. not running from a
+     *         JAR, or key not found in manifest).
+     */
+    public static String buildTime() {
+        return valueFromManifest("Build-Time");
+    }
+
+    /**
+     * Return the BlackLab version.
+     *
+     * @return BlackLab version, or UNKNOWN if the version could not be found for
+     *         some reason (i.e. not running from a JAR, or key not found in
+     *         manifest).
+     */
+    public static String version() {
+        return valueFromManifest("Implementation-Version");
+    }
+
+    public static Collator defaultCollator() {
+        return config().getSearch().getCollator().get();
+    }
+
+    /**
+     * Get a value from the manifest file, if available.
+     *
+     * @param key key to get the value for, e.g. "Build-Time".
+     * @return value from the manifest, or the default value if not found
+     */
+    private static String valueFromManifest(String key) {
+        try {
+            URL res = BlackLabIndexAbstract.class.getResource(BlackLabIndexAbstract.class.getSimpleName() + ".class");
+            String value = null;
+            if (res != null) {
+                URLConnection conn = res.openConnection();
+                if (conn instanceof JarURLConnection) {
+                    JarURLConnection jarConn = (JarURLConnection) res.openConnection();
+                    Manifest mf = jarConn.getManifest();
+                    if (mf != null) {
+                        Attributes atts = mf.getMainAttributes();
+                        if (atts != null) {
+                            value = atts.getValue(key);
+                        }
+                    }
+                }
+            }
+            return value == null ? "UNKNOWN" : value;
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException("Error reading '" + key + "' from manifest", e);
         }
-        return blackLabEngine.indexFromReader(reader);
     }
     
     /**
@@ -183,9 +256,15 @@ public final class BlackLab {
      * input format definition files or other configuration files. IndexTool and
      * BlackLab Server use this.
      *
-     * The directories returned are (in decreasing priority): - $BLACKLAB_CONFIG_DIR
-     * (if env. var. is defined) - $HOME/.blacklab - /etc/blacklab -
-     * /vol1/etc/blacklab (legacy, will be removed) - /tmp (legacy, will be removed)
+     * The directories returned are (in decreasing priority):
+     *
+     * <ul>
+     * <li>$BLACKLAB_CONFIG_DIR (if env. var. is defined)</li>
+     * <li>$HOME/.blacklab</li>
+     * <li>/etc/blacklab</li>
+     * <li>/vol1/etc/blacklab (legacy, will be removed)</li>
+     * <li>/tmp (legacy, will be removed)</li>
+     * </ul>>
      *
      * A convenient method to use with this is
      * {@link FileUtil#findFile(List, String, List)}.
@@ -296,31 +375,17 @@ public final class BlackLab {
      */
     private synchronized static void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
-            
-            BlackLabConfig blackLabConfig = config();
-            // Indexing settings
-            BLConfigIndexing indexing = blackLabConfig.getIndexing();
-            DownloadCache.setDownloadAllowed(indexing.isDownloadAllowed());
-            DownloadCache.setMaxFileSizeMegs(indexing.getDownloadCacheMaxFileSizeMegs());
-            if (indexing.getDownloadCacheDir() != null)
-                    DownloadCache.setDir(new File(indexing.getDownloadCacheDir()));
+
+            BLConfigIndexing indexing = config().getIndexing();
+            DownloadCache.setConfig(indexing.downloadCacheConfig());
             ZipHandleManager.setMaxOpen(indexing.getZipFilesMaxOpen());
-            
+
             // Plugins settings
-            PluginManager.initPlugins(blackLabConfig.getPlugins());
-            
-            // Log settings
-            BLConfigLog log = blackLabConfig.getLog();
-            if (log.getTrace().isIndexOpening())
-                BlackLabIndexImpl.setTraceIndexOpening(true);
-            if (log.getTrace().isOptimization())
-                BlackLabIndexImpl.setTraceOptimization(true);
-            if (log.getTrace().isQueryExecution())
-                BlackLabIndexImpl.setTraceQueryExecution(true);
-            
+            PluginManager.initPlugins(config().getPlugins());
+
             globalSettingsApplied = true;
         }
     }
-    
+
     private BlackLab() { }
 }

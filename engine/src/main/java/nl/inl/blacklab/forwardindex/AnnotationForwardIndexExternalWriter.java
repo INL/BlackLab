@@ -30,9 +30,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This implementation is not thread-safe.
  */
 @NotThreadSafe
-public class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternalAbstract {
+public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndexExternalAbstract {
 
-    protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexWriter.class);
+    protected static final Logger logger = LogManager.getLogger(AnnotationForwardIndexExternalWriter.class);
 
     /** Table of contents entry; stored in docs.dat */
     private static class TocEntry implements Comparable<TocEntry> {
@@ -89,7 +89,7 @@ public class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternal
     }
 
     /** The unique terms in our index */
-    TermsWriter terms;
+    private final TermsWriter terms;
 
     /** The memory mapped write int buffer */
     private IntBuffer writeBuffer;
@@ -113,12 +113,12 @@ public class AnnotationForwardIndexWriter extends AnnotationForwardIndexExternal
      * The table of contents (where documents start in the tokens file and how long
      * they are)
      */
-    List<TocEntry> toc = new ArrayList<>();
+    private List<TocEntry> toc = new ArrayList<>();
 
     /** Deleted TOC entries. Always sorted by size. */
-    List<TocEntry> deletedTocEntries = new ArrayList<>();
+    private List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexWriter(Annotation annotation, File dir, Collators collators, boolean create) {
+    AnnotationForwardIndexExternalWriter(Annotation annotation, File dir, Collators collators, boolean create) {
         super(annotation, dir, collators);
 
         if (!dir.exists()) {

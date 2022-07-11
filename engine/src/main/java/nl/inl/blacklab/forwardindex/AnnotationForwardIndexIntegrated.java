@@ -25,8 +25,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex {
 
-    private final TermsIntegrated terms;
-
     /**
      * Open an integrated forward index.
      *
@@ -46,11 +44,13 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
 
     private final Annotation annotation;
 
+    /** The Lucene field that contains our forward index */
+    private final String luceneField;
+
     /** Collators to use for comparisons */
     private final Collators collators;
 
-    /** The Lucene field that contains our forward index */
-    private final String luceneField;
+    private final Terms terms;
 
     /** Index of segments by their doc base (the number to add to get global docId) */
     private final Map<Integer, LeafReaderContext> leafReadersByDocBase = new TreeMap<>();

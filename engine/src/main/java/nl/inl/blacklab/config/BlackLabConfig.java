@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.Json;
 
 public class BlackLabConfig {
@@ -37,7 +37,7 @@ public class BlackLabConfig {
 
     /**
      * Load the global blacklab configuration. This file configures several global
-     * settings, as well as providing default settings for any new {@link BlackLabIndexImpl}
+     * settings, as well as providing default settings for any new {@link BlackLabIndex}
      * constructed hereafter.
      *
      * If no explicit config file has been set by the time when the first BlackLabIndex

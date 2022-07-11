@@ -3,17 +3,21 @@ package nl.inl.blacklab.mocks;
 import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.analysis.BLStandardAnalyzer;
+import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
@@ -30,6 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -59,13 +64,13 @@ public class MockBlackLabIndex implements BlackLabIndex {
     public MockBlackLabIndex() {
         super();
         indexMetadata = new MockIndexMetadata();
-        analyzer = new BLStandardAnalyzer();
+        analyzer = BuiltinAnalyzers.STANDARD.getAnalyzer();
         searchSettings = SearchSettings.defaults();
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
         // so we can find the corresponding BlackLabIndex object from within Lucene code
         blackLab = BlackLab.implicitInstance();
-        blackLab.registerSearcher(null, this);
+        blackLab.registerIndex(null, this);
     }
     
     public QueryInfo createDefaultQueryInfo() {
@@ -74,7 +79,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public void close() {
-        blackLab.removeSearcher(this);
+        blackLab.removeIndex(this);
     }
 
     @Override
@@ -132,11 +137,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public UnbalancedTagsStrategy defaultUnbalancedTagsStrategy() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setDefaultUnbalancedTagsStrategy(UnbalancedTagsStrategy strategy) {
         throw new UnsupportedOperationException();
     }
 
@@ -253,5 +253,25 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public boolean allFilesInIndex() {
         return false;
+    }
+
+    @Override
+    public DocIntFieldGetter createFiidGetter(LeafReader reader, Annotation annotation) {
+        return null;
+    }
+
+    @Override
+    public List<FiidLookup> getFiidLookups(List<Annotation> annotations, boolean enableRandomAccess) {
+        return null;
+    }
+
+    @Override
+    public void prepareForGetFiidCall(List<Annotation> annotations, Set<String> fieldsToLoad) {
+
+    }
+
+    @Override
+    public int getFiid(Annotation annotation, int docId, Document doc) {
+        return 0;
     }
 }

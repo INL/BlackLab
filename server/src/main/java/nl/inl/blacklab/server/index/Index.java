@@ -23,7 +23,6 @@ import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
@@ -33,7 +32,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**
- * A wrapper of sorts around {@link BlackLabIndexImpl}, which is the main blacklab-core
+ * A wrapper of sorts around {@link BlackLabIndex}, which is the main blacklab-core
  * interface to an index.
  *
  * This is the main class used to interface with a corpus/index in
