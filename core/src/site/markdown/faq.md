@@ -57,12 +57,19 @@ See the note about `contentViewable` on the [BlackLab Server overview](blacklab-
 
 ## Can I use BlackLab with Solr/ElasticSearch?
 
-Solr/ElasticSearch integration is high on our [wishlist](roadmap.html), but BlackLab started as a Java library using Lucene directly, and some changes are required to get it to integrate with Solr and/or ElasticSearch. We know the steps required, it's just a question of finding the time. 
+We are working on it! Version 4 of BlackLab should work with Solr, including distributed search. 
 
-If you’re using Solr/ElasticSearch and are interested in taking advantage of the features that BlackLab provides, drop us a line (see below). We'd love to collaborate on this.
+See our [roadmap](roadmap.html) for other future plans.
+
+
+## Where do I find requirements and compatibility information for different versions of BlackLab? 
+
+See the [downloads](downloads.html) page. This includes information about indexed corpus compatibility ("does an older corpus work with a newer BlackLab, or do I have to reindex?")
 
 
 ## Is BlackLab fast?
+
+_(this information is somewhat out of date, but the basic conclusions still hold)_
 
 We've done our best the features we've added don’t compromise Lucene’s impressive search speed. Of course, search and index speed varies based on machine and disk speed and available memory, but here are a few examples, from on a reasonably fast machine with 32GB RAM.
 
@@ -92,6 +99,7 @@ At the Dutch Language Institute, we use all kinds of corpora in all kinds of pro
 
 We designed BlackLab to offer the flexibility that we missed in other corpus engines at the time:
 
+- allows sorting and grouping hits on different properties, including context
 - doesn't prescribe a fixed input format, but can work with any data you want to throw at it
 - provides solid support for Corpus Query Language, but you can easily add query languages. We've added basic support for SRU/CQL (Contextual Query Language), for example, and may add other query languages (e.g. treebanks-search related) in the future.
 - has a modular design, making it easier to extend and maintain

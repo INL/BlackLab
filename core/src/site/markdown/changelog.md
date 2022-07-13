@@ -1,16 +1,41 @@
 # Change Log
 
-## Improvements in 3.0.0-SNAPSHOT
+## Improvements in 3.0.0
 
 ### Changed
 
+- Minimum Java version was raised from 8 to 11.
 - Based on Lucene 8. Thanks to @zhyongwei for the initial version update. Further
   changes were made to how DocValues are used, as this API is now sequential instead
   of random-access.
 - Smarter default config values based on number of CPU cores and max. heap memory.
   A debug message will show that and how the default value for a missing was determined.
 - Corpora larger than 2^31 tokens are now supported. The few operations
-  that don't support this yet will produce a clear error message.
+  that don't support this yet will produce a clear error message. This functionality can
+  be disabled with the `search.enableHugeResultSets` setting (default `true`) that might
+  slightly improve performance.
+- Warn if an annotation named 'word' or 'lemma' has no explicit `sensitivity` declared. Due to a special case, these will automatically get sensitivity `sensitive_insensitive`, but this quirk is deprecated and should not be relied upon.
+- Clearer error message if no `indexLocations` were found.
+- BLS now resolves symlinks while scanning indexLocations.
+- BLS now allows dots in index names (in addition to underscore and dash).
+- DocIndexerXPath now throws an exception if it encounters a non-UTF8 doc.
+- FileProcessor should now handle files larges than 4G (although such files may lead to other problems, e.g. excessive memory use).
+- When search is interrupted, there should now be a better indicating as to why.
+- Stack trace should be included in more error responses if in debug mode.
+- 'Unauthorized to view content' error now refers to documentation.
+- If a format config contains an error, report the file it occurs in.
+- Document that the first annotation declared becomes the main annotation.
+- BLS now also looks at `X-Forwarded-For` header to determine debug mode.
+- BLS now accepts wildcards in the debug mode ip configuration.
+- Update Jackson, revert YAML bug workaround.
+- Improve how search/count times are reported in BLS.
+
+
+### New
+
+- Added `naf` (NLP Annotation Format) to the builtin formats.
+- `FrequencyTool` is a commandline tool that allows you to get frequency lists for an entire corpus.
+
 
 ### Java API
 
@@ -19,6 +44,19 @@
 - `Doc` and `DocImpl` classes were removed. Now that we use `DocValues` everywhere, caching
   Lucene documents doesn't make sense.
 - Searches should no longer get stuck queued even if maxConcurrentSearches is set to a low value.
+
+
+### Fixed
+
+- Fix usecontent=orig with outputformat=json
+- Fix metadata value frequency reading, which due to a bug with how YAML was handled would all be read back as 0.
+- Fix an issue where `HitProperty.contextIndices` would seemingly change during a sort operation.
+- Prevent NPE if no patt specified with `/hits` request.
+- Fix `hitsProcessedAtLeast()` method not always blocking. It may not be clear from the name, but this method will wait for the specified amount of hits to be processed, or will return `false` if all hits were processed and there were fewer than that amount.
+- Fix NPE for malformed sort string like `docid,`.
+- Don't hardcode "word" as the main annotation.
+- Fix errors when running tests in parallel.
+
 
 ### Removed
 
@@ -29,6 +67,23 @@
   fi version 3; these were all replaced with newer versions six years ago. older indexes
   will need to be re-indexed)
 - Some deprecated settings. A warning will be shown if the setting is still found.
+- Deprecated methods from `Indexer`, among others.
+
+## Improvements in 2.3.1
+
+### Fixed
+
+- If another search needs a queued search, always unqueue it (avoids deadlock)
+- Respect chosen context size for CSV export
+- Update list of builtin formats so tei-p5 and the legacy tei formats can be found
+- If format with same name is found, include the name in the exception
+- Don't include metadataGroupInfo with every result for `/hits` and `/docs` responses, this was never intended and produced invalid JSON
+- Don't crash if an unreadable index from a different BlackLab version is found, just skip it
+- Add version and build time to WAR manifest.
+
+### Changed
+
+- IndexTooOld/IndexTooNew replaced with IndexVersionMismatch. See exception message for details.
 
 
 ## Improvements in 2.3.0
