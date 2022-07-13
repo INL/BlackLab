@@ -1,12 +1,20 @@
 # Change Log
 
-## Improvements in 3.0.0-SNAPSHOT
+## Improvements in 2.3.1
 
-### Removed
+### Fixed
 
-- support for obsolete content store and forward index files (cs types "utf8" and "utf8zip",
-  fi version 3; these were all replaced with newer versions six years ago. older indexes
-  will need to be re-indexed)
+- If another search needs a queued search, always unqueue it (avoids deadlock)
+- Respect chosen context size for CSV export
+- Update list of builtin formats so tei-p5 and the legacy tei formats can be found
+- If format with same name is found, include the name in the exception
+- Don't include metadataGroupInfo with every result for /hits and /docs responses, this was never intended and produced invalid JSON
+- Don't crash if an unreadable index from a different BlackLab version is found, just skip it
+- Add version and build time to WAR manifest.
+
+### Changed
+
+- IndexTooOld/IndexTooNew replaced with IndexVersionMismatch. See exception message for details.
 
 
 ## Improvements in 2.3.0
