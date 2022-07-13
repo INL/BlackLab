@@ -107,8 +107,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
                 // Warn users about this so they can make their config files explicit before this special case is removed.
                 logger.warn("Configuration " + config.getName()
-                        + "relies on special default sensitivity 'sensitive_insensitive' for annotation " + name
-                        + " (); this behaviour "
+                        + " relies on special default sensitivity 'sensitive_insensitive' for annotation " + name + "; this behaviour "
                         + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
                         + "without explicit sensitivity will default to 'insensitive'.");
             }

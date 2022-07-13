@@ -252,11 +252,11 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl) indexMetadata.metadataFields().get(name);
-        FieldType type = desc.type();
         for (String value: values) {
             desc.addValue(value);
         }
 
+        FieldType type = desc.type();
         if (type != FieldType.NUMERIC) {
             for (String value: values) {
                 currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
