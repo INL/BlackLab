@@ -12,7 +12,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -281,9 +280,8 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         List<Annotation> requiredContext = sortProp.needsContext();
-        List<FiidLookup> fiidLookups = queryInfo().index().getFiidLookups(requiredContext, !hasAscendingLuceneDocIds());
         sortProp = sortProp.copyWith(this,
-            requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index()), fiidLookups));
+            requiredContext == null ? null : new Contexts(this, requiredContext, sortProp.needsContextSize(index())));
 
         // Perform the actual sort.
         this.ensureAllResultsRead();

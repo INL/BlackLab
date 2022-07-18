@@ -58,7 +58,6 @@ public class TestIndexIntegrated {
 
     @Test
     public void testSimple() {
-        //Assert.assertTrue("allFilesInIndex", index.allFilesInIndex());
         Assert.assertEquals("Number of terms", NUMBER_OF_TERMS, wordTerms.numberOfTerms());
     }
 
@@ -112,19 +111,24 @@ public class TestIndexIntegrated {
         }
     }
 
+    int getToken(AnnotationForwardIndex afi, int docId, int pos) {
+        List<int[]> parts = afi.retrievePartsInt(docId, new int[] { pos }, new int[] { pos + 1 });
+        return parts.get(0)[0];
+    }
+
     @Test
     public void testRetrieve() {
         System.err.flush();
         String[] expected = { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
         for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[i], wordTerms.get(wordFi.getToken(0, i)));
+            Assert.assertEquals(expected[i], wordTerms.get(getToken(wordFi, 0, i)));
         }
     }
 
     /** if token offset out of range, throw an exception */
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOutOfRange() {
-        wordTerms.get(wordFi.getToken(0, TestIndex.DOC_LENGTHS_TOKENS[0]));
+        wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0]));
     }
 
     /** translating a -1 term from segment to global should also return -1 */

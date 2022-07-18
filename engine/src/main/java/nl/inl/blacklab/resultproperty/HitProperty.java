@@ -9,7 +9,6 @@ import org.apache.logging.log4j.Logger;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -272,8 +271,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         List<Annotation> contextsNeeded = needsContext();
         HitProperty result;
         if (contextsNeeded != null) {
-            List<FiidLookup> fiidLookups = hits.index().getFiidLookups(contextsNeeded, !hits.hasAscendingLuceneDocIds());
-            Contexts contexts = new Contexts(hits, contextsNeeded, needsContextSize(hits.index()), fiidLookups);
+            Contexts contexts = new Contexts(hits, contextsNeeded, needsContextSize(hits.index()));
             result = copyWith(hits, contexts, false);
         } else {
             result = copyWith(hits, null, false);

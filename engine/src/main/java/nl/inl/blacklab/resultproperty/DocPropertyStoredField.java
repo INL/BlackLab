@@ -115,7 +115,7 @@ public class DocPropertyStoredField extends DocProperty {
      */
     public String[] get(int docId) {
         if  (docValues != null) {
-            // Find the fiid in the correct segment
+            // Find the value in the correct segment
             Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> target = null;
             for (Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> e : this.docValues.entrySet()) {
                 if (e.getKey() > docId) { break; }
@@ -141,7 +141,7 @@ public class DocPropertyStoredField extends DocProperty {
             }
             return ret;
         } else if (numericDocValues != null) {
-            // Find the fiid in the correct segment
+            // Find the value in the correct segment
             Entry<Integer, NumericDocValuesCacher> target = null;
             for (Entry<Integer, NumericDocValuesCacher> e : this.numericDocValues.entrySet()) {
                 if (e.getKey() > docId) { break; }

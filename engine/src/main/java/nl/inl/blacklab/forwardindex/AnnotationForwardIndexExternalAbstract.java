@@ -3,6 +3,8 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.text.Collator;
 
+import org.apache.lucene.index.IndexReader;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -70,7 +72,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      * @param annotation annotation for which this is the forward index, or null if we don't know (yet)
      * @return the forward index object
      */
-    public static AnnotationForwardIndexExternalAbstract open(File dir, boolean indexMode, Collator collator, boolean create,
+    public static AnnotationForwardIndexExternalAbstract open(IndexReader reader, File dir, boolean indexMode, Collator collator, boolean create,
             Annotation annotation) {
         if (annotation != null && !annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
@@ -114,11 +116,11 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         }
         Collators collators = new Collators(collator, collVersion);
         if (indexMode)
-            fi = new AnnotationForwardIndexExternalWriter(annotation, dir, collators, create);
+            fi = new AnnotationForwardIndexExternalWriter(reader, annotation, dir, collators, create);
         else {
             if (create)
                 throw new UnsupportedOperationException("create == true, but not in index mode!");
-            fi = new AnnotationForwardIndexExternalReader(annotation, dir, collators);
+            fi = new AnnotationForwardIndexExternalReader(reader, annotation, dir, collators);
         }
         return fi;
     }
@@ -153,7 +155,12 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
     /** Has the tokens file been mapped? */
     protected boolean initialized = false;
 
-    public AnnotationForwardIndexExternalAbstract(Annotation annotation, File dir, Collators collators) {
+    /**
+     * For looking up fiid by docId.
+     */
+    private final FiidLookup fiidLookup;
+
+    public AnnotationForwardIndexExternalAbstract(IndexReader reader, Annotation annotation, File dir, Collators collators) {
         this.annotation = annotation;
         this.collators = collators;
         canDoNfaMatching = collators != null && collators.version() != CollatorVersion.V1;
@@ -161,6 +168,13 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         termsFile = new File(dir, "terms.dat");
         tocFile = new File(dir, "docs.dat");
         tokensFile = new File(dir, "tokens.dat");
+
+        if (reader == null) {
+            // Standalone use (e.g. BatchForwardIndex); just use dummy
+            fiidLookup = FiidLookup.USE_DOC_ID;
+        } else {
+            fiidLookup = new FiidLookupExternal(reader, annotation, true);
+        }
     }
 
     @Override
@@ -192,5 +206,12 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
     @Override
     public Collators collators() {
         return collators;
+    }
+
+    @Override
+    public int docId2fiid(int docId) {
+        synchronized (fiidLookup) {
+            return fiidLookup.get(docId);
+        }
     }
 }

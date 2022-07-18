@@ -20,12 +20,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * index segment. It does not need to be thread-safe.
  */
 class DocFieldLengthGetter {
-    /**
-     * We check some cache entries to see if document lengths were saved in the
-     * index or not. (These days, they should always be saved, but we do this in
-     * case someone uses an old index)
-     */
-    private static final int NUMBER_OF_CACHE_ENTRIES_TO_CHECK = 1000;
 
     /** The Lucene index reader, for querying field length */
     private final LeafReader reader;

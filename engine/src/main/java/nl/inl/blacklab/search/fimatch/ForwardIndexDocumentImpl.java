@@ -13,7 +13,7 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
     /** Default size for our chunks */
     private static final int CHUNK_SIZE = 10;
 
-    /** Where to get our forward indices and forward index ids (fiids) */
+    /** How to access our forward indexes */
     private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Lucene document id of the document we're looking at */

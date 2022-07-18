@@ -13,7 +13,6 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
@@ -57,8 +56,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
         List<Annotation> annotations = List.of(annotation);
-        List<FiidLookup> fiidLookups = index.getFiidLookups(annotations, !hits.hasAscendingLuceneDocIds());
-        Contexts contexts = new Contexts(hits, annotations, contextSize, fiidLookups);
+        Contexts contexts = new Contexts(hits, annotations, contextSize);
         MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
         for (int[] context: contexts) {
             // Count words

@@ -3,21 +3,17 @@ package nl.inl.blacklab.mocks;
 import java.io.File;
 import java.text.Collator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
@@ -34,7 +30,6 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -248,34 +243,5 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public BlackLabEngine blackLab() {
         return blackLab;
-    }
-
-    public boolean allFilesInIndex() {
-        return false;
-    }
-
-    @Override
-    public DocIntFieldGetter createFiidGetter(LeafReader reader, Annotation annotation) {
-        return null;
-    }
-
-    @Override
-    public List<FiidLookup> getFiidLookups(List<Annotation> annotations, boolean enableRandomAccess) {
-        return null;
-    }
-
-    @Override
-    public void prepareForGetFiidCall(List<Annotation> annotations, Set<String> fieldsToLoad) {
-
-    }
-
-    @Override
-    public int getFiid(Annotation annotation, int docId, Document doc) {
-        return 0;
-    }
-
-    @Override
-    public ForwardIndex createForwardIndex(AnnotatedField field) {
-        throw new UnsupportedOperationException();
     }
 }

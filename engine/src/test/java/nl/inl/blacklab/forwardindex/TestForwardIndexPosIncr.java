@@ -36,16 +36,19 @@ public class TestForwardIndexPosIncr {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexPosIncr");
 
-        AnnotationForwardIndexExternalWriter fiw = (AnnotationForwardIndexExternalWriter)AnnotationForwardIndexExternalAbstract.open(testDir, true, Collator.getInstance(), true, null);
+        AnnotationForwardIndexExternalWriter fiw = (AnnotationForwardIndexExternalWriter)
+                AnnotationForwardIndexExternalAbstract.open(null, testDir, true, Collator.getInstance(),
+                        true, null);
         try {
             // Store strings
-            String[] words = tokens.stream().map(t -> t.getLeft()).toArray(String[]::new);
-            Integer[] posIncrements = tokens.stream().map(t -> t.getRight()).toArray(Integer[]::new);
+            String[] words = tokens.stream().map(Pair::getLeft).toArray(String[]::new);
+            Integer[] posIncrements = tokens.stream().map(Pair::getRight).toArray(Integer[]::new);
             Assert.assertEquals(0, fiw.addDocument(Arrays.asList(words), Arrays.asList(posIncrements)));
         } finally {
             fiw.close(); // close so everything is guaranteed to be written
         }
-        fi = AnnotationForwardIndexExternalAbstract.open(testDir, false, Collator.getInstance(), false, null);
+        fi = AnnotationForwardIndexExternalAbstract.open(null, testDir, false, Collator.getInstance(),
+                false, null);
     }
 
     @After

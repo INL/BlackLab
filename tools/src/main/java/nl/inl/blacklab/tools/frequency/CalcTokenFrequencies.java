@@ -82,7 +82,6 @@ class CalcTokenFrequencies {
             // Determine all the fields we want to be able to load, so we don't need to load the entire document
             final Set<String> fieldsToLoad = new HashSet<>();
             fieldsToLoad.add(lengthTokensFieldName);
-            index.prepareForGetFiidCall(annotations, fieldsToLoad);
             fieldsToLoad.addAll(metadataFields);
 
             final IndexReader reader = index.reader();
@@ -101,8 +100,7 @@ class CalcTokenFrequencies {
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                         for (AnnotInfo annot : hitProperties) {
                             final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                            final int fiid = index.getFiid(afi.annotation(), docId, doc);
-                            final int[] tokenValues = afi.getDocument(fiid);
+                            final int[] tokenValues = afi.getDocument(docId);
                             tokenValuesPerAnnotation.add(tokenValues);
 
                             // Look up sort values

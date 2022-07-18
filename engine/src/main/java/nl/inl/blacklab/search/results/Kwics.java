@@ -1,14 +1,9 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -93,15 +88,6 @@ public class Kwics {
             }
         }
 
-        // Get FiidLookups for all required forward indexes
-        List<Annotation> fiidAnnotations = new ArrayList<>();
-        fiidAnnotations.add(wordAnnot);
-        fiidAnnotations.add(punctAnnot);
-        fiidAnnotations.addAll(attrForwardIndices.keySet());
-        List<FiidLookup> fiidLookupList = index.getFiidLookups(fiidAnnotations, !hits.hasAscendingLuceneDocIds());
-        Map<Annotation, FiidLookup> fiidLookups = IntStream.range(0, fiidAnnotations.size()).boxed()
-                .collect(Collectors.toMap(fiidAnnotations::get, fiidLookupList::get));
-
         Map<Hit, Kwic> conc1 = new HashMap<>();
         
         /*
@@ -119,7 +105,7 @@ public class Kwics {
                 if (firstIndexWithCurrentDocId != i) {
                     Contexts.makeKwicsSingleDocForwardIndex(
                         hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId), 
-                        wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+                        wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
                 }
                 firstIndexWithCurrentDocId = i;
                 lastDocId = curDocId;
@@ -128,7 +114,7 @@ public class Kwics {
         // last part
         Contexts.makeKwicsSingleDocForwardIndex(
             hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId), 
-            wordForwardIndex, punctForwardIndex, attrForwardIndices, fiidLookups, contextSize, conc1);
+            wordForwardIndex, punctForwardIndex, attrForwardIndices, contextSize, conc1);
         
         return conc1;
     }

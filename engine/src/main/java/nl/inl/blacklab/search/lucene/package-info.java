@@ -11,6 +11,5 @@
  *
  * - {@link nl.inl.blacklab.search.lucene.HitQueryContext} contains capture group information
  * - {@link nl.inl.blacklab.search.lucene.DocFieldLengthGetter} allows us to get the document's length in tokens, needed for some classes
- * - {@link nl.inl.blacklab.search.lucene.DocIntFieldGetter} can retrieve an integer metadata field from the Lucene document, used by ForwardIndexAccessorLeafReaderImpl
  */
 package nl.inl.blacklab.search.lucene;

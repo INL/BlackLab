@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -81,10 +80,6 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
     }
 
-    public int getTermAtPosition(int fiid, int annotationNumber, int pos) {
-        return fis.get(annotationNumber).getToken(fiid, pos);
-    }
-
     @Override
     public String getTermString(int annotIndex, int termId) {
         return fis.get(annotIndex).terms().get(termId);
@@ -115,23 +110,8 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
     @NotThreadSafe
     class ForwardIndexAccessorLeafReaderImpl extends ForwardIndexAccessorLeafReader {
 
-        private final List<DocIntFieldGetter> fiidGetters;
-
         ForwardIndexAccessorLeafReaderImpl(LeafReader reader) {
             super(reader);
-            fiidGetters = new ArrayList<>();
-            for (int i = 0; i < getNumberOfAnnotations(); i++)
-                fiidGetters.add(null);
-        }
-
-        DocIntFieldGetter fiidGetter(int annotIndex) {
-            DocIntFieldGetter g = fiidGetters.get(annotIndex);
-            if (g == null) {
-                Annotation annotation = annotationNames.get(annotIndex);
-                g = index.createFiidGetter(reader, annotation);
-                fiidGetters.set(annotIndex, g);
-            }
-            return g;
         }
 
         /**
@@ -150,7 +130,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         protected int getDocLength(int docId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return fis.get(0).docLength(getFiid(0, docId)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            return fis.get(0).docLength(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
         final int[] starts = { 0 };
@@ -160,12 +140,7 @@ class ForwardIndexAccessorImpl extends ForwardIndexAccessor {
         protected int[] getChunk(int annotIndex, int docId, int start, int end) {
             starts[0] = start;
             ends[0] = end;
-            int fiid = getFiid(annotIndex, docId);
-            return fis.get(annotIndex).retrievePartsInt(fiid, starts, ends).get(0);
-        }
-
-        private int getFiid(int annotIndex, int docId) {
-            return fiidGetter(annotIndex).advance(docId);
+            return fis.get(annotIndex).retrievePartsInt(docId, starts, ends).get(0);
         }
 
         @Override

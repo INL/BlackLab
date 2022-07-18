@@ -5,14 +5,12 @@ import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.text.Collator;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
@@ -22,7 +20,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
@@ -34,7 +31,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.DocIntFieldGetter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -111,61 +107,6 @@ public interface BlackLabIndex extends AutoCloseable {
     static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex  {
         return blackLab.open(indexDir);
     }
-
-    /**
-     * TODO: consolidate fiid stuff, push down to implementation
-     */
-    ForwardIndex createForwardIndex(AnnotatedField field);
-
-    /**
-     * TODO: consolidate fiid stuff, push down to implementation
-     */
-    DocIntFieldGetter createFiidGetter(LeafReader reader, Annotation annotation);
-
-    /**
-     * Get FiidLookups for the specified annotations.
-     *
-     * If any of the entries in the list is null, a corresponding null will be added
-     * to the result list, so the indexes of the result list will match the indexes
-     * of the input list.
-     *
-     * TODO: consolidate fiid stuff, push down to implementation
-     *
-     * @param annotations annotations to get FiidLookup for
-     * @param enableRandomAccess if true, random access will be enabled for the returned objects
-     * @return FiidLookup objects for the specfied annotations
-     */
-    List<FiidLookup> getFiidLookups(List<Annotation> annotations, boolean enableRandomAccess);
-
-    /**
-     * We want to call getFiid() with a Document. Add the fields we'll need.
-     *
-     * Use this to make sure the required fields will be loaded when retrieving
-     * the Lucene Document.
-     *
-     * May or may not add any fields, depending on the index format.
-     *
-     * TODO: probably push this down to a separate implementation class for each index format
-     *
-     * @param annotations annotations we want to access forward index for
-     * @param fieldsToLoad (out) required fields will be added here
-     */
-    void prepareForGetFiidCall(List<Annotation> annotations, Set<String> fieldsToLoad);
-
-    /**
-     * Given the Lucene docId, return the forward index id.
-     *
-     * If all files are contained in the index, the docId and forward
-     * index id are the same.
-     *
-     * TODO: probably push this down to a separate implementation class for each index format
-     *
-     * @param annotation annotation to get the fiid for
-     * @param docId Lucene doc id
-     * @param doc Lucene document if available, or null otherwise
-     * @return the forward index id
-     */
-    int getFiid(Annotation annotation, int docId, Document doc);
 
     // Basic stuff, low-level access to index
     //---------------------------------------------------------------

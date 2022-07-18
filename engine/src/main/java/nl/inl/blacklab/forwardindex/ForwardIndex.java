@@ -46,5 +46,4 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
     void put(Annotation annotation, AnnotationForwardIndex forwardIndex);
 
     boolean canDoNfaMatching();
-
 }

@@ -86,7 +86,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     public long get(int docId) {
         if (docValues != null) {
-            // Find the fiid in the correct segment
+            // Find the value in the correct segment
             Entry<Integer, NumericDocValuesCacher> prev = null;
             for (Entry<Integer, NumericDocValuesCacher> e : docValues.entrySet()) {
                 Integer docBase = e.getKey();
@@ -104,7 +104,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
             return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
         
-        // Not cached; find fiid by reading stored value from Document now
+        // Not cached; find value by reading stored value from Document now
         return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 

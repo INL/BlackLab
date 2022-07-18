@@ -32,7 +32,8 @@ public class ForwardIndexExternal extends ForwardIndexAbstract {
     protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation, BlackLabIndex index) {
         File dir = determineAfiDir(index.indexDirectory(), annotation);
         boolean create = index.indexMode() && index.isEmpty();
-        AnnotationForwardIndexExternalAbstract afi = AnnotationForwardIndexExternalAbstract.open(dir, index.indexMode(), index.collator(), create, annotation);
+        AnnotationForwardIndexExternalAbstract afi = AnnotationForwardIndexExternalAbstract.open(
+                index.reader(), dir, index.indexMode(), index.collator(), create, annotation);
         add(annotation, afi);
         return afi;
     }

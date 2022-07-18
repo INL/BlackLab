@@ -18,6 +18,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -118,8 +119,8 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
     /** Deleted TOC entries. Always sorted by size. */
     private List<TocEntry> deletedTocEntries = new ArrayList<>();
 
-    AnnotationForwardIndexExternalWriter(Annotation annotation, File dir, Collators collators, boolean create) {
-        super(annotation, dir, collators);
+    AnnotationForwardIndexExternalWriter(IndexReader reader, Annotation annotation, File dir, Collators collators, boolean create) {
+        super(reader, annotation, dir, collators);
 
         if (!dir.exists()) {
             if (!create)
@@ -468,11 +469,12 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
     }
 
     @Override
-    public synchronized List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+    public synchronized List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
         // Ideally we shouldn't have this duplicate here, but we use this during tests.
         // Better to refactor reader/writer to share this code.
         //throw new UnsupportedOperationException("Writer doesn't read!");
         try {
+            int fiid = docId2fiid(docId);
             TocEntry e = toc.get(fiid);
             if (e == null || e.deleted)
                 return null;
@@ -603,10 +605,10 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
      * @return length of the document
      */
     @Override
-    public int docLength(int fiid) {
+    public int docLength(int docId) {
         if (!initialized)
             initialize();
-        return toc.get(fiid).length;
+        return toc.get(docId2fiid(docId)).length;
     }
 
     /**

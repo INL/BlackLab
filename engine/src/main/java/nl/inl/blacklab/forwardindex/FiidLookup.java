@@ -22,10 +22,6 @@ public interface FiidLookup {
      */
     FiidLookup USE_DOC_ID = docId -> docId;
 
-    static FiidLookup external(IndexReader reader, Annotation annotation, boolean enableRandomAccess) {
-        return new FiidLookupExternal(reader, annotation, enableRandomAccess);
-    }
-
     /**
      * Return the forward index id for the given Lucene doc id.
      *

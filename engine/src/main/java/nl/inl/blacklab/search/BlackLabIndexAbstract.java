@@ -767,4 +767,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     protected void deleteFromForwardIndices(Document d) {
         // subclasses may override
     }
+
+    protected abstract ForwardIndex createForwardIndex(AnnotatedField field);
+
 }

@@ -12,7 +12,6 @@ import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -109,8 +108,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
         List<Annotation> requiredContext = criteria.needsContext();
         BlackLabIndex index = hits.queryInfo().index();
-        List<FiidLookup> fiidLookups = index.getFiidLookups(requiredContext, !hits.hasAscendingLuceneDocIds());
-        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index()), fiidLookups));
+        criteria = criteria.copyWith(hits, requiredContext == null ? null : new Contexts(hits, requiredContext, criteria.needsContextSize(hits.index())));
         
         //Thread currentThread = Thread.currentThread();
         Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();

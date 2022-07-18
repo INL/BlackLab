@@ -12,6 +12,16 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public interface AnnotationForwardIndex {
 
     /**
+     * Convert the given docId to a forward index id (fiid).
+     *
+     * @param docId Lucene doc id
+     * @return forward index id
+     */
+    default int docId2fiid(int docId) {
+        return docId;
+    }
+
+    /**
      * Initialize this forward index (to be run in the background).
      */
     void initialize();
@@ -33,23 +43,23 @@ public interface AnnotationForwardIndex {
      * file). Possibly this could be solved by using 64-bit Java, but we haven't
      * tried. For now we just disable memory mapping on Windows.
      *
-     * @param fiid forward index document id
+     * @param docId Lucene document id
      * @param start the starting points of the parts to retrieve (in words) (-1 for
      *         start of document)
      * @param end the end points (i.e. first token beyond) of the parts to retrieve
      *         (in words) (-1 for end of document)
      * @return the parts
      */
-    List<int[]> retrievePartsInt(int fiid, int[] start, int[] end);
+    List<int[]> retrievePartsInt(int docId, int[] start, int[] end);
 
     /**
      * Retrieve token ids for the entire document.
      * @param fiid forward index id
      * @return token ids for the entire document.
      */
-    default int[] getDocument(int fiid) {
+    default int[] getDocument(int docId) {
         int[] fullDoc = new int[] { -1 };
-        return retrievePartsInt(fiid, fullDoc, fullDoc).get(0);
+        return retrievePartsInt(docId, fullDoc, fullDoc).get(0);
     }
 
     /**
@@ -69,15 +79,10 @@ public interface AnnotationForwardIndex {
      *
      * NOTE: this INCLUDES the extra closing token at the end of the document!
      *
-     * @param fiid forward index id of a document
+     * @param docId Lucene document id
      * @return length of the document
      */
-    int docLength(int fiid);
-
-    default int getToken(int fiid, int pos) {
-        // Slow/naive implementation, subclasses should override
-        return retrievePartsInt(fiid, new int[] { pos }, new int[] { pos + 1 }).get(0)[0];
-    }
+    int docLength(int docId);
 
     /**
      * The annotation for which this is the forward index

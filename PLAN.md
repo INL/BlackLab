@@ -4,9 +4,7 @@ This is where we will keep track of our current development tasks.
 
 The current major task is to enable BlackLab to integrate with Solr. The goal is to utilize Solr's distributed indexing and search capabilities with BlackLab.
 
-Integrating with Solr will involve the following steps:
-
-These tasks will not necessarily be discretely executed in this order, but some tasks might overlap (e.g. we might tackle group hits standalone, then distributed, then do the other operations).
+Integrating with Solr will involve the following steps.
 
 ## Useful independent tasks:
 
@@ -21,7 +19,6 @@ These tasks will not necessarily be discretely executed in this order, but some 
 - [x] Make it possible to configure feature flags
 - [x] Run integration tests with both values of `integrateExternalFiles`
 - [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)
-- [ ] Make it easier and more obvious how to configure BlackLab programmatically, instead of requiring config file(s) in specific locations. (improves testability, e.g. change feature flag for certain tests).<br>(OPTIONAL BUT RECOMMENDED)
 
 ## Incorporate all information into the Lucene index
 
@@ -36,9 +33,9 @@ These tasks will not necessarily be discretely executed in this order, but some 
 - [ ] In general: refactor for looser coupling / improved testability.
 - [x] Use more clean interfaces instead of abstract classes for external API.
 - [x] BlackLabIndexImpl should be abstract, with separate External and Internal implementations.
-- [ ] Combine / eliminate the fiid-related methods in BlackLabIndex as much as possible.
+- [x] Combine / eliminate the fiid-related methods in BlackLabIndex as much as possible.
   - [ ] ForwardIndexAccessor(LeafReader) seems to have a lot of similarities with how ForwardIndexIntegrated and SegmentForwardIndex work. Could they use a single interface, with a external (legacy) implementation and internal implementations?
-  - [ ] Also look at FiidLookup and DocIntFieldGetter
+  - [x] Also look at FiidLookup and DocIntFieldGetter
 - [ ] Don't rely on BlackLab.defaultConfigDirs() in multiple places.
       Specifically DocIndexerFactoryConfig: this should use an option from blacklab(-server).yaml, 
       with a sane default. Remove stuff like /vol1/... and /tmp/ from default config dirs.
@@ -52,7 +49,7 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil
 - [ ] In addition to the traditional global `ForwardIndex` and `Terms` APIs, also add per-leafreader APIs that can be used to optimize operations on integrated indexes. But do keep non-integrated indexes working as well.
 - [x] In `BLFieldsProducer`, we clone `IndexInput` for every method call that needs access to a file. The reason is threadsafety. But too much cloning could be slow, so we could instead create objects that clone the required `IndexInput`s once for a thread and then use those for every method call.
-- [ ] `TermsIntegrated` doesn't read the terms files we wrote but gets the turms using `TermsEnum` from Lucene. It seems good not to store the terms twice (once by Lucene and once by us), but this does mean we can't use memory-mapped random access to the term strings. So switching to our own terms file might be necessary.
+- [ ] `TermsIntegrated` doesn't read the terms files we wrote but gets the terms using `TermsEnum` from Lucene. It seems good not to store the terms twice (once by Lucene and once by us), but this does mean we can't use memory-mapped random access to the term strings. So switching to our own terms file might be necessary.
 - [ ] Investigate if there is a more efficient way to read from Lucene's `IndexInput` than calling `readInt()` etc. repeatedly. How does Lucene read larger blocks of data from its files?
 - [ ] Interesting (if old) [article](https://blog.thetaphi.de/2012/07/use-lucenes-mmapdirectory-on-64bit.html) about Lucene and memory-mapping. Recommends 1/4 of physical memory should be Java heap, rest for OS cache. Use `iotop` to check how much I/O swapping is occurring.
 - [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
@@ -75,6 +72,3 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] Make other search operations work in distributed mode
 - [ ] Create a Docker setup for distributed Solr+BlackLab
 - [ ] Make it possible to run the tests on the distributed Solr version
-
-
->>>>>>> Add PLAN.md.

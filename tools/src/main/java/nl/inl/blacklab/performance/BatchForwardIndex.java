@@ -61,7 +61,7 @@ public class BatchForwardIndex {
         }
 
         System.err.print("Opening forward index... ");
-        AnnotationForwardIndex fi = AnnotationForwardIndexExternalAbstract.open(indexDir, false,
+        AnnotationForwardIndex fi = AnnotationForwardIndexExternalAbstract.open(null, indexDir, false,
                 BlackLab.defaultCollator(), false, null);
         System.err.println("done. [#docs: " + fi.numDocs() + "]");
 

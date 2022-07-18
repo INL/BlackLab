@@ -319,9 +319,6 @@ public class HitGroupsTokenFrequencies {
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
-                    List<Annotation> annotations = hitProperties.stream()
-                            .map(tr -> tr.getAnnotationForwardIndex().annotation()).collect(Collectors.toList());
-                    index.prepareForGetFiidCall(annotations, fieldsToLoad);
 
                     final IndexReader reader = queryInfo.index().reader();
 
@@ -343,8 +340,7 @@ public class HitGroupsTokenFrequencies {
                             try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                                 for (AnnotInfo annot : hitProperties) {
                                     final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                                    final int fiid = index.getFiid(afi.annotation(), docId, doc);
-                                    final int[] tokenValues = afi.getDocument(fiid);
+                                    final int[] tokenValues = afi.getDocument(docId);
                                     tokenValuesPerAnnotation.add(tokenValues);
 
                                     // Look up sort values
@@ -388,6 +384,14 @@ public class HitGroupsTokenFrequencies {
                                     // that hashes the token ids instead of the sortpositions in that case.
                                     for (int annotationIndex = 0; annotationIndex < numAnnotations; ++annotationIndex) {
                                         int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
+                                        if (tokenIndex >= tokenValues.length) {
+                                            logger.debug("### ERROR");
+                                            logger.debug("docLength = " + docLength);
+                                            logger.debug("tokenValues.length = " + tokenValues.length);
+                                            logger.debug("tokenIndex = " + tokenIndex);
+                                            logger.debug("annotationIndex = " + annotationIndex);
+                                            logger.debug("annotation = " + (hitProperties.get(annotationIndex).getAnnotationForwardIndex().annotation().name()));
+                                        }
                                         annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
                                         int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
                                         sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];

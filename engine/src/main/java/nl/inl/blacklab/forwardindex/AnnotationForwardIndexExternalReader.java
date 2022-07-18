@@ -16,6 +16,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -54,8 +55,8 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
     /** Deleted TOC entries. Always sorted by size. */
     List<Integer> deletedTocEntries = null;
 
-    AnnotationForwardIndexExternalReader(Annotation annotation, File dir, Collators collators) {
-        super(annotation, dir, collators);
+    AnnotationForwardIndexExternalReader(IndexReader reader, Annotation annotation, File dir, Collators collators) {
+        super(reader, annotation, dir, collators);
 
         if (!dir.exists()) {
             throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
@@ -169,10 +170,11 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int fiid, int[] starts, int[] ends) {
+    public List<int[]> retrievePartsInt(int docId, int[] starts, int[] ends) {
         if (!initialized)
             initialize();
 
+        int fiid = docId2fiid(docId);
         if (deleted[fiid] != 0)
             return null;
 
@@ -189,9 +191,6 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             if (end == -1 || end > length[fiid]) // Can happen while making KWICs because we don't know the doc length until here
                 end = length[fiid];
             ForwardIndexAbstract.validateSnippetParameters(length[fiid], start, end);
-
-            // Get an IntBuffer to read the desired content
-            IntBuffer ib;
 
             // The tokens file has has been mapped to memory.
             // Get an int buffer into the file.
@@ -219,16 +218,19 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
 
-            ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
-            ib = whichChunk.asIntBuffer();
+            synchronized (whichChunk) {
+                ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
+                // Get an IntBuffer to read the desired content
+                IntBuffer ib = whichChunk.asIntBuffer();
 
-            // The file is mem-mapped (search mode).
-            // Position us at the correct place in the file.
-            if (start > ib.limit()) {
-                logger.debug("  start=" + start + ", ib.limit()=" + ib.limit());
+                // The file is mem-mapped (search mode).
+                // Position us at the correct place in the file.
+                if (start > ib.limit()) {
+                    logger.debug("  start=" + start + ", ib.limit()=" + ib.limit());
+                }
+                ib.position(start);
+                ib.get(snippet);
             }
-            ib.position(start);
-            ib.get(snippet);
 
             result.add(snippet);
         }
@@ -255,10 +257,10 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
      * @return length of the document
      */
     @Override
-    public int docLength(int fiid) {
+    public int docLength(int docId) {
         if (!initialized)
             initialize();
-        return length[fiid];
+        return length[docId2fiid(docId)];
     }
 
     /**

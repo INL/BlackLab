@@ -22,7 +22,7 @@ public class MockForwardIndex implements AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int fiid, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
         //
         return null;
     }
@@ -40,7 +40,7 @@ public class MockForwardIndex implements AnnotationForwardIndex {
     }
 
     @Override
-    public int docLength(int fiid) {
+    public int docLength(int docId) {
         //
         return 0;
     }
