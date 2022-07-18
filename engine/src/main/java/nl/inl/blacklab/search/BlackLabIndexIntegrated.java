@@ -5,9 +5,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReader;
 
+import nl.inl.blacklab.codec.BLCodec;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -30,11 +33,6 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
-    }
-
-    @Override
-    public boolean allFilesInIndex() {
-        return true;
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {
@@ -95,5 +93,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public int getFiid(Annotation annotation, int docId, Document doc) {
         // fiid always equals lucene docId
         return docId;
+    }
+
+    @Override
+    protected void customizeIndexWriterConfig(IndexWriterConfig config) {
+        config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
+        config.setUseCompoundFile(false); // @@@ TEST
     }
 }

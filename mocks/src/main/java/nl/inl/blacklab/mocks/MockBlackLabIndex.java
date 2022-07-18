@@ -250,7 +250,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
         return blackLab;
     }
 
-    @Override
     public boolean allFilesInIndex() {
         return false;
     }
@@ -273,5 +272,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public int getFiid(Annotation annotation, int docId, Document doc) {
         return 0;
+    }
+
+    @Override
+    public ForwardIndex createForwardIndex(AnnotatedField field) {
+        throw new UnsupportedOperationException();
     }
 }

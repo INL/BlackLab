@@ -13,7 +13,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooNewException;
@@ -36,7 +35,6 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
-import nl.inl.blacklab.codec.BLCodec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -44,9 +42,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -67,7 +63,6 @@ import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.LuceneUtil;
-import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
@@ -106,7 +101,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
      *
      * Indexed by annotation.
      */
-    private final Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
+    protected final Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
 
     private SearchSettings searchSettings;
 
@@ -145,7 +140,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     private boolean isEmptyIndex = false;
 
     /** The index writer. Only valid in indexMode. */
-    private IndexWriter indexWriter = null;
+    IndexWriter indexWriter = null;
 
     /** How many words of context around matches to return by default */
     private ContextSize defaultContextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
@@ -188,6 +183,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 throw new InvalidConfiguration(e.getMessage() + " (BlackLab configuration file)", e.getCause());
             }
 
+            if (!indexMode && createNewIndex)
+                throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
+            checkCanOpenIndex(indexMode, createNewIndex);
             reader = openIndex(indexMode, createNewIndex);
 
             // Determine the index structure
@@ -223,6 +221,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         try {
             BlackLab.applyConfigToIndex(this);
 
+            if (!indexMode && createNewIndex)
+                throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
             reader = openIndex(indexMode, createNewIndex);
 
             // Determine the index structure
@@ -240,7 +240,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         }
     }
 
-    private boolean traceIndexOpening() {
+    boolean traceIndexOpening() {
         return BlackLab.config().getLog().getTrace().isIndexOpening();
     }
 
@@ -392,21 +392,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         return fi.canDoNfaMatching();
     }
 
-    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex)
-            throws IOException {
-        if (!indexMode && createNewIndex)
-            throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
+    protected void checkCanOpenIndex(boolean indexMode, boolean createNewIndex) throws IllegalArgumentException {
+        // subclass can override this
+    }
 
-        // If there's a version file (non-integrated index), check it now.
-        if (!createNewIndex && !allFilesInIndex()) {
-            if (!indexMode || VersionFile.exists(indexLocation)) {
-                if (!BlackLabIndex.isIndex(indexLocation)) {
-                    throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
-                            + VersionFile.report(indexLocation));
-                }
-            }
-        }
-
+    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex) throws IOException {
         if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
 
@@ -556,14 +546,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 indexWriter.close();
             }
             contentStores.close();
-
-            // Close the (external) forward indices
-            if (!allFilesInIndex()) {
-                for (ForwardIndex fi: forwardIndices.values()) {
-                    ((ForwardIndexAbstract)fi).close();
-                }
-            }
-
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -611,7 +593,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     // Methods for mutating the index
     //----------------------------------------------------------------
 
-    private IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
+    protected IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
                 throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
@@ -628,25 +610,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(150); // faster indexing
-        if (allFilesInIndex()) {
-            config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
-            config.setUseCompoundFile(false); // @@@ TEST
-        }
+        customizeIndexWriterConfig(config);
+        return new IndexWriter(indexLuceneDir, config);
+    }
 
-        IndexWriter writer = new IndexWriter(indexLuceneDir, config);
-
-        if (!allFilesInIndex()) {
-            if (create) {
-                VersionFile.write(indexDir, "blacklab", "2");
-            } else {
-                if (!BlackLabIndex.isIndex(indexDir)) {
-                    throw new IllegalArgumentException("Not a BlackLab index, or wrong type or version! "
-                            + VersionFile.report(indexDir) + ": " + indexDir);
-                }
-            }
-        }
-
-        return writer;
+    protected void customizeIndexWriterConfig(IndexWriterConfig config) {
+        // subclasses can override
     }
 
     @Override
@@ -657,20 +626,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     @Override
     public File indexDirectory() {
         return indexLocation;
-    }
-
-    protected void deleteFromForwardIndices(Document d) {
-        if (allFilesInIndex())
-            return;
-        // Delete this document in all forward indices
-        for (Map.Entry<AnnotatedField, ForwardIndex> e: forwardIndices.entrySet()) {
-            AnnotatedField field = e.getKey();
-            ForwardIndex fi = e.getValue();
-            for (Annotation annotation: field.annotations()) {
-                if (annotation.hasForwardIndex())
-                    ((AnnotationForwardIndexExternalWriter)fi.get(annotation)).deleteDocumentByLuceneDoc(d);
-            }
-        }
     }
 
     @Override
@@ -809,4 +764,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         return indexWriter.isOpen();
     }
 
+    protected void deleteFromForwardIndices(Document d) {
+        // subclasses may override
+    }
 }

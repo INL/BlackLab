@@ -24,8 +24,6 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FiidLookup;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
-import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -115,26 +113,9 @@ public interface BlackLabIndex extends AutoCloseable {
     }
 
     /**
-     * Are all files contained within the Lucene index, or are there
-     * separate files for e.g. forward indexes?
-     *
-     * Separate files is the legacy format, everything integrated
-     * is the modern one.
-     *
-     * TODO: remove from index, have separate implementations instead
-     *
-     * @return true iff all files are in the Lucene index
-     */
-    boolean allFilesInIndex();
-
-    /**
      * TODO: consolidate fiid stuff, push down to implementation
      */
-    default ForwardIndex createForwardIndex(AnnotatedField field) {
-        return allFilesInIndex() ?
-                new ForwardIndexIntegrated(this, field) :
-                new ForwardIndexExternal(this, field);
-    }
+    ForwardIndex createForwardIndex(AnnotatedField field);
 
     /**
      * TODO: consolidate fiid stuff, push down to implementation
