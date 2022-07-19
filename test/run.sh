@@ -22,17 +22,12 @@ $COMPOSE run --rm test
 
 # Re-run to test non-integrated index as well
 $COMPOSE stop testserver
-docker container rm blacklab-testserver-1
-docker volume rm blacklab_blacklab-data
-docker network rm blacklab_default
+$COMPOSE rm -fv testserver
 export BLACKLAB_FEATURE_integrateExternalFiles=false
 $COMPOSE run --rm test
 
 
 # Clean up
-# (stop then down to avoid warning about network in use)
+# (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
 $COMPOSE stop testserver
-#$COMPOSE down -v
-docker container rm blacklab-testserver-1
-docker volume rm blacklab_blacklab-data
-docker network rm blacklab_default
+$COMPOSE rm -fv testserver
