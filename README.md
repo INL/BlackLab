@@ -8,7 +8,7 @@ BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licens
 
 To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/).
 
-Learn about [BlackLab's structure and internals](./core/src/site/markdown/blacklab-internals.md) (work in progress). 
+To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
 ## Branches
 
@@ -28,9 +28,9 @@ This version uses Lucene 8. This unfortunately means that corpora created with o
 
 ## Roadmap
 
-There is a high-level [roadmap](https://inl.github.io/BlackLab/roadmap.html) page on the documentation site.
+There is a high-level [roadmap](https://inl.github.io/BlackLab/roadmap.html) page on the documentation site. There are also [BlackLab Archives of Relevant Knowledge (BARKs)](doc/bark/#readme) that go into more detail.
 
-For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found [here](PLAN.md).
+For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](PLAN.md).
 
 
 ## Development workflow
@@ -47,13 +47,13 @@ Our intention is to:
 ## Code style
 
 Configurations for IDE code formatters can be found in the `build-tools/` directory: 
-- `formatter-intellij.xml` for IntelliJ IDEA
-- `formatter-eclipse.xml` for Eclipse
+- **IntelliJ IDEA:** [formatter-intellij.xml](build-tools/formatter-intellij.xml)
+- **Eclipse:** [formatter-eclipse.xml](build-tools/formatter-eclipse.xml)
 
 
 ## Building the site
 
-Here's how to build the [BlackLab site](https://inl.github.io/BlackLab) locally:
+The [BlackLab end-user documentation site](https://inl.github.io/BlackLab) can be built locally if you want:
 
 ```bash
 # Contains the configurations for various checking plugins shared by multiple modules
@@ -99,8 +99,10 @@ docker-compose up -d
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
 
-See the [Docker README](docker/README.md) for more details.
+See the [Docker README](docker/#readme) for more details.
 
 ## Special thanks
 
-* ej-technologies for the <a href="https://www.ej-technologies.com/products/jprofiler/overview.html">JProfiler Java profiler</a>
+* ej-technologies for the [JProfiler Java profiler](https://www.ej-technologies.com/products/jprofiler/overview.html)
+* Matthijs Brouwer, developer of [Mtas](https://github.com/meertensinstituut/mtas/), which we used for reference while developing the custom Lucene Codec and integrating with Solr.
+* Everyone who contributed to the project. BlackLab wouldn't be where it is today without all of you.

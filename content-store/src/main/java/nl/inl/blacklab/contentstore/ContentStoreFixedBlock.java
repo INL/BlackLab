@@ -39,14 +39,15 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     /**
      * Block size for the contents file.
      *
-     * Contributing factors for choosing block size: - larger blocks improve
-     * compression ratio - larger blocks decrease number of blocks you have to read
-     * - smaller blocks decrease the decompression time - smaller blocks increase
-     * the chance that we only have to read one disk block for a single concordance
-     * (disk blocks are generally 2 or 4K) - consider OS I/O caching and memory
-     * mapping. Then it becomes the difference between reading a few bytes from
-     * memory and reading a few kilobytes and decompressing them. Right now, making
-     * concordances is often CPU-bound (because of decompression?)
+     * Contributing factors for choosing block size:
+     * - larger blocks improve compression ratio
+     * - larger blocks decrease number of blocks you have to read
+     * - smaller blocks decrease the decompression time
+     * - smaller blocks increase the chance that we only have to read one disk block for a single concordance
+     * (disk blocks are generally 2 or 4K)
+     * - consider OS I/O caching and memory mapping. Then it becomes the difference between reading a few bytes from
+     * memory and reading a few kilobytes and decompressing them. Right now, making concordances is often CPU-bound
+     * (because of decompression?)
      */
     protected static final int BLOCK_SIZE_BYTES = 4096;
 

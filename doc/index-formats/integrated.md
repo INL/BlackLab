@@ -1,8 +1,12 @@
-# BL CODEC FILES
+# Files in the integrated index
 
-**NOTE:** a "field annotation" is a Lucene field that belongs to an annotated field. An example is the "lemma" annotation for the "contents" field (Lucene field name: contents%lemma).
+This describes the new index format that integrates all previously external files (forward index, content store, index metadata, version files) into the Lucene index. The goal is to enable distributed indexing and search using Solr. Eventually this will become the default for new indexes.
+
+> **NOTE:** this index format is in development and documentation may still be a little rough.
 
 ## fields - where to find information about each Lucene field (BlackLab annotation).
+
+**NOTE:** a "field annotation" is a Lucene field that belongs to an annotated field. An example is the "lemma" annotation for the "contents" field (Lucene field name: `contents%lemma@i` for the insensitive alternative or `contents%lemma@s` for the sensitive one).
 
 **NOTE:** we don't store number of fields; we just read until the end of the file.
 

@@ -44,7 +44,7 @@
 				<item name="Add An Input Format" href="add-input-format.html" />
 				<item name="Improve Search Speed" href="improve-search-speed.html" />
 				<item name="API reference" href="apidocs/index.html" />
-				<item name="File formats" href="file-formats.html" />
+				<item name="Development documentation" href="https://github.com/INL/BlackLab/tree/dev/core/doc#readme" />
 			</item>
 			<item name="Downloads" href="downloads.html"/>
 			<item name="FAQ" href="faq.html"/>
