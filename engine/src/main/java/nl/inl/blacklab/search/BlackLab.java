@@ -152,6 +152,7 @@ public final class BlackLab {
      * @return a BlackLabIndexWriter for the new index, in index mode
      * @throws ErrorOpeningIndex if the index couldn't be opened 
      */
+    @Deprecated
     public static BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
         return openForWriting(indexDir, true, config);
     }

@@ -8,7 +8,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 

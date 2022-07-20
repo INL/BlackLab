@@ -25,7 +25,7 @@ public class TestQueryRewriteNfa {
 
     @BeforeClass
     public static void setUp() {
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
         index = testIndex.index();
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
         ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(false);

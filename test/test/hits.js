@@ -187,29 +187,34 @@ expectHitsJson('"the"', 21, 3, {
 });
 
 // Phrase
-expectHitsJson('"a" [lemma="successful"]', 1, 1, {
+const expectedResultPhraseQuery = {
     "docPid": "PRint602",
     "start": 150,
     "end": 152,
     "left": {
-      "punct": [ " " ],
-      "lemma": [ "be" ],
-      "pos": [ "" ],
-      "word": [ "'s" ]
+        "punct": [ " " ],
+        "lemma": [ "be" ],
+        "pos": [ "" ],
+        "word": [ "'s" ]
     },
     "match": {
-      "punct": [ " ", " " ],
-      "lemma": [ "a", "successful" ],
-      "pos": [ "", "" ],
-      "word": [ "a", "successful" ]
+        "punct": [ " ", " " ],
+        "lemma": [ "a", "successful" ],
+        "pos": [ "", "" ],
+        "word": [ "a", "successful" ]
     },
     "right": {
-      "punct": [ " " ],
-      "lemma": [ "meet/meeting" ],
-      "pos": [ "" ],
-      "word": [ "meeting" ]
+        "punct": [ " " ],
+        "lemma": [ "meet/meeting" ],
+        "pos": [ "" ],
+        "word": [ "meeting" ]
     }
-});
+};
+expectHitsJson('"a" [lemma="successful"]', 1, 1, expectedResultPhraseQuery);
+// Also test that forward index matching either the first or the second clause produces the same results
+// TODO: these 2 tests fail intermittently regardless of the index format!
+//expectHitsJson('_FI1("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
+//expectHitsJson('_FI2("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
 
 // Simple capture group
 expectHitsJson('"one" A:[]', 2, 1, {

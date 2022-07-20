@@ -33,7 +33,7 @@ public class TestSearchHitGroups {
 
     @BeforeClass
     public static void setUp() {
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
         index = testIndex.index();
         contents = index.mainAnnotatedField();
     }

@@ -206,9 +206,10 @@ class IndexerImpl implements DocWriter, Indexer {
      *             failed
      * @throws ErrorOpeningIndex if we couldn't open the index
      */
+    @Deprecated
     IndexerImpl(File directory, boolean create)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        this(directory, create, null, null);
+        init(directory, create, null, null);
     }
 
     /**
@@ -228,7 +229,7 @@ class IndexerImpl implements DocWriter, Indexer {
      *            the default for that index, unless another default is already set
      *            by the indexTemplateFile (as "documentFormat"), it will still be
      *            used by this Indexer however.
-     * @param indexTemplateFile JSON file to use as template for index structure /
+     * @param indexTemplateFile (optional) JSON file to use as template for index structure /
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
@@ -237,7 +238,39 @@ class IndexerImpl implements DocWriter, Indexer {
             throws DocumentFormatNotFound, ErrorOpeningIndex {
         init(directory, create, formatIdentifier, indexTemplateFile);
     }
-    
+
+    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
+            throws DocumentFormatNotFound, ErrorOpeningIndex {
+
+        if (create) {
+            if (indexTemplateFile == null) {
+                // Create index from format configuration (modern)
+                // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
+                createIndex(directory, formatIdentifier);
+            } else {
+                // Create index from index template file (legacy)
+                createIndexFromTemplate(directory, formatIdentifier, indexTemplateFile);
+            }
+        } else {
+            // opening an existing index
+            this.indexWriter = BlackLab.openForWriting(directory, false);
+            String defaultFormatIdentifier = this.indexWriter.metadata().documentFormat();
+
+            if (DocumentFormats.isSupported(formatIdentifier))
+                this.formatIdentifier = formatIdentifier;
+            else if (DocumentFormats.isSupported(defaultFormatIdentifier))
+                this.formatIdentifier = defaultFormatIdentifier;
+            else {
+                indexWriter.close();
+                throw new DocumentFormatNotFound(
+                        "Could not determine documentFormat for index " + directory + " (" + formatIdentifier
+                                + "): " + formatError(formatIdentifier));
+            }
+        }
+
+        initMetadataFieldTypes();
+    }
+
     /**
      * Open an indexer for the provided writer.
      *
@@ -255,15 +288,18 @@ class IndexerImpl implements DocWriter, Indexer {
         if (!DocumentFormats.isSupported(formatIdentifier)) {
             formatIdentifier = writer.metadata().documentFormat();
             if (!DocumentFormats.isSupported(formatIdentifier)) {
-                String message = formatIdentifier == null ? "No formatIdentifier"
-                        : "Unknown formatIdentifier '" + formatIdentifier + "'";
                 throw new DocumentFormatNotFound(
-                        message + ", and could not determine the default documentFormat for index " + writer.name());
+                        "Could not determine documentFormat for index " + writer.name() + " (" + formatIdentifier
+                                + "): " + formatError(formatIdentifier));
             }
         }
         this.formatIdentifier = formatIdentifier;
+        setMetadataDocumentFormatIfMissing(formatIdentifier);
 
-        // TODO
+        initMetadataFieldTypes();
+    }
+
+    private void initMetadataFieldTypes() {
         metadataFieldTypeTokenized = new FieldType();
         metadataFieldTypeTokenized.setStored(true);
         //metadataFieldTypeTokenized.setIndexed(true);
@@ -284,103 +320,76 @@ class IndexerImpl implements DocWriter, Indexer {
         metadataFieldTypeUntokenized.freeze();
     }
 
-    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws DocumentFormatNotFound, ErrorOpeningIndex {
+    private String formatError(String formatIdentifier) {
+        String formatError;
+        if (formatIdentifier == null)
+            formatError = "No formatIdentifier";
+        else {
+            formatError = DocumentFormats.formatError(formatIdentifier);
+            if (formatError == null)
+                formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
+        }
+        return formatError;
+    }
 
-        if (create) {
-            if (indexTemplateFile != null) {
-                indexWriter = BlackLab.openForWriting(directory, true, indexTemplateFile);
+    private void createIndex(File directory, String formatIdentifier) throws ErrorOpeningIndex, DocumentFormatNotFound {
+        if (!DocumentFormats.isSupported(formatIdentifier)) {
+            throw new DocumentFormatNotFound(
+                    "Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
+                            formatError(formatIdentifier));
+        }
+        this.formatIdentifier = formatIdentifier;
 
-                // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index
-                // has written it (might be null)
-                final String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
-
-                if (DocumentFormats.isSupported(formatIdentifier)) {
-                    this.formatIdentifier = formatIdentifier;
-                    if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
-                        // indexTemplateFile didn't provide a default formatIdentifier,
-                        // overwrite it with our provided formatIdentifier
-                        indexWriter.metadata().setDocumentFormat(formatIdentifier);
-                        indexWriter.metadata().save();
-                    }
-                } else if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
-                    this.formatIdentifier = defaultFormatIdentifier;
-                } else {
-                    // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
-                    indexWriter.close();
-                    String formatError = DocumentFormats.formatError(formatIdentifier);
-                    if (formatError == null)
-                        formatError = "format not found";
-                    throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
-                            formatError);
-                }
-            } else if (DocumentFormats.isSupported(formatIdentifier)) {
-                this.formatIdentifier = formatIdentifier;
-
-                // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of some other DocIndexer implementation)
-                // this ConfigInputFormat could then still be used as a minimal template to setup the index
-                // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-                ConfigInputFormat format = null;
-                for (Format desc : DocumentFormats.getFormats()) {
-                    if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
-                        format = desc.getConfig();
-                        break;
-                    }
-                }
-
-                // template might still be null, in that case a default will be created
-                indexWriter = BlackLab.create(directory, format);
-
-                String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
-                if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
-                    // ConfigInputFormat didn't provide a default formatIdentifier,
-                    // overwrite it with our provided formatIdentifier
-                    indexWriter.metadata().setDocumentFormat(formatIdentifier);
-                    indexWriter.metadata().save();
-                }
-            } else {
-                String formatError = DocumentFormats.formatError(formatIdentifier);
-                if (formatError == null)
-                    formatError = "format not found";
-                throw new DocumentFormatNotFound("Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
-                        formatError);
-            }
-        } else { // opening an existing index
-
-            this.indexWriter = BlackLab.openForWriting(directory, false);
-            String defaultFormatIdentifier = this.indexWriter.metadata().documentFormat();
-
-            if (DocumentFormats.isSupported(formatIdentifier))
-                this.formatIdentifier = formatIdentifier;
-            else if (DocumentFormats.isSupported(defaultFormatIdentifier))
-                this.formatIdentifier = defaultFormatIdentifier;
-            else {
-                indexWriter.close();
-                String message = formatIdentifier == null ? "No formatIdentifier"
-                        : "Unknown formatIdentifier '" + formatIdentifier + "'";
-                throw new DocumentFormatNotFound(
-                        message + ", and could not determine the default documentFormat for index " + directory);
+        // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
+        // some other DocIndexer implementation)
+        // this ConfigInputFormat could then still be used as a minimal template to setup the index
+        // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
+        ConfigInputFormat format = null;
+        for (Format desc : DocumentFormats.getFormats()) {
+            if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
+                format = desc.getConfig();
+                break;
             }
         }
 
-        metadataFieldTypeTokenized = new FieldType();
-        metadataFieldTypeTokenized.setStored(true);
-        //metadataFieldTypeTokenized.setIndexed(true);
-        metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        metadataFieldTypeTokenized.setTokenized(true);
-        metadataFieldTypeTokenized.setOmitNorms(true); // <-- depending on setting?
-        metadataFieldTypeTokenized.setStoreTermVectors(true);
-        metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
-        metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);
-        metadataFieldTypeTokenized.freeze();
+        // template might still be null, in that case a default will be created
+        indexWriter = BlackLab.openForWriting(directory, true, format);
 
-        metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
-        metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-        //metadataFieldTypeUntokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
-        metadataFieldTypeUntokenized.setStoreTermVectors(false);
-        metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
-        metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
-        metadataFieldTypeUntokenized.freeze();
+        setMetadataDocumentFormatIfMissing(formatIdentifier); // only necessary if not a config-based format?
+    }
+
+    private void createIndexFromTemplate(File directory, String formatIdentifier, File indexTemplateFile)
+            throws ErrorOpeningIndex, DocumentFormatNotFound {
+        indexWriter = BlackLab.openForWriting(directory, true, indexTemplateFile);
+
+        // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index
+        // has written it (might be null)
+
+        if (DocumentFormats.isSupported(formatIdentifier)) {
+            this.formatIdentifier = formatIdentifier;
+            setMetadataDocumentFormatIfMissing(formatIdentifier);
+        } else {
+            String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
+            if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
+                this.formatIdentifier = defaultFormatIdentifier;
+            } else {
+                // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
+                indexWriter.close();
+                throw new DocumentFormatNotFound(
+                        "Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
+                                formatError(formatIdentifier));
+            }
+        }
+    }
+
+    private void setMetadataDocumentFormatIfMissing(String formatIdentifier) {
+        String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
+        if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
+            // indexTemplateFile didn't provide a default formatIdentifier,
+            // overwrite it with our provided formatIdentifier
+            indexWriter.metadata().setDocumentFormat(formatIdentifier);
+            indexWriter.metadata().save();
+        }
     }
 
     @Override
@@ -402,7 +411,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatNotFound {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new DocumentFormatNotFound("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
-                    + this.indexWriter.name() + "; unknown identifier");
+                    + this.indexWriter.name() + "; " + formatError(formatIdentifier));
 
         this.formatIdentifier = formatIdentifier;
     }
@@ -641,19 +650,6 @@ class IndexerImpl implements DocWriter, Indexer {
         this.linkedFileDirs.addAll(linkedFileDirs);
     }
 
-    /**
-     * Add a directory to search for linked files.
-     *
-     * DocIndexerXPath allows us to index a second file into the same Lucene
-     * document, which is useful for external metadata, etc. This determines how
-     * linked files are located.
-     *
-     * @param linkedFileDir directory to search
-     */
-    public void addLinkedFileDir(File linkedFileDir) {
-        this.linkedFileDirs.add(linkedFileDir);
-    }
-
     @Override
     public void setLinkedFileResolver(Function<String, File> resolver) {
         this.linkedFileResolver = resolver;
@@ -684,7 +680,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public void setNumberOfThreadsToUse(int numberOfThreadsToUse) {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
-        // TODO some of the class-based docIndexers don't support theaded indexing
+        // Some of the class-based docIndexers don't support theaded indexing
         if (!DocumentFormats.getFormat(formatIdentifier).isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for format " + formatIdentifier);
             this.numberOfThreadsToUse = 1;

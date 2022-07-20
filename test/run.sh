@@ -20,9 +20,9 @@ $COMPOSE up --force-recreate -d --build testserver
 $COMPOSE build test
 $COMPOSE run --rm test
 
-# Re-run to test non-integrated index as well
 $COMPOSE stop testserver
 $COMPOSE rm -fv testserver
+# Re-run to test the other index format as well
 export BLACKLAB_FEATURE_integrateExternalFiles=false
 $COMPOSE run --rm test
 

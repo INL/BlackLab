@@ -21,7 +21,7 @@ public class TestDeleteDocument {
 
     @BeforeClass
     public static void setUp() {
-        testIndex = new TestIndex(true);
+        testIndex = TestIndex.getWithTestDelete();
     }
 
     @AfterClass

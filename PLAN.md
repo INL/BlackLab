@@ -18,23 +18,30 @@ Integrating with Solr will involve the following steps.
 
 - [x] Make it possible to configure feature flags
 - [x] Run integration tests with both values of `integrateExternalFiles`
-- [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)
+- [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)? No, generics not needed, see TestSearches; do the same with more classes.
 
 ## Incorporate all information into the Lucene index
 
 - [x] Eliminate index version files (replaced by codec version)
 - [x] Make the forward index part of the Lucene index
+  - [ ] _FI1/2 integration tests fail intermittently, with both index formats.
+  - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
   - [ ] Only create forward index for annotations that should have one (fieldsconsumer)
+  - [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
 - [ ] Make indexmetada.yaml part of the Lucene index. Probably take the opportunity to refactor and simplify related code as much as possible. E.g. use Jackson, get rid of old settings, don't try to autodetect stuff from the index, etc.
 - [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)<br>How do we add the content to the index? Could we create a custom field type for this or something (or otherwise register the field to be a content store field, maybe via a field attribute..?), which we store in such a way that it allows us random access..? Or do we simply obtain a reference to the FieldsConsumer and call a separate method to add the content to the store?
 
 ## Refactoring opportunities
 
 - [ ] In general: refactor for looser coupling / improved testability.
+  - [ ] Example of bad design: Indexer has many openIndex() methods which instantiate IndexerImpl, which then calls BlackLab.openForWriting to create an index. Much better would be to leave index creation to the client and have Indexer.openIndex() accept a BlackLabIndex instance instead (effectively dependency injection). Indexer now becomes easier to test because you can e.g. pass it a mock.
+  - [ ] addToForwardIndex shouldn't be a separate method in DocIndexers and Indexer; there should be an addDocument method that adds the document to all parts of the BlackLab index.
+- [ ] search for uses of instanceof
 - [x] Use more clean interfaces instead of abstract classes for external API.
 - [x] BlackLabIndexImpl should be abstract, with separate External and Internal implementations.
 - [x] Combine / eliminate the fiid-related methods in BlackLabIndex as much as possible.
   - [ ] ForwardIndexAccessor(LeafReader) seems to have a lot of similarities with how ForwardIndexIntegrated and SegmentForwardIndex work. Could they use a single interface, with a external (legacy) implementation and internal implementations?
+  - [ ] ForwardIndexDocumentImpl does a lot of work (e.g. filling chunks list with nulls for the whole document), but it regularly used to only read 1-2 tokens from a document; is it worth it at all? Could we use a more efficient implementation?
   - [x] Also look at FiidLookup and DocIntFieldGetter
 - [ ] Don't rely on BlackLab.defaultConfigDirs() in multiple places.
       Specifically DocIndexerFactoryConfig: this should use an option from blacklab(-server).yaml, 

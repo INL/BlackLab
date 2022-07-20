@@ -21,6 +21,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -41,6 +42,11 @@ import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends AutoCloseable {
+
+    enum IndexType {
+        EXTERNAL_FILES, // classic index with external forward index, etc.
+        INTEGRATED,     // everything integrated into Lucene index
+    }
 
     /**
      * Default number of context words to return around a hit.
@@ -66,15 +72,12 @@ public interface BlackLabIndex extends AutoCloseable {
                 return vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2"));
             }
 
-            if (BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES)) {
-                // Just see if it's a Lucene index and assume it's a BlackLab index if so.
-                // (Lucene index always has a segments_* file)
-                try (Directory dir = FSDirectory.open(indexDir.toPath())){
-                    return DirectoryReader.indexExists(dir);
-                }
+            // We also support integrated indexes which don't have a version file.
+            // So just see if it's a Lucene index and assume it's a BlackLab index if so.
+            // (Lucene index always has a segments_* file)
+            try (Directory dir = FSDirectory.open(indexDir.toPath())){
+                return DirectoryReader.indexExists(dir);
             }
-
-            return false;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -452,4 +455,6 @@ public interface BlackLabIndex extends AutoCloseable {
             throw new BlackLabRuntimeException(e);
         }
     }
+
+    ForwardIndexAccessor forwardIndexAccessor(String searchField);
 }

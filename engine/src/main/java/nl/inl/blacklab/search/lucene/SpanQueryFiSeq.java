@@ -117,7 +117,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             if (!clauses.get(0).hitsAreUnique())
                 anchorSpans = BLSpans.optSortUniq(anchorSpans, !clauses.get(0).hitsStartPointSorted(), true);
             BLSpans result = new SpansFiSeq(anchorSpans, startOfAnchor, nfa.getNfa().getStartingState(), direction,
-                    fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
+                    fiAccessor.getForwardIndexAccessorLeafReader(context));
 
             // Re-sort the results if necessary (if we FI-matched a non-fixed amount to the left)
             if (mustSort)

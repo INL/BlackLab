@@ -23,7 +23,7 @@ class SegmentForwardIndex implements AutoCloseable {
 
     /** Information about Lucene fields that represent BlackLab annotations */
     private static class Fields {
-        Map<String, Field> fields = new HashMap<>();
+        Map<String, Field> fieldsByName = new HashMap<>();
 
         public Fields(IndexInput input) throws IOException {
             long size = input.length();
@@ -31,12 +31,13 @@ class SegmentForwardIndex implements AutoCloseable {
                 String fieldName = input.readString();
                 long termIndexOffset = input.readLong();
                 long tokensIndexOffset = input.readLong();
-                fields.put(fieldName, new Field(fieldName, termIndexOffset, tokensIndexOffset));
+                Field field = new Field(fieldName, termIndexOffset, tokensIndexOffset);
+                fieldsByName.put(fieldName, field);
             }
         }
 
         public Field get(String name) {
-            return fields.get(name);
+            return fieldsByName.get(name);
         }
     }
 
@@ -114,8 +115,8 @@ class SegmentForwardIndex implements AutoCloseable {
     /**
      * A forward index reader for a single segment.
      *
-     * This can be used by a single operation to read from a forward index segment.
-     * Not thread-safe because IndexInput contains state (file pointer).
+     * This can be used by a single thread to read from a forward index segment.
+     * Not thread-safe because it contains state (file pointers, doc offset/length).
      */
     @NotThreadSafe
     public class Reader implements ForwardIndexSegmentReader {
@@ -123,6 +124,12 @@ class SegmentForwardIndex implements AutoCloseable {
         private IndexInput _tokensIndex;
 
         private IndexInput _tokens;
+
+        // Used by retrievePart(s)
+        private long docTokensOffset;
+
+        // Used by retrievePart(s)
+        private int docLength;
 
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
@@ -138,59 +145,79 @@ class SegmentForwardIndex implements AutoCloseable {
 
         /** Retrieve parts of a document from the forward index. */
         @Override
-        public List<int[]> retrievePartsInt(String luceneField, int docId, int[] starts, int[] ends) {
-            IndexInput tokensIndex = tokensIndex();
-            IndexInput tokens = tokens();
+        public List<int[]> retrieveParts(String luceneField, int docId, int[] starts, int[] ends) {
+            int n = starts.length;
+            if (n != ends.length)
+                throw new IllegalArgumentException("start and end must be of equal length");
+            // ensure both inputs available
+            tokensIndex();
+            tokens();
+            getDocOffsetAndLength(luceneField, docId);
+            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            List<int[]> result = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                result.add(retrievePart(starts[i], ends[i]));
+            }
+            return result;
+        }
+
+        /** Retrieve parts of a document from the forward index. */
+        @Override
+        public int[] retrievePart(String luceneField, int docId, int start, int end) {
+            // ensure both inputs available
+            tokensIndex();
+            tokens(); // ensure we have this input available
+            getDocOffsetAndLength(luceneField, docId);
+            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            return retrievePart(start, end);
+        }
+
+        private int[] retrievePart(int start, int end) {
+            if (start == -1)
+                start = 0;
+            if (end == -1 || end
+                    > docLength) // Can happen while making KWICs because we don't know the doc length until here
+                end = docLength;
+            ForwardIndexAbstract.validateSnippetParameters(docLength, start, end);
+
+            // Read the snippet from the tokens file
             try {
-                long fieldTokensIndexOffset = fields.get(luceneField).getTokensIndexOffset();
-                tokensIndex.seek(fieldTokensIndexOffset + (long) docId * Long.BYTES);
-                long docTokensOffset = tokensIndex.readLong();
-                long nextDocTokensOffset = tokensIndex.readLong(); // (always exists because we write an extra value at the end)
-                int docLength = (int) (nextDocTokensOffset - docTokensOffset) / Integer.BYTES
-                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-
-                int n = starts.length;
-                if (n != ends.length)
-                    throw new IllegalArgumentException("start and end must be of equal length");
-                List<int[]> result = new ArrayList<>(n);
-
-                for (int i = 0; i < n; i++) {
-                    int start = starts[i];
-                    if (start == -1)
-                        start = 0;
-                    int end = ends[i];
-                    if (end == -1 || end
-                            > docLength) // Can happen while making KWICs because we don't know the doc length until here
-                        end = docLength;
-                    ForwardIndexAbstract.validateSnippetParameters(docLength, start, end);
-
-                    // Read the snippet from the tokens file
-                    tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
-                    int[] snippet = new int[end - start];
-                    for (int j = 0; j < snippet.length; j++) {
-                        snippet[j] = tokens.readInt();
-                    }
-                    result.add(snippet);
+                _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
+                int[] snippet = new int[end - start];
+                for (int j = 0; j < snippet.length; j++) {
+                    snippet[j] = _tokens.readInt();
                 }
-                return result;
+                return snippet;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        /** Get length of document in tokens from the forward index. */
-        @Override
-        public long docLength(String luceneField, int docId) {
-            IndexInput tokensIndex = tokensIndex();
+        private void getDocOffsetAndLength(String luceneField, int docId)  {
             try {
                 long fieldTokensIndexOffset = fields.get(luceneField).getTokensIndexOffset();
-                tokensIndex.seek(fieldTokensIndexOffset + (long) docId * Long.BYTES);
-                long offset = tokensIndex.readLong();
-                long nextOffset = tokensIndex.readLong(); // always exists because we write an extra value at the end
-                return (nextOffset - offset) / Integer.BYTES;
+                _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * Long.BYTES);
+                docTokensOffset = _tokensIndex.readLong();
+                long nextDocTokensOffset = _tokensIndex.readLong(); // (always exists because we write an extra value at the end)
+                docLength = (int)(nextDocTokensOffset - docTokensOffset) / Integer.BYTES;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        /** Get length of document in tokens from the forward index.
+         *
+         * This includes the "extra closing token" at the end, so subtract one for the real length.
+         *
+         * @param luceneField lucene field to read forward index from
+         * @param docId segment-local docId of document to get length for
+         * @return
+         */
+        @Override
+        public long docLength(String luceneField, int docId) {
+            tokensIndex(); // ensure input available
+            getDocOffsetAndLength(luceneField, docId);
+            return docLength;
         }
     }
 }

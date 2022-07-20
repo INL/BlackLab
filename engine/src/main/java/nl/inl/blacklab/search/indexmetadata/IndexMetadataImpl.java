@@ -52,6 +52,8 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
 
@@ -108,6 +110,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     private static final Set<String> KEYS_ANNOTATED_FIELD_CONFIG = new HashSet<>(Arrays.asList(
             "displayName", "description", "mainProperty",
             "noForwardIndexProps", "displayOrder", "annotations"));
+
+    /** Our index */
+    private final BlackLabIndex index;
 
     /** Where to save indexmetadata.json */
     private final File indexDir;
@@ -177,14 +182,15 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      *
-     * @param reader the index of which we want to know the structure
+     * @param index the index of which we want to know the structure
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
+    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
+        this.index = index;
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -236,7 +242,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             save();
         } else {
             // Read existing metadata or create empty new one
-            readOrCreateMetadata(reader, createNewIndex, metadataFile, false);
+            readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, false);
         }
     }
 
@@ -251,7 +257,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *            metadata (if creating new index)
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      */
-    public IndexMetadataImpl(IndexReader reader, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
+    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
+        this.index = index;
         this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
@@ -301,7 +308,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             usedTemplate = true;
         }
 
-        readOrCreateMetadata(reader, createNewIndex, metadataFile, usedTemplate);
+        readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, usedTemplate);
     }
 
     // Methods that read data
@@ -454,10 +461,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         subannots.add(subannotName);
                     }
                 }
-                if (BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES)) {
-                    // NOTE: if adding to an existing index with external forward index, we may still
-                    // write this to the config, but that doesn't create any problems for older BlackLab versions
-                    // reading this index.
+                if (index instanceof BlackLabIndexIntegrated) {
+                    // For the integrated index, we don't detect whether there's a forward
+                    // index, we just store it in the metadata.
                     annot.put("hasForwardIndex", annotation.hasForwardIndex());
                 }
             }

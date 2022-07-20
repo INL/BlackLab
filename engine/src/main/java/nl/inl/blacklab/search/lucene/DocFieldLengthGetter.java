@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * This class is instantiated and used by a single Spans to get lengths for a single
  * index segment. It does not need to be thread-safe.
  */
-class DocFieldLengthGetter {
+public class DocFieldLengthGetter {
 
     /** The Lucene index reader, for querying field length */
     private final LeafReader reader;
@@ -35,9 +35,6 @@ class DocFieldLengthGetter {
     /** Is the field length stored separately in the index? */
     private boolean lengthFieldIsStored = false;
 
-    /** Name of the field we're searching */
-    private final String fieldName;
-
     /** Field name to check for the length of the field in tokens */
     private final String lengthTokensFieldName;
 
@@ -45,11 +42,10 @@ class DocFieldLengthGetter {
     private final DocumentStoredFieldVisitor lengthTokensFieldVisitor;
 
     /** Lengths may have been cached using FieldCache */
-    private NumericDocValues cachedFieldLengths;
+    private final NumericDocValues cachedFieldLengths;
 
     public DocFieldLengthGetter(LeafReader reader, String fieldName) {
         this.reader = reader;
-        this.fieldName = fieldName;
         lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         lengthTokensFieldVisitor = new DocumentStoredFieldVisitor(lengthTokensFieldName);
 

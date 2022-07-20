@@ -87,7 +87,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
             if (spansProd == null)
                 return null;
             return new SpansConstrained(spansProd, constraint,
-                    fiAccessor.getForwardIndexAccessorLeafReader(context.reader()));
+                    fiAccessor.getForwardIndexAccessorLeafReader(context));
         }
     }
 

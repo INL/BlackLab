@@ -44,14 +44,14 @@ public class TextPatternQueryFunction extends TextPattern {
         case "_FI1":
         {
             // Resolve first clause using forward index and the second clause using regular reverse index
-            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(context.index(), a.getField());
+            ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(a.getField());
             NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
             return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
         }
         case "_FI2":
         {
             // Resolve second clause using forward index and the first clause using regular reverse index
-            ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(context.index(), b.getField());
+            ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(b.getField());
             NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
             return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
         }

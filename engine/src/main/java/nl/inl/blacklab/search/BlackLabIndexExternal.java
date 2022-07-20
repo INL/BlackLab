@@ -14,6 +14,8 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
@@ -88,5 +90,10 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         for (ForwardIndex fi: forwardIndices.values()) {
             ((ForwardIndexAbstract)fi).close();
         }
+    }
+
+    @Override
+    public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
+        return new ForwardIndexAccessorExternal(this, annotatedField(searchField));
     }
 }

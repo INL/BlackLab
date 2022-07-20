@@ -24,7 +24,7 @@ public class TestSearchesNfa {
     @BeforeClass
     public static void setUp() {
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
     }
 
     @AfterClass

@@ -7,7 +7,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -18,6 +18,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
+import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -34,15 +35,20 @@ public class TestSearches {
      */
     List<String> expected;
 
-    @BeforeClass
-    public static void setUp() {
-        testIndex = new TestIndex();
+    @Before
+    public void setUp() {
+        if (testIndex == null)
+            testIndex = TestIndex.get(indexType());
     }
+
+    IndexType indexType()  { return IndexType.EXTERNAL_FILES; }
 
     @AfterClass
     public static void tearDown() {
-        if (testIndex != null)
+        if (testIndex != null) {
             testIndex.close();
+            testIndex = null;
+        }
     }
 
     @Test
@@ -88,6 +94,9 @@ public class TestSearches {
                 "quick [brown fox] jumps",
                 "the [lazy dog]");
         Assert.assertEquals(expected, testIndex.findConc(" [pos='adj'] [pos='nou'] "));
+        // Also test that forward index matching either the first or the second clause produces the same results
+        Assert.assertEquals(expected, testIndex.findConc(" _FI1([pos='adj'], [pos='nou']) "));
+        Assert.assertEquals(expected, testIndex.findConc(" _FI2([pos='adj'], [pos='nou']) "));
     }
 
     @Test

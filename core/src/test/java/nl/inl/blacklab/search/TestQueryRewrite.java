@@ -22,7 +22,7 @@ public class TestQueryRewrite {
 
     @BeforeClass
     public static void setUp() {
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
         index = testIndex.index();
         ClauseCombinerNfa.setForwardIndexMatchingEnabled(false);
     }

@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -243,5 +244,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public BlackLabEngine blackLab() {
         return blackLab;
+    }
+
+    @Override
+    public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
+        throw new UnsupportedOperationException();
     }
 }

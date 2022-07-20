@@ -21,7 +21,10 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndex.IndexType;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -35,6 +38,22 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
+
+    public static TestIndex get() {
+        return get(null);
+    }
+
+    public static TestIndex get(IndexType indexType) {
+        return new TestIndex(false, indexType);
+    }
+
+    public static TestIndex getWithTestDelete() {
+        return getWithTestDelete(null);
+    }
+
+    public static TestIndex getWithTestDelete(IndexType indexType) {
+        return new TestIndex(true, indexType);
+    }
     
     private static final class IndexListenerAbortOnError extends IndexListener {
         @Override
@@ -108,11 +127,11 @@ public class TestIndex {
 
     private final Annotation word;
 
-    public TestIndex() {
-        this(false);
+    private TestIndex(IndexType indexType) {
+        this(false, indexType);
     }
-    
-    public TestIndex(boolean testDelete) {
+
+    private TestIndex(boolean testDelete, IndexType indexType) {
 
         // Get a temporary directory for our test index
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
@@ -120,7 +139,9 @@ public class TestIndex {
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
-            Indexer indexer = Indexer.createNewIndex(indexDir, testFormat);
+            BlackLabEngine engine = BlackLab.implicitInstance();
+            BlackLabIndexWriter indexWriter = engine.openForWriting(indexDir, true, (File)null, indexType);
+            Indexer indexer = Indexer.openIndex(indexWriter, testFormat); //.createNewIndex(indexDir, testFormat);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
                 // Index each of our test "documents".
@@ -129,7 +150,7 @@ public class TestIndex {
                 }
                 if (testDelete) {
                     // Delete the first doc, to test deletion.
-                    // (close and re-open to be sure the document was written to disk first) 
+                    // (close and re-open to be sure the document was written to disk first)
                     indexer.close();
                     indexer = Indexer.openIndex(indexDir);
                     String luceneField = indexer.indexWriter().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();

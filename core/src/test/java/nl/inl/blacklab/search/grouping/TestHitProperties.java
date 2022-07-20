@@ -35,7 +35,7 @@ public class TestHitProperties {
 
     @BeforeClass
     public static void setUp() {
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
         index = testIndex.index();
         wordAnnotation = index.mainAnnotatedField().annotation("word");
         terms = index.annotationForwardIndex(wordAnnotation).terms();

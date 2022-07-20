@@ -191,7 +191,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, config);
+            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -228,7 +228,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(reader, indexDir, createNewIndex, indexTemplateFile);
+            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 

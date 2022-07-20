@@ -26,8 +26,7 @@ public class TextPatternConstrained extends TextPatternCombiner {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         BLSpanQuery translate = clauses.get(0).translate(context);
-        ForwardIndexAccessor fiAccessor = ForwardIndexAccessor.fromIndex(context.index(),
-                translate.getField());
+        ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(translate.getField());
         return new SpanQueryConstrained(translate, constraint, fiAccessor);
     }
 

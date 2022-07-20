@@ -41,7 +41,7 @@ public class TestIndexIntegrated {
     @BeforeClass
     public static void setUp() {
         BlackLab.config().getFeatureFlags().put(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES, "true");
-        testIndex = new TestIndex();
+        testIndex = TestIndex.get();
         index = testIndex.index();
         contents = index.mainAnnotatedField();
         word = contents.mainAnnotation();

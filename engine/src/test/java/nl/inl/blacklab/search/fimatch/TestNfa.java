@@ -4,22 +4,17 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 
-import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
 
-    static final class MockFiAccessor extends ForwardIndexAccessor {
-        @Override
-        public int numberOfAnnotations() {
-            return 1;
-        }
+    static final class MockFiAccessor implements ForwardIndexAccessor {
 
         @Override
         public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
@@ -39,32 +34,10 @@ public class TestNfa {
         }
 
         @Override
-        public int getAnnotationNumber(Annotation annotation) {
-            return getAnnotationNumber(annotation.name());
-        }
-
-        @Override
-        public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
+        public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReaderContext readerContext) {
             return null;
         }
 
-        @Override
-        public String getTermString(int annotIndex, int termId) {
-            if (annotIndex != 0)
-                throw new BlackLabRuntimeException("only 0 is valid annotation");
-            return Character.toString((char) termId);
-        }
-
-        @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-            if (annotIndex != 0)
-                throw new BlackLabRuntimeException("only 0 is valid annotation");
-            for (int i = 1; i < termId.length; i++) {
-                if (termId[i] != termId[0])
-                    return false;
-            }
-            return true;
-        }
     }
 
     static class ForwardIndexDocumentString extends ForwardIndexDocument {

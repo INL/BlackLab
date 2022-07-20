@@ -8,13 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -29,7 +28,7 @@ import nl.inl.blacklab.search.lucene.SpanQuerySequence;
 
 public class TestNfaFromQuery {
 
-    static class MockForwardIndexAccessor extends ForwardIndexAccessor {
+    static class MockForwardIndexAccessor implements ForwardIndexAccessor {
 
         final int[] termIds;
 
@@ -38,11 +37,7 @@ public class TestNfaFromQuery {
         public MockForwardIndexAccessor(String... document) {
             this.termIds = new int[document.length];
             for (int i = 0; i < document.length; i++) {
-                Integer termId = terms.get(document[i]);
-                if (termId == null) {
-                    termId = terms.size();
-                    terms.put(document[i], termId);
-                }
+                Integer termId = terms.computeIfAbsent(document[i], k -> terms.size());
                 termIds[i] = termId;
             }
         }
@@ -52,11 +47,6 @@ public class TestNfaFromQuery {
             if (annotationName.equals("word"))
                 return 0;
             throw new IllegalArgumentException("Unknown annotation " + annotationName);
-        }
-
-        @Override
-        public int getAnnotationNumber(Annotation annotation) {
-            return getAnnotationNumber(annotation.name());
         }
 
         @Override
@@ -75,14 +65,37 @@ public class TestNfaFromQuery {
             }
         }
 
-        @Override
         public int numberOfAnnotations() {
             return 1;
         }
 
         @Override
-        public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReader reader) {
-            return new ForwardIndexAccessorLeafReader(reader) {
+        public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReaderContext readerContext) {
+            return new ForwardIndexAccessorLeafReader() {
+
+                @Override
+                public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+                    throw new UnsupportedOperationException();
+                    //return MockForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
+                }
+
+                @Override
+                public String getTermString(int annotIndex, int termId) {
+                    return MockForwardIndexAccessor.this.getTermString(annotIndex, termId);
+                }
+
+                /**
+                 * Get the number of mapped annotations.
+                 *
+                 * Annotations are mapped before the matching starts, so we can simply pass an
+                 * annotation index instead of annotation names, which would be too slow.
+                 *
+                 * @return number of mapped annotations.
+                 */
+                @Override
+                public int getNumberOfAnnotations() {
+                    return MockForwardIndexAccessor.this.numberOfAnnotations();
+                }
 
                 @Override
                 public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
@@ -110,7 +123,6 @@ public class TestNfaFromQuery {
             };
         }
 
-        @Override
         public String getTermString(int annotIndex, int termId) {
             for (Entry<String, Integer> e : terms.entrySet()) {
                 if (e.getValue() == termId) {
@@ -118,11 +130,6 @@ public class TestNfaFromQuery {
                 }
             }
             return null;
-        }
-
-        @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-            throw new UnsupportedOperationException();
         }
 
     }

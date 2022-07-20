@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /** Source of tokens for the forward index matching process. */

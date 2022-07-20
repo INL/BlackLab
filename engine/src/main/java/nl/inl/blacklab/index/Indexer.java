@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
+    @Deprecated
     static Indexer createNewIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, true);
     }
@@ -30,6 +31,7 @@ public interface Indexer {
         return new IndexerImpl(directory, false);
     }
 
+    @Deprecated
     static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, false, formatIdentifier, null);
     }
@@ -38,6 +40,7 @@ public interface Indexer {
         return new IndexerImpl(writer, formatIdentifier);
     }
 
+    @Deprecated
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
         return new IndexerImpl(directory, createNewIndex, formatIdentifier, null);
     }
