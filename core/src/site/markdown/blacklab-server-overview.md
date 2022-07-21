@@ -546,7 +546,7 @@ Operations that do not return status or error codes and messages (which is all s
 	<tr>
 		<td>400 Bad Request </td>
 		<td>FILTER_SYNTAX_ERROR </td>
-		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE<br><i>(<b>NOTE:</b> see <a href="https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description">Lucene query syntax</a>)</i></td>
+		<td>Error parsing FILTERLANG filter query: ERRORMESSAGE<br/><i>(<b>NOTE:</b> see <a href="https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description">Lucene query syntax</a>)</i></td>
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>
