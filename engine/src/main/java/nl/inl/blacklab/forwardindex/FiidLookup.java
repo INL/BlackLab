@@ -12,7 +12,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -54,11 +53,8 @@ public class FiidLookup {
                 LeafReader r = rc.reader();
                 NumericDocValues numericDocValues = r.getNumericDocValues(fiidFieldName);
                 if (numericDocValues == null) {
-                    // Use UninvertingReader to simulate DocValues (slower)
-                    Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                    fields.put(fiidFieldName, UninvertingReader.Type.INTEGER_POINT);
-                    LeafReader uninv = UninvertingReader.wrap(r, fields::get);
-                    numericDocValues = uninv.getNumericDocValues(fiidFieldName);
+                    // (should never happen)
+                    throw new UnsupportedOperationException("no DocValues available");
                 }
                 if (numericDocValues != null) {
                     cachedFiids.put(rc.docBase, numericDocValues);

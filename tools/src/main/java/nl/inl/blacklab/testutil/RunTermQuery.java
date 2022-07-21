@@ -7,7 +7,6 @@ import java.util.BitSet;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
@@ -24,7 +23,6 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.solr.index.SlowCompositeReaderWrapper;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.LuceneUtil;
@@ -218,21 +216,6 @@ public class RunTermQuery {
                     System.out.printf("  doc %7d, pos %4d-%4d%n", doc, spans.startPosition(), spans.endPosition());
                     hitsFound = true;
                 }
-            }
-        }
-        if (!hitsFound)
-            System.out.println("  (no hits)");
-        System.out.println();
-
-        System.out.println("USING SLOWCOMPOSITEREADERWRAPPER:");
-        LeafReader scrw = SlowCompositeReaderWrapper.wrap(reader);
-        Spans spans = weight.getSpans(scrw.getContext(), Postings.OFFSETS);
-        hitsFound = false;
-        while (spans != null && spans.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-            while (spans.nextStartPosition() != Spans.NO_MORE_POSITIONS) {
-                System.out.printf("  doc %7d, pos %4d-%4d%n", spans.docID(), spans.startPosition(),
-                        spans.endPosition());
-                hitsFound = true;
             }
         }
         if (!hitsFound)

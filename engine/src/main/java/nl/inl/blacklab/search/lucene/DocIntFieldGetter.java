@@ -2,13 +2,10 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
-import java.util.TreeMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.solr.uninverting.UninvertingReader;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
@@ -40,11 +37,8 @@ public class DocIntFieldGetter implements Closeable {
         try {
             docValues = reader.getNumericDocValues(intFieldName);
             if (docValues == null) {
-                // Use UninvertingReader to simulate DocValues (slower)
-                Map<String, UninvertingReader.Type> fields = new TreeMap<>();
-                fields.put(intFieldName, UninvertingReader.Type.INTEGER_POINT);
-                LeafReader uninv = UninvertingReader.wrap(reader, fields::get);
-                docValues = uninv.getNumericDocValues(intFieldName);
+                // (should never happen)
+                throw new UnsupportedOperationException("no DocValues available");
             }
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
