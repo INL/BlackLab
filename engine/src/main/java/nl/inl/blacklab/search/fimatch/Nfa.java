@@ -49,12 +49,13 @@ public class Nfa {
         return new Nfa(copy, dangling);
     }
 
-    public void append(Nfa state) {
+    public Nfa append(Nfa state) {
         for (NfaState d : danglingArrows) {
             d.fillDangling(state.getStartingState());
         }
         danglingArrows.clear();
         danglingArrows.addAll(state.getDanglingArrows());
+        return this;
     }
 
     public void repeat(int min, int max) {

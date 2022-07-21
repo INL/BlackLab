@@ -6,16 +6,21 @@ import java.util.List;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-/** Source of tokens for the forward index matching process. */
-class ForwardIndexDocumentImpl extends ForwardIndexDocument {
+/** Source of tokens for the forward index matching process.
+ *
+ * Not threadsafe. Used from Spans. An instance is created
+ * per document, and a document only occurs in one index segment
+ * (so only one Spans), so this doesn't need threadsafety.
+ */
+class ForwardIndexDocumentImpl implements ForwardIndexDocument {
 
     /** Default size for our chunks */
     private static final int CHUNK_SIZE = 10;
 
-    /** How to access our forward indexes */
+    /** How to access our forward indexes (for the current segment) */
     private final ForwardIndexAccessorLeafReader fiAccessor;
 
-    /** Lucene document id of the document we're looking at */
+    /** Document id (within the segment) of the document we're looking at */
     private final int docId;
 
     /** Number of tokens in document.
@@ -28,6 +33,12 @@ class ForwardIndexDocumentImpl extends ForwardIndexDocument {
      */
     private final List<List<int[]>> allAnnotChunks = new ArrayList<>();
 
+    /**
+     * Construct a token reader for one or more annotations from one forward index document.
+     *
+     * @param fiAccessor forward index accessor for this segment
+     * @param docId document if within this segment
+     */
     public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId) {
         this.fiAccessor = fiAccessor;
         this.docId = docId;

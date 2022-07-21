@@ -27,7 +27,7 @@ public class NfaTwoWay {
     }
 
     public void append(NfaTwoWay part) {
-        nfa.append(part.getNfa());
+        nfa.append(part.getNfa().copy());
         Nfa r = part.getNfaReverse().copy();
         r.append(nfaReverse);
         nfaReverse = r;

@@ -40,7 +40,7 @@ public class TestNfa {
 
     }
 
-    static class ForwardIndexDocumentString extends ForwardIndexDocument {
+    static class ForwardIndexDocumentString implements ForwardIndexDocument {
 
         private final String input;
 

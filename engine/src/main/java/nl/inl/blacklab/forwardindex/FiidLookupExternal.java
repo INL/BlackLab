@@ -41,9 +41,6 @@ public class FiidLookupExternal implements FiidLookup {
     /** The DocValues per segment (keyed by docBase) */
     private final Map<Integer, NumericDocValues> cachedFiids = new TreeMap<>();
 
-    /** Do we have DocValues for the fiid? */
-    private final boolean docValuesAvailable;
-
     /** Any cached mappings from Lucene docId to forward index id (fiid) or null if not using cache */
     private final Map<Integer, Long> docIdToFiidCache;
 
@@ -59,11 +56,8 @@ public class FiidLookupExternal implements FiidLookup {
                     // (should never happen)
                     throw new UnsupportedOperationException("no DocValues available");
                 }
-                if (numericDocValues != null) {
-                    cachedFiids.put(rc.docBase, numericDocValues);
-                }
+                cachedFiids.put(rc.docBase, numericDocValues);
             }
-            docValuesAvailable = !cachedFiids.isEmpty();
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -90,38 +84,24 @@ public class FiidLookupExternal implements FiidLookup {
                 return (int)(long)fiid;
         }
 
-        if (docValuesAvailable) {
-            // Find the fiid in the correct segment
-            Entry<Integer, NumericDocValues> prev = null;
-            for (Entry<Integer, NumericDocValues> e : cachedFiids.entrySet()) {
-                Integer docBase = e.getKey();
-                if (docBase > docId) {
-                    // Previous segment (the highest docBase lower than docId) is the right one
-                    assert prev != null;
-                    Integer prevDocBase = prev.getKey();
-                    NumericDocValues prevDocValues = prev.getValue();
-                    return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
-                }
-                prev = e;
+        // Find the fiid in the correct segment
+        Entry<Integer, NumericDocValues> prev = null;
+        for (Entry<Integer, NumericDocValues> e : cachedFiids.entrySet()) {
+            Integer docBase = e.getKey();
+            if (docBase > docId) {
+                // Previous segment (the highest docBase lower than docId) is the right one
+                assert prev != null;
+                Integer prevDocBase = prev.getKey();
+                NumericDocValues prevDocValues = prev.getValue();
+                return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
             }
-            // Last segment is the right one
-            assert prev != null;
-            Integer prevDocBase = prev.getKey();
-            NumericDocValues prevDocValues = prev.getValue();
-            return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
+            prev = e;
         }
-
-        // Not cached, no DocValues; find fiid by reading stored value from Document now
-        // (should never happen)
-        try {
-            long v = Long.parseLong(reader.document(docId).get(fiidFieldName));
-            if (docIdToFiidCache != null) {
-                docIdToFiidCache.put(docId, v);
-            }
-            return (int)v;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
+        // Last segment is the right one
+        assert prev != null;
+        Integer prevDocBase = prev.getKey();
+        NumericDocValues prevDocValues = prev.getValue();
+        return getFiidFromDocValues(prevDocBase, prevDocValues, docId);
     }
 
     /**

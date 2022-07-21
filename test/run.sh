@@ -16,7 +16,8 @@ export DOCKER_BUILDKIT=1
 
 # Build and run BlackLab Server
 # (--force-recreate to avoid error 'network not found')
-export BLACKLAB_FEATURE_integrateExternalFiles=true
+echo === Testing classic index format...
+export BLACKLAB_FEATURE_integrateExternalFiles=false
 $COMPOSE up --force-recreate -d --build testserver
 
 # Build and run the test suite
@@ -26,7 +27,8 @@ $COMPOSE run --rm test
 $COMPOSE stop testserver
 $COMPOSE rm -fv testserver
 # Re-run to test the other index format as well
-export BLACKLAB_FEATURE_integrateExternalFiles=false
+echo === Testing integrated index format...
+export BLACKLAB_FEATURE_integrateExternalFiles=true
 $COMPOSE run --rm test
 
 

@@ -1,9 +1,16 @@
 package nl.inl.blacklab.search.fimatch;
 
+import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-/** Source of tokens for the forward index matching process. */
-public abstract class ForwardIndexDocument {
+/** Source of tokens for the forward index matching process.
+ *
+ * Not threadsafe. Used from Spans. An instance is created
+ * per document, and a document only occurs in one index segment
+ * (so only one Spans), so this doesn't need threadsafety.
+ */
+@NotThreadSafe
+public interface ForwardIndexDocument {
 
     /**
      * Return token at specified position.
@@ -12,7 +19,7 @@ public abstract class ForwardIndexDocument {
      * @param pos position to read
      * @return token at this position
      */
-    public abstract int getToken(int annotIndex, int pos);
+    int getToken(int annotIndex, int pos);
 
     /**
      * Return string for term id
@@ -21,7 +28,7 @@ public abstract class ForwardIndexDocument {
      * @param termId term id
      * @return corresponding term string
      */
-    public abstract String getTermString(int annotIndex, int termId);
+    String getTermString(int annotIndex, int termId);
 
     /**
      * Are all the specified term ids equal given these sensitivity settings?
@@ -31,7 +38,7 @@ public abstract class ForwardIndexDocument {
      * @param sensitivity whether we're comparing case-/diacritics-sensitively
      * @return true if all are equal, false if not
      */
-    public abstract boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
+    boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
 
     /**
      * Is this position valid in this document?
@@ -39,5 +46,5 @@ public abstract class ForwardIndexDocument {
      * @param pos position
      * @return true if valid, false if not
      */
-    public abstract boolean validPos(int pos);
+    boolean validPos(int pos);
 }

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -183,9 +182,11 @@ public abstract class NfaState {
      * @param visited nodes visited so far, so we don't visit nodes multiple times
      */
     public void finish(Set<NfaState> visited) {
+        // Avoid infinite cycling
         if (visited.contains(this))
             return;
         visited.add(this);
+        // Actually finish the state
         finishInternal(visited);
     }
 
@@ -245,14 +246,12 @@ public abstract class NfaState {
      */
     public abstract int hitsLengthMax(Set<NfaState> statesVisited);
 
-    public static Set<NfaState> emptySet() {
-        return Collections.newSetFromMap(new IdentityHashMap<>());
-    }
-
     public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+        // Make sure we only visit each state once
         if (statesVisited.containsKey(this))
             return;
         statesVisited.put(this, true);
+        // Actually look up the annotation numbers for the annotations we need
         lookupAnnotationNumbersInternal(fiAccessor, statesVisited);
     }
 

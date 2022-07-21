@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.fimatch;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreMode;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -9,6 +11,10 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Allows the forward index matching subsystem to access the forward indices,
  * including an easy and fast way to read any annotation at any position from a
  * document.
+ *
+ * {@link #getForwardIndexAccessorLeafReader(LeafReaderContext)} is threadsafe.
+ * The other methods are not, but are called from a single thread while initializing
+ * the NFA matching process (see {@link nl.inl.blacklab.search.lucene.SpanQueryFiSeq#createWeight(IndexSearcher, ScoreMode, float)}).
  */
 public interface ForwardIndexAccessor {
 

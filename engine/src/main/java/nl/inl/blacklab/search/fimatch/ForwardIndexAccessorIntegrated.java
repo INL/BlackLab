@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.apache.lucene.index.LeafReaderContext;
 
 import net.jcip.annotations.NotThreadSafe;
+import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BLFieldsProducer;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -20,9 +21,8 @@ import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
  * Allows the forward index matching subsystem to access the forward indices,
  * including an easy and fast way to read any annotation at any position from a
  * document.
- *
- * Thread-safe.
  */
+@ThreadSafe
 public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract {
 
     public ForwardIndexAccessorIntegrated(BlackLabIndex index, AnnotatedField searchField) {
@@ -31,7 +31,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
     @Override
     public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReaderContext readerContext) {
-        return new ForwardIndexAccessorLeafReaderInternal(readerContext);
+        return new ForwardIndexAccessorLeafReaderIntegrated(readerContext);
     }
 
     /**
@@ -40,7 +40,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
      * Not thread-safe (only used from Spans).
      */
     @NotThreadSafe
-    class ForwardIndexAccessorLeafReaderInternal implements ForwardIndexAccessorLeafReader {
+    class ForwardIndexAccessorLeafReaderIntegrated implements ForwardIndexAccessorLeafReader {
 
         protected final LeafReaderContext readerContext;
 
@@ -48,20 +48,13 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         private final DocFieldLengthGetter lengthGetter;
 
-        ForwardIndexAccessorLeafReaderInternal(LeafReaderContext readerContext) {
+        ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
             BLFieldsProducer fieldsProducer = BLFieldsProducer.get(readerContext, annotatedField.tokenLengthField());
             forwardIndexReader = fieldsProducer.forwardIndex();
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
 
-        /**
-         * Get a token source, which we can use to get tokens from a document for
-         * different annotations.
-         *
-         * @param docId Lucene document id
-         * @return the token source
-         */
         @Override
         public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
             return new ForwardIndexDocumentImpl(this, docId);
@@ -94,7 +87,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         public String getTermString(int annotIndex, int termId) {
             // TODO: we don't need to translate to global term ids; get the term string at
             //   the segment level instead.
-            int globalTermId = fis.get(annotIndex).terms()
+            int globalTermId = terms.get(annotIndex)
                     .segmentIdsToGlobalIds(readerContext, List.of(new int[] {termId})).get(0)[0];
             return ForwardIndexAccessorIntegrated.this.getTermString(annotIndex, globalTermId);
         }
@@ -103,7 +96,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
             // TODO: we don't need to translate to global term ids; the comparison could be done
             //   at the segment level instead.
-            int[] globalTermIds = fis.get(annotIndex).terms()
+            int[] globalTermIds = terms.get(annotIndex)
                     .segmentIdsToGlobalIds(readerContext, List.of(termId)).get(0);
             return ForwardIndexAccessorIntegrated.this.termsEqual(annotIndex, globalTermIds, sensitivity);
         }

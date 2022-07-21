@@ -15,7 +15,7 @@ public interface ForwardIndexAccessorLeafReader {
      * Get a token source, which we can use to get tokens from a document for
      * different annotations.
      *
-     * @param docId Lucene document id
+     * @param docId document id within this segment
      * @return the token source
      */
     ForwardIndexDocument advanceForwardIndexDoc(int docId);
@@ -25,7 +25,7 @@ public interface ForwardIndexAccessorLeafReader {
      *
      * NOTE: this does NOT include the extra closing token at the end.
      *
-     * @param docId Lucene document id
+     * @param docId document id within this segment
      * @return document length in tokens
      */
     int getDocLength(int docId);
@@ -34,7 +34,7 @@ public interface ForwardIndexAccessorLeafReader {
      * Get a chunk of tokens from a forward index
      *
      * @param annotIndex annotation to get tokens for
-     * @param docId Lucene document id
+     * @param docId document id within this segment
      * @param start first token to get
      * @param end one more than the last token to get
      * @return chunk of tokens

@@ -780,10 +780,8 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         int end = direction == SpanQueryFiSeq.DIR_TO_RIGHT ? clauses.size() : -1;
         for (int i = start; i != end; i += direction) {
             BLSpanQuery clause = clauses.get(i);
-            if (frag == null)
-                frag = clause.getNfa(fiAccessor, direction);
-            else
-                frag.append(clause.getNfa(fiAccessor, direction));
+            Nfa clauseNfa = clause.getNfa(fiAccessor, direction);
+            frag = frag == null ? clauseNfa : frag.append(clauseNfa);
         }
         return frag;
     }

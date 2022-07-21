@@ -601,7 +601,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
      *
      * NOTE: this INCLUDES the extra closing token at the end.
      *
-     * @param fiid forward index id of a document
+     * @param docId forward index id of a document
      * @return length of the document
      */
     @Override

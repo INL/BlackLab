@@ -44,16 +44,16 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
     private final Collators collators;
 
     /** Offset of each document */
-    long[] offset;
+    private long[] offset;
 
     /** Length of each document (INCLUDING the extra closing token at the end) */
-    int[] length;
+    private int[] length;
 
     /** Deleted status of each document */
-    byte[] deleted;
+    private byte[] deleted;
 
     /** Deleted TOC entries. Always sorted by size. */
-    List<Integer> deletedTocEntries = null;
+    private List<Integer> deletedTocEntries = null;
 
     AnnotationForwardIndexExternalReader(IndexReader reader, Annotation annotation, File dir, Collators collators) {
         super(reader, annotation, dir, collators);
@@ -218,6 +218,9 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];
 
+            // NOTE: we're synchronizing on a local variable (IntelliJ warns about this),
+            //   but it references the object we're reading from, so it's correct to
+            //   synchronize on it.
             synchronized (whichChunk) {
                 ((Buffer) whichChunk).position((int) (offset[fiid] * Integer.BYTES - chunkOffsetBytes));
                 // Get an IntBuffer to read the desired content
@@ -253,7 +256,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
      *
      * NOTE: this INCLUDES the extra closing token at the end.
      *
-     * @param fiid forward index id of a document
+     * @param docId forward index id of a document
      * @return length of the document
      */
     @Override

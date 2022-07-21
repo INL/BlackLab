@@ -134,7 +134,7 @@ public class TestNfaFromQuery {
 
     }
 
-    static class ForwardIndexDocumentIntArray extends ForwardIndexDocument {
+    static class ForwardIndexDocumentIntArray implements ForwardIndexDocument {
 
         private final int[] input;
 

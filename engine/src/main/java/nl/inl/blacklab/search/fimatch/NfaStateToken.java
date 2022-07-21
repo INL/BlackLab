@@ -143,7 +143,7 @@ public class NfaStateToken extends NfaState {
         String annotationName = comp[1];
         propertyNumber = fiAccessor.getAnnotationNumber(annotationName);
         MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
-        inputTokens = new IntHashSet(); //new HashSet<>();
+        inputTokens = new IntHashSet();
         for (String token : inputTokenStrings) {
             fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, sensitivity);
         }
