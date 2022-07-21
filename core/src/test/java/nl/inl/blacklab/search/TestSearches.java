@@ -8,7 +8,6 @@ import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Terms;
@@ -197,7 +196,6 @@ public class TestSearches {
     }
 
     @Test
-    @Ignore
     public void testAnd() {
         expected = List.of(
                 "The [quick] brown");
@@ -423,14 +421,6 @@ public class TestSearches {
         // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
         // there used to be an issue with determining doc length that messed this up
         Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));
-    }
-
-    // Backreferences not implemented yet
-    @Ignore
-    @Test
-    public void testBackref() {
-        expected = Arrays.asList("noot [mier aap mier] mier", "noot [aap aap aap] aap", "aap [aap aap aap]");
-        Assert.assertEquals(expected, testIndex.findConc("a:[] 'aap' b:[word = a.word]"));
     }
 
     @Test

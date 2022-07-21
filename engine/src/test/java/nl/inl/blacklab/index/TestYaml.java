@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -30,7 +29,6 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
  */
 public class TestYaml {
 
-    @Ignore // TODO: test fails when run from Jenkins (cannot find file?)
     @Test
     public void testDuplicatObjects() {
         DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig() {
@@ -42,7 +40,10 @@ public class TestYaml {
         };
 
         try {
-            factoryConfig.load("nodups", new File("src/test/resources/yaml/nodups.blf.yaml"));
+            ClassLoader classLoader = this.getClass().getClassLoader();
+            File file = new File(classLoader.getResource("yaml/nodups.blf.yaml").getFile());
+            //new File("src/test/resources/yaml/nodups.blf.yaml")
+            factoryConfig.load("nodups", file);
             Assert.fail("expected duplicates error");
         } catch (IOException | InvalidInputFormatConfig ex) {
             Assert.assertTrue(ex.getMessage().contains("Duplicate"));

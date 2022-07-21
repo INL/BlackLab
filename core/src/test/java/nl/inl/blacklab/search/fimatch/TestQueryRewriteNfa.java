@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.fimatch;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -79,11 +78,10 @@ public class TestQueryRewriteNfa {
                 "FISEQ(FISEQ(AND(TERM(contents%word@i:quick), TERM(contents%lemma@i:quick)), NFA:#1:TOKEN(brown,DANGLING), 1), NFA:#1:TOKEN(the,DANGLING), -1)");
     }
 
-    @Ignore // hard to test properly with tiny indices
     @Test
     public void testRewriteSuffix() {
         assertRewriteResult("\"noot\" \".*p\"",
-                "FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(^.*p$,DANGLING), 1)");
+                "FISEQ(TERM(contents%word@i:noot), NFA:#1:REGEX(.*p,DANGLING), 1)");
     }
 
     @Test
