@@ -2,6 +2,9 @@
 
 set -o errexit  # Exit on error (set -e)
 
+# Go to the repository root
+cd $( dirname -- "$0"; )/..
+
 # Check how to call Compose
 COMPOSE=docker-compose
 if ! command -v $COMPOSE &> /dev/null
