@@ -115,7 +115,7 @@ Please note that when declaring annotations, the first annotation you declare wi
 - be used to generate concordances (the KWIC view).
 - be returned as the value (text content) of the `<w>` tag (in the XML response).
 
-The rest of this page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#annotated-input-format-configuration-file).
+The rest of this page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](how-to-configure-indexing.md#annotated-configuration-file).
 
 
 ## XPath support level
@@ -217,7 +217,8 @@ Note that duplicates are checked case-insensitive. The value in the index will k
       allowDuplicateValues: false 
 ```
 
-Multiple value annotations also work for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is a semicolon (;). You can change it as follows:
+Multiple value annotations also work for tabular formats like csv, tsv or sketch-wpl. You can specify a regular expression to use for splitting a column value into multiple values. The default is a semicolon `;`. You can change it as follows:
+
 ```yaml
     fileType: tabular
     fileTypeOptions:
@@ -505,7 +506,7 @@ annotatedFields:
       valuePath: 2
 ```
 
-If one of your columns contains multiple values, for example multiple alternative lemmatizations, set the `multipleValues` option for that annotation to true and specify a regular expression to use for splitting a column value into multiple values in the `fileTypeOptions`. The default is a semicolon (;). See also <a href='#multiple-values'>here</a>.
+If one of your columns contains multiple values, for example multiple alternative lemmatizations, set the `multipleValues` option for that annotation to true and specify a regular expression to use for splitting a column value into multiple values in the `fileTypeOptions`. The default is a semicolon `;`. See also [here](/guide/how-to-configure-indexing.md#multiple-values-at-one-position).
 
 ```yaml
 fileType: tabular
@@ -1194,7 +1195,7 @@ The best way to influence the index metadata is by including a special section `
         - keywords
 ```
       
-There's also a complete [annotated index metadata file](indexing-with-blacklab.html#edit-index-metadata) if you want to know more details about that. 
+There's also a complete [annotated index metadata file](/guide/how-to-configure-indexing.md#annotated-configuration-file) if you want to know more details about that. 
 
 ## Automatic XSLT generation
 

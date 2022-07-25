@@ -1,6 +1,6 @@
 # Example XPaths
 
-Especially when using Saxonica you have extensive possibilities using xpath in blacklab configuration. Some noteworthy examples you find here.
+[When using Saxonica](/guide/how-to-configure-indexing.md#xpath-support-level) you have extensive possibilities using XPath in BlackLab configuration. Some noteworthy examples are shown below (thanks @eduarddrenth).
 
 ## punctPath
 

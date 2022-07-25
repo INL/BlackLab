@@ -43,7 +43,7 @@ In addition to this, the default TEI configuration ([tei.blf.yaml](https://githu
 
 Usually this is related to the Java heap size. Make sure [the JVM has enough heap space](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.
 
-If that doesn't help, you might be trying to index a very large corpus with a unique id for each word, for example. BlackLab was designed to index word, lemma, part of speech and such, which all have a limited number of unique values. If you wish to index a unique id annotation for each word, you could [disable the forward index](how-to-configure-indexing.html#disable-fi) to save memory and disk space. 
+If that doesn't help, you might be trying to index a very large corpus with a unique id for each word, for example. BlackLab was designed to index word, lemma, part of speech and such, which all have a limited number of unique values. If you wish to index a unique id annotation for each word, you could [disable the forward index](/guide/how-to-configure-indexing.md#reducing-index-size) to save memory and disk space. 
 
 Sometimes, certain advanced queries may be slow as well. You can experiment with writing the same query in a slightly different way and see if that helps. If not, let us know.
 
@@ -52,7 +52,7 @@ Sometimes, certain advanced queries may be slow as well. You can experiment with
 
 You may be getting "permission denied" or such when trying to view a whole document in corpus-frontend or via BlackLab Server. This is due to the `contentViewable` setting.
 
-See the note about `contentViewable` on the [BlackLab Server overview](blacklab-server-overview.html#requests) page.
+See the note about `contentViewable` on the [BlackLab Server overview](/server/) page.
 
 
 ## Can I use BlackLab with Solr/ElasticSearch?
@@ -64,7 +64,7 @@ See our [future plans](future-plans.md).
 
 ## Where do I find requirements and compatibility information? 
 
-See the [downloads](downloads.html) page. This includes information about indexed corpus compatibility ("does an older corpus work with a newer BlackLab, or do I have to reindex?")
+See the [downloads](/development/downloads.md) page. This includes information about indexed corpus compatibility ("does an older corpus work with a newer BlackLab, or do I have to reindex?")
 
 
 ## Is BlackLab fast?

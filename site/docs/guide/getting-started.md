@@ -16,7 +16,7 @@ Let's go over these one by one.
 
 The web service, BlackLab Server, can be used from any programming language and offers a simple REST interface. The Java library offers the most flexibility, but it does mean you have to use a language that runs on the JVM (e.g. Java, Scala, Kotlin, etc.).
 
-For now, this guide will focus on BlackLab Server. If you're interested in the Java library, see the [Developers](/development) section.
+For now, this guide will focus on BlackLab Server. If you're interested in the Java library, see the [Developers](/development/) section.
 
 
 ## Install BlackLab Server
@@ -57,7 +57,7 @@ BlackLab needs *tokenized* data files as input. That means the word boundaries h
 It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/server/#convert-tag-plugins).
 :::
 
-One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as <a href='http://ilk.uvt.nl/frog/'>Frog</a>. 
+One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as [Frog](http://ilk.uvt.nl/frog/).
 
 A [web-based user interface](http://openconvert.clarin.inl.nl/) for converting and tagging (Dutch) input files is available. You will need a [CLARIN.eu account](https://user.clarin.eu/user) ([more information](https://www.clarin.eu/content/clarin-identity-provider)).
 
@@ -110,7 +110,7 @@ If your corpus was created as a subdirectory of the `indexLocation` you configur
 
 #### Command line QueryTool
 
-**TODO:** move to `/development`
+**TODO:** move to `/development/`
 
 BlackLab Core includes a very basic command-based query tool useful for testing and debugging. To query the index you just created using this tool, type:
 
@@ -131,7 +131,7 @@ See also:
 
 ## Corpus search application
 
-[BlackLab Frontend](https://github.com/INL/corpus-frontend/) is our corpus search application. It is easy to install; see the GitHub page for instructions.
+BlackLab Frontend is our corpus search application. It is easy to install; see its ([GitHub page](https://github.com/INL/corpus-frontend/)) for instructions.
 
 **TODO:** quick install info here.
 

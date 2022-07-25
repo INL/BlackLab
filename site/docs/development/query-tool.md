@@ -1,23 +1,20 @@
-# Using the query tool
+# QueryTool
 
-About the query tool
---------------------
+## What is it?
 
-The BlackLab query tool is a simple command-driven search tool that provides a demonstration of the querying features of BlackLab. It allows you to search an index using different query languages:
+QueryTool is a simple command-driven search tool that provides a demonstration of the querying features of BlackLab. It allows you to search an index using different query languages:
 
--   The [Corpus Query Language](corpus-query-language.html), aimed at finding linguistic patterns in large text corpora. This was developed at the University of Stuttgard for the IMS Corpus Workbench (CWB) and is used in other corpus search systems as well, notably the Lexicom Sketch Engine.
--   Lucene Query Language, the query parser supplied with Lucene. A [familiar syntax](http://lucene.apache.org/core/2_9_4/queryparsersyntax.html "http://lucene.apache.org/core/2_9_4/queryparsersyntax.html") for including/excluding terms, similar to how many search engines operate.
--   The Contextual Query Language (SRU CQL) (EXPERIMENTAL), a [query language](http://zing.z3950.org/cql/intro.html "http://zing.z3950.org/cql/intro.html") used by libraries around the world.
+- [Corpus Query Language](/guide/corpus-query-language.html), aimed at finding linguistic patterns in large text corpora. This was developed at the University of Stuttgard for the IMS Corpus Workbench (CWB) and is used in other corpus search systems as well, notably the Lexicom Sketch Engine.
+- [Lucene Query Language](https://lucene.apache.org/core/8_0_0/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#Overview), the query parser supplied with Lucene. A familiar syntax for including/excluding terms, similar to how many search engines operate.
+- Rudimentary support for [SRU CQL](http://zing.z3950.org/cql/intro.html) (Contextual Query Language), a query language used by libraries around the world.
 
-Note that not all features of each query language are supported yet, but the basics are.
+Note that Corpus Query Language is by far the best-supported query language.
 
-Starting the QueryTool
-----------------------
+## Starting the QueryTool
 
-You can start QueryTool to search your own data set by running it from the commandline. To learn how to quickly index and search a corpus, see [Building and testing BlackLab](/Building_and_testing_BlackLab "Building and testing BlackLab").
+You can start QueryTool to search your own data set by running it from the commandline. To learn how to quickly index and search a corpus, see [Getting Started](/guide/getting-started.html).
 
-Paging, sorting and grouping
-----------------------------
+## Paging, sorting and grouping
 
 As a first query, type "de" (the) and press Enter. The first twenty hits for this query are shown. To page through the results, use the commands “next” and “previous” (or their one-letter abbreviations). You can also change the number of hits displayed per page by using the “pagesize” command followed by a number.
 
@@ -29,8 +26,7 @@ Once you group hits, you enter group mode. The groups are displayed in columns: 
 
 To examine the hits in a group, enter “group n”, where n is the group number displayed at the beginning of the line (the second number is the group size). To leave group mode and go back to showing all hits, enter “hits”. To get back to group mode, enter “groups”.
 
-Corpus Query Language
----------------------
+## Corpus Query Language
 
 The demo starts out in Corpus Query Language mode, which is the most powerful of the supported languages. The Corpus Query Language expresses queries as sequences of token queries. It is therefore mainly useful to find specific types of phrases in a larger text.
 
@@ -62,8 +58,7 @@ This find forms of these verbs (“to be” and “to stay”) occurring togethe
 
 This finds the word "man" with one or more adjectives applied to it.
 
-QueryTool reference
--------------------
+## QueryTool reference
 
 ### CorpusQL examples
 
