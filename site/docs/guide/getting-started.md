@@ -81,7 +81,7 @@ From this directory, run the IndexTool without parameters for help information:
  
 (this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory; if not, prefix it with the correct directory)
 
-(if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
+(if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
 
 We want to create a new index, so we need to supply an index directory, input file(s) and an input format:
 

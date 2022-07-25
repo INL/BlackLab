@@ -12,7 +12,7 @@ Start the IndexTool without parameters for help information:
  
 (this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
 
-(if you're on Windows, replace the classpath separator colon (:) with a semicolon (;))
+(if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
 
 To create a new index:
 
@@ -44,28 +44,24 @@ Here, `FILTER_QUERY` is a metadata filter query in Lucene query language that ma
 
 BlackLab supports a number of input formats that are common in corpus linguistics:
 
-* tei ([Text Encoding Initiative](http://www.tei-c.org/), a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type')
-* sketch-wpl (the TSV/XML hybrid input [format the Sketch Engine/CWB use](https://www.sketchengine.co.uk/documentation/preparing-corpus-text/))
-* chat ([Codes for the Human Analysis of Transcripts](https://en.wikipedia.org/wiki/CHILDES#Database_Format), the format used by the CHILDES project)
-* folia (a [corpus XML format](https://proycon.github.io/folia/) popular in the Netherlands)
-* tsv-frog (tab-separated file as produced by the [Frog annotation tool](https://languagemachines.github.io/frog/))
+* `tei` ([Text Encoding Initiative](http://www.tei-c.org/), a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type')
+* `sketch-wpl` (the TSV/XML hybrid input [format the Sketch Engine/CWB use](https://www.sketchengine.co.uk/documentation/preparing-corpus-text/))
+* `chat` ([Codes for the Human Analysis of Transcripts](https://en.wikipedia.org/wiki/CHILDES#Database_Format), the format used by the CHILDES project)
+* `folia` (a [corpus XML format](https://proycon.github.io/folia/) popular in the Netherlands)
+* `tsv-frog` (tab-separated file as produced by the [Frog annotation tool](https://languagemachines.github.io/frog/))
 
 BlackLab also supports these generic file formats:
 
-* csv (Comma-Separated Values file that should have column names "word", "lemma" and "pos")
-* tsv (Tab-Separated Values file that should have column names "word", "lemma" and "pos")
-* txt (A plain text file; will tokenize on whitespace and index word forms)
+* `csv` (Comma-Separated Values file that should have column names "word", "lemma" and "pos")
+* `tsv` (Tab-Separated Values file that should have column names "word", "lemma" and "pos")
+* `txt` (A plain text file; will tokenize on whitespace and index word forms)
 
 A number of less common formats are also supported:
 
-* pagexml (OCR XML format)
-* alto ([an OCR XML format](http://www.loc.gov/standards/alto/))
-* whitelab2 (FoLiA format, but specifically tailored for the [WhiteLab2](https://github.com/Taalmonsters/WhiteLab2.0) search frontend)
-* sketchxml (files converted from the Sketch Engine's tab-separated format to be "true XML", so each token corresponds to a 'w' tag)
-* di-tei-element-text (a variant of TEI where content inside the 'text' element is indexed)
-* di-tei-pos-function (a variant of TEI where part of speech is in an attribute called 'function')
+* `pagexml` (OCR XML format)
+* `alto` ([another OCR XML format](http://www.loc.gov/standards/alto/))
 
-To add support for your own format, you just have to [write a configuration file](how-to-configure-indexing.html). (There's a [legacy way](#using-legacy-docindexers) too, but that involves writing Java code and you probably don't need it) Please [contact us](mailto:jan.niestadt@ivdnt.org) if you have any questions.
+To add support for your own format, you just have to [write a configuration file](how-to-configure-indexing.html). (There's a [legacy way](/development/customization/docindexer.md) too, but that involves writing Java code and you probably don't need it) Please [contact us](mailto:jan.niestadt@ivdnt.org) if you have any questions.
 
 If you choose the first option, specify the format name (which must match the name of the .blf.yaml or .blf.json file) as the FORMAT parameter. IndexTool will search a number of directories, including the current directory and the (parent of the) input directory for format files.
 
