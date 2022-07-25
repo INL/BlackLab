@@ -250,7 +250,7 @@ there, download it and place it in the `installation` directory.
 
 ### Server
 See
-[blacklab-server overview](http://inl.github.io/BlackLab/blacklab-server-overview.html)
+[blacklab-server overview](/server/)
 
 #### Configure
 

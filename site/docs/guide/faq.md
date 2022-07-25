@@ -27,7 +27,7 @@ Queries can be supplied in many different forms, depending on what you’re fami
 - [Contextual Query Language](http://www.loc.gov/standards/sru/specs/cql.html) (EXPERIMENTAL), used by many online information retrieval systems;
 - or if you prefer, you can programmatically construct queries out of objects, so you can add your own query languages, offer a GUI query builder, etc.
 
-See [Getting started](getting-started.md) to get your feet wet with BlackLab. See the [reference documentation](/development/apidocs/) for a detailed overview of the Java library, or [BlackLab Server overview](/blacklab-server/) for more information about the webservice.
+See [Getting started](getting-started.md) to get your feet wet with BlackLab. See the [reference documentation](/development/apidocs/) for a detailed overview of the Java library, or [BlackLab Server overview](/server/) for more information about the webservice.
 
 If you have questions, contact us (see below)!
 

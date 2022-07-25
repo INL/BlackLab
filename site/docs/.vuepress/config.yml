@@ -8,9 +8,9 @@ themeConfig:
     - text: Guide
       link: /guide/
     - text: Webservice
-      link: /blacklab-server/
+      link: /server/
     - text: Frontend
-      link: /blacklab-frontend/
+      link: /frontend/
     - text: Developers
       link: /development/
   #repo: INL/BlackLab
@@ -26,13 +26,13 @@ themeConfig:
       - future-plans
       - who-uses-blacklab
       - about
-    /blacklab-server/:
+    /server/:
       - ''
       - from-different-languages
       - rest-api
       - configuration
       - vmtouch
-    /blacklab-frontend/:
+    /frontend/:
       - ''
     /development/:
       - ''

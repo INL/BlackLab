@@ -8,7 +8,7 @@ The Java library
 First you need to get the BlackLab library. The simplest way is to let Maven download it automatically from the Central Repository, but you can also download a prebuilt binary, and it's trivial to build it yourself.
 
 <blockquote>
-<b>Note to MacOS users</b>: Dirk Roorda at DANS wrote a detailed guide for installing and indexing data on MacOS. It's available <a href='https://github.com/Dans-labs/clariah-gm/blob/master/blacklab/install.md'>here</a>. It's also archived <a href="../blacklab-server/install-macos.html">here</a>.
+<b>Note to MacOS users</b>: Dirk Roorda at DANS wrote a detailed guide for installing and indexing data on MacOS. It's available <a href='https://github.com/Dans-labs/clariah-gm/blob/master/blacklab/install.md'>here</a>. It's also archived <a href="../server/install-macos.html">here</a>.
 </blockquote>
 
 ## Getting BlackLab
@@ -46,7 +46,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
 
 ::: tip NOTE
-If you want to use BlackLab Server and [BlackLab Frontend](/blacklab-frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the `webapps` directory (e.g. `/var/lib/tomcat/webapps/`, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](blacklab-server-overview.html).
+If you want to use BlackLab Server and [BlackLab Frontend](/frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the `webapps` directory (e.g. `/var/lib/tomcat/webapps/`, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](blacklab-server-overview.html).
 :::
 
 ## A simple BlackLab application

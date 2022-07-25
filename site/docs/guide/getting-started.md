@@ -39,7 +39,7 @@ On the [GitHub releases page](https://github.com/INL/BlackLab/releases/), find t
 
 Now go to [https://localhost:8080/blacklab-server/](https://localhost:8080/blacklab-server/) (or substitute the hostname of the server you've installed it on if not running locally) and you should see an XML response from BlackLab.
 
-*([learn more about BlackLab Server](../blacklab-server/))*
+*([learn more about BlackLab Server](../server/))*
 
 
 ## Prepare your data
@@ -54,7 +54,7 @@ BlackLab supports a number of input formats, but the most well-known are [TEI](h
 ::: warning PLEASE NOTE
 BlackLab needs *tokenized* data files as input. That means the word boundaries have already been determined and BlackLab can just index each word as it parses the input file.
 
-It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/blacklab-server/#convert-tag-plugins).
+It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/server/#convert-tag-plugins).
 :::
 
 One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as <a href='http://ilk.uvt.nl/frog/'>Frog</a>. 
@@ -170,4 +170,4 @@ def search(cqlQuery):
 search('[pos="a.*"] "fox"')
 ```
 
-More examples can be found [here](../blacklab-server/from-different-languages.md).
+More examples can be found [here](../server/from-different-languages.md).
