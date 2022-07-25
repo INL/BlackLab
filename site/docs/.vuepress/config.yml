@@ -1,0 +1,61 @@
+base: /BlackLab/  # prepend this to all URLs
+title: BlackLab
+description: Documentation for the corpus search engine BlackLab
+themeConfig:
+  smoothScroll: true
+  #logo: /images/logo-blacklab.png
+  nav:
+    - text: Guide
+      link: /guide/
+    - text: Webservice
+      link: /blacklab-server/
+    - text: Frontend
+      link: /blacklab-frontend/
+    - text: Developers
+      link: /development/
+  #repo: INL/BlackLab
+  lastUpdated: Last Updated
+  sidebar:
+    /guide/:
+      - ['', 'Introduction']
+      - getting-started
+      - indexing-with-blacklab
+      - how-to-configure-indexing
+      - corpus-query-language
+      - [ 'faq', 'FAQ' ]
+      - future-plans
+      - who-uses-blacklab
+      - about
+    /blacklab-server/:
+      - ''
+      - from-different-languages
+      - rest-api
+      - configuration
+      - vmtouch
+    /blacklab-frontend/:
+      - ''
+    /development/:
+      - ''
+      - downloads
+      - examples/example-application
+      - query-tool
+      - apidocs/
+      - title: Customization
+        children:
+        - customization/docindexer
+        - customization/query-language
+        - customization/plugins
+        - customization/legacy-docindexers
+      - migration-guide
+      - changelog
+    /:
+      - ''
+  # default value is true. Set it to false to hide next page links on all pages
+  nextLinks: true
+  # default value is true. Set it to false to hide prev page links on all pages
+  prevLinks: true
+  
+  # Enable this when site is in the repo?
+  #docsDir: docs
+  #editLinks: true # defaults to false, set to true to enable
+  #editLinkText: 'Help us improve this page!'
