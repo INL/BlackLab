@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -106,5 +107,23 @@ public interface Terms {
      * @param segmentResults snippets with segment-specific term ids
      * @return segments with global term ids
      */
-    List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults);
+    default List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
+        List<int[]> results = new ArrayList<>();
+        for (int[] snippet: segmentResults) {
+            results.add(segmentIdsToGlobalIds(lrc, snippet));
+        }
+        return results;
+    }
+
+    /**
+     * We have a snippet with segment-specific term ids; convert it to global term ids.
+     *
+     * Note that with external forward index, there is no such thing as segment-specific term ids,
+     * there's only global term ids. So in this case, this method should just return the input.
+     *
+     * @param lrc segment these snippets came from
+     * @param segmentResults snippets with segment-specific term ids
+     * @return segments with global term ids
+     */
+    int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] segmentResults);
 }

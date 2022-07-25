@@ -24,7 +24,6 @@ Integrating with Solr will involve the following steps.
 
 - [x] Eliminate index version files (replaced by codec version)
 - [x] Make the forward index part of the Lucene index
-  - [ ] _FI1/2 integration tests fail intermittently, with both index formats.
   - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
   - [ ] Only create forward index for annotations that should have one (fieldsconsumer)
   - [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)

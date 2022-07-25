@@ -75,7 +75,8 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
                     MatchSensitivity.SENSITIVE) ?
                     annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                     annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-            return forwardIndexReader.retrievePart(sensitivity.luceneField(), docId, start, end);
+            int[] part = forwardIndexReader.retrievePart(sensitivity.luceneField(), docId, start, end);
+            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext, part);
         }
 
         @Override

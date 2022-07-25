@@ -48,7 +48,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         finishInitialization(terms, termId2SensitivePosition, termId2InsensitivePosition);
     }
 
-    private synchronized String[] readTermsFromIndex() {
+    private String[] readTermsFromIndex() {
         // A list of globally unique terms that occur in our index.
         Map<String, Integer> globalTermIds = new LinkedHashMap<>(); // global term ids, in the correct order
         try {
@@ -114,16 +114,12 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     @Override
-    public List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
+    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] snippet) {
         List<Integer> mapping = segmentToGlobalTermIds.get(lrc.ord);
-        List<int[]> results = new ArrayList<>();
-        for (int[] snippet: segmentResults) {
-            int[] converted = new int[snippet.length];
-            for (int i = 0; i < snippet.length; i++) {
-                converted[i] = snippet[i] < 0 ? snippet[i] : mapping.get(snippet[i]);
-            }
-            results.add(converted);
+        int[] converted = new int[snippet.length];
+        for (int i = 0; i < snippet.length; i++) {
+            converted[i] = snippet[i] < 0 ? snippet[i] : mapping.get(snippet[i]);
         }
-        return results;
+        return converted;
     }
 }

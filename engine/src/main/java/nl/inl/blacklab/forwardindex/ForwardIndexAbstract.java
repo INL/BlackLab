@@ -16,6 +16,8 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     protected static final Logger logger = LogManager.getLogger(ForwardIndexAbstract.class);
 
+    private final boolean canDoNfaMatching;
+
     /** Check that the requested snippet can be taken from a document of this length.
      * @param docLength length of the document
      * @param snippetStart start position of the snippet
@@ -43,6 +45,12 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
+    /** Used to ensure that no new FIs are opened after the constructor. */
+    private boolean initialized;
+
+    /** Ensure that we don't try to use the FI after closing it. */
+    private boolean closed = false;
+
     public ForwardIndexAbstract(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
@@ -56,15 +64,14 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
             // Automatically initialize forward index (in the background)
             executorService.execute(afi::initialize);
         }
+
+        canDoNfaMatching = fis.values().stream().allMatch(fi -> fi.canDoNfaMatching());
+        initialized = true;
     }
 
     @Override
     public boolean canDoNfaMatching() {
-        for (AnnotationForwardIndex afi: fis.values()) {
-            if (afi.canDoNfaMatching())
-                return true;
-        }
-        return false;
+        return canDoNfaMatching;
     }
 
     /**
@@ -78,11 +85,14 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
                     ((AnnotationForwardIndexExternalWriter)fi).close();
             }
             fis.clear();
+            closed = true;
         }
     }
 
     @Override
     public Terms terms(Annotation annotation) {
+        if (closed)
+            throw new RuntimeException("ForwardIndex was closed");
         return get(annotation).terms();
     }
 
@@ -93,6 +103,8 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     @Override
     public Iterator<AnnotationForwardIndex> iterator() {
+        if (closed)
+            throw new RuntimeException("ForwardIndex was closed");
         synchronized (fis) {
             return fis.values().iterator();
         }
@@ -100,6 +112,8 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     @Override
     public AnnotationForwardIndex get(Annotation annotation) {
+        if (closed)
+            throw new RuntimeException("ForwardIndex was closed");
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
         AnnotationForwardIndex afi;
@@ -114,18 +128,15 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     protected abstract AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation, BlackLabIndex index);
 
     @Override
-    public void put(Annotation annotation, AnnotationForwardIndex forwardIndex) {
-        synchronized (fis) {
-            fis.put(annotation, forwardIndex);
-        }
-    }
-
-    @Override
     public String toString() {
         return this.getClass().getSimpleName() + "(" + index.indexDirectory() + "/fi_*)";
     }
 
     protected void add(Annotation annotation, AnnotationForwardIndex afi) {
+        if (initialized)
+            throw new RuntimeException("All forward indexes should have been opened while initializing!");
+        if (closed)
+            throw new RuntimeException("ForwardIndex was closed");
         synchronized (fis) {
             fis.put(annotation, afi);
         }

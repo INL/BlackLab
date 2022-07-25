@@ -37,13 +37,5 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      */
     AnnotationForwardIndex get(Annotation annotation);
 
-    /**
-     * Add a forward index.
-     * 
-     * @param annotation annotation for which this is the forward index
-     * @param forwardIndex forward index to add
-     */
-    void put(Annotation annotation, AnnotationForwardIndex forwardIndex);
-
     boolean canDoNfaMatching();
 }

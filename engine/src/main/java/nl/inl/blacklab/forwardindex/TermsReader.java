@@ -61,8 +61,8 @@ public class TermsReader extends TermsReaderAbstract {
     }
 
     @Override
-    public List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
-        return segmentResults; // no need to do anything, term ids are always global
+    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] snippet) {
+        return snippet; // no need to do anything, term ids are always global
     }
 
 }

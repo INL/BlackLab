@@ -135,6 +135,6 @@ public class TestIndexIntegrated {
     @Test
     public void testNoTerm() {
         LeafReaderContext lrc = index.reader().leaves().iterator().next();
-        Assert.assertEquals(-1, wordTerms.segmentIdsToGlobalIds(lrc, List.of(new int[] {-1})).get(0)[0]);
+        Assert.assertEquals(-1, wordTerms.segmentIdsToGlobalIds(lrc, new int[] {-1})[0]);
     }
 }

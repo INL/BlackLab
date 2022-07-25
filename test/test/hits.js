@@ -213,8 +213,8 @@ const expectedResultPhraseQuery = {
 expectHitsJson('"a" [lemma="successful"]', 1, 1, expectedResultPhraseQuery);
 // Also test that forward index matching either the first or the second clause produces the same results
 // TODO: these 2 tests still fail intermittently for the integrated index format.
-//expectHitsJson('_FI1("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
-//expectHitsJson('_FI2("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
+expectHitsJson('_FI1("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
+expectHitsJson('_FI2("a", [lemma="successful"])', 1, 1, expectedResultPhraseQuery);
 
 // Simple capture group
 expectHitsJson('"one" A:[]', 2, 1, {

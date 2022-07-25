@@ -12,7 +12,6 @@ import java.nio.channels.FileChannel.MapMode;
 import java.text.CollationKey;
 import java.text.Collator;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -311,7 +310,7 @@ class TermsWriter implements Terms {
     }
 
     @Override
-    public List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
+    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] segmentResults) {
         throw new UnsupportedOperationException("Not available during indexing");
     }
 }
