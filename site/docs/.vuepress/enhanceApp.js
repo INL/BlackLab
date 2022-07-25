@@ -21,14 +21,14 @@ export default ({ router }) => {
     { path: '/indexing-with-blacklab.html', redirect: '/guide/indexing-with-blacklab.html' },
     { path: '/install-macos.html', redirect: '/' },
     { path: '/learn.html', redirect: '/guide' },
-    { path: '/migration-guide.html', redirect: '/development/migration-guide.html' }
+    { path: '/migration-guide.html', redirect: '/development/migration-guide.html' },
     { path: '/newsletter.html', redirect: '/' },
     { path: '/plugins.html', redirect: '/' },
     { path: '/query-tool.html', redirect: '/' },
     { path: '/roadmap.html', redirect: '/guide/future-plans.html' },
-    { path: '/tsv-example.html', redirect: '/guide/tsv-example.html' }
+    { path: '/tsv-example.html', redirect: '/guide/tsv-example.html' },
     { path: '/who-uses-blacklab.html', redirect: '/' },
-    { path: '/xpath_examples.html', redirect: '/' }
+    { path: '/xpath_examples.html', redirect: '/' },
   ]);
 };
 
