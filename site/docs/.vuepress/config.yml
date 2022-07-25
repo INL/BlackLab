@@ -13,7 +13,7 @@ themeConfig:
       link: /frontend/
     - text: Developers
       link: /development/
-  #repo: INL/BlackLab
+  repo: INL/BlackLab
   lastUpdated: Last Updated
   sidebar:
     /guide/:
@@ -56,6 +56,7 @@ themeConfig:
   prevLinks: true
   
   # Enable this when site is in the repo?
-  #docsDir: docs
-  #editLinks: true # defaults to false, set to true to enable
-  #editLinkText: 'Help us improve this page!'
+  docsDir: site/docs
+  docsBranch: vuepress-site
+  editLinks: true # defaults to false, set to true to enable
+  editLinkText: 'Help us improve this page!'
