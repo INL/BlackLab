@@ -86,6 +86,8 @@ public class BLFieldsProducer extends FieldsProducer {
             throws IOException {
         this.postingsFormatName = postingsFormatName;
 
+        //state.fieldInfos.fieldInfo("bla").getAttribute("blabla");
+
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this, state);

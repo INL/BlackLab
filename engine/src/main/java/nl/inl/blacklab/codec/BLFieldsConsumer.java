@@ -131,6 +131,11 @@ public class BLFieldsConsumer extends FieldsConsumer {
 
         // implement custom type of stored field?
 
+        // Store metadata for this field
+        for (String field: fields) {
+            state.fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "didYouKnowThat?");
+        }
+
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
 
@@ -240,8 +245,6 @@ public class BLFieldsConsumer extends FieldsConsumer {
                                 }
                                 termId++;
                             }
-                            // Store additional metadata about this field
-                            fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "didYouKnowThat?");
                         }
                     }
                 }

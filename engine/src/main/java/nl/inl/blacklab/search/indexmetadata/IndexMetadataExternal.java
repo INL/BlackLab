@@ -149,19 +149,8 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
             jsonRoot = readMetadataFile(metadataFile);
         }
         extractFromJson(jsonRoot, reader, usedTemplate);
-
-        // Detect main contents field and main annotations of annotated fields
         if (!createNewIndex) { // new index doesn't have this information yet
-            // Detect the main annotations for all annotated fields
-            // (looks for fields with char offset information stored)
-            AnnotatedFieldImpl mainContentsField = null;
-            for (AnnotatedField d: annotatedFields()) {
-                if (mainContentsField == null || d.name().equals("contents"))
-                    mainContentsField = (AnnotatedFieldImpl) d;
-                if (tokenCount() > 0) // no use trying this on an empty index
-                    ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
-            }
-            annotatedFields.setMainContentsField(mainContentsField);
+            detectMainAnnotation(reader);
         }
     }
 

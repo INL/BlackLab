@@ -31,10 +31,12 @@ import nl.inl.util.LuceneUtil;
 public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
     /** Name in our index for the metadata field (stored in a special document that should never be matched) */
-    public static final String INDEX_METADATA_FIELD_NAME = "__index_metadata__";
+    private static final String METADATA_FIELD_NAME = "__index_metadata__";
 
     /** Index metadata document get a marker field so we can find it again (value same as field name) */
-    public static final String INDEX_METADATA_MARKER = "__index_metadata_marker__";
+    private static final String METADATA_MARKER = "__index_metadata_marker__";
+
+    private static final Query METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
     /** For writing indexmetadata to disk for debugging */
     private final File debugFile;
@@ -59,7 +61,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
-        this.debugFile = new File(index.indexDirectory(), "integrated-meta.yaml");
+        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
 
         if (createNewIndex) {
             // Create new index metadata from config
@@ -71,6 +73,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             try {
                 ObjectNode yamlRoot = getMetadataFromIndex(index);
                 extractFromJson(yamlRoot, index.reader(), false);
+                detectMainAnnotation(index.reader());
             } catch (IOException e) {
                 throw new RuntimeException("Error finding index metadata doc", e);
             }
@@ -78,16 +81,15 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     }
 
     private ObjectNode getMetadataFromIndex(BlackLabIndex index) throws IOException {
-        Query query = new TermQuery(new Term(INDEX_METADATA_MARKER, INDEX_METADATA_MARKER));
-        final List<Integer> docIds = new ArrayList<>();
         IndexSearcher searcher = new IndexSearcher(index.reader());
-        searcher.search(query, new LuceneUtil.SimpleDocIdCollector(docIds));
+        final List<Integer> docIds = new ArrayList<>();
+        searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
         if (docIds.isEmpty())
             throw new RuntimeException("No index metadata found!");
         if (docIds.size() > 1)
             throw new RuntimeException("Multiple index metadata found!");
         int docId = docIds.get(0);
-        String indexMetadataYaml = index.reader().document(docId).get(INDEX_METADATA_FIELD_NAME);
+        String indexMetadataYaml = index.reader().document(docId).get(METADATA_FIELD_NAME);
         ObjectMapper mapper = Json.getYamlObjectMapper();
         return (ObjectNode) mapper.readTree(new StringReader(indexMetadataYaml));
     }
@@ -103,9 +105,15 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         StringWriter sw = new StringWriter();
         try {
             mapper.writeValue(sw, encodeToJson());
-            indexmetadataDoc.add(new StoredField(INDEX_METADATA_FIELD_NAME, sw.toString()));
-            indexmetadataDoc.add(new org.apache.lucene.document.Field(INDEX_METADATA_MARKER, INDEX_METADATA_MARKER, markerFieldType));
+            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
+            indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+
+            // Update the index metadata by deleting it, then adding a new version.
+            // TODO: probably use versioning to prevent losing indexmetadata if we crash
+            //   (i.e. add new document, then remove old document by searching with the previous version)
+            indexWriter.writer().deleteDocuments(METADATA_DOC_QUERY);
             indexWriter.writer().addDocument(indexmetadataDoc);
+
             if (debugFile != null)
                 FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
         } catch (IOException e) {

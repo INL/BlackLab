@@ -1127,4 +1127,17 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         return this.frozen;
     }
 
+    protected void detectMainAnnotation(IndexReader reader) {
+        // Detect main contents field and main annotations of annotated fields
+        // Detect the main annotations for all annotated fields
+        // (looks for fields with char offset information stored)
+        AnnotatedFieldImpl mainContentsField = null;
+        for (AnnotatedField d: annotatedFields()) {
+            if (mainContentsField == null || d.name().equals("contents"))
+                mainContentsField = (AnnotatedFieldImpl) d;
+            if (tokenCount() > 0) // no use trying this on an empty index
+                ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
+        }
+        annotatedFields.setMainContentsField(mainContentsField);
+    }
 }
