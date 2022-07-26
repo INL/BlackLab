@@ -3,6 +3,7 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.util.Arrays;
 
+import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -10,19 +11,10 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public abstract class TermsReaderAbstract implements Terms {
     protected static final Logger logger = LogManager.getLogger(TermsReaderAbstract.class);
-
-    /**
-     * A helper array that's re-used.
-     *
-     * Returned by getOffsetAndLength() and used by get(termId).
-     * Could be eliminated by inlining getOffsetAndLength()?
-     */
-    protected final ThreadLocal<int[]> arrayAndOffsetAndLength = ThreadLocal.withInitial(() -> new int[3]);
 
     /** How many terms total are there? (always valid) */
     private int numberOfTerms;
@@ -51,25 +43,18 @@ public abstract class TermsReaderAbstract implements Terms {
 
     /**
      * Contains a leading int specifying how many ids for a given group, followed by the list of ids.
-     * For a group of size 2 containing the ids 4 and 8, contains [...2, 4, 9, ...]
+     * For a group of size 2 containing the ids 4 and 8, contains [...2, 4, 8, ...]
      * {@link #insensitivePosition2GroupId} and {@link #sensitivePosition2GroupId} contain the index of the leading int
      * in this array for all sensitive/insensitive sorting positions respectively.
      */
     private int[] groupId2TermIds;
 
-    /**
-     * The character data for all terms. Two-dimensional array because it may be larger than
-     * the maximum array size ({@link Constants#JAVA_MAX_ARRAY_SIZE}, roughly Integer.MAX_VALUE)
-     */
-    private byte[][] termCharData;
+    /** The character data for all terms. */
+    private ByteBigArrayBigList termCharData;
 
     /**
-     * Gives a position in the termCharData array for each term id.
-     *
-     * Lower 32 bits indicate the array, upper 32 bits indicate the index within the {@link #termCharData} array.
-     * This is needed to allow more than 2gb of term character data.
-     *
-     * Term length will follow from the positions of the next term (see {@link #getOffsetAndLength(int)}).
+     * Contains the start position in termCharData array for each term id.
+     * The length of the term must be computed by using the start position of the next term.
      */
     private long[] termId2CharDataOffset;
 
@@ -200,55 +185,17 @@ public abstract class TermsReaderAbstract implements Terms {
     protected void fillTermCharData(String[] terms) {
         // convert all to byte[] and tally total number of bytes
         // free the String instances while doing this so memory usage doesn't spike so much
+        this.termCharData = new ByteBigArrayBigList();
+        long bytesWritten = 0;
         this.termId2CharDataOffset = new long[numberOfTerms];
-        byte[][] bytes = new byte[numberOfTerms][];
-        long bytesRemainingToBeWritten = 0;
         for (int i = 0; i < numberOfTerms; ++i) {
-            byte[] b = terms[i].getBytes(DEFAULT_CHARSET);
-            terms[i] = null;
-            bytes[i] = b;
-            bytesRemainingToBeWritten += b.length;
-        }
-
-        byte[][] termCharData = new byte[0][];
-        byte[] curArray;
-        for (int termIndex = 0; termIndex < numberOfTerms; ++termIndex) {
-
-            // allocate new term bytes array, subtract what will fit
-            final int curArrayLength = (int) Long.min(bytesRemainingToBeWritten, Integer.MAX_VALUE);
-            curArray = new byte[curArrayLength];
-
-            // now write terms until the array runs out of space or we have written all remaining terms
-            // FIXME this code breaks when char term data total more than 2 GB
-            //       (because offset will overflow)
-            int offset = termCharData.length * Integer.MAX_VALUE; // set to beginning of current array
-            while (termIndex < numberOfTerms) {
-                final byte[] termBytes = bytes[termIndex];
-                if ((offset + termBytes.length) > curArrayLength) {
-                    --termIndex; /* note we didn't write this term yet, so re-process it next iteration */
-                    break;
-                }
-                bytes[termIndex] = null;  // free original byte[], only do after we verify it can be copied!
-
-                this.termId2CharDataOffset[termIndex] = offset;
-
-                System.arraycopy(termBytes, 0, curArray, offset, termBytes.length);
-
-                offset += termBytes.length;
-                ++termIndex;
-                bytesRemainingToBeWritten -= termBytes.length;
+            this.termId2CharDataOffset[i] = bytesWritten;
+            byte[] bytes = terms[i].getBytes(DEFAULT_CHARSET);
+            for (byte b : bytes) {
+                this.termCharData.add(bytesWritten++, b);
             }
-
-            // add the (now filled) current array to the set.
-            byte[][] tmp = termCharData;
-            termCharData = new byte[tmp.length + 1][];
-            System.arraycopy(tmp, 0, termCharData, 0, tmp.length);
-            termCharData[termCharData.length - 1] = curArray;
-
-            // and go to the top (allocate new array - copy remaining terms..)
         }
-
-        this.termCharData = termCharData;
+        this.termCharData.trim(); // clear extra space.
     }
 
     @Override
@@ -303,9 +250,14 @@ public abstract class TermsReaderAbstract implements Terms {
         if (id >= numberOfTerms || id < 0) {
             return "";
         }
-        final int[] arrayAndOffsetAndLength = getOffsetAndLength(id);
-        return new String(termCharData[arrayAndOffsetAndLength[0]], arrayAndOffsetAndLength[1],
-                arrayAndOffsetAndLength[2], DEFAULT_CHARSET);
+        boolean isLastId = id == (this.termId2CharDataOffset.length - 1);
+        long start = this.termId2CharDataOffset[id];
+        long end = (isLastId ? this.termCharData.size64() : this.termId2CharDataOffset[id+1]);
+        int length = (int) (end-start);
+
+        byte[] out = new byte[length];
+        this.termCharData.getElements(start, out, 0, length);
+        return new String(out, DEFAULT_CHARSET);
     }
 
     @Override
@@ -332,42 +284,6 @@ public abstract class TermsReaderAbstract implements Terms {
                 return false;
         }
         return true;
-    }
-
-    /**
-     * Returns the threadlocal arrayAndOffsetAndLength, the array is reused between calls.
-     * index 0 contains the char array
-     * index 1 contains the offset within the char array
-     * index 2 contains the length
-     *
-     * @return the
-     */
-    private int[] getOffsetAndLength(int termId) {
-        final int[] arrayAndOffsetAndLength = this.arrayAndOffsetAndLength.get();
-        final long offset = this.termId2CharDataOffset[termId];
-        final int arrayIndex = (int) (offset >> 32);
-        final int indexInArray = (int) (offset & 0xffffffffL); // only keep upper 32 bits
-
-        // Determine the length of this term from the positions of the next term
-        final boolean isLastTermInArray =
-                termId == (numberOfTerms - 1) || (((int) (this.termId2CharDataOffset[termId + 1] >> 32)) != arrayIndex);
-        int length = 0;
-        if (isLastTermInArray) {
-            // This term is the last in its array.
-            final byte[] relevantArray = termCharData[arrayIndex];
-            // find first null byte, that will terminate the string (or else until the border of the array)
-            while (relevantArray.length > (indexInArray + length) && relevantArray[indexInArray + length] != 0) {
-                ++length;
-            }
-        } else {
-            // Next term is also in this array, so just take the difference between the two offsets.
-            length = (int) (termId2CharDataOffset[termId + 1] - offset);
-        }
-
-        arrayAndOffsetAndLength[0] = arrayIndex;
-        arrayAndOffsetAndLength[1] = indexInArray;
-        arrayAndOffsetAndLength[2] = length;
-        return arrayAndOffsetAndLength;
     }
 
     private int getGroupId(String term, MatchSensitivity sensitivity) {
