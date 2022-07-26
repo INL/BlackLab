@@ -218,20 +218,16 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public void clearMetadataGroups() {
+    public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
         ensureNotFrozen();
-        metadataGroups.clear();
-    }
-
-    @Override
-    public void putMetadataGroup(String name, MetadataFieldGroupImpl metadataGroup) {
-        ensureNotFrozen();
-        metadataGroups.put(name, metadataGroup);
+        this.metadataGroups.clear();
+        this.metadataGroups.putAll(metadataGroups);
     }
 
     /**
      * Check if field exists, or create a default (tokenized) field for it if not.
      *
+     * @param name field name
      */
     @Override
     public void ensureFieldExists(String name) {

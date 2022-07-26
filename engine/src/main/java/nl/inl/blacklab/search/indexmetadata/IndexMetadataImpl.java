@@ -1,31 +1,23 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.util.Bits;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +28,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -54,19 +45,15 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
+import nl.inl.util.TimeUtil;
 
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements IndexMetadataWriter {
-
-    private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
+public abstract class IndexMetadataImpl implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataImpl.class);
-
-    private static final String METADATA_FILE_NAME = "indexmetadata";
 
     /**
      * The latest index format. Written to the index metadata file.
@@ -112,13 +99,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** Our index */
-    private final BlackLabIndex index;
-
-    /** Where to save indexmetadata.json */
-    private final File indexDir;
+    protected final BlackLabIndex index;
 
     /** Index display name */
-    private String displayName;
+    protected String displayName;
 
     /** Index description */
     private String description;
@@ -157,26 +141,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     private long tokenCount = 0;
 
-    /** When we save this file, should we write it as json or yaml? */
-    private boolean saveAsJson = true;
-
     /** Our metadata fields */
     private final MetadataFieldsImpl metadataFields;
 
     /** Our annotated fields */
-    private final AnnotatedFieldsImpl annotatedFields;
+    protected final AnnotatedFieldsImpl annotatedFields;
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
-
-    /**
-     * If true, subannotations are stored in the same Lucene field as their main annotation (old approach).
-     * If false (the new indexing default), subannotations get their own Lucene field.
-     *
-     * This boolean is initialized to true, and we set it to false if we encounter subannotation declarations
-     * in the index metadata, because that means we're dealing with a modern index.
-     */
-    private boolean subannotationsStoredWithMain = true;
 
     /**
      * Construct an IndexMetadata object, querying the index for the available
@@ -191,69 +163,18 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
         this.index = index;
-        this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
         annotatedFields = new AnnotatedFieldsImpl();
 
-        // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
-                Arrays.asList("json", "yaml", "yml"));
-        if (metadataFile != null && createNewIndex) {
-            // Don't leave the old metadata file if we're creating a new index
-            if (metadataFile.exists() && !metadataFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-        }
-
-        // If none found, or creating new index: write a .yaml file.
-        if (createNewIndex || metadataFile == null) {
-            metadataFile = new File(indexDir, METADATA_FILE_NAME + ".yaml");
-        }
-        saveAsJson = false;
-        if (createNewIndex && config != null) {
-            // Create an index metadata file from this config.
-            ConfigCorpus corpusConfig = config.getCorpusConfig();
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            ObjectNode jsonRoot = mapper.createObjectNode();
-            String displayName = corpusConfig.getDisplayName();
-            if (displayName.isEmpty())
-                displayName = determineIndexName();
-            jsonRoot.put("displayName", displayName);
-            jsonRoot.put("description", corpusConfig.getDescription());
-            jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
-            jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
-            jsonRoot.put("documentFormat", config.getName());
-            addVersionInfo(jsonRoot);
-            ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-            fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-            fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
-            fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
-            for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
-                fieldInfo.put(e.getKey(), e.getValue());
-            }
-            ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
-            ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
-            ObjectNode metadata = fieldInfo.putObject("metadataFields");
-            ObjectNode annotated = fieldInfo.putObject("complexFields");
-
-            addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
-            extractFromJson(jsonRoot, null, true);
-
-            if (config.getName() != null)
-                setDocumentFormat(config.getName());
-
-            save();
-        } else {
-            // Read existing metadata or create empty new one
-            readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, false);
-        }
+        initMetadata(indexDir, createNewIndex, config);
     }
 
     /**
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.
      *
-     * @param reader the index of which we want to know the structure
+     * @param index the index of which we want to know the structure
      * @param indexDir where the index (and the metadata file) is stored
      * @param createNewIndex whether we're creating a new index
      * @param indexTemplateFile JSON file to use as template for index structure /
@@ -262,87 +183,30 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
         this.index = index;
-        this.indexDir = indexDir;
 
         metadataFields = new MetadataFieldsImpl();
         annotatedFields = new AnnotatedFieldsImpl();
 
-        // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
-                Arrays.asList("json", "yaml", "yml"));
-        if (metadataFile != null && createNewIndex) {
-            // Don't leave the old metadata file if we're creating a new index
-            if (!metadataFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-        }
-
-        // If none found, or creating new index: metadata file should be same format as
-        // template.
-        if (createNewIndex || metadataFile == null) {
-            // No metadata file yet, or creating a new index;
-            // use same metadata format as the template
-            boolean templateIsJson = false;
-            if (indexTemplateFile != null && indexTemplateFile.getName().endsWith(".json"))
-                templateIsJson = true;
-            String templateExt = templateIsJson ? "json" : "yaml";
-            if (createNewIndex && metadataFile != null) {
-                // We're creating a new index, but also found a previous metadata file.
-                // Is it a different format than the template? If so, we would end up
-                // with two metadata files, which is confusing and might lead to errors.
-                boolean existingIsJson = metadataFile.getName().endsWith(".json");
-                if (existingIsJson != templateIsJson) {
-                    // Delete the existing, different-format file to avoid confusion.
-                    if (!metadataFile.delete())
-                        throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-                }
-            }
-            metadataFile = new File(indexDir, METADATA_FILE_NAME + "." + templateExt);
-        }
-        saveAsJson = metadataFile.getName().endsWith(".json");
-        boolean usedTemplate = false;
-        if (createNewIndex && indexTemplateFile != null) {
-            // Copy the template file to the index dir and read the metadata again.
-            try {
-                String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
-                FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-            usedTemplate = true;
-        }
-
-        readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, usedTemplate);
+        initMetadata(indexDir, createNewIndex, indexTemplateFile);
     }
+
+    protected abstract void initMetadata(File indexDir, boolean createNewIndex, ConfigInputFormat config)
+            throws IndexVersionMismatch;
+
+    protected abstract void initMetadata(File indexDir, boolean createNewIndex, File indexTemplateFile)
+            throws IndexVersionMismatch;
 
     // Methods that read data
     // ------------------------------------------------------------------------------
 
-    private String determineIndexName() {
-        String name = indexDir.getName();
-        if (name.equals("index"))
-            name = indexDir.getAbsoluteFile().getParentFile().getName();
-        return name;
-    }
-
-    @Override
-    public void save() {
-        String ext = saveAsJson ? ".json" : ".yaml";
-        File metadataFile = new File(indexDir, METADATA_FILE_NAME + ext);
-        try {
-            boolean isJson = metadataFile.getName().endsWith(".json");
-            ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            mapper.writeValue(metadataFile, encodeToJson());
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
+    protected abstract String determineIndexName();
 
     /**
      * Encode the index structure to an (in-memory) JSON structure.
      *
      * @return json structure
      */
-    private ObjectNode encodeToJson() {
+    protected ObjectNode encodeToJson() {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
         jsonRoot.put("displayName", displayName);
@@ -509,68 +373,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         return type;
     }
 
-    /**
-     * Check if a Lucene field has offsets stored.
-     *
-     * @param reader our index
-     * @param luceneFieldName field to check
-     * @return true iff field has offsets
-     */
-    static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
-        // Iterate over documents in the index until we find a annotation
-        // for this annotated field that has stored character offsets. This is
-        // our main annotation.
-
-        // Note that we can't simply retrieve the field from a document and
-        // check the FieldType to see if it has offsets or not, as that information
-        // is incorrect at search time (always set to false, even if it has offsets).
-
-        Bits liveDocs = MultiBits.getLiveDocs(reader);
-        for (int n = 0; n < reader.maxDoc(); n++) {
-            if (liveDocs == null || liveDocs.get(n)) {
-                try {
-                    Terms terms = reader.getTermVector(n, luceneFieldName);
-                    if (terms == null) {
-                        // No term vector; probably not stored in this document.
-                        continue;
-                    }
-                    if (terms.hasOffsets()) {
-                        // This field has offsets stored. Must be the main alternative.
-                        return true;
-                    }
-                    // This alternative has no offsets stored. Don't look at any more
-                    // documents, go to the next alternative.
-                    break;
-                } catch (IOException e) {
-                    throw BlackLabRuntimeException.wrap(e);
-                }
-            }
-        }
-        return false;
-    }
-
     @Override
     public MetadataFieldsWriter metadataFields() {
         return metadataFields;
-    }
-
-    /**
-     * Get the display name for the index.
-     *
-     * If no display name was specified, returns the name of the index directory.
-     *
-     * @return the display name
-     */
-    @Override
-    public String displayName() {
-        String dispName = "index";
-        if (displayName != null && displayName.length() != 0)
-            dispName = displayName;
-        if (dispName.equalsIgnoreCase("index"))
-            dispName = StringUtils.capitalize(indexDir.getName());
-        if (dispName.equalsIgnoreCase("index"))
-            dispName = StringUtils.capitalize(indexDir.getAbsoluteFile().getParentFile().getName());
-        return dispName;
     }
 
     /**
@@ -684,17 +489,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         return tokenCount;
     }
 
-    /**
-     * Format the current date and time according to the SQL datetime convention.
-     *
-     * @return a string representation, e.g. "1980-02-01 00:00:00"
-     */
-    static String timestamp() {
-        // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
-        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return dateTimeFormat.format(new Date());
-    }
-
     // Methods that mutate data
     // ------------------------------------
 
@@ -716,7 +510,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *            anymore.
      * @throws IndexVersionMismatch if the index is too old or too new to open with this BlackLab version
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
+    protected void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -746,7 +540,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
 
         // Specified in index metadata file?
-        String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
         FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
@@ -781,7 +574,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             }
         }
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
-            metadataFields.clearMetadataGroups();
+            Map<String, MetadataFieldGroupImpl> groupMap = new LinkedHashMap<>();
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
             for (int i = 0; i < groups.size(); i++) {
                 JsonNode group = groups.get(i);
@@ -794,8 +587,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
                         addRemainingFields);
-                metadataFields.putMetadataGroup(name, metadataGroup);
+                groupMap.put(name, metadataGroup);
             }
+            metadataFields.setMetadataGroups(groupMap);
         }
         if (hasFieldInfo) {
             // Metadata fields
@@ -875,7 +669,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                                     annotation.setInternal();
                                 break;
                             case "subannotations":
-                                subannotationsStoredWithMain = false; // new-style index
                                 annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
                                 break;
                             case "hasForwardIndex":
@@ -972,15 +765,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
 
         // Link subannotations to their parent annotation
-        if (!subannotationsStoredWithMain) {
-            for (AnnotatedField f: annotatedFields) {
-                Annotations annot = f.annotations();
-                for (Annotation a: annot) {
-                    if (a.subannotationNames().size() > 0) {
-                        // Link these subannotations back to their parent annotation
-                        for (String name: a.subannotationNames()) {
-                            annot.get(name).setSubAnnotation(a);
-                        }
+        for (AnnotatedField f: annotatedFields) {
+            Annotations annot = f.annotations();
+            for (Annotation a: annot) {
+                if (a.subannotationNames().size() > 0) {
+                    // Link these subannotations back to their parent annotation
+                    for (String name: a.subannotationNames()) {
+                        annot.get(name).setSubAnnotation(a);
                     }
                 }
             }
@@ -1013,53 +804,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             blackLabBuildTime = BlackLab.buildTime();
             blackLabVersion = BlackLab.version();
             indexFormat = LATEST_INDEX_FORMAT;
-            timeModified = timeCreated = IndexMetadataImpl.timestamp();
+            timeModified = timeCreated = TimeUtil.timestamp();
 
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
-        }
-    }
-
-    private void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
-            boolean usedTemplate) throws IndexVersionMismatch {
-        ensureNotFrozen();
-
-        // Read and interpret index metadata file
-        if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
-            // No metadata file yet; start with a blank one
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            ObjectNode jsonRoot = mapper.createObjectNode();
-            jsonRoot.put("displayName", determineIndexName());
-            jsonRoot.put("description", "");
-            addVersionInfo(jsonRoot);
-            ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-            fieldInfo.putObject("metadataFields");
-            fieldInfo.putObject("complexFields");
-            extractFromJson(jsonRoot, reader, false);
-        } else {
-            // Read the metadata file
-            try {
-                boolean isJson = metadataFile.getName().endsWith(".json");
-                ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-                ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
-                extractFromJson(jsonRoot, reader, usedTemplate);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
-
-        // Detect main contents field and main annotations of annotated fields
-        if (!createNewIndex) { // new index doesn't have this information yet
-            // Detect the main annotations for all annotated fields
-            // (looks for fields with char offset information stored)
-            AnnotatedFieldImpl mainContentsField = null;
-            for (AnnotatedField d: annotatedFields) {
-                if (mainContentsField == null || d.name().equals("contents"))
-                    mainContentsField = (AnnotatedFieldImpl) d;
-                if (tokenCount > 0) // no use trying this on an empty index
-                    ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
-            }
-            annotatedFields.setMainContentsField(mainContentsField);
         }
     }
 
@@ -1081,9 +829,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     @Override
     public void updateLastModified() {
-        // TODO: make sure this method is called when adding documents to index!
         ensureNotFrozen();
-        timeModified = IndexMetadataImpl.timestamp();
+        timeModified = TimeUtil.timestamp();
     }
 
     /**
@@ -1216,18 +963,18 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
     }
 
-    private static void addVersionInfo(ObjectNode jsonRoot) {
+    protected static void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", BlackLab.buildTime());
         versionInfo.put("blackLabVersion", BlackLab.version());
-        versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
-        versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
-        versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);
+        versionInfo.put("timeCreated", TimeUtil.timestamp());
+        versionInfo.put("timeModified", TimeUtil.timestamp());
+        versionInfo.put("indexFormat", LATEST_INDEX_FORMAT);
         versionInfo.put("alwaysAddClosingToken", true); // always true, but BL check for it, so required
         versionInfo.put("tagLengthInPayload", true); // always true, but BL check for it, so required
     }
 
-    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
+    protected void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
             ObjectNode annotGroupsPerField, ConfigInputFormat config) {
         ensureNotFrozen();
 
@@ -1304,13 +1051,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
-//                    displayOrder.add(a.getName());
-
                     addAnnotationInfo(a, displayOrder, noForwardIndexAnnotations, annotations);
-
-//                    if (!a.createForwardIndex())
-//                        noForwardIndexAnnotations.add(a.getName());
-
                 }
             }
         }
@@ -1319,13 +1060,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format.isConfigurationBased())
+            if (format != null && format.isConfigurationBased())
                 addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
         }
     }
 
     private void addAnnotationInfo(ConfigAnnotation annotation, ArrayNode displayOrder, ArrayNode noForwardIndexAnnotations,
             ArrayNode annotations) {
+        ensureNotFrozen();
         String annotationName = annotation.getName();
         displayOrder.add(annotationName);
         if (!annotation.createForwardIndex())
@@ -1339,7 +1081,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             annotationNode.put("isInternal", annotation.isInternal());
         }
         if (annotation.getSubAnnotations().size() > 0) {
-            subannotationsStoredWithMain = false; // this is a new-style index
             ArrayNode subannots = annotationNode.putArray("subannotations");
             for (ConfigAnnotation s: annotation.getSubAnnotations()) {
                 if (!s.isForEach()) {
@@ -1364,7 +1105,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     @Override
     public boolean subannotationsStoredWithParent() {
-        return subannotationsStoredWithMain;
+        return false;
     }
 
 }

@@ -17,4 +17,9 @@ public interface Freezable<T> {
         if (isFrozen())
             throw new UnsupportedOperationException("Tried to modify a frozen object");
     }
+
+    default void ensureFrozen() {
+        if (!isFrozen())
+            throw new UnsupportedOperationException("Tried to read a non-frozen object");
+    }
 }

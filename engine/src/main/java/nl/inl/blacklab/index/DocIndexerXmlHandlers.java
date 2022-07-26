@@ -34,7 +34,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.StringUtil;
 
 /**
@@ -389,7 +389,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
-    @SuppressWarnings("deprecation")
     public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
         super(docWriter, fileName, reader);
 
@@ -405,7 +404,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
     }
 
     public void registerContentsField() {
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 
@@ -596,9 +595,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         } catch (MaxDocsReached e) {
             // OK; just stop indexing prematurely
         }
-
-        if (nDocumentsSkipped > 0)
-            System.err.println("Skipped " + nDocumentsSkipped + " large documents");
     }
 
     public String describePosition() {

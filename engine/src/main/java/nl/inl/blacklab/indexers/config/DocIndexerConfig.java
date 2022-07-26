@@ -28,7 +28,7 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -135,7 +135,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return to == null ? from : to;
     }
 
-    @SuppressWarnings("deprecation")
     protected void init() {
         if (inited)
             return;
@@ -175,7 +174,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         SensitivitySetting.ONLY_INSENSITIVE, false);
             }
             if (getDocWriter() != null) {
-                IndexMetadataImpl indexMetadata = (IndexMetadataImpl)getDocWriter().indexWriter().metadata();
+                IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
                 indexMetadata.registerAnnotatedField(fieldWriter);
             }
 

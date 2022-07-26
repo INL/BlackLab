@@ -19,6 +19,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.SortedDocValues;
@@ -39,6 +40,7 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
+import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -305,6 +307,46 @@ public final class LuceneUtil {
 
     public static NumericDocValuesCacher cacher(NumericDocValues dv) {
         return dv == null ? null : new NumericDocValuesCacher(dv);
+    }
+
+    /**
+     * Check if a Lucene field has offsets stored.
+     *
+     * @param reader our index
+     * @param luceneFieldName field to check
+     * @return true iff field has offsets
+     */
+    public static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
+        // Iterate over documents in the index until we find a annotation
+        // for this annotated field that has stored character offsets. This is
+        // our main annotation.
+
+        // Note that we can't simply retrieve the field from a document and
+        // check the FieldType to see if it has offsets or not, as that information
+        // is incorrect at search time (always set to false, even if it has offsets).
+
+        Bits liveDocs = MultiBits.getLiveDocs(reader);
+        for (int n = 0; n < reader.maxDoc(); n++) {
+            if (liveDocs == null || liveDocs.get(n)) {
+                try {
+                    Terms terms = reader.getTermVector(n, luceneFieldName);
+                    if (terms == null) {
+                        // No term vector; probably not stored in this document.
+                        continue;
+                    }
+                    if (terms.hasOffsets()) {
+                        // This field has offsets stored. Must be the main alternative.
+                        return true;
+                    }
+                    // This alternative has no offsets stored. Don't look at any more
+                    // documents, go to the next alternative.
+                    break;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return false;
     }
 
     /** Handle a term. */

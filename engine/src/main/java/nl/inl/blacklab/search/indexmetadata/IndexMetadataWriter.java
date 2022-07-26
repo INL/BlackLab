@@ -14,6 +14,8 @@ public interface IndexMetadataWriter extends IndexMetadata {
     /**
 	 * Indicate that the index was modified, so that fact
 	 * will be recorded in the metadata file.
+	 *
+	 * TODO: make sure this method is called when adding documents to index!
 	 */
 	void updateLastModified();
 

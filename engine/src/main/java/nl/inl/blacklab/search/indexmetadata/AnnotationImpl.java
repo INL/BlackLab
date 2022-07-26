@@ -2,16 +2,14 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.util.LuceneUtil;
 
 /** Annotation on a field. */
 class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
@@ -58,14 +56,8 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     private boolean frozen = false;
     
-    /** Names of our subannotations, if declared (new-style index) and if we have any */
+    /** Names of our subannotations, if we have any */
     private final Set<String> subAnnotationNames = new HashSet<>();
-
-    /** Our subannotations (if we have an old-style index, where subannotations aren't declared).
-     *  This is not actually considered state, just cache, because all 
-     *  subannotations are valid (we don't know which ones were indexed).
-     */
-    final Map<String, Subannotation> cachedSubs = new HashMap<>();
     
     /**
      * If this is a subannotation, what is its parent annotation?
@@ -193,7 +185,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         // vector. If that has character offsets stored, it's our main annotation.
         // If not, keep searching.
         for (AnnotationSensitivity sensitivity: alternatives) {
-            if (IndexMetadataImpl.hasOffsets(reader, sensitivity.luceneField())) {
+            if (LuceneUtil.hasOffsets(reader, sensitivity.luceneField())) {
                 offsetsAlternative = sensitivity;
                 return true;
             }
@@ -288,18 +280,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
         this.offsetsAlternative = sensitivity(offsetsAlternative);
     }
-
-    @Override
-    public Annotation subannotation(String subName) {
-        if (!indexMetadata().subannotationsStoredWithParent())
-            throw new BlackLabRuntimeException("Can only call this for old-style indexes");
-        Subannotation subAnnotation = cachedSubs.get(subName);
-        if (subAnnotation == null) {
-            subAnnotation = new Subannotation(indexMetadata, this, subName);
-            cachedSubs.put(subName, subAnnotation);
-        }
-        return subAnnotation;
-    }
     
     @Override
     public Set<String> subannotationNames() {
@@ -315,11 +295,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     public void setSubAnnotation(Annotation parentAnnotation) {
         ensureNotFrozen();
         this.mainAnnotation = parentAnnotation;
-    }
-
-    @Override
-    public String subName() {
-        throw new BlackLabRuntimeException("Only valid for old-style indexes");
     }
 
     @Override

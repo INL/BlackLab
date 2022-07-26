@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Map;
+
 /**
  * Interface for MetadataFields objects while indexing.
  */
@@ -7,9 +9,7 @@ public interface MetadataFieldsWriter extends MetadataFields {
     
     MetadataField register(String fieldName);
     
-    void clearMetadataGroups();
-    
-    void putMetadataGroup(String name, MetadataFieldGroupImpl metadataGroup);    
+    void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups);
     
     void setSpecialField(String specialFieldType, String fieldName);
 

@@ -55,8 +55,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
 
     private int charsContentAlreadyStored = 0;
 
-    protected final int nDocumentsSkipped = 0;
-
     public void startCaptureContent(String fieldName) {
         captureContent = true;
         captureContentFieldName = fieldName;

@@ -49,7 +49,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -191,7 +191,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, config);
+            indexMetadata = new IndexMetadataExternal(this, indexDir, createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -228,7 +228,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, indexTemplateFile);
+            indexMetadata = new IndexMetadataExternal(this, indexDir, createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 

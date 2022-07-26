@@ -235,9 +235,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
                 throw new MaxDocsReached();
 
         }
-
-        if (nDocumentsSkipped > 0)
-            System.err.println("Skipped " + nDocumentsSkipped + " large documents");
     }
 
 }

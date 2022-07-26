@@ -29,7 +29,7 @@ public class TextPatternTerm extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
         return new BLSpanTermQuery(QueryInfo.create(context.index(), context.field()), new Term(context.luceneField(),
-                context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value))));
+                context.optDesensitize(optInsensitive(context, value))));
     }
 
     @Override

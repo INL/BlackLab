@@ -29,23 +29,12 @@ public class TextPatternAnnotation extends TextPattern {
         String[] parts = annotationName.split("/", -1);
         if (parts.length > 2)
             throw new InvalidQuery("Invalid query: annotation name '" + annotationName + "' contains more than one slash");
-        Annotation annotation;
-        if (context.index().metadata().subannotationsStoredWithParent()) {
-            // Old-style index, where subannotations are stored in their parent's Lucene field
-            annotation = context.field().annotation(parts[0]);
-            if (annotation == null)
-                throw new InvalidQuery("Invalid query: annotation '" + annotationName + "' doesn't exist");
-            if (parts.length > 1)
-                annotation = annotation.subannotation(parts[1]);
-        } else {
-            // New-style index, where subannotations have their own Lucene field
-            String name = parts[0];
-            if (parts.length > 1)
-                name += AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + parts[1];
-            annotation = context.field().annotation(name);
-            if (annotation == null)
-                throw new InvalidQuery("Invalid query: annotation '" + name + "' doesn't exist");
-        }
+        String name = parts[0];
+        if (parts.length > 1)
+            name += AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + parts[1];
+        Annotation annotation = context.field().annotation(name);
+        if (annotation == null)
+            throw new InvalidQuery("Invalid query: annotation '" + name + "' doesn't exist");
         return input.translate(context.withAnnotation(annotation));
     }
 
