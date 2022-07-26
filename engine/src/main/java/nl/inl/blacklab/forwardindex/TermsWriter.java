@@ -18,7 +18,6 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -310,7 +309,7 @@ class TermsWriter implements Terms {
     }
 
     @Override
-    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] segmentResults) {
+    public int[] segmentIdsToGlobalIds(int ord, int[] segmentResults) {
         throw new UnsupportedOperationException("Not available during indexing");
     }
 }

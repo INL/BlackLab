@@ -110,7 +110,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
         LeafReaderContext lrc = getLeafReader(docId);
         ForwardIndexSegmentReader fi = BLFieldsProducer.get(lrc, luceneField).forwardIndex();
         List<int[]> segmentResults = fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
-        return terms.segmentIdsToGlobalIds(lrc, segmentResults);
+        return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
     }
 
     @Override

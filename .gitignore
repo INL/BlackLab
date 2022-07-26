@@ -29,3 +29,6 @@ bin
 
 # Exclude *.env files except default .env
 ?*.env
+
+# NPM libs
+node_modules

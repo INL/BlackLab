@@ -5,7 +5,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.ThreadSafe;
@@ -95,6 +94,13 @@ public interface Terms {
         return Integer.compare(idToSortPosition(termId1, sensitivity), idToSortPosition(termId2, sensitivity));
     }
 
+    /**
+     * Check if two terms are considered equal for the given sensitivity.
+     *
+     * @param termId term id
+     * @param sensitivity how to compare the terms
+     * @return true if the terms are equal
+     */
     boolean termsEqual(int[] termId, MatchSensitivity sensitivity);
 
     /**
@@ -103,14 +109,14 @@ public interface Terms {
      * Note that with external forward index, there is no such thing as segment-specific term ids,
      * there's only global term ids. So in this case, this method should just return the input.
      *
-     * @param lrc segment these snippets came from
+     * @param ord segment these snippets came from
      * @param segmentResults snippets with segment-specific term ids
      * @return segments with global term ids
      */
-    default List<int[]> segmentIdsToGlobalIds(LeafReaderContext lrc, List<int[]> segmentResults) {
+    default List<int[]> segmentIdsToGlobalIds(int ord, List<int[]> segmentResults) {
         List<int[]> results = new ArrayList<>();
         for (int[] snippet: segmentResults) {
-            results.add(segmentIdsToGlobalIds(lrc, snippet));
+            results.add(segmentIdsToGlobalIds(ord, snippet));
         }
         return results;
     }
@@ -121,9 +127,9 @@ public interface Terms {
      * Note that with external forward index, there is no such thing as segment-specific term ids,
      * there's only global term ids. So in this case, this method should just return the input.
      *
-     * @param lrc segment these snippets came from
+     * @param ord segment these snippets came from
      * @param segmentResults snippets with segment-specific term ids
      * @return segments with global term ids
      */
-    int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] segmentResults);
+    int[] segmentIdsToGlobalIds(int ord, int[] segmentResults);
 }

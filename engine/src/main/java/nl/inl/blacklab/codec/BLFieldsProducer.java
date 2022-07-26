@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,7 +17,6 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
-import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
@@ -77,6 +78,9 @@ public class BLFieldsProducer extends FieldsProducer {
     /** The forward index */
     private final SegmentForwardIndex forwardIndex;
 
+    /** Terms object for each field */
+    private final Map<String, BLTerms> termsPerField = new HashMap<>();
+
     public BLFieldsProducer(SegmentReadState state, String postingsFormatName)
             throws IOException {
         this.postingsFormatName = postingsFormatName;
@@ -101,8 +105,16 @@ public class BLFieldsProducer extends FieldsProducer {
     }
 
     @Override
-    public Terms terms(String field) throws IOException {
-        return new BLTerms(delegateFieldsProducer.terms(field), this);
+    public BLTerms terms(String field) throws IOException {
+        BLTerms terms;
+        synchronized (termsPerField) {
+            terms = termsPerField.get(field);
+            if (terms == null) {
+                terms = new BLTerms(delegateFieldsProducer.terms(field), this);
+                termsPerField.put(field, terms);
+            }
+        }
+        return terms;
     }
 
     @Override

@@ -13,6 +13,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
@@ -69,6 +70,9 @@ class SegmentForwardIndex implements AutoCloseable {
         }
     }
 
+    /** Our fields producer */
+    private final BLFieldsProducer fieldsProducer;
+
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
     private final Fields fields;
 
@@ -85,6 +89,8 @@ class SegmentForwardIndex implements AutoCloseable {
     private IndexInput _tokensFile;
 
     public SegmentForwardIndex(BLFieldsProducer fieldsProducer, SegmentReadState state) throws IOException {
+        this.fieldsProducer = fieldsProducer;
+
         try (IndexInput fieldsFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.FIELDS_EXT)) {
             fields = new Fields(fieldsFile);
         }
@@ -218,6 +224,18 @@ class SegmentForwardIndex implements AutoCloseable {
             tokensIndex(); // ensure input available
             getDocOffsetAndLength(luceneField, docId);
             return docLength;
+        }
+
+        @Override
+        public TermsSegmentReader terms(String luceneField) {
+            BLTerms terms;
+            try {
+                terms = fieldsProducer.terms(luceneField);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            return terms;
         }
     }
 }

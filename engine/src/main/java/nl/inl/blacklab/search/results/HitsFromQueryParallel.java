@@ -502,6 +502,7 @@ public class HitsFromQueryParallel extends HitsMutable {
                     .collect(Collectors.toList()); // gather the futures
 
                 // Wait for workers to complete.
+                // FIXME: if an exception like an NPE occurs in one of the threads, we don't get notified
                 try {
                     while (!pendingResults.stream().allMatch(f -> f.isCancelled() || f.isDone())) {
                         Thread.sleep(HIT_POLLING_TIME_MS);

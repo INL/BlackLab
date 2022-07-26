@@ -74,14 +74,14 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader() {
 
                 @Override
-                public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+                public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
                     throw new UnsupportedOperationException();
                     //return MockForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
                 }
 
                 @Override
-                public String getTermString(int annotIndex, int termId) {
-                    return MockForwardIndexAccessor.this.getTermString(annotIndex, termId);
+                public String getTermString(int annotIndex, int segmentTermId) {
+                    return MockForwardIndexAccessor.this.getTermString(annotIndex, segmentTermId);
                 }
 
                 /**

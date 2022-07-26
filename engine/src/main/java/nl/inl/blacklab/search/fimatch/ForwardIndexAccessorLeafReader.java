@@ -33,6 +33,8 @@ public interface ForwardIndexAccessorLeafReader {
     /**
      * Get a chunk of tokens from a forward index
      *
+     * NOTE: Returns chunks with *global* term ids!
+     *
      * @param annotIndex annotation to get tokens for
      * @param docId document id within this segment
      * @param start first token to get
@@ -43,7 +45,22 @@ public interface ForwardIndexAccessorLeafReader {
 
     int getNumberOfAnnotations();
 
-    String getTermString(int annotIndex, int termId);
+    /**
+     * Get a term string for a term id.
+     *
+     * @param annotIndex which annotation?
+     * @param segmentTermId term id within the segment
+     * @return term string
+     */
+    String getTermString(int annotIndex, int segmentTermId);
 
-    boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
+    /**
+     * Check if a number of terms are considered equal for the given sensitivity.
+     *
+     * @param annotIndex which annotation?
+     * @param segmentTermIds term ids to compare
+     * @param sensitivity how to compare the terms
+     * @return true if all the terms are equals
+     */
+    boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity);
 }

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.fimatch;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -9,6 +10,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BLFieldsProducer;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -48,10 +50,15 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         private final DocFieldLengthGetter lengthGetter;
 
+        private final List<TermsSegmentReader> termsSegmentReaders = new ArrayList<>();
+
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
             BLFieldsProducer fieldsProducer = BLFieldsProducer.get(readerContext, annotatedField.tokenLengthField());
             forwardIndexReader = fieldsProducer.forwardIndex();
+            for (int i = 0; i < luceneFields.size(); i++) {
+                termsSegmentReaders.add(forwardIndexReader.terms(luceneFields.get(i)));
+            }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
 
@@ -76,7 +83,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
                     annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                     annotation.sensitivity(MatchSensitivity.INSENSITIVE);
             int[] part = forwardIndexReader.retrievePart(sensitivity.luceneField(), docId, start, end);
-            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext, part);
+            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext.ord, part);
         }
 
         @Override
@@ -85,21 +92,13 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public String getTermString(int annotIndex, int termId) {
-            // TODO: we don't need to translate to global term ids; get the term string at
-            //   the segment level instead.
-            int globalTermId = terms.get(annotIndex)
-                    .segmentIdsToGlobalIds(readerContext, List.of(new int[] {termId})).get(0)[0];
-            return ForwardIndexAccessorIntegrated.this.getTermString(annotIndex, globalTermId);
+        public String getTermString(int annotIndex, int segmentTermId) {
+            return termsSegmentReaders.get(annotIndex).get(segmentTermId);
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-            // TODO: we don't need to translate to global term ids; the comparison could be done
-            //   at the segment level instead.
-            int[] globalTermIds = terms.get(annotIndex)
-                    .segmentIdsToGlobalIds(readerContext, List.of(termId)).get(0);
-            return ForwardIndexAccessorIntegrated.this.termsEqual(annotIndex, globalTermIds, sensitivity);
+        public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+            return termsSegmentReaders.get(annotIndex).termsEqual(segmentTermIds, sensitivity);
         }
     }
 

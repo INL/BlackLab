@@ -1,6 +1,5 @@
 package nl.inl.blacklab.mocks;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.forwardindex.Terms;
@@ -58,7 +57,7 @@ public class MockTerms implements Terms {
     }
 
     @Override
-    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] snippet) {
+    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
         throw new UnsupportedOperationException();
     }
 

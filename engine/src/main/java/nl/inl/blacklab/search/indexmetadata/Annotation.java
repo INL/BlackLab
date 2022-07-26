@@ -145,4 +145,19 @@ public interface Annotation {
     }
 
     void setSubAnnotation(Annotation parentAnnotation);
+
+	/**
+	 * Get the alternative that has the forward index.
+	 *
+	 * @return alternative with the forward index
+	 * @throws RuntimeException if annotation has no forward index
+	 */
+    default AnnotationSensitivity forwardIndexSensitivity() {
+		if (!hasForwardIndex())
+			throw new RuntimeException("Annotation has no forward index: " + name());
+		if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
+			return sensitivity(MatchSensitivity.SENSITIVE);
+		} else
+			return sensitivity(MatchSensitivity.INSENSITIVE);
+	}
 }

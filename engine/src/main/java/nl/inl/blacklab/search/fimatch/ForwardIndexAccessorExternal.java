@@ -82,13 +82,13 @@ public class ForwardIndexAccessorExternal extends ForwardIndexAccessorAbstract {
         }
 
         @Override
-        public String getTermString(int annotIndex, int termId) {
-            return ForwardIndexAccessorExternal.this.getTermString(annotIndex, termId);
+        public String getTermString(int annotIndex, int segmentTermId) {
+            return ForwardIndexAccessorExternal.this.getTermString(annotIndex, segmentTermId);
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-            return ForwardIndexAccessorExternal.this.termsEqual(annotIndex, termId, sensitivity);
+        public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+            return ForwardIndexAccessorExternal.this.termsEqual(annotIndex, segmentTermIds, sensitivity);
         }
     }
 }

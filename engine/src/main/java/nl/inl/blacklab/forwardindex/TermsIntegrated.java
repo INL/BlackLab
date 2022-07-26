@@ -2,7 +2,6 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -11,8 +10,8 @@ import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.TermsEnum;
-import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.codec.BLTerms;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -52,25 +51,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
         // A list of globally unique terms that occur in our index.
         Map<String, Integer> globalTermIds = new LinkedHashMap<>(); // global term ids, in the correct order
         try {
-            for (LeafReaderContext l: indexReader.leaves()) {
-                org.apache.lucene.index.Terms t = l.reader().terms(luceneField);
-                TermsEnum ti = t.iterator();
-                List<Integer> thisSegmentToGlobal = new ArrayList<>();
-                while (true) {
-                    BytesRef termBytes = ti.next();
-                    if (termBytes == null)
-                        break;
-                    String term = termBytes.utf8ToString();
-                    int globalTermId;
-                    if (!globalTermIds.containsKey(term)) {
-                        globalTermId = globalTermIds.size();
-                        globalTermIds.put(term, globalTermId);
-                    } else {
-                        globalTermId = globalTermIds.get(term);
-                    }
-                    thisSegmentToGlobal.add(globalTermId);
-                }
-                segmentToGlobalTermIds.put(l.ord, thisSegmentToGlobal);
+            List<LeafReaderContext> leaves = indexReader.leaves();
+            for (LeafReaderContext l: leaves) {
+                BLTerms segmentTerms = (BLTerms)l.reader().terms(luceneField);
+                segmentTerms.setTermsIntegrated(this, l.ord);
+                segmentToGlobalTermIds.put(l.ord, segmentTerms.getSegmentToGlobalMapping(globalTermIds));
             }
             return globalTermIds.keySet().toArray(String[]::new);
         } catch (IOException e) {
@@ -114,12 +99,17 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     @Override
-    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] snippet) {
-        List<Integer> mapping = segmentToGlobalTermIds.get(lrc.ord);
+    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
+        List<Integer> mapping = segmentToGlobalTermIds.get(ord);
         int[] converted = new int[snippet.length];
         for (int i = 0; i < snippet.length; i++) {
             converted[i] = snippet[i] < 0 ? snippet[i] : mapping.get(snippet[i]);
         }
         return converted;
+    }
+
+    public int segmentIdToGlobalId(int ord, int id) {
+        List<Integer> mapping = segmentToGlobalTermIds.get(ord);
+        return id < 0 ? id : mapping.get(id);
     }
 }

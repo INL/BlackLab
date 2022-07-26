@@ -43,6 +43,9 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     /** The terms object for each annotation */
     protected final List<Terms> terms = new ArrayList<>();
 
+    /** The Lucene field that contains the forward index for each annotation */
+    protected final List<String> luceneFields = new ArrayList<>();
+
     public ForwardIndexAccessorAbstract(BlackLabIndex index, AnnotatedField searchField) {
         this.index = index;
         this.annotatedField = searchField;
@@ -62,6 +65,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
             annotationNumbers.put(annotation, n);
             annotations.add(annotation);
             terms.add(index.annotationForwardIndex(annotation).terms());
+            luceneFields.add(annotation.forwardIndexSensitivity().luceneField());
         }
         return n;
     }

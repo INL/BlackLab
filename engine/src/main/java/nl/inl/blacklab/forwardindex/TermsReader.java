@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
-import java.util.List;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
@@ -61,7 +59,7 @@ public class TermsReader extends TermsReaderAbstract {
     }
 
     @Override
-    public int[] segmentIdsToGlobalIds(LeafReaderContext lrc, int[] snippet) {
+    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
         return snippet; // no need to do anything, term ids are always global
     }
 

@@ -45,4 +45,6 @@ public interface ForwardIndexSegmentReader {
      * @return doc length in tokens (including the "extra closing token")
      */
     long docLength(String luceneField, int docId);
+
+    TermsSegmentReader terms(String luceneField);
 }
