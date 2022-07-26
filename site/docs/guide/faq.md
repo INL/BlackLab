@@ -119,4 +119,4 @@ We will keep improving BlackLab as time goes on. Please see our [future plans](f
 
 ## More questions?
 
-For technical questions about BlackLab, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org). I'm always happy to hear from you.
+For technical questions about BlackLab, please [contact us](/guide/about.md#contact-us). We're always happy to hear from you.

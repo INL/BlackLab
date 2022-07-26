@@ -1,8 +1,10 @@
 # Who is using BlackLab?
 
-A number of institutes and companies have chosen BlackLab for their corpus or text analysis projects: 
+A number of institutes and companies have chosen BlackLab for their corpus or text analysis projects.
 
-- The Dutch Language Institute ([INT](https://www.ivdnt.org/)) is developing BlackLab and uses it for their corpora, such as its internal Corpus of Contemporary Dutch (\~2.2 billion tokens and growing), [Letters as loot](https://brievenalsbuit.ivdnt.org/corpus-frontend/BaB/search/), [Corpus Gysseling](https://corpusgysseling.ivdnt.org/corpus-frontend/Gysseling/search/) and the [Corpus Hedendaags Nederlands](http://chn.ivdnt.org/) (CLARIN login required), a \~ 1 billion token public Corpus of Contemporary Dutch.
+If you're using BlackLab, [let us know](/guide/about.md#contact-us); we'd like to mention your project here!
+
+- The Dutch Language Institute ([INT](https://www.ivdnt.org/)) is leading BlackLab development and uses it for their corpora, such as its internal Corpus of Contemporary Dutch (\~2.2 billion tokens and growing), [Letters as loot](https://brievenalsbuit.ivdnt.org/corpus-frontend/BaB/search/), [Corpus Gysseling](https://corpusgysseling.ivdnt.org/corpus-frontend/Gysseling/search/) and the [Corpus Hedendaags Nederlands](http://chn.ivdnt.org/) (CLARIN login required), a \~ 1 billion token public Corpus of Contemporary Dutch.
 - [Lexion AI](https://www.lexion.ai/), who develop a contract management system. Lexion has an interestingly different use case from INT, with high query volume on many smaller indexes. We are grateful for their valuable contributions to the project.
 - [In Search of the Drowned](https://lts.fortunoff.library.yale.edu/): Testimonies and Testimonial Fragments of the Holocaust, edited and built by Gabor M. Toth in collaboration with the Yale Digital Humanities Laboratory.
 - [OpenSonar](http://opensonar.ivdnt.org), a Dutch corpus, by the University of Tilburg in collaboration with the Dutch Language Institute. The look and feel of [our corpus frontend](https://github.com/INL/corpus-frontend) was developed as part of this collaboration as well, for which we'd like to thank Martin Reynaert and Matje van de Camp.
@@ -17,4 +19,3 @@ A number of institutes and companies have chosen BlackLab for their corpus or te
 - [cosycat](https://github.com/emanjavacas/cosycat) (Collaborative Synchronized Corpus Annotation Tool)
 - [Latin lemmatized texts](https://blacklab.alpheios.net/latin-texts/search) ([Alpheios](https://alpheios.net/))
 - [Corpus of Spoken Hindi](http://www.cosh.site/) (Japan)
-- If you're using BlackLab, [let me know](mailto:jan.niestadt@ivdnt.org), I'd like to mention your project here!

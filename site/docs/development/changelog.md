@@ -1,6 +1,6 @@
 # Change Log
 
-## Improvements in 3.0.0
+## 3.0.0
 
 ### Changed
 
@@ -69,7 +69,7 @@
 - Some deprecated settings. A warning will be shown if the setting is still found.
 - Deprecated methods from `Indexer`, among others.
 
-## Improvements in 2.3.1
+## 2.3.1
 
 ### Fixed
 
@@ -86,7 +86,7 @@
 - IndexTooOld/IndexTooNew replaced with IndexVersionMismatch. See exception message for details.
 
 
-## Improvements in 2.3.0
+## 2.3.0
 
 ### Changed
 
@@ -135,7 +135,7 @@
 - `checkAgainMs` (from BLS response).
 - several long-deprecated methods.
 
-## Improvements in 2.2.0
+## 2.2.0
 
 ### Changed
 
@@ -191,13 +191,13 @@
 * Support for `useOldElementnames` (old BLS element names, using "properties" instead of "annotations")
 
 
-## Improvements in 2.1.1
+## 2.1.1
 
 ### Fixed
 
 * Upgrade to log4j-2.16.0 (fixes CVE-2021-45046).
 
-## Improvements in 2.1.0
+## 2.1.0
 
 ### Changed
 
@@ -214,7 +214,7 @@
 * Fix crash during indexing if terms file got very large.
 * BLS: Fix incorrect check who user-owned formats.
 
-## Improvements in 2.0.0
+## 2.0.0
 
 ### API changes
 
@@ -305,7 +305,7 @@
   the response is available. Only the "total results" count will be 
   reported asynchronously unless the "waitfortotal" parameters is true.
 
-## Improvements up to v1.7.2
+## 1.7.2
 
 ### New
 * Issue warning if unrecognized params passed to Auth* class.
@@ -321,7 +321,7 @@
 * Jackson and commons-compress libraries were updated because of patch 
   security vulnerabilities. 
 
-## Improvements up to v1.7.1
+## 1.7.1
 
 ### Changed
 * Default maximum file upload size is now 1GB. 
@@ -330,7 +330,7 @@
 * Don't block until all hits have been counted.
 * Fixed bug when maxHitsToRetrieve and maxHitsToCount are the same value
 
-## Improvements up to v1.7.0
+## 1.7.0
 
 ### New
 * Much user-friendlier indexing using .json/.yaml config files.
@@ -380,7 +380,7 @@
   when searching, causing problems. Now they are treated the same.
 * Numerous other bugfixes.
 
-## Improvements up to v1.6.0
+## 1.6.0
 
 ### New
 * Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
@@ -459,7 +459,7 @@
 * Added error message when 'viewgroup' is used without 'group'.
 * Don't add whitespace into leaf XML elements.
 
-## Improvements up to v1.5.0
+## 1.5.0
 
 ### Fixed
 * Two rare, subtle matching bugs in SpansExpansion and SpansPositionFilter.
@@ -499,7 +499,7 @@
   because it took too long.
 
 
-## Improvements up to v1.4.1
+## 1.4.1
 
 ### Fixed
 * Potential overflow bug in ContentStoreFixedBlock when retrieving content.
@@ -514,7 +514,7 @@
 ### BlackLab Server
 * Made sure missing options in blacklab-server.json don't cause problems.
 
-## Improvements up to v1.4.0
+## 1.4.0
 
 ### New
 * Added experimental support for "subproperties": properties that are indexed in the same Lucene 
@@ -541,12 +541,12 @@
 * Moved some basic Lucene functionality unrelated to the rest of BlackLab from Searcher to 
   LuceneUtil.
 
-## Improvements up to v1.3.7
+## 1.3.7
 
 ### Fixed
 * Opening a large "fixed-block" content store took a really long time. 
 
-## Improvements up to v1.3.6
+## 1.3.6
 
 ### Fixed
 * Content store growing larger than 2 GB caused an integer overflow.
@@ -554,7 +554,7 @@
 * Storing document in ContentStoreDirFixedBlock would very rarely crash due to a
   block resizing bug.
 
-## Improvements up to v1.3.5
+## 1.3.5
 
 ### New
 * Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
@@ -566,18 +566,18 @@
 ### Changed
 * Switched to JavaCC 6.x.
 
-## Improvements up to v1.3.4
+## 1.3.4
 
 ### Fixed
 * Lone carriage return characters in JSON output were not escaped;
   Windows line endings were escaped as a single \\n.
 
-## Improvements up to v1.3.3
+## 1.3.3
 
 ### Fixed
 * Indices with old terms file format (pre-1.3) produced empty concordances.
 
-## Improvements up to v1.3.2
+## 1.3.2
 
 ### Fixed
 * Query rewrite bug when combining identical clauses with different repetitions,
@@ -589,7 +589,7 @@
 * Added -javadoc and -sources JARs to Maven build, in preparation for publishing to Maven Central.
 * Added distributionManagement section for deploying to OSSRH staging area. 
 
-## Improvements up to v1.3.1
+## 1.3.1
 
 ### New
 * Added new default content store format "fixedblock", that improves space re-use when updating documents. 
@@ -600,7 +600,7 @@
 ### Changed
 * Special OSX and Windows files are skipped, even if they occur inside archives.
 
-## Improvements up to v1.3
+## 1.3
 
 ### Added
 * Searcher now implements Closeable, so it can be used with the try-with-resources statement.
@@ -611,12 +611,12 @@
 
 ### Changed
 
-## Improvements up to v1.2.1
+## 1.2.1
 
 ### Fixed
 * Queries containing only a document filter (metadata filter) would return incorrect results.
 
-## Improvements up to v1.2.0
+## 1.2.0
 
 ### Changed
 * Switched build from Ant to Maven, and added generating a project site with javadocs, reports, etc.
@@ -641,7 +641,7 @@
 * Opening an index by passing a symbolic link throws an exception.
 * Miscellaneous small fixes.
 
-## Improvements up to v1.1.0
+## 1.1.0
 * Upgraded from Lucene 3.6 to Lucene 4.2. This should speed up regular expression searching, among other things. The required Lucene 4 modules are: core, highlighter, queries, queryparser, analyzers-common. Thanks to Marc Kemps-Sneijders from the Meertens Institute for the code submission!
 * The awkwardly-named classes RandomAccessGroup(s) were renamed to HitGroup(s). Also, DocGrouper was renamed to DocGroups to match this naming scheme. The old versions are still around but have been deprecated.
 * HitPropValue classes now need a Hits object to properly serialize/deserialize their values in a way that doesn't break after re-indexing.
@@ -655,7 +655,7 @@
 * Some other methods have been renamed, are no longer needed, etc. and have been deprecated. Deprecated methods state the preferred alternative in the @deprecated Javadoc directive.
 
 
-## Improvements up to v1.0
+## 1.0
 
 ### Features
 * Sorting/grouping on multiple properties now works correctly. Use HitPropertyMultiple.

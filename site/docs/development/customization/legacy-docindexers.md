@@ -123,7 +123,7 @@ One example of using payloads can be seen in DocIndexerXmlHandlers.InlineTagHand
 
 If your input files are not XML or are not tokenized and annotated per word, you have two options: convert them into a tokenized, per-word annotated format, or index them directly.
 
-Indexing them directly is not covered here, but involves deriving from DocIndexerAbstract or implementing the DocIndexer interface yourself. If you need help with this, please [contact us](mailto:jan.niestadt@ivdnt.org).
+Indexing them directly is not covered here, but involves deriving from DocIndexerAbstract or implementing the DocIndexer interface yourself. If you need help with this, please [contact us](/guide/about.md#contact-us).
 
 ## Metadata 
 

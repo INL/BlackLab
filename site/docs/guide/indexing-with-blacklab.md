@@ -10,7 +10,7 @@ Start the IndexTool without parameters for help information:
 
     java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool
  
-(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory)
+(this assumes `blacklab.jar` and the `lib` subdirectory containing required libraries are located in the current directory)
 
 (if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
 
@@ -22,7 +22,7 @@ To add documents to an existing index:
 
     java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool add INDEX_DIR INPUT_FILES FORMAT
 
-If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml; single-quote it if you're on Linux so it doesn't get expanded by the shell) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index the contents.
+If you specify a directory as the `INPUT_FILES`, it will be scanned recursively. You can also specify a file glob (such as `*.xml`; single-quote it if you're on Linux so it doesn't get expanded by the shell) or a single file. If you specify a `.zip` or `.tar.gz` file, BlackLab will automatically index the contents.
 
 For example, if you have TEI data in `/data/input/my-tei-files` and want to index your corpus to `/data/blacklab-corpora/my-corpus`, run the following command:
 
@@ -61,7 +61,7 @@ A number of less common formats are also supported:
 * `pagexml` (OCR XML format)
 * `alto` ([another OCR XML format](http://www.loc.gov/standards/alto/))
 
-To add support for your own format, you just have to [write a configuration file](how-to-configure-indexing.html). (There's a [legacy way](/development/customization/docindexer.md) too, but that involves writing Java code and you probably don't need it) Please [contact us](mailto:jan.niestadt@ivdnt.org) if you have any questions.
+To add support for your own format, you just have to [write a configuration file](how-to-configure-indexing.html). (There's a [legacy way](/development/customization/docindexer.md) too, but that involves writing Java code and you probably don't need it) Please [contact us](/guide/about.md#contact-us) if you have any questions.
 
 If you choose the first option, specify the format name (which must match the name of the .blf.yaml or .blf.json file) as the FORMAT parameter. IndexTool will search a number of directories, including the current directory and the (parent of the) input directory for format files.
 

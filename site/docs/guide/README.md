@@ -27,16 +27,15 @@ BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It 
 
 BlackLab features include:
 
-- **Index annotated text**, so you can search for specific lemmas or parts of speech. For example, you could search for all verb forms starting with “a”.
+- **Index annotated text**, so you can search for specific lemmas or parts of speech. For example, you could search for all verb forms starting with “re” to find "researching", "replies", etc.
+- **Easy to use**: both the REST API and the Java library were designed to be easy to use, and we do our best to provide good documentation.
 - **Fast and scalable**: find complex patterns in large corpora (a billion words or more) in seconds.
-- **Search for regular-expression-like patterns**. Like being able to search for one or more adjectives, followed by the word “cow”, followed within 3 words by a form of the verb “to walk”. [Read more](/development/query-tool.md) about this.
-- **Multiple input formats**: whether your texts are in TEI, Alto, FoLiA or the Sketch Engine format, it's easy to get them into a BlackLab index. And if your format isn't supported yet, [adding support is easy](how-to-configure-indexing.md). If you do have trouble, we're always happy to help.
-- **Multiple query languages**: you can use the powerful [Corpus Query Language](/guide/corpus-query-language.md), or [Lucene's own query parser](http://lucene.apache.org/core/2_9_4/queryparsersyntax.html). There's also (very basic) experimental support for [SRU CQL](http://zing.z3950.org/cql/intro.html "http://zing.z3950.org/cql/intro.html"). Adding another query language isn't hard to do.
-- **Easy to use**: the API was carefully designed according to the 'principle of least surprise'. Have a look at the example program given on [this page](getting-started.md).
-- **Search within XML tags** occurring in a text. For example, if your text is tagged with <ne\> tags around named entities (people, organisations, locations), BlackLab allows you to search for named entities occurring in thtext that contain the word “city”. Or you can find words at the beginning or end of a sentence.
-- **Fast grouping and sorting** of large result sets on several criteria, including context (hit text, left context of hit, right context of hit). For example, you can group results by the word occurring to the right of the matched word(s).
+- **Flexible data ingestion**: if your data is not in one of the built-in formats, getting them into BlackLab is a matter of writing a configuration file.
+- **Search for regular-expression-like patterns**. Like being able to search for one or more adjectives followed by the word “cow”. (see [Corpus Query Language](corpus-query-language.md) to learn more)
+- **Search within XML tags** to find named entities that contain the word "tower" (Eiffel Tower, Tower Bridge, etc.), or words at the beginning or end of a sentence.
+- **Fast grouping and sorting** of large result sets on several criteria. For example, you can group results by the word occurring to the right of the matched word(s).
 - **Accurate highlighting** of hits in a document and fast KWIC (keyword in context) view of hits.
-- **Active open source project** written in Java, based on Apache Lucene. Almost 300 commits in the past year. Many [future plans](future-plans.md).
+- **Active open source project** in development since 2010, with many [plans for the future](future-plans.md).
 
 
 ## Try it online
@@ -61,23 +60,4 @@ Here are a few searches you can try:
 
 Please note that this is just a small sample of the capabilities of BlackLab.
 
-
-## Quick Start
-
-If you want to try out BlackLab on your own machine, in preparation for indexing your own data, read on.
-
-There's two ways to quickly try BlackLab. The easiest is probably using Docker, but Tomcat isn't much more difficult.
-
-    
-### Using Docker
-
-TODO
-
-### Using Tomcat
-
-### Test Index
-
-### Search your corpus
-
-### Advanced: Corpus Query Language
-
+If you're excited about the possibilities and want to get BlackLab up and running yourself, move on to [Getting Started](getting-started.md).

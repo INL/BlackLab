@@ -1,5 +1,7 @@
 # REST API reference
 
+TODO: improve this, maybe using a template like [this one](https://github.com/jamescooke/restapidocs/tree/master/examples)?
+
 ## Requests
 A request to BlackLab Server has the following structure:
 

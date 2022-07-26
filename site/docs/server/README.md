@@ -42,7 +42,7 @@ TODO
 
 ## Installation
 
-First, you need the BlackLab Server WAR file. You can either download the [latest release](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab GitHub) and building it using Maven.
+First, you need the BlackLab Server WAR file. You can either download the [latest release](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab) and building it using Maven.
 
 BlackLab Server needs to run in a Java application server that support servlets. We’ll assume Apache Tomcat here, but others should work almost the same.
 

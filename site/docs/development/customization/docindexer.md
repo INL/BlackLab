@@ -7,7 +7,7 @@ In rare cases, you may want to implement your own DocIndexer. This page provides
 
 If you have text in a format that isn't supported by BlackLab yet, you will have to create a DocIndexer class to support the format. You can have a look at the DocIndexer classes supplied with BlackLab (see the nl.inl.blacklab.indexers package), but here we'll build one from the ground up, step by step.
 
-It's important to note that we assume you have an XML format that is tagged per word. That is, in the main content of your documents, every word should have its own XML tag. If your format is not like that, it's still possible to index it using BlackLab, but the process will be a little bit different. Please [contact us](mailto:jan.niestadt@ivdnt.org) and we'd be happy to help.
+It's important to note that we assume you have an XML format that is tagged per word. That is, in the main content of your documents, every word should have its own XML tag. If your format is not like that, it's still possible to index it using BlackLab, but the process will be a little bit different. Please [contact us](/guide/about.md#contact-us) and we'd be happy to help.
 
 For this example, we'll build a simple TEI DocIndexer. We'll keep it a little bit simpler than DocIndexerTei that's already included in BlackLab, but all the basic features will be in there.
 
@@ -132,4 +132,4 @@ That's all there is to it, really. Well, we haven't covered capturing metadata, 
 
 If you need something fancy for metadata, have a look at the DocIndexers in BlackLab and the implementation of the helper classes mentioned above. It's not hard to make a version that will work for you.
 
-That concludes this simple tutorial. If you have a question, [contact me](mailto:jan.niestadt@ivdnt.org)!
+That concludes this simple tutorial. If you have a question, please [contact us](/guide/about.md#contact-us).

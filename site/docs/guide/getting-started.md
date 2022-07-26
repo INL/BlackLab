@@ -79,7 +79,7 @@ From this directory, run the IndexTool without parameters for help information:
 
 	java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool
  
-(this assumes blacklab.jar and the lib subdirectory containing required libraries are located in the current directory; if not, prefix it with the correct directory)
+(this assumes `blacklab.jar` and the `lib` subdirectory containing required libraries are located in the current directory; if not, prefix it with the correct directory)
 
 (if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
 
@@ -87,7 +87,7 @@ We want to create a new index, so we need to supply an index directory, input fi
 
 	java -cp "blacklab.jar:lib" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
 
-If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
+If you specify a directory as the `INPUT_FILES`, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
 For example, if you have TEI data in `/data/input/my-tei-files/` and want to create an index at `/data/blacklab-corpora/my-corpus`, run the following command:
 
