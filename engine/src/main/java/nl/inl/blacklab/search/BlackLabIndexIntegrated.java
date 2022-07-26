@@ -7,12 +7,15 @@ import org.apache.lucene.index.IndexWriterConfig;
 
 import nl.inl.blacklab.codec.BLCodec;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -27,6 +30,20 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+    }
+
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
+            throws IndexVersionMismatch {
+        return new IndexMetadataExternal(this, this.indexDirectory(), createNewIndex, config);
+//        return new IndexMetadataIntegrated(this, createNewIndex, config);
+    }
+
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
+            throws IndexVersionMismatch {
+        return new IndexMetadataExternal(this, this.indexDirectory(), createNewIndex, indexTemplateFile);
+//        if (indexTemplateFile != null)
+//            throw new UnsupportedOperationException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
+//        return new IndexMetadataIntegrated(this, createNewIndex, null);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

@@ -17,6 +17,7 @@ import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
+import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
@@ -110,7 +111,8 @@ public class BLFieldsProducer extends FieldsProducer {
         synchronized (termsPerField) {
             terms = termsPerField.get(field);
             if (terms == null) {
-                terms = new BLTerms(delegateFieldsProducer.terms(field), this);
+                Terms delegateTerms = delegateFieldsProducer.terms(field);
+                terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
                 termsPerField.put(field, terms);
             }
         }

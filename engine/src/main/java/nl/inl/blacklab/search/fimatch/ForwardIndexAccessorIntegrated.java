@@ -54,7 +54,8 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            BLFieldsProducer fieldsProducer = BLFieldsProducer.get(readerContext, annotatedField.tokenLengthField());
+            String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
+            BLFieldsProducer fieldsProducer = BLFieldsProducer.get(readerContext, luceneField);
             forwardIndexReader = fieldsProducer.forwardIndex();
             for (int i = 0; i < luceneFields.size(); i++) {
                 termsSegmentReaders.add(forwardIndexReader.terms(luceneFields.get(i)));

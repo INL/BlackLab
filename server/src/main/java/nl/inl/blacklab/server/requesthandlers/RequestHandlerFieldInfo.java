@@ -248,32 +248,14 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 ds.endList().endEntry();
                 ds.entry("valueListComplete", valueListComplete[0]);
             }
-            boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
-            if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
-                if (subannotationsStoredWithParent) {
-                    // Older index, where the subannotations are stored in the same Lucene field as their parent annotation.
-                    // Detecting these requires enumerating all terms, so only do it when asked.
-                    Map<String, Set<String>> subprops = LuceneUtil.getOldSingleFieldSubprops(index.reader(), luceneField);
-                    ds.startEntry("subannotations").startMap();
-                    for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
-                        String name = subprop.getKey();
-                        Set<String> values = subprop.getValue();
-                        ds.startAttrEntry("subannotation", "name", name).startList();
-                        for (String value : values) {
-                            ds.item("value", value);
-                        }
-                        ds.endList().endAttrEntry();
-                    }
-                    ds.endMap().endEntry();
-                } else if (!annotation.subannotationNames().isEmpty()) {
-                    // Newer index, where the subannotations are stored in their own Lucene fields.
-                    // Always show these.
-                    ds.startEntry("subannotations").startList();
-                    for (String name: annotation.subannotationNames()) {
-                        ds.item("subannotation", name);
-                    }
-                    ds.endList().endEntry();
+            if (!annotation.subannotationNames().isEmpty()) {
+                // Newer index, where the subannotations are stored in their own Lucene fields.
+                // Always show these.
+                ds.startEntry("subannotations").startList();
+                for (String name: annotation.subannotationNames()) {
+                    ds.item("subannotation", name);
                 }
+                ds.endList().endEntry();
             }
             if (annotation.isSubannotation()) {
                 ds.entry("parentAnnotation", annotation.parentAnnotation().name());

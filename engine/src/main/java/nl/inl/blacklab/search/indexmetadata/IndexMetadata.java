@@ -104,9 +104,5 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	 * @return true if it is, false if not.
 	 */
 	boolean isNewIndex();
-
-    default boolean subannotationsStoredWithParent() {
-        return false;
-    }
 	
 }

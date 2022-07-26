@@ -49,7 +49,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -191,7 +190,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataExternal(this, indexDir, createNewIndex, config);
+            indexMetadata = getIndexMetadata(createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -228,7 +227,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataExternal(this, indexDir, createNewIndex, indexTemplateFile);
+            indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -239,6 +238,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             throw new ErrorOpeningIndex(e);
         }
     }
+
+    protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
+            throws IndexVersionMismatch;
+
+    protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
+            throws IndexVersionMismatch;
 
     boolean traceIndexOpening() {
         return BlackLab.config().getLog().getTrace().isIndexOpening();

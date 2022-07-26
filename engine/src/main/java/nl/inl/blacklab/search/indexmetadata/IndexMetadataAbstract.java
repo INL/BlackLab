@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -51,9 +50,9 @@ import nl.inl.util.TimeUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public abstract class IndexMetadataImpl implements IndexMetadataWriter {
+public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
-    private static final Logger logger = LogManager.getLogger(IndexMetadataImpl.class);
+    private static final Logger logger = LogManager.getLogger(IndexMetadataAbstract.class);
 
     /**
      * The latest index format. Written to the index metadata file.
@@ -142,64 +141,61 @@ public abstract class IndexMetadataImpl implements IndexMetadataWriter {
     private long tokenCount = 0;
 
     /** Our metadata fields */
-    private final MetadataFieldsImpl metadataFields;
+    private final MetadataFieldsImpl metadataFields = new MetadataFieldsImpl();
 
     /** Our annotated fields */
-    protected final AnnotatedFieldsImpl annotatedFields;
+    protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
 
-    /**
-     * Construct an IndexMetadata object, querying the index for the available
-     * fields and their types.
-     *
-     * @param index the index of which we want to know the structure
-     * @param indexDir where the index (and the metadata file) is stored
-     * @param createNewIndex whether we're creating a new index
-     * @param config input format config to use as template for index structure /
-     *            metadata (if creating new index)
-     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
-     */
-    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
+    public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
-
-        metadataFields = new MetadataFieldsImpl();
-        annotatedFields = new AnnotatedFieldsImpl();
-
-        initMetadata(indexDir, createNewIndex, config);
     }
-
-    /**
-     * Construct an IndexMetadata object, querying the index for the available
-     * fields and their types.
-     *
-     * @param index the index of which we want to know the structure
-     * @param indexDir where the index (and the metadata file) is stored
-     * @param createNewIndex whether we're creating a new index
-     * @param indexTemplateFile JSON file to use as template for index structure /
-     *            metadata (if creating new index)
-     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
-     */
-    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
-        this.index = index;
-
-        metadataFields = new MetadataFieldsImpl();
-        annotatedFields = new AnnotatedFieldsImpl();
-
-        initMetadata(indexDir, createNewIndex, indexTemplateFile);
-    }
-
-    protected abstract void initMetadata(File indexDir, boolean createNewIndex, ConfigInputFormat config)
-            throws IndexVersionMismatch;
-
-    protected abstract void initMetadata(File indexDir, boolean createNewIndex, File indexTemplateFile)
-            throws IndexVersionMismatch;
 
     // Methods that read data
     // ------------------------------------------------------------------------------
 
-    protected abstract String determineIndexName();
+    protected ObjectNode createEmptyIndexMetadata() {
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+        ObjectNode jsonRoot = mapper.createObjectNode();
+        jsonRoot.put("displayName", determineIndexName());
+        jsonRoot.put("description", "");
+        addVersionInfo(jsonRoot);
+        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+        fieldInfo.putObject("metadataFields");
+        fieldInfo.putObject("complexFields");
+        return jsonRoot;
+    }
+
+    protected ObjectNode createIndexMetadataFromConfig(ConfigInputFormat config) {
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+        ObjectNode jsonRoot = mapper.createObjectNode();
+        String displayName = corpusConfig.getDisplayName();
+        if (displayName.isEmpty())
+            displayName = determineIndexName();
+        jsonRoot.put("displayName", displayName);
+        jsonRoot.put("description", corpusConfig.getDescription());
+        jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
+        jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
+        jsonRoot.put("documentFormat", config.getName());
+        addVersionInfo(jsonRoot);
+        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+        fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
+        fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
+        fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
+        for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
+            fieldInfo.put(e.getKey(), e.getValue());
+        }
+        ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
+        ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
+        ObjectNode metadata = fieldInfo.putObject("metadataFields");
+        ObjectNode annotated = fieldInfo.putObject("complexFields");
+
+        addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
+        return jsonRoot;
+    }
 
     /**
      * Encode the index structure to an (in-memory) JSON structure.
@@ -1091,6 +1087,34 @@ public abstract class IndexMetadataImpl implements IndexMetadataWriter {
         }
     }
 
+    /**
+     * Get the display name for the index.
+     *
+     * If no display name was specified, returns the name of the index directory.
+     *
+     * @return the display name
+     */
+    @Override
+    public String displayName() {
+        String dispName = "index";
+        if (displayName != null && displayName.length() != 0)
+            dispName = displayName;
+        if (dispName.equalsIgnoreCase("index"))
+            dispName = StringUtils.capitalize(index.indexDirectory().getName());
+        if (dispName.equalsIgnoreCase("index"))
+            dispName = StringUtils.capitalize(index.indexDirectory().getAbsoluteFile().getParentFile().getName());
+
+        return dispName;
+    }
+
+    protected String determineIndexName() {
+        ensureNotFrozen();
+        String name = index.indexDirectory().getName();
+        if (name.equals("index"))
+            name = index.indexDirectory().getAbsoluteFile().getParentFile().getName();
+        return name;
+    }
+
     @Override
     public void freeze() {
         this.frozen = true;
@@ -1101,11 +1125,6 @@ public abstract class IndexMetadataImpl implements IndexMetadataWriter {
     @Override
     public boolean isFrozen() {
         return this.frozen;
-    }
-
-    @Override
-    public boolean subannotationsStoredWithParent() {
-        return false;
     }
 
 }

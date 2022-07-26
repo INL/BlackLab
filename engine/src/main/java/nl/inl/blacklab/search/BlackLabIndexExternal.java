@@ -9,6 +9,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
@@ -18,6 +19,8 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.VersionFile;
 
 /**
@@ -33,6 +36,18 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+    }
+
+    @Override
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
+            throws IndexVersionMismatch {
+        return new IndexMetadataExternal(this, indexDirectory(), createNewIndex, config);
+    }
+
+    @Override
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
+            throws IndexVersionMismatch {
+        return new IndexMetadataExternal(this, indexDirectory(), createNewIndex, indexTemplateFile);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

@@ -37,6 +37,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.search.highlight.QueryTermExtractor;
 import org.apache.lucene.search.highlight.WeightedTerm;
@@ -633,5 +634,31 @@ public final class LuceneUtil {
             throw new RuntimeException(e);
         }
         return maxTermsPerLeafReader;
+    }
+
+    public static class SimpleDocIdCollector extends SimpleCollector {
+        private final List<Integer> docIds;
+        private int docBase;
+
+        public SimpleDocIdCollector(List<Integer> docIds) {
+            this.docIds = docIds;
+        }
+
+        @Override
+        protected void doSetNextReader(LeafReaderContext context) throws IOException {
+            docBase = context.docBase;
+            super.doSetNextReader(context);
+        }
+
+        @Override
+        public void collect(int docId) {
+            int globalDocId = docId + docBase;
+            docIds.add(globalDocId);
+        }
+
+        @Override
+        public ScoreMode scoreMode() {
+            return ScoreMode.COMPLETE_NO_SCORES;
+        }
     }
 }
