@@ -138,8 +138,7 @@ public class TestIndex {
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
-            BlackLabIndexWriter indexWriter;
-            indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
             Indexer indexer = Indexer.openIndex(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
