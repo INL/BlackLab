@@ -280,7 +280,7 @@ public class Index {
         try {
             BlackLabIndexWriter indexWriter = searchMan.blackLabInstance()
                     .openForWriting(this.dir, false);
-            this.indexer = Indexer.openIndex(indexWriter);
+            this.indexer = Indexer.get(indexWriter);
             indexer.setNumberOfThreadsToUse(BlackLab.config().getIndexing().getNumberOfThreads());
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);

@@ -276,7 +276,7 @@ public class IndexTool {
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
                     formatIdentifier, indexTemplateFile, indexType);
-            indexer = Indexer.openIndex(indexWriter, formatIdentifier);
+            indexer = Indexer.get(indexWriter, formatIdentifier);
             //indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
         } catch (DocumentFormatNotFound e1) {
             // Maybe formatIdentifier isn't a format name but the path to a format file?

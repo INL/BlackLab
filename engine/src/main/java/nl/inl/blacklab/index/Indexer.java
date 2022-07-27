@@ -28,7 +28,7 @@ public interface Indexer {
      * @return the indexer
      * @throws DocumentFormatNotFound if the default format isn't supported
      */
-    static Indexer openIndex(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
+    static Indexer get(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, null);
     }
 
@@ -43,13 +43,13 @@ public interface Indexer {
      * @return the indexer
      * @throws DocumentFormatNotFound if the format isn't supported
      */
-    static Indexer openIndex(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
+    static Indexer get(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, formatIdentifier);
     }
 
     /**
-     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
-     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
     static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
@@ -57,8 +57,8 @@ public interface Indexer {
     }
 
     /**
-     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
-     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
     static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
@@ -86,7 +86,7 @@ public interface Indexer {
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
-     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
      *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
