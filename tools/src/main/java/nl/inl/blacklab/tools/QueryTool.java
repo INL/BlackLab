@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.CorruptIndexException;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
 
@@ -602,7 +601,12 @@ public class QueryTool {
             Timer t = new Timer();
             statInfo = "";
             commandWasQuery = false;
-            processCommand(cmd);
+            try {
+                processCommand(cmd);
+            } catch (Exception e) {
+                // Report exception but don't crash right away, so we can try other queries while debugging.
+                e.printStackTrace();
+            }
             if (printStat)
                 statprintln((commandWasQuery ? "" : "@ ") + cmd + "\t" + t.elapsed() + "\t" + statInfo);
 
