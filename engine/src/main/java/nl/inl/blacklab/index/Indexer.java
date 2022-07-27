@@ -68,7 +68,7 @@ public interface Indexer {
      * Open index
      *
      * @param directory the main BlackLab index directory
-     * @param create if true, creates a new index; otherwise, appends to existing
+     * @param createNewIndex if true, creates a new index; otherwise, appends to existing
      *            index. When creating a new index, a formatIdentifier or an
      *            indexTemplateFile containing a valid "documentFormat" value should
      *            also be supplied. Otherwise adding new data to the index isn't
@@ -90,7 +90,9 @@ public interface Indexer {
      */
     @Deprecated
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(BlackLabIndexWriter.open(directory, createNewIndex, formatIdentifier, indexTemplateFile), formatIdentifier);
+        BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(directory, createNewIndex, formatIdentifier,
+                indexTemplateFile);
+        return new IndexerImpl(indexWriter, formatIdentifier);
     }
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;

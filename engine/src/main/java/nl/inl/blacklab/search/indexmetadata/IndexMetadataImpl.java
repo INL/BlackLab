@@ -211,7 +211,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
         saveAsJson = false;
         if (createNewIndex && config != null) {
-
             // Create an index metadata file from this config.
             ConfigCorpus corpusConfig = config.getCorpusConfig();
             ObjectMapper mapper = Json.getJsonObjectMapper();
@@ -239,6 +238,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
             addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
             extractFromJson(jsonRoot, null, true);
+
+            if (config.getName() != null)
+                setDocumentFormat(config.getName());
+
             save();
         } else {
             // Read existing metadata or create empty new one

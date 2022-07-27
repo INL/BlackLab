@@ -78,7 +78,8 @@ public class Example {
         // Create an index and add our test documents.
         Indexer indexer = null;
         try {
-            BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, true, "exampleformat", null);
+            BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, true,
+                    "exampleformat", null);
             indexer = Indexer.openIndex(indexWriter, "exampleformat");
             for (int i = 0; i < testData.length; i++) {
                 indexer.index("test" + (i + 1), testData[i].getBytes(StandardCharsets.UTF_8));

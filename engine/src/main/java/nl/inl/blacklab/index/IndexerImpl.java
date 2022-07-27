@@ -220,7 +220,9 @@ class IndexerImpl implements DocWriter, Indexer {
     @Deprecated
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        init(BlackLabIndexWriter.open(directory, create, formatIdentifier, indexTemplateFile), formatIdentifier);
+        BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(directory, create, formatIdentifier,
+                indexTemplateFile);
+        init(indexWriter, formatIdentifier);
     }
 
     /**

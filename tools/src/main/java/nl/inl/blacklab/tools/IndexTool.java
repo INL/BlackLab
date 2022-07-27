@@ -62,8 +62,7 @@ public class IndexTool {
         String deleteQuery = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
-        IndexType indexType = BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES) ?
-                IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
+        IndexType indexType = null; // null means "use default"
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.startsWith("---")) {
@@ -276,7 +275,7 @@ public class IndexTool {
         Indexer indexer = null;
         try {
             BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, forceCreateNew,
-                    formatIdentifier, indexTemplateFile);
+                    formatIdentifier, indexTemplateFile, indexType);
             indexer = Indexer.openIndex(indexWriter, formatIdentifier);
             //indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
         } catch (DocumentFormatNotFound e1) {

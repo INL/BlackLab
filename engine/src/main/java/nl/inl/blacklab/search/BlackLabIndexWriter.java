@@ -24,7 +24,24 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     static BlackLabIndexWriter open(File directory, boolean create, String formatIdentifier,
             File indexTemplateFile) throws ErrorOpeningIndex {
+        return open(directory, create, formatIdentifier, indexTemplateFile, null);
+    }
+
+    /**
+     * Create or open an index.
+     *
+     * @param directory index directory
+     * @param create force creating a new index even if one already exists?
+     * @param formatIdentifier default document format to use
+     * @param indexTemplateFile optional file to use as template for index (legacy)
+     * @param indexType index format to use for creating index: classic with external files or integrated
+     * @return the index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    static BlackLabIndexWriter open(File directory, boolean create, String formatIdentifier,
+            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
         BlackLabIndexWriter indexWriter;
+        BlackLabEngine engine = BlackLab.implicitInstance();
         if (create) {
             if (indexTemplateFile == null) {
                 // Create index from format configuration (modern)
@@ -36,11 +53,13 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
                 ConfigInputFormat format = DocumentFormats.getConfigInputFormat(formatIdentifier);
 
                 // template might still be null, in that case a default will be created
-                indexWriter = BlackLab.openForWriting(directory, true, format);
+                indexWriter = engine.openForWriting(directory, true, format, indexType);
             } else {
                 // Create index from index template file (legacy)
-                indexWriter = BlackLab.openForWriting(directory, true, indexTemplateFile);
+                indexWriter = engine.openForWriting(directory, true, indexTemplateFile, indexType);
             }
+            // Record the default format in the index
+            indexWriter.metadata().setDocumentFormat(formatIdentifier);
         } else {
             // opening an existing index
             indexWriter = BlackLab.openForWriting(directory, false);

@@ -140,8 +140,9 @@ public class TestIndex {
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
             BlackLabEngine engine = BlackLab.implicitInstance();
-            BlackLabIndexWriter indexWriter = engine.openForWriting(indexDir, true, (File)null, indexType);
-            Indexer indexer = Indexer.openIndex(indexWriter, testFormat); //.createNewIndex(indexDir, testFormat);
+            BlackLabIndexWriter indexWriter;
+            indexWriter = BlackLabIndexWriter.open(indexDir, true, testFormat, null, indexType);
+            Indexer indexer = Indexer.openIndex(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
                 // Index each of our test "documents".
@@ -152,7 +153,7 @@ public class TestIndex {
                     // Delete the first doc, to test deletion.
                     // (close and re-open to be sure the document was written to disk first)
                     indexer.close();
-                    indexWriter = BlackLabIndexWriter.open(indexDir, false, null, null);
+                    indexWriter = BlackLabIndexWriter.open(indexDir, false, null, null, indexType);
                     indexer = Indexer.openIndex(indexWriter);
                     String luceneField = indexer.indexWriter().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
