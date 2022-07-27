@@ -15,7 +15,6 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +35,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     /** Index metadata document get a marker field so we can find it again (value same as field name) */
     private static final String METADATA_MARKER = "__index_metadata_marker__";
 
-    private static final Query METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
+    private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
     /** For writing indexmetadata to disk for debugging */
     private final File debugFile;
@@ -109,10 +108,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
 
             // Update the index metadata by deleting it, then adding a new version.
-            // TODO: probably use versioning to prevent losing indexmetadata if we crash
-            //   (i.e. add new document, then remove old document by searching with the previous version)
-            indexWriter.writer().deleteDocuments(METADATA_DOC_QUERY);
-            indexWriter.writer().addDocument(indexmetadataDoc);
+            indexWriter.updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
             if (debugFile != null)
                 FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
@@ -121,4 +117,9 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         }
     }
 
+    @Override
+    public void freezeBeforeIndexing() {
+        if (!isFrozen())
+            freeze();
+    }
 }

@@ -1,6 +1,10 @@
 package nl.inl.blacklab.search;
 
+import java.io.IOException;
+
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -54,4 +58,30 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      */
     boolean isOpen();
 
+    /**
+     * Add a document to the index.
+     *
+     * @param document document to add
+     */
+    default void addDocument(Document document) throws IOException {
+        // If we're using the integrated index format, we must make sure
+        // the metadata is frozen as soon as we start adding documents.
+        metadata().freezeBeforeIndexing();
+
+        writer().addDocument(document);
+    }
+
+    /**
+     * Update a document in the index.
+     *
+     * @param term term query to find the previous version for deletion
+     * @param document new version of the document
+     */
+    default void updateDocument(Term term, Document document) throws IOException {
+        // If we're using the integrated index format, we must make sure
+        // the metadata is frozen as soon as we start adding documents.
+        metadata().freezeBeforeIndexing();
+
+        writer().updateDocument(term, document);
+    }
 }

@@ -135,7 +135,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return to == null ? from : to;
     }
 
-    protected void init() {
+    protected void ensureInitialized() {
         if (inited)
             return;
         inited = true;
@@ -183,12 +183,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     @Override
     public void index() throws IOException, MalformedInputFile, PluginException {
-        init();
+        ensureInitialized();
     }
 
     @Override
     public void indexSpecificDocument(String documentExpr) {
-        init();
+        ensureInitialized();
     }
 
     protected String processString(String result, List<ConfigProcessStep> process, Map<String, String> mapValues) {

@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -416,13 +415,13 @@ class IndexerImpl implements DocWriter, Indexer {
      */
     @Override
     public void add(Document document) throws IOException {
-        indexWriter.writer().addDocument(document);
+        indexWriter.addDocument(document);
         listener().luceneDocumentAdded();
     }
 
     @Override
     public void update(Term term, Document document) throws IOException {
-        indexWriter.writer().updateDocument(term, document);
+        indexWriter.updateDocument(term, document);
         listener().luceneDocumentAdded();
     }
 
@@ -550,17 +549,6 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public Map<String, String> indexerParameters() {
         return indexerParam;
-    }
-
-    /**
-     * Get the IndexWriter we're using.
-     *
-     * Useful if e.g. you want to access FSDirectory.
-     *
-     * @return the IndexWriter
-     */
-    protected IndexWriter writer() {
-        return indexWriter.writer();
     }
 
     @Override
