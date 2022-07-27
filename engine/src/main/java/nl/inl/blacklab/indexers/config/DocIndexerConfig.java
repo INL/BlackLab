@@ -7,8 +7,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -92,24 +94,30 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     protected final Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
 
+    /** What annotations have we warned about using special default sensitivity? */
+    Set<String> warnSensitivity = new HashSet<>();
+
     public void setConfigInputFormat(ConfigInputFormat config) {
         this.config = config;
     }
 
-    @SuppressWarnings("deprecation")
-    protected SensitivitySetting getSensitivitySetting(ConfigAnnotation mainAnnotation) {
-        SensitivitySetting sensitivity = mainAnnotation.getSensitivity();
+    protected SensitivitySetting getSensitivitySetting(ConfigAnnotation annotation) {
+        SensitivitySetting sensitivity = annotation.getSensitivity();
         if (sensitivity == SensitivitySetting.DEFAULT) {
-            String name = mainAnnotation.getName();
+            String name = annotation.getName();
             sensitivity = SensitivitySetting.defaultForAnnotation(name);
             if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
                 // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
                 // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
                 // Warn users about this so they can make their config files explicit before this special case is removed.
-                logger.warn("Configuration " + config.getName()
-                        + " relies on special default sensitivity 'sensitive_insensitive' for annotation " + name + "; this behaviour "
-                        + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
-                        + "without explicit sensitivity will default to 'insensitive'.");
+                if (!warnSensitivity.contains(name)) {
+                    warnSensitivity.add(name);
+                    logger.warn("Configuration " + config.getName()
+                            + " relies on special default sensitivity 'sensitive_insensitive' for annotation " + name
+                            + "; this behaviour "
+                            + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
+                            + "without explicit sensitivity will default to 'insensitive'.");
+                }
             }
             return sensitivity;
         }
