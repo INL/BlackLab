@@ -66,26 +66,6 @@ public interface Indexer {
     }
 
     /**
-     * Open index
-     *
-     * @param directory the main BlackLab index directory
-     * @param createNewIndex if true, creates a new index; otherwise, appends to existing
-     *            index. When creating a new index, a formatIdentifier or an
-     *            indexTemplateFile containing a valid "documentFormat" value should
-     *            also be supplied. Otherwise adding new data to the index isn't
-     *            possible, as we can't construct a DocIndexer to do the actual
-     *            indexing without a valid formatIdentifier.
-     * @param formatIdentifier (optional) determines how this Indexer will index any
-     *            new data added to it. If omitted, when opening an existing index,
-     *            the formatIdentifier in its metadata (as "documentFormat") is used
-     *            instead. When creating a new index, this format will be stored as
-     *            the default for that index, unless another default is already set
-     *            by the indexTemplateFile (as "documentFormat"), it will still be
-     *            used by this Indexer however.
-     * @param indexTemplateFile (optional, legacy) JSON file to use as template for index structure /
-     *            metadata (if creating new index)
-     * @throws DocumentFormatNotFound if no formatIdentifier was specified and
-     *             autodetection failed
      * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
      *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
