@@ -18,35 +18,79 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
-    @Deprecated
-    static Indexer createNewIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, true);
+    /**
+     * Create an Indexer for an existing index.
+     *
+     * The default index format from the index metadata will be used.
+     *
+     * @param writer index to write to
+     * @return the indexer
+     * @throws DocumentFormatNotFound if the default format isn't supported
+     */
+    static Indexer openIndex(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
+        return new IndexerImpl(writer, null);
     }
 
-    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, true, formatIdentifier, null);
-    }
-
-    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, false);
-    }
-
-    @Deprecated
-    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, false, formatIdentifier, null);
-    }
-
+    /**
+     * Create an Indexer.
+     *
+     * Will try to use the specified format, or fall back on the index's
+     * default format (if set).
+     *
+     * @param writer index to write to
+     * @param formatIdentifier format to use, or null for the index default
+     * @return the indexer
+     * @throws DocumentFormatNotFound if the format isn't supported
+     */
     static Indexer openIndex(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, formatIdentifier);
     }
 
+    /**
+     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
+     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     */
     @Deprecated
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, createNewIndex, formatIdentifier, null);
+    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
+        return openIndex(directory, true, formatIdentifier, null);
     }
 
+    /**
+     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
+     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     */
+    @Deprecated
+    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
+        return openIndex(directory, false, null, null);
+    }
+
+    /**
+     * Open index
+     *
+     * @param directory the main BlackLab index directory
+     * @param create if true, creates a new index; otherwise, appends to existing
+     *            index. When creating a new index, a formatIdentifier or an
+     *            indexTemplateFile containing a valid "documentFormat" value should
+     *            also be supplied. Otherwise adding new data to the index isn't
+     *            possible, as we can't construct a DocIndexer to do the actual
+     *            indexing without a valid formatIdentifier.
+     * @param formatIdentifier (optional) determines how this Indexer will index any
+     *            new data added to it. If omitted, when opening an existing index,
+     *            the formatIdentifier in its metadata (as "documentFormat") is used
+     *            instead. When creating a new index, this format will be stored as
+     *            the default for that index, unless another default is already set
+     *            by the indexTemplateFile (as "documentFormat"), it will still be
+     *            used by this Indexer however.
+     * @param indexTemplateFile (optional, legacy) JSON file to use as template for index structure /
+     *            metadata (if creating new index)
+     * @throws DocumentFormatNotFound if no formatIdentifier was specified and
+     *             autodetection failed
+     * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
+     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     */
+    @Deprecated
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, createNewIndex, formatIdentifier, indexTemplateFile);
+        return new IndexerImpl(BlackLabIndexWriter.open(directory, createNewIndex, formatIdentifier, indexTemplateFile), formatIdentifier);
     }
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;

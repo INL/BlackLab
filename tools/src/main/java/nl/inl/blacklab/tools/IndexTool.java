@@ -267,9 +267,6 @@ public class IndexTool {
 
         if (formatIdentifier == null) {
             System.err.println("No document format given; trying to detect it from the index...");
-        } else if (formatIdentifier.equals("teip4")) {
-            System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
-            formatIdentifier = "tei";
         }
 
         // Create the indexer and index the files
@@ -278,9 +275,12 @@ public class IndexTool {
         }
         Indexer indexer = null;
         try {
-            indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
-            indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
+            BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, forceCreateNew,
+                    formatIdentifier, indexTemplateFile);
+            indexer = Indexer.openIndex(indexWriter, formatIdentifier);
+            //indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
         } catch (DocumentFormatNotFound e1) {
+            // Maybe formatIdentifier isn't a format name but the path to a format file?
         	File docFormatFile = new File(formatIdentifier);
             try {
                 if (docFormatFile.isFile() && docFormatFile.canRead()) {
@@ -288,9 +288,8 @@ public class IndexTool {
                     DocumentFormats.registerFormat(format);
                     formatIdentifier = format.getName();
                     indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
-                    indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
                 }
-            } catch(DocumentFormatNotFound|IOException e) {
+            } catch (DocumentFormatNotFound|IOException e) {
                 // legit swallow this.
             	System.err.println("Not a format, not a file: " + docFormatFile + " . " + e.getMessage());
             }
@@ -302,6 +301,7 @@ public class IndexTool {
             	return;
             }
         }
+        indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         if (forceCreateNew)
             indexer.indexWriter().metadata().setDocumentFormat(formatIdentifier);
         indexer.setIndexerParam(indexerParam);

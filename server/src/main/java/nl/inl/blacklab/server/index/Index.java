@@ -23,6 +23,7 @@ import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
@@ -277,7 +278,9 @@ public class Index {
         cleanupClosedIndexerOrThrow();
         close(); // Close any BlackLabIndex that is still in search mode
         try {
-            this.indexer = Indexer.openIndex(searchMan.blackLabInstance().openForWriting(this.dir, false), null);
+            BlackLabIndexWriter indexWriter = searchMan.blackLabInstance()
+                    .openForWriting(this.dir, false);
+            this.indexer = Indexer.openIndex(indexWriter);
             indexer.setNumberOfThreadsToUse(BlackLab.config().getIndexing().getNumberOfThreads());
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);

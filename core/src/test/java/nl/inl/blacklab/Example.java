@@ -14,6 +14,7 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -77,7 +78,8 @@ public class Example {
         // Create an index and add our test documents.
         Indexer indexer = null;
         try {
-            indexer = Indexer.createNewIndex(indexDir, "exampleformat");
+            BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, true, "exampleformat", null);
+            indexer = Indexer.openIndex(indexWriter, "exampleformat");
             for (int i = 0; i < testData.length; i++) {
                 indexer.index("test" + (i + 1), testData[i].getBytes(StandardCharsets.UTF_8));
             }
