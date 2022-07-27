@@ -274,7 +274,7 @@ public class IndexTool {
         }
         Indexer indexer = null;
         try {
-            BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(indexDir, forceCreateNew,
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
                     formatIdentifier, indexTemplateFile, indexType);
             indexer = Indexer.openIndex(indexWriter, formatIdentifier);
             //indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);

@@ -24,6 +24,7 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.util.FileUtil;
 
 /**
@@ -140,7 +141,52 @@ public final class BlackLab {
      */
     public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return BlackLab.implicitInstance().openForWriting(indexDir, createNewIndex, config);
+        return implicitInstance().openForWriting(indexDir, createNewIndex, config);
+    }
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * @param directory the index directory
+     * @param create if true, create a new index even if one existed there
+     * @param formatIdentifier default format to use
+     * @param indexTemplateFile (optional, legacy) index template file
+     * @return index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
+        return openForWriting(directory, create, formatIdentifier, null, null);
+    }
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * @param directory the index directory
+     * @param create if true, create a new index even if one existed there
+     * @param formatIdentifier default format to use
+     * @param indexTemplateFile (optional, legacy) index template file
+     * @return index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
+            File indexTemplateFile) throws ErrorOpeningIndex {
+        return openForWriting(directory, create, formatIdentifier, indexTemplateFile, null);
+    }
+
+    /**
+     * Open an index for writing ("index mode": adding/deleting documents).
+     *
+     * @param directory the index directory
+     * @param create if true, create a new index even if one existed there
+     * @param formatIdentifier default format to use
+     * @param indexTemplateFile (optional, legacy) index template file
+     * @param indexType index format to use: classic with external files or new integrated
+     * @return index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
+            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
+        return implicitInstance().openForWriting(directory, create, formatIdentifier, indexTemplateFile, indexType);
     }
 
     /**

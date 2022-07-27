@@ -31,6 +31,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -214,13 +215,13 @@ class IndexerImpl implements DocWriter, Indexer {
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
-     * @deprecated use {@link #Indexer(BlackLabIndexWriter, String, File)} with
-     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     * @deprecated use {@link IndexerImpl(BlackLabIndexWriter, String, File)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(directory, create, formatIdentifier,
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, create, formatIdentifier,
                 indexTemplateFile);
         init(indexWriter, formatIdentifier);
     }
@@ -246,7 +247,7 @@ class IndexerImpl implements DocWriter, Indexer {
         // Make sure we have a supported format, and make sure a default format is recorded in the metadata.
         try {
             this.formatIdentifier = determineFormat(indexWriter.indexDirectory(), formatIdentifier, indexWriter.metadata().documentFormat());
-            setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
+            BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
         } catch (DocumentFormatNotFound e) {
             indexWriter.close();
             throw e;
@@ -313,16 +314,6 @@ class IndexerImpl implements DocWriter, Indexer {
                 formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
         }
         return formatError;
-    }
-
-    private static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
-        String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
-        if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
-            // indexTemplateFile didn't provide a default formatIdentifier,
-            // overwrite it with our provided formatIdentifier
-            indexWriter.metadata().setDocumentFormat(formatIdentifier);
-            indexWriter.metadata().save();
-        }
     }
 
     @Override

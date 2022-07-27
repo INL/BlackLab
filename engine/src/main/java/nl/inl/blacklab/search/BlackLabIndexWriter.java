@@ -1,70 +1,20 @@
 package nl.inl.blacklab.search;
 
-import java.io.File;
-
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
 
-    /**
-     * Create or open an index.
-     *
-     * @param directory index directory
-     * @param create force creating a new index even if one already exists?
-     * @param formatIdentifier default document format to use
-     * @param indexTemplateFile optional file to use as template for index (legacy)
-     * @return the index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    static BlackLabIndexWriter open(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile) throws ErrorOpeningIndex {
-        return open(directory, create, formatIdentifier, indexTemplateFile, null);
-    }
-
-    /**
-     * Create or open an index.
-     *
-     * @param directory index directory
-     * @param create force creating a new index even if one already exists?
-     * @param formatIdentifier default document format to use
-     * @param indexTemplateFile optional file to use as template for index (legacy)
-     * @param indexType index format to use for creating index: classic with external files or integrated
-     * @return the index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    static BlackLabIndexWriter open(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter;
-        BlackLabEngine engine = BlackLab.implicitInstance();
-        if (create) {
-            if (indexTemplateFile == null) {
-                // Create index from format configuration (modern)
-                // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
-                // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
-                // some other DocIndexer implementation)
-                // this ConfigInputFormat could then still be used as a minimal template to setup the index
-                // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-                ConfigInputFormat format = DocumentFormats.getConfigInputFormat(formatIdentifier);
-
-                // template might still be null, in that case a default will be created
-                indexWriter = engine.openForWriting(directory, true, format, indexType);
-            } else {
-                // Create index from index template file (legacy)
-                indexWriter = engine.openForWriting(directory, true, indexTemplateFile, indexType);
-            }
-            // Record the default format in the index
+    static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
+        String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
+        if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
+            // indexTemplateFile didn't provide a default formatIdentifier,
+            // overwrite it with our provided formatIdentifier
             indexWriter.metadata().setDocumentFormat(formatIdentifier);
-        } else {
-            // opening an existing index
-            indexWriter = BlackLab.openForWriting(directory, false);
+            indexWriter.metadata().save();
         }
-        return indexWriter;
     }
 
     /**

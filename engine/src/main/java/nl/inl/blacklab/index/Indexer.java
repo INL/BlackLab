@@ -14,6 +14,7 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
@@ -86,11 +87,11 @@ public interface Indexer {
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
      * @deprecated use {@link #openIndex(BlackLabIndexWriter, String)} with
-     *   {@link BlackLabIndexWriter#open(File, boolean, String, File)} instead
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLabIndexWriter.open(directory, createNewIndex, formatIdentifier,
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, createNewIndex, formatIdentifier,
                 indexTemplateFile);
         return new IndexerImpl(indexWriter, formatIdentifier);
     }

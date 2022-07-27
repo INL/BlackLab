@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.util.VersionFile;
@@ -138,6 +139,73 @@ public final class BlackLabEngine implements AutoCloseable {
             blackLabEngine = indexReader2BlackLabEngine.get(reader);
         }
         return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(reader);
+    }
+
+    /**
+     * Create or open an index.
+     *
+     * @param directory index directory
+     * @param create force creating a new index even if one already exists?
+     * @param formatIdentifier default document format to use
+     * @return the index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier)
+            throws ErrorOpeningIndex {
+        return openForWriting(directory, create, formatIdentifier, null, null);
+    }
+
+    /**
+     * Create or open an index.
+     *
+     * @param directory index directory
+     * @param create force creating a new index even if one already exists?
+     * @param formatIdentifier default document format to use
+     * @param indexTemplateFile optional file to use as template for index (legacy)
+     * @return the index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
+            File indexTemplateFile) throws ErrorOpeningIndex {
+        return openForWriting(directory, create, formatIdentifier, indexTemplateFile, null);
+    }
+
+    /**
+     * Create or open an index.
+     *
+     * @param directory index directory
+     * @param create force creating a new index even if one already exists?
+     * @param formatIdentifier default document format to use
+     * @param indexTemplateFile optional file to use as template for index (legacy)
+     * @param indexType index format to use for creating index: classic with external files or integrated
+     * @return the index writer
+     * @throws ErrorOpeningIndex if the index couldn't be opened
+     */
+    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
+            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
+        BlackLabIndexWriter indexWriter;
+        if (create) {
+            if (indexTemplateFile == null) {
+                // Create index from format configuration (modern)
+                // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
+                // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
+                // some other DocIndexer implementation)
+                // this ConfigInputFormat could then still be used as a minimal template to setup the index
+                // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
+                ConfigInputFormat format = DocumentFormats.getConfigInputFormat(formatIdentifier);
+
+                // template might still be null, in that case a default will be created
+                indexWriter = openForWriting(directory, true, format, indexType);
+            } else {
+                // Create index from index template file (legacy)
+                indexWriter = openForWriting(directory, true, indexTemplateFile, indexType);
+            }
+            BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
+        } else {
+            // opening an existing index
+            indexWriter = openForWriting(directory, false);
+        }
+        return indexWriter;
     }
 
     @Override

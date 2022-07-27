@@ -21,7 +21,6 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -139,9 +138,8 @@ public class TestIndex {
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
         try {
-            BlackLabEngine engine = BlackLab.implicitInstance();
             BlackLabIndexWriter indexWriter;
-            indexWriter = BlackLabIndexWriter.open(indexDir, true, testFormat, null, indexType);
+            indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
             Indexer indexer = Indexer.openIndex(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
@@ -153,7 +151,7 @@ public class TestIndex {
                     // Delete the first doc, to test deletion.
                     // (close and re-open to be sure the document was written to disk first)
                     indexer.close();
-                    indexWriter = BlackLabIndexWriter.open(indexDir, false, null, null, indexType);
+                    indexWriter = BlackLab.openForWriting(indexDir, false, null, null, indexType);
                     indexer = Indexer.openIndex(indexWriter);
                     String luceneField = indexer.indexWriter().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
