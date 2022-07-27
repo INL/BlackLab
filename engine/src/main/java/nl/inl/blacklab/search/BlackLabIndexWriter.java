@@ -7,6 +7,16 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
 
+    static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
+        String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
+        if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
+            // indexTemplateFile didn't provide a default formatIdentifier,
+            // overwrite it with our provided formatIdentifier
+            indexWriter.metadata().setDocumentFormat(formatIdentifier);
+            indexWriter.metadata().save();
+        }
+    }
+
     /**
      * Call this to roll back any changes made to the index this session. Calling
      * close() will automatically commit any changes. If you call this method, then

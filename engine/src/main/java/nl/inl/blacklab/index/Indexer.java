@@ -14,39 +14,66 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
 
-    @Deprecated
-    static Indexer createNewIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, true);
+    /**
+     * Create an Indexer for an existing index.
+     *
+     * The default index format from the index metadata will be used.
+     *
+     * @param writer index to write to
+     * @return the indexer
+     * @throws DocumentFormatNotFound if the default format isn't supported
+     */
+    static Indexer get(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
+        return new IndexerImpl(writer, null);
     }
 
-    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, true, formatIdentifier, null);
-    }
-
-    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, false);
-    }
-
-    @Deprecated
-    static Indexer openIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, false, formatIdentifier, null);
-    }
-
-    static Indexer openIndex(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
+    /**
+     * Create an Indexer.
+     *
+     * Will try to use the specified format, or fall back on the index's
+     * default format (if set).
+     *
+     * @param writer index to write to
+     * @param formatIdentifier format to use, or null for the index default
+     * @return the indexer
+     * @throws DocumentFormatNotFound if the format isn't supported
+     */
+    static Indexer get(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, formatIdentifier);
     }
 
+    /**
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     */
     @Deprecated
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, createNewIndex, formatIdentifier, null);
+    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
+        return openIndex(directory, true, formatIdentifier, null);
     }
 
+    /**
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     */
+    @Deprecated
+    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
+        return openIndex(directory, false, null, null);
+    }
+
+    /**
+     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     */
+    @Deprecated
     static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return new IndexerImpl(directory, createNewIndex, formatIdentifier, indexTemplateFile);
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, createNewIndex, formatIdentifier,
+                indexTemplateFile);
+        return new IndexerImpl(indexWriter, formatIdentifier);
     }
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;

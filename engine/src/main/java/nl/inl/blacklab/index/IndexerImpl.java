@@ -29,10 +29,8 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.ContentAccessor;
@@ -201,22 +199,6 @@ class IndexerImpl implements DocWriter, Indexer {
      *
      * @param directory the main BlackLab index directory
      * @param create if true, creates a new index; otherwise, appends to existing
-     *            index
-     * @throws DocumentFormatNotFound if autodetection of the document format
-     *             failed
-     * @throws ErrorOpeningIndex if we couldn't open the index
-     */
-    @Deprecated
-    IndexerImpl(File directory, boolean create)
-            throws DocumentFormatNotFound, ErrorOpeningIndex {
-        init(directory, create, null, null);
-    }
-
-    /**
-     * Construct Indexer
-     *
-     * @param directory the main BlackLab index directory
-     * @param create if true, creates a new index; otherwise, appends to existing
      *            index. When creating a new index, a formatIdentifier or an
      *            indexTemplateFile containing a valid "documentFormat" value should
      *            also be supplied. Otherwise adding new data to the index isn't
@@ -233,42 +215,15 @@ class IndexerImpl implements DocWriter, Indexer {
      *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
+     * @deprecated use {@link IndexerImpl(BlackLabIndexWriter, String, File)} with
+     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
+    @Deprecated
     IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        init(directory, create, formatIdentifier, indexTemplateFile);
-    }
-
-    protected void init(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
-            throws DocumentFormatNotFound, ErrorOpeningIndex {
-
-        if (create) {
-            if (indexTemplateFile == null) {
-                // Create index from format configuration (modern)
-                // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
-                createIndex(directory, formatIdentifier);
-            } else {
-                // Create index from index template file (legacy)
-                createIndexFromTemplate(directory, formatIdentifier, indexTemplateFile);
-            }
-        } else {
-            // opening an existing index
-            this.indexWriter = BlackLab.openForWriting(directory, false);
-            String defaultFormatIdentifier = this.indexWriter.metadata().documentFormat();
-
-            if (DocumentFormats.isSupported(formatIdentifier))
-                this.formatIdentifier = formatIdentifier;
-            else if (DocumentFormats.isSupported(defaultFormatIdentifier))
-                this.formatIdentifier = defaultFormatIdentifier;
-            else {
-                indexWriter.close();
-                throw new DocumentFormatNotFound(
-                        "Could not determine documentFormat for index " + directory + " (" + formatIdentifier
-                                + "): " + formatError(formatIdentifier));
-            }
-        }
-
-        initMetadataFieldTypes();
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, create, formatIdentifier,
+                indexTemplateFile);
+        init(indexWriter, formatIdentifier);
     }
 
     /**
@@ -279,24 +234,53 @@ class IndexerImpl implements DocWriter, Indexer {
      *      If omitted, uses the default formatIdentifier stored in the indexMetadata. If that is missing too, throws DocumentFormatNotFound.
      */
     IndexerImpl(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
-        if (writer == null) {
-            throw new BlackLabRuntimeException("writer == null");
+        init(writer, formatIdentifier);
+    }
+
+    private void init(BlackLabIndexWriter indexWriter, String formatIdentifier) throws DocumentFormatNotFound {
+        if (indexWriter == null) {
+            throw new BlackLabRuntimeException("indexWriter == null");
         }
 
-        this.indexWriter = writer;
+        this.indexWriter = indexWriter;
 
-        if (!DocumentFormats.isSupported(formatIdentifier)) {
-            formatIdentifier = writer.metadata().documentFormat();
-            if (!DocumentFormats.isSupported(formatIdentifier)) {
-                throw new DocumentFormatNotFound(
-                        "Could not determine documentFormat for index " + writer.name() + " (" + formatIdentifier
-                                + "): " + formatError(formatIdentifier));
-            }
+        // Make sure we have a supported format, and make sure a default format is recorded in the metadata.
+        try {
+            this.formatIdentifier = determineFormat(indexWriter.indexDirectory(), formatIdentifier, indexWriter.metadata().documentFormat());
+            BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
+        } catch (DocumentFormatNotFound e) {
+            indexWriter.close();
+            throw e;
         }
-        this.formatIdentifier = formatIdentifier;
-        setMetadataDocumentFormatIfMissing(formatIdentifier);
 
         initMetadataFieldTypes();
+    }
+
+    /**
+     * Determine what format to use, the specified or the default one.
+     *
+     * Will return a supported format, preferring the specified one to the
+     * default, or throw an exception.
+     *
+     * @param directory index directory (for exception message)
+     * @param formatIdentifier specified format
+     * @param fallbackFormat default to fall back if the specified format is not supported
+     * @return chosen format
+     * @throws DocumentFormatNotFound if neither format is supported
+     */
+    private String determineFormat(File directory, String formatIdentifier, String fallbackFormat)
+            throws DocumentFormatNotFound {
+        if (!DocumentFormats.isSupported(formatIdentifier)) {
+            // Specified format not found; use index default
+            if (fallbackFormat == null || !DocumentFormats.isSupported(fallbackFormat)) {
+                // Index default doesn't work either, error
+                throw new DocumentFormatNotFound(
+                        "Could not determine documentFormat for index " + directory + " (" + formatIdentifier
+                                + (fallbackFormat == null ? "" : " / " + fallbackFormat) + "): " + formatError(formatIdentifier));
+            }
+            formatIdentifier = fallbackFormat;
+        }
+        return formatIdentifier;
     }
 
     private void initMetadataFieldTypes() {
@@ -330,66 +314,6 @@ class IndexerImpl implements DocWriter, Indexer {
                 formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
         }
         return formatError;
-    }
-
-    private void createIndex(File directory, String formatIdentifier) throws ErrorOpeningIndex, DocumentFormatNotFound {
-        if (!DocumentFormats.isSupported(formatIdentifier)) {
-            throw new DocumentFormatNotFound(
-                    "Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
-                            formatError(formatIdentifier));
-        }
-        this.formatIdentifier = formatIdentifier;
-
-        // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
-        // some other DocIndexer implementation)
-        // this ConfigInputFormat could then still be used as a minimal template to setup the index
-        // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-        ConfigInputFormat format = null;
-        for (Format desc : DocumentFormats.getFormats()) {
-            if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
-                format = desc.getConfig();
-                break;
-            }
-        }
-
-        // template might still be null, in that case a default will be created
-        indexWriter = BlackLab.openForWriting(directory, true, format);
-
-        setMetadataDocumentFormatIfMissing(formatIdentifier); // only necessary if not a config-based format?
-    }
-
-    private void createIndexFromTemplate(File directory, String formatIdentifier, File indexTemplateFile)
-            throws ErrorOpeningIndex, DocumentFormatNotFound {
-        indexWriter = BlackLab.openForWriting(directory, true, indexTemplateFile);
-
-        // Read back the formatIdentifier that was provided through the indexTemplateFile now that the index
-        // has written it (might be null)
-
-        if (DocumentFormats.isSupported(formatIdentifier)) {
-            this.formatIdentifier = formatIdentifier;
-            setMetadataDocumentFormatIfMissing(formatIdentifier);
-        } else {
-            String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
-            if (DocumentFormats.isSupported(defaultFormatIdentifier)) {
-                this.formatIdentifier = defaultFormatIdentifier;
-            } else {
-                // TODO we should delete the newly created index here as it failed, how do we clean up files properly?
-                indexWriter.close();
-                throw new DocumentFormatNotFound(
-                        "Cannot create new index in " + directory + " with format " + formatIdentifier + ": " +
-                                formatError(formatIdentifier));
-            }
-        }
-    }
-
-    private void setMetadataDocumentFormatIfMissing(String formatIdentifier) {
-        String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
-        if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
-            // indexTemplateFile didn't provide a default formatIdentifier,
-            // overwrite it with our provided formatIdentifier
-            indexWriter.metadata().setDocumentFormat(formatIdentifier);
-            indexWriter.metadata().save();
-        }
     }
 
     @Override

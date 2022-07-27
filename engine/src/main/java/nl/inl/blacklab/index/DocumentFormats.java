@@ -200,4 +200,21 @@ public class DocumentFormats {
         DocIndexerFactory fac = getFactory(formatIdentifier);
         return fac != null ? fac.get(formatIdentifier, indexer, documentName, b, cs) : null;
     }
+
+    /**
+     * Get the format configuration matching the given format identifier, if it exists.
+     *
+     * @param formatIdentifier format identifier
+     * @return the format configuration, or null if not found
+     */
+    public static ConfigInputFormat getConfigInputFormat(String formatIdentifier) {
+        ConfigInputFormat format = null;
+        for (Format desc : getFormats()) {
+            if (desc.getId().equals(formatIdentifier) && desc.getConfig() != null) {
+                format = desc.getConfig();
+                break;
+            }
+        }
+        return format;
+    }
 }
