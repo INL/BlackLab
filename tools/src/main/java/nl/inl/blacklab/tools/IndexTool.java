@@ -27,6 +27,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
@@ -43,7 +44,7 @@ public class IndexTool {
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
-        
+
         // If the current directory contains indexer.properties, read it
         File propFile = new File(".", "indexer.properties");
         if (propFile.canRead())
@@ -53,14 +54,16 @@ public class IndexTool {
         int maxDocsToIndex = 0;
         File indexDir = null, inputDir = null;
         String glob = "*";
-        String docFormat = null;
-        boolean createNewIndex = false;
+        String formatIdentifier = null;
+        boolean forceCreateNew = false;
         String command = "";
         Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
         boolean addingFiles = true;
         String deleteQuery = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
+        IndexType indexType = BlackLab.isFeatureEnabled(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES) ?
+                IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
             if (arg.startsWith("---")) {
@@ -76,6 +79,15 @@ public class IndexTool {
             } else if (arg.startsWith("--")) {
                 String name = arg.substring(2);
                 switch (name) {
+                case "integrate-external-files":
+                    if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
+                        System.err.println("--integrate-external-files needs a parameter, true or false.");
+                        usage();
+                        return;
+                    }
+                    indexType = Boolean.parseBoolean(args[i + 1]) ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
+                    i++;
+                    break;
                 case "threads":
                     if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
                         try {
@@ -117,7 +129,7 @@ public class IndexTool {
                     break;
                 case "create":
                     System.err.println("Option --create is deprecated; use create command (--help for details)");
-                    createNewIndex = true;
+                    forceCreateNew = true;
                     break;
                 case "indexparam":
                     if (i + 1 == args.length) {
@@ -170,8 +182,8 @@ public class IndexTool {
                     } else {
                         inputDir = new File(arg);
                     }
-                } else if (addingFiles && docFormat == null) {
-                    docFormat = arg;
+                } else if (addingFiles && formatIdentifier == null) {
+                    formatIdentifier = arg;
                 } else if (command.equals("delete") && deleteQuery == null) {
                     deleteQuery = arg;
                 } else {
@@ -200,7 +212,7 @@ public class IndexTool {
             return;
         }
         if (command.equals("create"))
-            createNewIndex = true;
+            forceCreateNew = true;
 
         // We're adding files. Do we have an input dir/file and file format name?
         if (inputDir == null) {
@@ -224,17 +236,17 @@ public class IndexTool {
             readParametersFromPropertiesFile(propFile);
 
         File indexTemplateFile = null;
-        if (createNewIndex) {
+        if (forceCreateNew) {
             indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", Arrays.asList("json", "yaml", "yml"));
         }
 
-        String op = createNewIndex ? "Creating new" : "Appending to";
+        String op = forceCreateNew ? "Creating new" : "Appending to";
         String strGlob = File.separator;
         if (glob != null && glob.length() > 0 && !glob.equals("*")) {
             strGlob += glob;
         }
         System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
-                (docFormat != null ? " (using format " + docFormat + ")" : "(using autodetected format)"));
+                (formatIdentifier != null ? " (using format " + formatIdentifier + ")" : "(using autodetected format)"));
         if (!indexerParam.isEmpty()) {
             System.out.println("Indexer parameters:");
             for (Map.Entry<String, String> e : indexerParam.entrySet()) {
@@ -253,29 +265,29 @@ public class IndexTool {
 
         DocumentFormats.registerFormatsInDirectories(formatDirs);
 
-        if (docFormat == null) {
+        if (formatIdentifier == null) {
             System.err.println("No document format given; trying to detect it from the index...");
-        } else if (docFormat.equals("teip4")) {
+        } else if (formatIdentifier.equals("teip4")) {
             System.err.println("'teip4' is deprecated, use 'tei' for either TEI P4 or P5.");
-            docFormat = "tei";
+            formatIdentifier = "tei";
         }
 
         // Create the indexer and index the files
-        if (!createNewIndex || indexTemplateFile == null || !indexTemplateFile.canRead()) {
+        if (!forceCreateNew || indexTemplateFile == null || !indexTemplateFile.canRead()) {
             indexTemplateFile = null;
         }
         Indexer indexer = null;
         try {
-            indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
+            indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
             indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         } catch (DocumentFormatNotFound e1) {
-        	File docFormatFile = new File(docFormat);
+        	File docFormatFile = new File(formatIdentifier);
             try {
                 if (docFormatFile.isFile() && docFormatFile.canRead()) {
                 	ConfigInputFormat format = new ConfigInputFormat(docFormatFile, null);
                     DocumentFormats.registerFormat(format);
-                    docFormat = format.getName();
-                    indexer = Indexer.openIndex(indexDir, createNewIndex, docFormat, indexTemplateFile);
+                    formatIdentifier = format.getName();
+                    indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
                     indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
                 }
             } catch(DocumentFormatNotFound|IOException e) {
@@ -287,11 +299,11 @@ public class IndexTool {
             	System.err.println(e1.getMessage());
             	System.err.println("Please specify a correct format on the command line.");
             	usage();
-            	return;            	
+            	return;
             }
         }
-        if (createNewIndex)
-            indexer.indexWriter().metadata().setDocumentFormat(docFormat);
+        if (forceCreateNew)
+            indexer.indexWriter().metadata().setDocumentFormat(formatIdentifier);
         indexer.setIndexerParam(indexerParam);
         if (maxDocsToIndex > 0)
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
@@ -303,7 +315,7 @@ public class IndexTool {
             } else {
                 // Single file.
                 indexer.index(new File(inputDir, glob));
-                
+
                 MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
                 mf.setSpecialField(MetadataFields.PID, "filename");
 
