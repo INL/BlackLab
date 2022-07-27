@@ -1,6 +1,6 @@
-# REST API reference
+# BlackLab Server API overview
 
-TODO: improve this, maybe using a template like [this one](https://github.com/jamescooke/restapidocs/tree/master/examples)?
+The information below will mostly be replaced with a proper [REST API reference](rest-api/). This page will then become more of a guided introduction to using BlackLab Server as a client, to complement the reference docs.
 
 ## Requests
 A request to BlackLab Server has the following structure:

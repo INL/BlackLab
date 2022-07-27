@@ -29,7 +29,8 @@ themeConfig:
     /server/:
       - ''
       - from-different-languages
-      - rest-api
+      - [ 'overview', 'API overview' ]
+      - [ 'rest-api/', 'API reference' ]
       - configuration
       - vmtouch
     /frontend/:
