@@ -36,6 +36,8 @@ public class TestIndexIntegrated {
 
     private static AnnotationForwardIndex wordFi;
 
+    private static AnnotationForwardIndex posFi;
+
     private static Terms wordTerms;
 
     @BeforeClass
@@ -46,6 +48,7 @@ public class TestIndexIntegrated {
         contents = index.mainAnnotatedField();
         word = contents.mainAnnotation();
         wordFi = index.forwardIndex(contents).get(word);
+        posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
         wordTerms = wordFi.terms();
     }
 
@@ -108,6 +111,9 @@ public class TestIndexIntegrated {
         for (int i = 0; i < wordFi.numDocs(); i++) {
             int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i] + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             Assert.assertEquals(expectedLength, wordFi.docLength(i));
+
+            // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
+            Assert.assertEquals(expectedLength, posFi.docLength(i));
         }
     }
 

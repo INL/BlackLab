@@ -79,6 +79,24 @@ public class TestIndex {
                     + "<w l='lazy'  p='adj'>lazy</w> "
                     + "<w l='dog'   p='nou'>dog</w></entity>" + ".</s></doc>",
 
+            // This doc contains no p annotations.
+            // This is intentional, to test this case.
+            // It is not the last doc, because we need to make
+            // sure that doesn't mess up docs indexed after this one.
+            "<doc> <w l='noot'>noot</w> "
+                    + "<w l='mier'>mier</w> "
+                    + "<w l='aap'>aap</w> "
+                    + "<w l='mier'>mier</w> "
+                    + "<w l='mier'>mier</w> "
+                    + "<w l='mier'>mier</w> "
+                    + "<w l='noot'>noot</w> "
+                    + "<w l='noot'>noot</w> "
+                    + "<w l='aap'>aap</w> "
+                    + "<w l='aap'>aap</w> "
+                    + "<w l='aap'>aap</w> "
+                    + "<w l='aap'>aap</w> "
+                    + "</doc>",
+
             "<doc> <s><w l='may' p='vrb'>May</w> "
                     + "<entity><w l='the' p='art'>the</w> "
                     + "<w l='force' p='nou'>Force</w></entity> "
@@ -97,23 +115,9 @@ public class TestIndex {
                     + "<w l='the' p='art'>the</w> "
                     + "<w l='question' p='nou'>question</w>."
                     + "</s></doc>",
-
-            "<doc> <w l='noot'>noot</w> "
-                    + "<w l='mier'>mier</w> "
-                    + "<w l='aap'>aap</w> "
-                    + "<w l='mier'>mier</w> "
-                    + "<w l='mier'>mier</w> "
-                    + "<w l='mier'>mier</w> "
-                    + "<w l='noot'>noot</w> "
-                    + "<w l='noot'>noot</w> "
-                    + "<w l='aap'>aap</w> "
-                    + "<w l='aap'>aap</w> "
-                    + "<w l='aap'>aap</w> "
-                    + "<w l='aap'>aap</w> "
-                    + "</doc>",
     };
 
-    public static final int[] DOC_LENGTHS_TOKENS = { 9, 6, 10, 12 };
+    public static final int[] DOC_LENGTHS_TOKENS = { 9, 12, 6, 10 };
 
     final static String testFormat = "testformat";
 

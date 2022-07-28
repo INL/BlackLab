@@ -54,7 +54,7 @@ public interface AnnotationForwardIndex {
 
     /**
      * Retrieve token ids for the entire document.
-     * @param fiid forward index id
+     * @param docId forward index id
      * @return token ids for the entire document.
      */
     default int[] getDocument(int docId) {

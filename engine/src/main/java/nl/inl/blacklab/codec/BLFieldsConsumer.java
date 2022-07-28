@@ -8,6 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 public class BLFieldsConsumer extends FieldsConsumer {
 
     protected static final Logger logger = LogManager.getLogger(BLFieldsConsumer.class);
+
+    private final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
 
     /** The FieldsConsumer we're adapting and delegating some requests to. */
     private final FieldsConsumer delegateFieldsConsumer;
@@ -173,16 +177,18 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 //  (we're trying to reconstruct the document), so we will do that below.
                 //   we use temporary files because this might take a huge amount of memory)
                 // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
-                Map<String, Map<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
+                Map<String, SortedMap<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
                 try (IndexOutput outTempTermVectorFile = createOutput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
                     for (String field: fields) { // for each field
                         // If it's (part of) an annotated field...
-                        // TODO: we probably only want to create a forward index for one "alternative"
+                        // TODO: we probably only want to create a forward index for one sensitivity
                         //   of each annotation; the case/accent-sensitive one if it exists.
-                        Terms terms = fields.terms(field);
-                        if (isAnnotationField(terms)) {
+                        //   we need the index metadata for this though.
+                        if (isAnnotationField(field)) {
+
+                            Terms terms = fields.terms(field);
 
                             // Record starting offset of field in termindex file (written to fields file later)
                             field2TermIndexOffsets.put(field, termIndexFile.getFilePointer());
@@ -193,7 +199,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
                             // temporary termvector file where the occurrences for each term can be
                             // found.
                             Map<Integer, Map<Integer, Long>> docId2TermVecFileOffsets =
-                                    field2docTermVecFileOffsets.computeIfAbsent(field, k -> new LinkedHashMap<>());
+                                    field2docTermVecFileOffsets.computeIfAbsent(field, k -> new TreeMap<>());
                             // keep docs in order
 
                             // For each term in this field...
@@ -246,20 +252,37 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 try (IndexInput inTermVectorFile = openInput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // For each field...
-                    for (Entry<String, Map<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
+                    for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
                         String field = fieldEntry.getKey();
-                        Map<Integer, Map<Integer, Long>> docPosOffsets = fieldEntry.getValue();
+                        SortedMap<Integer, Map<Integer, Long>> docPosOffsets = fieldEntry.getValue();
 
                         // Record starting offset of field in tokensindex file (written to fields file later)
                         field2TokensIndexOffsets.put(field, outTokensIndexFile.getFilePointer());
 
                         // For each document...
+                        int expectedDocId = 0; // make sure we catch it if some doc(s) have no values for this field
                         for (Entry<Integer, Map<Integer, Long>> docEntry: docPosOffsets.entrySet()) {
                             Integer docId = docEntry.getKey();
+
+                            // If there were docs that did not contain values for this field,
+                            // write empty values.
+                            // TODO: optimize this so we don't waste disk space in this case (although probably rare)
+                            while (docId > expectedDocId) {
+                                // entire document is missing values
+                                outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
+                                for (int i = 0; i < docLengths.get(docId); i++) {
+                                    outTokensFile.writeInt(NO_TERM);
+                                }
+                                expectedDocId++;
+                            }
+                            if (docId != expectedDocId)
+                                throw new RuntimeException("Expected docId " + expectedDocId + ", got " + docId);
+                            expectedDocId++;
+
                             Map<Integer, Long> termPosOffsets = docEntry.getValue();
                             int docLength = docLengths.get(docId);
                             int[] tokensInDoc = new int[docLength]; // reconstruct the document here
-                            Arrays.fill(tokensInDoc, -1); // initialize to illegal value
+                            Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
                             // For each term...
                             for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
                                 int termId = e.getKey();
@@ -304,12 +327,8 @@ public class BLFieldsConsumer extends FieldsConsumer {
         }
     }
 
-    private Boolean isAnnotationField(Terms terms) throws IOException {
-        if (terms == null)
-            return false;
-        boolean hasPositions = terms.hasPositions();
-        boolean hasFreqs = terms.hasFreqs();
-        return hasFreqs && hasPositions;
+    private Boolean isAnnotationField(String field) throws IOException {
+        return field != null && field.contains("%") && field.contains("@");
     }
 
     private String getSegmentFileName(String ext) {

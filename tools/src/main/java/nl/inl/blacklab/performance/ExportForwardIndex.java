@@ -2,6 +2,7 @@ package nl.inl.blacklab.performance;
 
 import java.io.File;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.document.Document;
 
@@ -20,6 +21,11 @@ import nl.inl.util.LogUtil;
  */
 public class ExportForwardIndex {
 
+    // Annotations to skip
+    private static final List<String> SKIP_ANNOTATIONS = List.of("pos", "punct", "starttag");
+
+    private static final int MAX_DOCS = 30;
+
     public static void main(String[] args) throws ErrorOpeningIndex {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning
@@ -27,6 +33,7 @@ public class ExportForwardIndex {
         int fileArgNumber = 0;
         File indexDir = null;
         String annotatedFieldName = "contents";
+        String whatToExport = "all";
         for (String s: args) {
             String arg = s.trim();
             if (arg.charAt(0) == '-') {
@@ -46,6 +53,9 @@ public class ExportForwardIndex {
             case 1:
                 annotatedFieldName = arg;
                 break;
+            case 2:
+                whatToExport = arg;
+                break;
             default:
                 System.err.println("Too many file arguments (supply index dir)");
                 usage();
@@ -59,47 +69,64 @@ public class ExportForwardIndex {
             return;
         }
 
-        // Annotations to skip
-        List<String> skipAnnots = List.of("pos", "punct", "starttag");
+        boolean doTerms = whatToExport.equals("terms") || whatToExport.equals("all");
+        boolean doTokens = whatToExport.equals("tokens") || whatToExport.equals("all");
+        boolean doLengths = whatToExport.equals("lengths") || whatToExport.equals("all");
 
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             AnnotatedField annotatedField = index.annotatedField(annotatedFieldName);
             ForwardIndex forwardIndex = index.forwardIndex(annotatedField);
 
-            // Export term indexes + term strings
-            System.out.println("TERMS");
-            for (Annotation annotation: annotatedField.annotations()) {
-                if (skipAnnots.contains(annotation.name()) || !annotation.hasForwardIndex())
-                    continue;
-                System.out.println("  " + annotation.name());
-                Terms terms = forwardIndex.terms(annotation);
-                for (int i = 0; i < terms.numberOfTerms(); i++) {
-                    System.out.println(String.format("    %03d %s", i, terms.get(i)));
-                }
-            }
+            if (doTerms)
+                exportTerms(annotatedField, forwardIndex);
+            if (doLengths || doTokens)
+                exportDocs(index, annotatedField, forwardIndex, doLengths, doTokens);
+        }
+    }
 
-            // Export tokens in each doc
-            System.out.println("\nDOCS");
-            index.forEachDocument((__, docId) -> {
-                Document luceneDoc = index.luceneDoc(docId);
-                String inputFile = luceneDoc.get("fromInputFile");
-                System.out.println(docId + " (" + inputFile + ")");
-                for (Annotation annotation: annotatedField.annotations()) {
-                    if (skipAnnots.contains(annotation.name()) || !annotation.hasForwardIndex())
-                        continue;
-                    System.out.println("  " + annotation.name());
-                    AnnotationForwardIndex afi = forwardIndex.get(annotation);
+    private static void exportDocs(BlackLabIndex index, AnnotatedField annotatedField, ForwardIndex forwardIndex, boolean doLengths, boolean doTokens) {
+        // Export tokens in each doc
+        System.out.println("\nDOCS");
+        AtomicInteger n = new AtomicInteger(0);
+        index.forEachDocument((__, docId) -> {
+            if (n.incrementAndGet() > MAX_DOCS)
+                return;
+            Document luceneDoc = index.luceneDoc(docId);
+            String inputFile = luceneDoc.get("fromInputFile");
+            String lengthInField = doLengths ? ", lenfield=" + luceneDoc.get(annotatedField.tokenLengthField()) : "";
+            System.out.println(docId + "  file=" + inputFile + lengthInField);
+            for (Annotation annotation: annotatedField.annotations()) {
+                if (SKIP_ANNOTATIONS.contains(annotation.name()) || !annotation.hasForwardIndex())
+                    continue;
+                AnnotationForwardIndex afi = forwardIndex.get(annotation);
+                String length = doLengths ? " len=" + afi.docLength(docId) : "";
+                System.out.println("    " + annotation.name() + length);
+                if (doTokens) {
                     int[] doc = afi.getDocument(docId);
                     for (int tokenId: doc) {
                         String token = afi.terms().get(tokenId);
                         System.out.println("    " + token);
                     }
                 }
-            });
+            }
+        });
+    }
+
+    private static void exportTerms(AnnotatedField annotatedField, ForwardIndex forwardIndex) {
+        // Export term indexes + term strings
+        System.out.println("TERMS");
+        for (Annotation annotation: annotatedField.annotations()) {
+            if (SKIP_ANNOTATIONS.contains(annotation.name()) || !annotation.hasForwardIndex())
+                continue;
+            System.out.println("  " + annotation.name());
+            Terms terms = forwardIndex.terms(annotation);
+            for (int i = 0; i < terms.numberOfTerms(); i++) {
+                System.out.println(String.format("    %03d %s", i, terms.get(i)));
+            }
         }
     }
 
     private static void usage() {
-        System.out.println("Supply an index directory and, optionally, an annotated field name");
+        System.out.println("Supply an index directory and, optionally, an annotated field name and what to export");
     }
 }

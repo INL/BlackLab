@@ -2,7 +2,7 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +24,7 @@ class SegmentForwardIndex implements AutoCloseable {
 
     /** Information about Lucene fields that represent BlackLab annotations */
     private static class Fields {
-        Map<String, Field> fieldsByName = new HashMap<>();
+        Map<String, Field> fieldsByName = new LinkedHashMap<>();
 
         public Fields(IndexInput input) throws IOException {
             long size = input.length();
@@ -155,11 +155,10 @@ class SegmentForwardIndex implements AutoCloseable {
             int n = starts.length;
             if (n != ends.length)
                 throw new IllegalArgumentException("start and end must be of equal length");
-            // ensure both inputs available
-            tokensIndex();
-            tokens();
+
             getDocOffsetAndLength(luceneField, docId);
             docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            tokens(); // ensure available
             List<int[]> result = new ArrayList<>(n);
             for (int i = 0; i < n; i++) {
                 result.add(retrievePart(starts[i], ends[i]));
@@ -171,10 +170,9 @@ class SegmentForwardIndex implements AutoCloseable {
         @Override
         public int[] retrievePart(String luceneField, int docId, int start, int end) {
             // ensure both inputs available
-            tokensIndex();
-            tokens(); // ensure we have this input available
             getDocOffsetAndLength(luceneField, docId);
             docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            tokens(); // ensure we have this input available
             return retrievePart(start, end);
         }
 
@@ -201,11 +199,12 @@ class SegmentForwardIndex implements AutoCloseable {
 
         private void getDocOffsetAndLength(String luceneField, int docId)  {
             try {
+                tokensIndex(); // ensure input available
                 long fieldTokensIndexOffset = fields.get(luceneField).getTokensIndexOffset();
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * Long.BYTES);
                 docTokensOffset = _tokensIndex.readLong();
                 long nextDocTokensOffset = _tokensIndex.readLong(); // (always exists because we write an extra value at the end)
-                docLength = (int)(nextDocTokensOffset - docTokensOffset) / Integer.BYTES;
+                docLength = (int)((nextDocTokensOffset - docTokensOffset) / Integer.BYTES);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -217,11 +216,10 @@ class SegmentForwardIndex implements AutoCloseable {
          *
          * @param luceneField lucene field to read forward index from
          * @param docId segment-local docId of document to get length for
-         * @return
+         * @return doc length
          */
         @Override
         public long docLength(String luceneField, int docId) {
-            tokensIndex(); // ensure input available
             getDocOffsetAndLength(luceneField, docId);
             return docLength;
         }
