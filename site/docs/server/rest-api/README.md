@@ -4,6 +4,8 @@
 This is a work in progress. Many of the requests have not been documented yet. In the meantime, see the [overview](../overview.md).
 :::
 
+(used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples))
+
 ## Non-corpora endpoints
 
 These endpoints do not deal with one corpus, but with the server environment as a whole.
@@ -16,11 +18,15 @@ All URLs should start with `/blacklab-server`.
 
 ### Input format endpoints
 
-If user authentication and private user corpora are enabled, these can be used to list and manage available input formats.
+These give you information about input format configurations that BlackLab has access to: built-in formats as well as external format configuration files it found.
+
+There's also operations to add, update and delete private user formats; those are only available if user authentication and private user corpora are enabled.
 
 * [List input formats](input-formats/get.md) : `GET /input-formats`
+* [Get input format configuration](input-formats/name/get.md): `GET /input-formats/<name>`
+* [Autogenerate XSLT from input format](input-formats/name/xslt/get.md): `GET /input-formats/<name>/xslt`
 * [Add or update user input format](input-formats/post.md) : `POST /input-formats`
-* [Delete user input format](input-formats/delete.md) : `DELETE /input-formats`
+* [Delete user input format](input-formats/name/delete.md) : `DELETE /input-formats/<name>`
 
 ### Debug-related endpoints
 
