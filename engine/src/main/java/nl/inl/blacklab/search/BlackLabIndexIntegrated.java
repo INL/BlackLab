@@ -23,6 +23,8 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  */
 public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
+    /** Enable the integrated index metadata? (DEBUG) */
+    private final boolean INTEGRATE_METADATA = false;
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -33,8 +35,6 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
     }
-
-    final boolean INTEGRATE_METADATA = false;
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
             throws IndexVersionMismatch {

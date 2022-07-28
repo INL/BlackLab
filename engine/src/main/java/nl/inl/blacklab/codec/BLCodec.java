@@ -41,6 +41,8 @@ public class BLCodec extends Codec {
     /** The codec we're basing this codec on. */
     Codec delegate;
 
+    // Needed for SPI
+    @SuppressWarnings("unused")
     public BLCodec() {
         super(CODEC_NAME);
         delegate = null;
