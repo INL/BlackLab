@@ -10,12 +10,12 @@ This is a work in progress. Many of the requests have not been documented yet. I
 
 This endpoint gives information about the server environment and available corpora.
 
-* [List corpora and server information](get.md) : `GET /`
+* [List of corpora and server information](get.md) : `GET /`
 
 
-## Corpora-related endpoints
+## Corpus-related endpoints
 
-These endpoints deal with one corpus.
+These endpoints deal with a specific corpus.
 
 All URLs should start with `/blacklab-server/<corpus-name>`.
 
@@ -30,7 +30,7 @@ All URLs should start with `/blacklab-server/<corpus-name>`.
 * [Find hits](corpus/hits/get.md) : `GET /hits`
 * [Group hits](corpus/hits-grouped/get.md) : `GET /hits?group=...`
 * [Term frequencies](corpus/termfreq/get.md) : `GET /termfreq`
-* [Autocomplete for annotated and metadata fields](corpus/autocomplete/get.md) : `GET /autocomplete`
+* [Autocomplete](corpus/autocomplete/get.md) : `GET /autocomplete`
 
 ### Documents
 
@@ -50,11 +50,9 @@ If user authentication and private user corpora are enabled, these can be used t
 * [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /sharing`
 * [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /sharing`
 
-## Other non-corpora endpoints
+## Miscellaneous global endpoints
 
-These endpoints do not deal with one corpus, but with the server environment as a whole.
-
-All URLs should start with `/blacklab-server`.
+These endpoints are not tied to a specific corpus.  All URLs should start with `/blacklab-server`.
 
 ### Input format endpoints
 

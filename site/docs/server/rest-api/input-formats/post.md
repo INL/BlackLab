@@ -6,7 +6,7 @@
 
 **Auth required**: YES
 
-## Input data
+#### Parameters
 
 - `data`: a file upload of the configuration file
 

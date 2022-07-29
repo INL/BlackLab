@@ -1,4 +1,4 @@
-# List corpora and server information
+# List of corpora and server information
 
 **URL** : `/blacklab-server`
 
