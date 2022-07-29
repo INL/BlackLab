@@ -6,34 +6,12 @@ This is a work in progress. Many of the requests have not been documented yet. I
 
 (used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples))
 
-## Non-corpora endpoints
+## Root endpoint
 
-These endpoints do not deal with one corpus, but with the server environment as a whole.
-
-All URLs should start with `/blacklab-server`.
-
-### General
+This endpoint gives information about the server environment and available corpora.
 
 * [List corpora and server information](get.md) : `GET /`
 
-### Input format endpoints
-
-These give you information about input format configurations that BlackLab has access to: built-in formats as well as external format configuration files it found.
-
-There's also operations to add, update and delete private user formats; those are only available if user authentication and private user corpora are enabled.
-
-* [List input formats](input-formats/get.md) : `GET /input-formats`
-* [Get input format configuration](input-formats/name/get.md): `GET /input-formats/<name>`
-* [Autogenerate XSLT from input format](input-formats/name/xslt/get.md): `GET /input-formats/<name>/xslt`
-* [Add or update user input format](input-formats/post.md) : `POST /input-formats`
-* [Delete user input format](input-formats/name/delete.md) : `DELETE /input-formats/<name>`
-
-### Debug-related endpoints
-
-Can only be used in debug mode.
-
-* [Information about the cache](cache-info.md): `GET /cache-info`
-* [Clear the cache](cache-clear.md): `POST /cache-clear`
 
 ## Corpora-related endpoints
 
@@ -44,7 +22,7 @@ All URLs should start with `/blacklab-server/<corpus-name>`.
 ### General
 
 * [Information about the corpus](corpus/get.md) : `GET /`
-* [Information about fields in the corpus](corpus/fields/get.md) : `GET /fields`
+* [Information about a field in the corpus](corpus/fields/fieldname/get.md) : `GET /fields/<fieldname>`
 * [Corpus status](corpus/status/get.md) : `GET /status`
 
 ### Search
@@ -71,3 +49,29 @@ If user authentication and private user corpora are enabled, these can be used t
 * [Add data to user corpus](corpus/docs/post.md) : `POST /docs`
 * [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /sharing`
 * [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /sharing`
+
+## Other non-corpora endpoints
+
+These endpoints do not deal with one corpus, but with the server environment as a whole.
+
+All URLs should start with `/blacklab-server`.
+
+### Input format endpoints
+
+These give you information about input format configurations that BlackLab has access to: built-in formats as well as external format configuration files it found.
+
+There's also operations to add, update and delete private user formats; those are only available if user authentication and private user corpora are enabled.
+
+* [List input formats](input-formats/get.md) : `GET /input-formats`
+* [Get input format configuration](input-formats/name/get.md): `GET /input-formats/<name>`
+* [Autogenerate XSLT from input format](input-formats/name/xslt/get.md): `GET /input-formats/<name>/xslt`
+* [Add or update user input format](input-formats/post.md) : `POST /input-formats`
+* [Delete user input format](input-formats/name/delete.md) : `DELETE /input-formats/<name>`
+
+### Debug-related endpoints
+
+Can only be used in debug mode.
+
+* [Information about the cache](cache-info.md): `GET /cache-info`
+* [Clear the cache](cache-clear.md): `POST /cache-clear`
+
