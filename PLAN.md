@@ -27,7 +27,8 @@ Integrating with Solr will involve the following steps.
         (need access to index metadata)
   - [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
     (need access to index metadata)
-  - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions dynamically. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
+  - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
+    Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
    (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [ ] Make indexmetada.yaml part of the Lucene index.<br/>
   - [ ] Don't store in a special document, this causes too many problems.<br/>
@@ -80,6 +81,7 @@ Tasks:
 
 ## Integrate with Solr (standalone)
 
+- [ ] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
 - [ ] Study how Mtas integrates with Solr
 - [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
 - [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
