@@ -1,10 +1,12 @@
 # BlackLab Server REST API reference
 
 ::: warning
-This is a work in progress. Many of the requests have not been documented yet. In the meantime, see the [overview](../overview.md).
+This is a work in progress. Some of the endpoints have not been documented yet.
+
+Also see the [overview](../overview.md).
 :::
 
-(used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples))
+<!-- (used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples)) -->
 
 ## Root endpoint
 
@@ -19,30 +21,35 @@ These endpoints deal with a specific corpus.
 
 All URLs should start with `/blacklab-server/<corpus-name>`.
 
-### General
+### Information about the corpus
 
-* [Information about the corpus](corpus/get.md) : `GET /`
+* [General information, list of fields](corpus/get.md) : `GET /`
 * [Information about a field in the corpus](corpus/fields/fieldname/get.md) : `GET /fields/<fieldname>`
 * [Corpus status](corpus/status/get.md) : `GET /status`
 
-### Search
+### Find hits or documents
 
-* [Find hits](corpus/hits/get.md) : `GET /hits`
-* [Group hits](corpus/hits-grouped/get.md) : `GET /hits?group=...`
+Search for individual matches of a text pattern.
+
+* [Find hits; group hits](corpus/hits/get.md) : `GET /hits`
+* [Find documents; list all documents; group documents](corpus/docs/get.md) : `GET /docs`
+
+### Information about a document
+
+Search for documents matching a text pattern and/or metadata query.
+
+* [Document metadata](corpus/docs/pid/get.md) : `GET /docs/<pid>`
+* [Document contents](corpus/docs/pid/contents/get.md) : `GET /docs/<pid>/contents`
+* [Document snippet](corpus/docs/pid/snippet/get.md) : `GET /docs/<pid>/snippet`
+
+### Other search
+
 * [Term frequencies](corpus/termfreq/get.md) : `GET /termfreq`
 * [Autocomplete](corpus/autocomplete/get.md) : `GET /autocomplete`
 
-### Documents
+### Manage user corpora
 
-* [List or find documents in corpus](corpus/docs/get.md) : `GET /docs`
-* [Group documents](corpus/docs/get.md) : `GET /docs?group=...`
-* [Get document metadata](corpus/docs/pid/get.md) : `GET /docs/<pid>`
-* [Get document contents](corpus/docs/pid/contents/get.md) : `GET /docs/<pid>/contents`
-* [Get document snippet](corpus/docs/pid/snippet/get.md) : `GET /docs/<pid>/snippet`
-
-### Creating, adding data and deleting user corpora
-
-If user authentication and private user corpora are enabled, these can be used to manage the user's own corpora.
+If user authentication and private user corpora are enabled, these can be used to manage the user's own corpora: creating/deleting, adding data and sharing.
 
 * [Create user corpus](corpus/post.md) : `POST /`
 * [Delete user corpus](corpus/delete.md) : `DELETE /`
@@ -50,7 +57,7 @@ If user authentication and private user corpora are enabled, these can be used t
 * [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /sharing`
 * [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /sharing`
 
-## Miscellaneous global endpoints
+## Other global endpoints
 
 These endpoints are not tied to a specific corpus.  All URLs should start with `/blacklab-server`.
 
@@ -66,7 +73,7 @@ There's also operations to add, update and delete private user formats; those ar
 * [Add or update user input format](input-formats/post.md) : `POST /input-formats`
 * [Delete user input format](input-formats/name/delete.md) : `DELETE /input-formats/<name>`
 
-### Debug-related endpoints
+### Debug endpoints
 
 Can only be used in debug mode.
 
