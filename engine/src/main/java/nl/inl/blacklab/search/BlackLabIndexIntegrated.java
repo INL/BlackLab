@@ -22,7 +22,10 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  */
 public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
-    /** Enable the integrated index metadata? (DEBUG) */
+    /** Enable the integrated index metadata? (DEBUG)
+     *
+     * (there are still issues with e.g. metadata fields being registered in frozen metadata structure)
+     */
     private final boolean INTEGRATE_METADATA = false;
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,

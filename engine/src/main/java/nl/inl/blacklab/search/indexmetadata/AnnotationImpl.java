@@ -3,7 +3,9 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -23,7 +25,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private String name;
 
     /** Name to display in user interface (optional) */
-    String displayName;
+    private String displayName;
 
     /** Description for user interface (optional) */
     private String description = "";
@@ -40,10 +42,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean isInternal;
 
     /** Reference to match sensitivities this annotation has */
-    private final Set<AnnotationSensitivity> alternatives = new HashSet<>();
-
-    /** Match sensitivity values this annotation has */
-    private final Set<MatchSensitivity> matchSensitivities = new HashSet<>();
+    private final Map<MatchSensitivity, AnnotationSensitivity> alternatives = new LinkedHashMap<>();
 
     /** Whether or not this annotation has a forward index. */
     private boolean forwardIndex;
@@ -107,29 +106,20 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     @Override
     public Collection<AnnotationSensitivity> sensitivities() {
-        return Collections.unmodifiableSet(alternatives);
+        return Collections.unmodifiableCollection(alternatives.values());
     }
     
     @Override
     public boolean hasSensitivity(MatchSensitivity sensitivity) {
-        return matchSensitivities.contains(sensitivity);
+        return alternatives.containsKey(sensitivity);
     }
 
     @Override
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
-        if (!hasSensitivity(sensitivity))
+        AnnotationSensitivity s = alternatives.get(sensitivity);
+        if (s == null)
             throw new UnsupportedOperationException("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
-        return new AnnotationSensitivity() {
-            @Override
-            public Annotation annotation() {
-                return AnnotationImpl.this;
-            }
-
-            @Override
-            public MatchSensitivity sensitivity() {
-                return sensitivity;
-            }
-        };
+        return s;
     }
 
     /**
@@ -184,7 +174,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main annotation.
         // If not, keep searching.
-        for (AnnotationSensitivity sensitivity: alternatives) {
+        for (AnnotationSensitivity sensitivity: alternatives.values()) {
             if (LuceneUtil.hasOffsets(reader, sensitivity.luceneField())) {
                 offsetsAlternative = sensitivity;
                 return true;
@@ -200,14 +190,18 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     }
 
     void addAlternative(MatchSensitivity matchSensitivity) {
-        ensureNotFrozen();
-        alternatives.add(new AnnotationSensitivityImpl(this, matchSensitivity));
-        matchSensitivities.add(matchSensitivity);
+        AnnotationSensitivity sensitivity = new AnnotationSensitivityImpl(this, matchSensitivity);
+        if (!alternatives.containsKey(matchSensitivity)) {
+            ensureNotFrozen();
+            alternatives.put(matchSensitivity, sensitivity);
+        }
     }
 
     void setForwardIndex(boolean b) {
-        ensureNotFrozen();
-        forwardIndex = b;
+        if (forwardIndex != b) {
+            ensureNotFrozen();
+            forwardIndex = b;
+        }
     }
 
     public void setName(String annotationName) {
@@ -278,7 +272,11 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     }
     
     public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
-        this.offsetsAlternative = sensitivity(offsetsAlternative);
+        AnnotationSensitivity newValue = sensitivity(offsetsAlternative);
+        if (this.offsetsAlternative == null || !this.offsetsAlternative.equals(newValue)) {
+            ensureNotFrozen();
+            this.offsetsAlternative = newValue;
+        }
     }
     
     @Override

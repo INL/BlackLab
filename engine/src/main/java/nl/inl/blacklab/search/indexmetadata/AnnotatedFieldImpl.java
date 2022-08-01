@@ -240,9 +240,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     public synchronized AnnotationImpl getOrCreateAnnotation(String name) {
-        ensureNotFrozen();
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
+            ensureNotFrozen();
             pd = new AnnotationImpl(indexMetadata, this, name);
             putAnnotation(pd);
         }
@@ -303,10 +303,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     synchronized void setMainAnnotationName(String mainAnnotationName) {
-        ensureNotFrozen();
-        this.mainAnnotationName = mainAnnotationName;
-        if (annots.containsKey(mainAnnotationName))
-            mainAnnotation = annots.get(mainAnnotationName);
+        if (this.mainAnnotationName == null || !this.mainAnnotationName.equals(mainAnnotationName)) {
+            ensureNotFrozen();
+            this.mainAnnotationName = mainAnnotationName;
+            if (annots.containsKey(mainAnnotationName))
+                mainAnnotation = annots.get(mainAnnotationName);
+        }
     }
 
     void setNoForwardIndexAnnotations(Set<String> noForwardIndexAnnotations) {

@@ -56,20 +56,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             ConfigInputFormat config) throws IndexVersionMismatch {
         super(index);
 
-//        markerFieldType = new FieldType();
-//        markerFieldType.setIndexOptions(IndexOptions.DOCS);
-//        markerFieldType.setTokenized(false);
-//        markerFieldType.setOmitNorms(true);
-//        markerFieldType.setStored(false);
-//        markerFieldType.setStoreTermVectors(false);
-//        markerFieldType.setStoreTermVectorPositions(false);
-//        markerFieldType.setStoreTermVectorOffsets(false);
-//        markerFieldType.freeze();
-
-
-//        this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
-
         if (createNewIndex) {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
@@ -77,13 +64,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             save();
         } else {
             // Read previous index metadata from index
-            try {
-                ObjectNode yamlRoot = getMetadataFromIndex(index);
-                extractFromJson(yamlRoot, index.reader(), false);
-                detectMainAnnotation(index.reader());
-            } catch (IOException e) {
-                throw new RuntimeException("Error finding index metadata doc", e);
-            }
+            readMetadataFromIndex();
         }
     }
 
@@ -98,13 +79,21 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         }
     }
 
-    private ObjectNode getMetadataFromIndex(BlackLabIndex index) throws IOException {
+    private void readMetadataFromIndex() {
+        // Get the FieldsProducer from the first index segment
         LeafReaderContext lrc = index.reader().leaves().get(0);
         BlackLab40PostingsReader fieldsProducer = BlackLab40PostingsReader.get(lrc);
 
+        // Read the metadata from the segment info attributes and extract it
         String indexMetadataSerialized = fieldsProducer.getIndexMetadata();
         ObjectMapper mapper = Json.getYamlObjectMapper();
-        return (ObjectNode) mapper.readTree(new StringReader(indexMetadataSerialized));
+        try {
+            ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataSerialized));
+            extractFromJson(yamlRoot, index.reader(), false);
+        } catch (IOException|IndexVersionMismatch e) {
+            throw new RuntimeException(e);
+        }
+        detectMainAnnotation(index.reader());
     }
 
     @Override
@@ -143,5 +132,17 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     public void freezeBeforeIndexing() {
         if (!isFrozen())
             freeze();
+    }
+
+    @Override
+    public void addToTokenCount(long tokensProcessed) {
+        // ignore (immutable metadata)
+    }
+
+    @Override
+    public synchronized MetadataField registerMetadataField(String fieldName) {
+        MetadataField f = super.registerMetadataField(fieldName);
+        f.setKeepTrackOfValues(false); // we'll use docvalues instead
+        return f;
     }
 }

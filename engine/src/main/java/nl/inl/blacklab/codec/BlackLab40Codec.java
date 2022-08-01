@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
  *
  * This is referenced in Solr schema, e.g.:
  * <pre>
- * &lt;fieldType name="blacklab_text_example_test" class="solr.TextField" postingsFormat="BLCodec"&gt;
+ * &lt;fieldType name="blacklab_text_example_test" class="solr.TextField" postingsFormat="BlackLab40"&gt;
  * </pre>
  *
  * This class is declared in META-INF/services/org.apache.lucene.codecs.Codec

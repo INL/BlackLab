@@ -192,7 +192,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public synchronized MetadataField register(String fieldName) {
-        ensureNotFrozen();
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
         // Synchronized because we might be using the map in another indexing thread
@@ -202,6 +201,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
                 mf = metadataFieldInfos.get(fieldName);
             else {
                 // Not registered yet; do so now.
+                ensureNotFrozen();
                 FieldType fieldType = FieldType.TOKENIZED;
                 if (fieldName.equals("fromInputFile")) {
                     // internal bookkeeping field, never tokenize this
@@ -219,9 +219,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
-        ensureNotFrozen();
-        this.metadataGroups.clear();
-        this.metadataGroups.putAll(metadataGroups);
+        if (this.metadataGroups == null || !this.metadataGroups.equals(metadataGroups)) {
+            ensureNotFrozen();
+            this.metadataGroups.clear();
+            this.metadataGroups.putAll(metadataGroups);
+        }
     }
 
     /**

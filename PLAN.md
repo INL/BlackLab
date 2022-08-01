@@ -32,10 +32,10 @@ Integrating with Solr will involve the following steps.
    (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [ ] Make indexmetada.yaml part of the Lucene index.<br/>
   - [ ] Don't store in a special document, this causes too many problems.<br/>
-    Instead use the segment and field attributes. But how do we access the index metadata from within the `BLFieldsConsumer`?<br/>
-    `BLFieldProducer` is easy: we can give it a method `setIndexMetadata()` and BlackLab can fetch the `BLFieldProducer` for every leafreader and pass it a reference to the metadata.<br/>
-    A very ugly way to do this for BLFieldsConsumer would be to do it somewhere in BlackLabIndexAbstract.openIndexWriter() via a static method in BLCodec. This is obviously not threadsafe by itself, but we could probably make it work in applications that don't use Lucene for other purposes.
-   Another option for global metadata is the "commit user data"; see `IndexWriter.setLiveCommitData()`.
+    Instead use the segment and field attributes. But how do we access the index metadata from within the `BlackLab40PostingsWriter`?<br/>
+    `BlackLab40PostingsReader` is easy: we can give it a method `setIndexMetadata()` and BlackLab can fetch the `BlackLab40PostingsReader` for every leafreader and pass it a reference to the metadata.<br/>
+    For BlackLab40PostingsWriter, we use the Codec instance to pass
+    IndexWriter.
   - [ ] Probably take the opportunity to refactor and simplify related code as much as possible. E.g. use Jackson, get rid of old settings, don't try to autodetect stuff from the index, etc.
   - [ ] Don't store values+freqs in metadata if possible, iterate over DocValues to determine these instead.
 - [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)<br>How do we add the content to the index? Could we create a custom field type for this or something (or otherwise register the field to be a content store field, maybe via a field attribute..?), which we store in such a way that it allows us random access..? Or do we simply obtain a reference to the FieldsConsumer and call a separate method to add the content to the store?

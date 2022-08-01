@@ -28,6 +28,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     /** Did we encounter a value that was too long to store and warn the user about it? */
     private boolean warnedAboutValueLength = false;
 
+    private boolean keepTrackOfValues = true;
+
     public static void setMaxMetadataValuesToStore(int n) {
         maxMetadataValuesToStore = n;
     }
@@ -100,6 +102,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     MetadataFieldImpl(String fieldName, FieldType type) {
         super(fieldName);
         this.type = type;
+    }
+
+    public void setKeepTrackOfValues(boolean keepTrackOfValues) {
+        this.keepTrackOfValues = keepTrackOfValues;
     }
 
     @Override
@@ -177,18 +183,24 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
     
     public void setAnalyzer(String analyzer) {
-        ensureNotFrozen();
-        this.analyzer = analyzer;
+        if (this.analyzer == null || !this.analyzer.equals(analyzer)) {
+            ensureNotFrozen();
+            this.analyzer = analyzer;
+        }
     }
 
     public void setUnknownValue(String unknownValue) {
-        ensureNotFrozen();
-        this.unknownValue = unknownValue;
+        if (this.unknownValue == null || !this.unknownValue.equals(unknownValue)) {
+            ensureNotFrozen();
+            this.unknownValue = unknownValue;
+        }
     }
 
     public void setUnknownCondition(UnknownCondition unknownCondition) {
-        ensureNotFrozen();
-        this.unknownCondition = unknownCondition;
+        if (this.unknownCondition == null || !this.unknownCondition.equals(unknownCondition)) {
+            ensureNotFrozen();
+            this.unknownCondition = unknownCondition;
+        }
     }
 
     public void setValues(JsonNode values) {
@@ -233,6 +245,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * @param value field value
      */
     public synchronized void addValue(String value) {
+        if (!keepTrackOfValues)
+            return;
         ensureNotFrozen();
         // If we've seen a value, assume we'll get to see all values;
         // when it turns out there's too many or they're too long,

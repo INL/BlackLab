@@ -838,13 +838,13 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      */
     @Override
     public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
-        ensureNotFrozen();
-
         String fieldName = fieldWriter.name();
         AnnotatedFieldImpl cf;
         if (annotatedFields.exists(fieldName)) {
             cf = annotatedFields.get(fieldName);
         } else {
+            ensureNotFrozen();
+
             // Not registered yet; do so now. Note that we only add the main annotation,
             // not the other annotations, but that's okay; they're not needed at index
             // time and will be detected at search time.
@@ -872,7 +872,6 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     @Override
     public synchronized MetadataField registerMetadataField(String fieldName) {
-        ensureNotFrozen();
         return metadataFields.register(fieldName);
     }
 
