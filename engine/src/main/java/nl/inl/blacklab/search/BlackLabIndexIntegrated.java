@@ -61,7 +61,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
-        config.setCodec(new BlackLab40Codec()); // our own custom codec (extended from Lucene)
+        config.setCodec(new BlackLab40Codec(this)); // our own custom codec (extended from Lucene)
         config.setUseCompoundFile(false); // @@@ TEST
     }
 

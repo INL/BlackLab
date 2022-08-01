@@ -108,7 +108,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     @Override
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
         LeafReaderContext lrc = getLeafReader(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc, luceneField).forwardIndex();
+        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
         List<int[]> segmentResults = fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
         return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
     }
@@ -116,7 +116,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     @Override
     public int docLength(int docId) {
         LeafReaderContext lrc = getLeafReader(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc, luceneField).forwardIndex();
+        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
         return (int)fi.docLength(luceneField, docId - lrc.docBase);
     }
 

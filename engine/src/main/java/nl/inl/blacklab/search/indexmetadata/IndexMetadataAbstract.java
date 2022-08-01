@@ -202,7 +202,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      *
      * @return json structure
      */
-    protected ObjectNode encodeToJson() {
+    public ObjectNode encodeToJson() {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
         jsonRoot.put("displayName", displayName);

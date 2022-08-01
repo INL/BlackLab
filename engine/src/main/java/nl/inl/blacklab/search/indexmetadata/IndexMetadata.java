@@ -4,7 +4,7 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
 public interface IndexMetadata extends Freezable<IndexMetadata> {
-	
+
 	AnnotatedFields annotatedFields();
 	
 	default AnnotatedField mainAnnotatedField() {

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
@@ -55,13 +56,17 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * but can be used to read information related to any field from the segment.
      *
      * @param lrc leafreader to get the BLFieldsProducer for
-     * @param luceneField name of any Lucene field in the index
      * @return BLFieldsProducer for this leafreader
      */
-    public static BlackLab40PostingsReader get(LeafReaderContext lrc, String luceneField) {
+    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
         try {
-            BLTerms terms = (BLTerms)(lrc.reader().terms(luceneField));
-            return terms.getFieldsProducer();
+            // Do we need to loop here..?
+            for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
+                BLTerms terms = (BLTerms)(lrc.reader().terms(fieldInfo.name));
+                if (terms != null)
+                    return terms.getFieldsProducer();
+            }
+            return null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -79,17 +84,23 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
+    private final SegmentReadState state;
+
     public BlackLab40PostingsReader(SegmentReadState state)
             throws IOException {
-        //state.segmentInfo.getAttribute("blabla");
-        //state.fieldInfos.fieldInfo("bla").getAttribute("blabla");
+
+        this.state = state;
 
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this, state);
 
-        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(this.delegatePostingsFormatName);
-        this.delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegatePostingsFormatName);
+        delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+    }
+
+    public String getIndexMetadata() {
+        return state.segmentInfo.getAttribute("indexmetadata");
     }
 
     @Override

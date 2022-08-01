@@ -5,27 +5,21 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.document.StoredField;
-import org.apache.lucene.index.IndexOptions;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.Json;
-import nl.inl.util.LuceneUtil;
 
 public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
@@ -38,28 +32,42 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
     /** For writing indexmetadata to disk for debugging */
-    private final File debugFile;
+    private File debugFile = null;
 
-    private final BlackLabIndexWriter indexWriter;
+//    private final BlackLabIndexWriter indexWriter;
 
-    private final FieldType markerFieldType;
+//    private final FieldType markerFieldType;
+
+    public IndexMetadataIntegrated(BlackLabIndex index, String yaml) {
+        super(index);
+
+        try {
+            ObjectMapper mapper = Json.getYamlObjectMapper();
+            extractFromJson((ObjectNode)mapper.readTree(yaml), index.reader(), false);
+            detectMainAnnotation(index.reader());
+        } catch (IndexVersionMismatch e) {
+            throw new RuntimeException(e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) throws IndexVersionMismatch {
         super(index);
 
-        markerFieldType = new FieldType();
-        markerFieldType.setIndexOptions(IndexOptions.DOCS);
-        markerFieldType.setTokenized(false);
-        markerFieldType.setOmitNorms(true);
-        markerFieldType.setStored(false);
-        markerFieldType.setStoreTermVectors(false);
-        markerFieldType.setStoreTermVectorPositions(false);
-        markerFieldType.setStoreTermVectorOffsets(false);
-        markerFieldType.freeze();
+//        markerFieldType = new FieldType();
+//        markerFieldType.setIndexOptions(IndexOptions.DOCS);
+//        markerFieldType.setTokenized(false);
+//        markerFieldType.setOmitNorms(true);
+//        markerFieldType.setStored(false);
+//        markerFieldType.setStoreTermVectors(false);
+//        markerFieldType.setStoreTermVectorPositions(false);
+//        markerFieldType.setStoreTermVectorOffsets(false);
+//        markerFieldType.freeze();
 
 
-        this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
+//        this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
 
         if (createNewIndex) {
@@ -79,41 +87,55 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         }
     }
 
-    private ObjectNode getMetadataFromIndex(BlackLabIndex index) throws IOException {
-        IndexSearcher searcher = new IndexSearcher(index.reader());
-        final List<Integer> docIds = new ArrayList<>();
-        searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
-        if (docIds.isEmpty())
-            throw new RuntimeException("No index metadata found!");
-        if (docIds.size() > 1)
-            throw new RuntimeException("Multiple index metadata found!");
-        int docId = docIds.get(0);
-        String indexMetadataYaml = index.reader().document(docId).get(METADATA_FIELD_NAME);
+    public String serialize() {
         ObjectMapper mapper = Json.getYamlObjectMapper();
-        return (ObjectNode) mapper.readTree(new StringReader(indexMetadataYaml));
+        StringWriter sw = new StringWriter();
+        try {
+            mapper.writeValue(sw, encodeToJson());
+            return sw.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ObjectNode getMetadataFromIndex(BlackLabIndex index) throws IOException {
+        LeafReaderContext lrc = index.reader().leaves().get(0);
+        BlackLab40PostingsReader fieldsProducer = BlackLab40PostingsReader.get(lrc);
+
+        String indexMetadataSerialized = fieldsProducer.getIndexMetadata();
+        ObjectMapper mapper = Json.getYamlObjectMapper();
+        return (ObjectNode) mapper.readTree(new StringReader(indexMetadataSerialized));
     }
 
     @Override
     public void save() {
         if (!index.indexMode())
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
-        if (indexWriter == null)
-            throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
-        Document indexmetadataDoc = new Document();
-        ObjectMapper mapper = Json.getYamlObjectMapper();
-        StringWriter sw = new StringWriter();
-        try {
-            mapper.writeValue(sw, encodeToJson());
-            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
-            indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
 
-            // Update the index metadata by deleting it, then adding a new version.
-            indexWriter.updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
+        // We don't write the index metadata here, that happens for each segment in BlackLab40PostingsWriter.
+        // We do write the debug file if requested though.
+        if (debugFile != null) {
+            /*
+            if (indexWriter == null)
+                throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+            Document indexmetadataDoc = new Document();*/
+            ObjectMapper mapper = Json.getYamlObjectMapper();
+            StringWriter sw = new StringWriter();
+            try {
 
-            if (debugFile != null)
+                mapper.writeValue(sw, encodeToJson());
+                /*
+                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
+                indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+
+                // Update the index metadata by deleting it, then adding a new version.
+                indexWriter.updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
+                */
+
                 FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException("Error saving index metadata", e);
+            } catch (IOException e) {
+                throw new RuntimeException("Error saving index metadata", e);
+            }
         }
     }
 

@@ -13,6 +13,8 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 
+import nl.inl.blacklab.search.BlackLabIndexWriter;
+
 /**
  * The custom codec that BlackLab uses.
  *
@@ -36,7 +38,7 @@ import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40Codec extends Codec {
+public class BlackLab40Codec extends Codec implements BlackLabCodec {
 
     /** Our codec's name. */
     private static final String NAME = "BlackLab40";
@@ -46,10 +48,36 @@ public class BlackLab40Codec extends Codec {
 
     private PostingsFormat postingsFormat;
 
+    /** The BlackLab index writer, or null if not available (i.e. searching, not indexing) */
+    private BlackLabIndexWriter index = null;
+
     // Needed for SPI
     @SuppressWarnings("unused")
     public BlackLab40Codec() {
         super(NAME);
+    }
+
+    /**
+     * Construct a BlackLab40Codec that has access to the BlackLabIndexWriter.
+     *
+     * This is needed to access the metadata.
+     *
+     * @param index our BlackLabIndexWriter
+     */
+    public BlackLab40Codec(BlackLabIndexWriter index) {
+        super(NAME);
+        this.index = index;
+    }
+
+    /**
+     * Get the BlackLabIndexWriter.
+     *
+     * Needed to access the index metadata while indexing.
+     *
+     * @return the BlackLabIndexWriter
+     */
+    public BlackLabIndexWriter getBlackLabIndexWriter() {
+        return index;
     }
 
     private synchronized Codec delegate() {
