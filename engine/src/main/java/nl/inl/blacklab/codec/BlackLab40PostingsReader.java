@@ -40,9 +40,9 @@ import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BLFieldsProducer extends FieldsProducer {
+public class BlackLab40PostingsReader extends FieldsProducer {
 
-    protected static final Logger logger = LogManager.getLogger(BLFieldsProducer.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
     /**
      * Get the BLFieldsProducer for the given leafreader.
@@ -58,7 +58,7 @@ public class BLFieldsProducer extends FieldsProducer {
      * @param luceneField name of any Lucene field in the index
      * @return BLFieldsProducer for this leafreader
      */
-    public static BLFieldsProducer get(LeafReaderContext lrc, String luceneField) {
+    public static BlackLab40PostingsReader get(LeafReaderContext lrc, String luceneField) {
         try {
             BLTerms terms = (BLTerms)(lrc.reader().terms(luceneField));
             return terms.getFieldsProducer();
@@ -66,9 +66,6 @@ public class BLFieldsProducer extends FieldsProducer {
             throw new RuntimeException(e);
         }
     }
-
-    /** Our codec name (BLCodec) */
-    private final String postingsFormatName;
 
     /** Name of PF we delegate to (the one from Lucene) */
     private String delegatePostingsFormatName;
@@ -82,10 +79,9 @@ public class BLFieldsProducer extends FieldsProducer {
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
-    public BLFieldsProducer(SegmentReadState state, String postingsFormatName)
+    public BlackLab40PostingsReader(SegmentReadState state)
             throws IOException {
-        this.postingsFormatName = postingsFormatName;
-
+        //state.segmentInfo.getAttribute("blabla");
         //state.fieldInfos.fieldInfo("bla").getAttribute("blabla");
 
         // NOTE: opening the forward index calls openInputFile, which reads
@@ -163,8 +159,8 @@ public class BLFieldsProducer extends FieldsProducer {
         IndexInput input = state.directory.openInput(fileName, state.context);
         try {
             // Check index header
-            CodecUtil.checkIndexHeader(input, postingsFormatName, BLCodecPostingsFormat.VERSION_START,
-                    BLCodecPostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+            CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
+                    BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
             // Check delegate postings format name
             String delegatePFN = input.readString();

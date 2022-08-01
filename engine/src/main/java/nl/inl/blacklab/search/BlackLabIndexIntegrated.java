@@ -2,10 +2,9 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 
-import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.index.IndexWriterConfig;
 
-import nl.inl.blacklab.codec.BLCodec;
+import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -62,7 +61,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
-        config.setCodec(new BLCodec(BLCodec.CODEC_NAME, Codec.getDefault())); // our own custom codec (extended from Lucene)
+        config.setCodec(new BlackLab40Codec()); // our own custom codec (extended from Lucene)
         config.setUseCompoundFile(false); // @@@ TEST
     }
 

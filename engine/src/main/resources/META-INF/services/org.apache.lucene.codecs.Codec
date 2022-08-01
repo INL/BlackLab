@@ -1,3 +1,2 @@
 # List of codecs
-nl.inl.blacklab.codec.BLCodec
-#nl.inl.blacklab.codec.BLSimpleTextCodec
+nl.inl.blacklab.codec.BlackLab40Codec

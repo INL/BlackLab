@@ -15,13 +15,13 @@ import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
- * Overridden version of the Terms class so we
+ * Overridden version of the Lucene Terms class so we
  * can access our BLFieldsProducer from the rest of our code.
  * We need this to access the forward index.
  */
 public class BLTerms extends Terms implements TermsSegmentReader {
 
-    private final BLFieldsProducer fieldsProducer;
+    private final BlackLab40PostingsReader fieldsProducer;
 
     /** The Lucene terms object we're wrapping */
     private final Terms terms;
@@ -32,12 +32,12 @@ public class BLTerms extends Terms implements TermsSegmentReader {
     /** Our segment number */
     private int ord;
 
-    public BLTerms(Terms terms, BLFieldsProducer fieldsProducer) {
+    public BLTerms(Terms terms, BlackLab40PostingsReader fieldsProducer) {
         this.terms = terms;
         this.fieldsProducer = fieldsProducer;
     }
 
-    public BLFieldsProducer getFieldsProducer() {
+    public BlackLab40PostingsReader getFieldsProducer() {
         return fieldsProducer;
     }
 

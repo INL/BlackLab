@@ -42,9 +42,9 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BLFieldsConsumer extends FieldsConsumer {
+public class BlackLab40PostingsWriter extends FieldsConsumer {
 
-    protected static final Logger logger = LogManager.getLogger(BLFieldsConsumer.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsWriter.class);
 
     private final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
 
@@ -54,26 +54,21 @@ public class BLFieldsConsumer extends FieldsConsumer {
     /** Holds common information used for writing to index files. */
     private final SegmentWriteState state;
 
-    /** Codec name (always "BLCodec"?) */
-    private final String codecName;
-
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
     /**
      * Instantiates a fields consumer.
      *
-     * @param fieldsConsumer FieldsConsumer to be adapted by us
+     * @param delegateFieldsConsumer FieldsConsumer to be adapted by us
      * @param state holder class for common parameters used during write
-     * @param codecName name of our codec
      * @param delegatePostingsFormatName name of the delegate postings format
      *                                   (the one our PostingsFormat class adapts)
      */
-    public BLFieldsConsumer(FieldsConsumer fieldsConsumer, SegmentWriteState state, String codecName,
+    public BlackLab40PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
             String delegatePostingsFormatName) {
-        this.delegateFieldsConsumer = fieldsConsumer;
+        this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
-        this.codecName = codecName;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
     }
 
@@ -132,8 +127,9 @@ public class BLFieldsConsumer extends FieldsConsumer {
         // implement custom type of stored field?
 
         // Store metadata for this field
+        state.segmentInfo.putAttribute("funFactsAboutSegment", "segment info about " + state.segmentInfo.name + " here");
         for (String field: fields) {
-            state.fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "didYouKnowThat?");
+            state.fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "field info about " + field + " here");
         }
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
@@ -160,16 +156,16 @@ public class BLFieldsConsumer extends FieldsConsumer {
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
 
-        try (IndexOutput outTokensIndexFile = createOutput(BLCodecPostingsFormat.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BLCodecPostingsFormat.TOKENS_EXT)) {
+        try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
 
             // Keep track of starting offset in termindex and tokensindex files per field
             Map<String, Long> field2TermIndexOffsets = new HashMap<>();
             Map<String, Long> field2TokensIndexOffsets = new HashMap<>();
 
             // Write our postings extension information
-            try (IndexOutput termIndexFile = createOutput(BLCodecPostingsFormat.TERMINDEX_EXT);
-                    IndexOutput termsFile = createOutput(BLCodecPostingsFormat.TERMS_EXT)) {
+            try (IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
+                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT)) {
 
                 // We'll keep track of doc lengths so we can preallocate our forward index structure.
                 Map<Integer, Integer> docLengths = new HashMap<>();
@@ -183,7 +179,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 //   we use temporary files because this might take a huge amount of memory)
                 // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
                 Map<String, SortedMap<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
-                try (IndexOutput outTempTermVectorFile = createOutput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
+                try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
                     for (String field: fields) { // for each field
@@ -252,7 +248,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 // Reverse the reverse index to create forward index
                 // (this time we iterate per field and per document first, then reconstruct the document by
                 //  looking at each term's occurrences. This produces our forward index)
-                try (IndexInput inTermVectorFile = openInput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
+                try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // For each field...
                     for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -308,12 +304,12 @@ public class BLFieldsConsumer extends FieldsConsumer {
                     }
                 } finally {
                     // Clean up after ourselves
-                    deleteIndexFile(BLCodecPostingsFormat.TERMVEC_TMP_EXT);
+                    deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
                 }
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BLCodecPostingsFormat.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
                 for (String field: fields) { // for each field
                     // If it's (part of) an annotated field...
                     if (field2TermIndexOffsets.containsKey(field)) {
@@ -343,7 +339,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
 
         // Write standard header, with the codec name and version, segment info.
         // Also write the delegate codec name (Lucene's default codec).
-        CodecUtil.writeIndexHeader(output, codecName, BLCodecPostingsFormat.VERSION_CURRENT,
+        CodecUtil.writeIndexHeader(output, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_CURRENT,
                 state.segmentInfo.getId(), state.segmentSuffix);
         output.writeString(delegatePostingsFormatName);
 
@@ -356,8 +352,8 @@ public class BLFieldsConsumer extends FieldsConsumer {
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).
-        CodecUtil.checkIndexHeader(input, codecName, BLCodecPostingsFormat.VERSION_START,
-                BLCodecPostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+        CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
+                BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
         String delegatePFN = input.readString();
         if (!delegatePostingsFormatName.equals(delegatePFN))
             throw new IOException("Segment file " + fileName +
