@@ -131,7 +131,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      */
     private String documentFormat;
 
-    private long tokenCount = 0;
+    protected long tokenCount = 0;
 
     /** Our metadata fields */
     protected final MetadataFieldsImpl metadataFields = new MetadataFieldsImpl();

@@ -16,8 +16,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.util.Json;
 
 public class IndexMetadataIntegrated extends IndexMetadataAbstract {
@@ -46,11 +48,21 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         } else {
             // Read previous index metadata from index
             readMetadataFromIndex();
+            calculateTokenCount(annotatedFields().main());
         }
 
         // For integrated index, because metadata wasn't allowed to change during indexing,
         // return a default field config if you try to get a missing field.
         metadataFields.setThrowOnMissingField(false);
+    }
+
+    private void calculateTokenCount(AnnotatedField field) {
+        Annotation annot = field.mainAnnotation();
+        AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+        tokenCount = 0;
+        index.forEachDocument( (__, docId) -> {
+            tokenCount += afi.docLength(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        });
     }
 
     public String serialize() {
@@ -125,7 +137,9 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     public void addToTokenCount(long tokensProcessed) {
         // We don't keep the token count in the metadata in the integrated
         // index format because it cannot change during indexing.
-        // TODO Instead we will calculate the tokencount from the documents when necessary.
+        // However, we do want to keep track of it while creating or appending.
+        // We just don't check that the metadata isn't frozen (we don't care what value gets written there)
+        tokenCount += tokensProcessed;
     }
 
     @Override
