@@ -26,7 +26,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      *
      * (there are still issues with e.g. metadata fields being registered in frozen metadata structure)
      */
-    private final boolean INTEGRATE_METADATA = true;
+    private final boolean INTEGRATE_METADATA = false;
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {

@@ -44,7 +44,8 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
             extractFromJson(rootNode, index.reader(), false);
-            save();
+            if (index.indexMode())
+                save(); // save debug file if any
         } else {
             // Read previous index metadata from index
             readMetadataFromIndex();

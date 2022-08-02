@@ -31,6 +31,8 @@ Integrating with Solr will involve the following steps.
     Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
    (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [x] Make indexmetada.yaml part of the Lucene index.<br/>
+  - [ ] Fix errors with integrated metadata and BLS indexing (documentFormat not found when running integration tests)
+  - [ ] Add more unit/integrations tests for index metadata (tokenCount, metadata field values, etc.).
   - [ ] Don't store values+freqs in metadata, iterate over DocValues to determine these instead.
   - [ ] Calculate tokenCount and docCount when needed instead of storing in the metadata.
   - [ ] Probably take the opportunity to refactor and simplify related code as much as possible. E.g. use Jackson, get rid of old settings, don't try to autodetect stuff from the index, etc.
