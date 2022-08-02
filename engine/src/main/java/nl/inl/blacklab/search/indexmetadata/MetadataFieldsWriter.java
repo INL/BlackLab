@@ -13,8 +13,6 @@ public interface MetadataFieldsWriter extends MetadataFields {
     
     void setSpecialField(String specialFieldType, String fieldName);
 
-    void ensureFieldExists(String name);
-
     void put(String fieldName, MetadataFieldImpl fieldDesc);
 
     void setDefaultAnalyzerName(String name);

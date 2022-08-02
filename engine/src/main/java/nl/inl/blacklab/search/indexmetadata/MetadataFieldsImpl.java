@@ -7,12 +7,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * The metadata fields in an index.
  */
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
+
+    private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
 
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
@@ -49,8 +55,23 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /** Is the object frozen, not allowing any modifications? */
     private boolean frozen = false;
 
+    /** If we try to get() a missing field, should we throw or return a default config?
+     *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
+     */
+    private boolean throwOnMissingField = true;
+
+    /** If throwOnMissingField is false, the implicit field configs are stored here.
+     *  This map may be modified even if this instance is frozen.
+     *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
+     */
+    private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
+
     MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
+    }
+
+    public void setThrowOnMissingField(boolean throwOnMissingField) {
+        this.throwOnMissingField = throwOnMissingField;
     }
 
     @Override
@@ -86,9 +107,28 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         synchronized (metadataFieldInfos) {
             d = metadataFieldInfos.get(fieldName);
         }
-        if (d == null)
-            throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+        if (d == null) {
+            if (!throwOnMissingField) {
+                // Don't throw an exception like we used to do; instead return a default tokenized field.
+                // This allows us to handle the situation where not all metadata fields were registered
+                // before indexing, and unregistered tokenized metadata fields were added during indexing.
+                // (metadata can't change while indexing for integrated index)
+                return registerImplicit(fieldName);
+            } else {
+                // Old behaviour: just throw an exception
+                throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+            }
+        }
         return d;
+    }
+
+    private MetadataField registerImplicit(String fieldName) {
+        return implicitFields.computeIfAbsent(fieldName,
+                __ -> {
+                    logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
+                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
+                }
+        );
     }
 
     @Override
@@ -200,6 +240,14 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             if (metadataFieldInfos.containsKey(fieldName))
                 mf = metadataFieldInfos.get(fieldName);
             else {
+                if (isFrozen() && !throwOnMissingField) {
+                    // Metadata is frozen. Instead of really registering metadata
+                    // field, we'll register an "implicit field". This is a metadata
+                    // field whose configuration should match the default.
+                    // With throwOnMissingField set to false, get() will also return a
+                    // default config for missing fields.
+                    return registerImplicit(fieldName);
+                }
                 // Not registered yet; do so now.
                 ensureNotFrozen();
                 FieldType fieldType = FieldType.TOKENIZED;
@@ -223,22 +271,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             ensureNotFrozen();
             this.metadataGroups.clear();
             this.metadataGroups.putAll(metadataGroups);
-        }
-    }
-
-    /**
-     * Check if field exists, or create a default (tokenized) field for it if not.
-     *
-     * @param name field name
-     */
-    @Override
-    public void ensureFieldExists(String name) {
-        if (!exists(name)) {
-            ensureNotFrozen();
-            MetadataFieldImpl mf = new MetadataFieldImpl(name, FieldType.TOKENIZED);
-            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-            mf.setUnknownValue(defaultUnknownValue);
-            metadataFieldInfos.put(name, mf);
         }
     }
 

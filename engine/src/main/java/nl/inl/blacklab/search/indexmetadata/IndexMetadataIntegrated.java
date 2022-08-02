@@ -11,7 +11,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.TermQuery;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -34,24 +33,6 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     /** For writing indexmetadata to disk for debugging */
     private File debugFile = null;
 
-//    private final BlackLabIndexWriter indexWriter;
-
-//    private final FieldType markerFieldType;
-
-    public IndexMetadataIntegrated(BlackLabIndex index, String yaml) {
-        super(index);
-
-        try {
-            ObjectMapper mapper = Json.getYamlObjectMapper();
-            extractFromJson((ObjectNode)mapper.readTree(yaml), index.reader(), false);
-            detectMainAnnotation(index.reader());
-        } catch (IndexVersionMismatch e) {
-            throw new RuntimeException(e);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) throws IndexVersionMismatch {
         super(index);
@@ -66,6 +47,10 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             // Read previous index metadata from index
             readMetadataFromIndex();
         }
+
+        // For integrated index, because metadata wasn't allowed to change during indexing,
+        // return a default field config if you try to get a missing field.
+        metadataFields.setThrowOnMissingField(false);
     }
 
     public String serialize() {

@@ -141,7 +141,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     private long tokenCount = 0;
 
     /** Our metadata fields */
-    private final MetadataFieldsImpl metadataFields = new MetadataFieldsImpl();
+    protected final MetadataFieldsImpl metadataFields = new MetadataFieldsImpl();
 
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
@@ -578,7 +578,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 for (String f: fields) {
-                    metadataFields().ensureFieldExists(f);
+                    // Ensure field exists
+                    metadataFields().register(f);
                 }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
                 MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
