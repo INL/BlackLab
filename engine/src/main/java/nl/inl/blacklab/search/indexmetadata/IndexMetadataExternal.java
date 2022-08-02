@@ -196,4 +196,9 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
          */
         return "3.1";
     }
+
+    @Override
+    protected MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
+        return new MetadataFieldValuesInMetadataFile.Factory();
+    }
 }

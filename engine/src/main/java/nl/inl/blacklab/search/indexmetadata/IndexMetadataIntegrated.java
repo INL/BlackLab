@@ -40,7 +40,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         super(index);
 
         this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
-        if (createNewIndex) {
+        if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
             extractFromJson(rootNode, index.reader(), false);
@@ -87,7 +87,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         try {
             ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataSerialized));
             extractFromJson(yamlRoot, index.reader(), false);
-        } catch (IOException|IndexVersionMismatch e) {
+        } catch (IOException | IndexVersionMismatch e) {
             throw new RuntimeException(e);
         }
         detectMainAnnotation(index.reader());
@@ -147,7 +147,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         MetadataField f = super.registerMetadataField(fieldName);
         // We don't keep track of metadata field values in the integrated
         // index format because it cannot change during indexing.
-        // TODO Instead we will use DocValues to get the field values when necessary.
+        // Instead we will use DocValues to get the field values when necessary.
         f.setKeepTrackOfValues(false);
         return f;
     }
@@ -169,8 +169,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     public boolean isNewIndex() {
         // NOTE: we used to also check tokenCount == 0, but that's always true for
         //  integrated index (because indexmetadata cannot change during indexing).
-        //  TODO: maybe we need to actually check if there's any documents with this field?
-        return annotatedFields.main() == null;
+        return annotatedFields.main() == null || index.reader().leaves().isEmpty();
     }
 
     @Override
@@ -184,5 +183,10 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
          *      accurate version info now and determines what class is used to read it)
          */
         return "4";
+    }
+
+    @Override
+    protected MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
+        return new MetadataFieldValuesFromIndex.Factory(index);
     }
 }

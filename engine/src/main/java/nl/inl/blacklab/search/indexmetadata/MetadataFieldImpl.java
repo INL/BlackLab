@@ -21,12 +21,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     
     private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
-    private static final int MAX_VALUE_STORE_LENGTH = 256;
-
     private static int maxMetadataValuesToStore = 50;
-
-    /** Did we encounter a value that was too long to store and warn the user about it? */
-    private boolean warnedAboutValueLength = false;
 
     private boolean keepTrackOfValues = true;
 
@@ -59,12 +54,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     private UnknownCondition unknownCondition = UnknownCondition.NEVER;
 
-    /**
-     * The values this field can have. Note that this may not be the complete list;
-     * check valueListComplete.
-     */
-    private final Map<String, Integer> values = new HashMap<>();
-
     /** Gives the display value corresponding to a value, if any. */
     private final Map<String, String> displayValues = new HashMap<>();
 
@@ -72,9 +61,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private final List<String> displayOrder = new ArrayList<>();
 
     /**
-     * Whether or not all values are stored here.
+     * Values for this field and their frequencies.
      */
-    private ValueListComplete valueListComplete = ValueListComplete.UNKNOWN;
+    private MetadataFieldValues values;
 
     /**
      * The field group this field belongs to. Can be used by a generic search
@@ -99,9 +88,14 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     private DocValuesType docValuesType;
 
-    MetadataFieldImpl(String fieldName, FieldType type) {
+    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
+        this(fieldName, type, factory.create(fieldName, type));
+    }
+
+    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues values) {
         super(fieldName);
         this.type = type;
+        this.values = values;
     }
 
     public void setKeepTrackOfValues(boolean keepTrackOfValues) {
@@ -135,12 +129,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
 
     @Override
     public Map<String, Integer> valueDistribution() {
-        return Collections.unmodifiableMap(values);
+        return values.distribution();
     }
 
     @Override
     public ValueListComplete isValueListComplete() {
-        return valueListComplete;
+        return values.isComplete();
     }
 
     @Override
@@ -204,14 +198,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
 
     public void setValues(JsonNode values) {
-        ensureNotFrozen();
-        this.values.clear();
-        Iterator<Entry<String, JsonNode>> it = values.fields();
-        while (it.hasNext()) {
-            Entry<String, JsonNode> entry = it.next();
-            String value = entry.getKey();
-            int count = entry.getValue().asInt();
-            this.values.put(value, count);
+        if (this.values.shouldAddValuesWhileIndexing()) {
+            ensureNotFrozen();
+            this.values.setValues(values);
         }
     }
 
@@ -234,8 +223,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
 
     public void setValueListComplete(boolean valueListComplete) {
-        ensureNotFrozen();
-        this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
+        if (this.values.shouldAddValuesWhileIndexing()) {
+            ensureNotFrozen();
+            this.values.setComplete(valueListComplete ? ValueListComplete.YES : ValueListComplete.NO);
+        }
     }
 
     /**
@@ -248,34 +239,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         if (!keepTrackOfValues)
             return;
         ensureNotFrozen();
-        // If we've seen a value, assume we'll get to see all values;
-        // when it turns out there's too many or they're too long,
-        // we'll change the value to NO.
-        if (valueListComplete == ValueListComplete.UNKNOWN)
-            valueListComplete = ValueListComplete.YES;
-    
-        if (value.length() > MAX_VALUE_STORE_LENGTH) {
-            // Value too long to store.
-            valueListComplete = ValueListComplete.NO;
-            if (!warnedAboutValueLength) {
-                warnedAboutValueLength = true;
-                logger.warn("Metadata field " + name() + " includes a value too long to store in indexmetadata.yaml (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false. The value will still be indexed/stored in Lucene as normal. This warning only appears once.");
-            }
-            return;
-        }
-        if (values.containsKey(value)) {
-            // Seen this value before; increment frequency
-            values.put(value, values.get(value) + 1);
-        } else {
-            // New value; add it
-            if (values.size() >= maxMetadataValuesToStore) {
-                // We can't store thousands of unique values;
-                // Stop storing now and indicate that there's more.
-                valueListComplete = ValueListComplete.NO;
-                return;
-            }
-            values.put(value, 1);
-        }
+        values.addValue(value);
     }
 
     /**
@@ -286,24 +250,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     public synchronized void removeValue(String value) {
         ensureNotFrozen();
-        
-        // If we've seen a value, assume we'll get to see all values;
-        // when it turns out there's too many or they're too long,
-        // we'll change the value to NO.
-        if (valueListComplete == ValueListComplete.UNKNOWN)
-            valueListComplete = ValueListComplete.YES;
-    
-        if (values.containsKey(value)) {
-            // Seen this value before; decrement frequency
-            int n = values.get(value) - 1;
-            if (n > 0)
-                values.put(value, n);
-            else
-                values.remove(value);
-        } else {
-            // That's weird; maybe it was a really long value, or there
-            // were too many values to store. Just accept it and move on.
-        }
+        values.removeValue(value);
     }
 
     /**
@@ -312,8 +259,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     public void resetForIndexing() {
         ensureNotFrozen();
-        this.values.clear();
-        valueListComplete = ValueListComplete.UNKNOWN;
+        values.reset();
     }
 
     public void setGroup(String group) {

@@ -28,6 +28,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /** All non-annotated fields in our index (metadata fields) and their types. */
     private final Map<String, MetadataFieldImpl> metadataFieldInfos;
 
+    /** What MetadataFieldValues implementation to use (store in indexmetadata or get from index) */
+    private final MetadataFieldValues.Factory metadataFieldValuesFactory;
+
     /**
      * When a metadata field value is considered "unknown"
      * (never|missing|empty|missing_or_empty) [never]
@@ -66,7 +69,8 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      */
     private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
 
-    MetadataFieldsImpl() {
+    MetadataFieldsImpl(MetadataFieldValues.Factory metadataFieldValuesFactory) {
+        this.metadataFieldValuesFactory = metadataFieldValuesFactory;
         metadataFieldInfos = new TreeMap<>();
     }
 
@@ -126,7 +130,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         return implicitFields.computeIfAbsent(fieldName,
                 __ -> {
                     logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
-                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED);
+                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
                 }
         );
     }
@@ -256,7 +260,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
                     // (probably better to register this field properly, but this works for now)
                     fieldType = FieldType.UNTOKENIZED;
                 }
-                mf = new MetadataFieldImpl(fieldName, fieldType);
+                mf = new MetadataFieldImpl(fieldName, fieldType, metadataFieldValuesFactory);
                 mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
                 mf.setUnknownValue(defaultUnknownValue);
                 metadataFieldInfos.put(fieldName, mf);

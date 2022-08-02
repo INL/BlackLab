@@ -134,7 +134,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     protected long tokenCount = 0;
 
     /** Our metadata fields */
-    protected final MetadataFieldsImpl metadataFields = new MetadataFieldsImpl();
+    protected final MetadataFieldsImpl metadataFields;
 
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
@@ -144,6 +144,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
+        metadataFields = new MetadataFieldsImpl(getMetadataFieldValuesFactory());
     }
 
     // Methods that read data
@@ -591,7 +592,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig,
                         KEYS_META_FIELD_CONFIG);
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
-                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType);
+                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, getMetadataFieldValuesFactory());
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
@@ -731,7 +732,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     if (!metadataFields.exists(name)) {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
-                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type);
+                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, getMetadataFieldValuesFactory());
                         metadataFieldDesc
                                 .setUnknownCondition(
                                         UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
@@ -800,6 +801,17 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             metadataFields.resetForIndexing();
         }
     }
+
+    /**
+     * Return a factory that creates a MetadataFieldValues object.
+     *
+     * Will either create such an object that uses the indexmetadata file
+     * to manage metadata field values, or one that determines the values
+     * from the Lucene index directly, using DocValues.
+     *
+     * @return factory
+     */
+    protected abstract MetadataFieldValues.Factory getMetadataFieldValuesFactory();
 
     protected abstract String getLatestIndexFormat();
 
