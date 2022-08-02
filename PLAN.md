@@ -32,6 +32,8 @@ Integrating with Solr will involve the following steps.
    (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [x] Make indexmetada.yaml part of the Lucene index.<br/>
   - [ ] Fix errors with integrated metadata and BLS indexing (documentFormat not found when running integration tests)
+  - [ ] Skip deleted documents when iterating over DocValues.
+  - [ ] documentCount uses numDocs() which includes deleted documents.
   - [ ] Add more unit/integrations tests for index metadata (tokenCount, metadata field values, etc.).
   - [ ] Don't store values+freqs in metadata, iterate over DocValues to determine these instead.
   - [ ] Calculate tokenCount and docCount when needed instead of storing in the metadata.
