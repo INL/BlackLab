@@ -71,8 +71,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     if (formatIdentifier != null && formatIdentifier.length() > 0)
                         ds.entry("documentFormat", formatIdentifier);
                     ds.entry("timeModified", indexMetadata.timeModified());
-                    if (indexMetadata.tokenCount() > 0)
-                        ds.entry("tokenCount", indexMetadata.tokenCount());
+                    ds.entry("tokenCount", indexMetadata.tokenCount());
 
                     ds.endMap();
                     ds.endAttrEntry();

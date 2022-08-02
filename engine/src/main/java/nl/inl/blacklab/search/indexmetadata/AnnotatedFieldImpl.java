@@ -271,7 +271,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         
         if (annots.isEmpty())
             return; // dummy field for storing linked documents; has no annotations
-    
+
         AnnotationImpl firstAnnotation = null;
         for (AnnotationImpl pr : annots.values()) {
             if (firstAnnotation == null)

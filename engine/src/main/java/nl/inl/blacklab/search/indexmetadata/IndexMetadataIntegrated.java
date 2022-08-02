@@ -115,19 +115,60 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
     @Override
     public void freezeBeforeIndexing() {
+        // Contrary to the "classic" index format, with this one the metadata
+        // cannot change while indexing. So freeze it now to enforce that.
         if (!isFrozen())
             freeze();
     }
 
     @Override
     public void addToTokenCount(long tokensProcessed) {
-        // ignore (immutable metadata)
+        // We don't keep the token count in the metadata in the integrated
+        // index format because it cannot change during indexing.
+        // TODO Instead we will calculate the tokencount from the documents when necessary.
     }
 
     @Override
     public synchronized MetadataField registerMetadataField(String fieldName) {
         MetadataField f = super.registerMetadataField(fieldName);
-        f.setKeepTrackOfValues(false); // we'll use docvalues instead
+        // We don't keep track of metadata field values in the integrated
+        // index format because it cannot change during indexing.
+        // TODO Instead we will use DocValues to get the field values when necessary.
+        f.setKeepTrackOfValues(false);
         return f;
+    }
+
+    protected boolean shouldDetectMainAnnotation() {
+        // We don't know the tokenCount here (always 0 for integrated), so always try to detect.
+        // (does this work for empty indexes..?)
+        return true;
+    }
+
+    /**
+     * Is this a new, empty index?
+     *
+     * An empty index is one that doesn't have a main contents field yet.
+     *
+     * @return true if it is, false if not.
+     */
+    @Override
+    public boolean isNewIndex() {
+        // NOTE: we used to also check tokenCount == 0, but that's always true for
+        //  integrated index (because indexmetadata cannot change during indexing).
+        //  TODO: maybe we need to actually check if there's any documents with this field?
+        return annotatedFields.main() == null;
+    }
+
+    @Override
+    protected String getLatestIndexFormat() {
+        /**
+         * The latest index format. Written to the index metadata file.
+         *
+         * - 3: first version to include index metadata file
+         * - 3.1: tag length in payload
+         * - 4: integrated index format (final value for indexFormat; Lucene codec name+version contains
+         *      accurate version info now and determines what class is used to read it)
+         */
+        return "4";
     }
 }

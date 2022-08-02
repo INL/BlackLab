@@ -54,13 +54,6 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataAbstract.class);
 
-    /**
-     * The latest index format. Written to the index metadata file.
-     *
-     * 3: first version to include index metadata file 3.1: tag length in payload
-     */
-    private static final String LATEST_INDEX_FORMAT = "3.1";
-
     /** What keys may occur at top level? */
     private static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
             "displayName", "description", "contentViewable", "textDirection",
@@ -800,13 +793,15 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             // Reset version info
             blackLabBuildTime = BlackLab.buildTime();
             blackLabVersion = BlackLab.version();
-            indexFormat = LATEST_INDEX_FORMAT;
+            indexFormat = getLatestIndexFormat();
             timeModified = timeCreated = TimeUtil.timestamp();
 
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
         }
     }
+
+    protected abstract String getLatestIndexFormat();
 
     private synchronized AnnotatedFieldImpl getOrCreateAnnotatedField(String name) {
         ensureNotFrozen();
@@ -959,13 +954,13 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         }
     }
 
-    protected static void addVersionInfo(ObjectNode jsonRoot) {
+    protected void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", BlackLab.buildTime());
         versionInfo.put("blackLabVersion", BlackLab.version());
         versionInfo.put("timeCreated", TimeUtil.timestamp());
         versionInfo.put("timeModified", TimeUtil.timestamp());
-        versionInfo.put("indexFormat", LATEST_INDEX_FORMAT);
+        versionInfo.put("indexFormat", getLatestIndexFormat());
         versionInfo.put("alwaysAddClosingToken", true); // always true, but BL check for it, so required
         versionInfo.put("tagLengthInPayload", true); // always true, but BL check for it, so required
     }
@@ -1135,9 +1130,15 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         for (AnnotatedField d: annotatedFields()) {
             if (mainContentsField == null || d.name().equals("contents"))
                 mainContentsField = (AnnotatedFieldImpl) d;
-            if (tokenCount() > 0) // no use trying this on an empty index
+
+            if (shouldDetectMainAnnotation())
                 ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
         }
         annotatedFields.setMainContentsField(mainContentsField);
+    }
+
+    protected boolean shouldDetectMainAnnotation() {
+        // Only detect if index is not empty
+        return tokenCount() > 0;
     }
 }
