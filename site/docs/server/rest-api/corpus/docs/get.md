@@ -1,16 +1,14 @@
-# Find hits
+# Find documents
 
-Find occurrences of a text pattern in the corpus, optionally filtered on document metadata fields.
+Find documents in which a text pattern occurs and/or matching a metadata filter query. Each document result will include some snippets of matches.
 
-This resource can also group hits (returning a list of groups), or show the contents of one of the resulting groups.
+This resource can also group documents (returning a list of groups), or show the contents of one of the resulting groups.
 
-This is generally the most-used endpoint for BlackLab Server, and includes the most features.  For a more gentle introduction, see the [overview](/server/overview.md).
-
-**URL** : `/blacklab-server/<corpus-name>/hits`
+**URL** : `/blacklab-server/<corpus-name>/docs`
 
 **Method** : `GET`
 
-All parameters except `patt` are optional.
+All parameters are optional. If no parameters are supplied, the default is to return all documents (with a maximum number of document per page).
 
 #### Basic parameters
 
@@ -26,38 +24,26 @@ Use these to find text patterns in the corpus and control which results are retu
 
 #### Parameters for sampling
 
-Take a random sampling of hits. Note that this has to retrieve all hits (or at least as many hits as the `maxretrieve` setting allows), then perform the sampling, so it may take a while.
+Take a random sampling of results. Note that this has to retrieve all results (or at least as many as the `maxretrieve` setting allows), then perform the sampling, so it may take a while.
 
 | Parameter    | Description                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sample`     | Percentage of hits to select. Chooses a random sample of all the hits found.                                                                                                                                                                                                                                                                                                                                                                           |
-| `samplenum`  | Exact number of hits to select. Chooses a random sample of all the hits found.                                                                                                                                                                                                                                                                                                                                                                         |
+| `sample`     | Percentage of results to select. Chooses a random sample of all the results found.                                                                                                                                                                                                                                                                                                                                                                     |
+| `samplenum`  | Exact number of results to select. Chooses a random sample of all the results found.                                                                                                                                                                                                                                                                                                                                                                   |
 | `sampleseed` | Signed long seed number for sampling. If given, uses this value to seed the random number generator, ensuring identical sampling results next time. Please note that, without sorting, hit order is undefined (if the same data is re-indexed, hits may be produced in a different order). So if you want true reproducability, you should always sort hits that you want to sample, ideally with multiple sort criteria so the sort is fully defined. |
 
 
 
 #### Parameters for sorting and grouping hits and faceting documents
 
-Hits can be grouped by various criteria (see below). Faceting can be performed on the matching documents.
+Results can be grouped by various criteria (see below). Faceting can be performed on the matching documents.
 
-| Parameter                          | Description                                                                                                                                                                                                                                               |
-|------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `sort`                             | One or more sort criteria, for example: `hit:word:s` to sort by matched words, case-sensitively. Detailed explanation below.                                                                                                                              |
-| `group`                            | One or more grouping criteria, for example: `wordleft:lemma:i` to group on the lemma before the matched words, case-insensitively. Detailed explanation below.                                                                                            |
-| `includegroupcontents`             | Whether to include the hits with each group.<br/>**NOTE:** only works for `/hits` requests for now. Default: `false`                                                                                                                                      |
-| `viewgroup`                        | Identity of one of the groups to view (`identity` values are returned with the grouping results).<br/>**NOTE:** may not return all hits in the group because there is a limit to how many are stored. Use `hitfiltercrit`/`hitfilterval` to get all hits. |
-| `hitfiltercrit` and `hitfilterval` | Filter hits by a criterium and value. See below.                                                                                                                                                                                        |
-| `facets`                           | Document faceting criteria, comma-separated. For example: `field:author` to facet matched documents by author. Detailed explanation below.                                                                                                                |
-
-::: details <b>The <code>hitfiltercrit</code> / <code>hitfilterval</code> parameters explained</b>
-These parameters can be used to view all hits in a "group", and even perform another grouping on the results. For example: `wordright:pos:i` to filter hits by the `pos` value directly following the hit, case-insensitively. Detailed explanation below. Also needs `hitfilterval` (the value to keep when filtering) to work.
-
-This is useful if you want to view hits in a group, and then be able to group on those hits again. These two parameters essentially do something similar to the `viewgroup` parameter: that parameter also allows you to view the hits in a group, but won't allow you to group that subset of hits again. By specifying multiple criteria and values to `hitfiltercrit`/`hitfilterval`, you can keep diving deeper into your result set.
-
-Note that this may be slow at present because it finds all hits, then filters them by this criterium.
-
-(TECHNICAL NOTE: performance could be improved by internally extending the specified `patt` with the `hitfiltercrit`/`hitfilterval` so we only find the matches we're interested in, but this requires lookahead/lookbehind to be implemented).
-:::
+| Parameter                          | Description                                                                                                                                                                                              |
+|------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `sort`                             | One or more sort criteria, for example: `field:title` to sort by the `title` metadata field, case-sensitively. Detailed explanation below.                                                               |
+| `group`                            | One or more grouping criteria, for example: `field:author` to group by author, case-sensitively. Detailed explanation below.                                                                             |
+| `viewgroup`                        | Identity of one of the groups to view (`identity` values are returned with the grouping results).<br/>**NOTE:** may not return all results in the group because there is a limit to how many are stored. |
+| `facets`                           | Document faceting criteria, comma-separated. For example: `field:author` to facet matched documents by author. Detailed explanation below.                                                               |
 
 ::: warning PLEASE NOTE
 `sort`, `group` and `hitfiltercrit`/`hitfilterval` all require all results to be retrieved (or at least as much as allowed by the `maxretrieve` value), so they may take a lot of time and memory.
@@ -67,7 +53,7 @@ Criteria for sorting, grouping and faceting are explained in "Criteria for sorti
 
 #### Criteria for sorting, grouping and faceting
 
-The `sort`, `group`, `hitfiltercrit` and `facets` parameters receive one or more criteria (comma-separated) that indicate what to sort, group, filter or facet on.
+The `sort`, `group` and `facets` parameters receive one or more criteria (comma-separated) that indicate what to sort, group, filter or facet on.
 
 These are the basic criteria:
 
@@ -75,32 +61,10 @@ These are the basic criteria:
 |----------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | <code>field:_name_</code>  | Metadata field. Example: `field:author`                                                                                                                              |
 | <code>decade:_name_</code> | Sort/group by the decade of the year given in specified metadata field (rounds the value of the field down to the nearest multiple of 10, so `1976` becomes `1970`). |
+| `numhits`                  | (for sorting per-document results) Sort by the number of hits in the document.                                                                                       |
 | `identity`                 | (for sorting results of a grouping request) Sort by group identity.                                                                                                  |
 | `size`                     | (for sorting results of a grouping request) Sort by group size, descending by default.                                                                               |
 
-In addition to the basic criteria, it is also possible to sort/group on context words, such as the words matched by your query, or the words before or after the matched words:
-
-| Criterium                                    | Meaning                                                                                                                                                                                                                                                                                                                 |
-|----------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| <code>hit:_annot_:_c_</code>                 | Sort/group/facet on matched text. If `annot` is omitted, the default annotation (usually `word`) is used. `c` can specify case-sensitivity: either `s` (sensitive) or `i` (insensitive). `annot` and `c` can also be added to `left`, `right`, `wordleft` and `wordright`. Examples: `hit`, `hit:lemma`, `hit:lemma:s`. |
-| <code>left:_annot_:_c_</code>                | Left context words (number of words determined by `wordsaroundhit`). Use this for sorting, not for grouping/faceting (use `wordleft` instead, which look at a single word). Examples: `left`, `left:pos`, `left:pos:s`                                                                                                  |
-| <code>right:_annot_:_c_</code>               | Right context words (number of words determined by `wordsaroundhit`). Use this for sorting, not for grouping/faceting (use `wordright` instead, which look at a single word). Examples: `right`, `right:pos`, `right:pos:s`                                                                                             |
-| <code>wordleft:_annot_:_c_</code>            | Single word to the left of the matched text. Best used for grouping. Examples: `wordleft`, `wordleft:pos`, `wordleft:pos:s`                                                                                                                                                                                             |
-| <code>wordright:_annot_:_c_</code>           | Single word to the right of the matched text. Best used for grouping. Examples: `wordright`, `wordright:pos`, `wordright:pos:s`                                                                                                                                                                                         |
-| <code>context:_annot_:_c_:_spec_</code>      | More generic context words expression, giving the user more control at the cost of a bit of speed. Example: `context:word:s:H1-2` (first two matched words). See below for a complete specification.                                                                                                                    |
-| <code>capture:_groupname_:_annot_:_c_</code> | (PLANNED FEATURE) Group by a named capture group mentioned in your text pattern.                                                                                                                                                                                                                                        |
-::: details <b>The <code>context</code> criterium explained</b>
-Criteria like `context:word:s:H1-2` ("the first two matched words") allow fine control over what to group or sort on.
-
-Like with criteria such as `left`, `right` or `hit`, you can vary the annotation to group or sort on (e.g. `word`/`lemma`/`pos`, or whatever annotations your data set has). You may specify whether to sort/group case- and accent-sensitively (`s`) or insensitively (`i`).
-
-The final parameter to a `context` criterium is the "specification". This consists of one or more parts separated by a semicolon. Each part consists of an "anchor" (starting point) and number(s) to indicate a stretch of words. The anchor can be `H` (hit text), `E` (hit text, but counted from the end of the hit backwards), `L` (words to the left of the hit) or `R` (words to the right of the hit). The number or numbers after the anchor specify what words you want from this part. A single number indicates a single word; `1` is the first word, `2` the second word, etc. So `E2` means "the second-to-last word of the hit". Two numbers separated by a dash indicate a stretch of words. So `H1-2` means "the first two words of the hit", and `E2-1` means "the second-to-last word followed by the last word". A single number followed by a dash means "as much as possible from this part, starting from this word". So `H2-` means "the entire hit text except the first word".
-
-A few more examples:
-- `context:word:s:H1;E1`: the first and last matched word)
-- `context:word:s:R2-3`: second and third word to the right of the match)
-- `context:word:s:L1-`: left context, starting from first word to the left of the hit, i.e. the same as `left:word:s`. How many words of context are used depends on the `wordsaroundhit` parameter, which defaults to 5
-:::
 
 #### Miscellaneous parameters
 
@@ -137,6 +101,3 @@ TODO
 
 ```
 
-## TODO
-
-- This endpoint does a lot of different things, producing different responses. This can be confusing. We could consider moving the grouping operations to one or more new endpoints.
