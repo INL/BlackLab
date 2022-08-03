@@ -29,6 +29,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
@@ -53,7 +54,7 @@ public class TestIndex {
     public static TestIndex getWithTestDelete(IndexType indexType) {
         return new TestIndex(true, indexType);
     }
-    
+
     private static final class IndexListenerAbortOnError extends IndexListener {
         @Override
         public boolean errorOccurred(Throwable e, String path, File f) {
@@ -69,7 +70,7 @@ public class TestIndex {
      * Some test XML data to index.
      */
     final static String[] testData = {
-            "<doc><s><entity><w l='the'   p='art' >The</w> "
+            "<doc pid='0'><s><entity><w l='the'   p='art' >The</w> "
                     + "<w l='quick' p='adj'>quick</w> "
                     + "<w l='brown' p='adj'>brown</w> "
                     + "<w l='fox'   p='nou'>fox</w></entity> "
@@ -83,7 +84,7 @@ public class TestIndex {
             // This is intentional, to test this case.
             // It is not the last doc, because we need to make
             // sure that doesn't mess up docs indexed after this one.
-            "<doc> <w l='noot'>noot</w> "
+            "<doc pid='1'> <w l='noot'>noot</w> "
                     + "<w l='mier'>mier</w> "
                     + "<w l='aap'>aap</w> "
                     + "<w l='mier'>mier</w> "
@@ -97,14 +98,14 @@ public class TestIndex {
                     + "<w l='aap'>aap</w> "
                     + "</doc>",
 
-            "<doc> <s><w l='may' p='vrb'>May</w> "
+            "<doc pid='2'> <s><w l='may' p='vrb'>May</w> "
                     + "<entity><w l='the' p='art'>the</w> "
                     + "<w l='force' p='nou'>Force</w></entity> "
                     + "<w l='be' p='vrb'>be</w> "
                     + "<w l='with' p='pre'>with</w> "
                     + "<w l='you' p='pro'>you</w>" + ".</s></doc>",
 
-            "<doc> <s><w l='to' p='pre'>To</w> "
+            "<doc pid='3'> <s><w l='to' p='pre'>To</w> "
                     + "<w l='find' p='vrb'>find</w> "
                     + "<w l='or' p='con'>or</w> "
                     + "<w l='be' p='adv'>not</w> "
@@ -180,6 +181,19 @@ public class TestIndex {
         if (index != null)
             index.close();
         FileUtil.deleteTree(indexDir);
+    }
+
+    /**
+     * For a given document number (input docs), return the Lucene doc id.
+     *
+     * May not be the same because of the document containing index metadata.
+     *
+     * @param docNumber document number.
+     * @return Lucene doc id.
+     */
+    public int getDocIdForDocNumber(int docNumber) {
+        DocResults r = index.queryDocuments(new TermQuery(new Term("pid", "" + docNumber)));
+        return r.get(0).docId();
     }
 
     /**

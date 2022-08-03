@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
@@ -651,7 +652,15 @@ public class SearchParameters {
             return hitsSample().docs(-1);
         Query docFilterQuery = getFilterQuery();
         if (pattern == null && docFilterQuery == null) {
-            docFilterQuery = new MatchAllDocsQuery();
+            // Get all documents, but make sure to skip the index metadata document by only getting documents
+            // that have a value for the main annotated field.
+            // TODO: arguably this is wrong, because it is valid to add documents that do not have a value
+            //    for the main annotated field. Perhaps there are others, or perhaps you want a metadata-only
+            //    document. But no-one seems to use this, and the rest of the code may not actually handle it
+            //    either. Ideally, this would be possible though, and we would need a query that only skips the
+            //    index metadata document. If we remember its docId, that's easy.
+            // WAS: docFilterQuery = new MatchAllDocsQuery();
+            docFilterQuery = new DocValuesFieldExistsQuery(blIndex().mainAnnotatedField().tokenLengthField());
         }
         SearchEmpty search = blIndex().search(null, getUseCache());
         return search.findDocuments(docFilterQuery);

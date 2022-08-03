@@ -3,6 +3,7 @@ package nl.inl.blacklab.codec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -268,38 +269,53 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                         field2TokensIndexOffsets.put(field, outTokensIndexFile.getFilePointer());
 
                         // For each document...
-                        int expectedDocId = 0; // make sure we catch it if some doc(s) have no values for this field
-                        for (Entry<Integer, Map<Integer, Long>> docEntry: docPosOffsets.entrySet()) {
-                            Integer docId = docEntry.getKey();
+//                        int expectedDocId = 0; // make sure we catch it if some doc(s) have no values for this field
+                        for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
+                        //for (Entry<Integer, Map<Integer, Long>> docEntry: docPosOffsets.entrySet()) {
+                            //Integer docId = docEntry.getKey();
 
-                            // If there were docs that did not contain values for this field,
-                            // write empty values.
-                            // TODO: optimize this so we don't waste disk space in this case (although probably rare)
-                            while (docId > expectedDocId) {
-                                // entire document is missing values
-                                outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
-                                for (int i = 0; i < docLengths.get(docId); i++) {
-                                    outTokensFile.writeInt(NO_TERM);
-                                }
-                                expectedDocId++;
-                            }
-                            if (docId != expectedDocId)
-                                throw new RuntimeException("Expected docId " + expectedDocId + ", got " + docId);
-                            expectedDocId++;
+//                            // If there were docs that did not contain values for this field,
+//                            // write empty values.
+//                            // TODO: optimize this so we don't waste disk space in this case (although probably rare)
+//                            while (docId > expectedDocId) {
+//                                // entire document is missing values
+//                                outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
+//                                for (int i = 0; i < docLengths.getOrDefault(docId, 0); i++) {
+//                                    outTokensFile.writeInt(NO_TERM);
+//                                }
+//                                expectedDocId++;
+//                            }
+//                            if (docId != expectedDocId)
+//                                throw new RuntimeException("Expected docId " + expectedDocId + ", got " + docId);
+//                            expectedDocId++;
 
-                            Map<Integer, Long> termPosOffsets = docEntry.getValue();
-                            int docLength = docLengths.get(docId);
+                            //Map<Integer, Long> termPosOffsets = docEntry.getValue();
+                            Map<Integer, Long> termPosOffsets = docPosOffsets.get(docId);
+                            if (termPosOffsets == null)
+                                termPosOffsets = Collections.emptyMap();
+                            int docLength = docLengths.getOrDefault(docId, 0);
                             int[] tokensInDoc = new int[docLength]; // reconstruct the document here
-                            Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
-                            // For each term...
-                            for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
-                                int termId = e.getKey();
-                                inTermVectorFile.seek(e.getValue());
-                                int nOccurrences = inTermVectorFile.readInt();
-                                // For each occurrence...
-                                for (int i = 0; i < nOccurrences; i++) {
-                                    int position = inTermVectorFile.readInt();
-                                    tokensInDoc[position] = termId;
+                            // The special document holding the index metadata will be 0, as will
+                            // a document that doesn't have any value for this annotated field.
+                            if (docLength > 0) {
+                                // NOTE: sometimes docs won't have any values for a field, but we'll
+                                //   still write all NO_TERMs in this case. This is similar to sparse
+                                //   fields (e.g. the field that stores <p> <s> etc.) which also have a
+                                //   lot of NO_TERMs.
+                                // TODO: worth it to compress these cases using a sparse representation of the
+                                //       values (e.g. with run-length encoding or something)? This does make
+                                //       retrieval slower though.
+                                Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
+                                // For each term...
+                                for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
+                                    int termId = e.getKey();
+                                    inTermVectorFile.seek(e.getValue());
+                                    int nOccurrences = inTermVectorFile.readInt();
+                                    // For each occurrence...
+                                    for (int i = 0; i < nOccurrences; i++) {
+                                        int position = inTermVectorFile.readInt();
+                                        tokensInDoc[position] = termId;
+                                    }
                                 }
                             }
                             // Write the forward index for this document (reconstructed doc)
@@ -329,7 +345,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     }
                 }
             }
-
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }

@@ -532,7 +532,6 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         // Specified in index metadata file?
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
         metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
         metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
@@ -712,11 +711,15 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 annotatedFields.put(fieldName, fieldDesc);
             }
         }
+        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
         if (fis != null) {
             // Detect fields
-            for (int i = 0; i < fis.size(); i++) {
-                FieldInfo fi = fis.fieldInfo(i);
+            for (FieldInfo fi: fis) {
+            //for (int i = 0; i < fis.size(); i++) {
+                //FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
+                if (skipMetadataFieldDuringDetection(name))
+                    continue;
 
                 // Parse the name to see if it is a metadata field or part of an annotated field.
                 String[] parts;
@@ -800,6 +803,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
         }
+    }
+
+    protected boolean skipMetadataFieldDuringDetection(String name) {
+        return false;
     }
 
     /**
@@ -1082,6 +1089,9 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         annotationNode.put("uiType", annotation.getUiType());
         if (annotation.isInternal()) {
             annotationNode.put("isInternal", annotation.isInternal());
+        }
+        if (index instanceof BlackLabIndexIntegrated) {
+            annotationNode.put("hasForwardIndex", annotation.createForwardIndex());
         }
         if (annotation.getSubAnnotations().size() > 0) {
             ArrayNode subannots = annotationNode.putArray("subannotations");

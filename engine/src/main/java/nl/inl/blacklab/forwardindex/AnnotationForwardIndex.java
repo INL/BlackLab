@@ -71,6 +71,8 @@ public interface AnnotationForwardIndex {
 
     /**
      * @return the number of documents in the forward index
+     *
+     * NOTE: this INCLUDES deleted documents!
      */
     int numDocs();
 

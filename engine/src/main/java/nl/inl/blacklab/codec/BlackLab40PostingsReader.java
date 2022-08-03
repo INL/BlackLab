@@ -60,7 +60,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
         try {
-            // Do we need to loop here..?
+            // We need to find a field that is indexed and therefore has terms.
+            // TODO: determine an appropriate field once and reuse that so we don't always have to loop here.
             for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
                 BLTerms terms = (BLTerms)(lrc.reader().terms(fieldInfo.name));
                 if (terms != null)

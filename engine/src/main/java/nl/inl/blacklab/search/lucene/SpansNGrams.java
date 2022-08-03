@@ -102,7 +102,7 @@ class SpansNGrams extends BLSpans {
             boolean currentDocIsDeletedDoc;
             do {
                 currentDoc++;
-                currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
+                currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
                 throw new BlackLabRuntimeException("currentDoc > maxDoc!!");

@@ -108,12 +108,14 @@ public class TestIndexIntegrated {
 
     @Test
     public void testDocLength() {
-        for (int i = 0; i < wordFi.numDocs(); i++) {
+        for (int i = 0; i < TestIndex.DOC_LENGTHS_TOKENS.length; i++) {
             int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i] + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            Assert.assertEquals(expectedLength, wordFi.docLength(i));
+            int docId = testIndex.getDocIdForDocNumber(i);
+
+            Assert.assertEquals(expectedLength, wordFi.docLength(docId));
 
             // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
-            Assert.assertEquals(expectedLength, posFi.docLength(i));
+            Assert.assertEquals(expectedLength, posFi.docLength(docId));
         }
     }
 
@@ -126,8 +128,9 @@ public class TestIndexIntegrated {
     public void testRetrieve() {
         System.err.flush();
         String[] expected = { "The", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
+        int docId = testIndex.getDocIdForDocNumber(0);
         for (int i = 0; i < expected.length; i++) {
-            Assert.assertEquals(expected[i], wordTerms.get(getToken(wordFi, 0, i)));
+            Assert.assertEquals(expected[i], wordTerms.get(getToken(wordFi, docId, i)));
         }
     }
 

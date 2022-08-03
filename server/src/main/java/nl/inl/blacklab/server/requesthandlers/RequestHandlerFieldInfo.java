@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -208,57 +209,63 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", sensitivitySettingDesc(annotation))
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
-            AnnotationSensitivity as = annotation.sensitivity(annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE);
-            String luceneField = as.luceneField();
-            if (annotationMatches(annotation.name(), showValuesFor)) {
-                boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                ds.startEntry("values").startList();
+            if (!index.isEmpty() || !(index instanceof BlackLabIndexIntegrated)) {
+                AnnotationSensitivity as = annotation.sensitivity(
+                        annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
+                                MatchSensitivity.INSENSITIVE :
+                                MatchSensitivity.SENSITIVE);
+                String luceneField = as.luceneField();
+                if (annotationMatches(annotation.name(), showValuesFor)) {
+                    boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+                    ds.startEntry("values").startList();
 
-                // Arrays because we have to access them from the closures
-                boolean[] valueListComplete = { true };
-                
-                final Set<String> terms = new TreeSet<>();
-                if (isInlineTagAnnotation) {
-                    LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                    	if (!term.startsWith("@") && !terms.contains(term)) {
-                    		if (terms.size() >= MAX_FIELD_VALUES) {
-                    			valueListComplete[0] = false;
-                    			return false;
-                    		}
-                    		terms.add(term);
-                        }
-                    	return true;
-                    });
-                } else {
-                	LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                    	if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(term)) {
-                    		if (terms.size() >= MAX_FIELD_VALUES) {
-                    			valueListComplete[0] = false;
-                    			return false;
-                    		}
-                    		terms.add(term);
-                        }
-                    	return true;
-                    });
+                    // Arrays because we have to access them from the closures
+                    boolean[] valueListComplete = { true };
+
+                    final Set<String> terms = new TreeSet<>();
+                    if (isInlineTagAnnotation) {
+                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                            if (!term.startsWith("@") && !terms.contains(term)) {
+                                if (terms.size() >= MAX_FIELD_VALUES) {
+                                    valueListComplete[0] = false;
+                                    return false;
+                                }
+                                terms.add(term);
+                            }
+                            return true;
+                        });
+                    } else {
+                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                            if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(
+                                    term)) {
+                                if (terms.size() >= MAX_FIELD_VALUES) {
+                                    valueListComplete[0] = false;
+                                    return false;
+                                }
+                                terms.add(term);
+                            }
+                            return true;
+                        });
+                    }
+                    for (String term: terms) {
+                        ds.item("value", term);
+                    }
+
+                    ds.endList().endEntry();
+                    ds.entry("valueListComplete", valueListComplete[0]);
                 }
-                for (String term: terms) {
-                	ds.item("value", term);
+                if (!annotation.subannotationNames().isEmpty()) {
+                    // Newer index, where the subannotations are stored in their own Lucene fields.
+                    // Always show these.
+                    ds.startEntry("subannotations").startList();
+                    for (String name: annotation.subannotationNames()) {
+                        ds.item("subannotation", name);
+                    }
+                    ds.endList().endEntry();
                 }
-                
-                ds.endList().endEntry();
-                ds.entry("valueListComplete", valueListComplete[0]);
-            }
-            if (!annotation.subannotationNames().isEmpty()) {
-                // Newer index, where the subannotations are stored in their own Lucene fields.
-                // Always show these.
-                ds.startEntry("subannotations").startList();
-                for (String name: annotation.subannotationNames()) {
-                    ds.item("subannotation", name);
+                if (annotation.isSubannotation()) {
+                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
                 }
-                ds.endList().endEntry();
-            }
-            if (annotation.isSubannotation()) {
-                ds.entry("parentAnnotation", annotation.parentAnnotation().name());
             }
             ds.endMap().endAttrEntry();
         }

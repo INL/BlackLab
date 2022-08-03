@@ -5,40 +5,68 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.document.StoredField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.Json;
+import nl.inl.util.LuceneUtil;
 
 public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
+    /** How to recognize field related to index metadata */
+    private static final String INDEX_METADATA_FIELD_PREFIX = "__index_metadata";
+
     /** Name in our index for the metadata field (stored in a special document that should never be matched) */
-    private static final String METADATA_FIELD_NAME = "__index_metadata__";
+    private static final String METADATA_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "__";
 
     /** Index metadata document get a marker field so we can find it again (value same as field name) */
-    private static final String METADATA_MARKER = "__index_metadata_marker__";
+    private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
 
     private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
+    /** Have we determined our tokenCount from the index? (done lazily) */
+    private boolean tokenCountCalculated;
+
     /** For writing indexmetadata to disk for debugging */
     private File debugFile = null;
+
+    private final BlackLabIndexWriter indexWriter;
+
+    private final FieldType markerFieldType;
 
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) throws IndexVersionMismatch {
         super(index);
 
+        markerFieldType = new FieldType();
+        markerFieldType.setIndexOptions(IndexOptions.DOCS);
+        markerFieldType.setTokenized(false);
+        markerFieldType.setOmitNorms(true);
+        markerFieldType.setStored(false);
+        markerFieldType.setStoreTermVectors(false);
+        markerFieldType.setStoreTermVectorPositions(false);
+        markerFieldType.setStoreTermVectorOffsets(false);
+        markerFieldType.freeze();
+
+        this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
         if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
@@ -49,7 +77,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         } else {
             // Read previous index metadata from index
             readMetadataFromIndex();
-            calculateTokenCount(annotatedFields().main());
+            tokenCountCalculated = false;
         }
 
         // For integrated index, because metadata wasn't allowed to change during indexing,
@@ -57,13 +85,28 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         metadataFields.setThrowOnMissingField(false);
     }
 
-    private void calculateTokenCount(AnnotatedField field) {
-        Annotation annot = field.mainAnnotation();
-        AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
-        tokenCount = 0;
-        index.forEachDocument( (__, docId) -> {
-            tokenCount += afi.docLength(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-        });
+    @Override
+    public synchronized long tokenCount() {
+        if (!tokenCountCalculated) {
+            if (isNewIndex())
+                return 0;
+            tokenCountCalculated = true;
+
+            // Add up token counts for all the documents
+            AnnotatedField field = annotatedFields().main();
+            Annotation annot = field.mainAnnotation();
+            AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+            tokenCount = 0;
+            index.forEachDocument( (__, docId) -> {
+                int docLength = afi.docLength(docId);
+                if (docLength >= 1) {
+                    // Positive docLength means that this document has a value for this annotated field
+                    // (e.g. the index metadata document does not and returns 0)
+                    tokenCount += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                }
+            });
+        }
+        return tokenCount;
     }
 
     public String serialize() {
@@ -78,6 +121,25 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     }
 
     private void readMetadataFromIndex() {
+        try {
+            IndexSearcher searcher = new IndexSearcher(index.reader());
+            final List<Integer> docIds = new ArrayList<>();
+            searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
+            if (docIds.isEmpty())
+                throw new RuntimeException("No index metadata found!");
+            if (docIds.size() > 1)
+                throw new RuntimeException("Multiple index metadata found!");
+            int docId = docIds.get(0);
+            String indexMetadataYaml = index.reader().document(docId).get(METADATA_FIELD_NAME);
+            ObjectMapper mapper = Json.getYamlObjectMapper();
+            ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataYaml));
+            extractFromJson(yamlRoot, index.reader(), false);
+            detectMainAnnotation(index.reader());
+        } catch (IOException|IndexVersionMismatch e) {
+            throw new RuntimeException(e);
+        }
+
+        /*
         // Get the FieldsProducer from the first index segment
         LeafReaderContext lrc = index.reader().leaves().get(0);
         BlackLab40PostingsReader fieldsProducer = BlackLab40PostingsReader.get(lrc);
@@ -92,6 +154,8 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             throw new RuntimeException(e);
         }
         detectMainAnnotation(index.reader());
+
+         */
     }
 
     @Override
@@ -99,31 +163,41 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         if (!index.indexMode())
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
 
+
+        if (indexWriter == null)
+            throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+        Document indexmetadataDoc = new Document();
+        ObjectMapper mapper = Json.getYamlObjectMapper();
+        StringWriter sw = new StringWriter();
+        try {
+            mapper.writeValue(sw, encodeToJson());
+            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
+            indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+
+            // Update the index metadata by deleting it, then adding a new version.
+            indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
+
+            if (debugFile != null)
+                FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Error saving index metadata", e);
+        }
+
+        /*
         // We don't write the index metadata here, that happens for each segment in BlackLab40PostingsWriter.
         // We do write the debug file if requested though.
         if (debugFile != null) {
-            /*
-            if (indexWriter == null)
-                throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
-            Document indexmetadataDoc = new Document();*/
             ObjectMapper mapper = Json.getYamlObjectMapper();
             StringWriter sw = new StringWriter();
             try {
 
                 mapper.writeValue(sw, encodeToJson());
-                /*
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
-                indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
-
-                // Update the index metadata by deleting it, then adding a new version.
-                indexWriter.updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
-                */
-
                 FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new RuntimeException("Error saving index metadata", e);
             }
         }
+        */
     }
 
     @Override
@@ -168,9 +242,8 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
      */
     @Override
     public boolean isNewIndex() {
-        // NOTE: we used to also check tokenCount == 0, but that's always true for
-        //  integrated index (because indexmetadata cannot change during indexing).
-        return annotatedFields.main() == null || index.reader().leaves().isEmpty();
+        // An empty index only contains the index metadata document
+        return /*annotatedFields.main() == null ||*/ index.reader().numDocs() <= 1;
     }
 
     @Override
@@ -189,5 +262,10 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     @Override
     protected MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
         return new MetadataFieldValuesFromIndex.Factory(index);
+    }
+
+    @Override
+    protected boolean skipMetadataFieldDuringDetection(String name) {
+        return name.startsWith(INDEX_METADATA_FIELD_PREFIX); // special fields for index metadata
     }
 }

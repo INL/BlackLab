@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DocumentStoredFieldVisitor;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
@@ -97,10 +96,12 @@ public class DocFieldLengthGetter {
             if (cachedFieldLengths.advanceExact(doc)){
                 return (int)cachedFieldLengths.longValue();
             }
+            return 0;
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
 
+        /*
         if (!lookedForLengthField || lengthFieldIsStored) {
             // We either know the field length is stored in the index,
             // or we haven't checked yet and should do so now.
@@ -122,6 +123,6 @@ public class DocFieldLengthGetter {
             }
         }
 
-        throw new BlackLabRuntimeException("Could not get field length for document " + doc);
+        throw new BlackLabRuntimeException("Could not get field length for document " + doc);*/
     }
 }
