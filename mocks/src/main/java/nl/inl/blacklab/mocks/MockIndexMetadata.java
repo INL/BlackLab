@@ -122,6 +122,11 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
+    public int documentCount() {
+        return 0;
+    }
+
+    @Override
     public boolean isNewIndex() {
         return false;
     }

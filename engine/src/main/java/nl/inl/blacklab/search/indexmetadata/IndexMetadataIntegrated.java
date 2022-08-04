@@ -45,6 +45,9 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     /** Have we determined our tokenCount from the index? (done lazily) */
     private boolean tokenCountCalculated;
 
+    /** How many documents with values for the main annotated field are in our index */
+    private int documentCount;
+
     /** For writing indexmetadata to disk for debugging */
     private File debugFile = null;
 
@@ -77,6 +80,9 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         } else {
             // Read previous index metadata from index
             readMetadataFromIndex();
+
+            // we defer counting tokens because we can't always access the
+            // forward index while constructing
             tokenCountCalculated = false;
         }
 
@@ -87,26 +93,36 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
     @Override
     public synchronized long tokenCount() {
-        if (!tokenCountCalculated) {
-            if (isNewIndex())
-                return 0;
-            tokenCountCalculated = true;
-
-            // Add up token counts for all the documents
-            AnnotatedField field = annotatedFields().main();
-            Annotation annot = field.mainAnnotation();
-            AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
-            tokenCount = 0;
-            index.forEachDocument( (__, docId) -> {
-                int docLength = afi.docLength(docId);
-                if (docLength >= 1) {
-                    // Positive docLength means that this document has a value for this annotated field
-                    // (e.g. the index metadata document does not and returns 0)
-                    tokenCount += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                }
-            });
-        }
+        ensureDocsAndTokensCounted();
         return tokenCount;
+    }
+
+    @Override
+    public synchronized int documentCount() {
+        ensureDocsAndTokensCounted();
+        return documentCount;
+    }
+
+    private synchronized void ensureDocsAndTokensCounted() {
+        if (!tokenCountCalculated) {
+            tokenCountCalculated = true;
+            tokenCount = documentCount = 0;
+            if (!isNewIndex()) {
+                // Add up token counts for all the documents
+                AnnotatedField field = annotatedFields().main();
+                Annotation annot = field.mainAnnotation();
+                AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+                index.forEachDocument((__, docId) -> {
+                    int docLength = afi.docLength(docId);
+                    if (docLength >= 1) {
+                        // Positive docLength means that this document has a value for this annotated field
+                        // (e.g. the index metadata document does not and returns 0)
+                        tokenCount += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                        documentCount++;
+                    }
+                });
+            }
+        }
     }
 
     public String serialize() {
@@ -243,7 +259,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     @Override
     public boolean isNewIndex() {
         // An empty index only contains the index metadata document
-        return /*annotatedFields.main() == null ||*/ index.reader().numDocs() <= 1;
+        return index.reader().numDocs() <= 1;
     }
 
     @Override

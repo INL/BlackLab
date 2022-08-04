@@ -201,4 +201,9 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     protected MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
         return new MetadataFieldValuesInMetadataFile.Factory();
     }
+
+    @Override
+    public int documentCount() {
+        return index.reader().numDocs(); // not strictly correct; includes deleted docs
+    }
 }

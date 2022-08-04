@@ -90,10 +90,24 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	String indexBlackLabVersion();
 
 	/**
-	 * How many tokens are in the index?
+	 * How many tokens are in the main annotated field?
+     *
 	 * @return number of tokens
 	 */
 	long tokenCount();
+
+    /**
+     * How many documents are in the index?
+     *
+     * This reports the number of live documents in the index
+     * that have a value for the main annotated field.
+     *
+     * This does therefore not include the index metadata document
+     * (if using integrated index format).
+     *
+     * @return number of documents
+     */
+    int documentCount();
 
 	/**
 	 * Is this a new, empty index?
@@ -104,5 +118,5 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	 * @return true if it is, false if not.
 	 */
 	boolean isNewIndex();
-	
+
 }
