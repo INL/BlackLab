@@ -130,7 +130,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
                         .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
                         .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
             } else {
-                ds.contextList(c.annotations(), annotationsTolist, c.tokens());
+                ds.startEntry("snippet").contextList(c.annotations(), annotationsTolist, c.tokens()).endEntry();
             }
         }
         ds.endMap();
