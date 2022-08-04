@@ -13,7 +13,6 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
@@ -21,12 +20,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  * A BlackLab index with all files included in the Lucene index.
  */
 public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
-
-    /** Enable the integrated index metadata? (DEBUG)
-     *
-     * (there are still issues with e.g. metadata fields being registered in frozen metadata structure)
-     */
-    private final boolean INTEGRATE_METADATA = true;
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -40,22 +33,16 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
             throws IndexVersionMismatch {
-        return INTEGRATE_METADATA ?
-                new IndexMetadataIntegrated(this, createNewIndex, config) :
-                new IndexMetadataExternal(this, this.indexDirectory(), createNewIndex, config);
+        return new IndexMetadataIntegrated(this, createNewIndex, config);
 
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
             throws IndexVersionMismatch {
-        if (INTEGRATE_METADATA) {
-            if (indexTemplateFile != null)
-                throw new UnsupportedOperationException(
-                        "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
-            return new IndexMetadataIntegrated(this, createNewIndex, null);
-        } else {
-            return new IndexMetadataExternal(this, this.indexDirectory(), createNewIndex, indexTemplateFile);
-        }
+        if (indexTemplateFile != null)
+            throw new UnsupportedOperationException(
+                    "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
+        return new IndexMetadataIntegrated(this, createNewIndex, null);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {
