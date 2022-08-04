@@ -82,11 +82,6 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasLengthTokens() {
-        return false;
-    }
-
-    @Override
     public boolean hasXmlTags() {
         return false;
     }
@@ -99,11 +94,6 @@ public class MockAnnotatedField implements AnnotatedField {
     @Override
     public String offsetsField() {
         return null;
-    }
-
-    @Override
-    public boolean hasTokenLengthDocValues() {
-        return false;
     }
     
 }

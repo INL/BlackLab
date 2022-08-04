@@ -33,8 +33,9 @@ Integrating with Solr will involve the following steps.
 
 ### Metadata 
 
-- [ ] Store metadata in "special" document. Make sure we don't accidentally match that document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-- [ ] SearchParameters: better replacement for MatchAllQuery, see TODO comment.
+- [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
+      - [ ] Make sure we don't accidentally match that document.
+      - [ ] BlackLabIndexIntegrated.getAllRealDocsQuery(): better replacement for MatchAllQuery, see TODO comment.
 
 Where we would need to take metadata document into account:
 - whenever we iterate over all documents to do something

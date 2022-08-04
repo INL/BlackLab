@@ -94,12 +94,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     private String mainAnnotationName;
 
-    /** Is the field length in tokens stored? */
-    private boolean lengthInTokens;
-
-    /** Does the length field contain DocValues? */
-    private DocValuesType lengthInTokensDocValuesType = DocValuesType.NONE;
-
     /** Are there XML tag locations stored for this field? */
     private boolean xmlTags;
 
@@ -132,7 +126,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         };
         
         contentStore = false;
-        lengthInTokens = false;
         xmlTags = false;
         mainAnnotation = null;
         annotationsImpl = new AnnotationsImpl();
@@ -148,11 +141,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return annotationsImpl;
     }
 
-    @Override
-    public boolean hasLengthTokens() {
-        return lengthInTokens;
-    }
-
     /**
      * Returns the Lucene field that contains the length (in tokens) of this field,
      * or null if there is no such field.
@@ -161,7 +149,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     @Override
     public String tokenLengthField() {
-        return lengthInTokens ? AnnotatedFieldNameUtil.lengthTokensField(fieldName) : null;
+        return AnnotatedFieldNameUtil.lengthTokensField(fieldName);
     }
 
     @Override
@@ -212,9 +200,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
                 getOrCreateAnnotation("").setForwardIndex(true);
                 return;
             case LENGTH_TOKENS:
-                // Annotated field has length in tokens
-                lengthInTokens = true;
-                lengthInTokensDocValuesType = fi.getDocValuesType();
+                // Annotated field always has length in tokens
                 return;
             }
             throw new BlackLabRuntimeException();
@@ -338,11 +324,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     public String offsetsField() {
         AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
-    }
-
-    @Override
-    public boolean hasTokenLengthDocValues() {
-        return lengthInTokensDocValuesType != DocValuesType.NONE;
     }
 
 }

@@ -918,7 +918,6 @@ public class QueryTool {
             }
             out.println("  * " + (cf.hasContentStore() ? "Includes" : "No") + " content store");
             out.println("  * " + (cf.hasXmlTags() ? "Includes" : "No") + " XML tag index");
-            out.println("  * " + (cf.hasLengthTokens() ? "Includes" : "No") + " document length field");
         }
 
         out.println("\nMETADATA FIELDS");

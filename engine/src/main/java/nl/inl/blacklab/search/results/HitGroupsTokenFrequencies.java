@@ -18,7 +18,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
@@ -248,7 +247,7 @@ public class HitGroupsTokenFrequencies {
                 // Collect all doc ids that match the given filter (or all docs if no filter specified)
                 final List<Integer> docIds = new ArrayList<>();
                 try (BlockTimer ignored = c.child("Gathering documents")) {
-                    queryInfo.index().searcher().search(filterQuery == null ? new MatchAllDocsQuery() : filterQuery, new SimpleCollector() {
+                    index.searcher().search(filterQuery == null ? index.getAllRealDocsQuery() : filterQuery, new SimpleCollector() {
                         private int docBase;
 
                         @Override
@@ -284,7 +283,8 @@ public class HitGroupsTokenFrequencies {
 
                         docIds.parallelStream().forEach(docId -> {
                             final int docLength = (int) propTokens.get(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), docId), 0, docLength);
+                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
+                                    index, docId), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                             for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
                             final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
@@ -320,7 +320,7 @@ public class HitGroupsTokenFrequencies {
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
 
-                    final IndexReader reader = queryInfo.index().reader();
+                    final IndexReader reader = index.reader();
 
                     numberOfDocsProcessed = docIds.parallelStream().filter(docId -> {
 
@@ -359,7 +359,8 @@ public class HitGroupsTokenFrequencies {
 
                             // Step 2: retrieve the to-be-grouped metadata for this document
                             int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), docId), 0, docLength);
+                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
+                                    index, docId), 0, docLength);
                             final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
                             for (int i = 0; i < docProperties.size(); ++i)
                                 metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);

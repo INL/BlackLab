@@ -189,8 +189,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
-                .entry("hasXmlTags", fieldDesc.hasXmlTags())
-                .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
+                .entry("hasXmlTags", fieldDesc.hasXmlTags());
         ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));

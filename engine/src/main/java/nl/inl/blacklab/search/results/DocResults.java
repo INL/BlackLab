@@ -503,7 +503,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
             long numberOfTokens;
             long numberOfDocuments;
-            if (query != null && queryInfo().index().mainAnnotatedField().hasTokenLengthDocValues()) {
+            if (query != null) {
                 // Fast approach: use the DocValues for the token length field
 //                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {

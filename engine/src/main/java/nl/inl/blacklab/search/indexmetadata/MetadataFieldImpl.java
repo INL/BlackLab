@@ -84,7 +84,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private boolean frozen;
 
     /**
-     * Type of DocValues stored for this field, or NONE if no DocValues were stored.
+     * Type of DocValues stored for this field (numeric, sorted or sorted set).
+     *
+     * All metadata fielas should have doc values stored.
      */
     private DocValuesType docValuesType;
 
@@ -155,10 +157,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @Override
     public String offsetsField() {
         return name();
-    }
-
-    public DocValuesType docValuesType() {
-        return docValuesType;
     }
 
     // Methods that mutate data

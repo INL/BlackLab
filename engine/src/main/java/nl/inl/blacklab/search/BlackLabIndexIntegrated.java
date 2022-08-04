@@ -3,6 +3,8 @@ package nl.inl.blacklab.search;
 import java.io.File;
 
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.search.DocValuesFieldExistsQuery;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -59,4 +61,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorIntegrated(this, annotatedField(searchField));
     }
+
+    @Override
+    public Query getAllRealDocsQuery() {
+        // NOTE: we cannot use Lucene's MatchAllDocsQuery because we need to skip the index metadata document.
+
+        // Get all documents, but make sure to skip the index metadata document by only getting documents
+        // that have a value for the main annotated field.
+        // TODO: arguably this is wrong, because it is valid to add documents that do not have a value
+        //    for the main annotated field. Perhaps there are others, or perhaps you want a metadata-only
+        //    document. But no-one seems to use this, and the rest of the code may not actually handle it
+        //    either. Ideally, this would be possible though, and we would need a query that only skips the
+        //    index metadata document. If we remember its docId, that's easy.
+        return new DocValuesFieldExistsQuery(mainAnnotatedField().tokenLengthField());
+    }
+
 }

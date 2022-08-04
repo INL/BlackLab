@@ -21,8 +21,6 @@ public interface AnnotatedField extends Field {
 	    return annotations().get(name);
 	}
 
-	boolean hasLengthTokens();
-
 	boolean hasXmlTags();
 
 	String tokenLengthField();
@@ -35,14 +33,6 @@ public interface AnnotatedField extends Field {
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
         return offsetsSensitivity.luceneField();
     }
-
-    /**
-     * Was the field that stores the length of this field in tokens
-     * indexed with DocValues?
-     * 
-     * @return true if it was, false if not
-     */
-    boolean hasTokenLengthDocValues();
 
     default boolean isDummyFieldToStoreLinkedDocuments() {
         return annotations().isEmpty();

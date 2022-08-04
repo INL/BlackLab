@@ -456,5 +456,19 @@ public interface BlackLabIndex extends AutoCloseable {
         }
     }
 
+    /**
+     * Return a query matching all "real" documents in the index.
+     *
+     * This excludes the index metadata document or other such administrative
+     * documents if they exist.
+     *
+     * In practice, this will probably return only documents that have a value
+     * for the main annotated field; that's usually the same, but we should fix
+     * this anyway.
+     *
+     * @return query matching all documents
+     */
+    Query getAllRealDocsQuery();
+
     ForwardIndexAccessor forwardIndexAccessor(String searchField);
 }

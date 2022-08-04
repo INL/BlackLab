@@ -7,6 +7,8 @@ import java.util.Map;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
@@ -110,5 +112,10 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorExternal(this, annotatedField(searchField));
+    }
+
+    @Override
+    public Query getAllRealDocsQuery() {
+        return new MatchAllDocsQuery(); // there are no non-real documents in this index type
     }
 }
