@@ -287,8 +287,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     public void forEachDocument(DocTask task) {
         final int maxDoc = reader().maxDoc();
         final Bits liveDocs = MultiBits.getLiveDocs(reader());
+        int skipDocId = metadata().metadataDocId();
         for (int docId = 0; docId < maxDoc; docId++) {
-            if (liveDocs == null || liveDocs.get(docId)) {
+            boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+            if (isLiveDoc && docId != skipDocId) {
                 task.perform(this, docId);
             }
         }

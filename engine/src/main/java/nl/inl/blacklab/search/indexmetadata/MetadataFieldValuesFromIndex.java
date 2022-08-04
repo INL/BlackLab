@@ -89,6 +89,25 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
         }
     }
 
+    private void addValueInternal(String key) {
+        if (isComplete() == ValueListComplete.UNKNOWN)
+            valueListComplete = ValueListComplete.YES;
+
+        if (values.containsKey(key)) {
+            // Seen this value before; increment frequency
+            values.compute(key, (__, value) -> value + 1);
+        } else {
+            // New value; add it
+            if (values.size() >= MetadataFieldImpl.maxMetadataValuesToStore()) {
+                // We don't want to store thousands of unique values;
+                // Stop storing now and indicate that there's more.
+                valueListComplete = ValueListComplete.NO;
+            } else {
+                values.put(key, 1);
+            }
+        }
+    }
+
     private void getStringDocValues(LeafReader r) throws IOException {
         // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
         SortedSetDocValues sdv = r.getSortedSetDocValues(fieldName);
@@ -100,8 +119,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                 if (sdv.getValueCount() > 0) {
                     // NOTE: we only count the first value stored (for backward compatibility)
                     // TODO: pros/cons of changing this?
-                    String key = sdv.lookupOrd(0).utf8ToString();
-                    values.compute(key, (__, value) -> value == null ? 1 : value + 1);
+                    addValueInternal(sdv.lookupOrd(0).utf8ToString());
                 }
             }
         } else {
@@ -111,8 +129,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                     int docId = dv.nextDoc();
                     if (docId == DocIdSetIterator.NO_MORE_DOCS)
                         break;
-                    String key = dv.binaryValue().utf8ToString();
-                    values.compute(key, (__, value) -> value == null ? 1 : value + 1);
+                    addValueInternal(dv.binaryValue().utf8ToString());
                 }
             }
         }
@@ -126,8 +143,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                 int docId = dv.nextDoc();
                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                     break;
-                String key = Long.toString(dv.longValue());
-                values.compute(key, (__, value) -> value == null ? 1 : value + 1);
+                addValueInternal(Long.toString(dv.longValue()));
             }
         }
     }

@@ -90,11 +90,11 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
         // when it turns out there's too many or they're too long,
         // we'll change the value to NO.
         if (isComplete() == ValueListComplete.UNKNOWN)
-            setComplete(ValueListComplete.YES);
+            valueListComplete = ValueListComplete.YES;
 
         if (value.length() > MAX_VALUE_STORE_LENGTH) {
             // Value too long to store.
-            setComplete(ValueListComplete.NO);
+            valueListComplete = ValueListComplete.NO;
             if (!warnedAboutValueLength) {
                 warnedAboutValueLength = true;
                 logger.warn(
@@ -104,17 +104,15 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
             }
             return;
         }
+        // New value; add it
         if (values.containsKey(value)) {
             // Seen this value before; increment frequency
             values.put(value, values.get(value) + 1);
+        } else if (values.size() >= MetadataFieldImpl.maxMetadataValuesToStore()) {
+            // We can't store thousands of unique values;
+            // Stop storing now and indicate that there's more.
+            valueListComplete = ValueListComplete.NO;
         } else {
-            // New value; add it
-            if (values.size() >= MetadataFieldImpl.maxMetadataValuesToStore()) {
-                // We can't store thousands of unique values;
-                // Stop storing now and indicate that there's more.
-                valueListComplete = ValueListComplete.NO;
-                return;
-            }
             values.put(value, 1);
         }
     }

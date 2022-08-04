@@ -75,6 +75,16 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
         }
     }
 
+    @Override
+    protected boolean includeLegacyValues() {
+        return true;
+    }
+
+    @Override
+    protected boolean makeImplicitSettingsExplicit() {
+        return false;
+    }
+
     /**
      * Construct an IndexMetadata object, querying the index for the available
      * fields and their types.

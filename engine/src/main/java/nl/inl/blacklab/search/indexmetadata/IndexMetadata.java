@@ -119,4 +119,15 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	 */
 	boolean isNewIndex();
 
+    /**
+     * Return the id of the index metadata document.
+     *
+     * This document, if it exists, should be skipped when searching.
+     *
+     * @return special docId, or -1 if none
+     */
+    default int metadataDocId() {
+        return -1;
+    }
+
 }

@@ -55,6 +55,8 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
     private final FieldType markerFieldType;
 
+    private int metadataDocId = -1;
+
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) throws IndexVersionMismatch {
         super(index);
@@ -89,6 +91,16 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         // For integrated index, because metadata wasn't allowed to change during indexing,
         // return a default field config if you try to get a missing field.
         metadataFields.setThrowOnMissingField(false);
+    }
+
+    @Override
+    protected boolean includeLegacyValues() {
+        return false;
+    }
+
+    @Override
+    protected boolean makeImplicitSettingsExplicit() {
+        return true;
     }
 
     @Override
@@ -145,8 +157,8 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
                 throw new RuntimeException("No index metadata found!");
             if (docIds.size() > 1)
                 throw new RuntimeException("Multiple index metadata found!");
-            int docId = docIds.get(0);
-            String indexMetadataYaml = index.reader().document(docId).get(METADATA_FIELD_NAME);
+            metadataDocId = docIds.get(0);
+            String indexMetadataYaml = index.reader().document(metadataDocId).get(METADATA_FIELD_NAME);
             ObjectMapper mapper = Json.getYamlObjectMapper();
             ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataYaml));
             extractFromJson(yamlRoot, index.reader(), false);
@@ -283,5 +295,10 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     @Override
     protected boolean skipMetadataFieldDuringDetection(String name) {
         return name.startsWith(INDEX_METADATA_FIELD_PREFIX); // special fields for index metadata
+    }
+
+    @Override
+    public int metadataDocId() {
+        return metadataDocId;
     }
 }

@@ -34,24 +34,35 @@ Integrating with Solr will involve the following steps.
 ### Metadata 
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-      - [ ] Make sure we don't accidentally match that document.
-      - [ ] BlackLabIndexIntegrated.getAllRealDocsQuery(): better replacement for MatchAllQuery, see TODO comment.
+    - [ ] Skip deleted documents when iterating over DocValues.
+    - [ ] Add more unit/integrations tests for index metadata (tokenCount, metadata field values, etc.).
+    - [ ] We are free to change what and how we store the metadata.
+        - [ ] Store as JSON, not YAML (JSON is better for data interchange, YAML for readability)
+        - [ ] Probably get rid of detecting things from the index as that causes problems with an empty index, and generally seems unreliable if it relies on certain specific field name structures.
+            - [ ] main annotated field
+            - [ ] annotatedField.mainAnnotation
+            - [x] annotation.hasForwardIndex
+            - [ ] annotation.sensitivities
+            - [ ] annotation.offsetsSensitivity
+            - [ ] metadata fieldtype (numerical or not)
+        - [x] Get rid of old settings
+        - [ ] Refactor and simplify
+        - [ ] Use JAXB for the metadata (de)serialization?
+        - [ ] Isolate custom stuff that BlackLab doesn't use itself?
+        - [ ] Store .blf.yaml file in a separate field (mostly for ourselves for now)
+              (ideally with comments, so not serialized but read directly from file)
+  - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
 
-Where we would need to take metadata document into account:
-- whenever we iterate over all documents to do something
-- DocValues (but probably fine, because that doc just won't have a value for any of the fields)
-- SpansNGrams, SpansNot
+Where we take the metadata document into account:
+- whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)
+- DocValues (metadata doc just won't have a value for any of the fields)
+- SpansNGrams, SpansNot (use lengthgetter which returns 0 if annotated field is not in document)
 - HitsFromQuery[Parallel] (only if one of the Spans could potentially produce the metadata document as hit, which they shouldn't)
-- really anywhere that `liveDocs` or `MatchAllDocsQuery` is used (or SHOULD be used); maybe we can even incorporate it into a custom LiveDocsFormat.
+- anywhere where `liveDocs` is used (checked, see some the above)
+- anywhere where `MatchAllDocsQuery` is used (replaced with BlackLabIndex.getAllRealDocsQuery())
 
 ---
 
-- [ ] metadata value distribution: don't store 1M values in map. Maybe keep the same limit as before, so we don't break compatibility with the corpus-frontend which chooses UI widget based on number of values. On the other hand, why would you choose different widgets based on an arbitrary cut-off number, and not on how many values are practical to place in a dropdown list?
-- [ ] Skip deleted documents when iterating over DocValues.
-- [ ] documentCount uses numDocs() which includes deleted documents.
-- [ ] Add more unit/integrations tests for index metadata (tokenCount, metadata field values, etc.).
-- [ ] Calculate tokenCount and docCount when needed instead of storing in the metadata.
-- [ ] Probably take the opportunity to refactor and simplify related code as much as possible. E.g. use Jackson, get rid of old settings, don't try to autodetect stuff from the index, etc.
 
 ### Content store
 

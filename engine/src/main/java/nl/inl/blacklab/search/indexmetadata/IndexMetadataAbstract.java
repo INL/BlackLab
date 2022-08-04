@@ -147,6 +147,27 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         metadataFields = new MetadataFieldsImpl(getMetadataFieldValuesFactory());
     }
 
+    /**
+     * Should the index metadata include legacy settings?
+     *
+     * These are values that used to have a function, but are no longer
+     * used. They were kept around for compatibility.
+     *
+     * @return true if we need to include legacy settings
+     */
+    protected abstract boolean includeLegacyValues();
+
+    /**
+     * Do we want to make implicit settings explicit?
+     *
+     * These are settings that used to be detected from the index structure
+     * (e.g. field names found). The modern way is to explicitly include
+     * these so an empty index does not create issues, among other benefits.
+     *
+     * @return true if we should include previously implicit settings
+     */
+    protected abstract boolean makeImplicitSettingsExplicit();
+
     // Methods that read data
     // ------------------------------------------------------------------------------
 
@@ -204,20 +225,26 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         jsonRoot.put("contentViewable", contentViewable);
         jsonRoot.put("textDirection", textDirection.getCode());
         jsonRoot.put("documentFormat", documentFormat);
-        jsonRoot.put("tokenCount", tokenCount);
+        if (includeLegacyValues())
+            jsonRoot.put("tokenCount", tokenCount);
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", blackLabBuildTime);
         versionInfo.put("blackLabVersion", blackLabVersion);
         versionInfo.put("indexFormat", indexFormat);
         versionInfo.put("timeCreated", timeCreated);
         versionInfo.put("timeModified", timeModified);
-        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is
-                                                        // for XML tags after the last word)
-        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag annotation payload contains tag lengths,
-                                                     // and there is no end tag annotation
+        if (includeLegacyValues()) {
+            // Indicates that we always index words+1 tokens (last token is
+            // for XML tags after the last word)
+            versionInfo.put("alwaysAddClosingToken", true);
+            // Indicates that start tag annotation payload contains tag lengths,
+            // and there is no end tag annotation
+            versionInfo.put("tagLengthInPayload", true);
+        }
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.put("namingScheme", "DEFAULT");
+        if (includeLegacyValues())
+            fieldInfo.put("namingScheme", "DEFAULT");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
         fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
@@ -318,7 +345,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                         subannots.add(subannotName);
                     }
                 }
-                if (index instanceof BlackLabIndexIntegrated) {
+                if (makeImplicitSettingsExplicit()) {
                     // For the integrated index, we don't detect whether there's a forward
                     // index, we just store it in the metadata.
                     annot.put("hasForwardIndex", annotation.hasForwardIndex());
@@ -510,7 +537,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         contentViewable = Json.getBoolean(jsonRoot, "contentViewable", false);
         textDirection = TextDirection.fromCode(Json.getString(jsonRoot, "textDirection", "ltr"));
         documentFormat = Json.getString(jsonRoot, "documentFormat", "");
-        tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
+        if (includeLegacyValues())
+            tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
 
         ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
         warnUnknownKeys("in versionInfo", versionInfo, KEYS_VERSION_INFO);
@@ -519,14 +547,17 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         blackLabVersion = Json.getString(versionInfo, "blackLabVersion", "UNKNOWN");
         timeCreated = Json.getString(versionInfo, "timeCreated", "");
         timeModified = Json.getString(versionInfo, "timeModified", timeCreated);
-        boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
-        if (!alwaysHasClosingToken)
-            throw new IndexVersionMismatch(
-                    "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
-        boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
-        if (!tagLengthInPayload) {
-            logger.warn("Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
-            //throw new IndexVersionMismatch("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
+        if (includeLegacyValues()) {
+            boolean alwaysHasClosingToken = Json.getBoolean(versionInfo, "alwaysAddClosingToken", false);
+            if (!alwaysHasClosingToken)
+                throw new IndexVersionMismatch(
+                        "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
+            boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
+            if (!tagLengthInPayload) {
+                logger.warn(
+                        "Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
+                //throw new IndexVersionMismatch("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
+            }
         }
 
         // Specified in index metadata file?
