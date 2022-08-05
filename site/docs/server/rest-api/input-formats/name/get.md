@@ -1,5 +1,7 @@
 # Get input format configuration
 
+Get the complete format configuration file for one of the available formats. 
+
 **URL** : `/blacklab-server/input-formats/<name>`
 
 **Method** : `GET`

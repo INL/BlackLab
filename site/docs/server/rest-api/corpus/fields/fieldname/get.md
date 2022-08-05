@@ -1,4 +1,6 @@
-# Information about a field in the corpus
+# Field information
+
+Metadata about a field, including indexing settings, field values and more.
 
 **URL** : `/blacklab-server/<corpus-name>/fields/<fieldname>`
 

@@ -1,6 +1,8 @@
-# Find documents
+# Find documents / group documents
 
 Find documents in which a text pattern occurs and/or matching a metadata filter query. Each document result will include some snippets of matches.
+
+Without a `filter` query, it will list all documents in the corpus.
 
 This resource can also group documents (returning a list of groups), or show the contents of one of the resulting groups.
 

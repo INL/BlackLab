@@ -1,4 +1,4 @@
-# Find hits
+# Find hits / group hits
 
 Find occurrences of a text pattern in the corpus, optionally filtered on document metadata fields.
 

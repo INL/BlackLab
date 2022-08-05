@@ -1,4 +1,6 @@
-# Information about a corpus
+# Corpus information
+
+Return the corpus metadata, including size, document format, annotated and metadata fields, status and more.
 
 **URL** : `/blacklab-server/<corpus-name>`
 

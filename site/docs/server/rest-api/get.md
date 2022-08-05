@@ -1,4 +1,6 @@
-# List of corpora and server information
+# Corpora and server information
+
+List available corpora and general information about the server environment, such as BlackLab version and whether a user is logged-in.
 
 **URL** : `/blacklab-server`
 

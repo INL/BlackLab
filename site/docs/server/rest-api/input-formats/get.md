@@ -1,5 +1,7 @@
 # List input formats
 
+Get the list of available input formats.
+
 **URL** : `/blacklab-server/input-formats`
 
 **Method** : `GET`

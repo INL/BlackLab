@@ -1,5 +1,7 @@
 # Corpus status
 
+The current status of a corpus, plus some basic metadata. See notes below.
+
 **URL** : `/blacklab-server/<corpus-name>/status`
 
 **Method** : `GET`

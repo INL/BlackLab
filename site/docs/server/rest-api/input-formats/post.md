@@ -1,4 +1,6 @@
-# Add or update user input format
+# Add or update input format
+
+Add a user input format, or update an existing one. 
 
 **URL** : `/blacklab-server/input-formats`
 
@@ -35,6 +37,10 @@
     message: "Could not create/overwrite format. The server is not configured with support for user content."
 }
 ```
+
+## Notes
+
+This creates/updates a user input format. Use input format names start with the userid, so if your input format is named `my-format` and your userid is `me@example.com`, the input format will be named `me@examples.com:my-format`.
 
 ## TODO
 
