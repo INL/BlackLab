@@ -37,8 +37,11 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     /** Name in our index for the metadata field (stored in a special document that should never be matched) */
     private static final String METADATA_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "__";
 
-    /** Index metadata document get a marker field so we can find it again (value same as field name) */
+    /** Index metadata document gets a marker field so we can find it again (value same as field name) */
     private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
+
+    /** Contents of document format file is written to metadata document. */
+    private static final String METADATA_FIELD_DOCUMENT_FORMAT = INDEX_METADATA_FIELD_PREFIX + "_documentFormat__";
 
     private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
@@ -47,6 +50,9 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
 
     /** How many documents with values for the main annotated field are in our index */
     private int documentCount;
+
+    /** Contents of the documentFormat config file at index creation time. */
+    private String documentFormatConfigFileContents = "(not set)";
 
     /** For writing indexmetadata to disk for debugging */
     private File debugFile = null;
@@ -72,11 +78,12 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         markerFieldType.freeze();
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
-        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.json");
+        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.txt");
         if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
             extractFromJson(rootNode, index.reader(), false);
+            documentFormatConfigFileContents = config.getOriginalFileContents();
             if (index.indexMode())
                 save(); // save debug file if any
         } else {
@@ -172,23 +179,28 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     public void save() {
         if (!index.indexMode())
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
-
-
         if (indexWriter == null)
             throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+
+        // Create a metadata document with the metadata JSON, config format file,
+        // and a marker field to we can find it again
         Document indexmetadataDoc = new Document();
         ObjectMapper mapper = Json.getJsonObjectMapper();
-        StringWriter sw = new StringWriter();
+        StringWriter metadataJson = new StringWriter();
         try {
-            mapper.writeValue(sw, encodeToJson());
-            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, sw.toString()));
+            mapper.writeValue(metadataJson, encodeToJson());
+            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson.toString()));
+            indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
             indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
 
             // Update the index metadata by deleting it, then adding a new version.
             indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
-            if (debugFile != null)
-                FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
+            if (debugFile != null) {
+                String data = "# INDEX METADATA:\n\n" + metadataJson.toString() + "\n\n# CONFIG FORMAT: \n\n"
+                        + documentFormatConfigFileContents;
+                FileUtils.writeStringToFile(debugFile, data, StandardCharsets.UTF_8);
+            }
         } catch (IOException e) {
             throw new RuntimeException("Error saving index metadata", e);
         }

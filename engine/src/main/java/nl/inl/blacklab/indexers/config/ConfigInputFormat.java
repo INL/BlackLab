@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -182,6 +183,16 @@ public class ConfigInputFormat {
      */
     public ConfigInputFormat(String name) {
         this.name = name;
+    }
+
+    public String getOriginalFileContents() {
+        try {
+            if (readFromFile == null)
+                return "(configuration file not available)";
+            return FileUtils.readFileToString(readFromFile, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

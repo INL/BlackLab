@@ -35,8 +35,6 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -128,19 +126,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     public void write(Fields fields, NormsProducer norms) throws IOException {
 
         // Content store: implement custom type of stored field for
-
-        BlackLabIndexWriter indexWriter = ((BlackLabCodec)state.segmentInfo.getCodec()).getBlackLabIndexWriter();
-        if (indexWriter.metadata() instanceof IndexMetadataIntegrated) {
-            String serialized = ((IndexMetadataIntegrated)indexWriter.metadata()).serialize();
-            state.segmentInfo.putAttribute("indexmetadata", serialized);
-        }
-
-
-        // Store metadata for this field
-        state.segmentInfo.putAttribute("funFactsAboutSegment", "segment info about " + state.segmentInfo.name + " here");
-        for (String field: fields) {
-            state.fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "field info about " + field + " here");
-        }
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);

@@ -100,10 +100,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
     }
 
-    public String getIndexMetadata() {
-        return state.segmentInfo.getAttribute("indexmetadata");
-    }
-
     @Override
     public Iterator<String> iterator() {
         return delegateFieldsProducer.iterator();
