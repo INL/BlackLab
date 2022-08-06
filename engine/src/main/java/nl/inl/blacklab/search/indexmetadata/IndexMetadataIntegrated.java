@@ -72,7 +72,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         markerFieldType.freeze();
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
-        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.yaml");
+        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.json");
         if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
@@ -138,7 +138,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     }
 
     public String serialize() {
-        ObjectMapper mapper = Json.getYamlObjectMapper();
+        ObjectMapper mapper = Json.getJsonObjectMapper();
         StringWriter sw = new StringWriter();
         try {
             mapper.writeValue(sw, encodeToJson());
@@ -158,32 +158,14 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
             if (docIds.size() > 1)
                 throw new RuntimeException("Multiple index metadata found!");
             metadataDocId = docIds.get(0);
-            String indexMetadataYaml = index.reader().document(metadataDocId).get(METADATA_FIELD_NAME);
-            ObjectMapper mapper = Json.getYamlObjectMapper();
-            ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataYaml));
-            extractFromJson(yamlRoot, index.reader(), false);
+            String indexMetadataJson = index.reader().document(metadataDocId).get(METADATA_FIELD_NAME);
+            ObjectMapper mapper = Json.getJsonObjectMapper();
+            ObjectNode jsonRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataJson));
+            extractFromJson(jsonRoot, index.reader(), false);
             detectMainAnnotation(index.reader());
         } catch (IOException|IndexVersionMismatch e) {
             throw new RuntimeException(e);
         }
-
-        /*
-        // Get the FieldsProducer from the first index segment
-        LeafReaderContext lrc = index.reader().leaves().get(0);
-        BlackLab40PostingsReader fieldsProducer = BlackLab40PostingsReader.get(lrc);
-
-        // Read the metadata from the segment info attributes and extract it
-        String indexMetadataSerialized = fieldsProducer.getIndexMetadata();
-        ObjectMapper mapper = Json.getYamlObjectMapper();
-        try {
-            ObjectNode yamlRoot = (ObjectNode) mapper.readTree(new StringReader(indexMetadataSerialized));
-            extractFromJson(yamlRoot, index.reader(), false);
-        } catch (IOException | IndexVersionMismatch e) {
-            throw new RuntimeException(e);
-        }
-        detectMainAnnotation(index.reader());
-
-         */
     }
 
     @Override
@@ -195,7 +177,7 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         if (indexWriter == null)
             throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
         Document indexmetadataDoc = new Document();
-        ObjectMapper mapper = Json.getYamlObjectMapper();
+        ObjectMapper mapper = Json.getJsonObjectMapper();
         StringWriter sw = new StringWriter();
         try {
             mapper.writeValue(sw, encodeToJson());
@@ -210,22 +192,6 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         } catch (IOException e) {
             throw new RuntimeException("Error saving index metadata", e);
         }
-
-        /*
-        // We don't write the index metadata here, that happens for each segment in BlackLab40PostingsWriter.
-        // We do write the debug file if requested though.
-        if (debugFile != null) {
-            ObjectMapper mapper = Json.getYamlObjectMapper();
-            StringWriter sw = new StringWriter();
-            try {
-
-                mapper.writeValue(sw, encodeToJson());
-                FileUtils.writeStringToFile(debugFile, sw.toString(), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new RuntimeException("Error saving index metadata", e);
-            }
-        }
-        */
     }
 
     @Override
