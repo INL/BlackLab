@@ -43,7 +43,6 @@ Integrating with Solr will involve the following steps.
             - [ ] annotation.sensitivities
             - [ ] annotation.offsetsSensitivity
             - [ ] metadata fieldtype (numerical or not)
-        - [x] Get rid of old settings
         - [ ] Use JAXB for the metadata (de)serialization?
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
   - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)

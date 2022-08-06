@@ -18,6 +18,7 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
@@ -54,9 +55,6 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
     /** Contents of the documentFormat config file at index creation time. */
     private String documentFormatConfigFileContents = "(not set)";
 
-    /** For writing indexmetadata to disk for debugging */
-    private File debugFile = null;
-
     private final BlackLabIndexWriter indexWriter;
 
     private final FieldType markerFieldType;
@@ -78,12 +76,11 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         markerFieldType.freeze();
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
-        this.debugFile = new File(index.indexDirectory(), "integrated-meta-debug.txt");
         if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
             ObjectNode rootNode = config == null ? createEmptyIndexMetadata() : createIndexMetadataFromConfig(config);
             extractFromJson(rootNode, index.reader(), false);
-            documentFormatConfigFileContents = config.getOriginalFileContents();
+            documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
             if (index.indexMode())
                 save(); // save debug file if any
         } else {
@@ -185,22 +182,20 @@ public class IndexMetadataIntegrated extends IndexMetadataAbstract {
         // Create a metadata document with the metadata JSON, config format file,
         // and a marker field to we can find it again
         Document indexmetadataDoc = new Document();
-        ObjectMapper mapper = Json.getJsonObjectMapper();
-        StringWriter metadataJson = new StringWriter();
+        ObjectWriter mapper = Json.getJsonObjectMapper().writerWithDefaultPrettyPrinter();
         try {
-            mapper.writeValue(metadataJson, encodeToJson());
-            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson.toString()));
+            String metadataJson = mapper.writeValueAsString(encodeToJson());
+            indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
             indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
             indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
 
             // Update the index metadata by deleting it, then adding a new version.
             indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
-            if (debugFile != null) {
-                String data = "# INDEX METADATA:\n\n" + metadataJson.toString() + "\n\n# CONFIG FORMAT: \n\n"
-                        + documentFormatConfigFileContents;
-                FileUtils.writeStringToFile(debugFile, data, StandardCharsets.UTF_8);
-            }
+            File debugFileMetadata = new File(index.indexDirectory(), "debug-metadata.json");
+            FileUtils.writeStringToFile(debugFileMetadata, metadataJson.toString(), StandardCharsets.UTF_8);
+            File debugFileDocumentFormat = new File(index.indexDirectory(), "debug-format.blf.yaml");
+            FileUtils.writeStringToFile(debugFileDocumentFormat, documentFormatConfigFileContents, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Error saving index metadata", e);
         }
