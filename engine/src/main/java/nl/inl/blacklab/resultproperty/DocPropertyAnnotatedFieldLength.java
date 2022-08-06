@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.util.LuceneUtil;
+import nl.inl.util.DocValuesUtil;
 import nl.inl.util.NumericDocValuesCacher;
 
 /**
@@ -64,7 +64,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                     throw new UnsupportedOperationException("no DocValues available");
                 }
                 if (numericDocValues != null) {
-                    docValues.put(rc.docBase, LuceneUtil.cacher(numericDocValues));
+                    docValues.put(rc.docBase, DocValuesUtil.cacher(numericDocValues));
                 }
             }
             if (docValues.isEmpty()) {

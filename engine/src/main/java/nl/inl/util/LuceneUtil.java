@@ -4,13 +4,10 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.logging.log4j.LogManager;
@@ -20,92 +17,31 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.PostingsEnum;
-import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.search.highlight.QueryTermExtractor;
-import org.apache.lucene.search.highlight.WeightedTerm;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public final class LuceneUtil {
 
-    static final Charset LUCENE_DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final Logger logger = LogManager.getLogger(LuceneUtil.class);
 
-    private LuceneUtil() {
-    }
+    private static final Charset LUCENE_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-    /**
-     * Get all the terms in the index with low edit distance from the supplied term
-     *
-     * @param reader the index
-     * @param luceneName the field to search in
-     * @param searchTerms search terms
-     * @param maxEdits maximum edit distance (Levenshtein algorithm) for matches
-     *            (i.e. lower is more similar)
-     * @return the set of terms in the index that are close to our search term
-     * @throws BooleanQuery.TooManyClauses if the expansion resulted in too many
-     *             terms
-     */
-    public static Set<String> getMatchingTermsFromIndex(IndexReader reader, String luceneName,
-            Collection<String> searchTerms, int maxEdits) {
-        boolean doFuzzy = true;
-        if (maxEdits == 0) {
-            // Exact match; don't use fuzzy query (slow)
-            Set<String> result = new HashSet<>();
-            try {
-                for (String term : searchTerms) {
-                    if (reader.docFreq(new Term(luceneName, term)) > 0)
-                        result.add(term);
-                }
-            } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
-            }
-            return result;
-        }
-
-        BooleanQuery.Builder bb = new BooleanQuery.Builder();
-        for (String s : searchTerms) {
-            FuzzyQuery fq = new FuzzyQuery(new Term(luceneName, s), maxEdits);
-            bb.add(fq, Occur.SHOULD);
-        }
-        BooleanQuery q = bb.build();
-
-        try {
-            Query rewritten = q.rewrite(reader);
-            WeightedTerm[] wts = QueryTermExtractor.getTerms(rewritten);
-            Set<String> terms = new HashSet<>();
-            for (WeightedTerm wt : wts) {
-                if (doFuzzy || searchTerms.contains(wt.getTerm())) {
-                    terms.add(wt.getTerm());
-                }
-            }
-            return terms;
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
+    private LuceneUtil() {}
 
     /**
      * Parse a query in the Lucene query language format (QueryParser supplied with
@@ -122,25 +58,6 @@ public final class LuceneUtil {
         QueryParser qp = new QueryParser(defaultField, analyzer);
         qp.setAllowLeadingWildcard(true);
         return qp.parse(luceneQuery);
-    }
-
-    /**
-     * Get all words between the specified start and end positions from the term
-     * vector.
-     *
-     * NOTE: this may return an array of less than the size requested, if the
-     * document ends before the requested end position.
-     *
-     * @param reader the index
-     * @param doc doc id
-     * @param luceneName the index field from which to use the term vector
-     * @param start start position (first word we want to request)
-     * @param end end position (last word we want to request)
-     * @return the words found, in order
-     */
-    public static String[] getWordsFromTermVector(IndexReader reader, int doc,
-            String luceneName, int start, int end) {
-        return getWordsFromTermVector(reader, doc, luceneName, start, end, false);
     }
 
     /**
@@ -222,92 +139,6 @@ public final class LuceneUtil {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-    }
-
-    /**
-     * Add term frequencies for a single document to a frequency map.
-     *
-     * @param reader the index
-     * @param doc doc id
-     * @param luceneName the index field from which to use the term vector
-     * @param freq where to add to the token frequencies
-     */
-    public static void getFrequenciesFromTermVector(IndexReader reader, int doc,
-            String luceneName, Map<String, Integer> freq) {
-        try {
-            Terms terms = reader.getTermVector(doc, luceneName);
-            if (terms == null) {
-                throw new IllegalArgumentException("Field " + luceneName + " has no Terms");
-            }
-            TermsEnum termsEnum = terms.iterator();
-
-            // Verzamel concordantiewoorden uit term vector
-            PostingsEnum postingsEnum = null;
-            while (termsEnum.next() != null) {
-                postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.FREQS);
-                String term = termsEnum.term().utf8ToString();
-                Integer n = freq.get(term);
-                if (n == null) {
-                    n = 0;
-                }
-                while (postingsEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-                    n += termsEnum.docFreq();
-                }
-                freq.put(term, n);
-            }
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    /**
-     * Return the list of terms that occur in a field.
-     *
-     * @param index the index
-     * @param fieldName the field
-     * @return the matching terms
-     */
-    public static List<String> getFieldTerms(IndexReader index, String fieldName) {
-        return findTermsByPrefix(index, fieldName, null, true, -1);
-    }
-
-    /**
-     * Return the list of terms that occur in a field.
-     *
-     * @param index the index
-     * @param fieldName the field
-     * @param maxResults maximum number to return (or -1 for no limit)
-     * @return the matching terms
-     */
-    public static List<String> getFieldTerms(IndexReader index, String fieldName, long maxResults) {
-        return findTermsByPrefix(index, fieldName, null, true, maxResults);
-    }
-
-    /**
-     * Find terms in the index based on a prefix. Useful for autocomplete. NOTE: no
-     * limit on the number of results!
-     *
-     * @param index the index
-     * @param fieldName the field
-     * @param prefix the prefix we're looking for
-     * @param sensitive match case-sensitively or not?
-     * @return the matching terms
-     */
-    public static List<String> findTermsByPrefix(IndexReader index, String fieldName,
-            String prefix, boolean sensitive) {
-        return findTermsByPrefix(index, fieldName, prefix, sensitive, -1);
-    }
-
-    public static SortedDocValuesCacher cacher(SortedDocValues dv) {
-        return dv == null ? null : new SortedDocValuesCacher(dv);
-    }
-
-    public static SortedSetDocValuesCacher cacher(SortedSetDocValues dv) {
-        return dv == null ? null : new SortedSetDocValuesCacher(dv);
-    }
-
-    public static NumericDocValuesCacher cacher(NumericDocValues dv) {
-        return dv == null ? null : new NumericDocValuesCacher(dv);
     }
 
     /**
@@ -566,46 +397,6 @@ public final class LuceneUtil {
                 totalTerms += terms.getSumTotalTermFreq();
             }
             return totalTerms;
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
-    }
-
-    /**
-     * Enumerate all the terms in the given Lucene field, collecting all the
-     * subproperty names and values. Usually used for part of speech, where all the
-     * features are stored as separate subproperties.
-     *
-     * @param index our index
-     * @param fieldName field in the Lucene index to enumerate terms from
-     * @return subproperties and their values
-     */
-    public static Map<String, Set<String>> getOldSingleFieldSubprops(IndexReader index, String fieldName) {
-        Map<String, Set<String>> results = new TreeMap<>();
-        try {
-            for (LeafReaderContext leafReader : index.leaves()) {
-                Terms terms = leafReader.reader().terms(fieldName);
-                if (terms == null) {
-                    // if this LeafReader doesn't include this field, just skip it
-                    continue;
-                }
-                TermsEnum termsEnum = terms.iterator();
-                while (true) {
-                    BytesRef term = termsEnum.next();
-                    if (term == null)
-                        break;
-                    String termText = term.utf8ToString();
-                    if (termText.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR)) {
-                        termText = StringUtil.stripAccents(termText).toLowerCase();
-                        String[] parts = termText.split(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
-                        String subpropName = parts[1];
-                        Set<String> resultList = results.computeIfAbsent(subpropName, k -> new TreeSet<>());
-                        String subpropValue = parts[2];
-                        resultList.add(subpropValue);
-                    }
-                }
-            }
-            return results;
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }

@@ -13,9 +13,10 @@ Integrating with Solr will involve the following steps.
 - [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
-## Enable trunk-based development
+## Improve trunk-based development
 
 - [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)? No, generics not needed, see TestSearches; do the same with more classes.
+- [ ] Update integration testing to compare to known good results.
 
 ## Incorporate all information into the Lucene index
 
@@ -34,8 +35,7 @@ Integrating with Solr will involve the following steps.
 ### Metadata 
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] Skip deleted documents when iterating over DocValues.
-    - [ ] Add more unit/integrations tests for index metadata (tokenCount, metadata field values, etc.).
+    - [ ] Add unit tests for index metadata (tokenCount, metadata field values, etc.).
     - [ ] We are free to change what and how we store the metadata.
         - [ ] Store as JSON, not YAML (JSON is better for data interchange, YAML for readability)
         - [ ] Probably get rid of detecting things from the index as that causes problems with an empty index, and generally seems unreliable if it relies on certain specific field name structures.

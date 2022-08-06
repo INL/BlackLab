@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.util.DocValuesUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.NumericDocValuesCacher;
 import nl.inl.util.SortedDocValuesCacher;
@@ -82,7 +83,7 @@ public class DocPropertyStoredField extends DocProperty {
                         LeafReader r = rc.reader();
                         // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
                         NumericDocValues values = r.getNumericDocValues(fieldName);
-                        numericDocValues.put(rc.docBase, LuceneUtil.cacher(values));
+                        numericDocValues.put(rc.docBase, DocValuesUtil.cacher(values));
                     }
                 } else { // regular string doc values.
                     docValues = new TreeMap<>();
@@ -92,7 +93,7 @@ public class DocPropertyStoredField extends DocProperty {
                         SortedSetDocValues sortedSetDocValues = r.getSortedSetDocValues(fieldName);
                         SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
                         if (sortedSetDocValues != null || sortedDocValues != null) {
-                            docValues.put(rc.docBase, Pair.of(LuceneUtil.cacher(sortedDocValues), LuceneUtil.cacher(sortedSetDocValues)));
+                            docValues.put(rc.docBase, Pair.of(DocValuesUtil.cacher(sortedDocValues), DocValuesUtil.cacher(sortedSetDocValues)));
                         } else {
                             docValues.put(rc.docBase, null);
                         }

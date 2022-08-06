@@ -10,14 +10,13 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.util.Bits;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.util.DocValuesUtil;
 
 /**
  * List of values with freqencies of a metadata field.
@@ -72,24 +71,34 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
     private void determineValueDistribution(IndexReader reader) {
         try {
-            // TODO: parallellize this?
-            if (isNumeric) {
-                for (LeafReaderContext rc : reader.leaves()) {
-                    LeafReader r = rc.reader();
-                    getNumericDocValues(r);
-                }
-            } else {
-                for (LeafReaderContext rc : reader.leaves()) {
-                    LeafReader r = rc.reader();
-                    getStringDocValues(r);
-                }
+            // TODO: is this worth parallellizing?
+            for (LeafReaderContext rc : reader.leaves()) {
+                LeafReader r = rc.reader();
+                Bits liveDocs = r.getLiveDocs();
+                getDocValues(r, isNumeric, liveDocs);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void addValueInternal(String key) {
+    private void getDocValues(LeafReader r, boolean numeric, Bits liveDocs) throws IOException {
+        DocIdSetIterator dv = DocValuesUtil.docValuesIterator(r, fieldName, numeric);
+        if (dv != null) { // If null, the documents in this segment do not contain any values for this field
+            while (true) {
+                int docId = dv.nextDoc();
+                if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                    break;
+                if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
+                    String key = DocValuesUtil.getCurrentValueAsString(dv);
+                    if (key != null) // if null, there's no value for this field in this document
+                        addToValueMap(key);
+                }
+            }
+        }
+    }
+
+    private void addToValueMap(String key) {
         if (isComplete() == ValueListComplete.UNKNOWN)
             valueListComplete = ValueListComplete.YES;
 
@@ -104,46 +113,6 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
                 valueListComplete = ValueListComplete.NO;
             } else {
                 values.put(key, 1);
-            }
-        }
-    }
-
-    private void getStringDocValues(LeafReader r) throws IOException {
-        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
-        SortedSetDocValues sdv = r.getSortedSetDocValues(fieldName);
-        if (sdv != null) {
-            while (true) {
-                int docId = sdv.nextDoc();
-                if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                    break;
-                if (sdv.getValueCount() > 0) {
-                    // NOTE: we only count the first value stored (for backward compatibility)
-                    // TODO: pros/cons of changing this?
-                    addValueInternal(sdv.lookupOrd(0).utf8ToString());
-                }
-            }
-        } else {
-            SortedDocValues dv = r.getSortedDocValues(fieldName);
-            if (dv != null) {
-                while (true) {
-                    int docId = dv.nextDoc();
-                    if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                        break;
-                    addValueInternal(dv.binaryValue().utf8ToString());
-                }
-            }
-        }
-    }
-
-    private void getNumericDocValues(LeafReader r) throws IOException {
-        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
-        NumericDocValues dv = r.getNumericDocValues(fieldName);
-        if (dv != null) {
-            while (true) {
-                int docId = dv.nextDoc();
-                if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                    break;
-                addValueInternal(Long.toString(dv.longValue()));
             }
         }
     }
