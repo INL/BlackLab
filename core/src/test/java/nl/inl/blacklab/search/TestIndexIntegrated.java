@@ -1,8 +1,13 @@
 package nl.inl.blacklab.search;
 
 import java.text.Collator;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -16,7 +21,10 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.testutil.TestIndex;
 
 /**
@@ -145,5 +153,36 @@ public class TestIndexIntegrated {
     public void testNoTerm() {
         LeafReaderContext lrc = index.reader().leaves().iterator().next();
         Assert.assertEquals(-1, wordTerms.segmentIdsToGlobalIds(lrc.ord, new int[] {-1})[0]);
+    }
+
+    @Test
+    public void testMetadataCounts() {
+        int expectedTokenCount = Arrays.stream(TestIndex.DOC_LENGTHS_TOKENS).sum();
+        Assert.assertEquals(expectedTokenCount, index.metadata().tokenCount());
+        Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
+    }
+
+    @Test
+    public void testMetadataMetadataField() {
+        MetadataField field = index.metadata().metadataFields().get("pid");
+        Assert.assertEquals(FieldType.TOKENIZED, field.type());
+        Assert.assertEquals(ValueListComplete.YES, field.isValueListComplete());
+        Map<String, Integer> map = field.valueDistribution();
+        int expectedNumberOfDocuments = TestIndex.DOC_LENGTHS_TOKENS.length;
+        Assert.assertEquals(expectedNumberOfDocuments, map.size());
+        for (int i = 0; i < expectedNumberOfDocuments; i++)
+            Assert.assertEquals(1, (int)map.get(Integer.toString(i)));
+        Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
+    }
+
+    @Test
+    public void testMetadataAnnotatedField() {
+        AnnotatedField field = index.metadata().annotatedFields().get("contents");
+        Assert.assertEquals(true, field.hasXmlTags());
+        Assert.assertEquals(true, field.hasContentStore());
+        Set<String> expectedAnnotations = new HashSet<>(Arrays.asList("word", "lemma", "pos", "starttag", "punct"));
+        Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
+        Assert.assertEquals(expectedAnnotations, actualAnnotations);
+        Assert.assertEquals("word", field.mainAnnotation().name());
     }
 }

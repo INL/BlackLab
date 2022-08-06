@@ -35,7 +35,6 @@ Integrating with Solr will involve the following steps.
 ### Metadata 
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] Add unit tests for index metadata (tokenCount, metadata field values, etc.).
     - [ ] We are free to change what and how we store the metadata.
         - [ ] Probably get rid of detecting things from the index as that causes problems with an empty index, and generally seems unreliable if it relies on certain specific field name structures.
             - [ ] main annotated field
