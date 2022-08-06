@@ -1,11 +1,20 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.io.File;
+
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
 public interface IndexMetadata extends Freezable<IndexMetadata> {
 
-	AnnotatedFields annotatedFields();
+    static String indexNameFromDirectory(File directory) {
+        String name = directory.getName();
+        if (name.equals("index"))
+            name = directory.getAbsoluteFile().getParentFile().getName();
+        return name;
+    }
+
+    AnnotatedFields annotatedFields();
 	
 	default AnnotatedField mainAnnotatedField() {
 	    return annotatedFields().main();

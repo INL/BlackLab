@@ -46,6 +46,8 @@ Integrating with Solr will involve the following steps.
         - [ ] Use JAXB for the metadata (de)serialization?
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
     - [ ] Make tokenCount/docCount dynamic while indexing?
+    - [ ] noForwardIndexProps: store with annotation
+    - [ ] update nameing (property>annotation, etc.)]
     - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
 
 Where we take the metadata document into account:

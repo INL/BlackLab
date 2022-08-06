@@ -174,7 +174,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     protected ObjectNode createEmptyIndexMetadata() {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
-        jsonRoot.put("displayName", determineIndexName());
+        jsonRoot.put("displayName", IndexMetadata.indexNameFromDirectory(index.indexDirectory()));
         jsonRoot.put("description", "");
         addVersionInfo(jsonRoot);
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
@@ -189,7 +189,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         ObjectNode jsonRoot = mapper.createObjectNode();
         String displayName = corpusConfig.getDisplayName();
         if (displayName.isEmpty())
-            displayName = determineIndexName();
+            displayName = IndexMetadata.indexNameFromDirectory(index.indexDirectory());
         jsonRoot.put("displayName", displayName);
         jsonRoot.put("description", corpusConfig.getDescription());
         jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
@@ -1153,14 +1153,6 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             dispName = StringUtils.capitalize(index.indexDirectory().getAbsoluteFile().getParentFile().getName());
 
         return dispName;
-    }
-
-    protected String determineIndexName() {
-        ensureNotFrozen();
-        String name = index.indexDirectory().getName();
-        if (name.equals("index"))
-            name = index.indexDirectory().getAbsoluteFile().getParentFile().getName();
-        return name;
     }
 
     @Override
