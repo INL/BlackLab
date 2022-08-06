@@ -208,7 +208,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     }
 
     @Override
-    protected MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
+    protected MetadataFieldValues.Factory createMetadataFieldValuesFactory() {
         return new MetadataFieldValuesInMetadataFile.Factory();
     }
 

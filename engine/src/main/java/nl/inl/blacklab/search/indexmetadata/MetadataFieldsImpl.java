@@ -69,6 +69,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      */
     private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
 
+    public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
+        return metadataFieldValuesFactory;
+    }
+
     MetadataFieldsImpl(MetadataFieldValues.Factory metadataFieldValuesFactory) {
         this.metadataFieldValuesFactory = metadataFieldValuesFactory;
         metadataFieldInfos = new TreeMap<>();

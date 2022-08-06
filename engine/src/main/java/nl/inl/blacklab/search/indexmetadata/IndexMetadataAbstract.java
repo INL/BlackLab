@@ -144,7 +144,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
-        metadataFields = new MetadataFieldsImpl(getMetadataFieldValuesFactory());
+        metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
     }
 
     /**
@@ -622,7 +622,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig,
                         KEYS_META_FIELD_CONFIG);
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
-                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, getMetadataFieldValuesFactory());
+                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, metadataFields.getMetadataFieldValuesFactory());
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
@@ -766,7 +766,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     if (!metadataFields.exists(name)) {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
-                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, getMetadataFieldValuesFactory());
+                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, metadataFields.getMetadataFieldValuesFactory());
                         metadataFieldDesc
                                 .setUnknownCondition(
                                         UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
@@ -849,7 +849,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      *
      * @return factory
      */
-    protected abstract MetadataFieldValues.Factory getMetadataFieldValuesFactory();
+    protected abstract MetadataFieldValues.Factory createMetadataFieldValuesFactory();
 
     protected abstract String getLatestIndexFormat();
 
