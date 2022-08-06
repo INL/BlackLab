@@ -45,7 +45,8 @@ Integrating with Solr will involve the following steps.
             - [ ] metadata fieldtype (numerical or not)
         - [ ] Use JAXB for the metadata (de)serialization?
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
-  - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
+    - [ ] Make tokenCount/docCount dynamic while indexing?
+    - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

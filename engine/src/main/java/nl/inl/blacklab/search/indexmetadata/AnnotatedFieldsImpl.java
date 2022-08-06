@@ -14,7 +14,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
      * The main contents field in our index. This is either the annotated field with
      * the name "contents", or if that doesn't exist, the first annotated field found.
      */
-    private AnnotatedFieldImpl mainContentsField;
+    private AnnotatedFieldImpl mainAnnotatedField;
 
     /**
      * Logical groups of annotations, for presenting them in the user interface.
@@ -27,7 +27,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @Override
     public AnnotatedField main() {
-        return mainContentsField;
+        return mainAnnotatedField;
     }
 
     @Override
@@ -71,8 +71,8 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
         annotatedFields.put(fieldName, fieldDesc);
     }
 
-    public void setMainContentsField(AnnotatedFieldImpl mainContentsField) {
-        this.mainContentsField = mainContentsField;
+    public void setMainAnnotatedField(AnnotatedFieldImpl mainAnnotatedField) {
+        this.mainAnnotatedField = mainAnnotatedField;
     }
 
     public void clearAnnotationGroups() {
