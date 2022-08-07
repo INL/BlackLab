@@ -923,8 +923,6 @@ public class QueryTool {
         out.println("\nMETADATA FIELDS");
         MetadataFields mf = s.metadataFields();
         for (MetadataField field: mf) {
-            if (field.name().endsWith("Numeric"))
-                continue; // special case, will probably be removed later
             String special = "";
             if (field.equals(mf.special(MetadataFields.TITLE)))
                 special = "TITLEFIELD";

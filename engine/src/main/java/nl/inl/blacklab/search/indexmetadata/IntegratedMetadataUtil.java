@@ -15,8 +15,6 @@ import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -24,9 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigAnnotationGroup;
@@ -138,7 +136,7 @@ class IntegratedMetadataUtil {
      *                 don't have an index reader (e.g. because we're creating a new
      *                 index)
      */
-    public static void extractFromJson(IndexMetadataIntegratedNew metadata, ObjectNode jsonRoot, IndexReader reader) {
+    public static void extractFromJson(IndexMetadataIntegrated metadata, ObjectNode jsonRoot, IndexReader reader) {
         metadata.ensureNotFrozen();
 
         // Read and interpret index metadata file
@@ -246,7 +244,7 @@ class IntegratedMetadataUtil {
             Iterator<Entry<String, JsonNode>> it = nodeAnnotatedFields.fields();
             final Set<String> KEYS_ANNOTATED_FIELD_CONFIG = new HashSet<>(Arrays.asList(
                     "displayName", "description", IntegratedMetadataUtil.KEY_MAIN_ANNOTATION, "displayOrder",
-                    "annotations"));
+                    "hasContentStore", "hasXmlTags", "annotations"));
             while (it.hasNext()) {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
@@ -256,6 +254,8 @@ class IntegratedMetadataUtil {
                 AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(metadata, fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
+                fieldDesc.setContentStore(Json.getBoolean(fieldConfig, "hasContentStore", true));
+                fieldDesc.setXmlTags(Json.getBoolean(fieldConfig, "hasXmlTags", true));
                 String mainAnnotationName = Json.getString(fieldConfig, IntegratedMetadataUtil.KEY_MAIN_ANNOTATION, "");
                 if (mainAnnotationName.length() > 0)
                     fieldDesc.setMainAnnotationName(mainAnnotationName);
@@ -269,6 +269,7 @@ class IntegratedMetadataUtil {
                         JsonNode jsonAnnotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
                         AnnotationImpl annotation = new AnnotationImpl(metadata, fieldDesc);
+                        String offsetsSensitivity = "";
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {
@@ -298,6 +299,15 @@ class IntegratedMetadataUtil {
                                 boolean hasForwardIndex = opt.getValue().booleanValue();
                                 annotation.setForwardIndex(hasForwardIndex);
                                 break;
+                            case "offsetsSensitivity":
+                                offsetsSensitivity = opt.getValue().textValue();
+                                break;
+                            case "sensitivity":
+                                // Create all the sensitivities that this annotation was indexed with
+                                AnnotationSensitivities sensitivity = AnnotationSensitivities.fromStringValue(
+                                        opt.getValue().textValue());
+                                annotation.createSensitivities(sensitivity);
+                                break;
                             default:
                                 logger.warn(
                                         "Unknown key " + opt.getKey() + " in annotation for field '" + fieldName
@@ -305,14 +315,22 @@ class IntegratedMetadataUtil {
                                 break;
                             }
                         }
-                        if (StringUtils.isEmpty(annotation.name()))
+                        if (!StringUtils.isEmpty(offsetsSensitivity))
+                            annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(offsetsSensitivity));
+                        if (StringUtils.isEmpty(annotation.name())) {
                             logger.warn(
                                     "Annotation entry without name for field '" + fieldName
                                             + "' in indexmetadata file; skipping");
-                        else
+                        } else
                             fieldDesc.putAnnotation(annotation);
                     }
                 }
+                AnnotationImpl mainAnnot = (AnnotationImpl)fieldDesc.annotations().main();
+                if (mainAnnot != null) {
+                    MatchSensitivity offsetsSens = mainAnnot.mainSensitivity().sensitivity();
+                    mainAnnot.setOffsetsSensitivity(offsetsSens);
+                }
+
 
                 // This is the "natural order" of our annotations
                 // (probably not needed anymore - if not specified, the order of the annotations
@@ -325,56 +343,6 @@ class IntegratedMetadataUtil {
 
                 annotatedFields.put(fieldName, fieldDesc);
             }
-        }
-
-        // Scan the fieldinfos to detect information not in the metadata
-        // TODO: eliminate the need for this
-        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
-        if (fis != null) {
-            // Detect fields
-            for (FieldInfo fi: fis) {
-                //for (int i = 0; i < fis.size(); i++) {
-                //FieldInfo fi = fis.fieldInfo(i);
-                String name = fi.name;
-                if (metadata.skipMetadataFieldDuringDetection(name))
-                    continue;
-
-                // Parse the name to see if it is a metadata field or part of an annotated field.
-                String[] parts;
-                if (name.endsWith("Numeric")) {
-                    // Special case: this is not a annotation alternative, but a numeric
-                    // alternative for a metadata field.
-                    // (TODO: this should probably be changed or removed)
-                    parts = new String[] { name };
-                } else {
-                    parts = AnnotatedFieldNameUtil.getNameComponents(name);
-                }
-                if (parts.length == 1 && !annotatedFields.exists(parts[0])) {
-                    if (!metadataFields.exists(name)) {
-                        // Metadata field, not found in metadata JSON file
-                        FieldType type = getFieldType(name);
-                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type,
-                                metadataFields.getMetadataFieldValuesFactory());
-                        metadataFieldDesc
-                                .setUnknownCondition(
-                                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
-                        metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
-                        metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
-                        metadataFields.put(name, metadataFieldDesc);
-                    }
-                } else {
-                    // Part of annotated field.
-                    if (metadataFields.exists(parts[0])) {
-                        throw new BlackLabRuntimeException(
-                                "Annotated field and metadata field with same name, error! ("
-                                        + parts[0] + ")");
-                    }
-
-                    // Get or create descriptor object.
-                    AnnotatedFieldImpl cfd = metadata.getOrCreateAnnotatedField(parts[0]);
-                    cfd.processIndexField(parts, fi);
-                }
-            } // even if we have metadata, we still have to detect annotations/sensitivities
         }
 
         // Link subannotations to their parent annotation
@@ -409,7 +377,7 @@ class IntegratedMetadataUtil {
         }
     }
 
-    private static void extractTopLevelKeys(IndexMetadataIntegratedNew metadata, ObjectNode jsonRoot) {
+    private static void extractTopLevelKeys(IndexMetadataIntegrated metadata, ObjectNode jsonRoot) {
         final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
                 "displayName", "description", "contentViewable", "textDirection",
                 "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
@@ -421,7 +389,7 @@ class IntegratedMetadataUtil {
         metadata.setDocumentFormat(Json.getString(jsonRoot, "documentFormat", ""));
     }
 
-    private static void extractVersionInfo(IndexMetadataIntegratedNew metadata, ObjectNode jsonRoot) {
+    private static void extractVersionInfo(IndexMetadataIntegrated metadata, ObjectNode jsonRoot) {
         ObjectNode versionInfo = Json.getObject(jsonRoot, "versionInfo");
         final Set<String> KEYS_VERSION_INFO = new HashSet<>(Arrays.asList(
                 "indexFormat", "blackLabBuildTime", "blackLabVersion", "timeCreated",
@@ -439,7 +407,7 @@ class IntegratedMetadataUtil {
      *
      * @return json structure
      */
-    public static ObjectNode encodeToJson(IndexMetadataIntegratedNew metadata) {
+    public static ObjectNode encodeToJson(IndexMetadataIntegrated metadata) {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
         jsonRoot.put("displayName", metadata.displayName());
@@ -550,14 +518,16 @@ class IntegratedMetadataUtil {
     private static void addAnnotatedFields(AnnotatedFields annotFields, ObjectNode fieldInfo) {
         ObjectNode nodeAnnotatedFields = fieldInfo.putObject(KEY_ANNOTATED_FIELDS);
         for (AnnotatedField f: annotFields) {
-            ObjectNode fieldInfo2 = nodeAnnotatedFields.putObject(f.name());
-            fieldInfo2.put("displayName", f.displayName());
-            fieldInfo2.put("description", f.description());
+            ObjectNode nodeField = nodeAnnotatedFields.putObject(f.name());
+            nodeField.put("displayName", f.displayName());
+            nodeField.put("description", f.description());
             if (f.mainAnnotation() != null)
-                fieldInfo2.put(KEY_MAIN_ANNOTATION, f.mainAnnotation().name());
-            ArrayNode arr = fieldInfo2.putArray("displayOrder");
+                nodeField.put(KEY_MAIN_ANNOTATION, f.mainAnnotation().name());
+            ArrayNode arr = nodeField.putArray("displayOrder");
             Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());
-            ArrayNode annots = fieldInfo2.putArray("annotations");
+            nodeField.put("hasContentStore", f.hasContentStore());
+            nodeField.put("hasXmlTags", f.hasXmlTags());
+            ArrayNode annots = nodeField.putArray("annotations");
             for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
                 annot.put("name", annotation.name());
@@ -565,15 +535,16 @@ class IntegratedMetadataUtil {
                 annot.put("description", annotation.description());
                 annot.put("uiType", annotation.uiType());
                 annot.put("isInternal", annotation.isInternal());
+                annot.put("hasForwardIndex", annotation.hasForwardIndex());
+                if (annotation.offsetsSensitivity() != null)
+                    annot.put("offsetsSensitivity", annotation.offsetsSensitivity().sensitivity().luceneFieldSuffix());
+                annot.put("sensitivity", annotation.sensitivitySetting().getStringValue());
                 if (annotation.subannotationNames().size() > 0) {
                     ArrayNode subannots = annot.putArray("subannotations");
                     for (String subannotName: annotation.subannotationNames()) {
                         subannots.add(subannotName);
                     }
                 }
-                // For the integrated index, we don't detect whether there's a forward
-                // index, we just store it in the metadata.
-                annot.put("hasForwardIndex", annotation.hasForwardIndex());
             }
         }
     }
@@ -659,12 +630,18 @@ class IntegratedMetadataUtil {
                 g.put(KEY_MAIN_ANNOTATION, f.getAnnotations().values().iterator().next().getName());
             ArrayNode displayOrder = g.putArray("displayOrder");
             ArrayNode annotations = g.putArray("annotations");
+            int n = 0;
+            boolean hasOffsets;
             for (ConfigAnnotation a: f.getAnnotations().values()) {
-                addAnnotationInfo(a, displayOrder, annotations);
+                hasOffsets = n == 0; // first annotation gets offsets
+                addAnnotationInfo(a, hasOffsets, displayOrder, annotations);
+                n++;
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
-                    addAnnotationInfo(a, displayOrder, annotations);
+                    hasOffsets = n == 0; // first annotation gets offsets
+                    addAnnotationInfo(a, hasOffsets, displayOrder, annotations);
+                    n++;
                 }
             }
         }
@@ -678,7 +655,7 @@ class IntegratedMetadataUtil {
         }
     }
 
-    private static void addAnnotationInfo(ConfigAnnotation annotation, ArrayNode displayOrder, ArrayNode annotations) {
+    private static void addAnnotationInfo(ConfigAnnotation annotation, boolean hasOffsets, ArrayNode displayOrder, ArrayNode annotations) {
         String annotationName = annotation.getName();
         displayOrder.add(annotationName);
         ObjectNode annotationNode = annotations.addObject();
@@ -690,11 +667,13 @@ class IntegratedMetadataUtil {
             annotationNode.put("isInternal", annotation.isInternal());
         }
         annotationNode.put("hasForwardIndex", annotation.createForwardIndex());
+        annotationNode.put("sensitivity", annotation.getSensitivitySetting().getStringValue());
+        annotationNode.put("offsetsSensitivity", hasOffsets ? annotation.getMainSensitivity().luceneFieldSuffix() : "");
         if (annotation.getSubAnnotations().size() > 0) {
             ArrayNode subannots = annotationNode.putArray("subannotations");
             for (ConfigAnnotation s: annotation.getSubAnnotations()) {
                 if (!s.isForEach()) {
-                    addAnnotationInfo(s, displayOrder, annotations);
+                    addAnnotationInfo(s, false, displayOrder, annotations);
                     subannots.add(s.getName());
                 }
             }
@@ -716,33 +695,5 @@ class IntegratedMetadataUtil {
                     addRemainingAnnotations));
         }
         return annotationGroups;
-    }
-
-    /**
-     * Detect type by finding the first document that includes this field and
-     * inspecting the Fieldable. This assumes that the field type is the same for
-     * all documents.
-     *
-     * @param fieldName the field name to determine the type for
-     * @return type of the field (text or numeric)
-     */
-    private static FieldType getFieldType(String fieldName) {
-
-        /* NOTE: detecting the field type does not work well.
-         * Querying values and deciding based on those is not the right way
-         * (you can index ints as text too, after all). Lucene does not
-         * store the information in the index (and querying the field type does
-         * not return an IntField, DoubleField or such. In effect, it expects
-         * the client to know.
-         *
-         * We have a simple, bad approach based on field name below.
-         * The "right way" to do it is to keep a schema of field types during
-         * indexing.
-         */
-
-        FieldType type = FieldType.TOKENIZED;
-        if (fieldName.endsWith("Numeric") || fieldName.endsWith("Num") || fieldName.equals("metadataCid"))
-            type = FieldType.NUMERIC;
-        return type;
     }
 }

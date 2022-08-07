@@ -14,7 +14,7 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
@@ -48,7 +48,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
-                SensitivitySetting.defaultForAnnotation(mainPropName), false);
+                AnnotationSensitivities.defaultForAnnotation(mainPropName), false);
         annotMain = contentsField.mainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;
         annotPunct = contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), false);
@@ -106,7 +106,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         return annotMain.lastValuePosition() + 1;
     }
 
-    public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(String propName, AnnotationSensitivities sensitivity) {
         return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
@@ -227,7 +227,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
             documentDone(documentName);
 
             // Reset contents field for next document
-            contentsField.clear(true);
+            contentsField.clear();
             currentLuceneDoc = null;
 
             // Stop if required

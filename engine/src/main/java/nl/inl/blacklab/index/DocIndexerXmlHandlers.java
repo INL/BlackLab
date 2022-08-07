@@ -32,7 +32,7 @@ import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.StringUtil;
@@ -158,7 +158,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             documentDone(documentName);
 
             // Reset contents field for next document
-            contentsField.clear(true);
+            contentsField.clear();
             currentLuceneDoc = null;
 
             // Stop if required
@@ -385,7 +385,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         return contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), includePayloads);
     }
 
-    public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(String propName, AnnotationSensitivities sensitivity) {
         return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
@@ -395,7 +395,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
-                SensitivitySetting.defaultForAnnotation(mainPropName), false);
+                AnnotationSensitivities.defaultForAnnotation(mainPropName), false);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag

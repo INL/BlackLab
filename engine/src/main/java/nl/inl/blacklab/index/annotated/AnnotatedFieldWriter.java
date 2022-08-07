@@ -14,7 +14,6 @@ import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
@@ -74,7 +73,7 @@ public class AnnotatedFieldWriter {
      *            diacritics-sensitivity.
      * @param mainPropHasPayloads does the main annotation have payloads?
      */
-    public AnnotatedFieldWriter(String name, String mainAnnotationName, SensitivitySetting sensitivity,
+    public AnnotatedFieldWriter(String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
@@ -92,7 +91,7 @@ public class AnnotatedFieldWriter {
         return start.size();
     }
 
-    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, SensitivitySetting sensitivity, boolean includePayloads) {
+    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, AnnotationSensitivities sensitivity, boolean includePayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -104,7 +103,7 @@ public class AnnotatedFieldWriter {
         return p;
     }
 
-    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, AnnotationSensitivities sensitivity) {
         return addAnnotation(annot, name, sensitivity, false);
     }
 
@@ -136,24 +135,11 @@ public class AnnotatedFieldWriter {
 
     /**
      * Clear the internal state for reuse.
-     *
-     * @param reuseBuffers IMPORTANT: reuseBuffers should not be used if any
-     *            document passed to {@link AnnotatedFieldWriter#addToLuceneDoc(Document)}
-     *            has not been added to the IndexWriter yet. (though
-     *            IndexWriter::commit is not required). Document does not copy data
-     *            until it as added, so clearing our internal buffers before adding
-     *            it to the writer would also remove this data from the lucene
-     *            Document.
      */
-    public void clear(boolean reuseBuffers) {
+    public void clear() {
         // Don't reuse buffers, reclaim memory so we don't run out
-//        if (reuseBuffers) {
-//            start.clear();
-//            end.clear();
-//        } else {
-            start = new IntArrayList();
-            end = new IntArrayList();
-//        }
+        start = new IntArrayList();
+        end = new IntArrayList();
 
         for (AnnotationWriter p : annotations.values()) {
             p.clear();

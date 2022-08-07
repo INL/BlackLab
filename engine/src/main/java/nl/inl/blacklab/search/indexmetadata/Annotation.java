@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collection;
 import java.util.Set;
 
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+
 /** An annotation on an annotated field. */
 public interface Annotation {
 
@@ -119,9 +121,48 @@ public interface Annotation {
     default AnnotationSensitivity forwardIndexSensitivity() {
 		if (!hasForwardIndex())
 			throw new RuntimeException("Annotation has no forward index: " + name());
-		if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
-			return sensitivity(MatchSensitivity.SENSITIVE);
-		} else
-			return sensitivity(MatchSensitivity.INSENSITIVE);
+        return mainSensitivity();
 	}
+
+    /**
+     * Get the main sensitivity.
+     *
+     * If the field has a forward index, content store and/or offsets,
+     * they will be stored in this sensitivity.
+     *
+     * @return main sensitivity
+     * @throws RuntimeException if annotation has no forward index
+     */
+    default AnnotationSensitivity mainSensitivity() {
+        if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
+            return sensitivity(MatchSensitivity.SENSITIVE);
+        } else
+            return sensitivity(MatchSensitivity.INSENSITIVE);
+    }
+
+    /**
+     * Get the sensitivity setting that corresponds to the available sensitivities.
+     *
+     * The sensitivity setting is what is specified in the input format config,
+     * and is stored in the (integrated) index metadata.
+     *
+     * @return sensitivity setting
+     */
+    default AnnotationSensitivities sensitivitySetting() {
+        boolean s = hasSensitivity(MatchSensitivity.SENSITIVE);
+        boolean i = hasSensitivity(MatchSensitivity.INSENSITIVE);
+        boolean ci = hasSensitivity(MatchSensitivity.CASE_INSENSITIVE);
+        boolean di = hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE);
+
+        if (s && i && ci && di)
+            return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
+        else if (s & i)
+            return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
+        else if (i)
+            return AnnotationSensitivities.ONLY_INSENSITIVE;
+        else if (s)
+            return AnnotationSensitivities.ONLY_SENSITIVE;
+        else
+            throw new IllegalStateException("No sensitivities for annotation " + name());
+    }
 }

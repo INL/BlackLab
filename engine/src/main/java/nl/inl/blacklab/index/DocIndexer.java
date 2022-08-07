@@ -5,7 +5,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
@@ -90,8 +89,6 @@ public interface DocIndexer extends AutoCloseable {
      * @param b if true, doesn't store norms; if false, does store norms
      */
     void setOmitNorms(boolean b);
-
-    void addNumericFields(Collection<String> fields);
 
     boolean continueIndexing();
 

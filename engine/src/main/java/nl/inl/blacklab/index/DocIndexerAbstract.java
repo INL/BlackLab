@@ -2,13 +2,10 @@ package nl.inl.blacklab.index;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -63,8 +60,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      * Parameters passed to this indexer
      */
     protected final Map<String, String> parameters = new HashMap<>();
-
-    final Set<String> numericFields = new HashSet<>();
 
     /** How many documents we've processed */
     private int numberOfDocsDone = 0;
@@ -135,11 +130,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public void setOmitNorms(boolean b) {
         omitNorms = b;
-    }
-
-    @Override
-    public void addNumericFields(Collection<String> fields) {
-        numericFields.addAll(fields);
     }
 
     @Override
@@ -278,7 +268,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         new BytesRef(value))); // docvalues for efficient sorting/grouping
             }
         }
-        if (type == FieldType.NUMERIC || numericFields.contains(name)) {
+        if (type == FieldType.NUMERIC) {
             String numFieldName = name;
             if (type != FieldType.NUMERIC) {
                 numFieldName += "Numeric";

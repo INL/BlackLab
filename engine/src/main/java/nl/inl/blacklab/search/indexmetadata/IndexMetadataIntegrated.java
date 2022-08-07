@@ -38,9 +38,9 @@ import nl.inl.util.TimeUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataIntegratedNew implements IndexMetadataWriter {
+public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
-    private static final Logger logger = LogManager.getLogger(IndexMetadataIntegratedNew.class);
+    private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
     /**
      * Manages the index metadata document.
@@ -192,7 +192,7 @@ public class IndexMetadataIntegratedNew implements IndexMetadataWriter {
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
 
-    public IndexMetadataIntegratedNew(BlackLabIndex index, boolean createNewIndex,
+    public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
@@ -382,12 +382,15 @@ public class IndexMetadataIntegratedNew implements IndexMetadataWriter {
             if (annotationWriter.includeOffsets())
                 annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
+            annotation.createSensitivities(annotationWriter.getSensitivitySetting());
+            //annotation.setOffsetsSensitivity(annotation.mainSensitivity().sensitivity());
             annotationWriter.setAnnotation(annotation);
         }
         String mainAnnotName = fieldWriter.mainAnnotation().name();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
         cf.setMainAnnotationName(mainAnnotName); // set main annotation
         fieldWriter.setAnnotatedField(cf);
+
         return cf;
     }
 
@@ -613,10 +616,6 @@ public class IndexMetadataIntegratedNew implements IndexMetadataWriter {
 
     protected MetadataFieldValues.Factory createMetadataFieldValuesFactory() {
         return new MetadataFieldValuesFromIndex.Factory(index);
-    }
-
-    protected boolean skipMetadataFieldDuringDetection(String name) {
-        return metadataDocument.isMetadataDocumentField(name);
     }
 
     @Override

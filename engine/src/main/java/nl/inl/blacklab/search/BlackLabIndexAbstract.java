@@ -467,12 +467,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         // Detect and open the ContentStore for the contents field
         if (!createNewIndex) {
             if (traceIndexOpening())
-                logger.debug("  Determining main contents field name...");
+                logger.debug("  Checking if we have a main contents field...");
             AnnotatedField mainContentsField = indexMetadata.mainAnnotatedField();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new BlackLabRuntimeException("Could not detect main contents field");
+                        throw new BlackLabRuntimeException("Main contents field unknown");
                 }
             }
 
@@ -506,7 +506,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         //   the field has, because it is not stored in the index metadata, it is normally detected
         //   from the index fields.
         // TODO kinda messy, should be improved
-        boolean preventOpeningForwardIndex = isEmptyIndex && this instanceof BlackLabIndexIntegrated;
+        boolean preventOpeningForwardIndex = false; //isEmptyIndex && this instanceof BlackLabIndexIntegrated;
 
         // Open the forward indices
         if (!createNewIndex && !preventOpeningForwardIndex) {

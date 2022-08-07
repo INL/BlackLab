@@ -15,7 +15,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegratedNew;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
@@ -35,7 +35,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
             throws IndexVersionMismatch {
-        return new IndexMetadataIntegratedNew(this, createNewIndex, config);
+        return new IndexMetadataIntegrated(this, createNewIndex, config);
 
     }
 
@@ -44,7 +44,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         if (indexTemplateFile != null)
             throw new UnsupportedOperationException(
                     "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
-        return new IndexMetadataIntegratedNew(this, createNewIndex, null);
+        return new IndexMetadataIntegrated(this, createNewIndex, null);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

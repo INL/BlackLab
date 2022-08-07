@@ -7,10 +7,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -23,8 +21,8 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -34,9 +32,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  * A DocIndexer configured using a ConfigInputFormat structure.
  */
 public abstract class DocIndexerConfig extends DocIndexerBase {
-
-    /** What annotations have we warned about using special default sensitivity? */
-    private static Set<String> warnSensitivity = new HashSet<>();
 
     protected static String replaceDollarRefs(String pattern, List<String> replacements) {
         if (pattern != null) {
@@ -101,32 +96,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         this.config = config;
     }
 
-    protected SensitivitySetting getSensitivitySetting(ConfigAnnotation annotation) {
-        SensitivitySetting sensitivity = annotation.getSensitivity();
-        if (sensitivity == SensitivitySetting.DEFAULT) {
-            String name = annotation.getName();
-            sensitivity = SensitivitySetting.defaultForAnnotation(name);
-            if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
-                // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
-                // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
-                // Warn users about this so they can make their config files explicit before this special case is removed.
-                synchronized (warnSensitivity) {
-                    if (!warnSensitivity.contains(name)) {
-                        warnSensitivity.add(name);
-                        logger.warn("Configuration " + config.getName()
-                                + " relies on special default sensitivity 'sensitive_insensitive' for annotation "
-                                + name
-                                + "; this behaviour "
-                                + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
-                                + "without explicit sensitivity will default to 'insensitive'.");
-                    }
-                }
-            }
-            return sensitivity;
-        }
-        return sensitivity;
-    }
-
     @Override
     protected String optTranslateFieldName(String from) {
         if (config == null) // test
@@ -150,28 +119,28 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
             AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(), mainAnnotation.getName(),
-                    getSensitivitySetting(mainAnnotation), false);
+                    mainAnnotation.getSensitivitySetting(), false);
             addAnnotatedField(fieldWriter);
 
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
-                    SensitivitySetting.ONLY_SENSITIVE, true);
+                    AnnotationSensitivities.ONLY_SENSITIVE, true);
             annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
                 if (!annot.isForEach())
-                    fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
+                    fieldWriter.addAnnotation(annot, annot.getName(), annot.getSensitivitySetting(), false);
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
-                    fieldWriter.addAnnotation(annot, annot.getName(), getSensitivitySetting(annot), false);
+                    fieldWriter.addAnnotation(annot, annot.getName(), annot.getSensitivitySetting(), false);
                 }
             }
             if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
                 fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-                        SensitivitySetting.ONLY_INSENSITIVE, false);
+                        AnnotationSensitivities.ONLY_INSENSITIVE, false);
             }
             if (getDocWriter() != null) {
                 IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();

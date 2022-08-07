@@ -401,7 +401,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         for (AnnotatedFieldWriter annotatedField : getAnnotatedFields().values()) {
             // Reset annotated field for next document
             // don't reuse buffers, they're still referenced by the lucene doc.
-            annotatedField.clear(!indexingIntoExistingLuceneDoc);
+            annotatedField.clear();
         }
 
         // Report progress

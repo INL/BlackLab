@@ -63,6 +63,10 @@ public abstract class FieldImpl implements Field {
         return description;
     }
 
+    public void setContentStore(boolean contentStore) {
+        this.contentStore = contentStore;
+    }
+
     @Override
     public boolean hasContentStore() {
         return contentStore;

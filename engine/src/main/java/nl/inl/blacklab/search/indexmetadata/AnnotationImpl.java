@@ -11,10 +11,11 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.util.LuceneUtil;
 
 /** Annotation on a field. */
-class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
+public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
     private final IndexMetadata indexMetadata;
     
@@ -125,8 +126,6 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     /**
      * Return which alternative contains character offset information.
      *
-     * Note that there may not be such an alternative.
-     *
      * @return the alternative, or null if there is none.
      */
     @Override
@@ -184,6 +183,21 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return false;
     }
 
+    public void createSensitivities(AnnotationSensitivities sensitivitySetting) {
+        if (sensitivitySetting == AnnotationSensitivities.DEFAULT)
+            throw new IllegalArgumentException("Don't know what to do with DEFAULT sensitivity setting");
+        if (sensitivitySetting == AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE) {
+            addAlternative(MatchSensitivity.CASE_INSENSITIVE);
+            addAlternative(MatchSensitivity.DIACRITICS_INSENSITIVE);
+        }
+        if (sensitivitySetting != AnnotationSensitivities.ONLY_INSENSITIVE) {
+            addAlternative(MatchSensitivity.SENSITIVE);
+        }
+        if (sensitivitySetting != AnnotationSensitivities.ONLY_SENSITIVE) {
+            addAlternative(MatchSensitivity.INSENSITIVE);
+        }
+    }
+
     public void setDisplayName(String displayName) {
         ensureNotFrozen();
         this.displayName = displayName;
@@ -197,7 +211,7 @@ class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         }
     }
 
-    void setForwardIndex(boolean b) {
+    public void setForwardIndex(boolean b) {
         if (forwardIndex != b) {
             ensureNotFrozen();
             forwardIndex = b;

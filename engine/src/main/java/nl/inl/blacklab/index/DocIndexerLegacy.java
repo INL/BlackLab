@@ -16,8 +16,7 @@ import org.apache.lucene.document.Field;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.UnicodeStream;
@@ -251,38 +250,38 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     }
 
     @Deprecated
-    public AnnotationWriter.SensitivitySetting getSensitivitySetting(String annotationName) {
+    public AnnotationSensitivities getSensitivitySetting(String annotationName) {
         // See if it's specified in a parameter
         String strSensitivity = getParameter(annotationName + "_sensitivity");
         if (strSensitivity != null) {
             if (strSensitivity.equals("i"))
-                return AnnotationWriter.SensitivitySetting.ONLY_INSENSITIVE;
+                return AnnotationSensitivities.ONLY_INSENSITIVE;
             if (strSensitivity.equals("s"))
-                return AnnotationWriter.SensitivitySetting.ONLY_SENSITIVE;
+                return AnnotationSensitivities.ONLY_SENSITIVE;
             if (strSensitivity.equals("si") || strSensitivity.equals("is"))
-                return AnnotationWriter.SensitivitySetting.SENSITIVE_AND_INSENSITIVE;
+                return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
             if (strSensitivity.equals("all"))
-                return AnnotationWriter.SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE;
+                return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
         }
 
         // Not in parameter (or unrecognized value), use default based on
         // annotationName
-        if (SensitivitySetting.defaultForAnnotation(annotationName) != SensitivitySetting.ONLY_INSENSITIVE) {
+        if (AnnotationSensitivities.defaultForAnnotation(annotationName) != AnnotationSensitivities.ONLY_INSENSITIVE) {
             // Word or lemma: default to sensitive/insensitive
             // (deprecated, will be removed eventually)
-            return SensitivitySetting.defaultForAnnotation(annotationName);
+            return AnnotationSensitivities.defaultForAnnotation(annotationName);
         }
         if (annotationName.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
             // Punctuation: default to only insensitive
-            return AnnotationWriter.SensitivitySetting.ONLY_INSENSITIVE;
+            return AnnotationSensitivities.ONLY_INSENSITIVE;
         }
         if (annotationName.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME)) {
             // XML tag properties: default to only sensitive
-            return AnnotationWriter.SensitivitySetting.ONLY_SENSITIVE;
+            return AnnotationSensitivities.ONLY_SENSITIVE;
         }
 
         // Unrecognized; default to only insensitive
-        return AnnotationWriter.SensitivitySetting.ONLY_INSENSITIVE;
+        return AnnotationSensitivities.ONLY_INSENSITIVE;
     }
 
     /**

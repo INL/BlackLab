@@ -2,16 +2,24 @@ package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Configuration for a single annotation (formerly "property") of an annotated field.
  */
 public class ConfigAnnotation {
+
+    protected static final Logger logger = LogManager.getLogger(ConfigAnnotation.class);
 
     /** Annotation name, or forEach (or name XPath, if forEach) */
     private String name;
@@ -43,7 +51,7 @@ public class ConfigAnnotation {
      * What sensitivity setting to use to index this annotation (optional, default
      * depends on field name)
      */
-    private SensitivitySetting sensitivity = SensitivitySetting.DEFAULT;
+    private AnnotationSensitivities sensitivity = AnnotationSensitivities.DEFAULT;
 
     /** XPaths to capture the value of, to substitute for $1-$9 in valuePath */
     private final List<String> captureValuePaths = new ArrayList<>();
@@ -87,6 +95,9 @@ public class ConfigAnnotation {
      * BlackLab itself does not use this flag.
      */
     private boolean internal = false;
+
+    /** What annotations have we warned about using special default sensitivity? */
+    private static Set<String> warnSensitivity = new HashSet<>();
 
     public ConfigAnnotation() {
     }
@@ -218,11 +229,11 @@ public class ConfigAnnotation {
         this.uiType = uiType;
     }
 
-    public SensitivitySetting getSensitivity() {
+    public AnnotationSensitivities getSensitivity() {
         return sensitivity;
     }
 
-    public void setSensitivity(SensitivitySetting sensitivity) {
+    public void setSensitivity(AnnotationSensitivities sensitivity) {
         this.sensitivity = sensitivity;
     }
 
@@ -280,4 +291,42 @@ public class ConfigAnnotation {
         return "ConfigAnnotation [name=" + name + "]";
     }
 
+    public AnnotationSensitivities getSensitivitySetting() {
+        AnnotationSensitivities sensitivity = getSensitivity();
+        if (sensitivity == AnnotationSensitivities.DEFAULT) {
+            String name = getName();
+            sensitivity = AnnotationSensitivities.defaultForAnnotation(name);
+            if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
+                // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
+                // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
+                // Warn users about this so they can make their config files explicit before this special case is removed.
+                synchronized (warnSensitivity) {
+                    if (!warnSensitivity.contains(name)) {
+                        warnSensitivity.add(name);
+                        logger.warn("Configuration " + getName()
+                                + " relies on special default sensitivity 'sensitive_insensitive' for annotation "
+                                + name
+                                + "; this behaviour "
+                                + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
+                                + "without explicit sensitivity will default to 'insensitive'.");
+                    }
+                }
+            }
+        }
+        return sensitivity;
+    }
+
+
+    public MatchSensitivity getMainSensitivity() {
+        switch (getSensitivitySetting()) {
+        case ONLY_INSENSITIVE:
+            return MatchSensitivity.INSENSITIVE;
+        case ONLY_SENSITIVE:
+        case SENSITIVE_AND_INSENSITIVE:
+        case CASE_AND_DIACRITICS_SEPARATE:
+            return MatchSensitivity.SENSITIVE;
+        default:
+            throw new IllegalStateException("Unknown sensitivity " + getSensitivitySetting());
+        }
+    }
 }

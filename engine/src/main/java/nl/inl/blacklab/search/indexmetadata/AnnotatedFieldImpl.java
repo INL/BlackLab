@@ -12,7 +12,6 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
@@ -152,6 +151,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return AnnotatedFieldNameUtil.lengthTokensField(fieldName);
     }
 
+    public void setXmlTags(boolean xmlTags) {
+        this.xmlTags = xmlTags;
+    }
+
     @Override
     public boolean hasXmlTags() {
         return xmlTags;
@@ -197,8 +200,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             case FORWARD_INDEX_ID:
                 // Main annotation has forward index
                 // [should never happen anymore, because main annotation always has a name now]
-                getOrCreateAnnotation("").setForwardIndex(true);
-                return;
+                throw new IllegalStateException("Found lucene field " + fi.name + " with forward index id, but no annotation name!");
             case LENGTH_TOKENS:
                 // Annotated field always has length in tokens
                 return;
@@ -231,6 +233,8 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             ensureNotFrozen();
             pd = new AnnotationImpl(indexMetadata, this, name);
             putAnnotation(pd);
+            if (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+                xmlTags = true;
         }
         return pd;
     }
