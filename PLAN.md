@@ -37,17 +37,10 @@ Integrating with Solr will involve the following steps.
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] Make sure (basic) config-based indexing is unit tested too.
     - [ ] We are free to change what and how we store the metadata.
-        - [ ] Probably get rid of detecting things from the index as that causes problems with an empty index, and generally seems unreliable if it relies on certain specific field name structures.
-            - [ ] main annotated field
-            - [ ] annotatedField.mainAnnotation
-            - [x] annotation.hasForwardIndex
-            - [ ] annotation.sensitivities
-            - [ ] annotation.offsetsSensitivity
-            - [ ] metadata fieldtype (numerical or not)
         - [ ] Use JAXB for the metadata (de)serialization?
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
     - [ ] Make tokenCount/docCount dynamic while indexing?
-    - [ ] noForwardIndexProps: store with annotation
+    - [ ] remove noForwardIndexProps (specified in index template), provide alternative (via DocIndexerLegacy)
     - [ ] update nameing (property>annotation, etc.)]
     - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
 
