@@ -30,17 +30,15 @@ BlackLab Server is a stateless REST service: a particular URL will always result
 
 ## Basic example
 
-## Getting started
+TODO
 
 ## Basic installation, configuration
 
-### Using Docker
+This is an overview of installing BlackLab on a server running Apache Tomcat.
 
-TODO
-
-### Using Tomcat
-
-## Installation
+::: tip Prefer Docker?
+We have an [experimental Docker image](https://github.com/INL/BlackLab#using-blacklab-with-docker) available. A more user-friendly guide for usiing Blacklab with Docker will be available when we release our official image.
+:::
 
 First, you need the BlackLab Server WAR file. You can either download the [latest release](https://github.com/INL/BlackLab/releases), or you can build it by cloning the [repository](https://github.com/INL/BlackLab) and building it using Maven.
 
@@ -73,31 +71,18 @@ To ensure the correct handling of accented characters in (search) URLs, you shou
 To (significantly!) improve performance of certain operations, including sorting and grouping large result sets, you might want to consider using the [vmtouch](https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache "https://github.com/INL/BlackLab/wiki/Improve-search-speed-using-the-disk-cache") tool to lock the forward index files in the OS's disk cache. You could also serve these files (or the entire index) from an SSD.
 
 
-
 ## Indexing data
 
-### IndexTool
-### via the webservice
+You can index your data using the provided commandline tool IndexTool. See [Indexing with BlackLab](/guide/indexing-with-blacklab.md).
 
-## Manual use in the browser
+Another option is to configure user authentication to allow users to create corpora and add their data using BlackLab Server. Search for "authentication" in the [example config file](configuration.md#complete-config-file).
 
-## Tutorials / howtos
+There is currently no way to use BlackLab Server to add data to non-user ("global" or regular) corpora. In the future, this will be available using Solr.
 
-### User authentication, creating indices and adding data
-### Convert/Tag plugins
+## REST API
 
-- Create a class implementing `ConvertPlugin` or `TagPlugin`
-- Make the class known to the java [SPI](https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html) system.  
-  In short:
-  - Create a jar containing your plugin class.
-  - Add a file to the jar under `/META-INF/services/` with the name `nl.inl.blacklab.indexers.preprocess.ConvertPlugin` or `nl.inl.blacklab.indexers.preprocess.TagPlugin` depending on your plugin's type.
-  - Add a single line containing your class's fully-qualified class name.
-  - Add your jar to BlackLab's classpath.
+You can try most BlackLab Server requests out by typing URLs into your browser. See the [REST API documentation](rest-api/README.md#blacklab-server-rest-api-reference) for the endpoints. 
 
-Configuring your plugin is possible through `blacklab.json`.  
-Any options under `plugins.yourPluginId` will be passed to your plugin when it's initialized.
+## Frontend
 
-If your plugin was loaded successfully it can now be used by adding the following to an import format:
-
-    tagplugin: yourPluginId
-    convertPlugin: yourPluginId
+We have a full-featured corpus search frontend available. See [BlackLab Frontend](/frontend/) for more information.

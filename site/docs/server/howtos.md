@@ -1,0 +1,98 @@
+# Tutorials / howtos
+
+## Letting users manage their own corpora
+
+If you configure a form of user authentication, you can allow users to manager their own corpora using BlackLab Server or Frontend.
+
+For how to configure user authentication, to allow users to create corpora and add their data using BlackLab Server. Search for "authentication" in the [example config file](configuration.md#complete-config-file).
+
+For how to create a corpus, see [Manage user corpora](rest-api/README.md#manage-user-corpora).
+
+> TODO: expand on this.
+
+## Convert/Tag plugins
+
+These two plugin types allow you to convert documents from formats like `.docx` or `.pdf` into an XML format, tokenize them and tag each word with annotations like lemma and part of speech.
+
+- Create a class implementing `ConvertPlugin` or `TagPlugin`
+- Make the class known to the java [SPI](https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html) system.  
+  In short:
+    - Create a jar containing your plugin class.
+    - Add a file to the jar under `/META-INF/services/` with the name `nl.inl.blacklab.indexers.preprocess.ConvertPlugin` or `nl.inl.blacklab.indexers.preprocess.TagPlugin` depending on your plugin's type.
+    - Add a single line containing your class's fully-qualified class name.
+    - Add your jar to BlackLab's classpath.
+
+Configuring your plugin is possible through `blacklab[-server].yaml`.  
+Any options under `plugins.yourPluginId` will be passed to your plugin when it's initialized.
+
+Example:
+
+```yaml
+# Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or
+# apply linguistic tagging before indexing.
+plugins:
+
+  # Should we initialize plugins when they are first used?
+  # (plugin initialization can take a while; during development, delayed initialization is
+  # often convenient, but during production, you usually want to initialize right away)
+  delayInitialization: false
+
+  # Individual plugin configurations
+  plugins:
+
+    # Conversion plugin
+    OpenConvert:
+      jarPath: "/home/jan/int-projects/blacklab-data/autosearch-plugins/jars/OpenConvert-0.2.0.jar"
+
+    # Tagging plugin
+    DutchTagger:
+      jarPath: "/home/jan/int-projects/blacklab-data/autosearch-plugins/jars/DutchTagger-0.2.0.jar"
+      vectorFile:  "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/sonar.vectors.bin"
+      modelFile:   "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/withMoreVectorrs"
+      lexiconFile: "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/spelling.tab"
+```
+
+If your plugin was loaded successfully it can now be used by adding the following to an import format (`.blf.yaml` file):
+
+```yaml
+tagplugin: yourPluginId
+convertPlugin: yourPluginId
+```
+
+## Using vmtouch
+
+::: warning CAUTION
+
+Depending on your requirements and hardware, this may or may not be a good idea. In general, most users should rely on the operating system to effectively cache files, and not try to override the cache using a tool like `vmtouch`. This information is still provided in case anyone wants to use `vmtouch` nonetheless.
+
+:::
+
+At the Dutch Language Institute, we used to use a tool called [vmtouch](http://hoytech.com/vmtouch/) ([GitHub](https://github.com/hoytech/vmtouch)) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
+
+vmtouch is a tool that can "lock" a file in disk cache. It benefits applications that need to perform fast random access to large files (i.e. several gigabytes). Corpus search applications fall into this domain: they need random access to the "forward index" component of the index to do fast sorting and grouping.
+
+You should be careful to ensure the machine you're using has enough RAM to keep the required files in memory permanently, and will still have memory left over for the operating system and applications.
+
+Also important is to run vmtouch as the root user; user accounts have a limit to the amount of memory they may lock. Vmtouch will terminate with an out of memory error if it hits that limit. (it may be possible to raise this limit for a user by changing a configuration file - we haven't experimented with this)
+
+The [official page for vmtouch](http://hoytech.com/vmtouch/) has the C source code and the online manual. We've made a slight modification to the source code to allow for larger files to be cached.
+
+
+### Filesize limit
+
+The original vmtouch had a built-in file size limit (probably as a safety precaution). You may need to raise it (search for o_max_file_size).
+
+
+### Running vmtouch
+
+To run vmtouch in daemon mode, so that it will lock files in the disk cache, use the following command line:
+
+	sudo vmtouch -vtld <list_of_files>
+
+The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indices of our BlackLab index locked in disk cache (run from within the index directory):
+
+	sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
+
+The daemon will start up and will take a while to load all files into disk cache. You can check its progress by only specifying the -v option:
+
+	sudo vmtouch -v fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat

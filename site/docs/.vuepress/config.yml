@@ -32,7 +32,7 @@ themeConfig:
       - [ 'overview', 'API overview' ]
       - [ 'rest-api/', 'API reference' ]
       - configuration
-      - vmtouch
+      - howtos
     /frontend/:
       - ''
     /development/:

@@ -12,7 +12,7 @@ Also see the [overview](../overview.md).
 
 This endpoint returns available corpora and server information.
 
-* [Corpora and server information](get.md) : `GET /`
+* [Corpora and server information](get.md) : `GET /blacklab-server`
 
 
 ## Corpus-related endpoints
@@ -53,7 +53,7 @@ Retrieve metadata and (parts of) the content of a document.
 
 If user authentication and private user corpora are enabled, these can be used to manage the user's own corpora: creating/deleting, adding data and sharing.
 
-* [Create user corpus](corpus/post.md) : `POST /`
+* [Create user corpus](post.md) : `POST /`
 * [Delete user corpus](corpus/delete.md) : `DELETE /`
 * [Add data to user corpus](corpus/docs/post.md) : `POST /docs`
 * [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /sharing`

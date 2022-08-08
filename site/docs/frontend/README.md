@@ -1,5 +1,11 @@
 # BlackLab Frontend
 
+::: warning WORK IN PROGRESS
+
+This is a work in progress. For now, see the [GitHub repo](https://github.com/INL/corpus-frontend/#readme) for documentation.
+
+:::
+
 ## What is it?
 
 BlackLab Frontend is a webapplication for searching corpora.
