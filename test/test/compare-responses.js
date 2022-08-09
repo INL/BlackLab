@@ -72,12 +72,15 @@ function makeResponseValuesFixed(response, valuesToFix) {
  * @param testName name of this test
  * @param actualResponse webservice response we got (parsed JSON)
  */
-function expectUnchanged(testName, actualResponse) {
+function expectUnchanged(category, testName, actualResponse) {
     // Remove anything that's variable (e.g. search time) from the response.
     const sanitized = sanitizeResponse(actualResponse);
 
     // Did we have a previous response?
-    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, `${sanitizeFileName(testName)}.json`);
+    const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
+    if (!fs.existsSync(categoryDir))
+        fs.mkdirSync(categoryDir);
+    const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category), `${sanitizeFileName(testName)}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
         const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));

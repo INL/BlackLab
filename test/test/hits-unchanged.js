@@ -37,7 +37,7 @@ function expectHitsUnchanged(testName, params) {
             .end((err, res) => {
                 expect(err).to.be.null;
                 expect(res).to.have.status(200);
-                expectUnchanged(testName, res.body);
+                expectUnchanged('hits', testName, res.body);
                 done();
             });
         });
