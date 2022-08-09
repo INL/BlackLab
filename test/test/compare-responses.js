@@ -78,16 +78,13 @@ function expectUnchanged(testName, actualResponse) {
 
     // Did we have a previous response?
     const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, `${sanitizeFileName(testName)}.json`);
-    console.log(`file: ${savedResponseFile}`);
     if (fs.existsSync(savedResponseFile)) {
-        console.log(`file exists`);
         // Read previously saved response to compare
         const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
 
         // Compare
         expect(sanitized).to.be.deep.equal(savedResponse);
     } else {
-        console.log(`file doesn't exist, save`);
         // Save this response for subsequent tests
         fs.writeFileSync(savedResponseFile, JSON.stringify(sanitized, null, 2), { encoding: 'utf8' });
     }

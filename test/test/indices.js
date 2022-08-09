@@ -218,7 +218,6 @@ describe('Indexing tests', () => {
 
         const queriesTest = TEST_CONFIG['queries'];
         for (let [testName, testCase] of Object.entries(queriesTest)) {
-            console.log("Running test case: " + testName);
             const filterTerms = testCase['filters'];
             const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
             assert.isTrue(queryInd.ok);
