@@ -50,14 +50,14 @@ If you have a [CLARIN](https://clarin.eu/) account, you might also want to check
 - [Corpus Hedendaags Nederlands](https://chn.ivdnt.org/)
 - [OpenSonar](https://opensonar.ivdnt.org/)
 
-Here are a few searches you can try:
+Here are a few searches you can try (click on the _Extended_ tab):
 
 - **Lemma: "koe"** Finds all forms of the word "koe" (cow)<br/>
   Other words to try: "wet" (law), "zien" (to see), "groot" (large)
-- **POS: "NOU\*"** Find all nouns<br/>
+- **Part of speech: "NOU-C"** Find all common nouns<br/>
   Other values to try: "VRB\*" (verbs), "ADJ\*" (adjectives)
-- **Word form: "coe"** Find a specific historic spelling of "koe"
+- **Word: "coe"** Find a specific historic spelling of "koe"
 
-Please note that this is just a small sample of the capabilities of BlackLab.
+This is just a small sample of the capabilities of BlackLab.
 
 If you're excited about the possibilities and want to get BlackLab up and running yourself, move on to [Getting Started](getting-started.md).
