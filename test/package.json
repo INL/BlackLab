@@ -11,5 +11,8 @@
     "chai-http": "^4.3.0",
     "mocha": "^9.0.3",
     "xml2js": "^0.4.23"
+  },
+  "dependencies": {
+    "sanitize-filename": "^1.6.3"
   }
 }

@@ -1,2 +1,5 @@
 # Node libraries
 node_modules
+
+# Will be bindmounted
+saved-responses

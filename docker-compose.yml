@@ -71,6 +71,9 @@ services:
       - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
       - INDEX_TEST_DATA_ROOT=${INDEX_TEST_DATA_ROOT:-data}
     build: test
+    volumes:
+      # We need access to the previous responses and be able to save responses for any new tests.
+      - ./test/saved-responses:/app/saved-responses
     depends_on:
       - testserver
 
