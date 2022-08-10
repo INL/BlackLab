@@ -14,10 +14,11 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
  * This enables us to compare responses from tests.
  *
  * @param response response to sanitize
- * @return response with variable values replaces with fixed ones
+ * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
+ *   requests that should have same results) * @return response with variable values replaces with fixed ones
  */
-function sanitizeBlsResponse(response) {
-    return sanitizeResponse(response, {
+function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
+    const keysToMakeConstant = {
         // Server information page
         blackLabBuildTime: true,
         blacklabVersion: true,
@@ -35,7 +36,11 @@ function sanitizeBlsResponse(response) {
             searchTime: true,
             countTime: true,
         }
-    });
+    };
+    if (removeParametersFromResponse) {
+        keysToMakeConstant.summary.searchParam = true;
+    }
+    return sanitizeResponse(response, keysToMakeConstant);
 }
 
 /**
@@ -75,7 +80,7 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
         const value = response[key];
         if (key in keysToMakeConstant) {
             // This is (or contains) a variable value we don't want to compare.
-            if (recursive && typeof value === 'object' && !(value instanceof Array)) {
+            if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !(value instanceof Array)) {
                 // Subobject; recursively fix this part of the response
                 cleanedData[key] = sanitizeResponse(response[key], keysToMakeConstant[key]);
             } else {
@@ -97,10 +102,12 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
  * @param category test category (e.g. "hits")
  * @param testName name of this test, and file name for the response
  * @param actualResponse webservice response we got (parsed JSON)
+ * @param removeParametersFromResponse if true, also remove summary.searchParam (for comparing different
+ * requests that should have same results)
  */
-function expectUnchanged(category, testName, actualResponse) {
+function expectUnchanged(category, testName, actualResponse, removeParametersFromResponse = false) {
     // Remove anything that's variable (e.g. search time) from the response.
-    const sanitized = sanitizeBlsResponse(actualResponse);
+    const sanitized = sanitizeBlsResponse(actualResponse, removeParametersFromResponse);
 
     // Ensure category dir exists
     const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
