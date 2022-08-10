@@ -49,19 +49,21 @@ Retrieve metadata and (parts of) the content of a document.
 * [Term frequencies](corpus/termfreq/get.md) : `GET /termfreq`
 * [Autocomplete](corpus/autocomplete/field/get.md) : `GET /autocomplete`
 
-### Manage user corpora
+## Manage user corpora
 
 If user authentication and private user corpora are enabled, these can be used to manage the user's own corpora: creating/deleting, adding data and sharing.
 
+All URLs should start with `/blacklab-server`.
+
 * [Create user corpus](post.md) : `POST /`
-* [Delete user corpus](corpus/delete.md) : `DELETE /`
-* [Add data to user corpus](corpus/docs/post.md) : `POST /docs`
-* [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /sharing`
-* [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /sharing`
+* [Delete user corpus](corpus/delete.md) : `DELETE /<corpus-name>`
+* [Add data to user corpus](corpus/docs/post.md) : `POST /<corpus-name>/docs`
+* [Get user corpus sharing settings](corpus/sharing/get.md) : `GET /<corpus-name>/sharing`
+* [Update user corpus sharing settings](corpus/sharing/post.md) : `POST /<corpus-name>/sharing`
 
 ## Other global endpoints
 
-These endpoints are not tied to a specific corpus.  All URLs should start with `/blacklab-server`.
+These endpoints are not tied to a specific corpus. All URLs should start with `/blacklab-server`.
 
 ### Input format endpoints
 
