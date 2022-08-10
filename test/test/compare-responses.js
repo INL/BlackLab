@@ -27,11 +27,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
                 timeModified: true
             }
         },
-        cacheStatus: {
-            freeMemory: true,
-            countsPerStatus: true,
-            sizeBytes: true
-        },
+        cacheStatus: true,
 
         // Corpus information page
         versionInfo: {
