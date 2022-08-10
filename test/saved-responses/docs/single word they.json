@@ -1,0 +1,283 @@
+{
+  "summary": {
+    "searchParam": {
+      "indexname": "test",
+      "patt": "\"they\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "windowFirstResult": 0,
+    "requestedWindowSize": 50,
+    "actualWindowSize": 1,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 3,
+    "numberOfHitsRetrieved": 3,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    }
+  },
+  "docs": [
+    {
+      "docPid": "PBsve430",
+      "numberOfHits": 3,
+      "docInfo": {
+        "fromInputFile": [
+          "/input/PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ],
+        "lengthInTokens": 334,
+        "mayView": false
+      },
+      "snippets": [
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "",
+              "the",
+              "district",
+              "office",
+              "and"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "_0",
+              "the",
+              "district",
+              "office",
+              "and"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "they"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "they"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "tell",
+              "i",
+              "that",
+              "i",
+              "need"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "told",
+              "me",
+              "that",
+              "i",
+              "need"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "this",
+              "i",
+              "get",
+              "from",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "this",
+              "i",
+              "got",
+              "from",
+              "_0"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "they"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "they"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "have",
+              "it",
+              "mhm",
+              "",
+              "for"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "had",
+              "it",
+              "mhm",
+              "_14",
+              "for"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "yah",
+              "for",
+              "family",
+              "visum",
+              "but"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "yah",
+              "for",
+              "family",
+              "visa",
+              "but"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "they"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "they"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "",
+              "she",
+              "tell",
+              "i",
+              "that"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "the-",
+              "she",
+              "told",
+              "me",
+              "that"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
