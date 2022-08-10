@@ -21,7 +21,7 @@ A more complex expression with conditionals and variables:
 
 You can also do stuff like this:
 
-```xpath
+```xquery
 for $w in //tei:w[@xml:id]
 return let $xid := $w/@xml:id
     return 
