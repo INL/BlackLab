@@ -7,7 +7,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Get information about this BlackLab server.
+ * Show a simple help page. TO BE REMOVED.
  */
 public class RequestHandlerBlsHelp extends RequestHandler {
 

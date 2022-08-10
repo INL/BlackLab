@@ -31,7 +31,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.util.LuceneUtil;
 
 /**
- * Get information about the structure of an index.
+ * Get information about a field in the index.
  */
 public class RequestHandlerFieldInfo extends RequestHandler {
 

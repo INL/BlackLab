@@ -7,7 +7,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Display the contents of the cache.
+ * Clear the cache.
  */
 public class RequestHandlerClearCache extends RequestHandler {
     public RequestHandlerClearCache(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,

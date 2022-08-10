@@ -8,7 +8,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Display the contents of the cache.
+ * Delete a user index.
  */
 public class RequestHandlerDeleteIndex extends RequestHandler {
     public RequestHandlerDeleteIndex(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,

@@ -19,6 +19,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.jobs.User;
 
+/**
+ * Base class for handling CSV requests for hits and documents.
+ */
 public abstract class RequestHandlerCsvAbstract extends RequestHandler {
     public RequestHandlerCsvAbstract(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource, String urlPathInfo) {
         super(servlet, request, user, indexName, urlResource, urlPathInfo);

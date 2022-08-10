@@ -14,7 +14,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Display the contents of the cache.
+ * Get and change sharing options for a user corpus.
  */
 public class RequestHandlerSharing extends RequestHandler {
 

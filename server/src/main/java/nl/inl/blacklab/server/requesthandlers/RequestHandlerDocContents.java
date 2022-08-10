@@ -26,7 +26,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
- * Get information about the structure of an index.
+ * Show (part of) the original contents of a document.
  */
 public class RequestHandlerDocContents extends RequestHandler {
 

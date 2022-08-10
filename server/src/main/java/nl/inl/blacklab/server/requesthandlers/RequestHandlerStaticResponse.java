@@ -7,6 +7,9 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.jobs.User;
 
+/**
+ * Show a static response such as an error or succes message.
+ */
 public class RequestHandlerStaticResponse extends RequestHandler {
 
     /** Error or status? */

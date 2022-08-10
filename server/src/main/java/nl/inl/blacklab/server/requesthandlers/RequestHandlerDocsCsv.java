@@ -36,7 +36,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Request handler for hit results.
+ * Handle /docs requests that produce CSV.
  */
 public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     private static class Result {

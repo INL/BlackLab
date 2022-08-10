@@ -34,7 +34,7 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Request handler for the doc results.
+ * List documents, search for documents matching criteria.
  */
 public class RequestHandlerDocs extends RequestHandler {
 

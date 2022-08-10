@@ -9,7 +9,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Display the contents of the cache.
+ * Create a user index.
  */
 public class RequestHandlerCreateIndex extends RequestHandler {
     public RequestHandlerCreateIndex(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,

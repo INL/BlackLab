@@ -28,7 +28,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
- * Get information about the structure of an index.
+ * Get a snippet of a document's contents.
  */
 public class RequestHandlerDocSnippet extends RequestHandler {
     public RequestHandlerDocSnippet(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,

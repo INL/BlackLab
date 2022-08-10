@@ -31,7 +31,7 @@ import nl.inl.blacklab.server.jobs.User;
 import nl.inl.blacklab.server.util.FileUploadHandler;
 
 /**
- * Display the contents of the cache.
+ * Add document(s) to a user index.
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
     // TODO make configurable?

@@ -16,7 +16,9 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.User;
 
 /**
- * Get information about the structure of an index.
+ * Explain how a query will be rewritten.
+ *
+ * To be removed. Superseded by parameter explain=true for /hits request.
  */
 public class RequestHandlerExplain extends RequestHandler {
 
