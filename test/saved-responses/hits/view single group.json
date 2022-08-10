@@ -4,7 +4,7 @@
       "group": "field:title",
       "indexname": "test",
       "patt": "\"a\"",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid",
+      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
       "viewgroup": "str:service encounter about visa application for family members",
       "waitfortotal": "true",
       "wordsaroundhit": "1"

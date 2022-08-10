@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "\"a\" [lemma=\"successful\"]",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid",
+      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },

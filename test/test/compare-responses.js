@@ -76,10 +76,12 @@ function expectUnchanged(category, testName, actualResponse) {
     // Remove anything that's variable (e.g. search time) from the response.
     const sanitized = sanitizeResponse(actualResponse);
 
-    // Did we have a previous response?
+    // Ensure category dir exists
     const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
     if (!fs.existsSync(categoryDir))
         fs.mkdirSync(categoryDir);
+
+    // Did we have a previous response?
     const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category), `${sanitizeFileName(testName)}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
@@ -88,8 +90,12 @@ function expectUnchanged(category, testName, actualResponse) {
         // Compare
         expect(sanitized).to.be.deep.equal(savedResponse);
     } else {
-        // Save this response for subsequent tests
-        fs.writeFileSync(savedResponseFile, JSON.stringify(sanitized, null, 2), { encoding: 'utf8' });
+        if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
+            // Save this response for subsequent tests
+            fs.writeFileSync(savedResponseFile, JSON.stringify(sanitized, null, 2), {encoding: 'utf8'});
+        } else {
+            expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
+        }
     }
 }
 

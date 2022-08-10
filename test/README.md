@@ -18,7 +18,7 @@ The easiest way to do this is to run this process in Docker; this automates the 
 ## Optionally point to a directory containing custom data, optionally including a custom environment for testing
 #export INDEX_TEST_DATA_CONFIGURATION=./custom-data
 
-sh test/run.sh
+sh test/run-ci.sh
 ```
 
 ### Build a blacklab test server
@@ -105,7 +105,7 @@ You can customize the testing data used for **indexing tests** by setting the `I
 containing test data configuration files. `INDEX_TEST_DATA_ROOT` must available inside the repository and
 relative to the `test/` directory.
 
-In addition, if the `INDEX_TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](run-tests.sh)
+In addition, if the `INDEX_TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](perform-test-run.sh)
 will source it before running any tests. This allows the test to add environment variables to control for custom blacklab server configurations.
 
 For guidance on how to configure custom test data see the example here: [index-test-config.json](data/index-test-config.json)

@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "\"the\"",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid",
+      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -1021,6 +1021,19 @@
     }
   ],
   "docInfos": {
+    "PBsve435": {
+      "fromInputFile": [
+        "/input/PBsve435.xml"
+      ],
+      "pid": [
+        "PBsve435"
+      ],
+      "title": [
+        "service encounter about getting an address printed out"
+      ],
+      "lengthInTokens": 164,
+      "mayView": false
+    },
     "PBsve430": {
       "fromInputFile": [
         "/input/PBsve430.xml"
@@ -1045,19 +1058,6 @@
         "interview about conference experience and impressions of city"
       ],
       "lengthInTokens": 268,
-      "mayView": false
-    },
-    "PBsve435": {
-      "fromInputFile": [
-        "/input/PBsve435.xml"
-      ],
-      "pid": [
-        "PBsve435"
-      ],
-      "title": [
-        "service encounter about getting an address printed out"
-      ],
-      "lengthInTokens": 164,
       "mayView": false
     }
   }

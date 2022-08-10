@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "[]",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid",
+      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -809,53 +809,6 @@
     },
     {
       "docPid": "PRint602",
-      "start": 226,
-      "end": 227,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "_0"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "oh"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "oh"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "er"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "er"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
       "start": 125,
       "end": 126,
       "left": {
@@ -884,6 +837,53 @@
         ],
         "word": [
           "erm"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "er"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "er"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 226,
+      "end": 227,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "oh"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "oh"
         ]
       },
       "right": {
@@ -1185,6 +1185,53 @@
     },
     {
       "docPid": "PBsve430",
+      "start": 34,
+      "end": 35,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "that"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "i"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
       "start": 119,
       "end": 120,
       "left": {
@@ -1260,53 +1307,6 @@
         ],
         "word": [
           "and"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "i"
-        ]
-      }
-    },
-    {
-      "docPid": "PBsve430",
-      "start": 34,
-      "end": 35,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "_0"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "that"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "that"
         ]
       },
       "right": {
@@ -2078,8 +2078,8 @@
     },
     {
       "docPid": "PRint602",
-      "start": 188,
-      "end": 189,
+      "start": 180,
+      "end": 181,
       "left": {
         "punct": [
           " "
@@ -2125,8 +2125,8 @@
     },
     {
       "docPid": "PRint602",
-      "start": 180,
-      "end": 181,
+      "start": 188,
+      "end": 189,
       "left": {
         "punct": [
           " "
@@ -2360,6 +2360,19 @@
     }
   ],
   "docInfos": {
+    "PBsve435": {
+      "fromInputFile": [
+        "/input/PBsve435.xml"
+      ],
+      "pid": [
+        "PBsve435"
+      ],
+      "title": [
+        "service encounter about getting an address printed out"
+      ],
+      "lengthInTokens": 164,
+      "mayView": false
+    },
     "PBsve430": {
       "fromInputFile": [
         "/input/PBsve430.xml"
@@ -2384,19 +2397,6 @@
         "interview about conference experience and impressions of city"
       ],
       "lengthInTokens": 268,
-      "mayView": false
-    },
-    "PBsve435": {
-      "fromInputFile": [
-        "/input/PBsve435.xml"
-      ],
-      "pid": [
-        "PBsve435"
-      ],
-      "title": [
-        "service encounter about getting an address printed out"
-      ],
-      "lengthInTokens": 164,
       "mayView": false
     }
   }

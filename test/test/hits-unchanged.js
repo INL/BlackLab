@@ -27,7 +27,7 @@ function expectHitsUnchanged(testName, params) {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')
             .query({
-                sort: "wordleft:word:i,wordright:word:i,field:pid", // fully defined sort
+                sort: "wordleft:word:i,wordright:word:i,field:pid,hitposition", // fully defined sort
                 wordsaroundhit: 1,
                 waitfortotal: "true",
                 //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)

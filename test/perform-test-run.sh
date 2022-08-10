@@ -1,5 +1,7 @@
 #!/bin/sh
 
+# This script is run inside the Docker container to run the tests.
+
 set -o errexit  # Exit on error (set -e)
 
 ## Load overrides for the testing environment if any

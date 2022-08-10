@@ -70,12 +70,32 @@ services:
     environment:
       - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
       - INDEX_TEST_DATA_ROOT=${INDEX_TEST_DATA_ROOT:-data}
+
+      # If response file for a test does not exist, the test will FAIL.
+      - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=false
+
     build: test
-    volumes:
-      # We need access to the previous responses and be able to save responses for any new tests.
-      - ./test/saved-responses:/app/saved-responses
     depends_on:
       - testserver
+
+  # Runs the tests locally, so we can save new test responses
+  test-local:
+      profiles:
+          - tools
+      environment:
+          - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
+          - INDEX_TEST_DATA_ROOT=${INDEX_TEST_DATA_ROOT:-data}
+
+          # If response file for a test does not exist, the test will SUCCEED,
+          # and the response file will be saved for future runs.
+          - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
+
+      build: test
+      volumes:
+          # We need access to the previous responses and be able to save responses for any new tests.
+          - ./test/saved-responses:/app/saved-responses
+      depends_on:
+          - testserver
 
 
 
