@@ -16,16 +16,5 @@
     "canCreateIndex": false
   },
   "helpPageUrl": "/blacklab-server/help",
-  "cacheStatus": {
-    "freeMemory": "VALUE_REMOVED",
-    "maxJobAgeSec": 3600,
-    "numberOfSearches": 115,
-    "maxQueuedSearches": 20,
-    "targetFreeMemMegs": 841,
-    "maxSearchAgeSec": 3600,
-    "minFreeMemForSearchMegs": 50,
-    "countsPerStatus": "VALUE_REMOVED",
-    "maxSearchTimeSec": 300,
-    "sizeBytes": "VALUE_REMOVED"
-  }
+  "cacheStatus": "VALUE_REMOVED"
 }
