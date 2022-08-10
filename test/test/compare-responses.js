@@ -7,6 +7,7 @@ const sanitizeFileName = require("sanitize-filename");
 const constants = require('./constants');
 const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
 
+
 /**
  * Remove variable values such as build time, version, etc. from response.
  *
@@ -15,8 +16,8 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
  * @param response response to sanitize
  * @return response with variable values replaces with fixed ones
  */
-function sanitizeResponse(response) {
-    return makeResponseValuesFixed(response, {
+function sanitizeBlsResponse(response) {
+    return sanitizeResponse(response, {
         // Server information page
         blackLabBuildTime: true,
         blacklabVersion: true,
@@ -38,28 +39,52 @@ function sanitizeResponse(response) {
 }
 
 /**
- * Replace values in  JSON object structure with fixed ones.
+ * Clean up a response object for comparison.
  *
- * This enables us to compare responses from tests.
+ * Replaces specified values in JSON object structure with constant ones,
+ * and optionally applies a function to apply to values in the response.
  *
- * @param response response to sanitize
- * @param valuesToFix (potentially nested) object structure of values that, when found, should be set to this fixed value.
- * @return response with variable values replaces with fixed ones
+ * This enables us to transform responses into a form that we can easily compare.
+ *
+ * @param response response to clean up
+ * @param keysToMakeConstant (potentially nested) object structure of keys that, when found, should be set to a
+ *   constant value. Note that only the keys of this object are used. Alternatively, a single string or a list of
+ *   strings is also allowed. If null or undefined are specified, an empty object is used.
+ * @param transformValueFunc (optional) function to apply to all values copied from the response (i.e. values not
+ *   being made constant)
+ * @return sanitized response
  */
-function makeResponseValuesFixed(response, valuesToFix) {
+function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
+
+    // Make sure keysToMakeConstant is an object
+    let recursive = false;
+    if (keysToMakeConstant instanceof Array) {
+        keysToMakeConstant = Object.fromEntries(keysToMakeConstant.map(v => [v, true]));
+    } else if (typeof keysToMakeConstant === 'object') {
+        recursive = true;
+    } else if (typeof keysToMakeConstant === 'string') {
+        keysToMakeConstant = { [keysToMakeConstant]: true };
+    } else {
+        keysToMakeConstant = {};
+    }
+
+    // Replace any of the keys from keysToMakeConstant with constant values,
+    // and perform any other fixes if fixValueFunc was supplied.
     const cleanedData = {};
     for (let key in response) {
-        if (!(key in valuesToFix)) {
-            // Nothing to fix. Just copy this part.
-            cleanedData[key] = response[key];
-        } else {
-            if (typeof response[key] === 'object') {
-                // Recursively fix this part of the response
-                cleanedData[key] = makeResponseValuesFixed(response[key], valuesToFix[key]);
+        const value = response[key];
+        if (key in keysToMakeConstant) {
+            // This is (or contains) a variable value we don't want to compare.
+            if (recursive && typeof value === 'object' && !(value instanceof Array)) {
+                // Subobject; recursively fix this part of the response
+                cleanedData[key] = sanitizeResponse(response[key], keysToMakeConstant[key]);
             } else {
-                // Make this response value fixed
+                // Single value or array. Make this response value fixed
                 cleanedData[key] = "VALUE_REMOVED";
             }
+        } else {
+            // No values to make constant, just regular values we want to compare.
+            cleanedData[key] = transformValueFunc ? transformValueFunc(value) : value;
         }
     }
     return cleanedData;
@@ -69,12 +94,13 @@ function makeResponseValuesFixed(response, valuesToFix) {
  * Either save this response if it's the first time we
  * run this test, or compare it to the previously saved version.
  *
- * @param testName name of this test
+ * @param category test category (e.g. "hits")
+ * @param testName name of this test, and file name for the response
  * @param actualResponse webservice response we got (parsed JSON)
  */
 function expectUnchanged(category, testName, actualResponse) {
     // Remove anything that's variable (e.g. search time) from the response.
-    const sanitized = sanitizeResponse(actualResponse);
+    const sanitized = sanitizeBlsResponse(actualResponse);
 
     // Ensure category dir exists
     const categoryDir = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category));
@@ -100,5 +126,7 @@ function expectUnchanged(category, testName, actualResponse) {
 }
 
 module.exports = {
+    sanitizeBlsResponse,
+    sanitizeResponse,
     expectUnchanged,
 };

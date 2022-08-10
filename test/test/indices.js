@@ -1,7 +1,6 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
-const should = chai.should();
 const assert = chai.assert;
 const crypto = require('crypto')
 const fs = require('fs')
@@ -9,11 +8,13 @@ const path = require('path')
 const parseXmlString = require('xml2js').parseStringPromise;
 chai.use(chaiHttp);
 
+const sanitizeResponse = require('./compare-responses').sanitizeResponse;
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
 const TEST_DATA_ROOT = constants.TEST_DATA_ROOT;
-const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json')));
+const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json'),
+        { encoding: 'utf-8' }));
 
 const INPUT_FORMAT_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['input-format']);
 const DOC_TO_INDEX_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['docs-to-index']);
@@ -96,21 +97,11 @@ async function getIndexContent(indexName) {
 }
 
 function clearKeys(keys, data) {
-    const diff = Object.keys(data).filter(k => !keys.includes(k));
-    const cleanedData = {}
-    for (let k of diff) {
-        var value = data[k];
-        if (!(value instanceof Array)) {
-            cleanedData[k] = value;
-            continue;
-        }
-        if (value.length === 1 && typeof value[0] === "string" && (value[0].trim() === "" || value[0].trim() === "\n")) {
-            cleanedData[k] = [];
-        } else {
-            cleanedData[k] = value;
-        }
-    }
-    return cleanedData
+    return sanitizeResponse(data, keys, (v) => {
+        // Is the value an array with a single string element that only contains whitespace?
+        // If so, return an empty array. Otherwise, return unchanged
+        return v instanceof Array && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+    });
 }
 
 async function getIndexMetadata(indexName) {
@@ -223,17 +214,16 @@ describe('Indexing tests', () => {
             assert.isTrue(queryInd.ok);
             const body = await toJson(queryInd.body);
 
-            const keys = ['summary'];
+            const key = 'summary';
             if (testCase['expected'] === null) {
-                const results = clearKeys(keys, body['blacklabResponse']);
+                const results = clearKeys(key, body['blacklabResponse']);
                 expect(results['hits']).to.be.empty;
             } else {
                 const expectedOutput = await toJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
-                expect(clearKeys(keys, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(keys, body['blacklabResponse']));
+                expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(keys, body['blacklabResponse']));
             }
         }
     });
-
 
 });
 

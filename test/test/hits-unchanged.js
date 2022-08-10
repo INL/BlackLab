@@ -5,22 +5,27 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const util = require('./util');
 const expectUnchanged = require('./compare-responses').expectUnchanged;
 
-// Test that a hits search for a pattern returns the correct number of hits and docs,
-// and optionally test that the first hit matches (either JSON or text).
+//
+//
+
+/**
+ * Test that a hits search returns the same response as before.
+ *
+ * @param testName The name of the test (and file name of the expected response).
+ * @param params The search parameters.
+ */
 function expectHitsUnchanged(testName, params) {
 
     // You can call this function with one string parameter, which is then used
     // as both the name and the CQL pattern.
-    if (params === undefined && typeof testName === 'string')
-        params = testName;
-    else if (params === undefined)
-        throw 'You can only leave out the test name when specifying a single CQL pattern';
+    if (params === undefined)
+        throw 'Please pass both a test name and CQL pattern (or parameter object)';
 
     // You can specify a CQL pattern or a map of parameters
-    const useParams = typeof params === 'string' ? { patt: params } : params;
+    if (typeof params === 'string')
+        params = { patt: params };
 
     describe(testName, () => {
         it('response should match previous', done => {
@@ -31,7 +36,7 @@ function expectHitsUnchanged(testName, params) {
                 wordsaroundhit: 1,
                 waitfortotal: "true",
                 //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
-                ...useParams
+                ...params
             })
             .set('Accept', 'application/json')
             .end((err, res) => {
@@ -46,25 +51,23 @@ function expectHitsUnchanged(testName, params) {
 
 
 // Single word
-expectHitsUnchanged('"the"');
-expectHitsUnchanged('"a" [lemma="successful"]');
+expectHitsUnchanged("single word the", '"the"');
+expectHitsUnchanged("simple phrase a succesful", '"a" [lemma="successful"]');
 // Also test that forward index matching either the first or the second clause produces the same results
-expectHitsUnchanged('_FI1("a", [lemma="successful"])');
-expectHitsUnchanged('_FI2("a", [lemma="successful"])');
+expectHitsUnchanged("phrase a succesful with _FI1", '_FI1("a", [lemma="successful"])');
+expectHitsUnchanged("phrase a succesful with _FI2", '_FI2("a", [lemma="successful"])');
 
 // Simple capture group
-expectHitsUnchanged('"one" A:[]');
+expectHitsUnchanged("simple capture group", '"one" A:[]');
 
 // A few simpler tests, just checking matching text
-expectHitsUnchanged('[]');
+expectHitsUnchanged("any token", '[]');
 expectHitsUnchanged("two-four-single-regex", '"two|four"');
 expectHitsUnchanged("two-four-separate", '"two"|"four"');
-expectHitsUnchanged('[lemma="be" & word="are"]');
-expectHitsUnchanged('[lemma="be" & word!="are"]');
-expectHitsUnchanged('<u/> containing "good"');
-
-// Check if docPid, hit start and hit end match
-expectHitsUnchanged('"very" "good" within <u/>');
+expectHitsUnchanged("token level AND", '[lemma="be" & word="are"]');
+expectHitsUnchanged("token level AND NOT", '[lemma="be" & word!="are"]');
+expectHitsUnchanged("containing", '<u/> containing "good"');
+expectHitsUnchanged("within", '"very" "good" within <u/>');
 
 // View a single group from grouped hits
 expectHitsUnchanged('view single group', {
