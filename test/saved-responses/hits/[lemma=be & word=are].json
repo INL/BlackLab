@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "[lemma=\"be\" & word=\"are\"]",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
+      "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -81,53 +81,6 @@
     },
     {
       "docPid": "PRint602",
-      "start": 117,
-      "end": 118,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "or"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "or"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "you"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "you"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
       "start": 11,
       "end": 12,
       "left": {
@@ -142,147 +95,6 @@
         ],
         "word": [
           "we"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "do"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "doing"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 63,
-      "end": 64,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "what"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "what"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "y-"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 137,
-      "end": 138,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "you"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "you"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "a"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "a"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 67,
-      "end": 68,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "you"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "you"
         ]
       },
       "match": {
@@ -358,6 +170,194 @@
         ],
         "word": [
           "from"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 63,
+      "end": 64,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "what"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "what"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "y-"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 67,
+      "end": 68,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "do"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "doing"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 117,
+      "end": 118,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "or"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "or"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 137,
+      "end": 138,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
         ]
       }
     }

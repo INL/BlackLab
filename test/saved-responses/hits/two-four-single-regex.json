@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "\"two|four\"",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
+      "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -81,53 +81,6 @@
     },
     {
       "docPid": "PRint602",
-      "start": 101,
-      "end": 102,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "thousand"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "thousand"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "four"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "four"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "_0"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
       "start": 99,
       "end": 100,
       "left": {
@@ -170,6 +123,53 @@
         ],
         "word": [
           "thousand"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 101,
+      "end": 102,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "four"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "four"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
         ]
       }
     }

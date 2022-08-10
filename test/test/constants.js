@@ -8,7 +8,7 @@ const SHOULD_HAVE_CONTEXT = 'RESPONSE_SHOULD_HAVE_CONTEXT' in process.env
 const SHOULD_EXPECT_DOCS_IN_GROUPS = 'RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS' in process.env
     ? process.env.RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS === "true"
     : false;
-const INDEX_TEST_DATA_ROOT = process.env.INDEX_TEST_DATA_ROOT || "data";
+const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
 const SAVED_RESPONSES_PATH = process.env.SAVED_RESPONSES_PATH || "saved-responses";
 
 module.exports = {
@@ -18,6 +18,6 @@ module.exports = {
     BLACKLAB_PASSWORD,
     SHOULD_HAVE_CONTEXT,
     SHOULD_EXPECT_DOCS_IN_GROUPS,
-    INDEX_TEST_DATA_ROOT,
+    TEST_DATA_ROOT,
     SAVED_RESPONSES_PATH
 };

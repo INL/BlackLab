@@ -12,7 +12,7 @@ chai.use(chaiHttp);
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
-const TEST_DATA_ROOT = constants.INDEX_TEST_DATA_ROOT;
+const TEST_DATA_ROOT = constants.TEST_DATA_ROOT;
 const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json')));
 
 const INPUT_FORMAT_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['input-format']);

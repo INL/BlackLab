@@ -21,6 +21,8 @@ The easiest way to do this is to run this process in Docker; this automates the 
 sh test/run-ci.sh
 ```
 
+If you add a new test, you should run `test/run-local.sh`. The new test will always PASS and the server response will be saved to `test/saved-responses/<category>/<testName>.json`. Then subsequent runs of `run-ci.sh` will use the saved response.
+
 ### Build a blacklab test server
 If you've made changes ensure the latest BlackLab code and tests are being used by:
 
@@ -101,11 +103,11 @@ Data from the VOICE project is licensed under the [Creative Commons Attribution-
 
 ### Custom data
 
-You can customize the testing data used for **indexing tests** by setting the `INDEX_TEST_DATA_ROOT` to a directory
-containing test data configuration files. `INDEX_TEST_DATA_ROOT` must available inside the repository and
+You can customize the testing data used for **indexing tests** by setting the `TEST_DATA_ROOT` to a directory
+containing test data configuration files. `TEST_DATA_ROOT` must available inside the repository and
 relative to the `test/` directory.
 
-In addition, if the `INDEX_TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](perform-test-run.sh)
+In addition, if the `TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](perform-test-run.sh)
 will source it before running any tests. This allows the test to add environment variables to control for custom blacklab server configurations.
 
 For guidance on how to configure custom test data see the example here: [index-test-config.json](data/index-test-config.json)

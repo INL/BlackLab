@@ -5,9 +5,9 @@
 set -o errexit  # Exit on error (set -e)
 
 ## Load overrides for the testing environment if any
-if [ -f ${INDEX_TEST_DATA_ROOT}/environment ]; then
+if [ -f ${TEST_DATA_ROOT}/environment ]; then
   echo "sourcing custom environment for tests"
-  . ${INDEX_TEST_DATA_ROOT}/environment
+  . ${TEST_DATA_ROOT}/environment
 fi
 
 sleep 5

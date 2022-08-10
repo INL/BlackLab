@@ -3,7 +3,7 @@
     "searchParam": {
       "indexname": "test",
       "patt": "<u/> containing \"good\"",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
+      "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -32,6 +32,132 @@
     }
   },
   "hits": [
+    {
+      "docPid": "PRint602",
+      "start": 153,
+      "end": 158,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "meet/meeting"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "meeting"
+        ]
+      },
+      "match": {
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
+        "lemma": [
+          "yes",
+          "it",
+          "be",
+          "good",
+          "yeah"
+        ],
+        "pos": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "word": [
+          "yes",
+          "it",
+          "'s",
+          "good",
+          "yeah"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "yes"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "yes"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 159,
+      "end": 164,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "yes"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "yes"
+        ]
+      },
+      "match": {
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
+        "lemma": [
+          "it",
+          "be",
+          "a",
+          "good",
+          "atmosphere"
+        ],
+        "pos": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "word": [
+          "it",
+          "'s",
+          "a",
+          "good",
+          "atmosphere"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "there"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "there"
+        ]
+      }
+    },
     {
       "docPid": "PRint602",
       "start": 226,
@@ -157,6 +283,73 @@
     },
     {
       "docPid": "PRint602",
+      "start": 247,
+      "end": 253,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "match": {
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
+        "lemma": [
+          "and",
+          "er",
+          "good",
+          "food",
+          "",
+          ""
+        ],
+        "pos": [
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "word": [
+          "and",
+          "er",
+          "good",
+          "foods",
+          "_0",
+          "@@@@"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "good"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "good"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
       "start": 253,
       "end": 264,
       "left": {
@@ -239,199 +432,6 @@
         ],
         "word": [
           "okay"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 153,
-      "end": 158,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "meet/meeting"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "meeting"
-        ]
-      },
-      "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
-        "lemma": [
-          "yes",
-          "it",
-          "be",
-          "good",
-          "yeah"
-        ],
-        "pos": [
-          "",
-          "",
-          "",
-          "",
-          ""
-        ],
-        "word": [
-          "yes",
-          "it",
-          "'s",
-          "good",
-          "yeah"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "yes"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "yes"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 247,
-      "end": 253,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "mhm"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "mhm"
-        ]
-      },
-      "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
-        "lemma": [
-          "and",
-          "er",
-          "good",
-          "food",
-          "",
-          ""
-        ],
-        "pos": [
-          "",
-          "",
-          "",
-          "",
-          "",
-          ""
-        ],
-        "word": [
-          "and",
-          "er",
-          "good",
-          "foods",
-          "_0",
-          "@@@@"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "good"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "good"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 159,
-      "end": 164,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "yes"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "yes"
-        ]
-      },
-      "match": {
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
-        "lemma": [
-          "it",
-          "be",
-          "a",
-          "good",
-          "atmosphere"
-        ],
-        "pos": [
-          "",
-          "",
-          "",
-          "",
-          ""
-        ],
-        "word": [
-          "it",
-          "'s",
-          "a",
-          "good",
-          "atmosphere"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "there"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "there"
         ]
       }
     }

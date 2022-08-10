@@ -4,7 +4,7 @@
       "group": "field:title",
       "indexname": "test",
       "patt": "\"a\"",
-      "sort": "wordleft:word:i,wordright:word:i,field:pid,docid,hitposition",
+      "sort": "field:pid,hitposition",
       "viewgroup": "str:service encounter about visa application for family members",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
@@ -36,20 +36,20 @@
   "hits": [
     {
       "docPid": "PBsve430",
-      "start": 255,
-      "end": 256,
+      "start": 29,
+      "end": 30,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "for"
+          "need"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "for"
+          "need"
         ]
       },
       "match": {
@@ -71,13 +71,13 @@
           " "
         ],
         "lemma": [
-          "visa"
+          "letter"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "visa"
+          "letter"
         ]
       }
     },
@@ -130,20 +130,20 @@
     },
     {
       "docPid": "PBsve430",
-      "start": 29,
-      "end": 30,
+      "start": 255,
+      "end": 256,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "need"
+          "for"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "need"
+          "for"
         ]
       },
       "match": {
@@ -165,13 +165,13 @@
           " "
         ],
         "lemma": [
-          "letter"
+          "visa"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "letter"
+          "visa"
         ]
       }
     },
