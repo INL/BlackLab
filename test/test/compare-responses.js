@@ -20,13 +20,23 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
 function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
     const keysToMakeConstant = {
         // Server information page
-        blackLabBuildTime: true,
+        blacklabBuildTime: true,
         blacklabVersion: true,
+        indices: {
+            test: {
+                timeModified: true
+            }
+        },
+        cacheStatus: {
+            freeMemory: true,
+            countsPerStatus: true,
+            sizeBytes: true
+        },
 
         // Corpus information page
         versionInfo: {
             blackLabBuildTime: true,
-            blacklabVersion: true,
+            blackLabVersion: true,
             timeCreated: true,
             timeModified: true
         },
@@ -34,7 +44,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         // Hits/docs response
         summary: {
             searchTime: true,
-            countTime: true,
+            countTime: true
         }
     };
     if (removeParametersFromResponse) {

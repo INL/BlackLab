@@ -5,7 +5,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const expectUnchanged = require('./compare-responses').expectUnchanged;
+const { expectUnchanged } = require("./compare-responses");
 
 // Test that a hits search for a pattern returns the correct number of hits and docs,
 // and optionally test that the first hit matches (either JSON or text).

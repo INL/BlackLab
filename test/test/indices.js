@@ -8,7 +8,7 @@ const path = require('path')
 const parseXmlString = require('xml2js').parseStringPromise;
 chai.use(chaiHttp);
 
-const sanitizeResponse = require('./compare-responses').sanitizeResponse;
+const { sanitizeResponse } = require("./compare-responses");
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
@@ -114,8 +114,8 @@ async function getIndexMetadata(indexName) {
     return request.send();
 }
 
-async function toJson(xml) {
-    return parseXmlString(xml);
+async function xmlToJson(xml) {
+    return parseXmlString(xml, null);
 }
 
 function queryIndex(indexName, pattern, filters, format = 'application/json') {
@@ -212,18 +212,16 @@ describe('Indexing tests', () => {
             const filterTerms = testCase['filters'];
             const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
             assert.isTrue(queryInd.ok);
-            const body = await toJson(queryInd.body);
+            const body = await xmlToJson(queryInd.body);
 
             const key = 'summary';
             if (testCase['expected'] === null) {
                 const results = clearKeys(key, body['blacklabResponse']);
                 expect(results['hits']).to.be.empty;
             } else {
-                const expectedOutput = await toJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
-                expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(keys, body['blacklabResponse']));
+                const expectedOutput = await xmlToJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
+                expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(key, body['blacklabResponse']));
             }
         }
     });
-
 });
-

@@ -4,8 +4,8 @@ const expect = chai.expect;
 chai.use(chaiHttp);
 
 const constants = require('./constants');
+const { expectUnchanged } = require("./compare-responses");
 
-const expectUnchanged = require('./compare-responses').expectUnchanged;
 
 /**
  * Test that a hits search for a pattern returns the correct number of hits and docs,
