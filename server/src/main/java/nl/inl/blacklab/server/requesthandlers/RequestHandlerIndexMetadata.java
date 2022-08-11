@@ -53,11 +53,11 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.custom("displayName", ""))
-                    .entry("description", indexMetadata.custom("description", ""))
+                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
+                    .entry("description", indexMetadata.custom().get("description", ""))
                     .entry("status", status)
                     .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.custom("textDirection", "ltr"));
+                    .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
             addIndexProgress(ds, index, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());

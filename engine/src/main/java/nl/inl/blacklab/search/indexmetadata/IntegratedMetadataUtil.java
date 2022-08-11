@@ -389,12 +389,15 @@ class IntegratedMetadataUtil {
         final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
                 "custom", "contentViewable", "documentFormat", "versionInfo", "fieldInfo"));
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
+
+        // Get top-level custom properties
         ObjectNode nodeCustom = Json.getObject(jsonRoot, "custom");
         Iterator<Map.Entry<String, JsonNode>> itCustom = nodeCustom.fields();
         while (itCustom.hasNext()) {
             Map.Entry<String, JsonNode> entry = itCustom.next();
-            metadata.setCustom(entry.getKey(), entry.getValue().textValue());
+            metadata.custom().put(entry.getKey(), entry.getValue().textValue());
         }
+
         metadata.setContentViewable(Json.getBoolean(jsonRoot, "contentViewable", false));
         metadata.setDocumentFormat(Json.getString(jsonRoot, "documentFormat", ""));
     }
@@ -420,10 +423,13 @@ class IntegratedMetadataUtil {
     public static ObjectNode encodeToJson(IndexMetadataIntegrated metadata) {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
+
+        // Add top-level custom properties
         ObjectNode nodeCustom = jsonRoot.putObject("custom");
-        for (Map.Entry<String, String> e: metadata.customMap().entrySet()) {
+        for (Map.Entry<String, String> e: metadata.custom().asMap().entrySet()) {
             nodeCustom.put(e.getKey(), e.getValue());
         }
+
         jsonRoot.put("contentViewable", metadata.contentViewable());
         jsonRoot.put("documentFormat", metadata.documentFormat());
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");

@@ -3,7 +3,6 @@ package nl.inl.blacklab.mocks;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.TextDirection;
@@ -11,6 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
@@ -68,22 +68,8 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public String custom(String key, String defaultValue) {
-        switch (key) {
-        case "displayName": return displayName();
-        case "description": return description();
-        case "textDirection": return textDirection().getCode();
-        default: return defaultValue;
-        }
-    }
-
-    @Override
-    public Map<String, String> customMap() {
-        return Map.of(
-                "displayName", displayName(),
-                "description", description(),
-                "textDirection", textDirection().getCode()
-        );
+    public CustomProps custom() {
+        return CustomProps.corpusDelegate(this);
     }
 
     @Override

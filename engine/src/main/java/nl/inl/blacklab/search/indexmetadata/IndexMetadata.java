@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
-import java.util.Map;
 
 import nl.inl.blacklab.indexers.config.TextDirection;
 
@@ -32,35 +31,6 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	}
 
     /**
-     * Get a custom property for this corpus.
-     *
-     * Custom properties are not used by BlackLab, but are passed on by BLS
-     * for use by applications, e.g. a search GUI.
-     *
-     * Examples: displayName, description, textDirection.
-     *
-     * @param key property to get
-     * @return property value; defaults to an empty string if not found
-     */
-    default String custom(String key) {
-        return custom(key, null);
-    }
-
-    /**
-     * Get a custom property for this corpus.
-     *
-     * Custom properties are not used by BlackLab, but are passed on by BLS
-     * for use by applications, e.g. a search GUI.
-     *
-     * Examples: displayName, description, textDirection.
-     *
-     * @param key property to get
-     * @param defaultValue value to return if property not found
-     * @return property value; defaults to an empty string if not found
-     */
-    String custom(String key, String defaultValue);
-
-    /**
      * Get the custom properties for this corpus.
      *
      * Custom properties are not used by BlackLab, but are passed on by BLS
@@ -70,7 +40,7 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
      *
      * @return map of custom properties
      */
-    Map<String, String> customMap();
+    CustomProps custom();
 
 	/**
 	 * Get the display name for the index.
@@ -78,7 +48,7 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	 * If no display name was specified, returns the name of the index directory.
 	 *
 	 * @return the display name
-     * @deprecated use {@link #custom(String, String)} with key "displayName" instead
+     * @deprecated use {@link #custom()} and get("displayName", "") instead
 	 */
     @Deprecated
 	String displayName();
@@ -86,7 +56,7 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	/**
 	 * Get a description of the index, if specified
 	 * @return the description
-     * @deprecated use {@link #custom(String, String)} with key "description" instead
+     * @deprecated use {@link #custom()} and get("description", "") instead
 	 */
     @Deprecated
 	String description();
@@ -100,7 +70,7 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
     /**
      * What's the text direction of this corpus?
      * @return text direction
-     * @deprecated use {@link #custom(String, String)} with key "textDirection" instead
+     * @deprecated use {@link #custom()} and get("textDirection", "ltr") instead
      */
     @Deprecated
 	TextDirection textDirection();

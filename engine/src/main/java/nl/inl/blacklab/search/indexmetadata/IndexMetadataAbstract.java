@@ -1097,22 +1097,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     @Override
-    public String custom(String key, String defaultValue) {
-        switch (key) {
-        case "displayName": return displayName();
-        case "description": return description();
-        case "textDirection": return textDirection().getCode();
-        default: return defaultValue;
-        }
-    }
-
-    @Override
-    public Map<String, String> customMap() {
-        return Map.of(
-                "displayName", displayName(),
-                "description", description(),
-                "textDirection", textDirection().getCode()
-        );
+    public CustomProps custom() {
+        return new CustomPropsCorpusDelegate(this);
     }
 
     /**

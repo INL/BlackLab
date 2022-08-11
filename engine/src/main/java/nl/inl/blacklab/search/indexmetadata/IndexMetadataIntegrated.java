@@ -5,10 +5,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -136,20 +133,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     /** Our index */
     protected final BlackLabIndex index;
 
-    private final Map<String, String> customFields = new HashMap<>();
-
-    public void setCustom(String key, String value) {
-        customFields.put(key, value);
-    }
+    /** Corpus-level custom metadata */
+    private final CustomPropsMap custom = new CustomPropsMap();
 
     @Override
-    public String custom(String key, String defaultValue) {
-        return customFields.getOrDefault(key, defaultValue);
-    }
-
-    @Override
-    public Map<String, String> customMap() {
-        return Collections.unmodifiableMap(customFields);
+    public CustomPropsMap custom() {
+        return custom;
     }
 
     /** When BlackLab.jar was built */
@@ -249,7 +238,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String description() {
-        return custom("description", "");
+        return custom().get("description", "");
     }
 
     /**
@@ -269,7 +258,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public TextDirection textDirection() {
-        return TextDirection.fromCode(custom("textDirection", "ltr"));
+        return TextDirection.fromCode(custom.get("textDirection", "ltr"));
     }
 
     /**
@@ -415,12 +404,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         ensureNotFrozen();
         if (displayName.length() > 80)
             displayName = StringUtils.abbreviate(displayName, 75);
-        this.setCustom("displayName", displayName);
+        custom.put("displayName", displayName);
     }
 
     public void setDescription(String description) {
         ensureNotFrozen();
-        this.setCustom("description", description);
+        custom.put("description", description);
     }
 
     public void setBlackLabBuildTime(String blackLabBuildTime) {
@@ -489,7 +478,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
-        this.setCustom("textDirection", textDirection.getCode());
+        custom.put("textDirection", textDirection.getCode());
     }
 
     /**
@@ -501,7 +490,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String displayName() {
-        String displayName = custom("displayName", "");
+        String displayName = custom.get("displayName", "");
         return !StringUtils.isEmpty(displayName) ? displayName :
                 StringUtils.capitalize(IndexMetadata.indexNameFromDirectory(index.indexDirectory()));
     }

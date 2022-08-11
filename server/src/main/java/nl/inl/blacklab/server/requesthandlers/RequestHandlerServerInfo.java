@@ -44,8 +44,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
                 synchronized (index) {
                     IndexMetadata indexMetadata = index.getIndexMetadata();
-                    String displayName = indexMetadata.custom("displayName", "");
-                    String description = indexMetadata.custom("description", "");
+                    String displayName = indexMetadata.custom().get("displayName", "");
+                    String description = indexMetadata.custom().get("description", "");
                     IndexStatus status = index.getStatus();
 
                     ds.startAttrEntry("index", "name", index.getId());
