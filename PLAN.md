@@ -16,7 +16,9 @@ Integrating with Solr will involve the following steps.
 ## Improve trunk-based development
 
 - [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)? No, generics not needed, see TestSearches; do the same with more classes.
-- [ ] Update integration testing to compare to known good results.
+- [x] Update integration testing to compare to known good results.
+      (better-integration-tests branch, to be merged)
+
 
 ## Incorporate all information into the Lucene index
 
