@@ -37,7 +37,7 @@
       "numberOfHits": 334,
       "docInfo": {
         "fromInputFile": [
-          "/input/PBsve430.xml"
+          "/test-data/input/PBsve430.xml"
         ],
         "pid": [
           "PBsve430"
@@ -372,7 +372,7 @@
       "numberOfHits": 164,
       "docInfo": {
         "fromInputFile": [
-          "/input/PBsve435.xml"
+          "/test-data/input/PBsve435.xml"
         ],
         "pid": [
           "PBsve435"
@@ -707,7 +707,7 @@
       "numberOfHits": 268,
       "docInfo": {
         "fromInputFile": [
-          "/input/PRint602.xml"
+          "/test-data/input/PRint602.xml"
         ],
         "pid": [
           "PRint602"

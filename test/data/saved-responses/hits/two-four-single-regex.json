@@ -2,7 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
-      "patt": "\"one\" A:[]",
+      "patt": "\"two|four\"",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
@@ -11,12 +11,12 @@
     "countTime": "VALUE_REMOVED",
     "windowFirstResult": 0,
     "requestedWindowSize": 50,
-    "actualWindowSize": 2,
+    "actualWindowSize": 3,
     "windowHasPrevious": false,
     "windowHasNext": false,
     "stillCounting": false,
-    "numberOfHits": 2,
-    "numberOfHitsRetrieved": 2,
+    "numberOfHits": 3,
+    "numberOfHitsRetrieved": 3,
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
     "numberOfDocs": 1,
@@ -33,46 +33,35 @@
   },
   "hits": [
     {
-      "docPid": "PBsve430",
-      "start": 195,
-      "end": 197,
-      "captureGroups": [
-        {
-          "name": "A",
-          "start": 196,
-          "end": 197
-        }
-      ],
+      "docPid": "PRint602",
+      "start": 98,
+      "end": 99,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "be"
+          ""
         ],
         "pos": [
           ""
         ],
         "word": [
-          "is"
+          "a_[org1]"
         ]
       },
       "match": {
         "punct": [
-          " ",
           " "
         ],
         "lemma": [
-          "one",
-          "hundred"
+          "two"
         ],
         "pos": [
-          "",
           ""
         ],
         "word": [
-          "one",
-          "hundred"
+          "two"
         ]
       },
       "right": {
@@ -80,57 +69,46 @@
           " "
         ],
         "lemma": [
-          "ninety"
+          "two"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "ninety"
+          "two"
         ]
       }
     },
     {
-      "docPid": "PBsve430",
-      "start": 320,
-      "end": 322,
-      "captureGroups": [
-        {
-          "name": "A",
-          "start": 321,
-          "end": 322
-        }
-      ],
+      "docPid": "PRint602",
+      "start": 99,
+      "end": 100,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "this"
+          "two"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "this"
+          "two"
         ]
       },
       "match": {
         "punct": [
-          " ",
           " "
         ],
         "lemma": [
-          "one",
-          "okay"
+          "two"
         ],
         "pos": [
-          "",
           ""
         ],
         "word": [
-          "one",
-          "okay"
+          "two"
         ]
       },
       "right": {
@@ -138,29 +116,76 @@
           " "
         ],
         "lemma": [
-          "thank"
+          "thousand"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "thanks"
+          "thousand"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 101,
+      "end": 102,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "four"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "four"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
         ]
       }
     }
   ],
   "docInfos": {
-    "PBsve430": {
+    "PRint602": {
       "fromInputFile": [
-        "/input/PBsve430.xml"
+        "/test-data/input/PRint602.xml"
       ],
       "pid": [
-        "PBsve430"
+        "PRint602"
       ],
       "title": [
-        "service encounter about visa application for family members"
+        "interview about conference experience and impressions of city"
       ],
-      "lengthInTokens": 334,
+      "lengthInTokens": 268,
       "mayView": false
     }
   }

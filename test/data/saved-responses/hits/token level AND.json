@@ -1,11 +1,9 @@
 {
   "summary": {
     "searchParam": {
-      "group": "field:title",
       "indexname": "test",
-      "patt": "\"a\"",
+      "patt": "[lemma=\"be\" & word=\"are\"]",
       "sort": "field:pid,hitposition",
-      "viewgroup": "str:service encounter about visa application for family members",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
@@ -13,16 +11,16 @@
     "countTime": "VALUE_REMOVED",
     "windowFirstResult": 0,
     "requestedWindowSize": 50,
-    "actualWindowSize": 5,
+    "actualWindowSize": 7,
     "windowHasPrevious": false,
     "windowHasNext": false,
     "stillCounting": false,
-    "numberOfHits": 5,
-    "numberOfHitsRetrieved": 5,
+    "numberOfHits": 7,
+    "numberOfHitsRetrieved": 7,
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
+    "numberOfDocs": 2,
+    "numberOfDocsRetrieved": 2,
     "docFields": {
       "pidField": "pid",
       "titleField": "title"
@@ -36,20 +34,20 @@
   "hits": [
     {
       "docPid": "PBsve430",
-      "start": 29,
-      "end": 30,
+      "start": 168,
+      "end": 169,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "need"
+          ""
         ],
         "pos": [
           ""
         ],
         "word": [
-          "need"
+          "_0"
         ]
       },
       "match": {
@@ -57,13 +55,13 @@
           " "
         ],
         "lemma": [
-          "a"
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a"
+          "are"
         ]
       },
       "right": {
@@ -71,32 +69,32 @@
           " "
         ],
         "lemma": [
-          "letter"
+          "live"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "letter"
+          "living"
         ]
       }
     },
     {
-      "docPid": "PBsve430",
-      "start": 51,
-      "end": 52,
+      "docPid": "PRint602",
+      "start": 11,
+      "end": 12,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "have"
+          "we"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "have"
+          "we"
         ]
       },
       "match": {
@@ -104,13 +102,13 @@
           " "
         ],
         "lemma": [
-          "a"
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a"
+          "are"
         ]
       },
       "right": {
@@ -118,32 +116,32 @@
           " "
         ],
         "lemma": [
-          "look"
+          "do"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "look"
+          "doing"
         ]
       }
     },
     {
-      "docPid": "PBsve430",
-      "start": 255,
-      "end": 256,
+      "docPid": "PRint602",
+      "start": 57,
+      "end": 58,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "for"
+          "you"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "for"
+          "you"
         ]
       },
       "match": {
@@ -151,13 +149,13 @@
           " "
         ],
         "lemma": [
-          "a"
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a"
+          "are"
         ]
       },
       "right": {
@@ -165,32 +163,32 @@
           " "
         ],
         "lemma": [
-          "visa"
+          "from"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "visa"
+          "from"
         ]
       }
     },
     {
-      "docPid": "PBsve430",
-      "start": 323,
-      "end": 324,
+      "docPid": "PRint602",
+      "start": 63,
+      "end": 64,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "thank"
+          "what"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "thanks"
+          "what"
         ]
       },
       "match": {
@@ -198,13 +196,13 @@
           " "
         ],
         "lemma": [
-          "a"
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a"
+          "are"
         ]
       },
       "right": {
@@ -212,32 +210,32 @@
           " "
         ],
         "lemma": [
-          "lot"
+          ""
         ],
         "pos": [
           ""
         ],
         "word": [
-          "lot"
+          "y-"
         ]
       }
     },
     {
-      "docPid": "PBsve430",
-      "start": 326,
-      "end": 327,
+      "docPid": "PRint602",
+      "start": 67,
+      "end": 68,
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "thank"
+          "you"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "thanks"
+          "you"
         ]
       },
       "match": {
@@ -245,13 +243,13 @@
           " "
         ],
         "lemma": [
-          "a"
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a"
+          "are"
         ]
       },
       "right": {
@@ -259,13 +257,107 @@
           " "
         ],
         "lemma": [
-          "lot"
+          "do"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "lot"
+          "doing"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 117,
+      "end": 118,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "or"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "or"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 137,
+      "end": 138,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "are"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
         ]
       }
     }
@@ -273,7 +365,7 @@
   "docInfos": {
     "PBsve430": {
       "fromInputFile": [
-        "/input/PBsve430.xml"
+        "/test-data/input/PBsve430.xml"
       ],
       "pid": [
         "PBsve430"
@@ -282,6 +374,19 @@
         "service encounter about visa application for family members"
       ],
       "lengthInTokens": 334,
+      "mayView": false
+    },
+    "PRint602": {
+      "fromInputFile": [
+        "/test-data/input/PRint602.xml"
+      ],
+      "pid": [
+        "PRint602"
+      ],
+      "title": [
+        "interview about conference experience and impressions of city"
+      ],
+      "lengthInTokens": 268,
       "mayView": false
     }
   }

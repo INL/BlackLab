@@ -1023,7 +1023,7 @@
   "docInfos": {
     "PBsve430": {
       "fromInputFile": [
-        "/input/PBsve430.xml"
+        "/test-data/input/PBsve430.xml"
       ],
       "pid": [
         "PBsve430"
@@ -1036,7 +1036,7 @@
     },
     "PRint602": {
       "fromInputFile": [
-        "/input/PRint602.xml"
+        "/test-data/input/PRint602.xml"
       ],
       "pid": [
         "PRint602"
@@ -1049,7 +1049,7 @@
     },
     "PBsve435": {
       "fromInputFile": [
-        "/input/PBsve435.xml"
+        "/test-data/input/PBsve435.xml"
       ],
       "pid": [
         "PBsve435"

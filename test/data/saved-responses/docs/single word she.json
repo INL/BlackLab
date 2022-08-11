@@ -2,7 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
-      "patt": "\"they\"",
+      "patt": "\"she\"",
       "sort": "field:pid",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
@@ -15,8 +15,8 @@
     "windowHasPrevious": false,
     "windowHasNext": false,
     "stillCounting": false,
-    "numberOfHits": 3,
-    "numberOfHitsRetrieved": 3,
+    "numberOfHits": 5,
+    "numberOfHitsRetrieved": 5,
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
     "numberOfDocs": 1,
@@ -34,10 +34,10 @@
   "docs": [
     {
       "docPid": "PBsve430",
-      "numberOfHits": 3,
+      "numberOfHits": 5,
       "docInfo": {
         "fromInputFile": [
-          "/input/PBsve430.xml"
+          "/test-data/input/PBsve430.xml"
         ],
         "pid": [
           "PBsve430"
@@ -59,11 +59,11 @@
               " "
             ],
             "lemma": [
-              "",
-              "the",
-              "district",
-              "office",
-              "and"
+              "family",
+              "visum",
+              "but",
+              "they",
+              ""
             ],
             "pos": [
               "",
@@ -73,11 +73,11 @@
               ""
             ],
             "word": [
-              "_0",
-              "the",
-              "district",
-              "office",
-              "and"
+              "family",
+              "visa",
+              "but",
+              "they",
+              "the-"
             ]
           },
           "match": {
@@ -85,13 +85,13 @@
               " "
             ],
             "lemma": [
-              "they"
+              "she"
             ],
             "pos": [
               ""
             ],
             "word": [
-              "they"
+              "she"
             ]
           },
           "right": {
@@ -135,10 +135,86 @@
               " "
             ],
             "lemma": [
-              "this",
-              "i",
-              "get",
-              "from",
+              "rent",
+              "erm",
+              "",
+              "okay",
+              "but"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "rent",
+              "erm",
+              "hh",
+              "okay",
+              "but"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "she"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "she"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "be",
+              "say",
+              "that",
+              "er",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "was",
+              "saying",
+              "that",
+              "er",
+              "i"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "okay",
+              "so",
+              "but",
+              "if",
               ""
             ],
             "pos": [
@@ -149,10 +225,10 @@
               ""
             ],
             "word": [
-              "this",
-              "i",
-              "got",
-              "from",
+              "okay",
+              "so",
+              "but",
+              "if",
               "_0"
             ]
           },
@@ -161,13 +237,13 @@
               " "
             ],
             "lemma": [
-              "they"
+              "she"
             ],
             "pos": [
               ""
             ],
             "word": [
-              "they"
+              "she"
             ]
           },
           "right": {
@@ -179,11 +255,11 @@
               " "
             ],
             "lemma": [
-              "have",
-              "it",
-              "mhm",
-              "",
-              "for"
+              "ask",
+              "something",
+              "new",
+              "then",
+              "i"
             ],
             "pos": [
               "",
@@ -193,11 +269,11 @@
               ""
             ],
             "word": [
-              "had",
-              "it",
-              "mhm",
-              "_14",
-              "for"
+              "ask",
+              "something",
+              "new",
+              "then",
+              "i"
             ]
           }
         },
@@ -211,11 +287,11 @@
               " "
             ],
             "lemma": [
-              "yah",
-              "for",
-              "family",
-              "visum",
-              "but"
+              "okay",
+              "",
+              "no",
+              "problem",
+              "erm"
             ],
             "pos": [
               "",
@@ -225,11 +301,11 @@
               ""
             ],
             "word": [
-              "yah",
-              "for",
-              "family",
-              "visa",
-              "but"
+              "okay",
+              "@@",
+              "no",
+              "problem",
+              "erm"
             ]
           },
           "match": {
@@ -237,13 +313,13 @@
               " "
             ],
             "lemma": [
-              "they"
+              "she"
             ],
             "pos": [
               ""
             ],
             "word": [
-              "they"
+              "she"
             ]
           },
           "right": {
@@ -255,11 +331,11 @@
               " "
             ],
             "lemma": [
-              "",
               "she",
               "tell",
               "i",
-              "that"
+              "that",
+              ""
             ],
             "pos": [
               "",
@@ -269,11 +345,87 @@
               ""
             ],
             "word": [
-              "the-",
               "she",
               "told",
               "me",
-              "that"
+              "that",
+              "_0"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "",
+              "no",
+              "problem",
+              "erm",
+              "she"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "@@",
+              "no",
+              "problem",
+              "erm",
+              "she"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "she"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "she"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "tell",
+              "i",
+              "that",
+              "",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "told",
+              "me",
+              "that",
+              "_0",
+              "i"
             ]
           }
         }

@@ -100,9 +100,9 @@
       "unknownValue": "unknown",
       "displayValues": {},
       "fieldValues": {
-        "/input/PBsve430.xml": 1,
-        "/input/PBsve435.xml": 1,
-        "/input/PRint602.xml": 1
+        "/test-data/input/PBsve430.xml": 1,
+        "/test-data/input/PBsve435.xml": 1,
+        "/test-data/input/PRint602.xml": 1
       },
       "valueListComplete": true
     },

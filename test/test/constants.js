@@ -9,7 +9,7 @@ const SHOULD_EXPECT_DOCS_IN_GROUPS = 'RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS' in pr
     ? process.env.RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS === "true"
     : false;
 const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
-const SAVED_RESPONSES_PATH = process.env.SAVED_RESPONSES_PATH || "saved-responses";
+const SAVED_RESPONSES_PATH = process.env.SAVED_RESPONSES_PATH || `${TEST_DATA_ROOT}/saved-responses`;
 
 module.exports = {
     SERVER_URL,

@@ -59,9 +59,8 @@ services:
       - "${BLACKLAB_TEST_PORT:-8080}:8080"
       - "5005:5005"
     volumes:
-      - ./test/data:/input
-      - ./test/data/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
-      - blacklab-data:/data
+      - ./test/data:/test-data
+      - blacklab-test-data:/data
 
   # Runs the tests on the test server
   test:
@@ -93,7 +92,7 @@ services:
       build: test
       volumes:
           # We need access to the previous responses and be able to save responses for any new tests.
-          - ./test/saved-responses:/app/saved-responses
+          - ./test/data/saved-responses:/app/data/saved-responses
       depends_on:
           - testserver
 
@@ -102,3 +101,4 @@ services:
 # Volume where our indexes will be stored.
 volumes:
   blacklab-data: {}
+  blacklab-test-data: {}

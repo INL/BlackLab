@@ -32,7 +32,7 @@
       "docPid": "PBsve435",
       "docInfo": {
         "fromInputFile": [
-          "/input/PBsve435.xml"
+          "/test-data/input/PBsve435.xml"
         ],
         "pid": [
           "PBsve435"

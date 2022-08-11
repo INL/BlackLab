@@ -2,7 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
-      "patt": "\"two\"|\"four\"",
+      "patt": "\"one\" A:[]",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
@@ -11,12 +11,12 @@
     "countTime": "VALUE_REMOVED",
     "windowFirstResult": 0,
     "requestedWindowSize": 50,
-    "actualWindowSize": 3,
+    "actualWindowSize": 2,
     "windowHasPrevious": false,
     "windowHasNext": false,
     "stillCounting": false,
-    "numberOfHits": 3,
-    "numberOfHitsRetrieved": 3,
+    "numberOfHits": 2,
+    "numberOfHitsRetrieved": 2,
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
     "numberOfDocs": 1,
@@ -33,35 +33,46 @@
   },
   "hits": [
     {
-      "docPid": "PRint602",
-      "start": 98,
-      "end": 99,
+      "docPid": "PBsve430",
+      "start": 195,
+      "end": 197,
+      "captureGroups": [
+        {
+          "name": "A",
+          "start": 196,
+          "end": 197
+        }
+      ],
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          ""
+          "be"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "a_[org1]"
+          "is"
         ]
       },
       "match": {
         "punct": [
+          " ",
           " "
         ],
         "lemma": [
-          "two"
+          "one",
+          "hundred"
         ],
         "pos": [
+          "",
           ""
         ],
         "word": [
-          "two"
+          "one",
+          "hundred"
         ]
       },
       "right": {
@@ -69,46 +80,57 @@
           " "
         ],
         "lemma": [
-          "two"
+          "ninety"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "two"
+          "ninety"
         ]
       }
     },
     {
-      "docPid": "PRint602",
-      "start": 99,
-      "end": 100,
+      "docPid": "PBsve430",
+      "start": 320,
+      "end": 322,
+      "captureGroups": [
+        {
+          "name": "A",
+          "start": 321,
+          "end": 322
+        }
+      ],
       "left": {
         "punct": [
           " "
         ],
         "lemma": [
-          "two"
+          "this"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "two"
+          "this"
         ]
       },
       "match": {
         "punct": [
+          " ",
           " "
         ],
         "lemma": [
-          "two"
+          "one",
+          "okay"
         ],
         "pos": [
+          "",
           ""
         ],
         "word": [
-          "two"
+          "one",
+          "okay"
         ]
       },
       "right": {
@@ -116,76 +138,29 @@
           " "
         ],
         "lemma": [
-          "thousand"
+          "thank"
         ],
         "pos": [
           ""
         ],
         "word": [
-          "thousand"
-        ]
-      }
-    },
-    {
-      "docPid": "PRint602",
-      "start": 101,
-      "end": 102,
-      "left": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "thousand"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "thousand"
-        ]
-      },
-      "match": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          "four"
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "four"
-        ]
-      },
-      "right": {
-        "punct": [
-          " "
-        ],
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "word": [
-          "_0"
+          "thanks"
         ]
       }
     }
   ],
   "docInfos": {
-    "PRint602": {
+    "PBsve430": {
       "fromInputFile": [
-        "/input/PRint602.xml"
+        "/test-data/input/PBsve430.xml"
       ],
       "pid": [
-        "PRint602"
+        "PBsve430"
       ],
       "title": [
-        "interview about conference experience and impressions of city"
+        "service encounter about visa application for family members"
       ],
-      "lengthInTokens": 268,
+      "lengthInTokens": 334,
       "mayView": false
     }
   }

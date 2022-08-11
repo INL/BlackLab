@@ -2,7 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
-      "patt": "_FI1(\"a\", [lemma=\"successful\"])",
+      "patt": "\"very\" \"good\" within <u/>",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
@@ -34,8 +34,8 @@
   "hits": [
     {
       "docPid": "PRint602",
-      "start": 150,
-      "end": 152,
+      "start": 232,
+      "end": 234,
       "left": {
         "punct": [
           " "
@@ -56,16 +56,16 @@
           " "
         ],
         "lemma": [
-          "a",
-          "successful"
+          "very",
+          "good"
         ],
         "pos": [
           "",
           ""
         ],
         "word": [
-          "a",
-          "successful"
+          "very",
+          "good"
         ]
       },
       "right": {
@@ -73,13 +73,13 @@
           " "
         ],
         "lemma": [
-          "meet/meeting"
+          ""
         ],
         "pos": [
           ""
         ],
         "word": [
-          "meeting"
+          "_0"
         ]
       }
     }
@@ -87,7 +87,7 @@
   "docInfos": {
     "PRint602": {
       "fromInputFile": [
-        "/input/PRint602.xml"
+        "/test-data/input/PRint602.xml"
       ],
       "pid": [
         "PRint602"
