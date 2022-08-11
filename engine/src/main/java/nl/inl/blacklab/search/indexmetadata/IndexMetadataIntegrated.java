@@ -134,12 +134,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected final BlackLabIndex index;
 
     /** Corpus-level custom metadata */
-    private final CustomPropsMap custom = new CustomPropsMap();
-
-    @Override
-    public CustomPropsMap custom() {
-        return custom;
-    }
+    private CustomPropsMap custom = new CustomPropsMap();
 
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;
@@ -621,6 +616,15 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public int metadataDocId() {
         return metadataDocument.getDocumentId();
+    }
+
+    @Override
+    public CustomPropsMap custom() {
+        return custom;
+    }
+
+    public void setCustomProperties(CustomPropsMap customProperties) {
+        this.custom = customProperties;
     }
 
 }
