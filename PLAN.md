@@ -41,10 +41,12 @@ Integrating with Solr will involve the following steps.
     - [ ] We are free to change what and how we store the metadata.
         - [ ] Use JAXB for the metadata (de)serialization?
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
-    - [ ] Make tokenCount/docCount dynamic while indexing?
-    - [ ] remove noForwardIndexProps (specified in index template), provide alternative (via DocIndexerLegacy)
-    - [ ] update nameing (property>annotation, etc.)]
-    - [ ] (BlackLabIndexIntegrated.getAllRealDocsQuery(): use docId for a better replacement for MatchAllQuery?)
+          - [x] corpus level (displayName, description, textDirection)
+          - [ ] metadata field
+          - [ ] metadata field groups
+          - [ ] annotated field
+          - [ ] annotation groups
+          - [ ] annotation
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

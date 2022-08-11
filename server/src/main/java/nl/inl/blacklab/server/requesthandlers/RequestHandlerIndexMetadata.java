@@ -53,26 +53,13 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.displayName())
-                    .entry("description", indexMetadata.description())
+                    .entry("displayName", indexMetadata.custom("displayName", ""))
+                    .entry("description", indexMetadata.custom("description", ""))
                     .entry("status", status)
                     .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.textDirection().getCode());
+                    .entry("textDirection", indexMetadata.custom("textDirection", "ltr"));
 
-            if (status.equals(IndexStatus.INDEXING)) {
-                IndexListener indexProgress = index.getIndexerListener();
-                synchronized (indexProgress) {
-                    ds.startEntry("indexProgress").startMap()
-                            .entry("filesProcessed", indexProgress.getFilesProcessed())
-                            .entry("docsDone", indexProgress.getDocsDone())
-                            .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                            .endMap().endEntry();
-                }
-            }
-
-            String formatIdentifier = indexMetadata.documentFormat();
-            if (formatIdentifier != null && formatIdentifier.length() > 0)
-                ds.entry("documentFormat", formatIdentifier);
+            addIndexProgress(ds, index, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());
             ds.entry("documentCount", indexMetadata.documentCount());
 
@@ -162,6 +149,24 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
             return HTTP_OK;
         }
+    }
+
+    static void addIndexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, IndexStatus status)
+            throws BlsException {
+        if (status.equals(IndexStatus.INDEXING)) {
+            IndexListener indexProgress = index.getIndexerListener();
+            synchronized (indexProgress) {
+                ds.startEntry("indexProgress").startMap()
+                        .entry("filesProcessed", indexProgress.getFilesProcessed())
+                        .entry("docsDone", indexProgress.getDocsDone())
+                        .entry("tokensProcessed", indexProgress.getTokensProcessed())
+                        .endMap().endEntry();
+            }
+        }
+
+        String formatIdentifier = indexMetadata.documentFormat();
+        if (formatIdentifier != null && formatIdentifier.length() > 0)
+            ds.entry("documentFormat", formatIdentifier);
     }
 
 }

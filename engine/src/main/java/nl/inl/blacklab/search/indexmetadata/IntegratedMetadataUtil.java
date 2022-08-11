@@ -36,7 +36,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataBlock;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.Json;
 import nl.inl.util.TimeUtil;
@@ -62,11 +61,14 @@ class IntegratedMetadataUtil {
                 dir);
     }
 
-    public static ObjectNode createEmptyIndexMetadata(File indexDirectory) {
+    private static ObjectNode createEmptyIndexMetadata(File indexDirectory) {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
+
         jsonRoot.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
         jsonRoot.put("description", "");
+        jsonRoot.put("textDirection", "ltr");
+
         createVersionInfo(jsonRoot);
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.putObject("metadataFields");
@@ -74,19 +76,25 @@ class IntegratedMetadataUtil {
         return jsonRoot;
     }
 
-    public static ObjectNode createIndexMetadataFromConfig(ConfigInputFormat config, File indexDirectory) {
+    private static ObjectNode createIndexMetadataFromConfig(ConfigInputFormat config, File indexDirectory) {
         ConfigCorpus corpusConfig = config.getCorpusConfig();
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
         String displayName = corpusConfig.getDisplayName();
         if (displayName.isEmpty())
             displayName = IndexMetadata.indexNameFromDirectory(indexDirectory);
-        jsonRoot.put("displayName", displayName);
-        jsonRoot.put("description", corpusConfig.getDescription());
+
+        // Top-level custom properties
+        ObjectNode nodeCustom = jsonRoot.putObject("custom");
+        nodeCustom.put("displayName", displayName);
+        nodeCustom.put("description", corpusConfig.getDescription());
+        nodeCustom.put("textDirection", corpusConfig.getTextDirection().getCode());
+
         jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
-        jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
         jsonRoot.put("documentFormat", config.getName());
+
         createVersionInfo(jsonRoot);
+
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
         fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
@@ -379,13 +387,15 @@ class IntegratedMetadataUtil {
 
     private static void extractTopLevelKeys(IndexMetadataIntegrated metadata, ObjectNode jsonRoot) {
         final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
-                "displayName", "description", "contentViewable", "textDirection",
-                "documentFormat", "tokenCount", "versionInfo", "fieldInfo"));
+                "custom", "contentViewable", "documentFormat", "versionInfo", "fieldInfo"));
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
-        metadata.setDisplayName(Json.getString(jsonRoot, "displayName", ""));
-        metadata.setDescription(Json.getString(jsonRoot, "description", ""));
+        ObjectNode nodeCustom = Json.getObject(jsonRoot, "custom");
+        Iterator<Map.Entry<String, JsonNode>> itCustom = nodeCustom.fields();
+        while (itCustom.hasNext()) {
+            Map.Entry<String, JsonNode> entry = itCustom.next();
+            metadata.setCustom(entry.getKey(), entry.getValue().textValue());
+        }
         metadata.setContentViewable(Json.getBoolean(jsonRoot, "contentViewable", false));
-        metadata.setTextDirection(TextDirection.fromCode(Json.getString(jsonRoot, "textDirection", "ltr")));
         metadata.setDocumentFormat(Json.getString(jsonRoot, "documentFormat", ""));
     }
 
@@ -410,10 +420,11 @@ class IntegratedMetadataUtil {
     public static ObjectNode encodeToJson(IndexMetadataIntegrated metadata) {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
-        jsonRoot.put("displayName", metadata.displayName());
-        jsonRoot.put("description", metadata.description());
+        ObjectNode nodeCustom = jsonRoot.putObject("custom");
+        for (Map.Entry<String, String> e: metadata.customMap().entrySet()) {
+            nodeCustom.put(e.getKey(), e.getValue());
+        }
         jsonRoot.put("contentViewable", metadata.contentViewable());
-        jsonRoot.put("textDirection", metadata.textDirection().getCode());
         jsonRoot.put("documentFormat", metadata.documentFormat());
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", metadata.indexBlackLabBuildTime());

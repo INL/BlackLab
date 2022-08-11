@@ -42,8 +42,8 @@ public class RequestHandlerIndexStatus extends RequestHandler {
             // Assemble response
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.displayName())
-                    .entry("description", indexMetadata.description())
+                    .entry("displayName", indexMetadata.custom("displayName", ""))
+                    .entry("description", indexMetadata.custom("description", ""))
                     .entry("status", status);
 
             String formatIdentifier = indexMetadata.documentFormat();

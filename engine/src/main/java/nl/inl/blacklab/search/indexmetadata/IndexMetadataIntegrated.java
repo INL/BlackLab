@@ -5,7 +5,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -133,11 +136,21 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     /** Our index */
     protected final BlackLabIndex index;
 
-    /** Index display name */
-    protected String displayName;
+    private final Map<String, String> customFields = new HashMap<>();
 
-    /** Index description */
-    private String description;
+    public void setCustom(String key, String value) {
+        customFields.put(key, value);
+    }
+
+    @Override
+    public String custom(String key, String defaultValue) {
+        return customFields.getOrDefault(key, defaultValue);
+    }
+
+    @Override
+    public Map<String, String> customMap() {
+        return Collections.unmodifiableMap(customFields);
+    }
 
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;
@@ -156,9 +169,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     /** May all users freely retrieve the full content of documents, or is that restricted? */
     private boolean contentViewable = false;
-
-    /** Text direction for this corpus */
-    private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
     /**
      * Indication of the document format(s) in this index.
@@ -239,7 +249,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String description() {
-        return description;
+        return custom("description", "");
     }
 
     /**
@@ -259,7 +269,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public TextDirection textDirection() {
-        return textDirection;
+        return TextDirection.fromCode(custom("textDirection", "ltr"));
     }
 
     /**
@@ -405,12 +415,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         ensureNotFrozen();
         if (displayName.length() > 80)
             displayName = StringUtils.abbreviate(displayName, 75);
-        this.displayName = displayName;
+        this.setCustom("displayName", displayName);
     }
 
     public void setDescription(String description) {
         ensureNotFrozen();
-        this.description = description;
+        this.setCustom("description", description);
     }
 
     public void setBlackLabBuildTime(String blackLabBuildTime) {
@@ -479,7 +489,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
-        this.textDirection = textDirection;
+        this.setCustom("textDirection", textDirection.getCode());
     }
 
     /**
@@ -491,6 +501,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String displayName() {
+        String displayName = custom("displayName", "");
         return !StringUtils.isEmpty(displayName) ? displayName :
                 StringUtils.capitalize(IndexMetadata.indexNameFromDirectory(index.indexDirectory()));
     }
