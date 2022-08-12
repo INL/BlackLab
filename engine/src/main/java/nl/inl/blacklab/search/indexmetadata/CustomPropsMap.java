@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * Generic custom properties class that wrap a map.
  */
-class CustomPropsMap implements CustomProps {
+public class CustomPropsMap implements CustomProps {
 
     private final Map<String, Object> customFields = new HashMap<>();
 

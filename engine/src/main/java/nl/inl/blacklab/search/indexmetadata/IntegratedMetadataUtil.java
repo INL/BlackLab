@@ -64,9 +64,10 @@ class IntegratedMetadataUtil {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
 
-        jsonRoot.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
-        jsonRoot.put("description", "");
-        jsonRoot.put("textDirection", "ltr");
+        ObjectNode nodeCustom = jsonRoot.putObject("custom");
+        nodeCustom.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
+        nodeCustom.put("description", "");
+        nodeCustom.put("textDirection", "ltr");
 
         createVersionInfo(jsonRoot);
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
@@ -159,7 +160,8 @@ class IntegratedMetadataUtil {
         // Specified in index metadata file?
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
-                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField"));
+                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField",
+                "metadataFieldGroups", "annotationGroups"));
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
 
         // Metadata fields
@@ -230,8 +232,7 @@ class IntegratedMetadataUtil {
             // Annotated fields
             Iterator<Entry<String, JsonNode>> it = nodeAnnotatedFields.fields();
             final Set<String> KEYS_ANNOTATED_FIELD_CONFIG = new HashSet<>(Arrays.asList(
-                    /*"displayName", "description",*/ IntegratedMetadataUtil.KEY_MAIN_ANNOTATION, /*"displayOrder",*/
-                    "hasContentStore", "hasXmlTags", "annotations", "custom"));
+                    IntegratedMetadataUtil.KEY_MAIN_ANNOTATION, "hasContentStore", "hasXmlTags", "annotations", "custom"));
             while (it.hasNext()) {
                 Entry<String, JsonNode> entry = it.next();
                 String fieldName = entry.getKey();
@@ -265,6 +266,10 @@ class IntegratedMetadataUtil {
                                 annotation.setName(opt.getValue().textValue());
                                 annotationOrder.add(opt.getValue().textValue());
                                 break;
+                            case "custom":
+                                annotation.setCustomProps(CustomProps.fromJson((ObjectNode)opt.getValue()));
+                                break;
+                                /*
                             case "displayName":
                                 annotation.setDisplayName(opt.getValue().textValue());
                                 break;
@@ -273,7 +278,7 @@ class IntegratedMetadataUtil {
                                 break;
                             case "uiType":
                                 annotation.setUiType(opt.getValue().textValue());
-                                break;
+                                break;*/
                             case "isInternal":
                                 if (opt.getValue().booleanValue())
                                     annotation.setInternal();
@@ -478,9 +483,13 @@ class IntegratedMetadataUtil {
             for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
                 annot.put("name", annotation.name());
+
+                annot.putPOJO("custom", annotation.custom().asMap());
+                /*
                 annot.put("displayName", annotation.displayName());
                 annot.put("description", annotation.description());
-                annot.put("uiType", annotation.uiType());
+                annot.put("uiType", annotation.uiType());*/
+
                 annot.put("isInternal", annotation.isInternal());
                 annot.put("hasForwardIndex", annotation.hasForwardIndex());
                 if (annotation.offsetsSensitivity() != null)
@@ -614,9 +623,12 @@ class IntegratedMetadataUtil {
         displayOrder.add(annotationName);
         ObjectNode annotationNode = annotations.addObject();
         annotationNode.put("name", annotationName);
-        annotationNode.put("displayName", annotation.getDisplayName());
-        annotationNode.put("description", annotation.getDescription());
-        annotationNode.put("uiType", annotation.getUiType());
+
+        ObjectNode nodeCustom = annotationNode.putObject("custom");
+        nodeCustom.put("displayName", annotation.getDisplayName());
+        nodeCustom.put("description", annotation.getDescription());
+        nodeCustom.put("uiType", annotation.getUiType());
+
         if (annotation.isInternal()) {
             annotationNode.put("isInternal", annotation.isInternal());
         }

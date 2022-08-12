@@ -324,4 +324,62 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         subAnnotationNames.addAll(names);
     }
 
+    /** Our custom properties */
+    private CustomPropsDelegateAnnotation custom = new CustomPropsDelegateAnnotation();
+
+    public CustomProps custom() {
+        return custom;
+    }
+
+    public void setCustomProps(CustomPropsMap fromJson) {
+        custom.set(fromJson);
+    }
+
+    private class CustomPropsDelegateAnnotation implements CustomProps {
+
+        @Override
+        public Object get(String key) {
+            switch (key) {
+            case "displayName":
+                return displayName();
+            case "description":
+                return description();
+            case "uiType":
+                return uiType();
+            default:
+                return null;
+            }
+        }
+
+        public void put(String key, Object value) {
+            switch (key) {
+            case "displayName":
+                setDisplayName((String) value);
+                break;
+            case "description":
+                setDescription((String) value);
+                break;
+            case "uiType":
+                setUiType((String) value);
+                break;
+            default:
+                throw new IllegalStateException("Unknown custom property: " + key);
+            }
+        }
+
+        public void set(CustomPropsMap props) {
+            for (Map.Entry<String, Object> entry : props.asMap().entrySet()) {
+                put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        @Override
+        public Map<String, Object> asMap() {
+            return Map.of(
+                    "displayName", displayName(),
+                    "description", description(),
+                    "uiType", uiType()
+            );
+        }
+    }
 }

@@ -78,7 +78,7 @@ public abstract class FieldImpl implements Field {
         return custom;
     }
 
-    public void setCustomProps(CustomPropsMap fromJson) {
+    public void setCustomProps(CustomProps fromJson) {
         custom.set(fromJson);
     }
 
@@ -175,7 +175,7 @@ public abstract class FieldImpl implements Field {
             }
         }
 
-        public void set(CustomPropsMap props) {
+        public void set(CustomProps props) {
             for (Map.Entry<String, Object> entry : props.asMap().entrySet()) {
                 put(entry.getKey(), entry.getValue());
             }

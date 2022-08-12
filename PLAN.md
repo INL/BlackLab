@@ -45,11 +45,11 @@ Integrating with Solr will involve the following steps.
         - [ ] Isolate custom stuff that BlackLab doesn't use itself?
           - [x] corpus level (displayName, description, textDirection)
           - [x] metadata field
-          - [ ] special fields (except pidField)
+          - [x] special fields (except pidField)
           - [ ] metadata field groups
           - [ ] annotation groups
           - [x] annotated field
-          - [ ] annotation
+          - [x] annotation
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

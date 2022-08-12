@@ -165,4 +165,6 @@ public interface Annotation {
         else
             throw new IllegalStateException("No sensitivities for annotation " + name());
     }
+
+    CustomProps custom();
 }

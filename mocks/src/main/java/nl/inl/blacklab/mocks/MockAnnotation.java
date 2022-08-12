@@ -7,6 +7,7 @@ import java.util.Set;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -142,4 +143,8 @@ public class MockAnnotation implements Annotation {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public CustomProps custom() {
+        return CustomProps.NONE;
+    }
 }
