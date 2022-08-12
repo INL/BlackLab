@@ -67,7 +67,7 @@ These endpoints are not tied to a specific corpus. All URLs should start with `/
 
 ### Input format endpoints
 
-These give you information about input format configurations that BlackLab has access to: built-in formats as well as external format configuration files it found.
+These give you information about input format configurations that BlackLab has access to: built-in formats, external format configuration files it found, and user formats if available.
 
 There's also operations to add, update and delete private user formats; those are only available if user authentication and private user corpora are enabled.
 
