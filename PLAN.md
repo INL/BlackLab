@@ -37,7 +37,7 @@ Integrating with Solr will involve the following steps.
 ### Metadata 
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] Eliminate detectMainAnnotatedField()
+    - [ ] simplify index metadata structure a bit (get rid of fieldInfo level, ...)
     - [ ] clean up annotation display order mess (linkedhashmap / displayorder / comparator)
     - [ ] Make sure (basic) config-based indexing is unit tested too.
     - [ ] We are free to change what and how we store the metadata.

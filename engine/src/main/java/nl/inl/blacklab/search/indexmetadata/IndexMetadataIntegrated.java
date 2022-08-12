@@ -204,7 +204,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             // Read previous index metadata from index
             ObjectNode metadataObj = metadataDocument.readFromIndex(index.reader());
             IntegratedMetadataUtil.extractFromJson(this, metadataObj);
-            detectMainAnnotation(index.reader()); //@@@
+            ensureMainAnnotatedFieldSet();
 
             // we defer counting tokens because we can't always access the
             // forward index while constructing
@@ -502,7 +502,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return this.frozen;
     }
 
-    protected void detectMainAnnotation(IndexReader reader) {
+    protected void ensureMainAnnotatedFieldSet() {
         if (annotatedFields.main() != null)
             return; // we already know our main annotated field, probably from the metadata
 
@@ -513,10 +513,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         for (AnnotatedField d: annotatedFields()) {
             if (mainAnnotatedField == null || d.name().equals("contents"))
                 mainAnnotatedField = (AnnotatedFieldImpl) d;
-
-            // We don't know the tokenCount here (always 0 for integrated), so always try to detect.
-            // (does this work for empty indexes..?)
-            ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
         }
         annotatedFields.setMainAnnotatedField(mainAnnotatedField);
     }
