@@ -165,6 +165,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return noForwardIndexAnnotations;
     }
 
+    /**
+     * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
+     */
     List<String> getDisplayOrder() {
         return Collections.unmodifiableList(displayOrder);
     }

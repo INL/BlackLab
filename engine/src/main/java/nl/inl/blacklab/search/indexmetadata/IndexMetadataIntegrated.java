@@ -133,7 +133,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     /** Our index */
     protected final BlackLabIndex index;
 
-    /** Corpus-level custom metadata */
+    /** Corpus-level custom properties */
     private CustomPropsMap custom = new CustomPropsMap();
 
     /** When BlackLab.jar was built */
@@ -196,15 +196,15 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             // Create new index metadata from config
             File dir = index.indexDirectory();
             ObjectNode metadataObj = IntegratedMetadataUtil.createIndexMetadata(config, dir);
-            IntegratedMetadataUtil.extractFromJson(this,  metadataObj, index.reader());
+            IntegratedMetadataUtil.extractFromJson(this,  metadataObj);
             documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
             if (index.indexMode())
                 save(); // save debug file if any
         } else {
             // Read previous index metadata from index
             ObjectNode metadataObj = metadataDocument.readFromIndex(index.reader());
-            IntegratedMetadataUtil.extractFromJson(this, metadataObj, index.reader());
-            detectMainAnnotation(index.reader());
+            IntegratedMetadataUtil.extractFromJson(this, metadataObj);
+            detectMainAnnotation(index.reader()); //@@@
 
             // we defer counting tokens because we can't always access the
             // forward index while constructing
@@ -619,7 +619,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
-    public CustomPropsMap custom() {
+    public CustomProps custom() {
         return custom;
     }
 

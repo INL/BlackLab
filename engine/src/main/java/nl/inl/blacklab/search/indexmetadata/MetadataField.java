@@ -16,22 +16,38 @@ public interface MetadataField extends Field {
 	 */
 	default void setKeepTrackOfValues(boolean keepTrackOfValues) { }
 
+    /**
+     * @deprecated use {@link #custom()} and .get("uiType", "") instead
+     */
+    @Deprecated
     String uiType();
 
 	FieldType type();
 
-	List<String> displayOrder();
+    /**
+     * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
+     */
+    List<String> displayOrder();
 
 	String analyzerName();
 
+    /**
+     * @deprecated use {@link #custom()} and .get("unknownValue", "") instead
+     */
 	String unknownValue();
 
+    /**
+     * @deprecated use {@link #custom()} and .get("unknownCondition", "") instead
+     */
 	UnknownCondition unknownCondition();
 
 	Map<String, Integer> valueDistribution();
 
 	ValueListComplete isValueListComplete();
 
+    /**
+     * @deprecated use {@link #custom()} and .get("displayValues", Collections.emptyMap()) instead
+     */
     Map<String, String> displayValues();
 
 	String group();
@@ -40,5 +56,5 @@ public interface MetadataField extends Field {
     default String contentsFieldName() {
         return name();
     }
-	
+
 }

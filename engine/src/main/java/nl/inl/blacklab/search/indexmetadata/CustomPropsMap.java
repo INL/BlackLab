@@ -9,19 +9,25 @@ import java.util.Map;
  */
 class CustomPropsMap implements CustomProps {
 
-    private final Map<String, String> customFields = new HashMap<>();
+    private final Map<String, Object> customFields = new HashMap<>();
 
-    @Override
-    public String get(String key, String defaultValue) {
-        return customFields.getOrDefault(key, defaultValue);
+    public CustomPropsMap() { }
+
+    public CustomPropsMap(Map<String, Object> props) {
+        customFields.putAll(props);
     }
 
-    public void put(String key, String value) {
+    @Override
+    public Object get(String key) {
+        return customFields.get(key);
+    }
+
+    public void put(String key, Object value) {
         customFields.put(key, value);
     }
 
     @Override
-    public Map<String, String> asMap() {
+    public Map<String, Object> asMap() {
         return Collections.unmodifiableMap(customFields);
     }
 }

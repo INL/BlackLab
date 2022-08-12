@@ -99,6 +99,9 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     /** Index description */
     private String description;
 
+    /** Custom properties */
+    private CustomProps customProps;
+
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;
 
@@ -145,6 +148,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
+        customProps = new CustomPropsDelegateCorpus(this);
     }
 
     // Methods that read data
@@ -1098,7 +1102,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     @Override
     public CustomProps custom() {
-        return new CustomPropsCorpusDelegate(this);
+        return customProps;
     }
 
     /**
@@ -1149,5 +1153,36 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
         }
         annotatedFields.setMainAnnotatedField(mainAnnotatedField);
+    }
+
+    /**
+     * Custom properties at corpus level that delegates to the old methods.
+     */
+    @SuppressWarnings("deprecation") static
+    private class CustomPropsDelegateCorpus implements CustomProps {
+        private final IndexMetadata indexMetadata;
+
+        public CustomPropsDelegateCorpus(IndexMetadata indexMetadata) {
+            this.indexMetadata = indexMetadata;
+        }
+
+        @Override
+        public String get(String key) {
+            switch (key) {
+            case "displayName":
+                return indexMetadata.displayName();
+            case "description":
+                return indexMetadata.description();
+            case "textDirection":
+                return indexMetadata.textDirection().getCode();
+            default:
+                return null;
+            }
+        }
+
+        @Override
+        public Map<String, Object> asMap() {
+            throw new UnsupportedOperationException("Not implemented (legacy index metadata only)");
+        }
     }
 }

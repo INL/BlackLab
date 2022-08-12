@@ -41,4 +41,5 @@ public interface Field {
      */
     String contentsFieldName();
 
+    CustomProps custom();
 }

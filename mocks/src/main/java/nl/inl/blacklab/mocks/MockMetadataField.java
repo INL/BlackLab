@@ -3,6 +3,7 @@ package nl.inl.blacklab.mocks;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
@@ -39,6 +40,11 @@ public final class MockMetadataField implements MetadataField {
     @Override
     public String offsetsField() {
         return null;
+    }
+
+    @Override
+    public CustomProps custom() {
+        return CustomProps.NONE;
     }
 
     @Override

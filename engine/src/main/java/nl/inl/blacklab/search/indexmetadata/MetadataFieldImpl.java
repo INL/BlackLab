@@ -214,6 +214,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         }
     }
 
+    public void setDisplayValues(Map<String, String> displayValues) {
+        ensureNotFrozen();
+        this.displayValues.clear();
+        this.displayValues.putAll(displayValues);
+    }
+
     public void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
         this.displayOrder.clear();
@@ -273,5 +279,4 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     public void setDocValuesType(DocValuesType docValuesType) {
         this.docValuesType = docValuesType;
     }
-
 }

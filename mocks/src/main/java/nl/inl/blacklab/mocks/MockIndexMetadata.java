@@ -69,7 +69,7 @@ public class MockIndexMetadata implements IndexMetadata {
 
     @Override
     public CustomProps custom() {
-        return CustomProps.corpusDelegate(this);
+        return CustomProps.NONE;
     }
 
     @Override

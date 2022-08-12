@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 
 public class MockAnnotatedField implements AnnotatedField {
     
@@ -95,5 +96,10 @@ public class MockAnnotatedField implements AnnotatedField {
     public String offsetsField() {
         return null;
     }
-    
+
+    @Override
+    public CustomProps custom() {
+        return CustomProps.NONE;
+    }
+
 }
