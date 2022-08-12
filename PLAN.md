@@ -37,19 +37,18 @@ Integrating with Solr will involve the following steps.
 ### Metadata 
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] simplify index metadata structure a bit (get rid of fieldInfo level, ...)
     - [ ] clean up annotation display order mess (linkedhashmap / displayorder / comparator)
     - [ ] Make sure (basic) config-based indexing is unit tested too.
-    - [ ] We are free to change what and how we store the metadata.
-        - [ ] Use JAXB for the metadata (de)serialization?
-        - [ ] Isolate custom stuff that BlackLab doesn't use itself?
-          - [x] corpus level (displayName, description, textDirection)
-          - [x] metadata field
-          - [x] special fields (except pidField)
-          - [ ] metadata field groups
-          - [ ] annotation groups
-          - [x] annotated field
-          - [x] annotation
+    - [x] Isolate custom stuff that BlackLab doesn't use itself?
+      - [x] corpus level (displayName, description, textDirection)
+      - [x] metadata field
+      - [x] special fields (except pidField)
+      - [ ] metadata field groups
+      - [ ] annotation groups
+      - [x] annotated field
+      - [x] annotation
+    - [ ] get rid of `fieldInfo` level?
+    - [ ] (maybe) Use JAXB for the metadata (de)serialization?
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

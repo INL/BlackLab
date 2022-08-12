@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -95,6 +95,9 @@ class IntegratedMetadataUtil {
         }
         nodeCustom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
         nodeCustom.put("unknownValue", config.getMetadataDefaultUnknownValue());
+        ArrayNode metaGroups = nodeCustom.putArray("metadataFieldGroups");
+        ObjectNode annotGroups = nodeCustom.putObject("annotationGroups");
+        addGroupsInfoFromConfig(metaGroups, annotGroups, config);
 
         jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
         jsonRoot.put("documentFormat", config.getName());
@@ -106,12 +109,11 @@ class IntegratedMetadataUtil {
         if (corpusConfig.getSpecialFields().containsKey("pidField"))
             fieldInfo.put("pidField", corpusConfig.getSpecialFields().get("pidField"));
 
-        ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
-        ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
+
         ObjectNode metadata = fieldInfo.putObject("metadataFields");
         ObjectNode annotated = fieldInfo.putObject(KEY_ANNOTATED_FIELDS);
+        addFieldInfoFromConfig(metadata, annotated, config);
 
-        addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
         return jsonRoot;
     }
 
@@ -160,29 +162,27 @@ class IntegratedMetadataUtil {
         // Specified in index metadata file?
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
-                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField",
-                "metadataFieldGroups", "annotationGroups"));
+                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField"));
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
 
         // Metadata fields
         ObjectNode nodeMetaFields = Json.getObject(fieldInfo, "metadataFields");
         boolean hasMetaFields = nodeMetaFields.size() > 0;
         if (hasMetaFields) {
-            if (hasMetaFields && fieldInfo.has("metadataFieldGroups")) {
+
+            if (hasMetaFields && metadata.custom().containsKey("metadataFieldGroups")) {
                 Map<String, MetadataFieldGroupImpl> groupMap = new LinkedHashMap<>();
-                JsonNode groups = fieldInfo.get("metadataFieldGroups");
-                final Set<String> KEYS_METADATA_GROUP = new HashSet<>(Arrays.asList(
-                        "name", "fields", "addRemainingFields"));
-                for (int i = 0; i < groups.size(); i++) {
-                    JsonNode group = groups.get(i);
-                    warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
-                    String name = Json.getString(group, "name", "UNKNOWN");
-                    List<String> fields = Json.getListOfStrings(group, "fields");
+                List<Map<String, Object>> groups = metadata.custom().get("metadataFieldGroups", Collections.emptyList());
+                final Set<String> KEYS_METADATA_GROUP = Set.of("name", "fields", "addRemainingFields");
+                for (Map<String, Object> group: groups) {
+                    //warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
+                    String name = (String)group.getOrDefault("name", "UNKNOWN");
+                    List<String> fields = (List)group.getOrDefault("fields", Collections.emptyList());
                     for (String f: fields) {
                         // Ensure field exists
                         metadataFields.register(f);
                     }
-                    boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
+                    boolean addRemainingFields = (boolean)group.getOrDefault("addRemainingFields", false);
                     MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields, name, fields,
                             addRemainingFields);
                     groupMap.put(name, metadataGroup);
@@ -215,17 +215,13 @@ class IntegratedMetadataUtil {
         boolean hasAnnotatedFields = nodeAnnotatedFields.size() > 0;
         AnnotatedFieldsImpl annotatedFields = metadata.annotatedFields();
         if (hasAnnotatedFields) {
-            if (fieldInfo.has("annotationGroups")) {
+            if (metadata.custom().containsKey("annotationGroups")) {
                 annotatedFields.clearAnnotationGroups();
-                JsonNode groupingsPerField = fieldInfo.get("annotationGroups");
-                Iterator<Entry<String, JsonNode>> it = groupingsPerField.fields();
-                while (it.hasNext()) {
-                    Entry<String, JsonNode> entry = it.next();
+                Map<String, List<Map<String, Object>>> groupingsPerField = metadata.custom().get("annotationGroups", Collections.emptyMap());
+                for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
                     String fieldName = entry.getKey();
-                    JsonNode groups = entry.getValue();
-                    List<AnnotationGroup> annotationGroups = IntegratedMetadataUtil.extractAnnotationGroups(
-                            annotatedFields,
-                            fieldName, groups);
+                    List<Map<String, Object>> groups = entry.getValue();
+                    List<AnnotationGroup> annotationGroups = extractAnnotationGroups(annotatedFields, fieldName, groups);
                     annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
                 }
             }
@@ -269,16 +265,6 @@ class IntegratedMetadataUtil {
                             case "custom":
                                 annotation.setCustomProps(CustomProps.fromJson((ObjectNode)opt.getValue()));
                                 break;
-                                /*
-                            case "displayName":
-                                annotation.setDisplayName(opt.getValue().textValue());
-                                break;
-                            case "description":
-                                annotation.setDescription(opt.getValue().textValue());
-                                break;
-                            case "uiType":
-                                annotation.setUiType(opt.getValue().textValue());
-                                break;*/
                             case "isInternal":
                                 if (opt.getValue().booleanValue())
                                     annotation.setInternal();
@@ -412,42 +398,11 @@ class IntegratedMetadataUtil {
         versionInfo.put("timeModified", metadata.timeModified());
 
         ObjectNode fieldInfo = addFieldInfo(metadata.metadataFields(), jsonRoot);
-        addMetadataGroups(metadata.metadataFields().groups(), fieldInfo);
-        addAnnotationGroups(metadata.annotatedFields(), fieldInfo);
+        //addMetadataGroups(metadata.metadataFields().groups(), fieldInfo);
+        //addAnnotationGroups(metadata.annotatedFields(), fieldInfo);
         addMetadataFields(metadata.metadataFields(), fieldInfo);
         addAnnotatedFields(metadata.annotatedFields(), fieldInfo);
         return jsonRoot;
-    }
-
-    public static void addAnnotationGroups(AnnotatedFields annotatedFields, ObjectNode fieldInfo) {
-        ObjectNode nodeAnnotationGroups = fieldInfo.putObject("annotationGroups");
-        for (AnnotatedField f: annotatedFields) {
-            AnnotationGroups groups = annotatedFields.annotationGroups(f.name());
-            if (groups != null) {
-                ArrayNode jsonGroups = nodeAnnotationGroups.putArray(f.name());
-                for (AnnotationGroup g: groups) {
-                    ObjectNode jsonGroup = jsonGroups.addObject();
-                    jsonGroup.put("name", g.groupName());
-                    if (g.addRemainingAnnotations())
-                        jsonGroup.put("addRemainingAnnotations", true);
-                    ArrayNode arr = jsonGroup.putArray("annotations");
-                    Json.arrayOfStrings(arr,
-                            g.annotations().stream().map(Annotation::name).collect(Collectors.toList()));
-                }
-            }
-        }
-    }
-
-    private static void addMetadataGroups(MetadataFieldGroups metaGroups, ObjectNode fieldInfo) {
-        ArrayNode nodeMetaGroups = fieldInfo.putArray("metadataFieldGroups");
-        for (MetadataFieldGroup g: metaGroups) {
-            ObjectNode group = nodeMetaGroups.addObject();
-            group.put("name", g.name());
-            if (g.addRemainingFields())
-                group.put("addRemainingFields", true);
-            ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.stream().map(Field::name).collect(Collectors.toList()));
-        }
     }
 
     private static ObjectNode addFieldInfo(MetadataFieldsImpl metadataFields, ObjectNode jsonRoot) {
@@ -485,10 +440,6 @@ class IntegratedMetadataUtil {
                 annot.put("name", annotation.name());
 
                 annot.putPOJO("custom", annotation.custom().asMap());
-                /*
-                annot.put("displayName", annotation.displayName());
-                annot.put("description", annotation.description());
-                annot.put("uiType", annotation.uiType());*/
 
                 annot.put("isInternal", annotation.isInternal());
                 annot.put("hasForwardIndex", annotation.hasForwardIndex());
@@ -514,7 +465,7 @@ class IntegratedMetadataUtil {
         versionInfo.put("indexFormat", LATEST_INDEX_FORMAT);
     }
 
-    protected static void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
+    protected static void addGroupsInfoFromConfig(ArrayNode metaGroups,
             ObjectNode annotGroupsPerField, ConfigInputFormat config) {
         // Add metadata field groups info
         ConfigCorpus corpusConfig = config.getCorpusConfig();
@@ -548,6 +499,15 @@ class IntegratedMetadataUtil {
             }
         }
 
+        // Also (recursively) add groups config from any linked documents
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+            Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
+            if (format != null && format.isConfigurationBased())
+                addGroupsInfoFromConfig(metaGroups, annotGroupsPerField, format.getConfig());
+        }
+    }
+
+    protected static void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ConfigInputFormat config) {
         // Add metadata info
         String defaultAnalyzer = config.getMetadataDefaultAnalyzer();
         for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
@@ -613,8 +573,9 @@ class IntegratedMetadataUtil {
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format != null && format.isConfigurationBased())
-                addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
+            if (format != null && format.isConfigurationBased()) {
+                addFieldInfoFromConfig(metadata, annotated, format.getConfig());
+            }
         }
     }
 
@@ -647,16 +608,15 @@ class IntegratedMetadataUtil {
     }
 
     public static List<AnnotationGroup> extractAnnotationGroups(AnnotatedFieldsImpl annotatedFields, String fieldName,
-            JsonNode groups) {
+            List<Map<String, Object>> groups) {
         final Set<String> KEYS_ANNOTATION_GROUP = new HashSet<>(Arrays.asList(
                 "name", "annotations", "addRemainingAnnotations"));
         List<AnnotationGroup> annotationGroups = new ArrayList<>();
-        for (int i = 0; i < groups.size(); i++) {
-            JsonNode group = groups.get(i);
-            warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
-            String groupName = Json.getString(group, "name", "UNKNOWN");
-            List<String> annotations = Json.getListOfStrings(group, "annotations");
-            boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingAnnotations", false);
+        for (Map<String, Object> group: groups) {
+            //warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
+            String groupName = (String)group.getOrDefault("name", "UNKNOWN");
+            List<String> annotations = (List)group.getOrDefault( "annotations", Collections.emptyList());
+            boolean addRemainingAnnotations = (boolean)group.getOrDefault("addRemainingAnnotations", false);
             annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
                     addRemainingAnnotations));
         }
