@@ -116,6 +116,7 @@ public abstract class FieldImpl implements Field {
     /**
      * CustomProps implementation that delegates to the old methods
      */
+    @SuppressWarnings("deprecation")
     public class CustomPropsDelegateField implements CustomProps {
 
         @Override

@@ -170,14 +170,12 @@ class IntegratedMetadataUtil {
         boolean hasMetaFields = nodeMetaFields.size() > 0;
         if (hasMetaFields) {
 
-            if (hasMetaFields && metadata.custom().containsKey("metadataFieldGroups")) {
+            if (metadata.custom().containsKey("metadataFieldGroups")) {
                 Map<String, MetadataFieldGroupImpl> groupMap = new LinkedHashMap<>();
                 List<Map<String, Object>> groups = metadata.custom().get("metadataFieldGroups", Collections.emptyList());
-                final Set<String> KEYS_METADATA_GROUP = Set.of("name", "fields", "addRemainingFields");
                 for (Map<String, Object> group: groups) {
-                    //warnUnknownKeys("in metadataFieldGroup", group, KEYS_METADATA_GROUP);
                     String name = (String)group.getOrDefault("name", "UNKNOWN");
-                    List<String> fields = (List)group.getOrDefault("fields", Collections.emptyList());
+                    List<String> fields = (List<String>)group.getOrDefault("fields", Collections.emptyList());
                     for (String f: fields) {
                         // Ensure field exists
                         metadataFields.register(f);
@@ -303,6 +301,8 @@ class IntegratedMetadataUtil {
                         } else
                             fieldDesc.putAnnotation(annotation);
                     }
+                    if (fieldDesc.custom.get("displayOrder", Collections.emptyList()).isEmpty())
+                        fieldDesc.setDisplayOrder(annotationOrder);
                 }
                 AnnotationImpl mainAnnot = (AnnotationImpl)fieldDesc.annotations().main();
                 if (mainAnnot != null) {
@@ -386,7 +386,7 @@ class IntegratedMetadataUtil {
         ObjectNode jsonRoot = mapper.createObjectNode();
 
         // Add top-level custom properties
-        ObjectNode node = jsonRoot.putPOJO("custom", metadata.custom().asMap());
+        jsonRoot.putPOJO("custom", metadata.custom().asMap());
 
         jsonRoot.put("contentViewable", metadata.contentViewable());
         jsonRoot.put("documentFormat", metadata.documentFormat());
@@ -398,8 +398,6 @@ class IntegratedMetadataUtil {
         versionInfo.put("timeModified", metadata.timeModified());
 
         ObjectNode fieldInfo = addFieldInfo(metadata.metadataFields(), jsonRoot);
-        //addMetadataGroups(metadata.metadataFields().groups(), fieldInfo);
-        //addAnnotationGroups(metadata.annotatedFields(), fieldInfo);
         addMetadataFields(metadata.metadataFields(), fieldInfo);
         addAnnotatedFields(metadata.annotatedFields(), fieldInfo);
         return jsonRoot;
@@ -429,7 +427,7 @@ class IntegratedMetadataUtil {
         ObjectNode nodeAnnotatedFields = fieldInfo.putObject(KEY_ANNOTATED_FIELDS);
         for (AnnotatedField f: annotFields) {
             ObjectNode nodeField = nodeAnnotatedFields.putObject(f.name());
-            ObjectNode node = nodeField.putPOJO("custom", f.custom().asMap());
+            nodeField.putPOJO("custom", f.custom().asMap());
             if (f.mainAnnotation() != null)
                 nodeField.put(KEY_MAIN_ANNOTATION, f.mainAnnotation().name());
             nodeField.put("hasContentStore", f.hasContentStore());
@@ -609,13 +607,10 @@ class IntegratedMetadataUtil {
 
     public static List<AnnotationGroup> extractAnnotationGroups(AnnotatedFieldsImpl annotatedFields, String fieldName,
             List<Map<String, Object>> groups) {
-        final Set<String> KEYS_ANNOTATION_GROUP = new HashSet<>(Arrays.asList(
-                "name", "annotations", "addRemainingAnnotations"));
         List<AnnotationGroup> annotationGroups = new ArrayList<>();
         for (Map<String, Object> group: groups) {
-            //warnUnknownKeys("in annotation group", group, KEYS_ANNOTATION_GROUP);
             String groupName = (String)group.getOrDefault("name", "UNKNOWN");
-            List<String> annotations = (List)group.getOrDefault( "annotations", Collections.emptyList());
+            List<String> annotations = (List<String>)group.getOrDefault( "annotations", Collections.emptyList());
             boolean addRemainingAnnotations = (boolean)group.getOrDefault("addRemainingAnnotations", false);
             annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
                     addRemainingAnnotations));
