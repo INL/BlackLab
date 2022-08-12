@@ -42,4 +42,8 @@ public interface CustomProps {
     Object get(String key);
 
     Map<String, Object> asMap();
+
+    default boolean containsKey(String key) {
+        return get(key) != null;
+    }
 }

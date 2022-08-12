@@ -619,7 +619,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
-    public CustomProps custom() {
+    public CustomPropsMap custom() {
         return custom;
     }
 

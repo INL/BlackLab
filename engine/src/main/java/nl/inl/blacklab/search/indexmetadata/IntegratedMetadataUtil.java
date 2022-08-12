@@ -88,6 +88,12 @@ class IntegratedMetadataUtil {
         nodeCustom.put("displayName", displayName);
         nodeCustom.put("description", corpusConfig.getDescription());
         nodeCustom.put("textDirection", corpusConfig.getTextDirection().getCode());
+        for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
+            if (!e.getKey().equals("pidField"))
+                nodeCustom.put(e.getKey(), e.getValue());
+        }
+        nodeCustom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
+        nodeCustom.put("unknownValue", config.getMetadataDefaultUnknownValue());
 
         jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
         jsonRoot.put("documentFormat", config.getName());
@@ -96,11 +102,9 @@ class IntegratedMetadataUtil {
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-        fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
-        fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
-        for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
-            fieldInfo.put(e.getKey(), e.getValue());
-        }
+        if (corpusConfig.getSpecialFields().containsKey("pidField"))
+            fieldInfo.put("pidField", corpusConfig.getSpecialFields().get("pidField"));
+
         ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
         ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
         ObjectNode metadata = fieldInfo.putObject("metadataFields");
@@ -144,22 +148,19 @@ class IntegratedMetadataUtil {
     public static void extractFromJson(IndexMetadataIntegrated metadata, ObjectNode jsonRoot) {
         metadata.ensureNotFrozen();
 
+        MetadataFieldsImpl metadataFields = metadata.metadataFields();
+        metadataFields.clearSpecialFields();
+
         // Read and interpret index metadata file
         extractTopLevelKeys(metadata, jsonRoot);
         extractVersionInfo(metadata, jsonRoot);
 
-        MetadataFieldsImpl metadataFields = metadata.metadataFields();
 
         // Specified in index metadata file?
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
-                "unknownCondition", "unknownValue",
-                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "metadataFieldGroups",
-                "annotationGroups",
-                "defaultAnalyzer", "titleField", "authorField", "dateField", "pidField"));
+                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField"));
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
-        metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
         // Metadata fields
         ObjectNode nodeMetaFields = Json.getObject(fieldInfo, "metadataFields");
@@ -201,29 +202,8 @@ class IntegratedMetadataUtil {
                         metadataFields.getMetadataFieldValuesFactory());
 
                 fieldDesc.setCustomProps(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
-                /*
-                fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
-                fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
-                */
                 fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                /*
-                fieldDesc.setUnknownValue(
-                        Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
-                UnknownCondition unk = UnknownCondition
-                        .fromStringValue(Json.getString(fieldConfig, "unknownCondition",
-                                metadataFields.defaultUnknownCondition()));
-                fieldDesc.setUnknownCondition(unk);
-                if (fieldConfig.has("values"))
-                    fieldDesc.setValues(fieldConfig.get("values"));
-                if (fieldConfig.has("displayValues"))
-                    fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
-                if (fieldConfig.has("displayOrder"))
-                    fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
-                if (fieldConfig.has("valueListComplete"))
-                    fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
-                 */
                 metadataFields.put(fieldName, fieldDesc);
             }
         }
@@ -261,10 +241,6 @@ class IntegratedMetadataUtil {
                 AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(metadata, fieldName);
 
                 fieldDesc.setCustomProps(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
-                /*
-                fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
-                */
 
                 fieldDesc.setContentStore(Json.getBoolean(fieldConfig, "hasContentStore", true));
                 fieldDesc.setXmlTags(Json.getBoolean(fieldConfig, "hasXmlTags", true));
@@ -342,19 +318,6 @@ class IntegratedMetadataUtil {
                     MatchSensitivity offsetsSens = mainAnnot.mainSensitivity().sensitivity();
                     mainAnnot.setOffsetsSensitivity(offsetsSens);
                 }
-
-
-                /*
-                // This is the "natural order" of our annotations
-                // (probably not needed anymore - if not specified, the order of the annotations
-                // will be used)
-                List<String> displayOrder = Json.getListOfStrings(fieldConfig, "displayOrder");
-                if (displayOrder.isEmpty()) {
-                    displayOrder.addAll(annotationOrder);
-                }
-                fieldDesc.setDisplayOrder(displayOrder);
-                */
-
                 annotatedFields.put(fieldName, fieldDesc);
             }
         }
@@ -374,15 +337,8 @@ class IntegratedMetadataUtil {
 
         // Some additional metadata settings
         metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
-        metadataFields.clearSpecialFields();
-        if (fieldInfo.has("authorField"))
-            metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
-        if (fieldInfo.has("dateField"))
-            metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
             metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
-        if (fieldInfo.has("titleField"))
-            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
         if (metadataFields.titleField() == null) {
             if (metadataFields.pidField() != null)
                 metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
@@ -398,6 +354,19 @@ class IntegratedMetadataUtil {
 
         // Get top-level custom properties
         metadata.setCustomProperties(CustomProps.fromJson(Json.getObject(jsonRoot, "custom")));
+
+        // Set some metadata fields settings from the custom properties
+        // (we should eventually get rid of these copies of the properties)
+        CustomPropsMap custom = metadata.custom();
+        MetadataFieldsImpl metadataFields = metadata.metadataFields();
+        metadataFields.setDefaultUnknownCondition(custom.get("unknownCondition", "NEVER"));
+        metadataFields.setDefaultUnknownValue(custom.get("unknownValue", "unknown"));
+        if (custom.containsKey("authorField"))
+            metadataFields.setSpecialField(MetadataFields.AUTHOR, (String) custom.get("authorField"));
+        if (custom.containsKey("dateField"))
+            metadataFields.setSpecialField(MetadataFields.DATE, (String) custom.get("dateField"));
+        if (custom.containsKey("titleField"))
+            metadataFields.setSpecialField(MetadataFields.TITLE, (String) custom.get("titleField"));
 
         metadata.setContentViewable(Json.getBoolean(jsonRoot, "contentViewable", false));
         metadata.setDocumentFormat(Json.getString(jsonRoot, "documentFormat", ""));
@@ -479,14 +448,6 @@ class IntegratedMetadataUtil {
     private static ObjectNode addFieldInfo(MetadataFieldsImpl metadataFields, ObjectNode jsonRoot) {
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
-        fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
-        fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
-        if (metadataFields.titleField() != null)
-            fieldInfo.put("titleField", metadataFields.special(MetadataFields.TITLE).name());
-        if (metadataFields.authorField() != null)
-            fieldInfo.put("authorField", metadataFields.special(MetadataFields.AUTHOR).name());
-        if (metadataFields.dateField() != null)
-            fieldInfo.put("dateField", metadataFields.special(MetadataFields.DATE).name());
         if (metadataFields.pidField() != null)
             fieldInfo.put("pidField", metadataFields.special(MetadataFields.PID).name());
         return fieldInfo;
@@ -495,33 +456,10 @@ class IntegratedMetadataUtil {
     private static void addMetadataFields(MetadataFields metaFields, ObjectNode fieldInfo) {
         ObjectNode metadataFields = fieldInfo.putObject("metadataFields");
         for (MetadataField f: metaFields) {
-            UnknownCondition unknownCondition = f.unknownCondition();
             ObjectNode fi = metadataFields.putObject(f.name());
 
             // Custom props
             fi.putPOJO("custom", f.custom().asMap());
-            /*
-            fi.put("displayName", f.displayName());
-            fi.put("uiType", f.uiType());
-            fi.put("description", f.description());
-            fi.put("unknownValue", f.unknownValue());
-            fi.put("unknownCondition", unknownCondition.toString());
-            Map<String, String> displayValues = f.displayValues();
-            if (displayValues != null) {
-                ObjectNode jsonDisplayValues = fi.putObject("displayValues");
-                for (Entry<String, String> e: displayValues.entrySet()) {
-                    jsonDisplayValues.put(e.getKey(), e.getValue());
-                }
-            }
-            List<String> displayOrder = f.displayOrder();
-            if (displayOrder != null) {
-                ArrayNode jsonDisplayValues = fi.putArray("displayOrder");
-                for (String value: displayOrder) {
-                    jsonDisplayValues.add(value);
-                }
-            }
-            */
-
             fi.put("type", f.type().stringValue());
             fi.put("analyzer", f.analyzerName());
         }
@@ -532,14 +470,8 @@ class IntegratedMetadataUtil {
         for (AnnotatedField f: annotFields) {
             ObjectNode nodeField = nodeAnnotatedFields.putObject(f.name());
             ObjectNode node = nodeField.putPOJO("custom", f.custom().asMap());
-            /*
-            nodeField.put("displayName", f.displayName());
-            nodeField.put("description", f.description());
-            */
             if (f.mainAnnotation() != null)
                 nodeField.put(KEY_MAIN_ANNOTATION, f.mainAnnotation().name());
-            /*ArrayNode arr = nodeField.putArray("displayOrder");
-            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());*/
             nodeField.put("hasContentStore", f.hasContentStore());
             nodeField.put("hasXmlTags", f.hasXmlTags());
             ArrayNode annots = nodeField.putArray("annotations");
