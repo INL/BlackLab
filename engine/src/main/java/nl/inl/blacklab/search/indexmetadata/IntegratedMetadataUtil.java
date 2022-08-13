@@ -201,7 +201,7 @@ class IntegratedMetadataUtil {
                 MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType,
                         metadataFields.getMetadataFieldValuesFactory());
 
-                fieldDesc.setCustomProps(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
+                fieldDesc.custom().putAll(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
                 fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
                 metadataFields.put(fieldName, fieldDesc);
@@ -235,7 +235,7 @@ class IntegratedMetadataUtil {
                         KEYS_ANNOTATED_FIELD_CONFIG);
                 AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(metadata, fieldName);
 
-                fieldDesc.setCustomProps(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
+                fieldDesc.custom().putAll(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
 
                 fieldDesc.setContentStore(Json.getBoolean(fieldConfig, "hasContentStore", true));
                 fieldDesc.setXmlTags(Json.getBoolean(fieldConfig, "hasXmlTags", true));

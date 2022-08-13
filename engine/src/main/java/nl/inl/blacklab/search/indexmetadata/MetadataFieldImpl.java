@@ -44,23 +44,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private String analyzer = "DEFAULT";
 
     /**
-     * When value is missing or empty this value may be used instead (whether it is
-     * depends or unknownCondition).
-     */
-    private String unknownValue = "unknown";
-
-    /**
-     * When is the unknown value for this field used?
-     */
-    private UnknownCondition unknownCondition = UnknownCondition.NEVER;
-
-    /** Gives the display value corresponding to a value, if any. */
-    private final Map<String, String> displayValues = new HashMap<>();
-
-    /** Order in which to display values in select dropdown (if defined) */
-    private final List<String> displayOrder = new ArrayList<>();
-
-    /**
      * Values for this field and their frequencies.
      */
     private MetadataFieldValues values;
@@ -70,12 +53,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * application to generate metadata search interface.
      */
     private String group;
-
-    /**
-     * Type of UI element to show for this field. Can be used by a generic search
-     * application to generate metadata search interface.
-     */
-    private String uiType = "";
 
     /**
      * If true, this instance is frozen and may not be mutated anymore.
@@ -109,9 +86,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return type;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("displayOrder", Collections.emptyList()) instead.
+     */
     @Override
+    @Deprecated
     public List<String> displayOrder() {
-        return Collections.unmodifiableList(displayOrder);
+        return custom.get("displayOrder", Collections.emptyList());
     }
 
     @Override
@@ -119,14 +100,22 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return analyzer;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("unknownValue", "unknown") instead.
+     */
     @Override
+    @Deprecated
     public String unknownValue() {
-        return unknownValue;
+        return custom.get("unknownValue", "unknown");
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("unknownCondition", "never") instead.
+     */
     @Override
+    @Deprecated
     public UnknownCondition unknownCondition() {
-        return unknownCondition;
+        return UnknownCondition.fromStringValue(custom.get("unknownCondition", "never"));
     }
 
     @Override
@@ -139,9 +128,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return values.isComplete();
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("displayValues", Collections.emptyMap()) instead.
+     */
     @Override
+    @Deprecated
     public Map<String, String> displayValues() {
-        return Collections.unmodifiableMap(displayValues);
+        return custom.get("displayValues", Collections.emptyMap());
     }
 
     @Override
@@ -149,9 +142,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return group;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("uiType", "") instead.
+     */
     @Override
+    @Deprecated
     public String uiType() {
-        return uiType;
+        return custom.get("uiType", "");
     }
     
     @Override
@@ -181,52 +178,71 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         }
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("unknownValue", ...) instead.
+     */
+    @Deprecated
     public void setUnknownValue(String unknownValue) {
-        if (this.unknownValue == null || !this.unknownValue.equals(unknownValue)) {
+        if (!this.unknownValue().equals(unknownValue)) {
             ensureNotFrozen();
-            this.unknownValue = unknownValue;
+            custom.put("unknownValue", unknownValue);
         }
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("unknownCondition", ...) instead.
+     */
+    @Deprecated
     public void setUnknownCondition(UnknownCondition unknownCondition) {
-        if (this.unknownCondition == null || !this.unknownCondition.equals(unknownCondition)) {
+        if (!this.unknownCondition().equals(unknownCondition)) {
             ensureNotFrozen();
-            this.unknownCondition = unknownCondition;
+            this.custom.put("unknownCondition", unknownCondition.stringValue());
         }
     }
 
-    public void setValues(JsonNode values) {
+    void setValues(JsonNode values) {
         if (this.values.shouldAddValuesWhileIndexing()) {
             ensureNotFrozen();
             this.values.setValues(values);
         }
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("displayValue", ...) instead.
+     */
+    @Deprecated
     public void setDisplayValues(JsonNode displayValues) {
         ensureNotFrozen();
-        this.displayValues.clear();
+        Map<String, String> map = new HashMap<>();
         Iterator<Entry<String, JsonNode>> it = displayValues.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> entry = it.next();
             String value = entry.getKey();
             String displayValue = entry.getValue().textValue();
-            this.displayValues.put(value, displayValue);
+            map.put(value, displayValue);
         }
+        custom.put("displayValues", map);
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("displayValues", ...) instead.
+     */
+    @Deprecated
     public void setDisplayValues(Map<String, String> displayValues) {
         ensureNotFrozen();
-        this.displayValues.clear();
-        this.displayValues.putAll(displayValues);
+        custom.put("displayValues", new HashMap<>(displayValues));
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("displayOrder", ...) instead.
+     */
+    @Deprecated
     public void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
-        this.displayOrder.clear();
-        this.displayOrder.addAll(displayOrder);
+        custom.put("displayOrder", new ArrayList<>(displayOrder));
     }
 
-    public void setValueListComplete(boolean valueListComplete) {
+    void setValueListComplete(boolean valueListComplete) {
         if (this.values.shouldAddValuesWhileIndexing()) {
             ensureNotFrozen();
             this.values.setComplete(valueListComplete ? ValueListComplete.YES : ValueListComplete.NO);
@@ -271,9 +287,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         this.group = group;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .put("uiType", ...) instead.
+     */
+    @Deprecated
     public void setUiType(String uiType) {
         ensureNotFrozen();
-        this.uiType = uiType;
+        custom.put("uiType", uiType);
     }
 
     public void setDocValuesType(DocValuesType docValuesType) {

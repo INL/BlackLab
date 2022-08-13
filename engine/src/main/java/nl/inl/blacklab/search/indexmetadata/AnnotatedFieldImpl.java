@@ -1,13 +1,11 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -38,24 +36,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
         @Override
         public Iterator<Annotation> iterator() {
-            Iterator<AnnotationImpl> it = annotationsDisplayOrder.iterator();
-            return new Iterator<>() {
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
-
-                @Override
-                public Annotation next() {
-                    return it.next();
-                }
-
-            };
+            return stream().iterator();
         }
 
         @Override
         public Stream<Annotation> stream() {
-            return annotationsDisplayOrder.stream().map(a -> a);
+            return annots.values().stream().map(a -> a);
         }
 
         @Override
@@ -80,9 +66,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
     /** This field's annotations, sorted by name */
     private final Map<String, AnnotationImpl> annots;
-    
-    /** This field's annotations, in desired display order */
-    private final List<AnnotationImpl> annotationsDisplayOrder;
 
     /** The field's main annotation */
     private AnnotationImpl mainAnnotation;
@@ -99,12 +82,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     /** These annotations should not get a forward index. */
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
-    /** Annotation display order. If not specified, use reasonable defaults. */
-    private final List<String> displayOrder = new ArrayList<>(AnnotatedFieldNameUtil.COMMON_ANNOTATIONS);
-
-    /** Compares annotation names by displayOrder. */
-    private final Comparator<AnnotationImpl> annotationOrderComparator;
-
     private boolean frozen;
 
     private final AnnotationsImpl annotationsImpl;
@@ -112,17 +89,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
         this.indexMetadata = indexMetadata;
-        annots = new TreeMap<>();
-        annotationsDisplayOrder = new ArrayList<>();
-        annotationOrderComparator = (a, b) -> {
-            int ai = displayOrder.indexOf(a.name());
-            if (ai < 0)
-                ai = Integer.MAX_VALUE;
-            int bi = displayOrder.indexOf(b.name());
-            if (bi < 0)
-                bi = Integer.MAX_VALUE;
-            return Integer.compare(ai, bi);
-        };
+        annots = new LinkedHashMap<>();
         
         contentStore = false;
         xmlTags = false;
@@ -169,7 +136,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
      */
     List<String> getDisplayOrder() {
-        return Collections.unmodifiableList(displayOrder);
+        return custom().get("displayOrder", Collections.emptyList());
     }
     
     // Methods that mutate data
@@ -245,8 +212,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
-        annotationsDisplayOrder.add(annotDesc);
-        annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
     synchronized void detectMainAnnotation(IndexReader reader) {
@@ -309,11 +274,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         this.noForwardIndexAnnotations = noForwardIndexAnnotations;
     }
 
+    @Deprecated
     synchronized void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
-        this.displayOrder.clear();
-        this.displayOrder.addAll(displayOrder);
-        this.annotationsDisplayOrder.sort(annotationOrderComparator);
+        custom.put("displayOrder", displayOrder);
     }
 
     @Override
