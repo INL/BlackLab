@@ -39,8 +39,6 @@ Integrating with Solr will involve the following steps.
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
     - [ ] Make sure (basic) config-based indexing is unit tested too.
-    - [ ] get rid of `fieldInfo` level?
-    - [ ] use CustomPropsMap in fields, annotations instead of delegates, to make JAXB serialization easier?
     - [ ] (maybe) Use JAXB for the metadata (de)serialization?
 
 Where we take the metadata document into account:

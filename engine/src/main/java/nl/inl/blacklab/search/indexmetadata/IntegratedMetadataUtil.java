@@ -70,9 +70,8 @@ class IntegratedMetadataUtil {
         nodeCustom.put("textDirection", "ltr");
 
         createVersionInfo(jsonRoot);
-        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.putObject("metadataFields");
-        fieldInfo.putObject(KEY_ANNOTATED_FIELDS);
+        jsonRoot.putObject("metadataFields");
+        jsonRoot.putObject(KEY_ANNOTATED_FIELDS);
         return jsonRoot;
     }
 
@@ -104,14 +103,13 @@ class IntegratedMetadataUtil {
 
         createVersionInfo(jsonRoot);
 
-        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
+        jsonRoot.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
         if (corpusConfig.getSpecialFields().containsKey("pidField"))
-            fieldInfo.put("pidField", corpusConfig.getSpecialFields().get("pidField"));
+            jsonRoot.put("pidField", corpusConfig.getSpecialFields().get("pidField"));
 
 
-        ObjectNode metadata = fieldInfo.putObject("metadataFields");
-        ObjectNode annotated = fieldInfo.putObject(KEY_ANNOTATED_FIELDS);
+        ObjectNode metadata = jsonRoot.putObject("metadataFields");
+        ObjectNode annotated = jsonRoot.putObject(KEY_ANNOTATED_FIELDS);
         addFieldInfoFromConfig(metadata, annotated, config);
 
         return jsonRoot;
@@ -159,14 +157,8 @@ class IntegratedMetadataUtil {
         extractVersionInfo(metadata, jsonRoot);
 
 
-        // Specified in index metadata file?
-        ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
-        final Set<String> KEYS_FIELD_INFO = new HashSet<>(Arrays.asList(
-                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField"));
-        warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-
         // Metadata fields
-        ObjectNode nodeMetaFields = Json.getObject(fieldInfo, "metadataFields");
+        ObjectNode nodeMetaFields = Json.getObject(jsonRoot, "metadataFields");
         boolean hasMetaFields = nodeMetaFields.size() > 0;
         if (hasMetaFields) {
 
@@ -209,7 +201,7 @@ class IntegratedMetadataUtil {
         }
 
         // Annotated fields
-        ObjectNode nodeAnnotatedFields = Json.getObject(fieldInfo, IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS);
+        ObjectNode nodeAnnotatedFields = Json.getObject(jsonRoot, IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS);
         boolean hasAnnotatedFields = nodeAnnotatedFields.size() > 0;
         AnnotatedFieldsImpl annotatedFields = metadata.annotatedFields();
         if (hasAnnotatedFields) {
@@ -327,9 +319,9 @@ class IntegratedMetadataUtil {
         }
 
         // Some additional metadata settings
-        metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
-        if (fieldInfo.has("pidField"))
-            metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
+        metadataFields.setDefaultAnalyzerName(Json.getString(jsonRoot, "defaultAnalyzer", "DEFAULT"));
+        if (jsonRoot.has("pidField"))
+            metadataFields.setSpecialField(MetadataFields.PID, jsonRoot.get("pidField").textValue());
         if (metadataFields.titleField() == null) {
             if (metadataFields.pidField() != null)
                 metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
@@ -340,7 +332,8 @@ class IntegratedMetadataUtil {
 
     private static void extractTopLevelKeys(IndexMetadataIntegrated metadata, ObjectNode jsonRoot) {
         final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
-                "custom", "contentViewable", "documentFormat", "versionInfo", "fieldInfo"));
+                "custom", "contentViewable", "documentFormat", "versionInfo",
+                "metadataFields", IntegratedMetadataUtil.KEY_ANNOTATED_FIELDS, "defaultAnalyzer", "pidField"));
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
 
         // Get top-level custom properties
@@ -404,11 +397,10 @@ class IntegratedMetadataUtil {
     }
 
     private static ObjectNode addFieldInfo(MetadataFieldsImpl metadataFields, ObjectNode jsonRoot) {
-        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-        fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
+        jsonRoot.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         if (metadataFields.pidField() != null)
-            fieldInfo.put("pidField", metadataFields.special(MetadataFields.PID).name());
-        return fieldInfo;
+            jsonRoot.put("pidField", metadataFields.special(MetadataFields.PID).name());
+        return jsonRoot;
     }
 
     private static void addMetadataFields(MetadataFields metaFields, ObjectNode fieldInfo) {
