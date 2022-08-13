@@ -50,8 +50,6 @@ public interface MetadataField extends Field {
      */
     Map<String, String> displayValues();
 
-	String group();
-
     @Override
     default String contentsFieldName() {
         return name();

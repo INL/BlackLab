@@ -114,9 +114,6 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
-        String group = fd.group();
-        if (group != null && group.length() > 0)
-            ds.entry("group", group);
         ds
                 .entry("type", fd.type().toString())
                 .entry("analyzer", fd.analyzerName())
@@ -262,9 +259,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     }
                     ds.endList().endEntry();
                 }
-                if (annotation.isSubannotation()) {
-                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
-                }
+//                if (annotation.isSubannotation()) {
+//                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
+//                }
             }
             ds.endMap().endAttrEntry();
         }

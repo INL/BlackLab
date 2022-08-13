@@ -91,9 +91,4 @@ public final class MockMetadataField implements MetadataField {
     public Map<String, String> displayValues() {
         return null;
     }
-
-    @Override
-    public String group() {
-        return null;
-    }
 }

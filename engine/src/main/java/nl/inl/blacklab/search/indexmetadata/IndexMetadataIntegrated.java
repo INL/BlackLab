@@ -23,6 +23,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -44,6 +45,10 @@ import nl.inl.util.TimeUtil;
  * Determines the structure of a BlackLab index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({
+    "custom", "contentViewable", "documentFormat", "versionInfo",
+    "defaultAnalyzer", "pidField", "metadataFields", "annotatedFields"
+})
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
@@ -139,20 +144,25 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     /** Corpus-level custom properties */
     private CustomPropsMap custom = new CustomPropsMap();
 
-    /** When BlackLab.jar was built */
-    private String blackLabBuildTime;
+    @XmlAccessorType(XmlAccessType.FIELD)
+    static class VersionInfo {
+        /** When BlackLab.jar was built */
+        public String blackLabBuildTime;
 
-    /** BlackLab version used to (initially) create index */
-    private String blackLabVersion;
+        /** BlackLab version used to (initially) create index */
+        public String blackLabVersion;
 
-    /** Format the index uses */
-    private String indexFormat;
+        /** Format the index uses */
+        public String indexFormat;
 
-    /** Time at which index was created */
-    private String timeCreated;
+        /** Time at which index was created */
+        public String timeCreated;
 
-    /** Time at which index was created */
-    private String timeModified;
+        /** Time at which index was created */
+        public String timeModified;
+    }
+
+    private VersionInfo versionInfo = new VersionInfo();
 
     /** May all users freely retrieve the full content of documents, or is that restricted? */
     private boolean contentViewable = false;
@@ -285,7 +295,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String indexFormat() {
-        return indexFormat;
+        return versionInfo.indexFormat;
     }
 
     /**
@@ -295,7 +305,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String timeCreated() {
-        return timeCreated;
+        return versionInfo.timeCreated;
     }
 
     /**
@@ -305,7 +315,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String timeModified() {
-        return timeCreated;
+        return versionInfo.timeCreated;
     }
 
     /**
@@ -315,7 +325,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String indexBlackLabBuildTime() {
-        return blackLabBuildTime;
+        return versionInfo.blackLabBuildTime;
     }
 
     /**
@@ -325,7 +335,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     @Override
     public String indexBlackLabVersion() {
-        return blackLabVersion;
+        return versionInfo.blackLabVersion;
     }
 
     // Methods that mutate data
@@ -350,7 +360,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void updateLastModified() {
         ensureNotFrozen();
-        timeModified = TimeUtil.timestamp();
+        versionInfo.timeModified = TimeUtil.timestamp();
     }
 
     /**
@@ -418,27 +428,27 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     public void setBlackLabBuildTime(String blackLabBuildTime) {
         ensureNotFrozen();
-        this.blackLabBuildTime = blackLabBuildTime;
+        versionInfo.blackLabBuildTime = blackLabBuildTime;
     }
 
     public void setBlackLabVersion(String blackLabVersion) {
         ensureNotFrozen();
-        this.blackLabVersion = blackLabVersion;
+        versionInfo.blackLabVersion = blackLabVersion;
     }
 
     public void setIndexFormat(String indexFormat) {
         ensureNotFrozen();
-        this.indexFormat = indexFormat;
+        versionInfo.indexFormat = indexFormat;
     }
 
     public void setTimeCreated(String timeCreated) {
         ensureNotFrozen();
-        this.timeCreated = timeCreated;
+        versionInfo.timeCreated = timeCreated;
     }
 
     public void setTimeModified(String timeModified) {
         ensureNotFrozen();
-        this.timeModified = timeModified;
+        versionInfo.timeModified = timeModified;
     }
 
     /**

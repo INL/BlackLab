@@ -34,6 +34,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     private final Map<String, MetadataFieldImpl> metadataFieldInfos;
 
     /** What MetadataFieldValues implementation to use (store in indexmetadata or get from index) */
+    @XmlTransient
     private final MetadataFieldValues.Factory metadataFieldValuesFactory;
 
     /**
@@ -46,12 +47,15 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     private String defaultUnknownValue;
 
     /** Metadata field containing document title */
+    @XmlTransient
     private String titleField;
 
     /** Metadata field containing document author */
+    @XmlTransient
     private String authorField;
 
     /** Metadata field containing document date */
+    @XmlTransient
     private String dateField;
 
     /** Metadata field containing document pid */
@@ -73,6 +77,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      *  This map may be modified even if this instance is frozen.
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
      */
+    @XmlTransient
     private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
 
     public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {

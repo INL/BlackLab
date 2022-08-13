@@ -56,12 +56,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private MetadataFieldValues values;
 
     /**
-     * The field group this field belongs to. Can be used by a generic search
-     * application to generate metadata search interface.
-     */
-    private String group;
-
-    /**
      * If true, this instance is frozen and may not be mutated anymore.
      * Doing so anyway will throw an exception.
      */
@@ -144,11 +138,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @Deprecated
     public Map<String, String> displayValues() {
         return custom.get("displayValues", Collections.emptyMap());
-    }
-
-    @Override
-    public String group() {
-        return group;
     }
 
     /**
@@ -289,11 +278,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     public void resetForIndexing() {
         ensureNotFrozen();
         values.reset();
-    }
-
-    public void setGroup(String group) {
-        ensureNotFrozen();
-        this.group = group;
     }
 
     /**

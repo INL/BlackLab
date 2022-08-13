@@ -13,19 +13,6 @@ public interface Annotation {
 
 	/** @return this annotation's name */
 	String name();
-    
-    /**
-     * Is this a subannotation?
-     * @return true if is, false if not
-     */
-    boolean isSubannotation();
-    
-    /**
-     * If this is a subannotation, return its parent annotation.
-     * 
-     * @return parent annotation or null if this is not a subannotation
-     */
-    Annotation parentAnnotation();
 
     /**
      * What type of UI should be shown for this annotation?

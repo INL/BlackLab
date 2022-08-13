@@ -194,7 +194,7 @@ class IntegratedMetadataUtil {
                         metadataFields.getMetadataFieldValuesFactory());
 
                 fieldDesc.custom().putAll(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
-                fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
+                //fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
                 metadataFields.put(fieldName, fieldDesc);
             }

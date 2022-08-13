@@ -17,6 +17,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 
@@ -69,6 +71,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
     
     /** This field's annotations, sorted by name */
+    @XmlTransient
     private final Map<String, AnnotationImpl> annots;
 
     /** The field's main annotation */
@@ -79,6 +82,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      * The field's main annotation name (for storing the main annot name before we have
      * the annot. descriptions)
      */
+    @JsonProperty("mainAnnotation")
     private String mainAnnotationName;
 
     /** Are there XML tag locations stored for this field? */

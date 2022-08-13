@@ -88,16 +88,6 @@ public class MockAnnotation implements Annotation {
     }
 
     @Override
-    public boolean isSubannotation() {
-        return false;
-    }
-
-    @Override
-    public Annotation parentAnnotation() {
-        return null;
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;

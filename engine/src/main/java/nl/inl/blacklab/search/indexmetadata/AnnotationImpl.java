@@ -58,6 +58,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     /**
      * If this is a subannotation, what is its parent annotation?
      */
+    @XmlTransient
     private Annotation mainAnnotation = null;
 
     AnnotationImpl(AnnotatedField field) {
@@ -321,16 +322,6 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     public void setSubAnnotation(Annotation parentAnnotation) {
         ensureNotFrozen();
         this.mainAnnotation = parentAnnotation;
-    }
-
-    @Override
-    public boolean isSubannotation() {
-        return mainAnnotation != null;
-    }
-    
-    @Override
-    public Annotation parentAnnotation() {
-        return mainAnnotation;
     }
 
     public void setSubannotationNames(List<String> names) {

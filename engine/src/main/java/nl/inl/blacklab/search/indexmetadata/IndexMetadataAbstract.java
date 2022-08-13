@@ -598,7 +598,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
-                fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
+                //fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
                 fieldDesc.setUnknownValue(
                         Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
