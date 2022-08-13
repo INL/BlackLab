@@ -100,6 +100,105 @@ You may leave 'gaps' in the double-quoted strings in your Corpus Query Language 
 TODO
 
 ```json
-
+{
+  "summary": {
+    "searchParam": {
+      "filter": "afz_naam_norm:(Machiel Jochems)",
+      "first": "0",
+      "indexname": "BaB",
+      "number": "20"
+    },
+    "searchTime": 1,
+    "countTime": 1,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 20,
+    "actualWindowSize": 3,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title",
+      "authorField": "author",
+      "dateField": "witnessYear_from"
+    },
+    "metadataFieldDisplayNames": {
+      "adr_loc_land_norm": "Country",
+      "adr_loc_plaats_norm": "Place",
+      ...
+    }
+  },
+  "docs": [
+    {
+      "docPid": "bab0604",
+      "docInfo": {
+        "afz_loc_regio_norm": [
+          "Noord-Europa"
+        ],
+        "afz_klasse": [
+          "unknown"
+        ],
+        "afz_naam_norm": [
+          "Machiel Jochems"
+        ],
+        "author": [
+          "Machiel Jochems"
+        ],
+        "afz_loc_plaats_norm": [
+          "Frederiksstad"
+        ],
+        "witnessYear_from": [
+          "1666"
+        ],
+        "pid": [
+          "bab0604"
+        ],
+        "adr_loc_land_norm": [
+          "Nederland"
+        ],
+        "adr_naam_norm": [
+          "Jannetje Alberts"
+        ],
+        "title": [
+          "To Jannetje Alberts, 9 augustus 1666"
+        ],
+        "afz_loc_land_norm": [
+          "Duitsland"
+        ],
+        "afz_geslacht": [
+          "male"
+        ],
+        "afz_rel_tot_adr": [
+          "friend (m)"
+        ],
+        "datum_jaar": [
+          "1666"
+        ],
+        "fromInputFile": [
+          "\/2.8TDN\/05-01-2009_001-002.exported.xml"
+        ],
+        "adr_loc_regio_norm": [
+          "Noord-Holland"
+        ],
+        "autograaf": [
+          "uncertain"
+        ],
+        "type_brief": [
+          "private"
+        ],
+        "adr_loc_plaats_norm": [
+          "Amsterdam"
+        ],
+        "signatuur": [
+          "HCA 30-643"
+        ],
+        "lengthInTokens": 355,
+        "mayView": true
+      }
+    },
+    ...
+  ]
+}
 ```
-

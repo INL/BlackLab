@@ -1,10 +1,6 @@
 # BlackLab Server REST API reference
 
-::: warning
-This is a work in progress. Some of the endpoints have not been documented yet.
-
-Also see the [overview](../overview.md).
-:::
+This documents all of BlackLab Server's endpoints. For a more guided introducion, see the [overview](../overview.md).
 
 <!-- (used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples)) -->
 
@@ -72,15 +68,15 @@ These give you information about input format configurations that BlackLab has a
 There's also operations to add, update and delete private user formats; those are only available if user authentication and private user corpora are enabled.
 
 * [List input formats](input-formats/get.md) : `GET /input-formats`
+* [Add or update input format](input-formats/post.md) : `POST /input-formats`
 * [Input format configuration](input-formats/name/get.md): `GET /input-formats/<name>`
 * [Input format XSLT](input-formats/name/xslt/get.md): `GET /input-formats/<name>/xslt`
-* [Add or update input format](input-formats/post.md) : `POST /input-formats`
 * [Delete input format](input-formats/name/delete.md) : `DELETE /input-formats/<name>`
 
 ### Debug endpoints
 
 Can only be used in debug mode.
 
-* [Information about the cache](cache-info.md): `GET /cache-info`
-* [Clear the cache](cache-clear.md): `POST /cache-clear`
+* [Show results cache](cache-info/get.md): `GET /cache-info`
+* [Clear results cache](cache-clear/post.md): `POST /cache-clear`
 
