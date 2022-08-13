@@ -2,13 +2,14 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.search.DocValuesFieldExistsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -33,14 +34,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
     }
 
-    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
-            throws IndexVersionMismatch {
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
         return new IndexMetadataIntegrated(this, createNewIndex, config);
-
     }
 
-    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
-            throws IndexVersionMismatch {
+    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
         if (indexTemplateFile != null)
             throw new UnsupportedOperationException(
                     "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
@@ -63,6 +61,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
+    @XmlTransient
     public Query getAllRealDocsQuery() {
         // NOTE: we cannot use Lucene's MatchAllDocsQuery because we need to skip the index metadata document.
 

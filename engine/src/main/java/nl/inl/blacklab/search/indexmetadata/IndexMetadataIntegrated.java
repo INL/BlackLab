@@ -7,6 +7,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +26,7 @@ import org.apache.lucene.search.TermQuery;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -38,6 +43,7 @@ import nl.inl.util.TimeUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
@@ -123,14 +129,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         public int getDocumentId() {
             return metadataDocId;
         }
-
-        public boolean isMetadataDocumentField(String name) {
-            return name.startsWith(INDEX_METADATA_FIELD_PREFIX); // special fields for index metadata
-        }
     }
 
 
     /** Our index */
+    @XmlTransient
     protected final BlackLabIndex index;
 
     /** Corpus-level custom properties */
@@ -162,6 +165,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     private String documentFormat;
 
+    @XmlTransient
     protected long tokenCount = 0;
 
     /** Our metadata fields */
@@ -171,19 +175,24 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
 
     /** Have we determined our tokenCount from the index? (done lazily) */
+    @XmlTransient
     private boolean tokenCountCalculated;
 
     /** How many documents with values for the main annotated field are in our index */
+    @XmlTransient
     private int documentCount;
 
     /** Contents of the documentFormat config file at index creation time. */
     private String documentFormatConfigFileContents = "(not set)";
 
+    @XmlTransient
     private final BlackLabIndexWriter indexWriter;
 
+    @XmlTransient
     private final MetadataDocument metadataDocument = new MetadataDocument();
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
+    @XmlTransient
     private boolean frozen;
 
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
@@ -561,6 +570,20 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
         if (indexWriter == null)
             throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+
+        // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
+        // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
+        // which are currently still done through a delegate class instead of CustomPropsMap.
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JaxbAnnotationModule());
+            String metadataJsonJackson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(IndexMetadataIntegrated.this);
+            File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata-jaxb.json");
+            FileUtils.writeStringToFile(debugJackson, metadataJsonJackson, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
         ObjectNode metadata = IntegratedMetadataUtil.encodeToJson(this);
         metadataDocument.saveToIndex(indexWriter, metadata, documentFormatConfigFileContents);
     }
