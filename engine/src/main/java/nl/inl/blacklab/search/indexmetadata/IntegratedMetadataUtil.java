@@ -261,7 +261,7 @@ class IntegratedMetadataUtil {
                                 annotationOrder.add(opt.getValue().textValue());
                                 break;
                             case "custom":
-                                annotation.setCustomProps(CustomProps.fromJson((ObjectNode)opt.getValue()));
+                                annotation.custom().putAll(CustomProps.fromJson((ObjectNode)opt.getValue()));
                                 break;
                             case "isInternal":
                                 if (opt.getValue().booleanValue())

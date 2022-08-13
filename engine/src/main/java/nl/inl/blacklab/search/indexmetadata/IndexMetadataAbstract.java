@@ -50,6 +50,7 @@ import nl.inl.util.TimeUtil;
 /**
  * Determines the structure of a BlackLab index.
  */
+@SuppressWarnings("deprecation")
 public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataAbstract.class);
@@ -100,7 +101,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     private String description;
 
     /** Custom properties */
-    private CustomProps customProps;
+    private final CustomProps customProps;
 
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;

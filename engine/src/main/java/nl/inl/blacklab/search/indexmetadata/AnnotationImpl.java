@@ -25,18 +25,9 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     /** The annotation name */
     private String name;
 
-    /** Name to display in user interface (optional) */
-    private String displayName;
+    /** Our custom properties */
+    private final CustomPropsMap custom = new CustomPropsMap();
 
-    /** Description for user interface (optional) */
-    private String description = "";
-
-    /**
-     * What UI element to use for this annotation (e.g. text, select); only used in
-     * frontend, ignored by BlackLab itself.
-     */
-    private String uiType = "";
-    
     /**
      * Is this an internal annotation, not relevant for a search interface (e.g. punct, starttag)
      */
@@ -133,12 +124,15 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return offsetsAlternative;
     }
 
+    /**
+     * @deprecated use {@link #custom()} with .get("displayName", name) instead
+     */
+    @Deprecated
     @Override
     public String displayName() {
-        if (displayName != null)
+        String displayName = custom.get("displayName", "");
+        if (!displayName.isEmpty())
             return displayName;
-        if (name.equals("pos"))
-            return "PoS";
         return StringUtils.capitalize(name);
     }
 
@@ -147,14 +141,22 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return isInternal;
     }
 
+    /**
+     * @deprecated use {@link #custom()} with .get("uiType", name) instead
+     */
+    @Deprecated
     @Override
     public String uiType() {
-        return uiType;
+        return custom.get("uiType", "");
     }
 
+    /**
+     * @deprecated use {@link #custom()} with .get("description", name) instead
+     */
+    @Deprecated
     @Override
     public String description() {
-        return description;
+        return custom.get("description", "");
     }
     
     // Methods that mutate data
@@ -198,9 +200,13 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         }
     }
 
+    /**
+     * @deprecated use {@link #custom()} with .put("displayName", ...) instead
+     */
+    @Deprecated
     public void setDisplayName(String displayName) {
         ensureNotFrozen();
-        this.displayName = displayName;
+        this.custom.put("displayName", displayName);
     }
 
     void addAlternative(MatchSensitivity matchSensitivity) {
@@ -234,14 +240,23 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
     }
 
+    /**
+     * @deprecated use {@link #custom()} with .put("uiType", ...) instead
+     */
+    @Deprecated
     public void setUiType(String uiType) {
         ensureNotFrozen();
-        this.uiType = uiType;
+        custom.put("uiType", uiType);
     }
 
+
+    /**
+     * @deprecated use {@link #custom()} with .put("uiType", ...) instead
+     */
+    @Deprecated
     public void setDescription(String description) {
         ensureNotFrozen();
-        this.description = description;
+        custom.put("description", description);
     }
     
     @Override
@@ -324,62 +339,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         subAnnotationNames.addAll(names);
     }
 
-    /** Our custom properties */
-    private CustomPropsDelegateAnnotation custom = new CustomPropsDelegateAnnotation();
-
-    public CustomProps custom() {
+    public CustomPropsMap custom() {
         return custom;
-    }
-
-    public void setCustomProps(CustomPropsMap fromJson) {
-        custom.set(fromJson);
-    }
-
-    private class CustomPropsDelegateAnnotation implements CustomProps {
-
-        @Override
-        public Object get(String key) {
-            switch (key) {
-            case "displayName":
-                return displayName();
-            case "description":
-                return description();
-            case "uiType":
-                return uiType();
-            default:
-                return null;
-            }
-        }
-
-        public void put(String key, Object value) {
-            switch (key) {
-            case "displayName":
-                setDisplayName((String) value);
-                break;
-            case "description":
-                setDescription((String) value);
-                break;
-            case "uiType":
-                setUiType((String) value);
-                break;
-            default:
-                throw new IllegalStateException("Unknown custom property: " + key);
-            }
-        }
-
-        public void set(CustomPropsMap props) {
-            for (Map.Entry<String, Object> entry : props.asMap().entrySet()) {
-                put(entry.getKey(), entry.getValue());
-            }
-        }
-
-        @Override
-        public Map<String, Object> asMap() {
-            return Map.of(
-                    "displayName", displayName(),
-                    "description", description(),
-                    "uiType", uiType()
-            );
-        }
     }
 }
