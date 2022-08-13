@@ -8,6 +8,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
@@ -17,8 +21,10 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 
 /** An annotated field */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
-    
+
+    @XmlAccessorType(XmlAccessType.FIELD)
     public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
@@ -61,13 +67,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
-
-    private final IndexMetadata indexMetadata;
     
     /** This field's annotations, sorted by name */
     private final Map<String, AnnotationImpl> annots;
 
     /** The field's main annotation */
+    @XmlTransient
     private AnnotationImpl mainAnnotation;
 
     /**
@@ -80,21 +85,22 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private boolean xmlTags;
 
     /** These annotations should not get a forward index. */
+    @XmlTransient
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
+    @XmlTransient
     private boolean frozen;
 
-    private final AnnotationsImpl annotationsImpl;
+    private final AnnotationsImpl annotations;
 
     AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
         super(name);
-        this.indexMetadata = indexMetadata;
         annots = new LinkedHashMap<>();
         
         contentStore = false;
         xmlTags = false;
         mainAnnotation = null;
-        annotationsImpl = new AnnotationsImpl();
+        annotations = new AnnotationsImpl();
     }
 
     @Override
@@ -104,7 +110,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
     @Override
     public Annotations annotations() {
-        return annotationsImpl;
+        return annotations;
     }
 
     /**
@@ -201,7 +207,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
             ensureNotFrozen();
-            pd = new AnnotationImpl(indexMetadata, this, name);
+            pd = new AnnotationImpl(this, name);
             putAnnotation(pd);
             if (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
                 xmlTags = true;

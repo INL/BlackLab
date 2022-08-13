@@ -28,11 +28,6 @@ public class MockAnnotation implements Annotation {
         this.name = name;
     }
     
-    @Override
-    public IndexMetadata indexMetadata() {
-        return indexMetadata;
-    }
-    
     public void setField(AnnotatedField field) {
         this.field = field;
     }

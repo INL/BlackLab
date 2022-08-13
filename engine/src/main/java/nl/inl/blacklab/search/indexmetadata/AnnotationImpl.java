@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
@@ -15,11 +19,11 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.util.LuceneUtil;
 
 /** Annotation on a field. */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
-    private final IndexMetadata indexMetadata;
-    
     /** The field this is an annotation for. */
+    @XmlTransient
     private final AnnotatedField field;
     
     /** The annotation name */
@@ -45,6 +49,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     private AnnotationSensitivity offsetsAlternative;
 
+    @XmlTransient
     private boolean frozen = false;
     
     /** Names of our subannotations, if we have any */
@@ -55,20 +60,14 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     private Annotation mainAnnotation = null;
 
-    AnnotationImpl(IndexMetadata indexMetadata, AnnotatedField field) {
-        this(indexMetadata, field, null);
+    AnnotationImpl(AnnotatedField field) {
+        this(field, null);
     }
 
-    AnnotationImpl(IndexMetadata indexMetadata, AnnotatedField field, String name) {
-        this.indexMetadata = indexMetadata;
+    AnnotationImpl(AnnotatedField field, String name) {
         this.field = field;
         this.setName(name);
         forwardIndex = false;
-    }
-    
-    @Override
-    public IndexMetadata indexMetadata() {
-        return indexMetadata;
     }
     
     @Override

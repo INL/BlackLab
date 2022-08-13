@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValuesType;
@@ -17,12 +21,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * A metadata field in an index.
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
     
     private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
     private static int maxMetadataValuesToStore = 50;
 
+    @XmlTransient
     private boolean keepTrackOfValues = true;
 
     public static void setMaxMetadataValuesToStore(int n) {
@@ -46,6 +52,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     /**
      * Values for this field and their frequencies.
      */
+    @XmlTransient
     private MetadataFieldValues values;
 
     /**
@@ -58,6 +65,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * If true, this instance is frozen and may not be mutated anymore.
      * Doing so anyway will throw an exception.
      */
+    @XmlTransient
     private boolean frozen;
 
     /**
@@ -65,6 +73,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      *
      * All metadata fielas should have doc values stored.
      */
+    @XmlTransient
     private DocValuesType docValuesType;
 
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {

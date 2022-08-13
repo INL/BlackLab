@@ -640,7 +640,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     while (itAnnot.hasNext()) {
                         JsonNode jsonAnnotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
-                        AnnotationImpl annotation = new AnnotationImpl(this, fieldDesc);
+                        AnnotationImpl annotation = new AnnotationImpl(fieldDesc);
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {

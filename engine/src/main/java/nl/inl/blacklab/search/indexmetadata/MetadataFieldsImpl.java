@@ -10,12 +10,17 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * The metadata fields in an index.
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
@@ -56,6 +61,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     private String defaultAnalyzerName;
 
     /** Is the object frozen, not allowing any modifications? */
+    @XmlTransient
     private boolean frozen = false;
 
     /** If we try to get() a missing field, should we throw or return a default config?

@@ -7,8 +7,6 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 
 /** An annotation on an annotated field. */
 public interface Annotation {
-
-    IndexMetadata indexMetadata();
     
 	/** @return field for which this is an annotation */
 	AnnotatedField field();

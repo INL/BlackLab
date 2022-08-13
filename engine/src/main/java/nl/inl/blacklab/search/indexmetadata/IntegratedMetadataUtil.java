@@ -251,7 +251,7 @@ class IntegratedMetadataUtil {
                     while (itAnnot.hasNext()) {
                         JsonNode jsonAnnotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
-                        AnnotationImpl annotation = new AnnotationImpl(metadata, fieldDesc);
+                        AnnotationImpl annotation = new AnnotationImpl(fieldDesc);
                         String offsetsSensitivity = "";
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();

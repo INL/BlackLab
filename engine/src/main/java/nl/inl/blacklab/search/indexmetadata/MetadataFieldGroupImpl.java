@@ -5,6 +5,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,6 +16,7 @@ import org.apache.logging.log4j.Logger;
  *
  * Used to divide metadata into logical groups.
  */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
