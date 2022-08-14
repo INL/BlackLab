@@ -28,8 +28,8 @@ themeConfig:
       - about
     /server/:
       - ''
+      - [ 'overview', 'How to use' ]
       - from-different-languages
-      - [ 'overview', 'API overview' ]
       - [ 'rest-api/', 'API reference' ]
       - configuration
       - howtos

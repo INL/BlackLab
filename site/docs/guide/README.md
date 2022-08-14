@@ -33,6 +33,7 @@ BlackLab features include:
 - **Flexible data ingestion**: if your data is not in one of the built-in formats, getting them into BlackLab is a matter of writing a configuration file.
 - **Search for regular-expression-like patterns**. Like being able to search for one or more adjectives followed by the word “cow”. (see [Corpus Query Language](corpus-query-language.md) to learn more)
 - **Search within XML tags** to find named entities that contain the word "tower" (Eiffel Tower, Tower Bridge, etc.), or words at the beginning or end of a sentence.
+- **Capture groups** so you can capture specific parts of matches.
 - **Fast grouping and sorting** of large result sets on several criteria. For example, you can group results by the word occurring to the right of the matched word(s).
 - **Accurate highlighting** of hits in a document and fast KWIC (keyword in context) view of hits.
 - **Active open source project** in development since 2010, with many [plans for the future](future-plans.md).

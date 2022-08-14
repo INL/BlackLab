@@ -1,4 +1,6 @@
-# BlackLab Server API overview
+# Using BlackLab Server
+
+
 
 ::: tip 
 The information below will mostly be moved to a proper [REST API reference](rest-api/). This page will then become more of a guided introduction to using BlackLab Server as a client, to complement the reference docs.

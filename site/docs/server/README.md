@@ -7,25 +7,25 @@ BlackLab Server is a web service providing a REST API for accessing [BlackLab](.
 This page explains how to set up and use BlackLab Server.
 
 
-## Features
-
-- Supports both JSON and XML, making it very easy to use from any programming language.
-- Caches results for faster response times.
-- Supports keyword-in-context (KWIC) view, sorting, grouping, sampling
-- Faceted search
-- Capture parts of matches
-- Highly configurable and tunable for performance and server load.
-
 ## Overview
-
 
 ### JSON or XML?
 
-The webservice answers in JSON or XML. Selection of the desired output format is done through the HTTP Accept header (value “application/json” or “application/xml”), or by passing an extra parameter `outputformat` (value `json` or `xml`). If both are specified, the parameter has precedence. If neither are specified, the configured default format is used.
+The webservice answers in JSON or XML. Selection of the desired output format can be done two ways:
+
+- by passing the HTTP header `Accept` with the value `application/json` or `application/xml`
+- by passing an extra parameter `outputformat` with the value `json` or `xml`.
+
+If both are specified, the parameter has precedence.
+
+We'll usually use JSON in our examples.
+
 
 ### Running results count
 
-BlackLab Server is a stateless REST service: a particular URL will always result in the same response. There’s one exception to this: when the server has the requested set of results, it might indicate that it is still counting the total number of results, and has counted X so far. The client may repeat the request to update the running count for the user. This way, the user gets to see the first results as soon as possible, and she’ll be able to see that the total number of results is still being counted.
+BlackLab Server is mostly stateless: a particular URL will always result in the same response. An exception to this is the running result count. When you're requesting a page of results, and there are more results to the query, BlackLab Server will retrieve these results in the background. It will report how many results it has retrieved and whether it has finished or is still retrieving.
+
+A note about retrieving versus counting. BLS has two limits for processing results: maximum number of hits to retrieve/process and maximum number of hits to count. Retrieving or processing hits means the hit is stored and will appear on the results page, is sorted, grouped, faceted, etc. If the retrieval limit is reached, BLS will still keep counting hits but will no longer store them.
 
 
 ## Basic example
@@ -79,10 +79,8 @@ Another option is to configure user authentication to allow users to create corp
 
 There is currently no way to use BlackLab Server to add data to non-user ("global" or regular) corpora. In the future, this will be available using Solr.
 
-## REST API
+## Searching your corpus
 
 You can try most BlackLab Server requests out by typing URLs into your browser. See the [REST API documentation](rest-api/README.md#blacklab-server-rest-api-reference) for the endpoints. 
-
-## Frontend
 
 We have a full-featured corpus search frontend available. See [BlackLab Frontend](/frontend/) for more information.
