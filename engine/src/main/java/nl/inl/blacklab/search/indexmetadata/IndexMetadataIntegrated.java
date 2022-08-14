@@ -102,34 +102,82 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     throw new RuntimeException("Multiple index metadata found!");
                 metadataDocId = docIds.get(0);
                 String indexMetadataJson = reader.document(metadataDocId).get(METADATA_FIELD_NAME);
-                ObjectMapper mapper = Json.getJsonObjectMapper();
-                return (ObjectNode) mapper.readTree(new StringReader(indexMetadataJson));
+                return deserializeFromJson(indexMetadataJson);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
 
-        public void saveToIndex(BlackLabIndexWriter indexWriter, ObjectNode metadata, String documentFormatConfigFileContents) {
-            // Create a metadata document with the metadata JSON, config format file,
-            // and a marker field to we can find it again
-            Document indexmetadataDoc = new Document();
-            ObjectWriter mapper = Json.getJsonObjectMapper().writerWithDefaultPrettyPrinter();
+        public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata, String documentFormatConfigFileContents) {
             try {
-                String metadataJson = mapper.writeValueAsString(metadata);
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
-                indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+                // Serialize metadata to JSON
+                String metadataJson = serializeToJson(metadata);
+                String metadataJsonJaxb = serializeToJsonJaxb(metadata);
 
-                // Update the index metadata by deleting it, then adding a new version.
-                indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
-
+                // Write debug files
+                File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata-jaxb.json");
+                FileUtils.writeStringToFile(debugJackson, metadataJsonJaxb, StandardCharsets.UTF_8);
                 File debugFileMetadata = new File(indexWriter.indexDirectory(), "debug-metadata.json");
                 FileUtils.writeStringToFile(debugFileMetadata, metadataJson, StandardCharsets.UTF_8);
                 File debugFileDocumentFormat = new File(indexWriter.indexDirectory(), "debug-format.blf.yaml");
                 FileUtils.writeStringToFile(debugFileDocumentFormat, documentFormatConfigFileContents, StandardCharsets.UTF_8);
+
+                // Create a metadata document with the metadata JSON, config format file,
+                // and a marker field to we can find it again
+                Document indexmetadataDoc = new Document();
+                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
+                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME + "JAXB", metadataJsonJaxb));
+                indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
+                indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+                indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
+
             } catch (IOException e) {
                 throw new RuntimeException("Error saving index metadata", e);
             }
+        }
+
+        private String serializeToJsonJaxb(IndexMetadataIntegrated metadata) {
+            // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
+            // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
+            // which are currently still done through a delegate class instead of CustomPropsMap.
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JaxbAnnotationModule());
+                ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
+                return writer.writeValueAsString(metadata);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index, String json) {
+            try {
+                ObjectMapper mapper = Json.getJsonObjectMapper();
+                mapper.registerModule(new JaxbAnnotationModule());
+                IndexMetadataIntegrated metadata = mapper.readValue(new StringReader(json),
+                        IndexMetadataIntegrated.class);
+                metadata.fixAfterDeserialization(index);
+                return metadata;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private String serializeToJson(IndexMetadataIntegrated metadata) {
+            String metadataJson;
+            try {
+                ObjectWriter mapper = Json.getJsonObjectMapper().writerWithDefaultPrettyPrinter();
+                ObjectNode nodeMetadata = IntegratedMetadataUtil.encodeToJson(metadata);
+                metadataJson = mapper.writeValueAsString(nodeMetadata);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return metadataJson;
+        }
+
+        private ObjectNode deserializeFromJson(String indexMetadataJson) throws IOException {
+            ObjectMapper mapper = Json.getJsonObjectMapper();
+            return (ObjectNode) mapper.readTree(new StringReader(indexMetadataJson));
         }
 
         public int getDocumentId() {
@@ -137,10 +185,22 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
+    private void fixAfterDeserialization(BlackLabIndex index) {
+        this.index = index;
+        indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
+        tokenCount = 0;
+        documentCount = 0;
+        tokenCountCalculated = false;
+        // (already set) metadataDocument = new MetadataDocument();
+        frozen = !index.indexMode();
+
+        annotatedFields.fixAfterDeserialization(index);
+        metadataFields.fixAfterDeserialization(index);
+    }
 
     /** Our index */
     @XmlTransient
-    protected final BlackLabIndex index;
+    protected BlackLabIndex index;
 
     /** Corpus-level custom properties */
     private CustomPropsMap custom = new CustomPropsMap();
@@ -198,7 +258,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     private String documentFormatConfigFileContents = "(not set)";
 
     @XmlTransient
-    private final BlackLabIndexWriter indexWriter;
+    private BlackLabIndexWriter indexWriter;
 
     @XmlTransient
     private final MetadataDocument metadataDocument = new MetadataDocument();
@@ -533,7 +593,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             if (mainAnnotatedField == null || d.name().equals("contents"))
                 mainAnnotatedField = (AnnotatedFieldImpl) d;
         }
-        annotatedFields.setMainAnnotatedField(mainAnnotatedField);
+        if (mainAnnotatedField != null)
+            annotatedFields.setMainAnnotatedField(mainAnnotatedField);
     }
 
     @Override
@@ -580,21 +641,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (!isFrozen())
             ensureMainAnnotatedFieldSet();
 
-        // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
-        // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
-        // which are currently still done through a delegate class instead of CustomPropsMap.
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JaxbAnnotationModule());
-            String metadataJsonJackson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(IndexMetadataIntegrated.this);
-            File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata-jaxb.json");
-            FileUtils.writeStringToFile(debugJackson, metadataJsonJackson, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        ObjectNode metadata = IntegratedMetadataUtil.encodeToJson(this);
-        metadataDocument.saveToIndex(indexWriter, metadata, documentFormatConfigFileContents);
+        metadataDocument.saveToIndex(indexWriter, this, documentFormatConfigFileContents);
     }
 
     @Override

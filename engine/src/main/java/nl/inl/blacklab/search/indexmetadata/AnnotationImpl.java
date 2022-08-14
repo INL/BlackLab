@@ -19,6 +19,7 @@ import org.apache.lucene.index.IndexReader;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.LuceneUtil;
 
 /** Annotation on a field. */
@@ -27,7 +28,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
     /** The field this is an annotation for. */
     @XmlTransient
-    private final AnnotatedField field;
+    private AnnotatedField field;
     
     /** The annotation name */
     private String name;
@@ -350,5 +351,14 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     public CustomPropsMap custom() {
         return custom;
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index, AnnotatedFieldImpl field) {
+        this.field = field;
+        for (MatchSensitivity s: sensitivities) {
+            sensitivitiesMap.put(s, new AnnotationSensitivityImpl(this, s));
+        }
+        offsetsSensitivity = sensitivitiesMap.get(offsetsMatchSensitivity);
+        frozen = !index.indexMode();
     }
 }

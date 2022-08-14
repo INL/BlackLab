@@ -20,6 +20,8 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+
 /**
  * The metadata fields in an index.
  */
@@ -383,4 +385,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
+    public void fixAfterDeserialization(BlackLabIndex index) {
+        for (MetadataFieldImpl field: metadataFieldInfos.values()) {
+            field.fixAfterDeserialization(index);
+        }
+    }
 }

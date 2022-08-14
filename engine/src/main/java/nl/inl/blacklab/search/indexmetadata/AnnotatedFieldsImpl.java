@@ -1,7 +1,9 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -11,6 +13,8 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import nl.inl.blacklab.search.BlackLabIndex;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 final class AnnotatedFieldsImpl implements AnnotatedFields {
@@ -91,7 +95,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void setMainAnnotatedField(AnnotatedFieldImpl mainAnnotatedField) {
         this.mainAnnotatedField = mainAnnotatedField;
-        this.mainAnnotatedFieldName = mainAnnotatedField.name();
+        this.mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
     }
 
     public void clearAnnotationGroups() {
@@ -105,5 +109,26 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     @Override
     public AnnotationGroups annotationGroups(String fieldName) {
         return annotationGroupsPerField.get(fieldName);
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index) {
+        setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
+
+        CustomProps custom = index.metadata().custom();
+        if (custom.containsKey("annotationGroups")) {
+            clearAnnotationGroups();
+            Map<String, List<Map<String, Object>>> groupingsPerField =custom.get("annotationGroups", Collections.emptyMap());
+            for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
+                String fieldName = entry.getKey();
+                List<Map<String, Object>> groups = entry.getValue();
+                List<AnnotationGroup> annotationGroups = IntegratedMetadataUtil.extractAnnotationGroups(this, fieldName, groups);
+                putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
+            }
+        }
+
+        for (AnnotatedFieldImpl f: annotatedFields.values()) {
+            f.fixAfterDeserialization(index);
+        }
+
     }
 }

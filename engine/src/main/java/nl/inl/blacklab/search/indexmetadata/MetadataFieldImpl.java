@@ -18,6 +18,8 @@ import org.apache.lucene.index.DocValuesType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+
 /**
  * A metadata field in an index.
  */
@@ -291,5 +293,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
 
     public void setDocValuesType(DocValuesType docValuesType) {
         this.docValuesType = docValuesType;
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index) {
+        // TODO implement
     }
 }

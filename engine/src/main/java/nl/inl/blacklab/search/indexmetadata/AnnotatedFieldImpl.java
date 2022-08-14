@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 
 /** An annotated field */
@@ -308,6 +309,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     public String offsetsField() {
         AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index) {
+        for (Annotation annot : annotations) {
+            ((AnnotationImpl)annot).fixAfterDeserialization(index, this);
+        }
     }
 
 }
