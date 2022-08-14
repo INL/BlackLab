@@ -15,7 +15,7 @@ public interface MetadataFieldsWriter extends MetadataFields {
 
     void put(String fieldName, MetadataFieldImpl fieldDesc);
 
-    void setDefaultAnalyzerName(String name);
+    void setDefaultAnalyzer(String name);
 
     void clearSpecialFields();
 

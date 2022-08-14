@@ -18,12 +18,14 @@ import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
 
     @XmlAccessorType(XmlAccessType.FIELD)
@@ -86,6 +88,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     private String mainAnnotationName;
 
     /** Are there XML tag locations stored for this field? */
+    @JsonProperty("hasXmlTags")
     private boolean xmlTags;
 
     /** These annotations should not get a forward index. */

@@ -285,7 +285,7 @@ class IntegratedMetadataUtil {
                             }
                         }
                         if (!StringUtils.isEmpty(offsetsSensitivity))
-                            annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(offsetsSensitivity));
+                            annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(offsetsSensitivity));
                         if (StringUtils.isEmpty(annotation.name())) {
                             logger.warn(
                                     "Annotation entry without name for field '" + fieldName
@@ -299,7 +299,7 @@ class IntegratedMetadataUtil {
                 AnnotationImpl mainAnnot = (AnnotationImpl)fieldDesc.annotations().main();
                 if (mainAnnot != null) {
                     MatchSensitivity offsetsSens = mainAnnot.mainSensitivity().sensitivity();
-                    mainAnnot.setOffsetsSensitivity(offsetsSens);
+                    mainAnnot.setOffsetsMatchSensitivity(offsetsSens);
                 }
                 annotatedFields.put(fieldName, fieldDesc);
             }
@@ -319,7 +319,7 @@ class IntegratedMetadataUtil {
         }
 
         // Some additional metadata settings
-        metadataFields.setDefaultAnalyzerName(Json.getString(jsonRoot, "defaultAnalyzer", "DEFAULT"));
+        metadataFields.setDefaultAnalyzer(Json.getString(jsonRoot, "defaultAnalyzer", "DEFAULT"));
         if (jsonRoot.has("pidField"))
             metadataFields.setSpecialField(MetadataFields.PID, jsonRoot.get("pidField").textValue());
         if (metadataFields.titleField() == null) {

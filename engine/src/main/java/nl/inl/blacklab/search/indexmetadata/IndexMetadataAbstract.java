@@ -772,7 +772,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             }
         }
 
-        metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
+        metadataFields.setDefaultAnalyzer(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
         metadataFields.clearSpecialFields();
         if (fieldInfo.has("authorField"))
@@ -871,7 +871,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
             if (annotationWriter.includeOffsets())
-                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotationWriter.setAnnotation(annotation);
         }

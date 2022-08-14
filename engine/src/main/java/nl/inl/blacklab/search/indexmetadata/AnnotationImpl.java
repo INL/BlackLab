@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -14,6 +15,8 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.util.LuceneUtil;
@@ -38,16 +41,29 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean isInternal;
 
     /** Reference to match sensitivities this annotation has */
-    private final Map<MatchSensitivity, AnnotationSensitivity> alternatives = new LinkedHashMap<>();
+    @XmlTransient
+    private final Map<MatchSensitivity, AnnotationSensitivity> sensitivitiesMap = new LinkedHashMap<>();
+
+    /** List of available sensitivities */
+    private final List<MatchSensitivity> sensitivities = new ArrayList<>();
 
     /** Whether or not this annotation has a forward index. */
+    @JsonProperty("hasForwardIndex")
     private boolean forwardIndex;
 
     /**
      * Which of the alternatives is the main one (containing the offset info, if
      * present)
      */
-    private AnnotationSensitivity offsetsAlternative;
+    @XmlTransient
+    private AnnotationSensitivity offsetsSensitivity;
+
+    /**
+     * Which of the alternatives is the main one (containing the offset info, if
+     * present)
+     */
+    @JsonProperty("offsetsSensitivity")
+    private MatchSensitivity offsetsMatchSensitivity;
 
     @XmlTransient
     private boolean frozen = false;
@@ -98,17 +114,17 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     @Override
     public Collection<AnnotationSensitivity> sensitivities() {
-        return Collections.unmodifiableCollection(alternatives.values());
+        return Collections.unmodifiableCollection(sensitivitiesMap.values());
     }
     
     @Override
     public boolean hasSensitivity(MatchSensitivity sensitivity) {
-        return alternatives.containsKey(sensitivity);
+        return sensitivitiesMap.containsKey(sensitivity);
     }
 
     @Override
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
-        AnnotationSensitivity s = alternatives.get(sensitivity);
+        AnnotationSensitivity s = sensitivitiesMap.get(sensitivity);
         if (s == null)
             throw new UnsupportedOperationException("Specified sensitivity " + sensitivity + " not present for field " + luceneFieldPrefix());
         return s;
@@ -121,7 +137,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     @Override
     public AnnotationSensitivity offsetsSensitivity() {
-        return offsetsAlternative;
+        return offsetsSensitivity;
     }
 
     /**
@@ -175,9 +191,10 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         // Iterate over the alternatives and for each alternative, find a term
         // vector. If that has character offsets stored, it's our main annotation.
         // If not, keep searching.
-        for (AnnotationSensitivity sensitivity: alternatives.values()) {
+        for (AnnotationSensitivity sensitivity: sensitivitiesMap.values()) {
             if (LuceneUtil.hasOffsets(reader, sensitivity.luceneField())) {
-                offsetsAlternative = sensitivity;
+                offsetsSensitivity = sensitivity;
+                offsetsMatchSensitivity = sensitivity.sensitivity();
                 return true;
             }
         }
@@ -211,9 +228,10 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
 
     void addAlternative(MatchSensitivity matchSensitivity) {
         AnnotationSensitivity sensitivity = new AnnotationSensitivityImpl(this, matchSensitivity);
-        if (!alternatives.containsKey(matchSensitivity)) {
+        if (!sensitivitiesMap.containsKey(matchSensitivity)) {
             ensureNotFrozen();
-            alternatives.put(matchSensitivity, sensitivity);
+            sensitivitiesMap.put(matchSensitivity, sensitivity);
+            sensitivities.add(matchSensitivity);
         }
     }
 
@@ -300,11 +318,12 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return true;
     }
     
-    public void setOffsetsSensitivity(MatchSensitivity offsetsAlternative) {
+    public void setOffsetsMatchSensitivity(MatchSensitivity offsetsAlternative) {
         AnnotationSensitivity newValue = sensitivity(offsetsAlternative);
-        if (this.offsetsAlternative == null || !this.offsetsAlternative.equals(newValue)) {
+        if (offsetsSensitivity == null || !offsetsSensitivity.equals(newValue)) {
             ensureNotFrozen();
-            this.offsetsAlternative = newValue;
+            offsetsSensitivity = newValue;
+            offsetsMatchSensitivity = offsetsAlternative;
         }
     }
     

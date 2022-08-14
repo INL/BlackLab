@@ -6,21 +6,39 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 final class AnnotatedFieldsImpl implements AnnotatedFields {
+
     /** The annotated fields in our index */
+    @JsonProperty("fields")
     private final Map<String, AnnotatedFieldImpl> annotatedFields;
     
     /**
      * The main contents field in our index. This is either the annotated field with
      * the name "contents", or if that doesn't exist, the first annotated field found.
      */
+    @XmlTransient
     private AnnotatedFieldImpl mainAnnotatedField;
+
+    /**
+     * The main contents field in our index. This is either the annotated field with
+     * the name "contents", or if that doesn't exist, the first annotated field found.
+     */
+    @JsonProperty("mainAnnotatedField")
+    private String mainAnnotatedFieldName;
 
     /**
      * Logical groups of annotations, for presenting them in the user interface.
      */
+    @XmlTransient
     private final Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
-    
+
     public AnnotatedFieldsImpl() {
         annotatedFields = new TreeMap<>();
     }
@@ -73,6 +91,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void setMainAnnotatedField(AnnotatedFieldImpl mainAnnotatedField) {
         this.mainAnnotatedField = mainAnnotatedField;
+        this.mainAnnotatedFieldName = mainAnnotatedField.name();
     }
 
     public void clearAnnotationGroups() {

@@ -1,14 +1,20 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.commons.lang3.StringUtils;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
     /** Field's name */
+    @XmlTransient
     protected final String fieldName;
 
     /** Does the field have an associated content store? */
+    @JsonProperty("hasContentStore")
     protected boolean contentStore;
 
     /** Custom field properties */

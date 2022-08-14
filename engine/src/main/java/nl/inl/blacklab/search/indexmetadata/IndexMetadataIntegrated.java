@@ -23,6 +23,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.TermQuery;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -47,7 +48,7 @@ import nl.inl.util.TimeUtil;
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
     "custom", "contentViewable", "documentFormat", "versionInfo",
-    "defaultAnalyzer", "pidField", "metadataFields", "annotatedFields"
+    "metadataFields", "annotatedFields"
 })
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
@@ -193,6 +194,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     private int documentCount;
 
     /** Contents of the documentFormat config file at index creation time. */
+    @JsonProperty("documentFormatConfig")
     private String documentFormatConfigFileContents = "(not set)";
 
     @XmlTransient
@@ -393,7 +395,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
             if (annotationWriter.includeOffsets())
-                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotation.createSensitivities(annotationWriter.getSensitivitySetting());
             //annotation.setOffsetsSensitivity(annotation.mainSensitivity().sensitivity());
@@ -525,9 +527,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (annotatedFields.main() != null)
             return; // we already know our main annotated field, probably from the metadata
 
-        // Detect main contents field and main annotations of annotated fields
-        // Detect the main annotations for all annotated fields
-        // (looks for fields with char offset information stored)
+        // "Detect" main contents field and main annotations of annotated fields
         AnnotatedFieldImpl mainAnnotatedField = null;
         for (AnnotatedField d: annotatedFields()) {
             if (mainAnnotatedField == null || d.name().equals("contents"))
@@ -535,10 +535,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
         annotatedFields.setMainAnnotatedField(mainAnnotatedField);
     }
-
-
-
-
 
     @Override
     public synchronized long tokenCount() {
@@ -580,6 +576,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
         if (indexWriter == null)
             throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+
+        if (!isFrozen())
+            ensureMainAnnotatedFieldSet();
 
         // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
         // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,

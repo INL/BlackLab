@@ -17,10 +17,14 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 /**
  * The metadata fields in an index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({ "defaultAnalyzer", "pidField", "throwOnMissingField", "fields" })
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
@@ -28,9 +32,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /**
      * Logical groups of metadata fields, for presenting them in the user interface.
      */
+    @XmlTransient
     private final Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
+    @JsonProperty("fields")
     private final Map<String, MetadataFieldImpl> metadataFieldInfos;
 
     /** What MetadataFieldValues implementation to use (store in indexmetadata or get from index) */
@@ -41,9 +47,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      * When a metadata field value is considered "unknown"
      * (never|missing|empty|missing_or_empty) [never]
      */
+    @XmlTransient
     private String defaultUnknownCondition;
 
     /** What value to index when a metadata field value is unknown [unknown] */
+    @XmlTransient
     private String defaultUnknownValue;
 
     /** Metadata field containing document title */
@@ -62,7 +70,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     private String pidField;
 
     /** Default analyzer to use for metadata fields */
-    private String defaultAnalyzerName;
+    private String defaultAnalyzer;
 
     /** Is the object frozen, not allowing any modifications? */
     @XmlTransient
@@ -95,7 +103,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public String defaultAnalyzerName() {
-        return defaultAnalyzerName;
+        return defaultAnalyzer;
     }
 
     @Override
@@ -347,9 +355,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public void setDefaultAnalyzerName(String name) {
+    public void setDefaultAnalyzer(String name) {
         ensureNotFrozen();
-        this.defaultAnalyzerName = name;
+        this.defaultAnalyzer = name;
     }
 
     @Override
