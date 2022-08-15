@@ -225,7 +225,7 @@ class IntegratedMetadataUtil {
                 ObjectNode fieldConfig = (ObjectNode)entry.getValue();
                 warnUnknownKeys("in annotated field config for '" + fieldName + "'", fieldConfig,
                         KEYS_ANNOTATED_FIELD_CONFIG);
-                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(metadata, fieldName);
+                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
 
                 fieldDesc.custom().putAll(CustomProps.fromJson(Json.getObject(fieldConfig, "custom")));
 
@@ -343,7 +343,7 @@ class IntegratedMetadataUtil {
         // (we should eventually get rid of these copies of the properties)
         CustomPropsMap custom = metadata.custom();
         MetadataFieldsImpl metadataFields = metadata.metadataFields();
-        metadataFields.setDefaultUnknownCondition(custom.get("unknownCondition", "NEVER"));
+        metadataFields.setDefaultUnknownCondition(custom.get("unknownCondition", UnknownCondition.NEVER).stringValue());
         metadataFields.setDefaultUnknownValue(custom.get("unknownValue", "unknown"));
         if (custom.containsKey("authorField"))
             metadataFields.setSpecialField(MetadataFields.AUTHOR, (String) custom.get("authorField"));

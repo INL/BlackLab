@@ -6,12 +6,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
     /** Field's name */
     @XmlTransient
-    protected final String fieldName;
+    protected String fieldName;
 
     /** Does the field have an associated content store? */
     @JsonProperty("hasContentStore")
@@ -19,6 +20,11 @@ public abstract class FieldImpl implements Field {
 
     /** Custom field properties */
     protected CustomPropsMap custom = new CustomPropsMap();
+
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    FieldImpl() {
+    }
 
     FieldImpl(String fieldName) {
         this.fieldName = fieldName;
@@ -106,6 +112,10 @@ public abstract class FieldImpl implements Field {
     @Override
     public String toString() {
         return fieldName;
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
+        this.fieldName = fieldName;
     }
 
 }

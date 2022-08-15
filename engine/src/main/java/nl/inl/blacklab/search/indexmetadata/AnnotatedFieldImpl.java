@@ -29,7 +29,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepField
 @JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
 public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
 
-    @XmlAccessorType(XmlAccessType.FIELD)
     public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
@@ -73,13 +72,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
     
-    /** This field's annotations, sorted by name */
-    @XmlTransient
-    private final Map<String, AnnotationImpl> annots;
+    /** This field's annotations */
+    private final Map<String, AnnotationImpl> annots = new LinkedHashMap<>();
 
     /** The field's main annotation */
     @XmlTransient
-    private AnnotationImpl mainAnnotation;
+    private AnnotationImpl mainAnnotation = null;
 
     /**
      * The field's main annotation name (for storing the main annot name before we have
@@ -99,16 +97,18 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     @XmlTransient
     private boolean frozen;
 
-    private final AnnotationsImpl annotations;
+    @XmlTransient
+    private final AnnotationsImpl annotations = new AnnotationsImpl();
 
-    AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    AnnotatedFieldImpl() {
+    }
+
+    AnnotatedFieldImpl(String name) {
         super(name);
-        annots = new LinkedHashMap<>();
-        
-        contentStore = false;
-        xmlTags = false;
-        mainAnnotation = null;
-        annotations = new AnnotationsImpl();
+//        contentStore = false;
+//        xmlTags = false;
     }
 
     @Override
@@ -311,9 +311,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index) {
-        for (Annotation annot : annotations) {
-            ((AnnotationImpl)annot).fixAfterDeserialization(index, this);
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
+        super.fixAfterDeserialization(index, fieldName);
+        for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
+            entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
     }
 

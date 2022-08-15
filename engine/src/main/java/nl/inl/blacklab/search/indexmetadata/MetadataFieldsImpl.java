@@ -20,8 +20,6 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-
 /**
  * The metadata fields in an index.
  */
@@ -43,7 +41,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     /** What MetadataFieldValues implementation to use (store in indexmetadata or get from index) */
     @XmlTransient
-    private final MetadataFieldValues.Factory metadataFieldValuesFactory;
+    private MetadataFieldValues.Factory metadataFieldValuesFactory;
 
     /**
      * When a metadata field value is considered "unknown"
@@ -55,6 +53,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     /** What value to index when a metadata field value is unknown [unknown] */
     @XmlTransient
     private String defaultUnknownValue;
+
+    /** Top-level custom props (if using integrated input format), for special fields, etc. */
+    @XmlTransient
+    private CustomPropsMap topLevelCustom;
 
     /** Metadata field containing document title */
     @XmlTransient
@@ -92,6 +94,12 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
         return metadataFieldValuesFactory;
+    }
+
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    MetadataFieldsImpl() {
+        metadataFieldInfos = new TreeMap<>();
     }
 
     MetadataFieldsImpl(MetadataFieldValues.Factory metadataFieldValuesFactory) {
@@ -286,8 +294,8 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
                     fieldType = FieldType.UNTOKENIZED;
                 }
                 mf = new MetadataFieldImpl(fieldName, fieldType, metadataFieldValuesFactory);
-                mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-                mf.setUnknownValue(defaultUnknownValue);
+                mf.custom().put("unknownCondition", defaultUnknownCondition());
+                mf.custom().put("unknownValue", defaultUnknownValue());
                 metadataFieldInfos.put(fieldName, mf);
             }
             return mf;
@@ -339,21 +347,25 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
         switch(specialFieldType) {
-        case "pid":
+        case MetadataFields.PID:
             pidField = fieldName;
             break;
-        case "title":
+        case MetadataFields.TITLE:
             titleField = fieldName;
             break;
-        case "author":
+        case MetadataFields.AUTHOR:
             authorField = fieldName;
             break;
-        case "date":
+        case MetadataFields.DATE:
             dateField = fieldName;
             break;
         default:
             throw new IllegalArgumentException("Unknown special field type: " + fieldName);
         }
+        // Also update top-level custom properties, where these special fields (except pidField)
+        // are stored (in the integrated input format)
+        if (topLevelCustom != null && !specialFieldType.equals(MetadataFields.PID))
+            topLevelCustom.put(specialFieldType + "Field", fieldName);
     }
 
     @Override
@@ -385,9 +397,25 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index) {
-        for (MetadataFieldImpl field: metadataFieldInfos.values()) {
-            field.fixAfterDeserialization(index);
+    public void fixAfterDeserialization(IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
+        setTopLevelCustom(metadata.custom());
+
+        metadataFieldValuesFactory = factory;
+        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
+            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
         }
+
+        // Get our special fields from the top-level custom props
+        if (topLevelCustom.containsKey("authorField"))
+            setSpecialField(MetadataFields.AUTHOR, (String) topLevelCustom.get("authorField"));
+        if (topLevelCustom.containsKey("dateField"))
+            setSpecialField(MetadataFields.DATE, (String) topLevelCustom.get("dateField"));
+        if (topLevelCustom.containsKey("titleField"))
+            setSpecialField(MetadataFields.TITLE, (String) topLevelCustom.get("titleField"));
     }
+
+    public void setTopLevelCustom(CustomPropsMap topLevelCustom) {
+        this.topLevelCustom = topLevelCustom;
+    }
+
 }

@@ -54,6 +54,21 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
+    public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
+        try {
+            Integer docId = MetadataDocument.getMetadataDocId(index.reader());
+            String json = MetadataDocument.getMetadataJson(index.reader(), docId);
+            ObjectMapper mapper = Json.getJsonObjectMapper();
+            mapper.registerModule(new JaxbAnnotationModule());
+            IndexMetadataIntegrated metadata = mapper.readValue(new StringReader(json),
+                    IndexMetadataIntegrated.class);
+            metadata.fixAfterDeserialization(index, docId);
+            return metadata;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
      * Manages the index metadata document.
      *
@@ -66,6 +81,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         /** Name in our index for the metadata field (stored in a special document that should never be matched) */
         private static final String METADATA_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "__";
+
+        /** Name in our index for the JAXB metadata field */
+        private static final String METADATA_JAXB_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "_JAXB__";
 
         /** Index metadata document gets a marker field so we can find it again (value same as field name) */
         private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
@@ -89,19 +107,28 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             markerFieldType.freeze();
         }
 
+        public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
+            return reader.document(docId).get(METADATA_JAXB_FIELD_NAME);
+        }
+
+        public static Integer getMetadataDocId(IndexReader reader) throws IOException {
+            IndexSearcher searcher = new IndexSearcher(reader);
+            final List<Integer> docIds = new ArrayList<>();
+            searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
+            if (docIds.isEmpty())
+                throw new RuntimeException("No index metadata found!");
+            if (docIds.size() > 1)
+                throw new RuntimeException("Multiple index metadata found!");
+            Integer id = docIds.get(0);
+            return id;
+        }
+
         private int metadataDocId = -1;
 
         public ObjectNode readFromIndex(IndexReader reader) {
             try {
-                IndexSearcher searcher = new IndexSearcher(reader);
-                final List<Integer> docIds = new ArrayList<>();
-                searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
-                if (docIds.isEmpty())
-                    throw new RuntimeException("No index metadata found!");
-                if (docIds.size() > 1)
-                    throw new RuntimeException("Multiple index metadata found!");
-                metadataDocId = docIds.get(0);
-                String indexMetadataJson = reader.document(metadataDocId).get(METADATA_FIELD_NAME);
+                metadataDocId = getMetadataDocId(reader);
+                String indexMetadataJson = getMetadataJson(reader, metadataDocId);
                 return deserializeFromJson(indexMetadataJson);
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -126,7 +153,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // and a marker field to we can find it again
                 Document indexmetadataDoc = new Document();
                 indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME + "JAXB", metadataJsonJaxb));
+                indexmetadataDoc.add(new StoredField(METADATA_JAXB_FIELD_NAME, metadataJsonJaxb));
                 indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
                 indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
                 indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
@@ -145,19 +172,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 mapper.registerModule(new JaxbAnnotationModule());
                 ObjectWriter writer = mapper.writerWithDefaultPrettyPrinter();
                 return writer.writeValueAsString(metadata);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index, String json) {
-            try {
-                ObjectMapper mapper = Json.getJsonObjectMapper();
-                mapper.registerModule(new JaxbAnnotationModule());
-                IndexMetadataIntegrated metadata = mapper.readValue(new StringReader(json),
-                        IndexMetadataIntegrated.class);
-                metadata.fixAfterDeserialization(index);
-                return metadata;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -185,8 +199,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
-    private void fixAfterDeserialization(BlackLabIndex index) {
+    private void fixAfterDeserialization(BlackLabIndex index, int metadataDocId) {
+        metadataDocument.metadataDocId = metadataDocId;
+
         this.index = index;
+
         indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         tokenCount = 0;
         documentCount = 0;
@@ -194,8 +211,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // (already set) metadataDocument = new MetadataDocument();
         frozen = !index.indexMode();
 
-        annotatedFields.fixAfterDeserialization(index);
-        metadataFields.fixAfterDeserialization(index);
+        annotatedFields.fixAfterDeserialization(index, this);
+        MetadataFieldValues.Factory factory = createMetadataFieldValuesFactory();
+        metadataFields.fixAfterDeserialization(this, factory);
     }
 
     /** Our index */
@@ -240,7 +258,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected long tokenCount = 0;
 
     /** Our metadata fields */
-    protected final MetadataFieldsImpl metadataFields;
+    protected MetadataFieldsImpl metadataFields = null;
 
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
@@ -267,10 +285,15 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @XmlTransient
     private boolean frozen;
 
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    IndexMetadataIntegrated() {}
+
     public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
             ConfigInputFormat config) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
+        metadataFields.setTopLevelCustom(custom); // for special fields
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         if (createNewIndex || index.reader().leaves().isEmpty()) {
@@ -409,7 +432,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (annotatedFields.exists(name))
             cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
-            cfd = new AnnotatedFieldImpl(this, name);
+            cfd = new AnnotatedFieldImpl(name);
             annotatedFields.put(name, cfd);
         }
         return cfd;
@@ -699,7 +722,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     public void setCustomProperties(CustomPropsMap customProperties) {
-        this.custom = customProperties;
+        this.custom.clear();
+        this.custom.putAll(customProperties);
     }
 
 }

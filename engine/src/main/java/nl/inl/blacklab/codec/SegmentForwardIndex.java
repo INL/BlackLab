@@ -14,7 +14,6 @@ import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
  * Manages read access to forward indexes for a single segment.
@@ -157,7 +156,10 @@ class SegmentForwardIndex implements AutoCloseable {
                 throw new IllegalArgumentException("start and end must be of equal length");
 
             getDocOffsetAndLength(luceneField, docId);
-            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+
+            // We don't exclude the closing token here because we didn't do that with the external index format either.
+            // And you might want to fetch the extra closing token.
+            //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             tokens(); // ensure available
             List<int[]> result = new ArrayList<>(n);
             for (int i = 0; i < n; i++) {
@@ -171,7 +173,9 @@ class SegmentForwardIndex implements AutoCloseable {
         public int[] retrievePart(String luceneField, int docId, int start, int end) {
             // ensure both inputs available
             getDocOffsetAndLength(luceneField, docId);
-            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            // We don't exclude the closing token here because we didn't do that with the external index format either.
+            // And you might want to fetch the extra closing token.
+            //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             tokens(); // ensure we have this input available
             return retrievePart(start, end);
         }

@@ -31,6 +31,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private AnnotatedField field;
     
     /** The annotation name */
+    @XmlTransient
     private String name;
 
     /** Our custom properties */
@@ -77,6 +78,12 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
      */
     @XmlTransient
     private Annotation mainAnnotation = null;
+
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    AnnotationImpl() {
+        this(null, null);
+    }
 
     AnnotationImpl(AnnotatedField field) {
         this(field, null);
@@ -353,8 +360,9 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return custom;
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index, AnnotatedFieldImpl field) {
+    public void fixAfterDeserialization(BlackLabIndex index, AnnotatedFieldImpl field, String annotationName) {
         this.field = field;
+        this.name = annotationName;
         for (MatchSensitivity s: sensitivities) {
             sensitivitiesMap.put(s, new AnnotationSensitivityImpl(this, s));
         }

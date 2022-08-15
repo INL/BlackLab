@@ -91,6 +91,10 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {
         annotatedFields.put(fieldName, fieldDesc);
+        if ( (mainAnnotatedField == null && mainAnnotatedFieldName == null) || fieldName.equals("contents")) {
+            mainAnnotatedFieldName = fieldName;
+            mainAnnotatedField = fieldDesc;
+        }
     }
 
     public void setMainAnnotatedField(AnnotatedFieldImpl mainAnnotatedField) {
@@ -111,10 +115,10 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
         return annotationGroupsPerField.get(fieldName);
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index) {
+    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
         setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
 
-        CustomProps custom = index.metadata().custom();
+        CustomProps custom = metadata.custom();
         if (custom.containsKey("annotationGroups")) {
             clearAnnotationGroups();
             Map<String, List<Map<String, Object>>> groupingsPerField =custom.get("annotationGroups", Collections.emptyMap());
@@ -126,8 +130,8 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
             }
         }
 
-        for (AnnotatedFieldImpl f: annotatedFields.values()) {
-            f.fixAfterDeserialization(index);
+        for (Map.Entry<String, AnnotatedFieldImpl> e: annotatedFields.entrySet()) {
+            e.getValue().fixAfterDeserialization(index, e.getKey());
         }
 
     }

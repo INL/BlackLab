@@ -72,6 +72,11 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @XmlTransient
     private DocValuesType docValuesType;
 
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    MetadataFieldImpl() {
+    }
+
     MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
         this(fieldName, type, factory.create(fieldName, type));
     }
@@ -120,7 +125,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @Override
     @Deprecated
     public UnknownCondition unknownCondition() {
-        return UnknownCondition.fromStringValue(custom.get("unknownCondition", "never"));
+        String strUnknownCondition = custom.get("unknownCondition", UnknownCondition.NEVER.stringValue());
+        return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
     @Override
@@ -295,7 +301,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         this.docValuesType = docValuesType;
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index) {
-        // TODO implement
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {
+        super.fixAfterDeserialization(index, fieldName);
+        values = factory.create(fieldName, type);
+        setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
 }

@@ -39,7 +39,8 @@ Integrating with Solr will involve the following steps.
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
     - [ ] Make sure (basic) config-based indexing is unit tested too.
-    - [ ] (maybe) Use JAXB for the metadata (de)serialization?
+    - [ ] Use JAXB for the metadata (de)serialization, making a lot of `IntegratedMetadataUtil` redundant
+    - [ ] Don't create ObjectNode structure, then call extractFromJson. Instantiate metadata class directly 
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

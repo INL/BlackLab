@@ -625,7 +625,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 JsonNode fieldConfig = entry.getValue();
                 warnUnknownKeys("in annotated field config for '" + fieldName + "'", fieldConfig,
                         KEYS_ANNOTATED_FIELD_CONFIG);
-                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(this, fieldName);
+                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 String mainAnnotationName = Json.getString(fieldConfig, "mainProperty", "");
@@ -825,7 +825,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         if (annotatedFields.exists(name))
             cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
-            cfd = new AnnotatedFieldImpl(this, name);
+            cfd = new AnnotatedFieldImpl(name);
             annotatedFields.put(name, cfd);
         }
         return cfd;
@@ -1139,8 +1139,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     protected void detectMainAnnotation(IndexReader reader) {
-        if (annotatedFields.main() != null)
-            return; // we already know our main annotated field, probably from the metadata
+        boolean shouldDetectMainAnnotatedField = annotatedFields.main() == null;
 
         // Detect main contents field and main annotations of annotated fields
         // Detect the main annotations for all annotated fields
@@ -1153,7 +1152,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             if (tokenCount() > 0) // Only detect if index is not empty
                 ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
         }
-        annotatedFields.setMainAnnotatedField(mainAnnotatedField);
+        if (shouldDetectMainAnnotatedField)
+            annotatedFields.setMainAnnotatedField(mainAnnotatedField);
     }
 
     /**

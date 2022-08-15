@@ -14,7 +14,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -32,6 +33,8 @@ import nl.inl.blacklab.testutil.TestIndex;
  * Test the integrated index.
  */
 public class TestIndexIntegrated {
+
+    BlackLabIndex.IndexType indexType()  { return BlackLabIndex.IndexType.INTEGRATED; }
 
     private static final int NUMBER_OF_TERMS = 26;
 
@@ -49,23 +52,25 @@ public class TestIndexIntegrated {
 
     private static Terms wordTerms;
 
-    @BeforeClass
-    public static void setUp() {
-        BlackLab.config().getFeatureFlags().put(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES, "true");
-        testIndex = TestIndex.get();
-        index = testIndex.index();
-        contents = index.mainAnnotatedField();
-        word = contents.mainAnnotation();
-        wordFi = index.forwardIndex(contents).get(word);
-        posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
-        wordTerms = wordFi.terms();
+    @Before
+    public void setUp() {
+        if (testIndex == null) {
+            testIndex = TestIndex.get(indexType());
+            index = testIndex.index();
+            contents = index.mainAnnotatedField();
+            word = contents.mainAnnotation();
+            wordFi = index.forwardIndex(contents).get(word);
+            posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
+            wordTerms = wordFi.terms();
+        }
     }
 
     @AfterClass
     public static void tearDown() {
-        if (testIndex != null)
+        if (testIndex != null) {
             testIndex.close();
-        BlackLab.config().getFeatureFlags().put(BlackLab.FEATURE_INTEGRATE_EXTERNAL_FILES, "false");
+            testIndex = null;
+        }
     }
 
     @Test
@@ -146,7 +151,8 @@ public class TestIndexIntegrated {
     /** if token offset out of range, throw an exception */
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOutOfRange() {
-        wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0]));
+        wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0] +
+                BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN));
     }
 
     /** translating a -1 term from segment to global should also return -1 */
@@ -174,6 +180,10 @@ public class TestIndexIntegrated {
         for (int i = 0; i < expectedNumberOfDocuments; i++)
             Assert.assertEquals(1, (int)map.get(Integer.toString(i)));
         Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
+
+        Assert.assertEquals("fromInputFile", index.metadata().metadataFields().special(MetadataFields.TITLE).name());
+        Assert.assertNull(index.metadata().metadataFields().special(MetadataFields.AUTHOR));
+        Assert.assertNull(index.metadata().metadataFields().special(MetadataFields.DATE));
     }
 
     @Test
@@ -186,5 +196,6 @@ public class TestIndexIntegrated {
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());
         Assert.assertEquals(AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE, field.mainAnnotation().sensitivitySetting());
+        Assert.assertEquals(MatchSensitivity.SENSITIVE, field.mainAnnotation().offsetsSensitivity().sensitivity());
     }
 }
