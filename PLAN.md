@@ -13,14 +13,35 @@ Integrating with Solr will involve the following steps.
 - [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
-## Improve trunk-based development
+## Improve testing
 
-- [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)? No, generics not needed, see TestSearches; do the same with more classes.
-- [x] Update integration testing to compare to known good results.
-      (better-integration-tests branch, to be merged)
+### Unit tests
+
+- [ ] Run more of the unit test suites on both the classic and the integrated index format. See e.g. TestSearches.
+- [ ] Make sure (basic) config-based indexing is unit tested too.
+ 
+### Integration tests
+
+- [ ] Test that file formats remain unchanged, by including small already-indexed corpora for both supported index formats in the repo and test those.
 
 
 ## Incorporate all information into the Lucene index
+
+### Metadata
+
+- [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
+    - [ ] don't create ObjectNode structure, then call extractFromJson. Instantiate metadata class directly
+    - [ ] clean up redundant methods from `IntegratedMetadataUtil`
+    - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
+
+Where we take the metadata document into account:
+- whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)
+- DocValues (metadata doc just won't have a value for any of the fields)
+- SpansNGrams, SpansNot (use lengthgetter which returns 0 if annotated field is not in document)
+- HitsFromQuery[Parallel] (only if one of the Spans could potentially produce the metadata document as hit, which they shouldn't)
+- anywhere where `liveDocs` is used (checked, see some the above)
+- anywhere where `MatchAllDocsQuery` is used (replaced with BlackLabIndex.getAllRealDocsQuery())
+
 
 ### Forward index
 
@@ -34,23 +55,6 @@ Integrating with Solr will involve the following steps.
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 
-### Metadata 
-
-- [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
-    - [ ] Make sure (basic) config-based indexing is unit tested too.
-    - [ ] Use JAXB for the metadata (de)serialization, making a lot of `IntegratedMetadataUtil` redundant
-    - [ ] Don't create ObjectNode structure, then call extractFromJson. Instantiate metadata class directly 
-
-Where we take the metadata document into account:
-- whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)
-- DocValues (metadata doc just won't have a value for any of the fields)
-- SpansNGrams, SpansNot (use lengthgetter which returns 0 if annotated field is not in document)
-- HitsFromQuery[Parallel] (only if one of the Spans could potentially produce the metadata document as hit, which they shouldn't)
-- anywhere where `liveDocs` is used (checked, see some the above)
-- anywhere where `MatchAllDocsQuery` is used (replaced with BlackLabIndex.getAllRealDocsQuery())
-
----
 
 
 ### Content store
