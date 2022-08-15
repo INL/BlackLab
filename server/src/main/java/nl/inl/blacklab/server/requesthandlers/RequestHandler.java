@@ -834,8 +834,7 @@ public abstract class RequestHandler {
 
         // Information about search progress
         ds.entry("searchTime", timings.getProcessingTime());
-        if (timings.getCountTime() != 0)
-            ds.entry("countTime", timings.getCountTime());
+        ds.entry("countTime", timings.getCountTime());
 
         // Information about grouping operation
         if (groups != null) {
