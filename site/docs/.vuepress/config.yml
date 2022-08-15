@@ -29,8 +29,8 @@ themeConfig:
     /server/:
       - ''
       - [ 'overview', 'How to use' ]
-      - from-different-languages
       - [ 'rest-api/', 'API reference' ]
+      - from-different-languages
       - configuration
       - howtos
     /frontend/:

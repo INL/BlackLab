@@ -80,3 +80,6 @@ Can only be used in debug mode.
 * [Show results cache](cache-info/get.md): `GET /cache-info`
 * [Clear results cache](cache-clear/post.md): `POST /cache-clear`
 
+## Miscellaneous
+
+* An incomplete list of [response codes](errors.md) Blacklab Server will return.
