@@ -396,7 +396,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         // subclass can override this
     }
 
-    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex) throws IOException {
+    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex) throws IOException,
+            IndexVersionMismatch {
         if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
 
@@ -418,7 +419,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             }
             if (traceIndexOpening())
                 logger.debug("  Opening IndexReader...");
-            return DirectoryReader.open(FSDirectory.open(indexPath));
+            try {
+                return DirectoryReader.open(FSDirectory.open(indexPath));
+            } catch (IllegalArgumentException e) {
+                if (e.getMessage().contains("Codec with name"))
+                    throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
+                throw e;
+            }
         }
     }
 

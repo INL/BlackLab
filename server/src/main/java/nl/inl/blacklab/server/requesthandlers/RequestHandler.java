@@ -959,7 +959,7 @@ public abstract class RequestHandler {
             ds.entry("end", hit.end());
 
             if (hits.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit);
+                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit, searchParam.omitEmptyCapture());
                 if (capturedGroups != null) {
                     ds.startEntry("captureGroups").startList();
 

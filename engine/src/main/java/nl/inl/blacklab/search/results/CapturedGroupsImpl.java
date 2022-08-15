@@ -51,10 +51,27 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @return groups
      */
     @Override
-    public Span[] get(Hit hit) {
+    public Span[] get(Hit hit, boolean omitEmpty) {
         if (capturedGroups == null)
             return null;
-        return capturedGroups.get(hit);
+        Span[] groups = capturedGroups.get(hit);
+        if (omitEmpty) {
+            // We don't want any Spans where start and end are equal. Replace them with null instead.
+            Span[] withoutEmpty = null;
+            for (int i = 0; i < groups.length; i++) {
+                if (groups[i].length() == 0) {
+                    if (withoutEmpty == null) {
+                        withoutEmpty = new Span[groups.length];
+                        System.arraycopy(groups, 0, withoutEmpty, 0, groups.length);
+                    }
+                    withoutEmpty[i] = null;
+                }
+            }
+            if (withoutEmpty != null)
+                return withoutEmpty;
+        }
+        // We don't mind empty captures, or there are none.
+        return groups;
     }
 
     /**
@@ -66,7 +83,7 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @return groups
      */
     @Override
-    public Map<String, Span> getMap(Hit hit) {
+    public Map<String, Span> getMap(Hit hit, boolean omitEmpty) {
         if (capturedGroups == null)
             return null;
         List<String> names = names();
@@ -75,7 +92,8 @@ public class CapturedGroupsImpl implements CapturedGroups {
             return null;
         Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
         for (int i = 0; i < names.size(); i++) {
-            result.put(names.get(i), groups[i]);
+            if (!omitEmpty || groups[i].length() > 0)
+                result.put(names.get(i), groups[i]);
         }
         return Collections.unmodifiableMap(result);
     }

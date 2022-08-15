@@ -24,7 +24,18 @@ public interface CapturedGroups {
      * @param hit hit to get groups for
      * @return groups
      */
-    Span[] get(Hit hit);
+    default Span[] get(Hit hit) {
+        return get(hit, false);
+    }
+
+    /**
+     * Get the captured groups.
+     *
+     * @param hit hit to get groups for
+     * @param omitEmpty if true, instead of a Span with length 0, null will be returned (default: false)
+     * @return groups
+     */
+    Span[] get(Hit hit, boolean omitEmpty);
 
     /**
      * Get a map of the captured groups.
@@ -34,7 +45,20 @@ public interface CapturedGroups {
      * @param hit hit to get groups for
      * @return groups
      */
-    Map<String, Span> getMap(Hit hit);
+    default Map<String, Span> getMap(Hit hit) {
+        return getMap(hit, false);
+    }
+
+    /**
+     * Get a map of the captured groups.
+     *
+     * Relatively slow. If you care about performance, prefer {@link #get(Hit)}.
+     *
+     * @param hit hit to get groups for
+     * @param omitEmpty if true, instead of a Span with length 0, null will be returned (default: false)
+     * @return groups
+     */
+    Map<String, Span> getMap(Hit hit, boolean omitEmpty);
 
     @Override
     String toString();

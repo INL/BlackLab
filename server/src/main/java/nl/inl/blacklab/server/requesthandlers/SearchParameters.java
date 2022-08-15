@@ -105,6 +105,8 @@ public class SearchParameters {
         defaultParameterValues.put("subprops", "");
         defaultParameterValues.put("csvsummary", "no");
         defaultParameterValues.put("csvsepline", "no");
+        defaultParameterValues.put("includegroupcontents", "no");
+        defaultParameterValues.put("omitemptycaptures", "no");
     }
 
     private static String getDefault(String paramName) {
@@ -190,7 +192,10 @@ public class SearchParameters {
             "csvsepline", // include separator declaration for Excel? [no]
 
             // Deprecated parameters
-            "property" // now called "annotation"
+            "property", // now called "annotation",
+
+            "includegroupcontents", // include hits with the group response? (false)
+            "omitemptycaptures"  // omit capture groups of length 0? (false)
 
     );
 
@@ -418,6 +423,13 @@ public class SearchParameters {
             return getBoolean("includegroupcontents");
         }
         return searchManager.config().getParameters().isWriteHitsAndDocsInGroupedHits();
+    }
+
+    public boolean omitEmptyCapture() {
+        if (containsKey("omitemptycaptures")) {
+            return getBoolean("omitemptycaptures");
+        }
+        return searchManager.config().getParameters().isOmitEmptyCaptures();
     }
 
     private List<DocProperty> getFacets() {

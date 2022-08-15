@@ -22,9 +22,12 @@ public class Span {
         return end;
     }
 
+    public int length() {
+        return end - start;
+    }
+
     @Override
     public String toString() {
         return start + "-" + end;
     }
-
 }

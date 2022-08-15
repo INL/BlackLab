@@ -142,9 +142,16 @@ parameters:
 
     # By default, should we include the grouped hits in
     # grouped responses? If false, just include group 
-    # identity and size. Can be overridden using the
-    # "includegroupcontents" parameter.
+    # identity and size. Defaults to false. Can be overridden 
+    # using the "includegroupcontents" parameter.
     writeHitsAndDocsInGroupedHits: false
+
+    # If we're capturing part of our matches, should
+    # we include empty captures? This can happen when the
+    # clause to capture is optional, e.g. A:[]?
+    # Defaults to false. Can be overridden using the 
+    # "omitemptycaptures" parameter.
+    omitEmptyCaptures: false
 
 
 
