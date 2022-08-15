@@ -1,7 +1,6 @@
 const chai = require("chai");
 const chaiHttp = require("chai-http");
 const expect = chai.expect;
-const should = chai.should();
 const assert = chai.assert;
 const crypto = require('crypto')
 const fs = require('fs')
@@ -9,20 +8,24 @@ const path = require('path')
 const parseXmlString = require('xml2js').parseStringPromise;
 chai.use(chaiHttp);
 
+const { sanitizeResponse } = require("./compare-responses");
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
-const TEST_DATA_ROOT =  constants.INDEX_TEST_DATA_ROOT;
-const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json')));
+const TEST_DATA_ROOT = constants.TEST_DATA_ROOT;
+const TEST_CONFIG = JSON.parse(fs.readFileSync(path.resolve(TEST_DATA_ROOT, 'index-test-config.json'),
+        { encoding: 'utf-8' }));
 
 const INPUT_FORMAT_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['input-format']);
 const DOC_TO_INDEX_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['docs-to-index']);
 const EXPECTED_INDEX_CONTENT_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['expected-index']);
 const EXPECTED_INDEX_METADATA_PATH = path.resolve(TEST_DATA_ROOT, TEST_CONFIG['expected-metadata']);
 
+const READ_FILE_OPTS = { encoding: 'utf-8' };
+
 function addDefaultHeaders(request) {
     request.auth(constants.BLACKLAB_USER, constants.BLACKLAB_PASSWORD)
-    let allHeaders = {
+    const allHeaders = {
         'X-Request-ID': crypto.randomBytes(8).toString('hex'),
     }
 
@@ -32,107 +35,97 @@ function addDefaultHeaders(request) {
 }
 
 function createIndexName() {
-    indexName = "test-index-" + crypto.randomInt(10000).toString();
-    return indexName;
+    return "test-index-" + crypto.randomInt(10000).toString();
 }
 
-async function createInputFormat(){
-    var formatName = path.basename(INPUT_FORMAT_PATH);
-    let request = chai
-        .request(SERVER_URL)
-        .post('/input-formats')
-        .set('Accept', 'application/json')
-        .attach('data', fs.readFileSync(INPUT_FORMAT_PATH), formatName);
+async function createInputFormat() {
+    const formatName = path.basename(INPUT_FORMAT_PATH);
+    const request = chai
+            .request(SERVER_URL)
+            .post('/input-formats')
+            .set('Accept', 'application/json')
+            .attach('data', fs.readFileSync(INPUT_FORMAT_PATH), formatName);
     addDefaultHeaders(request);
     return request;
 }
 
 async function createIndex(indexName) {
-    index_url = constants.BLACKLAB_USER + ":" + indexName
-    inputFormat = TEST_CONFIG['input-format'].split('.')[0];
-    let request = chai
-        .request(SERVER_URL)
-        .post('/')
-        .query({
-            'name': index_url,
-            'display': indexName,
-            'format': constants.BLACKLAB_USER + ":" + inputFormat
-        })
-        .set('Accept', 'application/json')
+    const index_url = constants.BLACKLAB_USER + ":" + indexName
+    const inputFormat = TEST_CONFIG['input-format'].split('.')[0];
+    const request = chai
+            .request(SERVER_URL)
+            .post('/')
+            .query({
+                'name': index_url,
+                'display': indexName,
+                'format': constants.BLACKLAB_USER + ":" + inputFormat
+            })
+            .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
 }
 
 async function getIndexRequest(indexName) {
-    indexUrl = constants.BLACKLAB_USER + ":" + indexName
-    let request = chai
-        .request(SERVER_URL)
-        .get("/" + indexUrl + "/status")
-        .set('Accept', 'application/json')
+    const indexUrl = constants.BLACKLAB_USER + ":" + indexName
+    const request = chai
+            .request(SERVER_URL)
+            .get("/" + indexUrl + "/status")
+            .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
 }
 
 async function addToIndex(indexName, payloadPath) {
-    indexUrl = constants.BLACKLAB_USER + ":" + indexName
-    let request = chai
-        .request(SERVER_URL)
-        .post('/' + indexUrl + '/docs')
-        .set('Accept', 'application/json')
-        .attach('data', fs.readFileSync(payloadPath), 'testdocs' );
+    const indexUrl = constants.BLACKLAB_USER + ":" + indexName
+    const request = chai
+            .request(SERVER_URL)
+            .post('/' + indexUrl + '/docs')
+            .set('Accept', 'application/json')
+            .attach('data', fs.readFileSync(payloadPath), 'testdocs');
     addDefaultHeaders(request);
     return request;
 }
+
 async function getIndexContent(indexName) {
-    indexUrl = constants.BLACKLAB_USER + ":" + indexName;
+    const indexUrl = constants.BLACKLAB_USER + ":" + indexName;
     let request = chai
-        .request(SERVER_URL)
-        .get("/" + indexUrl + "/docs")
-        .set('Accept', 'application/json')
+            .request(SERVER_URL)
+            .get("/" + indexUrl + "/docs")
+            .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
 }
 
 function clearKeys(keys, data) {
-    var diff = Object.keys(data).filter(k => !keys.includes(k));
-    var cleanedData = {}
-    for (let k of diff) {
-        var value = data[k];
-        if (!(value instanceof Array)) {
-            cleanedData[k] = value;
-            continue;
-        }
-        if (value.length === 1 && typeof value[0] === "string" && (value[0].trim() === "" || value[0].trim() === "\n")) {
-            cleanedData[k] = [];
-        } else {
-            cleanedData[k] = value;
-        }
-    }
-    return cleanedData
+    return sanitizeResponse(data, keys, (v) => {
+        // Is the value an array with a single string element that only contains whitespace?
+        // If so, return an empty array. Otherwise, return unchanged
+        return v instanceof Array && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+    });
 }
 
 async function getIndexMetadata(indexName) {
-    indexUrl = constants.BLACKLAB_USER + ":" + indexName
-    let request = chai
-        .request(SERVER_URL)
-        .get("/" + indexUrl + "/")
-        .set('Accept', 'application/json')
+    const indexUrl = constants.BLACKLAB_USER + ":" + indexName
+    const request = chai
+            .request(SERVER_URL)
+            .get("/" + indexUrl + "/")
+            .set('Accept', 'application/json')
     addDefaultHeaders(request);
     return request.send();
 }
 
-async function toJson(xml) {
-    return parseXmlString(xml);
+async function xmlToJson(xml) {
+    return parseXmlString(xml, null);
 }
 
 function queryIndex(indexName, pattern, filters, format = 'application/json') {
-    indexUrl = constants.BLACKLAB_USER + ":" + indexName + "/hits";
-    var respFormat = format === "" ? "application/json" : format;
-    let request = chai
-        .request(SERVER_URL)
-        .post("/" + indexUrl + "/")
-        .buffer()
-        .set('Accept', respFormat)
+    const indexUrl = constants.BLACKLAB_USER + ":" + indexName + "/hits";
+    const respFormat = format === "" ? "application/json" : format;
+    const request = chai
+            .request(SERVER_URL)
+            .post("/" + indexUrl + "/")
+            .buffer()
+            .set('Accept', respFormat)
     if (filters !== "") {
         request.query({"patt": pattern, "filter": filters})
     } else {
@@ -152,40 +145,40 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
 
 describe('Indexing tests', () => {
     it('create a new index', async () => {
-        indexName = createIndexName();
-        let respFormat = await createInputFormat();
+        const indexName = createIndexName();
+        const respFormat = await createInputFormat();
         assert.isTrue(respFormat.ok);
 
-        let createRes = await createIndex(indexName);
+        const createRes = await createIndex(indexName);
         assert.isTrue(createRes.ok);
 
-        let resGetIndex = await getIndexRequest(indexName);
+        const resGetIndex = await getIndexRequest(indexName);
         assert.isTrue(resGetIndex.ok);
     });
     it('adds to index', async () => {
 
-        indexName = createIndexName();
+        const indexName = createIndexName();
         const req = await createInputFormat();
         assert.isTrue(req.ok);
 
-        let createRes = await createIndex(indexName);
+        const createRes = await createIndex(indexName);
         assert.isTrue(createRes.ok);
 
-        let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
+        const addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
         assert.isTrue(addReq.ok);
-        
-        let indexContents = await getIndexContent(indexName);
+
+        const indexContents = await getIndexContent(indexName);
         assert.isTrue(indexContents.ok);
 
-        var body = indexContents.body;
-        var expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH));
+        const body = indexContents.body;
+        const expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH, READ_FILE_OPTS));
 
-        var keys = ['summary', 'searchTime'];
+        const keys = ['summary', 'searchTime'];
         expect(clearKeys(keys, expectedContent)).to.be.deep.equal(clearKeys(keys, body));
     }).timeout(3000); // allow a little more time for slower servers
 
     it('get index metadata', async () => {
-        indexName = createIndexName();
+        const indexName = createIndexName();
         await createInputFormat();
 
         let createRes = await createIndex(indexName);
@@ -194,18 +187,18 @@ describe('Indexing tests', () => {
         let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
         assert.isTrue(addReq.ok);
 
-        let indexMetadata = await getIndexMetadata(indexName);
-        var body = indexMetadata.body;
+        const indexMetadata = await getIndexMetadata(indexName);
+        const body = indexMetadata.body;
         assert.isTrue(indexMetadata.ok);
 
-        var expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH));
+        const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
 
-        var keys = ['indexName', 'displayName', 'versionInfo', 'documentFormat']
+        const keys = ['indexName', 'displayName', 'versionInfo', 'documentFormat']
         expect(clearKeys(keys, expectedMetadata)).to.be.deep.equal(clearKeys(keys, body));
     });
 
     it('query from config', async () => {
-        indexName = createIndexName();
+        const indexName = createIndexName();
         await createInputFormat();
 
         let createRes = await createIndex(indexName);
@@ -214,25 +207,21 @@ describe('Indexing tests', () => {
         let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
         assert.isTrue(addReq.ok);
 
-        var queriesTest = TEST_CONFIG['queries'];
-        for (let [testName, testCase]  of Object.entries(queriesTest)) {
-            console.log("Running test case: " + testName);
+        const queriesTest = TEST_CONFIG['queries'];
+        for (let [testName, testCase] of Object.entries(queriesTest)) {
             const filterTerms = testCase['filters'];
             const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
             assert.isTrue(queryInd.ok);
-            const body = await toJson(queryInd.body);
+            const body = await xmlToJson(queryInd.body);
 
-            const keys = ['summary'];
+            const key = 'summary';
             if (testCase['expected'] === null) {
-                var results = clearKeys(keys, body['blacklabResponse']);
+                const results = clearKeys(key, body['blacklabResponse']);
                 expect(results['hits']).to.be.empty;
             } else {
-                var expectedOutput = await toJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
-                expect(clearKeys(keys, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(keys, body['blacklabResponse']));
+                const expectedOutput = await xmlToJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
+                expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(key, body['blacklabResponse']));
             }
         }
     });
-
-
 });
-

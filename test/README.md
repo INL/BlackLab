@@ -18,8 +18,10 @@ The easiest way to do this is to run this process in Docker; this automates the 
 ## Optionally point to a directory containing custom data, optionally including a custom environment for testing
 #export INDEX_TEST_DATA_CONFIGURATION=./custom-data
 
-sh test/run.sh
+sh test/run-ci.sh
 ```
+
+If you add a new test, you should run `test/run-local.sh`. The new test will always PASS and the server response will be saved to `test/data/saved-responses/<category>/<testName>.json`. Then subsequent runs of `run-ci.sh` will use the saved response.
 
 ### Build a blacklab test server
 If you've made changes ensure the latest BlackLab code and tests are being used by:
@@ -53,7 +55,7 @@ Build the containers with the tests
 ## Build the tests container
 docker-compose build test
 ```
-By default, it will use the data found the `test/data` directory for testing
+By default, it will use the data found the `test/data/input` directory for testing
 
 Run the tests
 ```bash
@@ -65,7 +67,7 @@ The tests should now be run and the output shown. If all tests succeed, `$?` sho
 
 If you want to run the tests manually outside of Docker, you should:
 
-- index the data in `test/data` to an index named `test` (using config `voice-tei.blf.yaml`)
+- index the data in `test/data/input` to an index named `test` (using config `voice-tei.blf.yaml`)
 - start a local server that can access this index
 - run the tests using `npm run test` from the `test` directory
 
@@ -95,17 +97,17 @@ Mocha/Chai were chosen because they are mature, popular and tests are easy to un
 ### Default data
 We currently use a small sample of data from the [VOICE](https://www.univie.ac.at/voice/) (Vienna-Oxford International Corpus of English) project. The test data consists of lemmatized and PoS-tagged TEI, making it easy to index in BlackLab. Using English also makes it easier for others to read and write tests.
 
-The test data is included in our repository (in the `test/data` subdirectory) because the tests rely on this specific data, so it is important that they can be distributed together.
+The test data is included in our repository (in the `test/data/input` subdirectory) because the tests rely on this specific data, so it is important that they can be distributed together.
 
 Data from the VOICE project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License](http://creativecommons.org/licenses/by-nc-sa/3.0/). As BlackLab is noncommercial and licensed under the Apache license, we believe that including this test data conforms to this license. If you are the rightsholder and believe otherwise, please let us know.
 
 ### Custom data
 
-You can customize the testing data used for **indexing tests** by setting the `INDEX_TEST_DATA_ROOT` to a directory
-containing test data configuration files. `INDEX_TEST_DATA_ROOT` must available inside the repository and
+You can customize the testing data used for **indexing tests** by setting the `TEST_DATA_ROOT` to a directory
+containing test data configuration files. `TEST_DATA_ROOT` must available inside the repository and
 relative to the `test/` directory.
 
-In addition, if the `INDEX_TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](run-tests.sh)
+In addition, if the `TEST_DATA_ROOT` directory contains a file named `environment`. The [test script](perform-test-run.sh)
 will source it before running any tests. This allows the test to add environment variables to control for custom blacklab server configurations.
 
 For guidance on how to configure custom test data see the example here: [index-test-config.json](data/index-test-config.json)
@@ -118,5 +120,5 @@ There are currently two workflows ensuring the quality of the pull requests:
 
 - [Build and unit tests](../.github/workflows/maven.yml): builds the code change and runs all blacklab unit tests via maven.
 - [Integration tests](../.github/workflows/integration-test.yml): builds the code change and runs [integration tests](./test).
-  Note: Integrations tests are currently running on two different data sets, [the default data set](./test/data) and a 
+  Note: Integrations tests are currently running on two different data sets, [the default data set](./test/data/input) and a 
   custom configured data set whose settings are recorded on a per-repository basis.

@@ -59,9 +59,8 @@ services:
       - "${BLACKLAB_TEST_PORT:-8080}:8080"
       - "5005:5005"
     volumes:
-      - ./test/data:/input
-      - ./test/data/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
-      - blacklab-data:/data
+      - ./test/data:/test-data
+      - blacklab-test-data:/data
 
   # Runs the tests on the test server
   test:
@@ -69,13 +68,37 @@ services:
       - tools
     environment:
       - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
-      - INDEX_TEST_DATA_ROOT=${INDEX_TEST_DATA_ROOT:-data}
+      - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
+
+      # If response file for a test does not exist, the test will FAIL.
+      - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=false
+
     build: test
     depends_on:
       - testserver
+
+  # Runs the tests locally, so we can save new test responses
+  test-local:
+      profiles:
+          - tools
+      environment:
+          - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
+          - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
+
+          # If response file for a test does not exist, the test will SUCCEED,
+          # and the response file will be saved for future runs.
+          - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
+
+      build: test
+      volumes:
+          # We need access to the previous responses and be able to save responses for any new tests.
+          - ./test/data/saved-responses:/app/data/saved-responses
+      depends_on:
+          - testserver
 
 
 
 # Volume where our indexes will be stored.
 volumes:
   blacklab-data: {}
+  blacklab-test-data: {}

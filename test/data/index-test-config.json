@@ -1,7 +1,7 @@
 {
   "input-format": "voice-tei.blf.yaml",
-  "docs-to-index": "PBsve430.xml",
-  "expected-index": "expected-index-content.json",
-  "expected-metadata": "expected-index-metadata.json",
+  "docs-to-index": "input/PBsve430.xml",
+  "expected-index": "saved-responses/indices/expected-index-content.json",
+  "expected-metadata": "saved-responses/indices/expected-index-metadata.json",
   "queries": {}
 }

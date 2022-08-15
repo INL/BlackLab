@@ -1,0 +1,20 @@
+{
+  "blacklabBuildTime": "VALUE_REMOVED",
+  "blacklabVersion": "VALUE_REMOVED",
+  "indices": {
+    "test": {
+      "displayName": "test",
+      "description": "",
+      "status": "available",
+      "documentFormat": "voice-tei",
+      "timeModified": "VALUE_REMOVED",
+      "tokenCount": 766
+    }
+  },
+  "user": {
+    "loggedIn": false,
+    "canCreateIndex": false
+  },
+  "helpPageUrl": "/blacklab-server/help",
+  "cacheStatus": "VALUE_REMOVED"
+}

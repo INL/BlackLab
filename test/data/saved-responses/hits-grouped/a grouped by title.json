@@ -1,0 +1,74 @@
+{
+  "summary": {
+    "searchParam": "VALUE_REMOVED",
+    "searchTime": "VALUE_REMOVED",
+    "numberOfGroups": 3,
+    "largestGroupSize": 8,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 30,
+    "actualWindowSize": 3,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 17,
+    "numberOfHitsRetrieved": 17,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    }
+  },
+  "hitGroups": [
+    {
+      "identity": "str:interview about conference experience and impressions of city",
+      "identityDisplay": "interview about conference experience and impressions of city",
+      "size": 8,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "interview about conference experience and impressions of city"
+        }
+      ],
+      "numberOfDocs": 1,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 268
+      }
+    },
+    {
+      "identity": "str:service encounter about visa application for family members",
+      "identityDisplay": "service encounter about visa application for family members",
+      "size": 5,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about visa application for family members"
+        }
+      ],
+      "numberOfDocs": 1,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 334
+      }
+    },
+    {
+      "identity": "str:service encounter about getting an address printed out",
+      "identityDisplay": "service encounter about getting an address printed out",
+      "size": 4,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about getting an address printed out"
+        }
+      ],
+      "numberOfDocs": 1,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 164
+      }
+    }
+  ]
+}

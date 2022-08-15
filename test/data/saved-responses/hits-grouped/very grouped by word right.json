@@ -1,0 +1,98 @@
+{
+  "summary": {
+    "searchParam": "VALUE_REMOVED",
+    "searchTime": "VALUE_REMOVED",
+    "numberOfGroups": 6,
+    "largestGroupSize": 2,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 30,
+    "actualWindowSize": 6,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 7,
+    "numberOfHitsRetrieved": 7,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 2,
+    "numberOfDocsRetrieved": 2,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    }
+  },
+  "hitGroups": [
+    {
+      "identity": "cwo:word:i:much",
+      "identityDisplay": "much",
+      "size": 2,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "much"
+        }
+      ],
+      "numberOfDocs": 2
+    },
+    {
+      "identity": "cwo:word:i:a",
+      "identityDisplay": "a",
+      "size": 1,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "a"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cwo:word:i:briefly",
+      "identityDisplay": "briefly",
+      "size": 1,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "briefly"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cwo:word:i:famous",
+      "identityDisplay": "famous",
+      "size": 1,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "famous"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cwo:word:i:fresh",
+      "identityDisplay": "fresh",
+      "size": 1,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "fresh"
+        }
+      ],
+      "numberOfDocs": 1
+    },
+    {
+      "identity": "cwo:word:i:good",
+      "identityDisplay": "good",
+      "size": 1,
+      "properties": [
+        {
+          "name": "wordright:word:i",
+          "value": "good"
+        }
+      ],
+      "numberOfDocs": 1
+    }
+  ]
+}
