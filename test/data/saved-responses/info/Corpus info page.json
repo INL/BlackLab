@@ -11,7 +11,7 @@
   "versionInfo": {
     "blackLabBuildTime": "VALUE_REMOVED",
     "blackLabVersion": "VALUE_REMOVED",
-    "indexFormat": "3.1",
+    "indexFormat": "VALUE_REMOVED",
     "timeCreated": "VALUE_REMOVED",
     "timeModified": "VALUE_REMOVED"
   },
@@ -29,7 +29,6 @@
       "description": "Contents of the documents.",
       "hasContentStore": true,
       "hasXmlTags": true,
-      "hasLengthTokens": true,
       "mainAnnotation": "word",
       "displayOrder": [
         "word",

@@ -33,6 +33,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         versionInfo: {
             blackLabBuildTime: true,
             blackLabVersion: true,
+            indexFormat: true,
             timeCreated: true,
             timeModified: true
         },
