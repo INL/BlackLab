@@ -53,7 +53,7 @@ class IntegratedMetadataUtil {
 
     private static final String KEY_MAIN_ANNOTATION = "mainAnnotation";
 
-    private static final String LATEST_INDEX_FORMAT = "4";
+    public static final String LATEST_INDEX_FORMAT = "4";
 
     public static ObjectNode createIndexMetadata(ConfigInputFormat config, File dir) {
         return config == null ? createEmptyIndexMetadata(dir) : createIndexMetadataFromConfig(config,

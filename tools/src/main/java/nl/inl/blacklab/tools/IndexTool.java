@@ -29,7 +29,6 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -314,10 +313,7 @@ public class IndexTool {
             } else {
                 // Single file.
                 indexer.index(new File(inputDir, glob));
-
                 MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
-                mf.setSpecialField(MetadataFields.PID, "filename");
-
             }
         } catch (Exception e) {
             System.err.println(

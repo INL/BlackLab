@@ -168,6 +168,9 @@ describe('Indexing tests', () => {
         assert.isTrue(addReq.ok);
 
         const indexContents = await getIndexContent(indexName);
+        console.log('status', indexContents.status);
+        console.log('ok', indexContents.ok);
+        console.log('body', indexContents.body);
         assert.isTrue(indexContents.ok);
 
         const body = indexContents.body;
@@ -185,9 +188,15 @@ describe('Indexing tests', () => {
         assert.isTrue(createRes.ok);
 
         let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-        assert.isTrue(addReq.ok);
+        //assert.isTrue(addReq.ok);
+        console.log(addReq.body);
+        assert.equal(200, addReq.status);
 
         const indexMetadata = await getIndexMetadata(indexName);
+        console.log('getIndexMetadata');
+        console.log('status', indexMetadata.status);
+        console.log('ok', indexMetadata.ok);
+        console.log('body', indexMetadata.body);
         const body = indexMetadata.body;
         assert.isTrue(indexMetadata.ok);
 

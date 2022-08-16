@@ -31,8 +31,12 @@ Integrating with Solr will involve the following steps.
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] don't create ObjectNode structure, then call extractFromJson. Instantiate metadata class directly
+    - [ ] write metadatafieldgroups, annotationgroups to custom
+    - [ ] eliminate MetadataFields.authorField, , annotationgroups, etc. (also in custom)?
     - [ ] clean up redundant methods from `IntegratedMetadataUtil`
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
+    - [ ] QueryTool: `filter *:*`, then `docs` doesn't skip index metadata document
+    - [ ] serialize metadata in exactly the way you want to return it in APIv2
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

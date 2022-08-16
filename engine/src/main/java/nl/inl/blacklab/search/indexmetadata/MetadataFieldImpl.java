@@ -12,12 +12,14 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.DocValuesType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
@@ -30,9 +32,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
 
     private static int maxMetadataValuesToStore = 50;
 
-    @XmlTransient
-    private boolean keepTrackOfValues = true;
-
     public static void setMaxMetadataValuesToStore(int n) {
         maxMetadataValuesToStore = n;
     }
@@ -40,6 +39,34 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     public static int maxMetadataValuesToStore() {
         return maxMetadataValuesToStore;
     }
+
+    public static MetadataFieldImpl fromConfig(ConfigMetadataField config,
+            MetadataFieldsImpl metadataFields) {
+        MetadataFieldImpl field = new MetadataFieldImpl(config.getName(), config.getType(),
+                metadataFields.getMetadataFieldValuesFactory());
+
+        // Custom properties
+        CustomPropsMap custom = field.custom();
+        custom.put("displayName", config.getDisplayName());
+        custom.put("description", config.getDescription());
+        custom.put("uiType", config.getUiType());
+        custom.put("unknownCondition", (
+                config.getUnknownCondition() == null ?
+                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()) :
+                        config.getUnknownCondition()
+                ).stringValue()
+        );
+        custom.put("unknownValue", config.getUnknownValue() == null ? metadataFields.defaultUnknownValue() :
+                config.getUnknownValue());
+        custom.put("displayValues", config.getDisplayValues());
+        custom.put("displayOrder", config.getDisplayOrder());
+
+        field.setAnalyzer(!StringUtils.isEmpty(config.getAnalyzer()) ? config.getAnalyzer() : metadataFields.defaultAnalyzerName());
+        return field;
+    }
+
+    @XmlTransient
+    private boolean keepTrackOfValues = true;
 
     /**
      * The field type: text, untokenized or numeric.

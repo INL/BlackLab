@@ -25,7 +25,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -180,10 +179,6 @@ public class TestIndexIntegrated {
         for (int i = 0; i < expectedNumberOfDocuments; i++)
             Assert.assertEquals(1, (int)map.get(Integer.toString(i)));
         Assert.assertEquals(TestIndex.DOC_LENGTHS_TOKENS.length, index.metadata().documentCount());
-
-        Assert.assertEquals("fromInputFile", index.metadata().metadataFields().special(MetadataFields.TITLE).name());
-        Assert.assertNull(index.metadata().metadataFields().special(MetadataFields.AUTHOR));
-        Assert.assertNull(index.metadata().metadataFields().special(MetadataFields.DATE));
     }
 
     @Test

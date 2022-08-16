@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,18 +22,20 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
 
-    private final MetadataFields metadataFieldsAccessor;
+    @XmlTransient
+    private MetadataFields metadataFields;
 
     private final String name;
 
     private final List<String> fieldNamesInGroup;
 
+    @XmlTransient
     private List<MetadataField> fieldsInGroup = null;
 
-    boolean addRemainingFields = false;
+    boolean addRemainingFields;
 
-    MetadataFieldGroupImpl(MetadataFields metadataFieldsAccessor, String name, List<String> fieldNames, boolean addRemainingFields) {
-        this.metadataFieldsAccessor = metadataFieldsAccessor;
+    MetadataFieldGroupImpl(MetadataFields metadataFields, String name, List<String> fieldNames, boolean addRemainingFields) {
+        this.metadataFields = metadataFields;
         this.name = name;
         this.fieldNamesInGroup = new ArrayList<>(fieldNames);
         this.addRemainingFields = addRemainingFields;
@@ -56,8 +59,8 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         if (fieldsInGroup == null) {
             fieldsInGroup = new ArrayList<>();
             for (String fieldName: fieldNamesInGroup) {
-                if (metadataFieldsAccessor.exists(fieldName))
-                    fieldsInGroup.add(metadataFieldsAccessor.get(fieldName));
+                if (metadataFields.exists(fieldName))
+                    fieldsInGroup.add(metadataFields.get(fieldName));
                 else
                     logger.warn("Field '" + fieldName + "' in metadata group '" + name + "' does not exist!");
             }
@@ -76,4 +79,10 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
         return fieldsInGroup.stream();
     }
 
+    public void fixAfterDeserialization(MetadataFields metadataFields) {
+        this.metadataFields = metadataFields;
+        for (String fieldName: fieldNamesInGroup) {
+            fieldsInGroup.add(metadataFields.get(fieldName));
+        }
+    }
 }

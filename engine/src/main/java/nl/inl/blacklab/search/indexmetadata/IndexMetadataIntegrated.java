@@ -5,7 +5,9 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -31,10 +33,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.index.DocIndexerFactory;
+import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
+import nl.inl.blacklab.indexers.config.ConfigAnnotationGroup;
+import nl.inl.blacklab.indexers.config.ConfigAnnotationGroups;
+import nl.inl.blacklab.indexers.config.ConfigCorpus;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.ConfigLinkedDocument;
+import nl.inl.blacklab.indexers.config.ConfigMetadataBlock;
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
+import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -239,6 +252,14 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         /** Time at which index was created */
         public String timeModified;
+
+        public void populateWithDefaults() {
+            blackLabBuildTime = BlackLab.buildTime();
+            blackLabVersion = BlackLab.version();
+            timeCreated =  TimeUtil.timestamp();
+            timeModified =  TimeUtil.timestamp();
+            indexFormat =  IntegratedMetadataUtil.LATEST_INDEX_FORMAT;
+        }
     }
 
     private VersionInfo versionInfo = new VersionInfo();
@@ -293,14 +314,23 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             ConfigInputFormat config) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
-        metadataFields.setTopLevelCustom(custom); // for special fields
+        metadataFields.setTopLevelCustom(custom); // for special fields, metadata groups
+        annotatedFields.setTopLevelCustom(custom); // for annotation groups
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
         if (createNewIndex || index.reader().leaves().isEmpty()) {
             // Create new index metadata from config
             File dir = index.indexDirectory();
+
+            if (config == null)
+                populateWithDefaults(dir);
+            else
+                populateFromConfig(config, dir);
+            /*
             ObjectNode metadataObj = IntegratedMetadataUtil.createIndexMetadata(config, dir);
             IntegratedMetadataUtil.extractFromJson(this,  metadataObj);
+            */
+
             documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
             if (index.indexMode())
                 save(); // save debug file if any
@@ -318,6 +348,105 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // For integrated index, because metadata wasn't allowed to change during indexing,
         // return a default field config if you try to get a missing field.
         metadataFields.setThrowOnMissingField(false);
+    }
+
+    private void populateFromConfig(ConfigInputFormat config, File indexDirectory) {
+        ensureNotFrozen();
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
+        String displayName = corpusConfig.getDisplayName();
+        if (StringUtils.isEmpty(displayName))
+            displayName = IndexMetadata.indexNameFromDirectory(indexDirectory);
+        custom.put("displayName", displayName);
+        custom.put("description", corpusConfig.getDescription());
+        custom.put("textDirection", corpusConfig.getTextDirection().getCode());
+        for (Map.Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
+            if (!e.getKey().equals("pidField"))
+                custom.put(e.getKey(), e.getValue());
+        }
+        custom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
+        custom.put("unknownValue", config.getMetadataDefaultUnknownValue());
+
+        addGroupsInfoFromConfig(config);
+
+        contentViewable =  corpusConfig.isContentViewable();
+        documentFormat = config.getName();
+        versionInfo.populateWithDefaults();
+        metadataFields.setDefaultAnalyzer(config.getMetadataDefaultAnalyzer());
+        if (corpusConfig.getSpecialFields().containsKey("pidField"))
+            metadataFields.setSpecialField(MetadataFields.PID, corpusConfig.getSpecialFields().get("pidField"));
+
+        addFieldInfoFromConfig(config);
+    }
+
+    private void addFieldInfoFromConfig(ConfigInputFormat config) {
+        // Add metadata info
+        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+            for (ConfigMetadataField f: b.getFields()) {
+                if (f.isForEach())
+                    continue;
+                metadataFields.addFromConfig(f);
+            }
+        }
+
+        // Add annotated field info
+        for (ConfigAnnotatedField f: config.getAnnotatedFields().values()) {
+            annotatedFields.addFromConfig(f);
+        }
+
+        // Also (recursively) add metadata and annotated field config from any linked
+        // documents
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
+            if (format != null && format.isConfigurationBased()) {
+                addFieldInfoFromConfig(format.getConfig());
+            }
+        }
+
+    }
+
+    private void addGroupsInfoFromConfig(ConfigInputFormat config) {
+        // Metadata field groups
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
+        Map<String, MetadataFieldGroupImpl> groups = new LinkedHashMap<>();
+        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
+            MetadataFieldGroupImpl group = new MetadataFieldGroupImpl(metadataFields, g.getName(),
+                    g.getFields(), g.isAddRemainingFields());
+            groups.put(group.name(), group);
+        }
+        custom.put("metadataFieldGroups", groups);
+        metadataFields.setMetadataGroups(groups);
+
+        // Annotation groups
+        custom.put("annotationGroups", new LinkedHashMap<>());
+        for (ConfigAnnotationGroups cfgField: corpusConfig.getAnnotationGroups().values()) {
+            String fieldName = cfgField.getName();
+            List<AnnotationGroup> annotGroups = new ArrayList<>();
+            for (ConfigAnnotationGroup cfgAnnotGroup: cfgField.getGroups()) {
+                String groupName = cfgAnnotGroup.getName();
+                List<String> annotations = cfgAnnotGroup.getAnnotations();
+                boolean addRemaining = cfgAnnotGroup.isAddRemainingAnnotations();
+                annotGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations, addRemaining));
+            }
+            this.annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotGroups));
+        }
+
+        // Also (recursively) add groups config from any linked documents
+        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
+            DocIndexerFactory.Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
+            if (format != null && format.isConfigurationBased())
+                addGroupsInfoFromConfig(format.getConfig());
+        }
+    }
+
+    private void populateWithDefaults(File indexDirectory) {
+        ensureNotFrozen();
+        custom.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
+        custom.put("description", "");
+        custom.put("textDirection", "ltr");
+        versionInfo.populateWithDefaults();
+        metadataFields.clearSpecialFields();
+        custom.put("annotationGroups", new LinkedHashMap<>());
+        custom.put("metadataFieldGroups", new LinkedHashMap<>());
     }
 
     @Override

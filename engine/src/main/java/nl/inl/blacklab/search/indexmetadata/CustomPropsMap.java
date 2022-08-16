@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -34,7 +35,8 @@ public class CustomPropsMap implements CustomProps {
 
             if (el == null)
                 return;
-            provider.defaultSerializeValue(el.customFields, jgen);
+            Map<String, Object> sorted = new TreeMap<>(el.customFields);
+            provider.defaultSerializeValue(sorted, jgen);
         }
     }
 

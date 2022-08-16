@@ -147,7 +147,7 @@ public class ConfigInputFormat {
     final Map<String, String> indexFieldAs = new LinkedHashMap<>();
 
     /** What default analyzer to use if not overridden */
-    private String metadataDefaultAnalyzer = "default";
+    private String metadataDefaultAnalyzer = "DEFAULT";
 
     private UnknownCondition metadataDefaultUnknownCondition = UnknownCondition.NEVER;
 

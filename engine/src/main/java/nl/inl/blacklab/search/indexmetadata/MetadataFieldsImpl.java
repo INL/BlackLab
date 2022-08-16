@@ -20,6 +20,8 @@ import org.apache.logging.log4j.Logger;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
+
 /**
  * The metadata fields in an index.
  */
@@ -48,11 +50,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      * (never|missing|empty|missing_or_empty) [never]
      */
     @XmlTransient
-    private String defaultUnknownCondition;
+    private String defaultUnknownCondition = "never";
 
     /** What value to index when a metadata field value is unknown [unknown] */
     @XmlTransient
-    private String defaultUnknownValue;
+    private String defaultUnknownValue = "unknown";
 
     /** Top-level custom props (if using integrated input format), for special fields, etc. */
     @XmlTransient
@@ -74,7 +76,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     private String pidField;
 
     /** Default analyzer to use for metadata fields */
-    private String defaultAnalyzer;
+    private String defaultAnalyzer = "DEFAULT";
 
     /** Is the object frozen, not allowing any modifications? */
     @XmlTransient
@@ -91,6 +93,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      */
     @XmlTransient
     private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
+
+    void addFromConfig(ConfigMetadataField f) {
+        put(f.getName(), MetadataFieldImpl.fromConfig(f, this));
+    }
 
     public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
         return metadataFieldValuesFactory;
@@ -308,6 +314,8 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             ensureNotFrozen();
             this.metadataGroups.clear();
             this.metadataGroups.putAll(metadataGroups);
+            if (topLevelCustom != null)
+                topLevelCustom.put("metadataFieldGroups", metadataGroups);
         }
     }
 
@@ -412,6 +420,12 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             setSpecialField(MetadataFields.DATE, (String) topLevelCustom.get("dateField"));
         if (topLevelCustom.containsKey("titleField"))
             setSpecialField(MetadataFields.TITLE, (String) topLevelCustom.get("titleField"));
+
+        if (topLevelCustom.containsKey("metadataFieldGroups")) {
+            metadataGroups.clear();
+            metadataGroups.putAll((Map<String, MetadataFieldGroupImpl>) topLevelCustom.get("metadataFieldGroups"));
+            metadataGroups.forEach((k, v) -> v.fixAfterDeserialization(this));
+        }
     }
 
     public void setTopLevelCustom(CustomPropsMap topLevelCustom) {

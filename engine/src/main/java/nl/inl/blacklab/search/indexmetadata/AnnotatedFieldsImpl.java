@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -14,6 +15,9 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
+import nl.inl.blacklab.indexers.config.ConfigAnnotation;
+import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -42,6 +46,9 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
      */
     @XmlTransient
     private final Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
+
+    @XmlTransient
+    private CustomPropsMap topLevelCustom;
 
     public AnnotatedFieldsImpl() {
         annotatedFields = new TreeMap<>();
@@ -104,10 +111,21 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void clearAnnotationGroups() {
         annotationGroupsPerField.clear();
+        if (topLevelCustom != null)
+            topLevelCustom.put("annotationGroups", new LinkedHashMap<>());
+
     }
 
     public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
         annotationGroupsPerField.put(fieldName, annotationGroups);
+        if (topLevelCustom != null) {
+            Map<String, AnnotationGroups> map = (Map<String, AnnotationGroups>) topLevelCustom.get("annotationGroups");
+            if (map == null) {
+                map = new LinkedHashMap<>();
+                topLevelCustom.put("annotationGroups", map);
+            }
+            map.put(fieldName, annotationGroups);
+        }
     }
     
     @Override
@@ -116,12 +134,12 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
-        setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
+        setTopLevelCustom(metadata.custom());
 
         CustomProps custom = metadata.custom();
         if (custom.containsKey("annotationGroups")) {
             clearAnnotationGroups();
-            Map<String, List<Map<String, Object>>> groupingsPerField =custom.get("annotationGroups", Collections.emptyMap());
+            Map<String, List<Map<String, Object>>> groupingsPerField = custom.get("annotationGroups", Collections.emptyMap());
             for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
                 String fieldName = entry.getKey();
                 List<Map<String, Object>> groups = entry.getValue();
@@ -133,6 +151,52 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
         for (Map.Entry<String, AnnotatedFieldImpl> e: annotatedFields.entrySet()) {
             e.getValue().fixAfterDeserialization(index, e.getKey());
         }
+        setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
 
+    }
+
+    void setTopLevelCustom(CustomPropsMap custom) {
+        this.topLevelCustom = custom;
+    }
+
+    public void addFromConfig(ConfigAnnotatedField f) {
+        AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(f.getName());
+        CustomPropsMap custom = annotatedField.custom();
+        custom.put("displayName", f.getDisplayName());
+        custom.put("description", f.getDescription());
+        List<String> displayOrder = new ArrayList<>();
+
+        if (!f.getAnnotations().isEmpty())
+            annotatedField.setMainAnnotationName(f.getAnnotations().values().iterator().next().getName());
+        int n = 0;
+        boolean hasOffsets;
+        for (ConfigAnnotation configAnnot: f.getAnnotations().values()) {
+            hasOffsets = n == 0; // first annotation gets offsets
+            addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
+            n++;
+        }
+        for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
+            for (ConfigAnnotation configAnnot: standoff.getAnnotations().values()) {
+                hasOffsets = n == 0; // first annotation gets offsets
+                addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
+                n++;
+            }
+        }
+        custom.put("displayOrder", displayOrder);
+        put(annotatedField.name(), annotatedField);
+    }
+
+    public void addAnnotationInfo(AnnotatedFieldImpl f, ConfigAnnotation config, boolean hasOffsets, List<String> displayOrder) {
+        AnnotationImpl annotation = new AnnotationImpl(f, config.getName());
+        CustomPropsMap custom = annotation.custom();
+        custom.put("displayName", config.getDisplayName());
+        custom.put("description", config.getDescription());
+
+        annotation.createSensitivities(config.getSensitivitySetting());
+        if (hasOffsets)
+            annotation.setOffsetsMatchSensitivity(annotation.mainSensitivity().sensitivity());
+
+        f.putAnnotation(annotation);
+        displayOrder.add(annotation.name());
     }
 }
