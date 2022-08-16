@@ -37,7 +37,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
         if (!createNewIndex)
             return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
-        return new IndexMetadataIntegrated(this, true, config);
+        return IndexMetadataIntegrated.create(this, config);
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
@@ -46,7 +46,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         if (indexTemplateFile != null)
             throw new UnsupportedOperationException(
                     "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
-        return new IndexMetadataIntegrated(this, true, null);
+        return IndexMetadataIntegrated.create(this, null);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

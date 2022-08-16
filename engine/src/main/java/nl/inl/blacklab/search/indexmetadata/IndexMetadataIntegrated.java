@@ -15,8 +15,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.IndexOptions;
@@ -29,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -65,7 +62,7 @@ import nl.inl.util.TimeUtil;
 })
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
-    private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
+    //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
     public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
@@ -82,6 +79,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
+    public static IndexMetadataIntegrated create(BlackLabIndex index, ConfigInputFormat config) {
+        return new IndexMetadataIntegrated(index, config);
+    }
+
     /**
      * Manages the index metadata document.
      *
@@ -92,17 +93,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         /** How to recognize field related to index metadata */
         private static final String INDEX_METADATA_FIELD_PREFIX = "__index_metadata";
 
-        /** Name in our index for the metadata field (stored in a special document that should never be matched) */
-        private static final String METADATA_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "__";
-
         /** Name in our index for the JAXB metadata field */
-        private static final String METADATA_JAXB_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "_JAXB__";
+        private static final String METADATA_FIELD_NAME = INDEX_METADATA_FIELD_PREFIX + "__";
 
         /** Index metadata document gets a marker field so we can find it again (value same as field name) */
         private static final String METADATA_MARKER = INDEX_METADATA_FIELD_PREFIX + "_marker__";
-
-        /** Contents of document format file is written to metadata document. */
-        private static final String METADATA_FIELD_DOCUMENT_FORMAT = INDEX_METADATA_FIELD_PREFIX + "_documentFormat__";
 
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
@@ -121,7 +116,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
 
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
-            return reader.document(docId).get(METADATA_JAXB_FIELD_NAME);
+            return reader.document(docId).get(METADATA_FIELD_NAME);
         }
 
         public static Integer getMetadataDocId(IndexReader reader) throws IOException {
@@ -132,42 +127,24 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 throw new RuntimeException("No index metadata found!");
             if (docIds.size() > 1)
                 throw new RuntimeException("Multiple index metadata found!");
-            Integer id = docIds.get(0);
-            return id;
+            return docIds.get(0);
         }
 
         private int metadataDocId = -1;
-
-        public ObjectNode readFromIndex(IndexReader reader) {
-            try {
-                metadataDocId = getMetadataDocId(reader);
-                String indexMetadataJson = getMetadataJson(reader, metadataDocId);
-                return deserializeFromJson(indexMetadataJson);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
 
         public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata, String documentFormatConfigFileContents) {
             try {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
-                String metadataJsonJaxb = serializeToJsonJaxb(metadata);
 
                 // Write debug files
-                File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata-jaxb.json");
-                FileUtils.writeStringToFile(debugJackson, metadataJsonJaxb, StandardCharsets.UTF_8);
-                File debugFileMetadata = new File(indexWriter.indexDirectory(), "debug-metadata.json");
-                FileUtils.writeStringToFile(debugFileMetadata, metadataJson, StandardCharsets.UTF_8);
-                File debugFileDocumentFormat = new File(indexWriter.indexDirectory(), "debug-format.blf.yaml");
-                FileUtils.writeStringToFile(debugFileDocumentFormat, documentFormatConfigFileContents, StandardCharsets.UTF_8);
+                File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata.json");
+                FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
 
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again
                 Document indexmetadataDoc = new Document();
                 indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
-                indexmetadataDoc.add(new StoredField(METADATA_JAXB_FIELD_NAME, metadataJsonJaxb));
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_DOCUMENT_FORMAT, documentFormatConfigFileContents));
                 indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
                 indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
@@ -176,7 +153,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             }
         }
 
-        private String serializeToJsonJaxb(IndexMetadataIntegrated metadata) {
+        private String serializeToJson(IndexMetadataIntegrated metadata) {
             // Eventually, we'd like to serialize using JAXB annotations instead of a lot of manual code.
             // The biggest hurdle for now is neatly serializing custom properties for fields and annotations,
             // which are currently still done through a delegate class instead of CustomPropsMap.
@@ -188,23 +165,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
-
-        private String serializeToJson(IndexMetadataIntegrated metadata) {
-            String metadataJson;
-            try {
-                ObjectWriter mapper = Json.getJsonObjectMapper().writerWithDefaultPrettyPrinter();
-                ObjectNode nodeMetadata = IntegratedMetadataUtil.encodeToJson(metadata);
-                metadataJson = mapper.writeValueAsString(nodeMetadata);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return metadataJson;
-        }
-
-        private ObjectNode deserializeFromJson(String indexMetadataJson) throws IOException {
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            return (ObjectNode) mapper.readTree(new StringReader(indexMetadataJson));
         }
 
         public int getDocumentId() {
@@ -310,40 +270,29 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @SuppressWarnings("unused")
     IndexMetadataIntegrated() {}
 
-    public IndexMetadataIntegrated(BlackLabIndex index, boolean createNewIndex,
-            ConfigInputFormat config) {
+    /**
+     * Create index metadata object for a new index.
+     *
+     * Either based on config if supplied, or populated with default values.
+     */
+    private IndexMetadataIntegrated(BlackLabIndex index, ConfigInputFormat config) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
         metadataFields.setTopLevelCustom(custom); // for special fields, metadata groups
         annotatedFields.setTopLevelCustom(custom); // for annotation groups
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
-        if (createNewIndex || index.reader().leaves().isEmpty()) {
-            // Create new index metadata from config
-            File dir = index.indexDirectory();
 
-            if (config == null)
-                populateWithDefaults(dir);
-            else
-                populateFromConfig(config, dir);
-            /*
-            ObjectNode metadataObj = IntegratedMetadataUtil.createIndexMetadata(config, dir);
-            IntegratedMetadataUtil.extractFromJson(this,  metadataObj);
-            */
+        // Create new index metadata from config
+        File dir = index.indexDirectory();
+        if (config == null)
+            populateWithDefaults(dir);
+        else
+            populateFromConfig(config, dir);
 
-            documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
-            if (index.indexMode())
-                save(); // save debug file if any
-        } else {
-            // Read previous index metadata from index
-            ObjectNode metadataObj = metadataDocument.readFromIndex(index.reader());
-            IntegratedMetadataUtil.extractFromJson(this, metadataObj);
-            ensureMainAnnotatedFieldSet();
-
-            // we defer counting tokens because we can't always access the
-            // forward index while constructing
-            tokenCountCalculated = false;
-        }
+        documentFormatConfigFileContents = config == null ? "(no config)" : config.getOriginalFileContents();
+        if (index.indexMode())
+            save(); // save debug file if any
 
         // For integrated index, because metadata wasn't allowed to change during indexing,
         // return a default field config if you try to get a missing field.
