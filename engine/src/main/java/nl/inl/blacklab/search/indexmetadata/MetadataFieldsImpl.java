@@ -1,8 +1,8 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,12 +29,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
-
-    /**
-     * Logical groups of metadata fields, for presenting them in the user interface.
-     */
-    @XmlTransient
-    private final Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
     @JsonProperty("fields")
@@ -167,23 +161,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public MetadataFieldGroups groups() {
-        return new MetadataFieldGroups() {
-            @Override
-            public Iterator<MetadataFieldGroup> iterator() {
-                return metadataGroups.values().stream().map(g -> (MetadataFieldGroup)g).iterator();
-            }
-
-            @Override
-            public Stream<MetadataFieldGroup> stream() {
-                return metadataGroups.values().stream().map(g -> g);
-            }
-
-            @Override
-            public MetadataFieldGroup get(String name) {
-                return metadataGroups.get(name);
-            }
-        };
+    public Map<String, ? extends MetadataFieldGroup> groups() {
+        Map<String, MetadataFieldGroup> metadataFieldGroups = topLevelCustom.get("metadataFieldGroups",
+                Collections.emptyMap());
+        return Collections.unmodifiableMap(metadataFieldGroups);
     }
 
     @Override
@@ -254,12 +235,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
-        if (!this.metadataGroups.equals(metadataGroups)) {
+        if (!groups().equals(metadataGroups)) {
             ensureNotFrozen();
-            this.metadataGroups.clear();
-            this.metadataGroups.putAll(metadataGroups);
-            if (topLevelCustom != null)
-                topLevelCustom.put("metadataFieldGroups", metadataGroups);
+            topLevelCustom.put("metadataFieldGroups", metadataGroups);
         }
     }
 
@@ -346,21 +324,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         metadataFieldValuesFactory = factory;
         for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
             e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
-        }
-
-        // Get our special fields from the top-level custom props
-        /*
-        if (topLevelCustom.containsKey("authorField"))
-            setSpecialField(MetadataFields.AUTHOR, (String) topLevelCustom.get("authorField"));
-        if (topLevelCustom.containsKey("dateField"))
-            setSpecialField(MetadataFields.DATE, (String) topLevelCustom.get("dateField"));
-        if (topLevelCustom.containsKey("titleField"))
-            setSpecialField(MetadataFields.TITLE, (String) topLevelCustom.get("titleField"));
-         */
-
-        if (topLevelCustom.containsKey("metadataFieldGroups")) {
-            metadataGroups.clear();
-            metadataGroups.putAll((Map<String, MetadataFieldGroupImpl>) topLevelCustom.get("metadataFieldGroups"));
         }
     }
 

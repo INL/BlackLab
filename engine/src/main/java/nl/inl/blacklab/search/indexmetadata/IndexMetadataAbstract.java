@@ -140,7 +140,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
-        //customProps = new CustomPropsDelegateCorpus(this);
+        metadataFields.setTopLevelCustom(custom); // for metadata groups
+        annotatedFields.setTopLevelCustom(custom); // for annotation groups
     }
 
     // Methods that read data
@@ -233,7 +234,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         ObjectNode jsonAnnotatedFields = fieldInfo.putObject("complexFields");
 
         // Add metadata field group info
-        for (MetadataFieldGroup g: metadataFields().groups()) {
+        for (MetadataFieldGroup g: metadataFields().groups().values()) {
             ObjectNode group = metadataFieldGroups.addObject();
             group.put("name", g.name());
             if (g.addRemainingFields())

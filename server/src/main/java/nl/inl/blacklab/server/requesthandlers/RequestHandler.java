@@ -39,7 +39,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -617,7 +616,7 @@ public abstract class RequestHandler {
     }
 
     protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
-        MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
+        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
         // TODO: This synchronization was necessary when testing many simultaneous
         //   requests with Artillery. It should no longer be possible for metadata field
         //   groups to change after the IndexMetadata object has been constructed though,
@@ -625,7 +624,7 @@ public abstract class RequestHandler {
         //synchronized (metaGroups) { // concurrent requests
         Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
                 .collect(Collectors.toSet());
-        for (MetadataFieldGroup metaGroup : metaGroups) {
+        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
             for (String fieldName: metaGroup) {
                 MetadataField field = index.metadata().metadataFields().get(fieldName);
                 metadataFieldsNotInGroups.remove(field);
@@ -634,7 +633,7 @@ public abstract class RequestHandler {
 
         ds.startEntry("metadataFieldGroups").startList();
         boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metaGroups) {
+        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
             ds.startItem("metadataFieldGroup").startMap();
             ds.entry("name", metaGroup.name());
             ds.startEntry("fields").startList();
