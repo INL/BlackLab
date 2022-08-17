@@ -358,8 +358,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         ConfigCorpus corpusConfig = config.getCorpusConfig();
         Map<String, MetadataFieldGroupImpl> groups = new LinkedHashMap<>();
         for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
-            MetadataFieldGroupImpl group = new MetadataFieldGroupImpl(metadataFields, g.getName(),
-                    g.getFields(), g.isAddRemainingFields());
+            MetadataFieldGroupImpl group = new MetadataFieldGroupImpl(g.getName(), g.getFields(),
+                    g.isAddRemainingFields());
             groups.put(group.name(), group);
         }
         custom.put("metadataFieldGroups", groups);

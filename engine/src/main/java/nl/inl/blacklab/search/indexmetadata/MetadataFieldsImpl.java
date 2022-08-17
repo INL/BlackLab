@@ -171,18 +171,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         return new MetadataFieldGroups() {
             @Override
             public Iterator<MetadataFieldGroup> iterator() {
-                Iterator<MetadataFieldGroupImpl> it = metadataGroups.values().iterator();
-                return new Iterator<>() {
-                    @Override
-                    public boolean hasNext() {
-                        return it.hasNext();
-                    }
-
-                    @Override
-                    public MetadataFieldGroup next() {
-                        return it.next();
-                    }
-                };
+                return metadataGroups.values().stream().map(g -> (MetadataFieldGroup)g).iterator();
             }
 
             @Override
@@ -372,7 +361,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         if (topLevelCustom.containsKey("metadataFieldGroups")) {
             metadataGroups.clear();
             metadataGroups.putAll((Map<String, MetadataFieldGroupImpl>) topLevelCustom.get("metadataFieldGroups"));
-            metadataGroups.forEach((k, v) -> v.fixAfterDeserialization(this));
         }
     }
 

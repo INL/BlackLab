@@ -239,7 +239,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             if (g.addRemainingFields())
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.stream().map(Field::name).collect(Collectors.toList()));
+            Json.arrayOfStrings(arr, g.stream().collect(Collectors.toList()));
         }
         // Add annotation group info
         for (AnnotatedField f: annotatedFields()) {
@@ -571,7 +571,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     metadataFields().register(f);
                 }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
-                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
+                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(name, fields,
                         addRemainingFields);
                 groupMap.put(name, metadataGroup);
             }

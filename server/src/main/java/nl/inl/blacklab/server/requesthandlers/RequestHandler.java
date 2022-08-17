@@ -626,7 +626,8 @@ public abstract class RequestHandler {
         Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
                 .collect(Collectors.toSet());
         for (MetadataFieldGroup metaGroup : metaGroups) {
-            for (MetadataField field: metaGroup) {
+            for (String fieldName: metaGroup) {
+                MetadataField field = index.metadata().metadataFields().get(fieldName);
                 metadataFieldsNotInGroups.remove(field);
             }
         }
@@ -637,8 +638,8 @@ public abstract class RequestHandler {
             ds.startItem("metadataFieldGroup").startMap();
             ds.entry("name", metaGroup.name());
             ds.startEntry("fields").startList();
-            for (MetadataField field: metaGroup) {
-                ds.item("field", field.name());
+            for (String field: metaGroup) {
+                ds.item("field", field);
             }
             if (!addedRemaining && metaGroup.addRemainingFields()) {
                 addedRemaining = true;
