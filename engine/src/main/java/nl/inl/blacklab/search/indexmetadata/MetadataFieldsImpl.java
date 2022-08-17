@@ -214,7 +214,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     public MetadataField pidField() {
-        return special(PID);
+        return pidField == null ? null : get(pidField);
     }
 
     public String defaultUnknownCondition() {
@@ -304,20 +304,22 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     public void clearSpecialFields() {
         ensureNotFrozen();
         pidField = null;
-        setSpecialField("titleField", null);
-        setSpecialField("authorField", null);
-        setSpecialField("dateField", null);
-        //titleField = authorField = dateField = pidField = null;
+        topLevelCustom.put("titleField", null);
+        topLevelCustom.put("authorField", null);
+        topLevelCustom.put("dateField", null);
     }
 
     @Override
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
-        if (specialFieldType.equals(MetadataFields.PID)) {
-            pidField = fieldName;
-        } else {
+        if (specialFieldType.equals("pid"))
+            setPidField(fieldName);
+        else
             topLevelCustom.put(specialFieldType + "Field", fieldName);
-        }
+    }
+
+    public void setPidField(String pidField) {
+        this.pidField = pidField;
     }
 
     @Override
@@ -358,12 +360,14 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
         }
 
         // Get our special fields from the top-level custom props
+        /*
         if (topLevelCustom.containsKey("authorField"))
             setSpecialField(MetadataFields.AUTHOR, (String) topLevelCustom.get("authorField"));
         if (topLevelCustom.containsKey("dateField"))
             setSpecialField(MetadataFields.DATE, (String) topLevelCustom.get("dateField"));
         if (topLevelCustom.containsKey("titleField"))
             setSpecialField(MetadataFields.TITLE, (String) topLevelCustom.get("titleField"));
+         */
 
         if (topLevelCustom.containsKey("metadataFieldGroups")) {
             metadataGroups.clear();

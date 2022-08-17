@@ -692,18 +692,22 @@ public abstract class RequestHandler {
         Set<String> requestedFields = searchParam.listMetadataValuesFor();
 
         Set<MetadataField> ret = new HashSet<>();
-        ret.add(fields.special(MetadataFields.AUTHOR));
-        ret.add(fields.special(MetadataFields.DATE));
-        ret.add(fields.special(MetadataFields.PID));
-        ret.add(fields.special(MetadataFields.TITLE));
+        ret.add(optCustomField(blIndex().metadata(), "authorField"));
+        ret.add(optCustomField(blIndex().metadata(), "dateField"));
+        ret.add(optCustomField(blIndex().metadata(), "titleField"));
+        ret.add(fields.pidField());
         for (MetadataField field  : fields) {
             if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
                 ret.add(field);
             }
         }
         ret.remove(null); // for missing special fields.
-
         return ret;
+    }
+
+    private MetadataField optCustomField(IndexMetadata metadata, String propName) {
+        String fieldName = metadata.custom().get(propName, "");
+        return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
     }
 
     /**
@@ -760,18 +764,14 @@ public abstract class RequestHandler {
 
     public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
-        MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = indexMetadata.metadataFields().pidField();
         if (pidField != null)
             ds.entry("pidField", pidField.name());
-        MetadataField titleField = indexMetadata.metadataFields().special(MetadataFields.TITLE);
-        if (titleField != null)
-            ds.entry("titleField", titleField.name());
-        MetadataField authorField = indexMetadata.metadataFields().special(MetadataFields.AUTHOR);
-        if (authorField != null)
-            ds.entry("authorField", authorField.name());
-        MetadataField dateField = indexMetadata.metadataFields().special(MetadataFields.DATE);
-        if (dateField != null)
-            ds.entry("dateField", dateField.name());
+        for (String propName: List.of("titleField", "authorField", "dateField")) {
+            String fieldName = indexMetadata.custom().get(propName, "");
+            if (!fieldName.isEmpty())
+                ds.entry(propName, fieldName);
+        }
         ds.endMap();
     }
 
@@ -789,7 +789,7 @@ public abstract class RequestHandler {
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
-        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = index.metadataFields().pidField();
         String pid = pidField == null ? null : document.get(pidField.name());
         if (pid == null)
             return Integer.toString(luceneDocId);

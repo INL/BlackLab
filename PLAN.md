@@ -30,7 +30,7 @@ Integrating with Solr will involve the following steps.
 ### Metadata
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] eliminate separate fields MetadataFields.authorField, , annotationgroups, etc.? Already in custom.
+    - [ ] eliminate separate fields for metadata group, annotation groups, etc.? Already in custom.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
     - [ ] QueryTool: `filter *:*`, then `docs` doesn't skip index metadata document
     - [ ] serialize metadata in exactly the way you want to return it in APIv2

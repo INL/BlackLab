@@ -219,12 +219,12 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
         fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
-        if (metadataFields.special(MetadataFields.TITLE) != null)
-            fieldInfo.put("titleField", metadataFields.special(MetadataFields.TITLE).name());
-        if (metadataFields.special(MetadataFields.AUTHOR) != null)
-            fieldInfo.put("authorField", metadataFields.special(MetadataFields.AUTHOR).name());
-        if (metadataFields.special(MetadataFields.DATE) != null)
-            fieldInfo.put("dateField", metadataFields.special(MetadataFields.DATE).name());
+        if (custom.containsKey("titleField"))
+            fieldInfo.put("titleField", custom.get("titleField", ""));
+        if (custom.containsKey("authorField"))
+            fieldInfo.put("authorField", custom.get("authorField", ""));
+        if (custom.containsKey("dateField"))
+            fieldInfo.put("dateField", custom.get("dateField", ""));
         if (metadataFields.pidField() != null)
             fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -769,19 +769,20 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
         metadataFields.setTopLevelCustom(custom());
         metadataFields.clearSpecialFields();
-        if (fieldInfo.has("authorField"))
-            metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
-        if (fieldInfo.has("dateField"))
-            metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
-            metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
+            metadataFields.setPidField(fieldInfo.get("pidField").textValue());
+        if (fieldInfo.has("authorField"))
+            custom.put("authorField", fieldInfo.get("authorField").textValue());
+        if (fieldInfo.has("dateField"))
+            custom.put("dateField", fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("titleField"))
-            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
-        if (metadataFields.special(MetadataFields.TITLE) == null) {
+            custom.put("titleField", fieldInfo.get("titleField").textValue());
+        if (custom.get("titleField", "").isEmpty()) {
             if (metadataFields.pidField() != null)
-                metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
+                custom.put("titleField", metadataFields.pidField().name());
             else
-                metadataFields.setSpecialField(MetadataFields.TITLE, "fromInputFile");
+                custom.put("titleField", "fromInputFile");
+            logger.warn("No titleField specified; using default " + custom.get("titleField") + ". In future versions, no default will be chosen.");
         }
 
         if (usedTemplate) {

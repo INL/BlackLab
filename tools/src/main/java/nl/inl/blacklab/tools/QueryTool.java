@@ -924,13 +924,13 @@ public class QueryTool {
         MetadataFields mf = s.metadataFields();
         for (MetadataField field: mf) {
             String special = "";
-            if (field.equals(mf.special(MetadataFields.TITLE)))
+            if (field.name().equals(s.custom().get("titleField", "")))
                 special = "TITLEFIELD";
-            else if (field.equals(mf.special(MetadataFields.AUTHOR)))
+            else if (field.name().equals(s.custom().get("authorField", "")))
                 special = "AUTHORFIELD";
-            else if (field.equals(mf.special(MetadataFields.DATE)))
+            else if (field.name().equals(s.custom().get("dateField", "")))
                 special = "DATEFIELD";
-            else if (field.equals(mf.special(MetadataFields.PID)))
+            else if (field.name().equals(mf.pidField()))
                 special = "PIDFIELD";
             if (special.length() > 0)
                 special = " (" + special + ")";
@@ -1455,14 +1455,14 @@ public class QueryTool {
         DocResults window = docs.window(firstResult, resultsPerPage);
 
         // Compile hits display info and calculate necessary width of left context column
-        MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
+        String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;
         for (Group<Hit> result : window) {
             int docId = ((PropertyValueDoc)result.identity()).value();
             Document d = index.luceneDoc(docId);
-            String title = d.get(titleField.name());
+            String title = d.get(titleField);
             if (title == null)
-                title = "(doc #" + docId + ", no " + titleField.name() + " given)";
+                title = "(doc #" + docId + ", no " + titleField + " given)";
             else
                 title = title + " (doc #" + docId + ")";
             outprintf("%4d. %s\n", hitNr, title);
@@ -1554,7 +1554,7 @@ public class QueryTool {
         if (showDocTitle)
             format = "%4d. %" + leftContextMaxSize + "s[%s]%s\n";
         int currentDoc = -1;
-        MetadataField titleField = index.metadataFields().special(MetadataFields.TITLE);
+        String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;
         for (HitToShow hit : toShow) {
             if (showDocTitle && hit.doc != currentDoc) {
@@ -1562,9 +1562,9 @@ public class QueryTool {
                     outprintln("");
                 currentDoc = hit.doc;
                 Document d = index.luceneDoc(currentDoc);
-                String title = d.get(titleField.name());
+                String title = d.get(titleField);
                 if (title == null)
-                    title = "(doc #" + currentDoc + ", no " + titleField.name() + " given)";
+                    title = "(doc #" + currentDoc + ", no " + titleField + " given)";
                 else
                     title = title + " (doc #" + currentDoc + ")";
                 outprintln("--- " + title + " ---");

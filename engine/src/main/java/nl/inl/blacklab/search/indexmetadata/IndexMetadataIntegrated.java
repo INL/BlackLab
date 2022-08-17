@@ -322,7 +322,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         versionInfo.populateWithDefaults();
         metadataFields.setDefaultAnalyzer(config.getMetadataDefaultAnalyzer());
         if (corpusConfig.getSpecialFields().containsKey("pidField"))
-            metadataFields.setSpecialField(MetadataFields.PID, corpusConfig.getSpecialFields().get("pidField"));
+            metadataFields.setPidField(corpusConfig.getSpecialFields().get("pidField"));
 
         addFieldInfoFromConfig(config);
     }
