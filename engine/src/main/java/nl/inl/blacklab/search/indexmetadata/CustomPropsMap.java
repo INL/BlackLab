@@ -73,7 +73,11 @@ public class CustomPropsMap implements CustomProps {
     }
 
     public void put(String key, Object value) {
-        customFields.put(key, value);
+        if (value == null) {
+            customFields.remove(key);
+        } else {
+            customFields.put(key, value);
+        }
     }
 
     public void putAll(CustomProps props) {

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,18 +59,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @XmlTransient
     private CustomPropsMap topLevelCustom;
 
-    /** Metadata field containing document title */
-    @XmlTransient
-    private String titleField;
-
-    /** Metadata field containing document author */
-    @XmlTransient
-    private String authorField;
-
-    /** Metadata field containing document date */
-    @XmlTransient
-    private String dateField;
-
     /** Metadata field containing document pid */
     private String pidField;
 
@@ -92,7 +79,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
      */
     @XmlTransient
-    private Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
+    private final Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
 
     void addFromConfig(ConfigMetadataField f) {
         put(f.getName(), MetadataFieldImpl.fromConfig(f, this));
@@ -145,7 +132,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public MetadataField get(String fieldName) {
-        MetadataField d = null;
+        MetadataField d;
         // Synchronized because we sometimes register new metadata fields during indexing
         synchronized (metadataFieldInfos) {
             d = metadataFieldInfos.get(fieldName);
@@ -212,54 +199,22 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public MetadataField special(String specialFieldType) {
-        switch(specialFieldType) {
-        case "pid":
-            return pidField != null && metadataFieldInfos.containsKey(pidField) ? get(pidField) : null;
-        case "title":
-            return titleField != null && metadataFieldInfos.containsKey(titleField) ? get(titleField) : null;
-        case "author":
-            return authorField != null && metadataFieldInfos.containsKey(authorField) ? get(authorField) : null;
-        case "date":
-            return dateField != null && metadataFieldInfos.containsKey(dateField) ? get(dateField) : null;
+        if (specialFieldType.equals("pid"))
+            return pidField == null ? null : get(pidField);
+        String field = topLevelCustom.get(specialFieldType + "Field", "");
+
+        // TODO: if field is set but field doesn't exist, that seems like a bug...
+        if (!field.isEmpty() && !metadataFieldInfos.containsKey(field)) {
+            logger.warn(
+                    "Special field " + specialFieldType + " is set to " + field + ", but that field doesn't exist.");
+            return null;
         }
-        return null;
-    }
 
-    public MetadataField titleField() {
-        return special(TITLE);
-    }
-
-    public MetadataField authorField() {
-        return special(AUTHOR);
+        return field.isEmpty() ? null : get(field);
     }
 
     public MetadataField pidField() {
         return special(PID);
-    }
-
-    public MetadataField dateField() {
-        return special(DATE);
-    }
-
-    /**
-     * Find the first (alphabetically) field whose name matches (case-insensitively) the search string.
-     *
-     * @param search the string to search for
-     * @return the field name, or null if no fields matched
-     */
-    MetadataField findTextField(String search) {
-        // Find documents with title in the name
-        List<MetadataField> fieldsFound = new ArrayList<>();
-        for (MetadataField field: metadataFieldInfos.values()) {
-            if (field.type() == FieldType.TOKENIZED && field.name().equalsIgnoreCase(search))
-                fieldsFound.add(field);
-        }
-        if (fieldsFound.isEmpty())
-            return null;
-
-        // Sort (so we always return the same field if more than one matches
-        fieldsFound.sort(Comparator.comparing(Field::name));
-        return fieldsFound.get(0);
     }
 
     public String defaultUnknownCondition() {
@@ -310,7 +265,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
-        if (this.metadataGroups == null || !this.metadataGroups.equals(metadataGroups)) {
+        if (!this.metadataGroups.equals(metadataGroups)) {
             ensureNotFrozen();
             this.metadataGroups.clear();
             this.metadataGroups.putAll(metadataGroups);
@@ -348,32 +303,21 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @Override
     public void clearSpecialFields() {
         ensureNotFrozen();
-        titleField = authorField = dateField = pidField = null;
+        pidField = null;
+        setSpecialField("titleField", null);
+        setSpecialField("authorField", null);
+        setSpecialField("dateField", null);
+        //titleField = authorField = dateField = pidField = null;
     }
 
     @Override
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
-        switch(specialFieldType) {
-        case MetadataFields.PID:
+        if (specialFieldType.equals(MetadataFields.PID)) {
             pidField = fieldName;
-            break;
-        case MetadataFields.TITLE:
-            titleField = fieldName;
-            break;
-        case MetadataFields.AUTHOR:
-            authorField = fieldName;
-            break;
-        case MetadataFields.DATE:
-            dateField = fieldName;
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown special field type: " + fieldName);
-        }
-        // Also update top-level custom properties, where these special fields (except pidField)
-        // are stored (in the integrated input format)
-        if (topLevelCustom != null && !specialFieldType.equals(MetadataFields.PID))
+        } else {
             topLevelCustom.put(specialFieldType + "Field", fieldName);
+        }
     }
 
     @Override

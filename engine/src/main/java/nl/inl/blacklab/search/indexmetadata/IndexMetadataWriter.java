@@ -63,7 +63,9 @@ public interface IndexMetadataWriter extends IndexMetadata {
      * Used when creating an index to initialize textDirection setting. Do not use otherwise.
      *
      * @param textDirection text direction
+     * @deprecated use {@link #custom()} and set("textDirection", textDirection.getCode()) instead
      */
+    @Deprecated
     void setTextDirection(TextDirection textDirection);
 
     /**

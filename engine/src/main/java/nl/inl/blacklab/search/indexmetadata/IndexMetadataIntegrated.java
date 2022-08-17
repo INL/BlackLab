@@ -432,8 +432,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      * What's the text direction of this corpus?
      *
      * @return text direction
+     * @deprecated use {@link #custom()} and get("textDirection", "ltr") instead
      */
     @Override
+    @Deprecated
     public TextDirection textDirection() {
         return TextDirection.fromCode(custom.get("textDirection", "ltr"));
     }
@@ -651,8 +653,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      * otherwise.
      *
      * @param textDirection text direction
+     * @deprecated use {@link #custom()} and set("textDirection", textDirection.getCode()) instead
      */
     @Override
+    @Deprecated
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
         custom.put("textDirection", textDirection.getCode());

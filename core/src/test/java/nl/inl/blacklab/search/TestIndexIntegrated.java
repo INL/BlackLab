@@ -162,6 +162,11 @@ public class TestIndexIntegrated {
     }
 
     @Test
+    public void testMetadataTextDirection() {
+        Assert.assertEquals("ltr", index.metadata().custom().get("textDirection", ""));
+    }
+
+    @Test
     public void testMetadataCounts() {
         int expectedTokenCount = Arrays.stream(TestIndex.DOC_LENGTHS_TOKENS).sum();
         Assert.assertEquals(expectedTokenCount, index.metadata().tokenCount());

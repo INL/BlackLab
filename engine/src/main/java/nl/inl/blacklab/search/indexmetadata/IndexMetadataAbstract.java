@@ -94,14 +94,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     /** Our index */
     protected final BlackLabIndex index;
 
-    /** Index display name */
-    protected String displayName;
-
-    /** Index description */
-    private String description;
-
     /** Custom properties */
-    private final CustomProps customProps;
+    private final CustomPropsMap custom = new CustomPropsMap();
 
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;
@@ -123,9 +117,6 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      * restricted?
      */
     private boolean contentViewable = false;
-
-    /** Text direction for this corpus */
-    private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
 
     /**
      * Indication of the document format(s) in this index.
@@ -149,7 +140,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
-        customProps = new CustomPropsDelegateCorpus(this);
+        //customProps = new CustomPropsDelegateCorpus(this);
     }
 
     // Methods that read data
@@ -204,10 +195,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     public ObjectNode encodeToJson() {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
-        jsonRoot.put("displayName", displayName);
-        jsonRoot.put("description", description);
+        jsonRoot.put("displayName", displayName());
+        jsonRoot.put("description", description());
         jsonRoot.put("contentViewable", contentViewable);
-        jsonRoot.put("textDirection", textDirection.getCode());
+        jsonRoot.put("textDirection", textDirection().getCode());
         jsonRoot.put("documentFormat", documentFormat);
         jsonRoot.put("tokenCount", tokenCount);
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
@@ -228,12 +219,12 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
         fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
-        if (metadataFields.titleField() != null)
-            fieldInfo.put("titleField", metadataFields.titleField().name());
-        if (metadataFields.authorField() != null)
-            fieldInfo.put("authorField", metadataFields.authorField().name());
-        if (metadataFields.dateField() != null)
-            fieldInfo.put("dateField", metadataFields.dateField().name());
+        if (metadataFields.special(MetadataFields.TITLE) != null)
+            fieldInfo.put("titleField", metadataFields.special(MetadataFields.TITLE).name());
+        if (metadataFields.special(MetadataFields.AUTHOR) != null)
+            fieldInfo.put("authorField", metadataFields.special(MetadataFields.AUTHOR).name());
+        if (metadataFields.special(MetadataFields.DATE) != null)
+            fieldInfo.put("dateField", metadataFields.special(MetadataFields.DATE).name());
         if (metadataFields.pidField() != null)
             fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -377,7 +368,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      */
     @Override
     public String description() {
-        return description;
+        return custom.get("description", "");
     }
 
     /**
@@ -394,10 +385,12 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      * What's the text direction of this corpus?
      *
      * @return text direction
+     * @deprecated use {@link #custom()} with .get("textDirection", "ltr") instead
      */
     @Override
+    @Deprecated
     public TextDirection textDirection() {
-        return textDirection;
+        return TextDirection.fromCode(custom.get("textDirection", "ltr"));
     }
 
     /**
@@ -507,10 +500,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
         // Read and interpret index metadata file
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
-        displayName = Json.getString(jsonRoot, "displayName", "");
-        description = Json.getString(jsonRoot, "description", "");
+        setDisplayName(Json.getString(jsonRoot, "displayName", ""));
+        setDescription(Json.getString(jsonRoot, "description", ""));
         contentViewable = Json.getBoolean(jsonRoot, "contentViewable", false);
-        textDirection = TextDirection.fromCode(Json.getString(jsonRoot, "textDirection", "ltr"));
+        custom.put("textDirection", Json.getString(jsonRoot, "textDirection", "ltr"));
         documentFormat = Json.getString(jsonRoot, "documentFormat", "");
         tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
 
@@ -774,6 +767,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
         metadataFields.setDefaultAnalyzer(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
+        metadataFields.setTopLevelCustom(custom());
         metadataFields.clearSpecialFields();
         if (fieldInfo.has("authorField"))
             metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
@@ -783,7 +777,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
         if (fieldInfo.has("titleField"))
             metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
-        if (metadataFields.titleField() == null) {
+        if (metadataFields.special(MetadataFields.TITLE) == null) {
             if (metadataFields.pidField() != null)
                 metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
             else
@@ -898,7 +892,11 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         ensureNotFrozen();
         if (displayName.length() > 80)
             displayName = StringUtils.abbreviate(displayName, 75);
-        this.displayName = displayName;
+        this.custom.put("displayName", displayName);
+    }
+
+    private void setDescription(String description) {
+        custom.put("description", description);
     }
 
     /**
@@ -944,11 +942,13 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      * otherwise.
      *
      * @param textDirection text direction
+     * @deprecated use {@link #custom()} with .put("textDirection", textDirection.getCode()) instead
      */
     @Override
+    @Deprecated
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
-        this.textDirection = textDirection;
+        this.custom.put("textDirection", textDirection.getCode());
     }
 
     /**
@@ -1102,8 +1102,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     @Override
-    public CustomProps custom() {
-        return customProps;
+    public CustomPropsMap custom() {
+        return custom;
     }
 
     /**
@@ -1115,14 +1115,13 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
      */
     @Override
     public String displayName() {
-        String dispName = "index";
-        if (displayName != null && displayName.length() != 0)
-            dispName = displayName;
-        if (dispName.equalsIgnoreCase("index"))
+        String dispName = custom.get("displayName", "");
+        if (dispName.isEmpty())
             dispName = StringUtils.capitalize(index.indexDirectory().getName());
-        if (dispName.equalsIgnoreCase("index"))
+        if (dispName.isEmpty())
             dispName = StringUtils.capitalize(index.indexDirectory().getAbsoluteFile().getParentFile().getName());
-
+        if (dispName.isEmpty())
+            dispName = "index";
         return dispName;
     }
 
@@ -1154,36 +1153,5 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         }
         if (shouldDetectMainAnnotatedField)
             annotatedFields.setMainAnnotatedField(mainAnnotatedField);
-    }
-
-    /**
-     * Custom properties at corpus level that delegates to the old methods.
-     */
-    @SuppressWarnings("deprecation") static
-    private class CustomPropsDelegateCorpus implements CustomProps {
-        private final IndexMetadata indexMetadata;
-
-        public CustomPropsDelegateCorpus(IndexMetadata indexMetadata) {
-            this.indexMetadata = indexMetadata;
-        }
-
-        @Override
-        public String get(String key) {
-            switch (key) {
-            case "displayName":
-                return indexMetadata.displayName();
-            case "description":
-                return indexMetadata.description();
-            case "textDirection":
-                return indexMetadata.textDirection().getCode();
-            default:
-                return null;
-            }
-        }
-
-        @Override
-        public Map<String, Object> asMap() {
-            throw new UnsupportedOperationException("Not implemented (legacy index metadata only)");
-        }
     }
 }
