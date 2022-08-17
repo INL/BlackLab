@@ -41,12 +41,6 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
     @JsonProperty("mainAnnotatedField")
     private String mainAnnotatedFieldName;
 
-    /**
-     * Logical groups of annotations, for presenting them in the user interface.
-     */
-    @XmlTransient
-    private final Map<String, AnnotationGroups> annotationGroupsPerField = new LinkedHashMap<>();
-
     @XmlTransient
     private CustomPropsMap topLevelCustom;
 
@@ -109,28 +103,26 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
         this.mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
     }
 
-    public void clearAnnotationGroups() {
-        annotationGroupsPerField.clear();
-        if (topLevelCustom != null)
-            topLevelCustom.put("annotationGroups", new LinkedHashMap<>());
+    private Map<String, AnnotationGroups> annotationGroupsPerField() {
+        Map<String, AnnotationGroups> map = (Map<String, AnnotationGroups>) topLevelCustom.get("annotationGroups");
+        if (map == null) {
+            map = new LinkedHashMap<>();
+            topLevelCustom.put("annotationGroups", map);
+        }
+        return map;
+    }
 
+    public void clearAnnotationGroups() {
+        annotationGroupsPerField().clear();
     }
 
     public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
-        annotationGroupsPerField.put(fieldName, annotationGroups);
-        if (topLevelCustom != null) {
-            Map<String, AnnotationGroups> map = (Map<String, AnnotationGroups>) topLevelCustom.get("annotationGroups");
-            if (map == null) {
-                map = new LinkedHashMap<>();
-                topLevelCustom.put("annotationGroups", map);
-            }
-            map.put(fieldName, annotationGroups);
-        }
+        annotationGroupsPerField().put(fieldName, annotationGroups);
     }
     
     @Override
     public AnnotationGroups annotationGroups(String fieldName) {
-        return annotationGroupsPerField.get(fieldName);
+        return annotationGroupsPerField().get(fieldName);
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {

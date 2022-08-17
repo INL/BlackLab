@@ -5,7 +5,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 /** Groups of annotations for a single field */
+@XmlAccessorType(XmlAccessType.FIELD)
 public class AnnotationGroups implements Iterable<AnnotationGroup> {
     
     private final String fieldName;

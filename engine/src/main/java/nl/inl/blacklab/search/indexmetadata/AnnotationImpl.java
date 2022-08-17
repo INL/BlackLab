@@ -71,7 +71,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     private boolean frozen = false;
     
     /** Names of our subannotations, if we have any */
-    private final Set<String> subAnnotationNames = new HashSet<>();
+    private final Set<String> subannotations = new HashSet<>();
     
     /**
      * If this is a subannotation, what is its parent annotation?
@@ -337,7 +337,7 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     
     @Override
     public Set<String> subannotationNames() {
-        return subAnnotationNames;
+        return subannotations;
     }
     
     /**
@@ -352,8 +352,8 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
     }
 
     public void setSubannotationNames(List<String> names) {
-        subAnnotationNames.clear();
-        subAnnotationNames.addAll(names);
+        subannotations.clear();
+        subannotations.addAll(names);
     }
 
     public CustomPropsMap custom() {

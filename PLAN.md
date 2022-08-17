@@ -30,10 +30,10 @@ Integrating with Solr will involve the following steps.
 ### Metadata
 
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
-    - [ ] eliminate separate fields for metadata group, annotation groups, etc.? Already in custom.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
-    - [ ] QueryTool: `filter *:*`, then `docs` doesn't skip index metadata document
-    - [ ] serialize metadata in exactly the way you want to return it in APIv2
+          OTOH, changing metadata as documents are added to the index would be tricky in distributed env...
+    - [ ] QueryTool: enter command `filter *:*`, then command `docs`. The index metadata document is not skipped.
+          ideally, there should be a guarantee that DocResults cannot include the metadata document.
 
 Where we take the metadata document into account:
 - whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)

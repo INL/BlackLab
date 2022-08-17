@@ -114,7 +114,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     // LinkedHashSet - preserve order!
                     @SuppressWarnings("FuseStreamOperations") Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
                     for (AnnotationGroup group : groups) {
-                        for (Annotation annotation: group) {
+                        for (String annotationName: group) {
+                            Annotation annotation = f.annotation(annotationName);
                             annotationsNotInGroups.remove(annotation);
                         }
                     }
@@ -124,8 +125,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                         ds.startItem("annotationGroup").startMap();
                         ds.entry("name", group.groupName());
                         ds.startEntry("annotations").startList();
-                        for (Annotation annotation: group) {
-                            ds.item("annotation", annotation.name());
+                        for (String annotation: group) {
+                            ds.item("annotation", annotation);
                         }
                         if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
                             addedRemainingAnnots = true;

@@ -374,7 +374,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 String groupName = cfgAnnotGroup.getName();
                 List<String> annotations = cfgAnnotGroup.getAnnotations();
                 boolean addRemaining = cfgAnnotGroup.isAddRemainingAnnotations();
-                annotGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations, addRemaining));
+                annotGroups.add(new AnnotationGroup(fieldName, groupName, annotations, addRemaining));
             }
             this.annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotGroups));
         }

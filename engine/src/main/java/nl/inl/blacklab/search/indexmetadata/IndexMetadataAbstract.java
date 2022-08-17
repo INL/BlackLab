@@ -253,7 +253,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     if (g.addRemainingAnnotations())
                         jsonGroup.put("addRemainingAnnotations", true);
                     ArrayNode arr = jsonGroup.putArray("annotations");
-                    Json.arrayOfStrings(arr, g.annotations().stream().map(Annotation::name).collect(Collectors.toList()));
+                    Json.arrayOfStrings(arr, g.annotations());
                 }
             }
         }
@@ -553,7 +553,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     String groupName = Json.getString(group, "name", "UNKNOWN");
                     List<String> annotations = Json.getListOfStrings(group, "annotations");
                     boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingAnnotations", false);
-                    annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
+                    annotationGroups.add(new AnnotationGroup(fieldName, groupName, annotations,
                             addRemainingAnnotations));
                 }
                 annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));

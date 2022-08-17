@@ -21,7 +21,7 @@ class IntegratedMetadataUtil {
             String groupName = (String)group.getOrDefault("name", "UNKNOWN");
             List<String> annotations = (List<String>)group.getOrDefault( "annotations", Collections.emptyList());
             boolean addRemainingAnnotations = (boolean)group.getOrDefault("addRemainingAnnotations", false);
-            annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
+            annotationGroups.add(new AnnotationGroup(fieldName, groupName, annotations,
                     addRemainingAnnotations));
         }
         return annotationGroups;
