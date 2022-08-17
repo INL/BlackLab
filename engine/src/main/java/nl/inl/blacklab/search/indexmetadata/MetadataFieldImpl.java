@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -13,9 +12,6 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.DocValuesType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -26,9 +22,9 @@ import nl.inl.blacklab.search.BlackLabIndex;
  * A metadata field in an index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
+public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable {
     
-    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
+//    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
     private static int maxMetadataValuesToStore = 50;
 
@@ -90,14 +86,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     @XmlTransient
     private boolean frozen;
-
-    /**
-     * Type of DocValues stored for this field (numeric, sorted or sorted set).
-     *
-     * All metadata fielas should have doc values stored.
-     */
-    @XmlTransient
-    private DocValuesType docValuesType;
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -223,7 +211,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
 
     /**
-     * @deprecated Use {@link #custom()} with .put("unknownCondition", ...) instead.
+     * @deprecated Use {@link #custom()} with .put("unknownCondition", unknownCondition.stringValue()) instead.
      */
     @Deprecated
     public void setUnknownCondition(UnknownCondition unknownCondition) {
@@ -244,7 +232,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * @deprecated Use {@link #custom()} with .put("displayValue", ...) instead.
      */
     @Deprecated
-    public void setDisplayValues(JsonNode displayValues) {
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    void setDisplayValues(JsonNode displayValues) {
         ensureNotFrozen();
         Map<String, String> map = new HashMap<>();
         Iterator<Entry<String, JsonNode>> it = displayValues.fields();
@@ -255,24 +244,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
             map.put(value, displayValue);
         }
         custom.put("displayValues", map);
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("displayValues", ...) instead.
-     */
-    @Deprecated
-    public void setDisplayValues(Map<String, String> displayValues) {
-        ensureNotFrozen();
-        custom.put("displayValues", new HashMap<>(displayValues));
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("displayOrder", ...) instead.
-     */
-    @Deprecated
-    public void setDisplayOrder(List<String> displayOrder) {
-        ensureNotFrozen();
-        custom.put("displayOrder", new ArrayList<>(displayOrder));
     }
 
     void setValueListComplete(boolean valueListComplete) {
@@ -313,19 +284,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     public void resetForIndexing() {
         ensureNotFrozen();
         values.reset();
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("uiType", ...) instead.
-     */
-    @Deprecated
-    public void setUiType(String uiType) {
-        ensureNotFrozen();
-        custom.put("uiType", uiType);
-    }
-
-    public void setDocValuesType(DocValuesType docValuesType) {
-        this.docValuesType = docValuesType;
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {

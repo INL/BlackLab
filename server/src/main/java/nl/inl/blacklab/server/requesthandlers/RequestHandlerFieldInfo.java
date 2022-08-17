@@ -4,6 +4,7 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +121,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("unknownCondition", fd.unknownCondition().toString())
                 .entry("unknownValue", fd.unknownValue());
         if (listValues) {
-            final Map<String, String> displayValues = fd.displayValues();
+            final Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
             ds.startEntry("displayValues").startMap();
             for (Map.Entry<String, String> e : displayValues.entrySet()) {
                 ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
@@ -259,9 +260,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     }
                     ds.endList().endEntry();
                 }
-//                if (annotation.isSubannotation()) {
-//                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
-//                }
+                if (annotation.isSubannotation()) {
+                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
+                }
             }
             ds.endMap().endAttrEntry();
         }

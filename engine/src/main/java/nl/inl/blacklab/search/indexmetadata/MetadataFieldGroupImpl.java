@@ -8,9 +8,6 @@ import java.util.stream.Stream;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * A named, ordered list of metadata fields.
  *
@@ -19,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
-    static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
+//    static final Logger logger = LogManager.getLogger(MetadataFieldGroupImpl.class);
 
     private final String name;
 

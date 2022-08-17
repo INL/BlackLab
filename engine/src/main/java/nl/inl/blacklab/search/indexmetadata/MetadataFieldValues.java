@@ -4,8 +4,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-
 /**
  * List of values with freqencies of a metadata field.
  *

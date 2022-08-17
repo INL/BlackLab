@@ -135,7 +135,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
             for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
                 String fieldName = entry.getKey();
                 List<Map<String, Object>> groups = entry.getValue();
-                List<AnnotationGroup> annotationGroups = IntegratedMetadataUtil.extractAnnotationGroups(this, fieldName, groups);
+                List<AnnotationGroup> annotationGroups = extractAnnotationGroups(fieldName, groups);
                 putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
             }
         }
@@ -145,6 +145,19 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
         }
         setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
 
+    }
+
+    private static List<AnnotationGroup> extractAnnotationGroups(String fieldName,
+            List<Map<String, Object>> groups) {
+        List<AnnotationGroup> annotationGroups = new ArrayList<>();
+        for (Map<String, Object> group: groups) {
+            String groupName = (String)group.getOrDefault("name", "UNKNOWN");
+            List<String> annotations = (List<String>)group.getOrDefault( "annotations", Collections.emptyList());
+            boolean addRemainingAnnotations = (boolean)group.getOrDefault("addRemainingAnnotations", false);
+            annotationGroups.add(new AnnotationGroup(fieldName, groupName, annotations,
+                    addRemainingAnnotations));
+        }
+        return annotationGroups;
     }
 
     void setTopLevelCustom(CustomPropsMap custom) {

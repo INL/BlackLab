@@ -1,5 +1,6 @@
 package nl.inl.blacklab.mocks;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public final class MockMetadataField implements MetadataField {
 
     @Override
     public Map<String, Integer> valueDistribution() {
-        return null;
+        return Collections.emptyMap();
     }
 
     @Override
@@ -89,6 +90,6 @@ public final class MockMetadataField implements MetadataField {
 
     @Override
     public Map<String, String> displayValues() {
-        return null;
+        return Collections.emptyMap();
     }
 }

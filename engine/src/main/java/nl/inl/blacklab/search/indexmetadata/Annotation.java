@@ -152,4 +152,8 @@ public interface Annotation {
     }
 
     CustomProps custom();
+
+    boolean isSubannotation();
+
+    Annotation parentAnnotation();
 }

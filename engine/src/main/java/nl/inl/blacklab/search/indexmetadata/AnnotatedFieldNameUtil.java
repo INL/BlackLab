@@ -11,14 +11,6 @@ public final class AnnotatedFieldNameUtil {
 
     public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
-    /**
-     * Most commonly used annotations. Used to decide whether or not to build a term index
-     * right away (vs. when needed), and as default display order if none is provided.
-     *
-     * (probably move away from this kind of special case)
-     */
-    public static final List<String> COMMON_ANNOTATIONS = Arrays.asList("word", "lemma", "pos");
-
     private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
 
     private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
@@ -49,7 +41,7 @@ public final class AnnotatedFieldNameUtil {
      * Valid XML element names. Field and annotation names should generally conform to
      * this.
      */
-    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z0-9\\-_.]*");
+    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z\\d\\-_.]*");
 
     /**
      * String used to separate the base field name (say, contents) and the field
@@ -379,7 +371,7 @@ public final class AnnotatedFieldNameUtil {
      * @return sanitized name
      */
     public static String sanitizeXmlElementName(String name, String replaceChar) {
-        name = name.replaceAll("[^\\p{L}0-9_.]", replaceChar); // can only contain letters, digits, underscores and periods
+        name = name.replaceAll("[^\\p{L}\\d_.]", replaceChar); // can only contain letters, digits, underscores and periods
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }

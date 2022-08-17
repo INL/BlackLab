@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepField
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
-public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
+public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
 
     public final class AnnotationsImpl implements Annotations {
         @Override
@@ -107,8 +107,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     AnnotatedFieldImpl(String name) {
         super(name);
-//        contentStore = false;
-//        xmlTags = false;
     }
 
     @Override
@@ -130,10 +128,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     @Override
     public String tokenLengthField() {
         return AnnotatedFieldNameUtil.lengthTokensField(fieldName);
-    }
-
-    public void setXmlTags(boolean xmlTags) {
-        this.xmlTags = xmlTags;
     }
 
     @Override
@@ -267,11 +261,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         // (note that not having any offsets makes it impossible to highlight the
         // original content, but this may not be an issue. We probably need
         // a better way to keep track of the main annotation)
-        if (firstAnnotation != null) {
-            logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
-                    + ") is main annotation");
-            mainAnnotation = firstAnnotation;
-        }
+        logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
+                + ") is main annotation");
+        mainAnnotation = firstAnnotation;
     }
 
     synchronized void setMainAnnotationName(String mainAnnotationName) {

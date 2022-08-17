@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -278,7 +279,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
-            Map<String, String> displayValues = f.displayValues();
+            Map<String, String> displayValues = f.custom().get("displayValues", Collections.emptyMap());
             if (displayValues != null) {
                 ObjectNode jsonDisplayValues = fi.putObject("displayValues");
                 for (Map.Entry<String, String> e: displayValues.entrySet()) {
@@ -302,7 +303,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             if (f.mainAnnotation() != null)
                 fieldInfo2.put("mainProperty", f.mainAnnotation().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
-            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());
+            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).custom().get("displayOrder", Collections.emptyList()));
             ArrayNode annots = fieldInfo2.putArray("annotations");
             for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
@@ -529,7 +530,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         // Specified in index metadata file?
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
+        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition",
+                UnknownCondition.NEVER.stringValue()));
         metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
         ObjectNode metaFieldConfigs = Json.getObject(fieldInfo, "metadataFields");
@@ -590,22 +592,22 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
                 MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, metadataFields.getMetadataFieldValuesFactory());
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
+                fieldDesc.custom().put("uiType", Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 //fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.setUnknownValue(
+                fieldDesc.custom().put("unknownValue",
                         Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
                 UnknownCondition unk = UnknownCondition
                         .fromStringValue(Json.getString(fieldConfig, "unknownCondition",
                                 metadataFields.defaultUnknownCondition()));
-                fieldDesc.setUnknownCondition(unk);
+                fieldDesc.custom().put("unknownCondition", unk.stringValue());
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
                 if (fieldConfig.has("displayValues"))
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
-                    fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
+                    fieldDesc.custom().put("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
                 if (fieldConfig.has("valueListComplete"))
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFields.put(fieldName, fieldDesc);
@@ -649,7 +651,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                                 annotation.setDescription(opt.getValue().textValue());
                                 break;
                             case "uiType":
-                                annotation.setUiType(opt.getValue().textValue());
+                                annotation.custom().put("uiType", opt.getValue().textValue());
                                 break;
                             case "isInternal":
                                 if (opt.getValue().booleanValue())
@@ -703,7 +705,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 if (displayOrder.isEmpty()) {
                     displayOrder.addAll(annotationOrder);
                 }
-                fieldDesc.setDisplayOrder(displayOrder);
+                fieldDesc.custom.put("displayOrder", displayOrder);
 
                 annotatedFields.put(fieldName, fieldDesc);
             }
@@ -731,11 +733,9 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
                         MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, metadataFields.getMetadataFieldValuesFactory());
-                        metadataFieldDesc
-                                .setUnknownCondition(
-                                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
-                        metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
-                        metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
+                        metadataFieldDesc.custom().put("unknownCondition", metadataFields.defaultUnknownCondition());
+                        metadataFieldDesc.custom().put("unknownValue", metadataFields.defaultUnknownValue());
+                        //metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
                         metadataFields.put(name, metadataFieldDesc);
                     }
                 } else {
@@ -1032,8 +1032,10 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 if (!f.getAnalyzer().equals(defaultAnalyzer))
                     g.put("analyzer", f.getAnalyzer());
                 g.put("uiType", f.getUiType());
-                g.put("unknownCondition", (f.getUnknownCondition() == null ? config.getMetadataDefaultUnknownCondition() : f.getUnknownCondition()).stringValue());
-                g.put("unknownValue", f.getUnknownValue() == null ? config.getMetadataDefaultUnknownValue() : f.getUnknownValue());
+                g.put("unknownCondition", (f.getUnknownCondition() == null ?
+                        config.getMetadataDefaultUnknownCondition() : f.getUnknownCondition()).stringValue());
+                g.put("unknownValue", f.getUnknownValue() == null ? config.getMetadataDefaultUnknownValue()
+                        : f.getUnknownValue());
                 ObjectNode h = g.putObject("displayValues");
                 for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
                     h.put(e.getKey(), e.getValue());

@@ -59,10 +59,6 @@ public class CustomPropsMap implements CustomProps {
         putAll(props);
     }
 
-    public CustomPropsMap(CustomProps props) {
-        putAll(props);
-    }
-
     @Override
     public Object get(String key) {
         return customFields.get(key);

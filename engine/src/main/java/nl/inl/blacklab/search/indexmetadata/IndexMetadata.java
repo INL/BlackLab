@@ -5,7 +5,7 @@ import java.io.File;
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
-public interface IndexMetadata extends Freezable<IndexMetadata> {
+public interface IndexMetadata extends Freezable {
 
     static String indexNameFromDirectory(File directory) {
         String name = directory.getName();

@@ -61,6 +61,7 @@ import nl.inl.util.TimeUtil;
     "metadataFields", "annotatedFields"
 })
 public class IndexMetadataIntegrated implements IndexMetadataWriter {
+    public static final String LATEST_INDEX_FORMAT = "4";
 
     //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
 
@@ -132,7 +133,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         private int metadataDocId = -1;
 
-        public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata, String documentFormatConfigFileContents) {
+        public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata) {
             try {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
@@ -194,7 +195,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected BlackLabIndex index;
 
     /** Corpus-level custom properties */
-    private CustomPropsMap custom = new CustomPropsMap();
+    private final CustomPropsMap custom = new CustomPropsMap();
 
     @XmlAccessorType(XmlAccessType.FIELD)
     static class VersionInfo {
@@ -218,11 +219,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             blackLabVersion = BlackLab.version();
             timeCreated =  TimeUtil.timestamp();
             timeModified =  TimeUtil.timestamp();
-            indexFormat =  IntegratedMetadataUtil.LATEST_INDEX_FORMAT;
+            indexFormat =  LATEST_INDEX_FORMAT;
         }
     }
 
-    private VersionInfo versionInfo = new VersionInfo();
+    private final VersionInfo versionInfo = new VersionInfo();
 
     /** May all users freely retrieve the full content of documents, or is that restricted? */
     private boolean contentViewable = false;
@@ -253,6 +254,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     private int documentCount;
 
     /** Contents of the documentFormat config file at index creation time. */
+    @SuppressWarnings("unused")
     @JsonProperty("documentFormatConfig")
     private String documentFormatConfigFileContents = "(not set)";
 
@@ -591,31 +593,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         custom.put("description", description);
     }
 
-    public void setBlackLabBuildTime(String blackLabBuildTime) {
-        ensureNotFrozen();
-        versionInfo.blackLabBuildTime = blackLabBuildTime;
-    }
-
-    public void setBlackLabVersion(String blackLabVersion) {
-        ensureNotFrozen();
-        versionInfo.blackLabVersion = blackLabVersion;
-    }
-
-    public void setIndexFormat(String indexFormat) {
-        ensureNotFrozen();
-        versionInfo.indexFormat = indexFormat;
-    }
-
-    public void setTimeCreated(String timeCreated) {
-        ensureNotFrozen();
-        versionInfo.timeCreated = timeCreated;
-    }
-
-    public void setTimeModified(String timeModified) {
-        ensureNotFrozen();
-        versionInfo.timeModified = timeModified;
-    }
-
     /**
      * Set a document format (or formats) for this index.
      *
@@ -746,7 +723,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (!isFrozen())
             ensureMainAnnotatedFieldSet();
 
-        metadataDocument.saveToIndex(indexWriter, this, documentFormatConfigFileContents);
+        metadataDocument.saveToIndex(indexWriter, this);
     }
 
     @Override
@@ -801,11 +778,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public CustomPropsMap custom() {
         return custom;
-    }
-
-    public void setCustomProperties(CustomPropsMap customProperties) {
-        this.custom.clear();
-        this.custom.putAll(customProperties);
     }
 
 }

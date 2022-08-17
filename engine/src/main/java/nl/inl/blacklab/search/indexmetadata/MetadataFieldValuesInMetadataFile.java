@@ -46,7 +46,7 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
     /**
      * Field name for use in warning message
      */
-    private String fieldName;
+    private final String fieldName;
 
     public MetadataFieldValuesInMetadataFile(String fieldName) {
         this.fieldName = fieldName;
@@ -132,10 +132,9 @@ class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
                 values.put(value, n);
             else
                 values.remove(value);
-        } else {
-            // That's weird; maybe it was a really long value, or there
-            // were too many values to store. Just accept it and move on.
         }
+        // Value not found! That's weird; maybe it was a really long value,
+        // or there were too many values to store. Just accept it and move on.
     }
 
     @Override

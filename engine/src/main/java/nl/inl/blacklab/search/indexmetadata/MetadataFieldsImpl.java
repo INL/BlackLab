@@ -26,7 +26,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({ "defaultAnalyzer", "pidField", "throwOnMissingField", "fields" })
-class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
+class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
 

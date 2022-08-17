@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -24,7 +25,7 @@ import nl.inl.util.LuceneUtil;
 
 /** Annotation on a field. */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
+public class AnnotationImpl implements Annotation, Freezable {
     
     /** The field this is an annotation for. */
     @XmlTransient
@@ -295,37 +296,20 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         return this.frozen;
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((field == null) ? 0 : field.hashCode());
-        result = prime * result + ((name == null) ? 0 : name.hashCode());
-        return result;
+    @Override public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof AnnotationImpl))
+            return false;
+        AnnotationImpl that = (AnnotationImpl) o;
+        return field.equals(that.field) && name.equals(that.name);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AnnotationImpl other = (AnnotationImpl) obj;
-        if (field == null) {
-            if (other.field != null)
-                return false;
-        } else if (!field.equals(other.field))
-            return false;
-        if (name == null) {
-            if (other.name != null)
-                return false;
-        } else if (!name.equals(other.name))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(field, name);
     }
-    
+
     public void setOffsetsMatchSensitivity(MatchSensitivity offsetsAlternative) {
         AnnotationSensitivity newValue = sensitivity(offsetsAlternative);
         if (offsetsSensitivity == null || !offsetsSensitivity.equals(newValue)) {
@@ -368,5 +352,13 @@ public class AnnotationImpl implements Annotation, Freezable<AnnotationImpl> {
         }
         offsetsSensitivity = sensitivitiesMap.get(offsetsMatchSensitivity);
         frozen = !index.indexMode();
+    }
+
+    public boolean isSubannotation() {
+        return mainAnnotation != null;
+    }
+
+    public Annotation parentAnnotation() {
+        return mainAnnotation;
     }
 }

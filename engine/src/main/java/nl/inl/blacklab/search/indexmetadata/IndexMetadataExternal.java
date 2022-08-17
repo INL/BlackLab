@@ -188,11 +188,11 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
 
     @Override
     protected String getLatestIndexFormat() {
-        /**
-         * The latest index format. Written to the index metadata file.
+        /* The latest index format. Written to the index metadata file.
          *
          * - 3: first version to include index metadata file
          * - 3.1: tag length in payload
+         * - 4: integrated index format (see IndexMetadataIntegrated)
          */
         return "3.1";
     }

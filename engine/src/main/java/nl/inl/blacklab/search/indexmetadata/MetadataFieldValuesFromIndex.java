@@ -5,8 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -25,6 +23,8 @@ import nl.inl.util.DocValuesUtil;
  */
 class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
+//    private static final Logger logger = LogManager.getLogger(MetadataFieldValuesFromIndex.class);
+
     static class Factory implements MetadataFieldValues.Factory {
 
         private final BlackLabIndex index;
@@ -37,8 +37,6 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             return new MetadataFieldValuesFromIndex(index.reader(), fieldName, fieldType == FieldType.NUMERIC);
         }
     }
-
-    private static final Logger logger = LogManager.getLogger(MetadataFieldValuesFromIndex.class);
 
     /**
      * The values this field can have. Note that this may not be the complete list;
@@ -56,7 +54,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
     /**
      * Field name for use in warning message
      */
-    private String fieldName;
+    private final String fieldName;
 
     public MetadataFieldValuesFromIndex(IndexReader reader, String fieldName, boolean isNumeric) {
         this.fieldName = fieldName;
@@ -104,7 +102,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
         if (values.containsKey(key)) {
             // Seen this value before; increment frequency
-            values.compute(key, (__, value) -> value + 1);
+            values.compute(key, (__, value) -> value == null ? 1 : value + 1);
         } else {
             // New value; add it
             if (values.size() >= MetadataFieldImpl.maxMetadataValuesToStore()) {
@@ -124,7 +122,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
     @Override
     public ValueListComplete isComplete() {
-        return ValueListComplete.YES;
+        return valueListComplete;
     }
 
     @Override
