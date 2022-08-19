@@ -79,3 +79,11 @@ IndexTool will try to index two documents at the same time by default. If you ha
 
 If you find that IndexTool is running out of memory, or becoming very slow, try a lower number of threads instead.
 
+::: warning 
+
+- multi-threaded indexing currently works per-file, so if all your documents are in a single large file, only 1 thread will be used.
+- large files appear to gradually degrade indexing performance as we get further into the file.
+
+For these reasons, it is currently better to spread your documents over multiple files, although it is not necessary to limit yourself to 1 document per file. Just make sure your files aren't larger than a few MB.
+
+:::
