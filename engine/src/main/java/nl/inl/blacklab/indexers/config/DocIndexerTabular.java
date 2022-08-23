@@ -174,6 +174,13 @@ public class DocIndexerTabular extends DocIndexerConfig {
         }
     }
 
+    @Override protected void endDocument() {
+        super.endDocument();
+
+        // Clear csvData (we use this to store the document)
+        csvData.delete(0, csvData.length());
+    }
+
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
         super.index();
@@ -181,6 +188,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         // If a documentPath was specified, look for that as the document tag
         boolean lookForDocumentTags = !config.getDocumentPath().equals("/");
 
+        csvData = new StringBuilder();
         if (!lookForDocumentTags)
             startDocument();
 
@@ -190,7 +198,6 @@ public class DocIndexerTabular extends DocIndexerConfig {
         // Are we inside a document now?
         boolean inDocument = !lookForDocumentTags;
 
-        csvData = new StringBuilder();
         try (CSVPrinter p = new CSVPrinter(csvData, tabularFormat)) {
             // For the configured annotated field...
             for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
