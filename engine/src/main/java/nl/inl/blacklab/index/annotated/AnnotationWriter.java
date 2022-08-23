@@ -138,12 +138,6 @@ public class AnnotationWriter {
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
 
-    /**
-     * To keep memory usage down, we make sure we only store 1 copy of each string
-     * value
-     */
-    private Map<String, String> storedValues = new HashMap<>();
-
     public String mainSensitivity() {
         return mainSensitivity;
     }
@@ -285,11 +279,7 @@ public class AnnotationWriter {
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-        String storedValue = storedValues.get(value);
-        if (storedValue == null) {
-            storedValues.put(value, value);
-            storedValue = value;
-        }
+        value = value.intern();
 
         // Special case: if previous value was the empty string and position increment is 0,
         // replace the previous value. This is convenient to keep all the annotations synched
@@ -299,17 +289,16 @@ public class AnnotationWriter {
         int lastIndex = values.size() - 1;
         if (lastIndex >= 0 && values.get(lastIndex).length() == 0) {
             // Change the last value and its position increment
-            values.set(lastIndex, storedValue);
+            values.set(lastIndex, value);
             if (increment > 0)
                 increments.set(lastIndex, increments.get(lastIndex) + increment);
             lastValuePosition += increment; // keep track of position of last token
             return;
         }
 
-        values.add(storedValue);
+        values.add(value);
         increments.add(increment);
         lastValuePosition += increment; // keep track of position of last token
-
     }
 
     /**
@@ -331,17 +320,13 @@ public class AnnotationWriter {
             value = value.substring(0, MAXIMUM_VALUE_LENGTH);
         }
 
+        // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
+        value = value.intern();
+
         if (position >= lastValuePosition) {
             // Beyond the last position; regular addValue()
             addValue(value, position - lastValuePosition);
         } else {
-            // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-            String storedValue = storedValues.get(value);
-            if (storedValue == null) {
-                storedValues.put(value, value);
-                storedValue = value;
-            }
-
             // Before the last position.
             // Find the index where the value should be inserted.
             int curPos = this.lastValuePosition;
@@ -349,15 +334,7 @@ public class AnnotationWriter {
                 if (curPos <= position) {
                     // Value should be inserted after this index.
                     int n = i + 1;
-                    values.add(n, storedValue);
-                    int incr = position - curPos;
-                    increments.addAtIndex(n, incr);
-                    if (increments.size() > n + 1 && incr > 0) {
-                        // Inserted value wasn't the last value, so the
-                        // increment for the value after this is now wrong;
-                        // correct it.
-                        increments.set(n + 1, increments.get(n + 1) - incr);
-                    }
+                    insertValueAtPosition(value, position, n, curPos);
                     break;
                 }
                 curPos -= increments.get(i); // go to previous value position
@@ -365,19 +342,31 @@ public class AnnotationWriter {
             if (curPos == -1) {
                 // Value should be inserted at the first position.
                 int n = 0;
-                values.add(n, storedValue);
-                int incr = position - curPos;
-                increments.addAtIndex(n, incr);
-                if (increments.size() > n + 1 && incr > 0) {
-                    // Inserted value wasn't the last value, so the
-                    // increment for the value after this is now wrong;
-                    // correct it.
-                    increments.set(n + 1, increments.get(n + 1) - incr);
-                }
+                insertValueAtPosition(value, position, n, curPos);
             }
         }
 
         return lastValuePosition;
+    }
+
+    /**
+     * Add a value at a specific token position.
+     *
+     * @param value value to add
+     * @param valuePosition token position of this value
+     * @param index index in the arrays where this value goes
+     * @param previousPosition token position of the previous value in the arrays (to calculate positionIncrement)
+     */
+    private void insertValueAtPosition(String value, int valuePosition, int index, int previousPosition) {
+        values.add(index, value);
+        int positionIncrement = valuePosition - previousPosition;
+        increments.addAtIndex(index, positionIncrement);
+        if (increments.size() > index + 1 && positionIncrement > 0) {
+            // Inserted value wasn't the last value, so the
+            // increment for the value after this is now wrong;
+            // correct it.
+            increments.set(index + 1, increments.get(index + 1) - positionIncrement);
+        }
     }
 
     public void addPayload(BytesRef payload) {
@@ -394,11 +383,6 @@ public class AnnotationWriter {
 
     public void clear() {
         lastValuePosition = -1;
-        // In theory, we don't need to clear the cached values between documents, but
-        // for large data sets, this would keep getting larger and larger, so we do
-        // it anyway.
-        storedValues = new HashMap<>();
-
         // Don't reuse buffers, reclaim memory so we don't run out
         values = new ArrayList<>();
         increments = new IntArrayList();

@@ -193,7 +193,7 @@ public class DocumentFormats {
      * @param documentName document name
      * @param b file contents
      * @param cs file encoding
-     * @return the DocIndexer
+     * @return the DocIndexer, or null if format not found
      */
     public static DocIndexer get(String formatIdentifier, DocWriter indexer, String documentName, byte[] b, Charset cs)
             throws UnsupportedOperationException {

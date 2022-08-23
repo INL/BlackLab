@@ -13,7 +13,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -100,12 +99,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     /** For capturing punctuation between words. */
     private StringBuilder punctuation = new StringBuilder();
-
-    /**
-     * Unique strings we store, so we avoid storing many copies of the same string
-     * (e.g. punctuation).
-     */
-    private final Map<String, String> uniqueStrings = new HashMap<>();
 
     /**
      * If true, we're indexing into an existing Lucene document. Don't overwrite it
@@ -269,11 +262,13 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 }
                 ldi.indexSpecificDocument(documentPath);
             } else {
-                throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
+                if (docIndexer == null)
+                    throw new BlackLabRuntimeException("Could not instantiate linked DocIndexer, format not found? (" + inputFormatIdentifier + ")");
+                else
+                    throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
             }
         }
-
     }
 
     /**
@@ -316,11 +311,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @return unique instance of the string
      */
     protected String dedupe(String possibleDupe) {
-        String original = uniqueStrings.get(possibleDupe);
-        if (original != null)
-            return original;
-        uniqueStrings.put(possibleDupe, possibleDupe);
-        return possibleDupe;
+        return possibleDupe.intern();
     }
 
     protected void trace(String msg) {
@@ -430,8 +421,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!getDocWriter().continueIndexing())
                 throw new MaxDocsReached();
         }
-
-        uniqueStrings.clear();
     }
 
     /**
