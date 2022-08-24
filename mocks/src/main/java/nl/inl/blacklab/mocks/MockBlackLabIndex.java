@@ -10,6 +10,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
@@ -249,5 +250,10 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Query getAllRealDocsQuery() {
+        return new MatchAllDocsQuery();
     }
 }

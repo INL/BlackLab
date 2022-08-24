@@ -10,7 +10,6 @@ import java.io.PushbackInputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -139,11 +138,6 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     @Override
     public void addMetadataField(String fieldName, String value) {
         outputIndexer.addMetadataField(fieldName, value);
-    }
-
-    @Override
-    public void addNumericFields(Collection<String> fields) {
-        outputIndexer.addNumericFields(fields);
     }
 
     @Override

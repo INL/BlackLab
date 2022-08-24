@@ -33,8 +33,7 @@ public class TextPatternRegex extends TextPatternTerm {
         String valueNoStartEndMatch = optInsensitive(context, value).replaceAll("^\\^|\\$$", "");
         try {
             return new BLSpanMultiTermQueryWrapper<>(QueryInfo.create(context.index(), context.field()), new RegexpQuery(
-                    new Term(context.luceneField(),
-                            context.subannotPrefix() + context.optDesensitize(valueNoStartEndMatch))));
+                    new Term(context.luceneField(), context.optDesensitize(valueNoStartEndMatch))));
         } catch (IllegalArgumentException e) {
             throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");
         } catch (StackOverflowError e) {

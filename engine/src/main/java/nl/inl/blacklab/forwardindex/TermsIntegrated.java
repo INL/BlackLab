@@ -54,8 +54,10 @@ public class TermsIntegrated extends TermsReaderAbstract {
             List<LeafReaderContext> leaves = indexReader.leaves();
             for (LeafReaderContext l: leaves) {
                 BLTerms segmentTerms = (BLTerms)l.reader().terms(luceneField);
-                segmentTerms.setTermsIntegrated(this, l.ord);
-                segmentToGlobalTermIds.put(l.ord, segmentTerms.getSegmentToGlobalMapping(globalTermIds));
+                if (segmentTerms != null) { // can happen if segment only contains index metadata doc
+                    segmentTerms.setTermsIntegrated(this, l.ord);
+                    segmentToGlobalTermIds.put(l.ord, segmentTerms.getSegmentToGlobalMapping(globalTermIds));
+                }
             }
             return globalTermIds.keySet().toArray(String[]::new);
         } catch (IOException e) {

@@ -1,27 +1,34 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.stream.Stream;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.DocValuesType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepFieldType;
 
 /** An annotated field */
-public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable<AnnotatedFieldImpl> {
-    
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
+public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
+
     public final class AnnotationsImpl implements Annotations {
         @Override
         public Annotation main() {
@@ -39,24 +46,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
         @Override
         public Iterator<Annotation> iterator() {
-            Iterator<AnnotationImpl> it = annotationsDisplayOrder.iterator();
-            return new Iterator<>() {
-                @Override
-                public boolean hasNext() {
-                    return it.hasNext();
-                }
-
-                @Override
-                public Annotation next() {
-                    return it.next();
-                }
-
-            };
+            return stream().iterator();
         }
 
         @Override
         public Stream<Annotation> stream() {
-            return annotationsDisplayOrder.stream().map(a -> a);
+            return annots.values().stream().map(a -> a);
         }
 
         @Override
@@ -76,66 +71,42 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldImpl.class);
-
-    private final IndexMetadata indexMetadata;
     
-    /** This field's annotations, sorted by name */
-    private final Map<String, AnnotationImpl> annots;
-    
-    /** This field's annotations, in desired display order */
-    private final List<AnnotationImpl> annotationsDisplayOrder;
+    /** This field's annotations */
+    private final Map<String, AnnotationImpl> annots = new LinkedHashMap<>();
 
     /** The field's main annotation */
-    private AnnotationImpl mainAnnotation;
+    @XmlTransient
+    private AnnotationImpl mainAnnotation = null;
 
     /**
      * The field's main annotation name (for storing the main annot name before we have
      * the annot. descriptions)
      */
+    @JsonProperty("mainAnnotation")
     private String mainAnnotationName;
 
-    /** Is the field length in tokens stored? */
-    private boolean lengthInTokens;
-
-    /** Does the length field contain DocValues? */
-    private DocValuesType lengthInTokensDocValuesType = DocValuesType.NONE;
-
     /** Are there XML tag locations stored for this field? */
+    @JsonProperty("hasXmlTags")
     private boolean xmlTags;
 
     /** These annotations should not get a forward index. */
+    @XmlTransient
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
 
-    /** Annotation display order. If not specified, use reasonable defaults. */
-    private final List<String> displayOrder = new ArrayList<>(AnnotatedFieldNameUtil.COMMON_ANNOTATIONS);
-
-    /** Compares annotation names by displayOrder. */
-    private final Comparator<AnnotationImpl> annotationOrderComparator;
-
+    @XmlTransient
     private boolean frozen;
 
-    private final AnnotationsImpl annotationsImpl;
+    @XmlTransient
+    private final AnnotationsImpl annotations = new AnnotationsImpl();
 
-    AnnotatedFieldImpl(IndexMetadata indexMetadata, String name) {
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    AnnotatedFieldImpl() {
+    }
+
+    AnnotatedFieldImpl(String name) {
         super(name);
-        this.indexMetadata = indexMetadata;
-        annots = new TreeMap<>();
-        annotationsDisplayOrder = new ArrayList<>();
-        annotationOrderComparator = (a, b) -> {
-            int ai = displayOrder.indexOf(a.name());
-            if (ai < 0)
-                ai = Integer.MAX_VALUE;
-            int bi = displayOrder.indexOf(b.name());
-            if (bi < 0)
-                bi = Integer.MAX_VALUE;
-            return Integer.compare(ai, bi);
-        };
-        
-        contentStore = false;
-        lengthInTokens = false;
-        xmlTags = false;
-        mainAnnotation = null;
-        annotationsImpl = new AnnotationsImpl();
     }
 
     @Override
@@ -145,12 +116,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     
     @Override
     public Annotations annotations() {
-        return annotationsImpl;
-    }
-
-    @Override
-    public boolean hasLengthTokens() {
-        return lengthInTokens;
+        return annotations;
     }
 
     /**
@@ -161,7 +127,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
      */
     @Override
     public String tokenLengthField() {
-        return lengthInTokens ? AnnotatedFieldNameUtil.lengthTokensField(fieldName) : null;
+        return AnnotatedFieldNameUtil.lengthTokensField(fieldName);
     }
 
     @Override
@@ -174,8 +140,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return noForwardIndexAnnotations;
     }
 
+    /**
+     * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
+     */
     List<String> getDisplayOrder() {
-        return Collections.unmodifiableList(displayOrder);
+        return custom().get("displayOrder", Collections.emptyList());
     }
     
     // Methods that mutate data
@@ -209,12 +178,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
             case FORWARD_INDEX_ID:
                 // Main annotation has forward index
                 // [should never happen anymore, because main annotation always has a name now]
-                getOrCreateAnnotation("").setForwardIndex(true);
-                return;
+                throw new IllegalStateException("Found lucene field " + fi.name + " with forward index id, but no annotation name!");
             case LENGTH_TOKENS:
-                // Annotated field has length in tokens
-                lengthInTokens = true;
-                lengthInTokensDocValuesType = fi.getDocValuesType();
+                // Annotated field always has length in tokens
                 return;
             }
             throw new BlackLabRuntimeException();
@@ -240,11 +206,13 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     }
 
     public synchronized AnnotationImpl getOrCreateAnnotation(String name) {
-        ensureNotFrozen();
         AnnotationImpl pd = annots.get(name);
         if (pd == null) {
-            pd = new AnnotationImpl(indexMetadata, this, name);
+            ensureNotFrozen();
+            pd = new AnnotationImpl(this, name);
             putAnnotation(pd);
+            if (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+                xmlTags = true;
         }
         return pd;
     }
@@ -252,8 +220,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
-        annotationsDisplayOrder.add(annotDesc);
-        annotationsDisplayOrder.sort(annotationOrderComparator);
     }
 
     synchronized void detectMainAnnotation(IndexReader reader) {
@@ -271,7 +237,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         
         if (annots.isEmpty())
             return; // dummy field for storing linked documents; has no annotations
-    
+
         AnnotationImpl firstAnnotation = null;
         for (AnnotationImpl pr : annots.values()) {
             if (firstAnnotation == null)
@@ -295,18 +261,18 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         // (note that not having any offsets makes it impossible to highlight the
         // original content, but this may not be an issue. We probably need
         // a better way to keep track of the main annotation)
-        if (firstAnnotation != null) {
-            logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
-                    + ") is main annotation");
-            mainAnnotation = firstAnnotation;
-        }
+        logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
+                + ") is main annotation");
+        mainAnnotation = firstAnnotation;
     }
 
     synchronized void setMainAnnotationName(String mainAnnotationName) {
-        ensureNotFrozen();
-        this.mainAnnotationName = mainAnnotationName;
-        if (annots.containsKey(mainAnnotationName))
-            mainAnnotation = annots.get(mainAnnotationName);
+        if (this.mainAnnotationName == null || !this.mainAnnotationName.equals(mainAnnotationName)) {
+            ensureNotFrozen();
+            this.mainAnnotationName = mainAnnotationName;
+            if (annots.containsKey(mainAnnotationName))
+                mainAnnotation = annots.get(mainAnnotationName);
+        }
     }
 
     void setNoForwardIndexAnnotations(Set<String> noForwardIndexAnnotations) {
@@ -314,11 +280,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         this.noForwardIndexAnnotations = noForwardIndexAnnotations;
     }
 
+    @Deprecated
     synchronized void setDisplayOrder(List<String> displayOrder) {
         ensureNotFrozen();
-        this.displayOrder.clear();
-        this.displayOrder.addAll(displayOrder);
-        this.annotationsDisplayOrder.sort(annotationOrderComparator);
+        custom.put("displayOrder", displayOrder);
     }
 
     @Override
@@ -338,9 +303,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
 
-    @Override
-    public boolean hasTokenLengthDocValues() {
-        return lengthInTokensDocValuesType != DocValuesType.NONE;
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
+        super.fixAfterDeserialization(index, fieldName);
+        for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
+            entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
+        }
     }
 
 }

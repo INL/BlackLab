@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -433,7 +433,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "sensitivity":
                 if (isSubannotation)
                     throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings" + inFormat());
-                annot.setSensitivity(SensitivitySetting.fromStringValue(str(e)));
+                annot.setSensitivity(AnnotationSensitivities.fromStringValue(str(e)));
                 break;
             case "uiType":
                 annot.setUiType(str(e));

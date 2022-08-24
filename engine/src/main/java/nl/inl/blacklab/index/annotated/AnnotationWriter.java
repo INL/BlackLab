@@ -54,48 +54,9 @@ public class AnnotationWriter {
         type.freeze();
     }
 
-    /**
-     * How an annotation is to be indexed with respect to case and diacritics
-     * sensitivity.
-     */
-    public enum SensitivitySetting {
-        DEFAULT, // "choose default based on field name"
-        ONLY_SENSITIVE, // only index case- and diacritics-sensitively
-        ONLY_INSENSITIVE, // only index case- and diacritics-insensitively
-        SENSITIVE_AND_INSENSITIVE, // case+diac sensitive as well as case+diac insensitive
-        CASE_AND_DIACRITICS_SEPARATE; // all four combinations (sens, insens, case-insens, diac-insens)
-
-        public static SensitivitySetting fromStringValue(String v) {
-            switch (v.toLowerCase()) {
-            case "default":
-            case "":
-                return DEFAULT;
-            case "sensitive":
-            case "s":
-                return ONLY_SENSITIVE;
-            case "insensitive":
-            case "i":
-                return ONLY_INSENSITIVE;
-            case "sensitive_insensitive":
-            case "si":
-                return SENSITIVE_AND_INSENSITIVE;
-            case "case_diacritics_separate":
-            case "all":
-                return CASE_AND_DIACRITICS_SEPARATE;
-            default:
-                throw new IllegalArgumentException("Unknown string value for SensitivitySetting: " + v
-                        + " (should be default|sensitive|insensitive|sensitive_insensitive|case_diacritics_separate or s|i|si|all)");
-            }
-        }
-
-        public static SensitivitySetting defaultForAnnotation(String name) {
-            return AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name) ?
-                    SensitivitySetting.SENSITIVE_AND_INSENSITIVE :
-                    SensitivitySetting.ONLY_INSENSITIVE;
-        }
-    }
-
     private final AnnotatedFieldWriter fieldWriter;
+
+    private final AnnotationSensitivities sensitivitySetting;
 
     protected boolean includeOffsets;
 
@@ -165,28 +126,29 @@ public class AnnotationWriter {
      *            sensitivity variant
      * @param includePayloads will this annotation include payloads?
      */
-    public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, SensitivitySetting sensitivity,
+    public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, AnnotationSensitivities sensitivity,
             boolean includeOffsets, boolean includePayloads) {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
+        this.sensitivitySetting = sensitivity;
         if (fieldWriter.field() != null) {
             annotation = fieldWriter.field().annotation(annotationName);
         }
 
         mainSensitivity = null;
-        if (sensitivity != SensitivitySetting.ONLY_INSENSITIVE) {
+        if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
             // Add sensitive sensitivity
             mainSensitivity = MatchSensitivity.SENSITIVE.luceneFieldSuffix();
             sensitivities.put(mainSensitivity, null);
         }
-        if (sensitivity != SensitivitySetting.ONLY_SENSITIVE) {
+        if (sensitivity != AnnotationSensitivities.ONLY_SENSITIVE) {
             // Add insensitive sensitivity
             sensitivities.put(MatchSensitivity.INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, true));
             if (mainSensitivity == null)
                 mainSensitivity = MatchSensitivity.INSENSITIVE.luceneFieldSuffix();
         }
-        if (sensitivity == SensitivitySetting.CASE_AND_DIACRITICS_SEPARATE) {
+        if (sensitivity == AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE) {
             // Add case-insensitive and diacritics-insensitive sensitivity
             sensitivities.put(MatchSensitivity.CASE_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(true, false));
             sensitivities.put(MatchSensitivity.DIACRITICS_INSENSITIVE.luceneFieldSuffix(), new DesensitizerAdder(false, true));
@@ -404,4 +366,7 @@ public class AnnotationWriter {
         return "AnnotationWriter(" + field() + "." + annotationName + ")";
     }
 
+    public AnnotationSensitivities getSensitivitySetting() {
+        return sensitivitySetting;
+    }
 }

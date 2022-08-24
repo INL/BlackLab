@@ -7,7 +7,7 @@ import org.xml.sax.Attributes;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 
 /**
  * Example indexer. See Example for the file format.
@@ -21,8 +21,8 @@ public class DocIndexerExample extends DocIndexerXmlHandlers {
         final AnnotationWriter propPunct = punctAnnotation();
 
         // Add some extra properties
-        final AnnotationWriter propLemma = addAnnotation("lemma", SensitivitySetting.SENSITIVE_AND_INSENSITIVE);
-        final AnnotationWriter propPartOfSpeech = addAnnotation("pos", SensitivitySetting.ONLY_INSENSITIVE);
+        final AnnotationWriter propLemma = addAnnotation("lemma", AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE);
+        final AnnotationWriter propPartOfSpeech = addAnnotation("pos", AnnotationSensitivities.ONLY_INSENSITIVE);
         
         registerContentsField();
 

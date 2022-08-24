@@ -5,7 +5,6 @@ import java.util.Collection;
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -45,8 +44,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
                 synchronized (index) {
                     IndexMetadata indexMetadata = index.getIndexMetadata();
-                    String displayName = indexMetadata.displayName();
-                    String description = indexMetadata.description();
+                    String displayName = indexMetadata.custom().get("displayName", "");
+                    String description = indexMetadata.custom().get("description", "");
                     IndexStatus status = index.getStatus();
 
                     ds.startAttrEntry("index", "name", index.getId());
@@ -56,23 +55,9 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.entry("description", description);
                     ds.entry("status", status);
 
-                    if (status.equals(IndexStatus.INDEXING)) {
-                        IndexListener indexProgress = index.getIndexerListener();
-                        synchronized (indexProgress) {
-                            ds.startEntry("indexProgress").startMap()
-                                    .entry("filesProcessed", indexProgress.getFilesProcessed())
-                                    .entry("docsDone", indexProgress.getDocsDone())
-                                    .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                                    .endMap().endEntry();
-                        }
-                    }
-
-                    String formatIdentifier = indexMetadata.documentFormat();
-                    if (formatIdentifier != null && formatIdentifier.length() > 0)
-                        ds.entry("documentFormat", formatIdentifier);
+                    RequestHandlerIndexMetadata.addIndexProgress(ds, index, indexMetadata, status);
                     ds.entry("timeModified", indexMetadata.timeModified());
-                    if (indexMetadata.tokenCount() > 0)
-                        ds.entry("tokenCount", indexMetadata.tokenCount());
+                    ds.entry("tokenCount", indexMetadata.tokenCount());
 
                     ds.endMap();
                     ds.endAttrEntry();

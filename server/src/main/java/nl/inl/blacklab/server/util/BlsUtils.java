@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -140,7 +139,7 @@ public class BlsUtils {
      * @return the document id, or -1 if it doesn't exist
      */
     public static int getDocIdFromPid(BlackLabIndex index, String pid) {
-        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = index.metadataFields().pidField();
         if (pidField == null) {
             int luceneDocId;
             try {

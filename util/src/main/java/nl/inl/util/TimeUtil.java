@@ -1,5 +1,9 @@
 package nl.inl.util;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 public final class TimeUtil {
 
     private TimeUtil() {
@@ -60,4 +64,14 @@ public final class TimeUtil {
         return describeInterval(intervalMsec, false);
     }
 
+    /**
+     * Format the current date and time according to the SQL datetime convention.
+     *
+     * @return a string representation, e.g. "1980-02-01 00:00:00"
+     */
+    public static String timestamp() {
+        // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
+        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        return dateTimeFormat.format(new Date());
+    }
 }

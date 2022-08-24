@@ -15,7 +15,7 @@ public interface Annotations extends Iterable<Annotation> {
 
     /**
      * Iterate over the annotations.
-     * 
+     *
      * @return iterator
      */
     @Override
@@ -23,7 +23,7 @@ public interface Annotations extends Iterable<Annotation> {
 
     /**
      * Stream the annotations.
-     * 
+     *
      * @return stream
      */
     Stream<Annotation> stream();

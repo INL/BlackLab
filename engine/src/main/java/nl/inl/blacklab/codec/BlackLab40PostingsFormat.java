@@ -2,8 +2,6 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
@@ -30,15 +28,15 @@ import org.apache.lucene.index.SegmentWriteState;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BLCodecPostingsFormat extends PostingsFormat {
+public class BlackLab40PostingsFormat extends PostingsFormat {
 
-    protected static final Logger logger = LogManager.getLogger(BLCodecPostingsFormat.class);
+    static final String NAME = "BlackLab40Postings";
 
     /** Oldest postings version still supported */
-    public static final int VERSION_START = 1;
+    static final int VERSION_START = 1;
 
     /** Current postings version */
-    public static final int VERSION_CURRENT = 1;
+    static final int VERSION_CURRENT = 1;
 
     /** Extension for the fields file. This stores the annotated field name and the offset
         in the term index file where the term offsets ares stored.*/
@@ -69,18 +67,18 @@ public class BLCodecPostingsFormat extends PostingsFormat {
     /** The PostingsFormat we're wrapping and we delegate most requests to. */
     private final PostingsFormat delegatePostingsFormat;
 
-    public BLCodecPostingsFormat() {
-        this(BLCodec.CODEC_NAME);
+    public BlackLab40PostingsFormat() {
+        this(NAME);
     }
 
-    public BLCodecPostingsFormat(PostingsFormat delegate) {
-        super(BLCodec.CODEC_NAME);
+    public BlackLab40PostingsFormat(PostingsFormat delegate) {
+        super(NAME);
         delegateCodecName = delegate.getName();
         delegatePostingsFormat = delegate;
     }
 
-    public BLCodecPostingsFormat(String codecName) {
-        super(codecName);
+    public BlackLab40PostingsFormat(String codecName) {
+        super(NAME);
         delegateCodecName = codecName;
         delegatePostingsFormat = null;
     }
@@ -88,15 +86,15 @@ public class BLCodecPostingsFormat extends PostingsFormat {
     @Override
     public final FieldsProducer fieldsProducer(SegmentReadState state)
             throws IOException {
-        return new BLFieldsProducer(state, getName());
+        return new BlackLab40PostingsReader(state);
     }
 
     @Override
     public final FieldsConsumer fieldsConsumer(SegmentWriteState state)
             throws IOException {
         if (delegatePostingsFormat != null) {
-            return new BLFieldsConsumer(
-                    delegatePostingsFormat.fieldsConsumer(state), state, getName(),
+            return new BlackLab40PostingsWriter(
+                    delegatePostingsFormat.fieldsConsumer(state), state,
                     delegatePostingsFormat.getName());
         }
         PostingsFormat pf = Codec.forName(delegateCodecName).postingsFormat();

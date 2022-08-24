@@ -1,10 +1,15 @@
 package nl.inl.util;
 
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -63,5 +68,19 @@ public class TestXmlUtil {
         Assert.assertEquals("simple", Json.getString(readJsonRoot, keys[3], ""));
     }
 
+    @Test
+    public void testSerializeStandardCollections() throws JsonProcessingException {
+        Map<String, Object> map = new HashMap<>();
+        map.put("string", "Hallo");
+        map.put("list", List.of("aap", "noot", "mies"));
 
+        ObjectMapper jsonMapper = Json.getJsonObjectMapper();
+        JsonNode tree = jsonMapper.valueToTree(map);
+
+        Map<String, Object> reconstructed = jsonMapper.treeToValue(tree, Map.class);
+
+        Assert.assertEquals(reconstructed.size(), map.size());
+        Assert.assertEquals(reconstructed.get("string"), map.get("string"));
+        Assert.assertEquals(reconstructed.get("list"), map.get("list"));
+    }
 }

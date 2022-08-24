@@ -4,6 +4,7 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -113,16 +115,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
                 .entry("uiType", fd.uiType());
-        String group = fd.group();
-        if (group != null && group.length() > 0)
-            ds.entry("group", group);
         ds
                 .entry("type", fd.type().toString())
                 .entry("analyzer", fd.analyzerName())
                 .entry("unknownCondition", fd.unknownCondition().toString())
                 .entry("unknownValue", fd.unknownValue());
         if (listValues) {
-            final Map<String, String> displayValues = fd.displayValues();
+            final Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
             ds.startEntry("displayValues").startMap();
             for (Map.Entry<String, String> e : displayValues.entrySet()) {
                 ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
@@ -188,8 +187,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                 .entry("displayName", fieldDesc.displayName())
                 .entry("description", fieldDesc.description())
                 .entry("hasContentStore", fieldDesc.hasContentStore())
-                .entry("hasXmlTags", fieldDesc.hasXmlTags())
-                .entry("hasLengthTokens", fieldDesc.hasLengthTokens());
+                .entry("hasXmlTags", fieldDesc.hasXmlTags());
         ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
         annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
@@ -208,64 +206,52 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", sensitivitySettingDesc(annotation))
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
-            AnnotationSensitivity as = annotation.sensitivity(annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ? MatchSensitivity.INSENSITIVE : MatchSensitivity.SENSITIVE);
-            String luceneField = as.luceneField();
-            if (annotationMatches(annotation.name(), showValuesFor)) {
-                boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
-                ds.startEntry("values").startList();
+            if (!index.isEmpty() || !(index instanceof BlackLabIndexIntegrated)) {
+                AnnotationSensitivity as = annotation.sensitivity(
+                        annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
+                                MatchSensitivity.INSENSITIVE :
+                                MatchSensitivity.SENSITIVE);
+                String luceneField = as.luceneField();
+                if (annotationMatches(annotation.name(), showValuesFor)) {
+                    boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+                    ds.startEntry("values").startList();
 
-                // Arrays because we have to access them from the closures
-                boolean[] valueListComplete = { true };
-                
-                final Set<String> terms = new TreeSet<>();
-                if (isInlineTagAnnotation) {
-                    LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                    	if (!term.startsWith("@") && !terms.contains(term)) {
-                    		if (terms.size() >= MAX_FIELD_VALUES) {
-                    			valueListComplete[0] = false;
-                    			return false;
-                    		}
-                    		terms.add(term);
-                        }
-                    	return true;
-                    });
-                } else {
-                	LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                    	if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(term)) {
-                    		if (terms.size() >= MAX_FIELD_VALUES) {
-                    			valueListComplete[0] = false;
-                    			return false;
-                    		}
-                    		terms.add(term);
-                        }
-                    	return true;
-                    });
-                }
-                for (String term: terms) {
-                	ds.item("value", term);
-                }
-                
-                ds.endList().endEntry();
-                ds.entry("valueListComplete", valueListComplete[0]);
-            }
-            boolean subannotationsStoredWithParent = index.metadata().subannotationsStoredWithParent();
-            if (!subannotationsStoredWithParent || showSubpropsFor.contains(annotation.name())) {
-                if (subannotationsStoredWithParent) {
-                    // Older index, where the subannotations are stored in the same Lucene field as their parent annotation.
-                    // Detecting these requires enumerating all terms, so only do it when asked.
-                    Map<String, Set<String>> subprops = LuceneUtil.getOldSingleFieldSubprops(index.reader(), luceneField);
-                    ds.startEntry("subannotations").startMap();
-                    for (Map.Entry<String, Set<String>> subprop : subprops.entrySet()) {
-                        String name = subprop.getKey();
-                        Set<String> values = subprop.getValue();
-                        ds.startAttrEntry("subannotation", "name", name).startList();
-                        for (String value : values) {
-                            ds.item("value", value);
-                        }
-                        ds.endList().endAttrEntry();
+                    // Arrays because we have to access them from the closures
+                    boolean[] valueListComplete = { true };
+
+                    final Set<String> terms = new TreeSet<>();
+                    if (isInlineTagAnnotation) {
+                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                            if (!term.startsWith("@") && !terms.contains(term)) {
+                                if (terms.size() >= MAX_FIELD_VALUES) {
+                                    valueListComplete[0] = false;
+                                    return false;
+                                }
+                                terms.add(term);
+                            }
+                            return true;
+                        });
+                    } else {
+                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                            if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(
+                                    term)) {
+                                if (terms.size() >= MAX_FIELD_VALUES) {
+                                    valueListComplete[0] = false;
+                                    return false;
+                                }
+                                terms.add(term);
+                            }
+                            return true;
+                        });
                     }
-                    ds.endMap().endEntry();
-                } else if (!annotation.subannotationNames().isEmpty()) {
+                    for (String term: terms) {
+                        ds.item("value", term);
+                    }
+
+                    ds.endList().endEntry();
+                    ds.entry("valueListComplete", valueListComplete[0]);
+                }
+                if (!annotation.subannotationNames().isEmpty()) {
                     // Newer index, where the subannotations are stored in their own Lucene fields.
                     // Always show these.
                     ds.startEntry("subannotations").startList();
@@ -274,9 +260,9 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     }
                     ds.endList().endEntry();
                 }
-            }
-            if (annotation.isSubannotation()) {
-                ds.entry("parentAnnotation", annotation.parentAnnotation().name());
+                if (annotation.isSubannotation()) {
+                    ds.entry("parentAnnotation", annotation.parentAnnotation().name());
+                }
             }
             ds.endMap().endAttrEntry();
         }

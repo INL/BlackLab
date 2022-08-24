@@ -49,7 +49,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -191,7 +190,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, config);
+            indexMetadata = getIndexMetadata(createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -228,7 +227,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = new IndexMetadataImpl(this, indexDir, createNewIndex, indexTemplateFile);
+            indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 
@@ -239,6 +238,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             throw new ErrorOpeningIndex(e);
         }
     }
+
+    protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
+            throws IndexVersionMismatch;
+
+    protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
+            throws IndexVersionMismatch;
 
     boolean traceIndexOpening() {
         return BlackLab.config().getLog().getTrace().isIndexOpening();
@@ -282,8 +287,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     public void forEachDocument(DocTask task) {
         final int maxDoc = reader().maxDoc();
         final Bits liveDocs = MultiBits.getLiveDocs(reader());
+        int skipDocId = metadata().metadataDocId();
         for (int docId = 0; docId < maxDoc; docId++) {
-            if (liveDocs == null || liveDocs.get(docId)) {
+            boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+            if (isLiveDoc && docId != skipDocId) {
                 task.perform(this, docId);
             }
         }
@@ -460,12 +467,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         // Detect and open the ContentStore for the contents field
         if (!createNewIndex) {
             if (traceIndexOpening())
-                logger.debug("  Determining main contents field name...");
+                logger.debug("  Checking if we have a main contents field...");
             AnnotatedField mainContentsField = indexMetadata.mainAnnotatedField();
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new BlackLabRuntimeException("Could not detect main contents field");
+                        throw new BlackLabRuntimeException("Main contents field unknown");
                 }
             }
 
@@ -493,8 +500,16 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             logger.debug("  Setting maxClauseCount...");
         BooleanQuery.setMaxClauseCount(100_000);
 
+        // (NOTE: with integrated, we cannot open the forward index if
+        //   the index is empty. The reason is that the forward index is attached
+        //   to the main sensitivity of the field, and we don't know what sensitivities
+        //   the field has, because it is not stored in the index metadata, it is normally detected
+        //   from the index fields.
+        // TODO kinda messy, should be improved
+        boolean preventOpeningForwardIndex = false; //isEmptyIndex && this instanceof BlackLabIndexIntegrated;
+
         // Open the forward indices
-        if (!createNewIndex) {
+        if (!createNewIndex && !preventOpeningForwardIndex) {
             if (traceIndexOpening())
                 logger.debug("  Opening forward indices...");
             for (AnnotatedField field: annotatedFields()) {

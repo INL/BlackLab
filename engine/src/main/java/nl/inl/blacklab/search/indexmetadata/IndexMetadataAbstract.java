@@ -1,31 +1,23 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.util.Bits;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +28,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
@@ -54,26 +45,16 @@ import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
+import nl.inl.util.TimeUtil;
 
 /**
  * Determines the structure of a BlackLab index.
  */
-public class IndexMetadataImpl implements IndexMetadataWriter {
+@SuppressWarnings("deprecation")
+public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
 
-    private static final Charset INDEX_STRUCT_FILE_ENCODING = Indexer.DEFAULT_INPUT_ENCODING;
-
-    private static final Logger logger = LogManager.getLogger(IndexMetadataImpl.class);
-
-    private static final String METADATA_FILE_NAME = "indexmetadata";
-
-    /**
-     * The latest index format. Written to the index metadata file.
-     *
-     * 3: first version to include index metadata file 3.1: tag length in payload
-     */
-    private static final String LATEST_INDEX_FORMAT = "3.1";
+    private static final Logger logger = LogManager.getLogger(IndexMetadataAbstract.class);
 
     /** What keys may occur at top level? */
     private static final Set<String> KEYS_TOP_LEVEL = new HashSet<>(Arrays.asList(
@@ -112,16 +93,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             "noForwardIndexProps", "displayOrder", "annotations"));
 
     /** Our index */
-    private final BlackLabIndex index;
+    protected final BlackLabIndex index;
 
-    /** Where to save indexmetadata.json */
-    private final File indexDir;
-
-    /** Index display name */
-    private String displayName;
-
-    /** Index description */
-    private String description;
+    /** Custom properties */
+    private final CustomPropsMap custom = new CustomPropsMap();
 
     /** When BlackLab.jar was built */
     private String blackLabBuildTime;
@@ -144,9 +119,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     private boolean contentViewable = false;
 
-    /** Text direction for this corpus */
-    private TextDirection textDirection = TextDirection.LEFT_TO_RIGHT;
-
     /**
      * Indication of the document format(s) in this index.
      *
@@ -155,186 +127,66 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     private String documentFormat;
 
-    private long tokenCount = 0;
-
-    /** When we save this file, should we write it as json or yaml? */
-    private boolean saveAsJson = true;
+    protected long tokenCount = 0;
 
     /** Our metadata fields */
-    private final MetadataFieldsImpl metadataFields;
+    protected final MetadataFieldsImpl metadataFields;
 
     /** Our annotated fields */
-    private final AnnotatedFieldsImpl annotatedFields;
+    protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     private boolean frozen;
 
-    /**
-     * If true, subannotations are stored in the same Lucene field as their main annotation (old approach).
-     * If false (the new indexing default), subannotations get their own Lucene field.
-     *
-     * This boolean is initialized to true, and we set it to false if we encounter subannotation declarations
-     * in the index metadata, because that means we're dealing with a modern index.
-     */
-    private boolean subannotationsStoredWithMain = true;
-
-    /**
-     * Construct an IndexMetadata object, querying the index for the available
-     * fields and their types.
-     *
-     * @param index the index of which we want to know the structure
-     * @param indexDir where the index (and the metadata file) is stored
-     * @param createNewIndex whether we're creating a new index
-     * @param config input format config to use as template for index structure /
-     *            metadata (if creating new index)
-     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
-     */
-    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, ConfigInputFormat config) throws IndexVersionMismatch {
+    public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
-        this.indexDir = indexDir;
-
-        metadataFields = new MetadataFieldsImpl();
-        annotatedFields = new AnnotatedFieldsImpl();
-
-        // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
-                Arrays.asList("json", "yaml", "yml"));
-        if (metadataFile != null && createNewIndex) {
-            // Don't leave the old metadata file if we're creating a new index
-            if (metadataFile.exists() && !metadataFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-        }
-
-        // If none found, or creating new index: write a .yaml file.
-        if (createNewIndex || metadataFile == null) {
-            metadataFile = new File(indexDir, METADATA_FILE_NAME + ".yaml");
-        }
-        saveAsJson = false;
-        if (createNewIndex && config != null) {
-            // Create an index metadata file from this config.
-            ConfigCorpus corpusConfig = config.getCorpusConfig();
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            ObjectNode jsonRoot = mapper.createObjectNode();
-            String displayName = corpusConfig.getDisplayName();
-            if (displayName.isEmpty())
-                displayName = determineIndexName();
-            jsonRoot.put("displayName", displayName);
-            jsonRoot.put("description", corpusConfig.getDescription());
-            jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
-            jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
-            jsonRoot.put("documentFormat", config.getName());
-            addVersionInfo(jsonRoot);
-            ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-            fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
-            fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
-            fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
-            for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
-                fieldInfo.put(e.getKey(), e.getValue());
-            }
-            ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
-            ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
-            ObjectNode metadata = fieldInfo.putObject("metadataFields");
-            ObjectNode annotated = fieldInfo.putObject("complexFields");
-
-            addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
-            extractFromJson(jsonRoot, null, true);
-
-            if (config.getName() != null)
-                setDocumentFormat(config.getName());
-
-            save();
-        } else {
-            // Read existing metadata or create empty new one
-            readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, false);
-        }
-    }
-
-    /**
-     * Construct an IndexMetadata object, querying the index for the available
-     * fields and their types.
-     *
-     * @param reader the index of which we want to know the structure
-     * @param indexDir where the index (and the metadata file) is stored
-     * @param createNewIndex whether we're creating a new index
-     * @param indexTemplateFile JSON file to use as template for index structure /
-     *            metadata (if creating new index)
-     * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
-     */
-    public IndexMetadataImpl(BlackLabIndex index, File indexDir, boolean createNewIndex, File indexTemplateFile) throws IndexVersionMismatch {
-        this.index = index;
-        this.indexDir = indexDir;
-
-        metadataFields = new MetadataFieldsImpl();
-        annotatedFields = new AnnotatedFieldsImpl();
-
-        // Find existing metadata file, if any.
-        File metadataFile = FileUtil.findFile(List.of(indexDir), METADATA_FILE_NAME,
-                Arrays.asList("json", "yaml", "yml"));
-        if (metadataFile != null && createNewIndex) {
-            // Don't leave the old metadata file if we're creating a new index
-            if (!metadataFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-        }
-
-        // If none found, or creating new index: metadata file should be same format as
-        // template.
-        if (createNewIndex || metadataFile == null) {
-            // No metadata file yet, or creating a new index;
-            // use same metadata format as the template
-            boolean templateIsJson = false;
-            if (indexTemplateFile != null && indexTemplateFile.getName().endsWith(".json"))
-                templateIsJson = true;
-            String templateExt = templateIsJson ? "json" : "yaml";
-            if (createNewIndex && metadataFile != null) {
-                // We're creating a new index, but also found a previous metadata file.
-                // Is it a different format than the template? If so, we would end up
-                // with two metadata files, which is confusing and might lead to errors.
-                boolean existingIsJson = metadataFile.getName().endsWith(".json");
-                if (existingIsJson != templateIsJson) {
-                    // Delete the existing, different-format file to avoid confusion.
-                    if (!metadataFile.delete())
-                        throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
-                }
-            }
-            metadataFile = new File(indexDir, METADATA_FILE_NAME + "." + templateExt);
-        }
-        saveAsJson = metadataFile.getName().endsWith(".json");
-        boolean usedTemplate = false;
-        if (createNewIndex && indexTemplateFile != null) {
-            // Copy the template file to the index dir and read the metadata again.
-            try {
-                String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
-                FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-            usedTemplate = true;
-        }
-
-        readOrCreateMetadata(index.reader(), createNewIndex, metadataFile, usedTemplate);
+        metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
+        metadataFields.setTopLevelCustom(custom); // for metadata groups
+        annotatedFields.setTopLevelCustom(custom); // for annotation groups
     }
 
     // Methods that read data
     // ------------------------------------------------------------------------------
 
-    private String determineIndexName() {
-        String name = indexDir.getName();
-        if (name.equals("index"))
-            name = indexDir.getAbsoluteFile().getParentFile().getName();
-        return name;
+    protected ObjectNode createEmptyIndexMetadata() {
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+        ObjectNode jsonRoot = mapper.createObjectNode();
+        jsonRoot.put("displayName", IndexMetadata.indexNameFromDirectory(index.indexDirectory()));
+        jsonRoot.put("description", "");
+        addVersionInfo(jsonRoot);
+        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+        fieldInfo.putObject("metadataFields");
+        fieldInfo.putObject("complexFields");
+        return jsonRoot;
     }
 
-    @Override
-    public void save() {
-        String ext = saveAsJson ? ".json" : ".yaml";
-        File metadataFile = new File(indexDir, METADATA_FILE_NAME + ext);
-        try {
-            boolean isJson = metadataFile.getName().endsWith(".json");
-            ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            mapper.writeValue(metadataFile, encodeToJson());
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+    protected ObjectNode createIndexMetadataFromConfig(ConfigInputFormat config) {
+        ConfigCorpus corpusConfig = config.getCorpusConfig();
+        ObjectMapper mapper = Json.getJsonObjectMapper();
+        ObjectNode jsonRoot = mapper.createObjectNode();
+        String displayName = corpusConfig.getDisplayName();
+        if (displayName.isEmpty())
+            displayName = IndexMetadata.indexNameFromDirectory(index.indexDirectory());
+        jsonRoot.put("displayName", displayName);
+        jsonRoot.put("description", corpusConfig.getDescription());
+        jsonRoot.put("contentViewable", corpusConfig.isContentViewable());
+        jsonRoot.put("textDirection", corpusConfig.getTextDirection().getCode());
+        jsonRoot.put("documentFormat", config.getName());
+        addVersionInfo(jsonRoot);
+        ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
+        fieldInfo.put("defaultAnalyzer", config.getMetadataDefaultAnalyzer());
+        fieldInfo.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
+        fieldInfo.put("unknownValue", config.getMetadataDefaultUnknownValue());
+        for (Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
+            fieldInfo.put(e.getKey(), e.getValue());
         }
+        ArrayNode metaGroups = fieldInfo.putArray("metadataFieldGroups");
+        ObjectNode annotGroups = fieldInfo.putObject("annotationGroups");
+        ObjectNode metadata = fieldInfo.putObject("metadataFields");
+        ObjectNode annotated = fieldInfo.putObject("complexFields");
+
+        addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroups, config);
+        return jsonRoot;
     }
 
     /**
@@ -342,13 +194,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *
      * @return json structure
      */
-    private ObjectNode encodeToJson() {
+    public ObjectNode encodeToJson() {
         ObjectMapper mapper = Json.getJsonObjectMapper();
         ObjectNode jsonRoot = mapper.createObjectNode();
-        jsonRoot.put("displayName", displayName);
-        jsonRoot.put("description", description);
+        jsonRoot.put("displayName", displayName());
+        jsonRoot.put("description", description());
         jsonRoot.put("contentViewable", contentViewable);
-        jsonRoot.put("textDirection", textDirection.getCode());
+        jsonRoot.put("textDirection", textDirection().getCode());
         jsonRoot.put("documentFormat", documentFormat);
         jsonRoot.put("tokenCount", tokenCount);
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
@@ -357,22 +209,24 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         versionInfo.put("indexFormat", indexFormat);
         versionInfo.put("timeCreated", timeCreated);
         versionInfo.put("timeModified", timeModified);
-        versionInfo.put("alwaysAddClosingToken", true); // Indicates that we always index words+1 tokens (last token is
-                                                        // for XML tags after the last word)
-        versionInfo.put("tagLengthInPayload", true); // Indicates that start tag annotation payload contains tag lengths,
-                                                     // and there is no end tag annotation
+        // Indicates that we always index words+1 tokens (last token is
+        // for XML tags after the last word)
+        versionInfo.put("alwaysAddClosingToken", true);
+        // Indicates that start tag annotation payload contains tag lengths,
+        // and there is no end tag annotation
+        versionInfo.put("tagLengthInPayload", true);
 
         ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
         fieldInfo.put("namingScheme", "DEFAULT");
         fieldInfo.put("defaultAnalyzer", metadataFields.defaultAnalyzerName());
         fieldInfo.put("unknownCondition", metadataFields.defaultUnknownCondition());
         fieldInfo.put("unknownValue", metadataFields.defaultUnknownValue());
-        if (metadataFields.titleField() != null)
-            fieldInfo.put("titleField", metadataFields.titleField().name());
-        if (metadataFields.authorField() != null)
-            fieldInfo.put("authorField", metadataFields.authorField().name());
-        if (metadataFields.dateField() != null)
-            fieldInfo.put("dateField", metadataFields.dateField().name());
+        if (custom.containsKey("titleField"))
+            fieldInfo.put("titleField", custom.get("titleField", ""));
+        if (custom.containsKey("authorField"))
+            fieldInfo.put("authorField", custom.get("authorField", ""));
+        if (custom.containsKey("dateField"))
+            fieldInfo.put("dateField", custom.get("dateField", ""));
         if (metadataFields.pidField() != null)
             fieldInfo.put("pidField", metadataFields.pidField().name());
         ArrayNode metadataFieldGroups = fieldInfo.putArray("metadataFieldGroups");
@@ -381,13 +235,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ObjectNode jsonAnnotatedFields = fieldInfo.putObject("complexFields");
 
         // Add metadata field group info
-        for (MetadataFieldGroup g: metadataFields().groups()) {
+        for (MetadataFieldGroup g: metadataFields().groups().values()) {
             ObjectNode group = metadataFieldGroups.addObject();
             group.put("name", g.name());
             if (g.addRemainingFields())
                 group.put("addRemainingFields", true);
             ArrayNode arr = group.putArray("fields");
-            Json.arrayOfStrings(arr, g.stream().map(Field::name).collect(Collectors.toList()));
+            Json.arrayOfStrings(arr, g.stream().collect(Collectors.toList()));
         }
         // Add annotation group info
         for (AnnotatedField f: annotatedFields()) {
@@ -400,7 +254,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (g.addRemainingAnnotations())
                         jsonGroup.put("addRemainingAnnotations", true);
                     ArrayNode arr = jsonGroup.putArray("annotations");
-                    Json.arrayOfStrings(arr, g.annotations().stream().map(Annotation::name).collect(Collectors.toList()));
+                    Json.arrayOfStrings(arr, g.annotations());
                 }
             }
         }
@@ -425,7 +279,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     jsonValues.put(e.getKey(), e.getValue());
                 }
             }
-            Map<String, String> displayValues = f.displayValues();
+            Map<String, String> displayValues = f.custom().get("displayValues", Collections.emptyMap());
             if (displayValues != null) {
                 ObjectNode jsonDisplayValues = fi.putObject("displayValues");
                 for (Map.Entry<String, String> e: displayValues.entrySet()) {
@@ -449,7 +303,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             if (f.mainAnnotation() != null)
                 fieldInfo2.put("mainProperty", f.mainAnnotation().name());
             ArrayNode arr = fieldInfo2.putArray("displayOrder");
-            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).getDisplayOrder());
+            Json.arrayOfStrings(arr, ((AnnotatedFieldImpl) f).custom().get("displayOrder", Collections.emptyList()));
             ArrayNode annots = fieldInfo2.putArray("annotations");
             for (Annotation annotation: f.annotations()) {
                 ObjectNode annot = annots.addObject();
@@ -463,11 +317,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     for (String subannotName: annotation.subannotationNames()) {
                         subannots.add(subannotName);
                     }
-                }
-                if (index instanceof BlackLabIndexIntegrated) {
-                    // For the integrated index, we don't detect whether there's a forward
-                    // index, we just store it in the metadata.
-                    annot.put("hasForwardIndex", annotation.hasForwardIndex());
                 }
             }
         }
@@ -509,68 +358,9 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         return type;
     }
 
-    /**
-     * Check if a Lucene field has offsets stored.
-     *
-     * @param reader our index
-     * @param luceneFieldName field to check
-     * @return true iff field has offsets
-     */
-    static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
-        // Iterate over documents in the index until we find a annotation
-        // for this annotated field that has stored character offsets. This is
-        // our main annotation.
-
-        // Note that we can't simply retrieve the field from a document and
-        // check the FieldType to see if it has offsets or not, as that information
-        // is incorrect at search time (always set to false, even if it has offsets).
-
-        Bits liveDocs = MultiBits.getLiveDocs(reader);
-        for (int n = 0; n < reader.maxDoc(); n++) {
-            if (liveDocs == null || liveDocs.get(n)) {
-                try {
-                    Terms terms = reader.getTermVector(n, luceneFieldName);
-                    if (terms == null) {
-                        // No term vector; probably not stored in this document.
-                        continue;
-                    }
-                    if (terms.hasOffsets()) {
-                        // This field has offsets stored. Must be the main alternative.
-                        return true;
-                    }
-                    // This alternative has no offsets stored. Don't look at any more
-                    // documents, go to the next alternative.
-                    break;
-                } catch (IOException e) {
-                    throw BlackLabRuntimeException.wrap(e);
-                }
-            }
-        }
-        return false;
-    }
-
     @Override
     public MetadataFieldsWriter metadataFields() {
         return metadataFields;
-    }
-
-    /**
-     * Get the display name for the index.
-     *
-     * If no display name was specified, returns the name of the index directory.
-     *
-     * @return the display name
-     */
-    @Override
-    public String displayName() {
-        String dispName = "index";
-        if (displayName != null && displayName.length() != 0)
-            dispName = displayName;
-        if (dispName.equalsIgnoreCase("index"))
-            dispName = StringUtils.capitalize(indexDir.getName());
-        if (dispName.equalsIgnoreCase("index"))
-            dispName = StringUtils.capitalize(indexDir.getAbsoluteFile().getParentFile().getName());
-        return dispName;
     }
 
     /**
@@ -580,7 +370,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     @Override
     public String description() {
-        return description;
+        return custom.get("description", "");
     }
 
     /**
@@ -597,10 +387,12 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * What's the text direction of this corpus?
      *
      * @return text direction
+     * @deprecated use {@link #custom()} with .get("textDirection", "ltr") instead
      */
     @Override
+    @Deprecated
     public TextDirection textDirection() {
-        return textDirection;
+        return TextDirection.fromCode(custom.get("textDirection", "ltr"));
     }
 
     /**
@@ -684,17 +476,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         return tokenCount;
     }
 
-    /**
-     * Format the current date and time according to the SQL datetime convention.
-     *
-     * @return a string representation, e.g. "1980-02-01 00:00:00"
-     */
-    static String timestamp() {
-        // NOTE: DateFormat is not threadsafe, so we just create a new one every time.
-        DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        return dateTimeFormat.format(new Date());
-    }
-
     // Methods that mutate data
     // ------------------------------------
 
@@ -716,15 +497,15 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *            anymore.
      * @throws IndexVersionMismatch if the index is too old or too new to open with this BlackLab version
      */
-    private void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
+    protected void extractFromJson(ObjectNode jsonRoot, IndexReader reader, boolean usedTemplate) throws IndexVersionMismatch {
         ensureNotFrozen();
 
         // Read and interpret index metadata file
         warnUnknownKeys("at top-level", jsonRoot, KEYS_TOP_LEVEL);
-        displayName = Json.getString(jsonRoot, "displayName", "");
-        description = Json.getString(jsonRoot, "description", "");
+        setDisplayName(Json.getString(jsonRoot, "displayName", ""));
+        setDescription(Json.getString(jsonRoot, "description", ""));
         contentViewable = Json.getBoolean(jsonRoot, "contentViewable", false);
-        textDirection = TextDirection.fromCode(Json.getString(jsonRoot, "textDirection", "ltr"));
+        custom.put("textDirection", Json.getString(jsonRoot, "textDirection", "ltr"));
         documentFormat = Json.getString(jsonRoot, "documentFormat", "");
         tokenCount = Json.getLong(jsonRoot, "tokenCount", 0);
 
@@ -741,16 +522,16 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     "Your index is too old (alwaysAddClosingToken == false). Please use v1.7.1 or re-index your data.");
         boolean tagLengthInPayload = Json.getBoolean(versionInfo, "tagLengthInPayload", false);
         if (!tagLengthInPayload) {
-            logger.warn("Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
+            logger.warn(
+                    "Your index is too old (tagLengthInPayload == false). Searches using XML elements like <s> may not work correctly. If this is a problem, please use v1.7.1 or re-index your data.");
             //throw new IndexVersionMismatch("Your index is too old (tagLengthInPayload == false). Please use v1.7.1 or re-index your data.");
         }
 
         // Specified in index metadata file?
-        String namingScheme;
         ObjectNode fieldInfo = Json.getObject(jsonRoot, "fieldInfo");
         warnUnknownKeys("in fieldInfo", fieldInfo, KEYS_FIELD_INFO);
-        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
-        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition", "NEVER"));
+        metadataFields.setDefaultUnknownCondition(Json.getString(fieldInfo, "unknownCondition",
+                UnknownCondition.NEVER.stringValue()));
         metadataFields.setDefaultUnknownValue(Json.getString(fieldInfo, "unknownValue", "unknown"));
 
         ObjectNode metaFieldConfigs = Json.getObject(fieldInfo, "metadataFields");
@@ -774,14 +555,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     String groupName = Json.getString(group, "name", "UNKNOWN");
                     List<String> annotations = Json.getListOfStrings(group, "annotations");
                     boolean addRemainingAnnotations = Json.getBoolean(group, "addRemainingAnnotations", false);
-                    annotationGroups.add(new AnnotationGroup(annotatedFields, fieldName, groupName, annotations,
+                    annotationGroups.add(new AnnotationGroup(fieldName, groupName, annotations,
                             addRemainingAnnotations));
                 }
                 annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
             }
         }
         if (hasFieldInfo && fieldInfo.has("metadataFieldGroups")) {
-            metadataFields.clearMetadataGroups();
+            Map<String, MetadataFieldGroupImpl> groupMap = new LinkedHashMap<>();
             JsonNode groups = fieldInfo.get("metadataFieldGroups");
             for (int i = 0; i < groups.size(); i++) {
                 JsonNode group = groups.get(i);
@@ -789,13 +570,15 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 String name = Json.getString(group, "name", "UNKNOWN");
                 List<String> fields = Json.getListOfStrings(group, "fields");
                 for (String f: fields) {
-                    metadataFields().ensureFieldExists(f);
+                    // Ensure field exists
+                    metadataFields().register(f);
                 }
                 boolean addRemainingFields = Json.getBoolean(group, "addRemainingFields", false);
-                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(metadataFields(), name, fields,
+                MetadataFieldGroupImpl metadataGroup = new MetadataFieldGroupImpl(name, fields,
                         addRemainingFields);
-                metadataFields.putMetadataGroup(name, metadataGroup);
+                groupMap.put(name, metadataGroup);
             }
+            metadataFields.setMetadataGroups(groupMap);
         }
         if (hasFieldInfo) {
             // Metadata fields
@@ -807,24 +590,24 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 warnUnknownKeys("in metadata field config for '" + fieldName + "'", fieldConfig,
                         KEYS_META_FIELD_CONFIG);
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
-                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType);
+                MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, metadataFields.getMetadataFieldValuesFactory());
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.setUiType(Json.getString(fieldConfig, "uiType", ""));
+                fieldDesc.custom().put("uiType", Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
-                fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
+                //fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.setUnknownValue(
+                fieldDesc.custom().put("unknownValue",
                         Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
                 UnknownCondition unk = UnknownCondition
                         .fromStringValue(Json.getString(fieldConfig, "unknownCondition",
                                 metadataFields.defaultUnknownCondition()));
-                fieldDesc.setUnknownCondition(unk);
+                fieldDesc.custom().put("unknownCondition", unk.stringValue());
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
                 if (fieldConfig.has("displayValues"))
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
-                    fieldDesc.setDisplayOrder(Json.getListOfStrings(fieldConfig, "displayOrder"));
+                    fieldDesc.custom().put("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
                 if (fieldConfig.has("valueListComplete"))
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFields.put(fieldName, fieldDesc);
@@ -838,7 +621,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 JsonNode fieldConfig = entry.getValue();
                 warnUnknownKeys("in annotated field config for '" + fieldName + "'", fieldConfig,
                         KEYS_ANNOTATED_FIELD_CONFIG);
-                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(this, fieldName);
+                AnnotatedFieldImpl fieldDesc = new AnnotatedFieldImpl(fieldName);
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 String mainAnnotationName = Json.getString(fieldConfig, "mainProperty", "");
@@ -853,7 +636,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     while (itAnnot.hasNext()) {
                         JsonNode jsonAnnotation = itAnnot.next();
                         Iterator<Entry<String, JsonNode>> itAnnotOpt = jsonAnnotation.fields();
-                        AnnotationImpl annotation = new AnnotationImpl(this, fieldDesc);
+                        AnnotationImpl annotation = new AnnotationImpl(fieldDesc);
                         while (itAnnotOpt.hasNext()) {
                             Entry<String, JsonNode> opt = itAnnotOpt.next();
                             switch (opt.getKey()) {
@@ -868,14 +651,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                                 annotation.setDescription(opt.getValue().textValue());
                                 break;
                             case "uiType":
-                                annotation.setUiType(opt.getValue().textValue());
+                                annotation.custom().put("uiType", opt.getValue().textValue());
                                 break;
                             case "isInternal":
                                 if (opt.getValue().booleanValue())
                                     annotation.setInternal();
                                 break;
                             case "subannotations":
-                                subannotationsStoredWithMain = false; // new-style index
                                 annotation.setSubannotationNames(Json.getListOfStrings(jsonAnnotation, "subannotations"));
                                 break;
                             case "hasForwardIndex":
@@ -923,15 +705,17 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 if (displayOrder.isEmpty()) {
                     displayOrder.addAll(annotationOrder);
                 }
-                fieldDesc.setDisplayOrder(displayOrder);
+                fieldDesc.custom.put("displayOrder", displayOrder);
 
                 annotatedFields.put(fieldName, fieldDesc);
             }
         }
+        FieldInfos fis = reader == null ? null : FieldInfos.getMergedFieldInfos(reader);
         if (fis != null) {
             // Detect fields
-            for (int i = 0; i < fis.size(); i++) {
-                FieldInfo fi = fis.fieldInfo(i);
+            for (FieldInfo fi: fis) {
+            //for (int i = 0; i < fis.size(); i++) {
+                //FieldInfo fi = fis.fieldInfo(i);
                 String name = fi.name;
 
                 // Parse the name to see if it is a metadata field or part of an annotated field.
@@ -948,12 +732,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (!metadataFields.exists(name)) {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
-                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type);
-                        metadataFieldDesc
-                                .setUnknownCondition(
-                                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()));
-                        metadataFieldDesc.setUnknownValue(metadataFields.defaultUnknownValue());
-                        metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
+                        MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, metadataFields.getMetadataFieldValuesFactory());
+                        metadataFieldDesc.custom().put("unknownCondition", metadataFields.defaultUnknownCondition());
+                        metadataFieldDesc.custom().put("unknownValue", metadataFields.defaultUnknownValue());
+                        //metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
                         metadataFields.put(name, metadataFieldDesc);
                     }
                 } else {
@@ -972,36 +754,36 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
 
         // Link subannotations to their parent annotation
-        if (!subannotationsStoredWithMain) {
-            for (AnnotatedField f: annotatedFields) {
-                Annotations annot = f.annotations();
-                for (Annotation a: annot) {
-                    if (a.subannotationNames().size() > 0) {
-                        // Link these subannotations back to their parent annotation
-                        for (String name: a.subannotationNames()) {
-                            annot.get(name).setSubAnnotation(a);
-                        }
+        for (AnnotatedField f: annotatedFields) {
+            Annotations annot = f.annotations();
+            for (Annotation a: annot) {
+                if (a.subannotationNames().size() > 0) {
+                    // Link these subannotations back to their parent annotation
+                    for (String name: a.subannotationNames()) {
+                        annot.get(name).setSubAnnotation(a);
                     }
                 }
             }
         }
 
-        metadataFields.setDefaultAnalyzerName(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
+        metadataFields.setDefaultAnalyzer(Json.getString(fieldInfo, "defaultAnalyzer", "DEFAULT"));
 
+        metadataFields.setTopLevelCustom(custom());
         metadataFields.clearSpecialFields();
-        if (fieldInfo.has("authorField"))
-            metadataFields.setSpecialField(MetadataFields.AUTHOR, fieldInfo.get("authorField").textValue());
-        if (fieldInfo.has("dateField"))
-            metadataFields.setSpecialField(MetadataFields.DATE, fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("pidField"))
-            metadataFields.setSpecialField(MetadataFields.PID, fieldInfo.get("pidField").textValue());
+            metadataFields.setPidField(fieldInfo.get("pidField").textValue());
+        if (fieldInfo.has("authorField"))
+            custom.put("authorField", fieldInfo.get("authorField").textValue());
+        if (fieldInfo.has("dateField"))
+            custom.put("dateField", fieldInfo.get("dateField").textValue());
         if (fieldInfo.has("titleField"))
-            metadataFields.setSpecialField(MetadataFields.TITLE, fieldInfo.get("titleField").textValue());
-        if (metadataFields.titleField() == null) {
+            custom.put("titleField", fieldInfo.get("titleField").textValue());
+        if (custom.get("titleField", "").isEmpty()) {
             if (metadataFields.pidField() != null)
-                metadataFields.setSpecialField(MetadataFields.TITLE, metadataFields.pidField().name());
+                custom.put("titleField", metadataFields.pidField().name());
             else
-                metadataFields.setSpecialField(MetadataFields.TITLE, "fromInputFile");
+                custom.put("titleField", "fromInputFile");
+            logger.warn("No titleField specified; using default " + custom.get("titleField") + ". In future versions, no default will be chosen.");
         }
 
         if (usedTemplate) {
@@ -1012,56 +794,26 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             // Reset version info
             blackLabBuildTime = BlackLab.buildTime();
             blackLabVersion = BlackLab.version();
-            indexFormat = LATEST_INDEX_FORMAT;
-            timeModified = timeCreated = IndexMetadataImpl.timestamp();
+            indexFormat = getLatestIndexFormat();
+            timeModified = timeCreated = TimeUtil.timestamp();
 
             // Clear any recorded values in metadata fields
             metadataFields.resetForIndexing();
         }
     }
 
-    private void readOrCreateMetadata(IndexReader reader, boolean createNewIndex, File metadataFile,
-            boolean usedTemplate) throws IndexVersionMismatch {
-        ensureNotFrozen();
+    /**
+     * Return a factory that creates a MetadataFieldValues object.
+     *
+     * Will either create such an object that uses the indexmetadata file
+     * to manage metadata field values, or one that determines the values
+     * from the Lucene index directly, using DocValues.
+     *
+     * @return factory
+     */
+    protected abstract MetadataFieldValues.Factory createMetadataFieldValuesFactory();
 
-        // Read and interpret index metadata file
-        if ((createNewIndex && !usedTemplate) || !metadataFile.exists()) {
-            // No metadata file yet; start with a blank one
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            ObjectNode jsonRoot = mapper.createObjectNode();
-            jsonRoot.put("displayName", determineIndexName());
-            jsonRoot.put("description", "");
-            addVersionInfo(jsonRoot);
-            ObjectNode fieldInfo = jsonRoot.putObject("fieldInfo");
-            fieldInfo.putObject("metadataFields");
-            fieldInfo.putObject("complexFields");
-            extractFromJson(jsonRoot, reader, false);
-        } else {
-            // Read the metadata file
-            try {
-                boolean isJson = metadataFile.getName().endsWith(".json");
-                ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-                ObjectNode jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
-                extractFromJson(jsonRoot, reader, usedTemplate);
-            } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
-            }
-        }
-
-        // Detect main contents field and main annotations of annotated fields
-        if (!createNewIndex) { // new index doesn't have this information yet
-            // Detect the main annotations for all annotated fields
-            // (looks for fields with char offset information stored)
-            AnnotatedFieldImpl mainContentsField = null;
-            for (AnnotatedField d: annotatedFields) {
-                if (mainContentsField == null || d.name().equals("contents"))
-                    mainContentsField = (AnnotatedFieldImpl) d;
-                if (tokenCount > 0) // no use trying this on an empty index
-                    ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
-            }
-            annotatedFields.setMainContentsField(mainContentsField);
-        }
-    }
+    protected abstract String getLatestIndexFormat();
 
     private synchronized AnnotatedFieldImpl getOrCreateAnnotatedField(String name) {
         ensureNotFrozen();
@@ -1069,7 +821,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         if (annotatedFields.exists(name))
             cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
-            cfd = new AnnotatedFieldImpl(this, name);
+            cfd = new AnnotatedFieldImpl(name);
             annotatedFields.put(name, cfd);
         }
         return cfd;
@@ -1081,9 +833,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     @Override
     public void updateLastModified() {
-        // TODO: make sure this method is called when adding documents to index!
         ensureNotFrozen();
-        timeModified = IndexMetadataImpl.timestamp();
+        timeModified = TimeUtil.timestamp();
     }
 
     /**
@@ -1095,13 +846,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      */
     @Override
     public synchronized AnnotatedField registerAnnotatedField(AnnotatedFieldWriter fieldWriter) {
-        ensureNotFrozen();
-
         String fieldName = fieldWriter.name();
         AnnotatedFieldImpl cf;
         if (annotatedFields.exists(fieldName)) {
             cf = annotatedFields.get(fieldName);
         } else {
+            ensureNotFrozen();
+
             // Not registered yet; do so now. Note that we only add the main annotation,
             // not the other annotations, but that's okay; they're not needed at index
             // time and will be detected at search time.
@@ -1116,7 +867,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 annotation.addAlternative(MatchSensitivity.fromLuceneFieldSuffix(suffix));
             }
             if (annotationWriter.includeOffsets())
-                annotation.setOffsetsSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
+                annotation.setOffsetsMatchSensitivity(MatchSensitivity.fromLuceneFieldSuffix(annotationWriter.mainSensitivity()));
             annotation.setForwardIndex(annotationWriter.hasForwardIndex());
             annotationWriter.setAnnotation(annotation);
         }
@@ -1129,7 +880,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     @Override
     public synchronized MetadataField registerMetadataField(String fieldName) {
-        ensureNotFrozen();
         return metadataFields.register(fieldName);
     }
 
@@ -1144,7 +894,11 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ensureNotFrozen();
         if (displayName.length() > 80)
             displayName = StringUtils.abbreviate(displayName, 75);
-        this.displayName = displayName;
+        this.custom.put("displayName", displayName);
+    }
+
+    private void setDescription(String description) {
+        custom.put("description", description);
     }
 
     /**
@@ -1190,11 +944,13 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      * otherwise.
      *
      * @param textDirection text direction
+     * @deprecated use {@link #custom()} with .put("textDirection", textDirection.getCode()) instead
      */
     @Override
+    @Deprecated
     public void setTextDirection(TextDirection textDirection) {
         ensureNotFrozen();
-        this.textDirection = textDirection;
+        this.custom.put("textDirection", textDirection.getCode());
     }
 
     /**
@@ -1216,18 +972,18 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         }
     }
 
-    private static void addVersionInfo(ObjectNode jsonRoot) {
+    protected void addVersionInfo(ObjectNode jsonRoot) {
         ObjectNode versionInfo = jsonRoot.putObject("versionInfo");
         versionInfo.put("blackLabBuildTime", BlackLab.buildTime());
         versionInfo.put("blackLabVersion", BlackLab.version());
-        versionInfo.put("timeCreated", IndexMetadataImpl.timestamp());
-        versionInfo.put("timeModified", IndexMetadataImpl.timestamp());
-        versionInfo.put("indexFormat", IndexMetadataImpl.LATEST_INDEX_FORMAT);
+        versionInfo.put("timeCreated", TimeUtil.timestamp());
+        versionInfo.put("timeModified", TimeUtil.timestamp());
+        versionInfo.put("indexFormat", getLatestIndexFormat());
         versionInfo.put("alwaysAddClosingToken", true); // always true, but BL check for it, so required
         versionInfo.put("tagLengthInPayload", true); // always true, but BL check for it, so required
     }
 
-    private void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
+    protected void addFieldInfoFromConfig(ObjectNode metadata, ObjectNode annotated, ArrayNode metaGroups,
             ObjectNode annotGroupsPerField, ConfigInputFormat config) {
         ensureNotFrozen();
 
@@ -1276,8 +1032,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 if (!f.getAnalyzer().equals(defaultAnalyzer))
                     g.put("analyzer", f.getAnalyzer());
                 g.put("uiType", f.getUiType());
-                g.put("unknownCondition", (f.getUnknownCondition() == null ? config.getMetadataDefaultUnknownCondition() : f.getUnknownCondition()).stringValue());
-                g.put("unknownValue", f.getUnknownValue() == null ? config.getMetadataDefaultUnknownValue() : f.getUnknownValue());
+                g.put("unknownCondition", (f.getUnknownCondition() == null ?
+                        config.getMetadataDefaultUnknownCondition() : f.getUnknownCondition()).stringValue());
+                g.put("unknownValue", f.getUnknownValue() == null ? config.getMetadataDefaultUnknownValue()
+                        : f.getUnknownValue());
                 ObjectNode h = g.putObject("displayValues");
                 for (Entry<String, String> e: f.getDisplayValues().entrySet()) {
                     h.put(e.getKey(), e.getValue());
@@ -1304,13 +1062,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             }
             for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
                 for (ConfigAnnotation a: standoff.getAnnotations().values()) {
-//                    displayOrder.add(a.getName());
-
                     addAnnotationInfo(a, displayOrder, noForwardIndexAnnotations, annotations);
-
-//                    if (!a.createForwardIndex())
-//                        noForwardIndexAnnotations.add(a.getName());
-
                 }
             }
         }
@@ -1319,13 +1071,14 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
             Format format = DocumentFormats.getFormat(ld.getInputFormatIdentifier());
-            if (format.isConfigurationBased())
+            if (format != null && format.isConfigurationBased())
                 addFieldInfoFromConfig(metadata, annotated, metaGroups, annotGroupsPerField, format.getConfig());
         }
     }
 
     private void addAnnotationInfo(ConfigAnnotation annotation, ArrayNode displayOrder, ArrayNode noForwardIndexAnnotations,
             ArrayNode annotations) {
+        ensureNotFrozen();
         String annotationName = annotation.getName();
         displayOrder.add(annotationName);
         if (!annotation.createForwardIndex())
@@ -1338,8 +1091,10 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         if (annotation.isInternal()) {
             annotationNode.put("isInternal", annotation.isInternal());
         }
+        if (index instanceof BlackLabIndexIntegrated) {
+            annotationNode.put("hasForwardIndex", annotation.createForwardIndex());
+        }
         if (annotation.getSubAnnotations().size() > 0) {
-            subannotationsStoredWithMain = false; // this is a new-style index
             ArrayNode subannots = annotationNode.putArray("subannotations");
             for (ConfigAnnotation s: annotation.getSubAnnotations()) {
                 if (!s.isForEach()) {
@@ -1348,6 +1103,30 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 }
             }
         }
+    }
+
+    @Override
+    public CustomPropsMap custom() {
+        return custom;
+    }
+
+    /**
+     * Get the display name for the index.
+     *
+     * If no display name was specified, returns the name of the index directory.
+     *
+     * @return the display name
+     */
+    @Override
+    public String displayName() {
+        String dispName = custom.get("displayName", "");
+        if (dispName.isEmpty())
+            dispName = StringUtils.capitalize(index.indexDirectory().getName());
+        if (dispName.isEmpty())
+            dispName = StringUtils.capitalize(index.indexDirectory().getAbsoluteFile().getParentFile().getName());
+        if (dispName.isEmpty())
+            dispName = "index";
+        return dispName;
     }
 
     @Override
@@ -1362,9 +1141,21 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         return this.frozen;
     }
 
-    @Override
-    public boolean subannotationsStoredWithParent() {
-        return subannotationsStoredWithMain;
-    }
+    protected void detectMainAnnotation(IndexReader reader) {
+        boolean shouldDetectMainAnnotatedField = annotatedFields.main() == null;
 
+        // Detect main contents field and main annotations of annotated fields
+        // Detect the main annotations for all annotated fields
+        // (looks for fields with char offset information stored)
+        AnnotatedFieldImpl mainAnnotatedField = null;
+        for (AnnotatedField d: annotatedFields()) {
+            if (mainAnnotatedField == null || d.name().equals("contents"))
+                mainAnnotatedField = (AnnotatedFieldImpl) d;
+
+            if (tokenCount() > 0) // Only detect if index is not empty
+                ((AnnotatedFieldImpl) d).detectMainAnnotation(reader);
+        }
+        if (shouldDetectMainAnnotatedField)
+            annotatedFields.setMainAnnotatedField(mainAnnotatedField);
+    }
 }

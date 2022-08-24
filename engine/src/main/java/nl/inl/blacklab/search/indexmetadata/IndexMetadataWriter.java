@@ -14,6 +14,8 @@ public interface IndexMetadataWriter extends IndexMetadata {
     /**
 	 * Indicate that the index was modified, so that fact
 	 * will be recorded in the metadata file.
+	 *
+	 * TODO: make sure this method is called when adding documents to index!
 	 */
 	void updateLastModified();
 
@@ -61,7 +63,9 @@ public interface IndexMetadataWriter extends IndexMetadata {
      * Used when creating an index to initialize textDirection setting. Do not use otherwise.
      *
      * @param textDirection text direction
+     * @deprecated use {@link #custom()} and set("textDirection", textDirection.getCode()) instead
      */
+    @Deprecated
     void setTextDirection(TextDirection textDirection);
 
     /**
@@ -94,4 +98,13 @@ public interface IndexMetadataWriter extends IndexMetadata {
      */
     @Override
     String documentFormat();
+
+	/**
+	 * If necessary, freeze the metadata so we can start indexing.
+	 *
+	 * We're about to start indexing. For the integrated index format,
+	 * metadata must not change during indexing, so in that case, we
+	 * freeze it to enforce this.
+	 */
+	void freezeBeforeIndexing();
 }

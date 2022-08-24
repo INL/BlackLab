@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 
 public class MockAnnotatedField implements AnnotatedField {
     
@@ -82,11 +83,6 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasLengthTokens() {
-        return false;
-    }
-
-    @Override
     public boolean hasXmlTags() {
         return false;
     }
@@ -102,8 +98,8 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasTokenLengthDocValues() {
-        return false;
+    public CustomProps custom() {
+        return CustomProps.NONE;
     }
-    
+
 }

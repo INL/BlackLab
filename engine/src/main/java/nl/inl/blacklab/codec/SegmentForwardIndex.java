@@ -14,10 +14,9 @@ import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
- * Managers read access to forward indexes for a single segment.
+ * Manages read access to forward indexes for a single segment.
  */
 @ThreadSafe
 class SegmentForwardIndex implements AutoCloseable {
@@ -71,7 +70,7 @@ class SegmentForwardIndex implements AutoCloseable {
     }
 
     /** Our fields producer */
-    private final BLFieldsProducer fieldsProducer;
+    private final BlackLab40PostingsReader fieldsProducer;
 
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
     private final Fields fields;
@@ -88,17 +87,17 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Contains the tokens for all fields and documents */
     private IndexInput _tokensFile;
 
-    public SegmentForwardIndex(BLFieldsProducer fieldsProducer, SegmentReadState state) throws IOException {
+    public SegmentForwardIndex(BlackLab40PostingsReader fieldsProducer, SegmentReadState state) throws IOException {
         this.fieldsProducer = fieldsProducer;
 
-        try (IndexInput fieldsFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.FIELDS_EXT)) {
+        try (IndexInput fieldsFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.FIELDS_EXT)) {
             fields = new Fields(fieldsFile);
         }
 
-        _termIndexFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.TERMINDEX_EXT);
-        _termsFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.TERMS_EXT);
-        _tokensIndexFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.TOKENS_INDEX_EXT);
-        _tokensFile = fieldsProducer.openIndexFile(state, BLCodecPostingsFormat.TOKENS_EXT);
+        _termIndexFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TERMINDEX_EXT);
+        _termsFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TERMS_EXT);
+        _tokensIndexFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+        _tokensFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_EXT);
     }
 
     @Override
@@ -157,7 +156,10 @@ class SegmentForwardIndex implements AutoCloseable {
                 throw new IllegalArgumentException("start and end must be of equal length");
 
             getDocOffsetAndLength(luceneField, docId);
-            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+
+            // We don't exclude the closing token here because we didn't do that with the external index format either.
+            // And you might want to fetch the extra closing token.
+            //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             tokens(); // ensure available
             List<int[]> result = new ArrayList<>(n);
             for (int i = 0; i < n; i++) {
@@ -171,7 +173,9 @@ class SegmentForwardIndex implements AutoCloseable {
         public int[] retrievePart(String luceneField, int docId, int start, int end) {
             // ensure both inputs available
             getDocOffsetAndLength(luceneField, docId);
-            docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            // We don't exclude the closing token here because we didn't do that with the external index format either.
+            // And you might want to fetch the extra closing token.
+            //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             tokens(); // ensure we have this input available
             return retrievePart(start, end);
         }

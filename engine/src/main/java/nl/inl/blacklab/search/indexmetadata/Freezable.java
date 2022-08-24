@@ -4,10 +4,8 @@ package nl.inl.blacklab.search.indexmetadata;
  * An object that can be frozen.
  * 
  * A frozen object may not be modified.
- * 
- * @param <T> class we're freezing (will be returned by freeze())
  */
-public interface Freezable<T> {
+public interface Freezable {
     
     void freeze();
     
@@ -16,5 +14,10 @@ public interface Freezable<T> {
     default void ensureNotFrozen() {
         if (isFrozen())
             throw new UnsupportedOperationException("Tried to modify a frozen object");
+    }
+
+    default void ensureFrozen() {
+        if (!isFrozen())
+            throw new UnsupportedOperationException("Tried to read a non-frozen object");
     }
 }

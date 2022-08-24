@@ -53,30 +53,15 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.displayName())
-                    .entry("description", indexMetadata.description())
+                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
+                    .entry("description", indexMetadata.custom().get("description", ""))
                     .entry("status", status)
                     .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.textDirection().getCode());
+                    .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            if (status.equals(IndexStatus.INDEXING)) {
-                IndexListener indexProgress = index.getIndexerListener();
-                synchronized (indexProgress) {
-                    ds.startEntry("indexProgress").startMap()
-                            .entry("filesProcessed", indexProgress.getFilesProcessed())
-                            .entry("docsDone", indexProgress.getDocsDone())
-                            .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                            .endMap().endEntry();
-                }
-            }
-
-            String formatIdentifier = indexMetadata.documentFormat();
-            if (formatIdentifier != null && formatIdentifier.length() > 0)
-                ds.entry("documentFormat", formatIdentifier);
-            if (indexMetadata.tokenCount() > 0)
-                ds.entry("tokenCount", indexMetadata.tokenCount());
-            if (blIndex.reader().numDocs() > 0)
-                ds.entry("documentCount", blIndex.reader().numDocs());
+            addIndexProgress(ds, index, indexMetadata, status);
+            ds.entry("tokenCount", indexMetadata.tokenCount());
+            ds.entry("documentCount", indexMetadata.documentCount());
 
             ds.startEntry("versionInfo").startMap()
                     .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
@@ -88,10 +73,10 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
             MetadataFields fields = indexMetadata.metadataFields();
             ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", optSpecialFieldName(fields, MetadataFields.PID))
-                    .entry("titleField", optSpecialFieldName(fields, MetadataFields.TITLE))
-                    .entry("authorField", optSpecialFieldName(fields, MetadataFields.AUTHOR))
-                    .entry("dateField", optSpecialFieldName(fields, MetadataFields.DATE))
+                    .entry("pidField", fields.pidField() == null ? "" : fields.pidField())
+                    .entry("titleField", indexMetadata.custom().get("titleField", ""))
+                    .entry("authorField", indexMetadata.custom().get("authorField", ""))
+                    .entry("dateField", indexMetadata.custom().get("dateField", ""))
                     .endMap().endEntry();
 
             ds.startEntry("annotatedFields").startMap();
@@ -129,7 +114,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     // LinkedHashSet - preserve order!
                     @SuppressWarnings("FuseStreamOperations") Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
                     for (AnnotationGroup group : groups) {
-                        for (Annotation annotation: group) {
+                        for (String annotationName: group) {
+                            Annotation annotation = f.annotation(annotationName);
                             annotationsNotInGroups.remove(annotation);
                         }
                     }
@@ -139,8 +125,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                         ds.startItem("annotationGroup").startMap();
                         ds.entry("name", group.groupName());
                         ds.startEntry("annotations").startList();
-                        for (Annotation annotation: group) {
-                            ds.item("annotation", annotation.name());
+                        for (String annotation: group) {
+                            ds.item("annotation", annotation);
                         }
                         if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
                             addedRemainingAnnots = true;
@@ -164,6 +150,24 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
             return HTTP_OK;
         }
+    }
+
+    static void addIndexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, IndexStatus status)
+            throws BlsException {
+        if (status.equals(IndexStatus.INDEXING)) {
+            IndexListener indexProgress = index.getIndexerListener();
+            synchronized (indexProgress) {
+                ds.startEntry("indexProgress").startMap()
+                        .entry("filesProcessed", indexProgress.getFilesProcessed())
+                        .entry("docsDone", indexProgress.getDocsDone())
+                        .entry("tokensProcessed", indexProgress.getTokensProcessed())
+                        .endMap().endEntry();
+            }
+        }
+
+        String formatIdentifier = indexMetadata.documentFormat();
+        if (formatIdentifier != null && formatIdentifier.length() > 0)
+            ds.entry("documentFormat", formatIdentifier);
     }
 
 }

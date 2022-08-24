@@ -3,34 +3,16 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collection;
 import java.util.Set;
 
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+
 /** An annotation on an annotated field. */
 public interface Annotation {
-
-    IndexMetadata indexMetadata();
     
 	/** @return field for which this is an annotation */
 	AnnotatedField field();
 
 	/** @return this annotation's name */
 	String name();
-	
-	/** Get the subannotation name, if this is a subannotation.
-	 * @return subannotation name, or null if this is not a subannotation
-	 */
-    String subName();
-    
-    /**
-     * Is this a subannotation?
-     * @return true if is, false if not
-     */
-    boolean isSubannotation();
-    
-    /**
-     * If this is a subannotation, return its parent annotation.
-     * 
-     * @return parent annotation or null if this is not a subannotation
-     */
-    Annotation parentAnnotation();
 
     /**
      * What type of UI should be shown for this annotation?
@@ -99,25 +81,9 @@ public interface Annotation {
     default String forwardIndexIdField() {
         return AnnotatedFieldNameUtil.forwardIndexIdField(luceneFieldPrefix());
     }
-    
-    /**
-     * Get subannotation descriptor.
-     * 
-     * Only valid for old-style indexes! (IndexMetadata.subannotationsStoredWithParent() == true)
-     * 
-     * Note that subannotations are not (yet) declared in index structure,
-     * so this will always succeed, even if the subannotation wasn't actually
-     * indexed. In that case, no hits will be found.
-     * 
-     * @param subName subannotation name
-     * @return subannotation descriptor
-     */
-    Annotation subannotation(String subName);
 
     /**
      * Get names of the subannotations for this annotation.
-     * 
-     * Only valid for new-style indexes! (IndexMetadata.subannotationsStoredWithParent() == false)
      * 
      * @return names of annotations that are considered subannotations of this annotation
      */
@@ -128,21 +94,6 @@ public interface Annotation {
     
     @Override
     int hashCode();
-
-    /**
-     * Return prefix for the value we're searching for, if any.
-     * 
-     * We used to index subannotations in the same field as their parent annotation,
-     * with the values prefixed. We don't do this anymore, but for old indexes,
-     * this is still relevant.
-     * 
-     * @return the prefix
-     */
-    default String subpropValuePrefix() {
-        if (isSubannotation() && indexMetadata().subannotationsStoredWithParent())
-            return AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR + subName() + AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR;
-        return "";
-    }
 
     void setSubAnnotation(Annotation parentAnnotation);
 
@@ -155,9 +106,54 @@ public interface Annotation {
     default AnnotationSensitivity forwardIndexSensitivity() {
 		if (!hasForwardIndex())
 			throw new RuntimeException("Annotation has no forward index: " + name());
-		if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
-			return sensitivity(MatchSensitivity.SENSITIVE);
-		} else
-			return sensitivity(MatchSensitivity.INSENSITIVE);
+        return mainSensitivity();
 	}
+
+    /**
+     * Get the main sensitivity.
+     *
+     * If the field has a forward index, content store and/or offsets,
+     * they will be stored in this sensitivity.
+     *
+     * @return main sensitivity
+     * @throws RuntimeException if annotation has no forward index
+     */
+    default AnnotationSensitivity mainSensitivity() {
+        if (hasSensitivity(MatchSensitivity.SENSITIVE)) {
+            return sensitivity(MatchSensitivity.SENSITIVE);
+        } else
+            return sensitivity(MatchSensitivity.INSENSITIVE);
+    }
+
+    /**
+     * Get the sensitivity setting that corresponds to the available sensitivities.
+     *
+     * The sensitivity setting is what is specified in the input format config,
+     * and is stored in the (integrated) index metadata.
+     *
+     * @return sensitivity setting
+     */
+    default AnnotationSensitivities sensitivitySetting() {
+        boolean s = hasSensitivity(MatchSensitivity.SENSITIVE);
+        boolean i = hasSensitivity(MatchSensitivity.INSENSITIVE);
+        boolean ci = hasSensitivity(MatchSensitivity.CASE_INSENSITIVE);
+        boolean di = hasSensitivity(MatchSensitivity.DIACRITICS_INSENSITIVE);
+
+        if (s && i && ci && di)
+            return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
+        else if (s & i)
+            return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
+        else if (i)
+            return AnnotationSensitivities.ONLY_INSENSITIVE;
+        else if (s)
+            return AnnotationSensitivities.ONLY_SENSITIVE;
+        else
+            throw new IllegalStateException("No sensitivities for annotation " + name());
+    }
+
+    CustomProps custom();
+
+    boolean isSubannotation();
+
+    Annotation parentAnnotation();
 }

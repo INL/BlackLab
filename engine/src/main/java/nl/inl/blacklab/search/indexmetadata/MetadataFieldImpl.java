@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -8,25 +7,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.DocValuesType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
+
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * A metadata field in an index.
  */
-public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable<MetadataFieldImpl> {
+@XmlAccessorType(XmlAccessType.FIELD)
+public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable {
     
-    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
-
-    private static final int MAX_VALUE_STORE_LENGTH = 256;
+//    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
     private static int maxMetadataValuesToStore = 50;
-
-    /** Did we encounter a value that was too long to store and warn the user about it? */
-    private boolean warnedAboutValueLength = false;
 
     public static void setMaxMetadataValuesToStore(int n) {
         maxMetadataValuesToStore = n;
@@ -35,6 +35,34 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     public static int maxMetadataValuesToStore() {
         return maxMetadataValuesToStore;
     }
+
+    public static MetadataFieldImpl fromConfig(ConfigMetadataField config,
+            MetadataFieldsImpl metadataFields) {
+        MetadataFieldImpl field = new MetadataFieldImpl(config.getName(), config.getType(),
+                metadataFields.getMetadataFieldValuesFactory());
+
+        // Custom properties
+        CustomPropsMap custom = field.custom();
+        custom.put("displayName", config.getDisplayName());
+        custom.put("description", config.getDescription());
+        custom.put("uiType", config.getUiType());
+        custom.put("unknownCondition", (
+                config.getUnknownCondition() == null ?
+                        UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()) :
+                        config.getUnknownCondition()
+                ).stringValue()
+        );
+        custom.put("unknownValue", config.getUnknownValue() == null ? metadataFields.defaultUnknownValue() :
+                config.getUnknownValue());
+        custom.put("displayValues", config.getDisplayValues());
+        custom.put("displayOrder", config.getDisplayOrder());
+
+        field.setAnalyzer(!StringUtils.isEmpty(config.getAnalyzer()) ? config.getAnalyzer() : metadataFields.defaultAnalyzerName());
+        return field;
+    }
+
+    @XmlTransient
+    private boolean keepTrackOfValues = true;
 
     /**
      * The field type: text, untokenized or numeric.
@@ -47,59 +75,35 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     private String analyzer = "DEFAULT";
 
     /**
-     * When value is missing or empty this value may be used instead (whether it is
-     * depends or unknownCondition).
+     * Values for this field and their frequencies.
      */
-    private String unknownValue = "unknown";
-
-    /**
-     * When is the unknown value for this field used?
-     */
-    private UnknownCondition unknownCondition = UnknownCondition.NEVER;
-
-    /**
-     * The values this field can have. Note that this may not be the complete list;
-     * check valueListComplete.
-     */
-    private final Map<String, Integer> values = new HashMap<>();
-
-    /** Gives the display value corresponding to a value, if any. */
-    private final Map<String, String> displayValues = new HashMap<>();
-
-    /** Order in which to display values in select dropdown (if defined) */
-    private final List<String> displayOrder = new ArrayList<>();
-
-    /**
-     * Whether or not all values are stored here.
-     */
-    private ValueListComplete valueListComplete = ValueListComplete.UNKNOWN;
-
-    /**
-     * The field group this field belongs to. Can be used by a generic search
-     * application to generate metadata search interface.
-     */
-    private String group;
-
-    /**
-     * Type of UI element to show for this field. Can be used by a generic search
-     * application to generate metadata search interface.
-     */
-    private String uiType = "";
+    @XmlTransient
+    private MetadataFieldValues values;
 
     /**
      * If true, this instance is frozen and may not be mutated anymore.
      * Doing so anyway will throw an exception.
      */
+    @XmlTransient
     private boolean frozen;
 
-    /**
-     * Type of DocValues stored for this field, or NONE if no DocValues were stored.
-     */
-    private DocValuesType docValuesType;
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    MetadataFieldImpl() {
+    }
 
-    MetadataFieldImpl(String fieldName, FieldType type) {
+    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
+        this(fieldName, type, factory.create(fieldName, type));
+    }
+
+    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues values) {
         super(fieldName);
         this.type = type;
+        this.values = values;
+    }
+
+    public void setKeepTrackOfValues(boolean keepTrackOfValues) {
+        this.keepTrackOfValues = keepTrackOfValues;
     }
 
     @Override
@@ -107,9 +111,13 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return type;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("displayOrder", Collections.emptyList()) instead.
+     */
     @Override
+    @Deprecated
     public List<String> displayOrder() {
-        return Collections.unmodifiableList(displayOrder);
+        return custom.get("displayOrder", Collections.emptyList());
     }
 
     @Override
@@ -117,48 +125,56 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         return analyzer;
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("unknownValue", "unknown") instead.
+     */
     @Override
+    @Deprecated
     public String unknownValue() {
-        return unknownValue;
+        return custom.get("unknownValue", "unknown");
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("unknownCondition", "never") instead.
+     */
     @Override
+    @Deprecated
     public UnknownCondition unknownCondition() {
-        return unknownCondition;
+        String strUnknownCondition = custom.get("unknownCondition", UnknownCondition.NEVER.stringValue());
+        return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
     @Override
     public Map<String, Integer> valueDistribution() {
-        return Collections.unmodifiableMap(values);
+        return values.distribution();
     }
 
     @Override
     public ValueListComplete isValueListComplete() {
-        return valueListComplete;
+        return values.isComplete();
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("displayValues", Collections.emptyMap()) instead.
+     */
     @Override
+    @Deprecated
     public Map<String, String> displayValues() {
-        return Collections.unmodifiableMap(displayValues);
+        return custom.get("displayValues", Collections.emptyMap());
     }
 
+    /**
+     * @deprecated Use {@link #custom()} with .get("uiType", "") instead.
+     */
     @Override
-    public String group() {
-        return group;
-    }
-
-    @Override
+    @Deprecated
     public String uiType() {
-        return uiType;
+        return custom.get("uiType", "");
     }
     
     @Override
     public String offsetsField() {
         return name();
-    }
-
-    public DocValuesType docValuesType() {
-        return docValuesType;
     }
 
     // Methods that mutate data
@@ -177,53 +193,64 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     }
     
     public void setAnalyzer(String analyzer) {
-        ensureNotFrozen();
-        this.analyzer = analyzer;
-    }
-
-    public void setUnknownValue(String unknownValue) {
-        ensureNotFrozen();
-        this.unknownValue = unknownValue;
-    }
-
-    public void setUnknownCondition(UnknownCondition unknownCondition) {
-        ensureNotFrozen();
-        this.unknownCondition = unknownCondition;
-    }
-
-    public void setValues(JsonNode values) {
-        ensureNotFrozen();
-        this.values.clear();
-        Iterator<Entry<String, JsonNode>> it = values.fields();
-        while (it.hasNext()) {
-            Entry<String, JsonNode> entry = it.next();
-            String value = entry.getKey();
-            int count = entry.getValue().asInt();
-            this.values.put(value, count);
+        if (this.analyzer == null || !this.analyzer.equals(analyzer)) {
+            ensureNotFrozen();
+            this.analyzer = analyzer;
         }
     }
 
-    public void setDisplayValues(JsonNode displayValues) {
+    /**
+     * @deprecated Use {@link #custom()} with .put("unknownValue", ...) instead.
+     */
+    @Deprecated
+    public void setUnknownValue(String unknownValue) {
+        if (!this.unknownValue().equals(unknownValue)) {
+            ensureNotFrozen();
+            custom.put("unknownValue", unknownValue);
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #custom()} with .put("unknownCondition", unknownCondition.stringValue()) instead.
+     */
+    @Deprecated
+    public void setUnknownCondition(UnknownCondition unknownCondition) {
+        if (!this.unknownCondition().equals(unknownCondition)) {
+            ensureNotFrozen();
+            this.custom.put("unknownCondition", unknownCondition.stringValue());
+        }
+    }
+
+    void setValues(JsonNode values) {
+        if (this.values.shouldAddValuesWhileIndexing()) {
+            ensureNotFrozen();
+            this.values.setValues(values);
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #custom()} with .put("displayValue", ...) instead.
+     */
+    @Deprecated
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    void setDisplayValues(JsonNode displayValues) {
         ensureNotFrozen();
-        this.displayValues.clear();
+        Map<String, String> map = new HashMap<>();
         Iterator<Entry<String, JsonNode>> it = displayValues.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> entry = it.next();
             String value = entry.getKey();
             String displayValue = entry.getValue().textValue();
-            this.displayValues.put(value, displayValue);
+            map.put(value, displayValue);
         }
+        custom.put("displayValues", map);
     }
 
-    public void setDisplayOrder(List<String> displayOrder) {
-        ensureNotFrozen();
-        this.displayOrder.clear();
-        this.displayOrder.addAll(displayOrder);
-    }
-
-    public void setValueListComplete(boolean valueListComplete) {
-        ensureNotFrozen();
-        this.valueListComplete = valueListComplete ? ValueListComplete.YES : ValueListComplete.NO;
+    void setValueListComplete(boolean valueListComplete) {
+        if (this.values.shouldAddValuesWhileIndexing()) {
+            ensureNotFrozen();
+            this.values.setComplete(valueListComplete ? ValueListComplete.YES : ValueListComplete.NO);
+        }
     }
 
     /**
@@ -233,35 +260,10 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      * @param value field value
      */
     public synchronized void addValue(String value) {
-        ensureNotFrozen();
-        // If we've seen a value, assume we'll get to see all values;
-        // when it turns out there's too many or they're too long,
-        // we'll change the value to NO.
-        if (valueListComplete == ValueListComplete.UNKNOWN)
-            valueListComplete = ValueListComplete.YES;
-    
-        if (value.length() > MAX_VALUE_STORE_LENGTH) {
-            // Value too long to store.
-            valueListComplete = ValueListComplete.NO;
-            if (!warnedAboutValueLength) {
-                warnedAboutValueLength = true;
-                logger.warn("Metadata field " + name() + " includes a value too long to store in indexmetadata.yaml (" + value.length() + " > " + MAX_VALUE_STORE_LENGTH + "). Will not store this value and will set valueListComplete to false. The value will still be indexed/stored in Lucene as normal. This warning only appears once.");
-            }
+        if (!keepTrackOfValues)
             return;
-        }
-        if (values.containsKey(value)) {
-            // Seen this value before; increment frequency
-            values.put(value, values.get(value) + 1);
-        } else {
-            // New value; add it
-            if (values.size() >= maxMetadataValuesToStore) {
-                // We can't store thousands of unique values;
-                // Stop storing now and indicate that there's more.
-                valueListComplete = ValueListComplete.NO;
-                return;
-            }
-            values.put(value, 1);
-        }
+        ensureNotFrozen();
+        values.addValue(value);
     }
 
     /**
@@ -272,24 +274,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     public synchronized void removeValue(String value) {
         ensureNotFrozen();
-        
-        // If we've seen a value, assume we'll get to see all values;
-        // when it turns out there's too many or they're too long,
-        // we'll change the value to NO.
-        if (valueListComplete == ValueListComplete.UNKNOWN)
-            valueListComplete = ValueListComplete.YES;
-    
-        if (values.containsKey(value)) {
-            // Seen this value before; decrement frequency
-            int n = values.get(value) - 1;
-            if (n > 0)
-                values.put(value, n);
-            else
-                values.remove(value);
-        } else {
-            // That's weird; maybe it was a really long value, or there
-            // were too many values to store. Just accept it and move on.
-        }
+        values.removeValue(value);
     }
 
     /**
@@ -298,22 +283,12 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
      */
     public void resetForIndexing() {
         ensureNotFrozen();
-        this.values.clear();
-        valueListComplete = ValueListComplete.UNKNOWN;
+        values.reset();
     }
 
-    public void setGroup(String group) {
-        ensureNotFrozen();
-        this.group = group;
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {
+        super.fixAfterDeserialization(index, fieldName);
+        values = factory.create(fieldName, type);
+        setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
-
-    public void setUiType(String uiType) {
-        ensureNotFrozen();
-        this.uiType = uiType;
-    }
-
-    public void setDocValuesType(DocValuesType docValuesType) {
-        this.docValuesType = docValuesType;
-    }
-
 }

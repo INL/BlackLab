@@ -15,7 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -651,7 +650,7 @@ public class SearchParameters {
             return hitsSample().docs(-1);
         Query docFilterQuery = getFilterQuery();
         if (pattern == null && docFilterQuery == null) {
-            docFilterQuery = new MatchAllDocsQuery();
+            docFilterQuery = blIndex().getAllRealDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache());
         return search.findDocuments(docFilterQuery);
@@ -668,7 +667,7 @@ public class SearchParameters {
     public SearchDocs subcorpus() throws BlsException {
         Query docFilterQuery = getFilterQuery();
         if (docFilterQuery == null) {
-            docFilterQuery = new MatchAllDocsQuery();
+            docFilterQuery = blIndex().getAllRealDocsQuery();
         }
         SearchEmpty search = blIndex().search(null, getUseCache());
         return search.findDocuments(docFilterQuery);

@@ -149,9 +149,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected AnnotatedFieldWriter getMainAnnotatedField() {
         if (mainAnnotatedField == null) {
-            // The "main annotated field" is the field that stores the document content id for now.
-            // (We will change this eventually so the document content id is not stored with a annotated field
-            // but as a metadata field instead.)
+            // The "main annotated field" is the field that stores the document content id.
             // The main annotated field is a field named "contents" or, if that does not exist, the first
             // annotated field
             for (AnnotatedFieldWriter field : annotatedFields.values()) {
@@ -403,7 +401,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         for (AnnotatedFieldWriter annotatedField : getAnnotatedFields().values()) {
             // Reset annotated field for next document
             // don't reuse buffers, they're still referenced by the lucene doc.
-            annotatedField.clear(!indexingIntoExistingLuceneDoc);
+            annotatedField.clear();
         }
 
         // Report progress

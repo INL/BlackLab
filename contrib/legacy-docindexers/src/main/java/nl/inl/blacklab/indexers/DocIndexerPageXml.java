@@ -1,7 +1,6 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
-import java.util.Arrays;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
@@ -25,8 +24,6 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
         super(indexer, fileName, reader);
         
         registerContentsField();
-
-        addNumericFields(Arrays.asList("yearFrom", "yearTo"));
 
         // Document element
         addHandler("/PcGts", new DocumentElementHandler());

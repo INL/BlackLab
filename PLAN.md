@@ -13,23 +13,56 @@ Integrating with Solr will involve the following steps.
 - [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
-## Enable trunk-based development
+## Improve testing
 
-- [ ] Figure out how to effectively run the same unit tests on multiple implementations of the same interface. [Using generics and inheritance?](https://stackoverflow.com/a/16237354)? No, generics not needed, see TestSearches; do the same with more classes.
+### Unit tests
+
+- [ ] Run more of the unit test suites on both the classic and the integrated index format. See e.g. TestSearches.
+- [ ] Make sure (basic) config-based indexing is unit tested too.
+ 
+### Integration tests
+
+- [ ] Test that file formats remain unchanged, by including small already-indexed corpora for both supported index formats in the repo and test those.
+
 
 ## Incorporate all information into the Lucene index
 
-- [x] Eliminate index version files (replaced by codec version)
-- [x] Make the forward index part of the Lucene index
-  - [ ] PROBLEM: we normally only store the first value indexed at a position in the forward index. But with the integrated index, we can't tell what value was first anymore by the time we write the forward index (because we reverse the reverse index). So we should either change it to store all values in the forward index (doable but complicated and doesn't tell us how to build concordances), or we need to add extra information to the tokens (payload?) that tells us what value was first. Probably refer to Mtas (they do store all values in the forward index, but they still need to know what token to use for concordances).
-  - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
-  - [ ] Only create forward index for annotations that should have one (fieldsconsumer)
-  - [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
-  - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions dynamically. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
-   (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
-- [ ] Make indexmetada.yaml part of the Lucene index. Probably take the opportunity to refactor and simplify related code as much as possible. E.g. use Jackson, get rid of old settings, don't try to autodetect stuff from the index, etc.
-  - [ ] Don't store values+freqs in metadata if possible, iterate over DocValues to determine these instead. 
+### Metadata
+
+- [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
+    - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
+          OTOH, changing metadata as documents are added to the index would be tricky in distributed env...
+    - [ ] QueryTool: enter command `filter *:*`, then command `docs`. The index metadata document is not skipped.
+          ideally, there should be a guarantee that DocResults cannot include the metadata document.
+
+Where we take the metadata document into account:
+- whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)
+- DocValues (metadata doc just won't have a value for any of the fields)
+- SpansNGrams, SpansNot (use lengthgetter which returns 0 if annotated field is not in document)
+- HitsFromQuery[Parallel] (only if one of the Spans could potentially produce the metadata document as hit, which they shouldn't)
+- anywhere where `liveDocs` is used (checked, see some the above)
+- anywhere where `MatchAllDocsQuery` is used (replaced with BlackLabIndex.getAllRealDocsQuery())
+
+
+### Forward index
+ 
+- [ ] Search for "with integrated, we cannot open the forward index ...". This is no longer a problem.
+- [ ] PROBLEM: we normally only store the first value indexed at a position in the forward index. But with the integrated index, we can't tell what value was first anymore by the time we write the forward index (because we reverse the reverse index). So we should either change it to store all values in the forward index (doable but complicated and doesn't tell us how to build concordances), or we need to add extra information to the tokens (payload?) that tells us what value was first. Probably refer to Mtas (they do store all values in the forward index, but they still need to know what token to use for concordances).
+- [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
+- [ ] Only create forward index for annotations that should have one (fieldsconsumer)
+      (need access to index metadata)
+- [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
+  (need access to index metadata)
+- [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
+  Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
+ (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
+
+
+
+### Content store
+
 - [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)<br>How do we add the content to the index? Could we create a custom field type for this or something (or otherwise register the field to be a content store field, maybe via a field attribute..?), which we store in such a way that it allows us random access..? Or do we simply obtain a reference to the FieldsConsumer and call a separate method to add the content to the store?
+
 
 ## Refactoring opportunities
 
@@ -72,6 +105,7 @@ Tasks:
 
 ## Integrate with Solr (standalone)
 
+- [ ] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
 - [ ] Study how Mtas integrates with Solr
 - [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
 - [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)

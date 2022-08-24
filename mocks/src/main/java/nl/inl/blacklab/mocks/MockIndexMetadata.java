@@ -10,6 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
+import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 
@@ -67,6 +68,11 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
+    public CustomProps custom() {
+        return CustomProps.NONE;
+    }
+
+    @Override
     public String displayName() {
         return null;
     }
@@ -118,6 +124,11 @@ public class MockIndexMetadata implements IndexMetadata {
 
     @Override
     public long tokenCount() {
+        return 0;
+    }
+
+    @Override
+    public int documentCount() {
         return 0;
     }
 

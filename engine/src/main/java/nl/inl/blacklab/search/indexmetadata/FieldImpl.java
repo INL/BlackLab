@@ -1,25 +1,33 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.apache.commons.lang3.StringUtils;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field {
     /** Field's name */
-    protected final String fieldName;
-
-    /** Field's name */
-    protected String displayName;
-
-    /** Field's name */
-    protected String description = "";
+    @XmlTransient
+    protected String fieldName;
 
     /** Does the field have an associated content store? */
+    @JsonProperty("hasContentStore")
     protected boolean contentStore;
+
+    /** Custom field properties */
+    protected CustomPropsMap custom = new CustomPropsMap();
+
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
+    FieldImpl() {
+    }
 
     FieldImpl(String fieldName) {
         this.fieldName = fieldName;
-        this.displayName = "";
     }
 
     /**
@@ -32,35 +40,51 @@ public abstract class FieldImpl implements Field {
         return fieldName;
     }
 
+    /**
+     * @deprecated use {@link #custom()} and .put("displayName", "...") instead
+     */
+    @Deprecated
     public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+        custom.put("displayName", displayName);
     }
 
     /**
-     * Get this field's display name
-     * 
-     * @return this field's display name
+     * @deprecated use {@link #custom()} and .get("displayName", "") instead
      */
+    @Deprecated
     @Override
     public String displayName() {
+        String displayName = custom.get("displayName", "");
         if (StringUtils.isEmpty(displayName)) {
             displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
         }
         return displayName;
     }
 
+    /**
+     * @deprecated use {@link #custom()} and .put("description", "...") instead
+     */
+    @Deprecated
     public void setDescription(String description) {
-        this.description = description;
+        custom.put("description", description);
     }
 
     /**
-     * Get this field's description
-     * 
-     * @return this field's description
+     * @deprecated use {@link #custom()} and .get("description", "") instead
      */
+    @Deprecated
     @Override
     public String description() {
-        return description;
+        return custom.get("description", "");
+    }
+
+    @Override
+    public CustomPropsMap custom() {
+        return custom;
+    }
+
+    public void setContentStore(boolean contentStore) {
+        this.contentStore = contentStore;
     }
 
     @Override
@@ -88,6 +112,10 @@ public abstract class FieldImpl implements Field {
     @Override
     public String toString() {
         return fieldName;
+    }
+
+    public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
+        this.fieldName = fieldName;
     }
 
 }

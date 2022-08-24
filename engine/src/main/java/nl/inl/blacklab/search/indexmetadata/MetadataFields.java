@@ -1,22 +1,11 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /** Metadata fields in an index. */
 public interface MetadataFields extends Iterable<MetadataField> {
-	
-    /** Name of special field type for persistent identifier */
-    String PID = "pid";
-
-    /** Name of special field type for document title */
-    String TITLE = "title";
-
-    /** Name of special field type for document author */
-    String AUTHOR = "author";
-
-    /** Name of special field type for document date */
-    String DATE = "date";
 
 	/**
 	 * Name of the default analyzer to use for metadata fields.
@@ -34,8 +23,8 @@ public interface MetadataFields extends Iterable<MetadataField> {
 	 * @throws IllegalArgumentException if field not found
 	 */
 	MetadataField get(String fieldName);
-	
-	MetadataFieldGroups groups();
+
+    Map<String, ? extends MetadataFieldGroup> groups();
 	
 	/**
 	 * Returns the one of the special fields, if configured.
@@ -51,10 +40,14 @@ public interface MetadataFields extends Iterable<MetadataField> {
 	 * 
 	 * @param specialFieldType type of field 
 	 * @return name of the pid field, or null if none found
+     * @deprecated use {@link #pidField()} or indexmetadata.custom().get(propName, ") instead
 	 */
+    @Deprecated
 	MetadataField special(String specialFieldType);
 
-	/**
+    MetadataField pidField();
+
+    /**
 	 * Does the specified field exist?
 	 * 
 	 * @return true if it exists, false if not
@@ -62,5 +55,5 @@ public interface MetadataFields extends Iterable<MetadataField> {
     boolean exists(String name);
 
     List<String> names();
-	
+
 }

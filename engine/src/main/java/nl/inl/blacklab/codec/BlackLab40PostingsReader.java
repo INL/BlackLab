@@ -14,9 +14,11 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
+import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 import org.apache.lucene.util.Accountables;
@@ -39,9 +41,9 @@ import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
  * are cloned whenever a thread needs to use them.
  */
 @ThreadSafe
-public class BLFieldsProducer extends FieldsProducer {
+public class BlackLab40PostingsReader extends FieldsProducer {
 
-    protected static final Logger logger = LogManager.getLogger(BLFieldsProducer.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
     /**
      * Get the BLFieldsProducer for the given leafreader.
@@ -54,20 +56,22 @@ public class BLFieldsProducer extends FieldsProducer {
      * but can be used to read information related to any field from the segment.
      *
      * @param lrc leafreader to get the BLFieldsProducer for
-     * @param luceneField name of any Lucene field in the index
      * @return BLFieldsProducer for this leafreader
      */
-    public static BLFieldsProducer get(LeafReaderContext lrc, String luceneField) {
+    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
         try {
-            BLTerms terms = (BLTerms)(lrc.reader().terms(luceneField));
-            return terms.getFieldsProducer();
+            // We need to find a field that is indexed and therefore has terms.
+            // TODO: determine an appropriate field once and reuse that so we don't always have to loop here.
+            for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
+                BLTerms terms = (BLTerms)(lrc.reader().terms(fieldInfo.name));
+                if (terms != null)
+                    return terms.getFieldsProducer();
+            }
+            return null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
-
-    /** Our codec name (BLCodec) */
-    private final String postingsFormatName;
 
     /** Name of PF we delegate to (the one from Lucene) */
     private String delegatePostingsFormatName;
@@ -81,16 +85,19 @@ public class BLFieldsProducer extends FieldsProducer {
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
-    public BLFieldsProducer(SegmentReadState state, String postingsFormatName)
+    private final SegmentReadState state;
+
+    public BlackLab40PostingsReader(SegmentReadState state)
             throws IOException {
-        this.postingsFormatName = postingsFormatName;
+
+        this.state = state;
 
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this, state);
 
-        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(this.delegatePostingsFormatName);
-        this.delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegatePostingsFormatName);
+        delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
     }
 
     @Override
@@ -110,7 +117,8 @@ public class BLFieldsProducer extends FieldsProducer {
         synchronized (termsPerField) {
             terms = termsPerField.get(field);
             if (terms == null) {
-                terms = new BLTerms(delegateFieldsProducer.terms(field), this);
+                Terms delegateTerms = delegateFieldsProducer.terms(field);
+                terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
                 termsPerField.put(field, terms);
             }
         }
@@ -159,8 +167,8 @@ public class BLFieldsProducer extends FieldsProducer {
         IndexInput input = state.directory.openInput(fileName, state.context);
         try {
             // Check index header
-            CodecUtil.checkIndexHeader(input, postingsFormatName, BLCodecPostingsFormat.VERSION_START,
-                    BLCodecPostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+            CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
+                    BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
             // Check delegate postings format name
             String delegatePFN = input.readString();

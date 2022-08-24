@@ -29,7 +29,6 @@
       "description": "Contents of the documents.",
       "hasContentStore": true,
       "hasXmlTags": true,
-      "hasLengthTokens": true,
       "mainAnnotation": "word",
       "displayOrder": [
         "word",

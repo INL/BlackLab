@@ -1,11 +1,20 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.io.File;
+
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */
-public interface IndexMetadata extends Freezable<IndexMetadata> {
-	
-	AnnotatedFields annotatedFields();
+public interface IndexMetadata extends Freezable {
+
+    static String indexNameFromDirectory(File directory) {
+        String name = directory.getName();
+        if (name.equals("index"))
+            name = directory.getAbsoluteFile().getParentFile().getName();
+        return name;
+    }
+
+    AnnotatedFields annotatedFields();
 	
 	default AnnotatedField mainAnnotatedField() {
 	    return annotatedFields().main();
@@ -21,19 +30,35 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	    return metadataFields().get(name);
 	}
 
+    /**
+     * Get the custom properties for this corpus.
+     *
+     * Custom properties are not used by BlackLab, but are passed on by BLS
+     * for use by applications, e.g. a search GUI.
+     *
+     * Examples: displayName, description, textDirection.
+     *
+     * @return map of custom properties
+     */
+    CustomProps custom();
+
 	/**
 	 * Get the display name for the index.
 	 *
 	 * If no display name was specified, returns the name of the index directory.
 	 *
 	 * @return the display name
+     * @deprecated use {@link #custom()} and get("displayName", "") instead
 	 */
+    @Deprecated
 	String displayName();
 
 	/**
 	 * Get a description of the index, if specified
 	 * @return the description
+     * @deprecated use {@link #custom()} and get("description", "") instead
 	 */
+    @Deprecated
 	String description();
 
 	/**
@@ -45,7 +70,9 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
     /**
      * What's the text direction of this corpus?
      * @return text direction
+     * @deprecated use {@link #custom()} and get("textDirection", "ltr") instead
      */
+    @Deprecated
 	TextDirection textDirection();
 
 	/**
@@ -90,10 +117,24 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	String indexBlackLabVersion();
 
 	/**
-	 * How many tokens are in the index?
+	 * How many tokens are in the main annotated field?
+     *
 	 * @return number of tokens
 	 */
 	long tokenCount();
+
+    /**
+     * How many documents are in the index?
+     *
+     * This reports the number of live documents in the index
+     * that have a value for the main annotated field.
+     *
+     * This does therefore not include the index metadata document
+     * (if using integrated index format).
+     *
+     * @return number of documents
+     */
+    int documentCount();
 
 	/**
 	 * Is this a new, empty index?
@@ -105,8 +146,15 @@ public interface IndexMetadata extends Freezable<IndexMetadata> {
 	 */
 	boolean isNewIndex();
 
-    default boolean subannotationsStoredWithParent() {
-        return false;
+    /**
+     * Return the id of the index metadata document.
+     *
+     * This document, if it exists, should be skipped when searching.
+     *
+     * @return special docId, or -1 if none
+     */
+    default int metadataDocId() {
+        return -1;
     }
-	
+
 }

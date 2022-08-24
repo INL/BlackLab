@@ -39,7 +39,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroups;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -617,41 +616,43 @@ public abstract class RequestHandler {
     }
 
     protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
-        MetadataFieldGroups metaGroups = index.metadata().metadataFields().groups();
-        // FIXME: This synchronization is necessary because opening an index is not an atomic
-        //   operation, so it is apparently possible to get the metadata field groups object
-        //   before it's complete. We should fix the underlying problem here and make sure
-        //   index metadata is immutable.
-        synchronized (metaGroups) { // concurrent requests
-            Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream().collect(Collectors.toSet());
-            for (MetadataFieldGroup metaGroup : metaGroups) {
-                for (MetadataField field: metaGroup) {
-                    metadataFieldsNotInGroups.remove(field);
-                }
+        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
+        // TODO: This synchronization was necessary when testing many simultaneous
+        //   requests with Artillery. It should no longer be possible for metadata field
+        //   groups to change after the IndexMetadata object has been constructed though,
+        //   so it's been disabled. Verify this is using Artillery.
+        //synchronized (metaGroups) { // concurrent requests
+        Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
+                .collect(Collectors.toSet());
+        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
+            for (String fieldName: metaGroup) {
+                MetadataField field = index.metadata().metadataFields().get(fieldName);
+                metadataFieldsNotInGroups.remove(field);
             }
+        }
 
-            ds.startEntry("metadataFieldGroups").startList();
-            boolean addedRemaining = false;
-            for (MetadataFieldGroup metaGroup : metaGroups) {
-                ds.startItem("metadataFieldGroup").startMap();
-                ds.entry("name", metaGroup.name());
-                ds.startEntry("fields").startList();
-                for (MetadataField field: metaGroup) {
+        ds.startEntry("metadataFieldGroups").startList();
+        boolean addedRemaining = false;
+        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
+            ds.startItem("metadataFieldGroup").startMap();
+            ds.entry("name", metaGroup.name());
+            ds.startEntry("fields").startList();
+            for (String field: metaGroup) {
+                ds.item("field", field);
+            }
+            if (!addedRemaining && metaGroup.addRemainingFields()) {
+                addedRemaining = true;
+                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
+                rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
+                for (MetadataField field: rest) {
                     ds.item("field", field.name());
                 }
-                if (!addedRemaining && metaGroup.addRemainingFields()) {
-                    addedRemaining = true;
-                    List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                    rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
-                    for (MetadataField field: rest) {
-                        ds.item("field", field.name());
-                    }
-                }
-                ds.endList().endEntry();
-                ds.endMap().endItem();
             }
             ds.endList().endEntry();
+            ds.endMap().endItem();
         }
+        ds.endList().endEntry();
+        //}
     }
 
     /**
@@ -691,18 +692,22 @@ public abstract class RequestHandler {
         Set<String> requestedFields = searchParam.listMetadataValuesFor();
 
         Set<MetadataField> ret = new HashSet<>();
-        ret.add(fields.special(MetadataFields.AUTHOR));
-        ret.add(fields.special(MetadataFields.DATE));
-        ret.add(fields.special(MetadataFields.PID));
-        ret.add(fields.special(MetadataFields.TITLE));
+        ret.add(optCustomField(blIndex().metadata(), "authorField"));
+        ret.add(optCustomField(blIndex().metadata(), "dateField"));
+        ret.add(optCustomField(blIndex().metadata(), "titleField"));
+        ret.add(fields.pidField());
         for (MetadataField field  : fields) {
             if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
                 ret.add(field);
             }
         }
         ret.remove(null); // for missing special fields.
-
         return ret;
+    }
+
+    private MetadataField optCustomField(IndexMetadata metadata, String propName) {
+        String fieldName = metadata.custom().get(propName, "");
+        return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
     }
 
     /**
@@ -759,18 +764,14 @@ public abstract class RequestHandler {
 
     public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
         ds.startMap();
-        MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = indexMetadata.metadataFields().pidField();
         if (pidField != null)
             ds.entry("pidField", pidField.name());
-        MetadataField titleField = indexMetadata.metadataFields().special(MetadataFields.TITLE);
-        if (titleField != null)
-            ds.entry("titleField", titleField.name());
-        MetadataField authorField = indexMetadata.metadataFields().special(MetadataFields.AUTHOR);
-        if (authorField != null)
-            ds.entry("authorField", authorField.name());
-        MetadataField dateField = indexMetadata.metadataFields().special(MetadataFields.DATE);
-        if (dateField != null)
-            ds.entry("dateField", dateField.name());
+        for (String propName: List.of("titleField", "authorField", "dateField")) {
+            String fieldName = indexMetadata.custom().get(propName, "");
+            if (!fieldName.isEmpty())
+                ds.entry(propName, fieldName);
+        }
         ds.endMap();
     }
 
@@ -788,7 +789,7 @@ public abstract class RequestHandler {
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
-        MetadataField pidField = index.metadataFields().special(MetadataFields.PID);
+        MetadataField pidField = index.metadataFields().pidField();
         String pid = pidField == null ? null : document.get(pidField.name());
         if (pid == null)
             return Integer.toString(luceneDocId);

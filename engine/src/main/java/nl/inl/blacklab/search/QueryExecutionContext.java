@@ -28,7 +28,7 @@ public class QueryExecutionContext {
     private final BlackLabIndex index;
 
     /** What to prefix values with (for "subproperties", like PoS features, etc.) */
-    private final String subpropPrefix;
+    private final String subpropPrefix = "";
 
     /** The sensitivity variant of our annotation we'll search. */
     private final AnnotationSensitivity sensitivity;
@@ -50,7 +50,6 @@ public class QueryExecutionContext {
         if (annotation == null)
             throw new IllegalArgumentException("Annotation doesn't exist: null");
         this.index = index;
-        this.subpropPrefix = annotation.subpropValuePrefix();
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
     }

@@ -21,7 +21,7 @@ public class TextPatternPrefix extends TextPatternTerm {
     public BLSpanQuery translate(QueryExecutionContext context) throws RegexpTooLarge {
         try {
             return new BLSpanMultiTermQueryWrapper<>(QueryInfo.create(context.index(), context.field()), new PrefixQuery(new Term(context.luceneField(),
-                    context.subannotPrefix() + context.optDesensitize(optInsensitive(context, value)))));
+                    context.optDesensitize(optInsensitive(context, value)))));
         } catch (StackOverflowError e) {
             // If we pass in a prefix expression matching a lot of words,
             // stack overflow may occur inside Lucene's automaton building

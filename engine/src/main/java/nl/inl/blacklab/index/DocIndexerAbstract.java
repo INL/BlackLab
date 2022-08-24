@@ -2,13 +2,10 @@ package nl.inl.blacklab.index;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +21,6 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
@@ -64,8 +60,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      * Parameters passed to this indexer
      */
     protected final Map<String, String> parameters = new HashMap<>();
-
-    final Set<String> numericFields = new HashSet<>();
 
     /** How many documents we've processed */
     private int numberOfDocsDone = 0;
@@ -139,11 +133,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     @Override
-    public void addNumericFields(Collection<String> fields) {
-        numericFields.addAll(fields);
-    }
-
-    @Override
     public boolean continueIndexing() {
         return getDocWriter().continueIndexing();
     }
@@ -199,7 +188,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public void addMetadataToDocument() {
         // See what metadatafields are missing or empty and add unknown value if desired.
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
         for (String field: fields) {
@@ -279,7 +268,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         new BytesRef(value))); // docvalues for efficient sorting/grouping
             }
         }
-        if (type == FieldType.NUMERIC || numericFields.contains(name)) {
+        if (type == FieldType.NUMERIC) {
             String numFieldName = name;
             if (type != FieldType.NUMERIC) {
                 numFieldName += "Numeric";

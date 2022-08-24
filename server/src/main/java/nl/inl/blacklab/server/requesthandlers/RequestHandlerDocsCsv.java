@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -204,7 +203,7 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     private void writeDocs(DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize, DataStreamPlain ds) throws BlsException {
         try {
             IndexMetadata indexMetadata = this.blIndex().metadata();
-            MetadataField pidField = indexMetadata.metadataFields().special(MetadataFields.PID);
+            MetadataField pidField = indexMetadata.metadataFields().pidField();
             String tokenLengthField = this.blIndex().mainAnnotatedField().tokenLengthField();
 
             // Build the header; 2 columns for pid and length, then 1 for each metadata field

@@ -1,61 +1,106 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlTransient;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 
 /**
  * The metadata fields in an index.
  */
-class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFieldsImpl> {
+@XmlAccessorType(XmlAccessType.FIELD)
+@JsonPropertyOrder({ "defaultAnalyzer", "pidField", "throwOnMissingField", "fields" })
+class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
-    /**
-     * Logical groups of metadata fields, for presenting them in the user interface.
-     */
-    private final Map<String, MetadataFieldGroupImpl> metadataGroups = new LinkedHashMap<>();
+    private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
+    @JsonProperty("fields")
     private final Map<String, MetadataFieldImpl> metadataFieldInfos;
+
+    /** What MetadataFieldValues implementation to use (store in indexmetadata or get from index) */
+    @XmlTransient
+    private MetadataFieldValues.Factory metadataFieldValuesFactory;
 
     /**
      * When a metadata field value is considered "unknown"
      * (never|missing|empty|missing_or_empty) [never]
      */
-    private String defaultUnknownCondition;
+    @XmlTransient
+    private String defaultUnknownCondition = "never";
 
     /** What value to index when a metadata field value is unknown [unknown] */
-    private String defaultUnknownValue;
+    @XmlTransient
+    private String defaultUnknownValue = "unknown";
 
-    /** Metadata field containing document title */
-    private String titleField;
-
-    /** Metadata field containing document author */
-    private String authorField;
-
-    /** Metadata field containing document date */
-    private String dateField;
+    /** Top-level custom props (if using integrated input format), for special fields, etc. */
+    @XmlTransient
+    private CustomPropsMap topLevelCustom;
 
     /** Metadata field containing document pid */
     private String pidField;
 
     /** Default analyzer to use for metadata fields */
-    private String defaultAnalyzerName;
+    private String defaultAnalyzer = "DEFAULT";
 
     /** Is the object frozen, not allowing any modifications? */
+    @XmlTransient
     private boolean frozen = false;
 
+    /** If we try to get() a missing field, should we throw or return a default config?
+     *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
+     */
+    private boolean throwOnMissingField = true;
+
+    /** If throwOnMissingField is false, the implicit field configs are stored here.
+     *  This map may be modified even if this instance is frozen.
+     *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
+     */
+    @XmlTransient
+    private final Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
+
+    void addFromConfig(ConfigMetadataField f) {
+        put(f.getName(), MetadataFieldImpl.fromConfig(f, this));
+    }
+
+    public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {
+        return metadataFieldValuesFactory;
+    }
+
+    // For JAXB deserialization
+    @SuppressWarnings("unused")
     MetadataFieldsImpl() {
         metadataFieldInfos = new TreeMap<>();
     }
 
+    MetadataFieldsImpl(MetadataFieldValues.Factory metadataFieldValuesFactory) {
+        this.metadataFieldValuesFactory = metadataFieldValuesFactory;
+        metadataFieldInfos = new TreeMap<>();
+    }
+
+    public void setThrowOnMissingField(boolean throwOnMissingField) {
+        this.throwOnMissingField = throwOnMissingField;
+    }
+
     @Override
     public String defaultAnalyzerName() {
-        return defaultAnalyzerName;
+        return defaultAnalyzer;
     }
 
     @Override
@@ -81,14 +126,33 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public MetadataField get(String fieldName) {
-        MetadataField d = null;
+        MetadataField d;
         // Synchronized because we sometimes register new metadata fields during indexing
         synchronized (metadataFieldInfos) {
             d = metadataFieldInfos.get(fieldName);
         }
-        if (d == null)
-            throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+        if (d == null) {
+            if (!throwOnMissingField) {
+                // Don't throw an exception like we used to do; instead return a default tokenized field.
+                // This allows us to handle the situation where not all metadata fields were registered
+                // before indexing, and unregistered tokenized metadata fields were added during indexing.
+                // (metadata can't change while indexing for integrated index)
+                return registerImplicit(fieldName);
+            } else {
+                // Old behaviour: just throw an exception
+                throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
+            }
+        }
         return d;
+    }
+
+    private MetadataField registerImplicit(String fieldName) {
+        return implicitFields.computeIfAbsent(fieldName,
+                __ -> {
+                    logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
+                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                }
+        );
     }
 
     @Override
@@ -97,86 +161,30 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public MetadataFieldGroups groups() {
-        return new MetadataFieldGroups() {
-            @Override
-            public Iterator<MetadataFieldGroup> iterator() {
-                Iterator<MetadataFieldGroupImpl> it = metadataGroups.values().iterator();
-                return new Iterator<>() {
-                    @Override
-                    public boolean hasNext() {
-                        return it.hasNext();
-                    }
-
-                    @Override
-                    public MetadataFieldGroup next() {
-                        return it.next();
-                    }
-                };
-            }
-
-            @Override
-            public Stream<MetadataFieldGroup> stream() {
-                return metadataGroups.values().stream().map(g -> g);
-            }
-
-            @Override
-            public MetadataFieldGroup get(String name) {
-                return metadataGroups.get(name);
-            }
-        };
+    public Map<String, ? extends MetadataFieldGroup> groups() {
+        Map<String, MetadataFieldGroup> metadataFieldGroups = topLevelCustom.get("metadataFieldGroups",
+                Collections.emptyMap());
+        return Collections.unmodifiableMap(metadataFieldGroups);
     }
 
     @Override
     public MetadataField special(String specialFieldType) {
-        switch(specialFieldType) {
-        case "pid":
-            return pidField != null && metadataFieldInfos.containsKey(pidField) ? get(pidField) : null;
-        case "title":
-            return titleField != null && metadataFieldInfos.containsKey(titleField) ? get(titleField) : null;
-        case "author":
-            return authorField != null && metadataFieldInfos.containsKey(authorField) ? get(authorField) : null;
-        case "date":
-            return dateField != null && metadataFieldInfos.containsKey(dateField) ? get(dateField) : null;
+        if (specialFieldType.equals("pid"))
+            return pidField == null ? null : get(pidField);
+        String field = topLevelCustom.get(specialFieldType + "Field", "");
+
+        // TODO: if field is set but field doesn't exist, that seems like a bug...
+        if (!field.isEmpty() && !metadataFieldInfos.containsKey(field)) {
+            logger.warn(
+                    "Special field " + specialFieldType + " is set to " + field + ", but that field doesn't exist.");
+            return null;
         }
-        return null;
-    }
 
-    public MetadataField titleField() {
-        return special(TITLE);
-    }
-
-    public MetadataField authorField() {
-        return special(AUTHOR);
+        return field.isEmpty() ? null : get(field);
     }
 
     public MetadataField pidField() {
-        return special(PID);
-    }
-
-    public MetadataField dateField() {
-        return special(DATE);
-    }
-
-    /**
-     * Find the first (alphabetically) field whose name matches (case-insensitively) the search string.
-     *
-     * @param search the string to search for
-     * @return the field name, or null if no fields matched
-     */
-    MetadataField findTextField(String search) {
-        // Find documents with title in the name
-        List<MetadataField> fieldsFound = new ArrayList<>();
-        for (MetadataField field: metadataFieldInfos.values()) {
-            if (field.type() == FieldType.TOKENIZED && field.name().equalsIgnoreCase(search))
-                fieldsFound.add(field);
-        }
-        if (fieldsFound.isEmpty())
-            return null;
-
-        // Sort (so we always return the same field if more than one matches
-        fieldsFound.sort(Comparator.comparing(Field::name));
-        return fieldsFound.get(0);
+        return pidField == null ? null : get(pidField);
     }
 
     public String defaultUnknownCondition() {
@@ -192,7 +200,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
 
     @Override
     public synchronized MetadataField register(String fieldName) {
-        ensureNotFrozen();
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
         // Synchronized because we might be using the map in another indexing thread
@@ -201,16 +208,25 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
             if (metadataFieldInfos.containsKey(fieldName))
                 mf = metadataFieldInfos.get(fieldName);
             else {
+                if (isFrozen() && !throwOnMissingField) {
+                    // Metadata is frozen. Instead of really registering metadata
+                    // field, we'll register an "implicit field". This is a metadata
+                    // field whose configuration should match the default.
+                    // With throwOnMissingField set to false, get() will also return a
+                    // default config for missing fields.
+                    return registerImplicit(fieldName);
+                }
                 // Not registered yet; do so now.
+                ensureNotFrozen();
                 FieldType fieldType = FieldType.TOKENIZED;
                 if (fieldName.equals("fromInputFile")) {
                     // internal bookkeeping field, never tokenize this
                     // (probably better to register this field properly, but this works for now)
                     fieldType = FieldType.UNTOKENIZED;
                 }
-                mf = new MetadataFieldImpl(fieldName, fieldType);
-                mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-                mf.setUnknownValue(defaultUnknownValue);
+                mf = new MetadataFieldImpl(fieldName, fieldType, metadataFieldValuesFactory);
+                mf.custom().put("unknownCondition", defaultUnknownCondition());
+                mf.custom().put("unknownValue", defaultUnknownValue());
                 metadataFieldInfos.put(fieldName, mf);
             }
             return mf;
@@ -218,29 +234,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     }
 
     @Override
-    public void clearMetadataGroups() {
-        ensureNotFrozen();
-        metadataGroups.clear();
-    }
-
-    @Override
-    public void putMetadataGroup(String name, MetadataFieldGroupImpl metadataGroup) {
-        ensureNotFrozen();
-        metadataGroups.put(name, metadataGroup);
-    }
-
-    /**
-     * Check if field exists, or create a default (tokenized) field for it if not.
-     *
-     */
-    @Override
-    public void ensureFieldExists(String name) {
-        if (!exists(name)) {
+    public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
+        if (!groups().equals(metadataGroups)) {
             ensureNotFrozen();
-            MetadataFieldImpl mf = new MetadataFieldImpl(name, FieldType.TOKENIZED);
-            mf.setUnknownCondition(UnknownCondition.fromStringValue(defaultUnknownCondition));
-            mf.setUnknownValue(defaultUnknownValue);
-            metadataFieldInfos.put(name, mf);
+            topLevelCustom.put("metadataFieldGroups", metadataGroups);
         }
     }
 
@@ -273,34 +270,29 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @Override
     public void clearSpecialFields() {
         ensureNotFrozen();
-        titleField = authorField = dateField = pidField = null;
+        pidField = null;
+        topLevelCustom.put("titleField", null);
+        topLevelCustom.put("authorField", null);
+        topLevelCustom.put("dateField", null);
     }
 
     @Override
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
-        switch(specialFieldType) {
-        case "pid":
-            pidField = fieldName;
-            break;
-        case "title":
-            titleField = fieldName;
-            break;
-        case "author":
-            authorField = fieldName;
-            break;
-        case "date":
-            dateField = fieldName;
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown special field type: " + fieldName);
-        }
+        if (specialFieldType.equals("pid"))
+            setPidField(fieldName);
+        else
+            topLevelCustom.put(specialFieldType + "Field", fieldName);
+    }
+
+    public void setPidField(String pidField) {
+        this.pidField = pidField;
     }
 
     @Override
-    public void setDefaultAnalyzerName(String name) {
+    public void setDefaultAnalyzer(String name) {
         ensureNotFrozen();
-        this.defaultAnalyzerName = name;
+        this.defaultAnalyzer = name;
     }
 
     @Override
@@ -324,6 +316,19 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable<MetadataFiel
     @Override
     public List<String> names() {
         return new ArrayList<>(metadataFieldInfos.keySet());
+    }
+
+    public void fixAfterDeserialization(IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
+        setTopLevelCustom(metadata.custom());
+
+        metadataFieldValuesFactory = factory;
+        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
+            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
+        }
+    }
+
+    public void setTopLevelCustom(CustomPropsMap topLevelCustom) {
+        this.topLevelCustom = topLevelCustom;
     }
 
 }

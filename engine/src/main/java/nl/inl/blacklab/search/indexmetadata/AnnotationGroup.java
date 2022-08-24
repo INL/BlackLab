@@ -1,16 +1,17 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 /** Logical grouping of annotations */
-public class AnnotationGroup implements Iterable<Annotation> {
-    
-    private final AnnotatedFieldsImpl annotatedFields;
+@XmlAccessorType(XmlAccessType.FIELD)
+public class AnnotationGroup implements Iterable<String> {
     
     private final String fieldName;
     
@@ -20,9 +21,8 @@ public class AnnotationGroup implements Iterable<Annotation> {
     
     private final boolean addRemainingAnnotations;
 
-    public AnnotationGroup(AnnotatedFieldsImpl annotatedFields, String fieldName, String groupName, List<String> annotations,
+    public AnnotationGroup(String fieldName, String groupName, List<String> annotations,
             boolean addRemainingAnnotations) {
-        this.annotatedFields = annotatedFields;
         this.fieldName = fieldName;
         this.groupName = groupName;
         this.annotations = new ArrayList<>(annotations);
@@ -37,9 +37,8 @@ public class AnnotationGroup implements Iterable<Annotation> {
         return groupName;
     }
 
-    public List<Annotation> annotations() {
-        AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(f::annotation).filter(Objects::nonNull).collect(Collectors.toList());
+    public List<String> annotations() {
+        return Collections.unmodifiableList(annotations);
     }
 
     public boolean addRemainingAnnotations() {
@@ -47,14 +46,12 @@ public class AnnotationGroup implements Iterable<Annotation> {
     }
     
     @Override
-    public Iterator<Annotation> iterator() {
-        AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(f::annotation).iterator();
+    public Iterator<String> iterator() {
+        return annotations.iterator();
     }
 
-    public Stream<Annotation> stream() {
-        AnnotatedFieldImpl f = annotatedFields.get(fieldName);
-        return annotations.stream().map(f::annotation);
+    public Stream<String> stream() {
+        return annotations.stream();
     }
 
 }

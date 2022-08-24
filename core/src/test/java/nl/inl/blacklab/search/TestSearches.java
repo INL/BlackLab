@@ -76,7 +76,8 @@ public class TestSearches {
     @Test
     public void testSimpleDocFilter() {
         expected = List.of("May [the] Force");
-        Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(2)));
+        int docId = testIndex.getDocIdForDocNumber(2);
+        Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(docId)));
     }
 
     @Test

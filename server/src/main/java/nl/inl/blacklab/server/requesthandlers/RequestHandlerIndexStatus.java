@@ -42,16 +42,15 @@ public class RequestHandlerIndexStatus extends RequestHandler {
             // Assemble response
             ds.startMap()
                     .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.displayName())
-                    .entry("description", indexMetadata.description())
+                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
+                    .entry("description", indexMetadata.custom().get("description", ""))
                     .entry("status", status);
 
             String formatIdentifier = indexMetadata.documentFormat();
             if (formatIdentifier != null && formatIdentifier.length() > 0)
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            if (indexMetadata.tokenCount() > 0)
-                ds.entry("tokenCount", indexMetadata.tokenCount());
+            ds.entry("tokenCount", indexMetadata.tokenCount());
 
             if (status.equals(IndexStatus.INDEXING)) {
                 IndexListener indexProgress = index.getIndexerListener();

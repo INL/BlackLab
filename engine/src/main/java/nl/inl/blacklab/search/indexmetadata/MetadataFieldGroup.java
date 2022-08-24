@@ -7,11 +7,11 @@ import java.util.stream.Stream;
  * 
  * Used to divide metadata into logical groups.
  */
-public interface MetadataFieldGroup extends Iterable<MetadataField> {
+public interface MetadataFieldGroup extends Iterable<String> {
 
     String name();
 
-    Stream<MetadataField> stream();
+    Stream<String> stream();
 
     boolean addRemainingFields();
 }

@@ -3,6 +3,7 @@ package nl.inl.blacklab.codec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -42,9 +43,9 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BLFieldsConsumer extends FieldsConsumer {
+public class BlackLab40PostingsWriter extends FieldsConsumer {
 
-    protected static final Logger logger = LogManager.getLogger(BLFieldsConsumer.class);
+    protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsWriter.class);
 
     private final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
 
@@ -54,26 +55,21 @@ public class BLFieldsConsumer extends FieldsConsumer {
     /** Holds common information used for writing to index files. */
     private final SegmentWriteState state;
 
-    /** Codec name (always "BLCodec"?) */
-    private final String codecName;
-
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
     /**
      * Instantiates a fields consumer.
      *
-     * @param fieldsConsumer FieldsConsumer to be adapted by us
+     * @param delegateFieldsConsumer FieldsConsumer to be adapted by us
      * @param state holder class for common parameters used during write
-     * @param codecName name of our codec
      * @param delegatePostingsFormatName name of the delegate postings format
      *                                   (the one our PostingsFormat class adapts)
      */
-    public BLFieldsConsumer(FieldsConsumer fieldsConsumer, SegmentWriteState state, String codecName,
+    public BlackLab40PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
             String delegatePostingsFormatName) {
-        this.delegateFieldsConsumer = fieldsConsumer;
+        this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
-        this.codecName = codecName;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
     }
 
@@ -129,7 +125,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
 
-        // implement custom type of stored field?
+        // Content store: implement custom type of stored field for
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
@@ -155,16 +151,16 @@ public class BLFieldsConsumer extends FieldsConsumer {
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
 
-        try (IndexOutput outTokensIndexFile = createOutput(BLCodecPostingsFormat.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BLCodecPostingsFormat.TOKENS_EXT)) {
+        try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
 
             // Keep track of starting offset in termindex and tokensindex files per field
             Map<String, Long> field2TermIndexOffsets = new HashMap<>();
             Map<String, Long> field2TokensIndexOffsets = new HashMap<>();
 
             // Write our postings extension information
-            try (IndexOutput termIndexFile = createOutput(BLCodecPostingsFormat.TERMINDEX_EXT);
-                    IndexOutput termsFile = createOutput(BLCodecPostingsFormat.TERMS_EXT)) {
+            try (IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
+                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT)) {
 
                 // We'll keep track of doc lengths so we can preallocate our forward index structure.
                 Map<Integer, Integer> docLengths = new HashMap<>();
@@ -178,7 +174,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 //   we use temporary files because this might take a huge amount of memory)
                 // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
                 Map<String, SortedMap<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
-                try (IndexOutput outTempTermVectorFile = createOutput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
+                try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
                     for (String field: fields) { // for each field
@@ -240,8 +236,6 @@ public class BLFieldsConsumer extends FieldsConsumer {
                                 }
                                 termId++;
                             }
-                            // Store additional metadata about this field
-                            fieldInfos.fieldInfo(field).putAttribute("funFactsAboutField", "didYouKnowThat?");
                         }
                     }
                 }
@@ -249,7 +243,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
                 // Reverse the reverse index to create forward index
                 // (this time we iterate per field and per document first, then reconstruct the document by
                 //  looking at each term's occurrences. This produces our forward index)
-                try (IndexInput inTermVectorFile = openInput(BLCodecPostingsFormat.TERMVEC_TMP_EXT)) {
+                try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // For each field...
                     for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
@@ -260,38 +254,53 @@ public class BLFieldsConsumer extends FieldsConsumer {
                         field2TokensIndexOffsets.put(field, outTokensIndexFile.getFilePointer());
 
                         // For each document...
-                        int expectedDocId = 0; // make sure we catch it if some doc(s) have no values for this field
-                        for (Entry<Integer, Map<Integer, Long>> docEntry: docPosOffsets.entrySet()) {
-                            Integer docId = docEntry.getKey();
+//                        int expectedDocId = 0; // make sure we catch it if some doc(s) have no values for this field
+                        for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
+                        //for (Entry<Integer, Map<Integer, Long>> docEntry: docPosOffsets.entrySet()) {
+                            //Integer docId = docEntry.getKey();
 
-                            // If there were docs that did not contain values for this field,
-                            // write empty values.
-                            // TODO: optimize this so we don't waste disk space in this case (although probably rare)
-                            while (docId > expectedDocId) {
-                                // entire document is missing values
-                                outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
-                                for (int i = 0; i < docLengths.get(docId); i++) {
-                                    outTokensFile.writeInt(NO_TERM);
-                                }
-                                expectedDocId++;
-                            }
-                            if (docId != expectedDocId)
-                                throw new RuntimeException("Expected docId " + expectedDocId + ", got " + docId);
-                            expectedDocId++;
+//                            // If there were docs that did not contain values for this field,
+//                            // write empty values.
+//                            // TODO: optimize this so we don't waste disk space in this case (although probably rare)
+//                            while (docId > expectedDocId) {
+//                                // entire document is missing values
+//                                outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
+//                                for (int i = 0; i < docLengths.getOrDefault(docId, 0); i++) {
+//                                    outTokensFile.writeInt(NO_TERM);
+//                                }
+//                                expectedDocId++;
+//                            }
+//                            if (docId != expectedDocId)
+//                                throw new RuntimeException("Expected docId " + expectedDocId + ", got " + docId);
+//                            expectedDocId++;
 
-                            Map<Integer, Long> termPosOffsets = docEntry.getValue();
-                            int docLength = docLengths.get(docId);
+                            //Map<Integer, Long> termPosOffsets = docEntry.getValue();
+                            Map<Integer, Long> termPosOffsets = docPosOffsets.get(docId);
+                            if (termPosOffsets == null)
+                                termPosOffsets = Collections.emptyMap();
+                            int docLength = docLengths.getOrDefault(docId, 0);
                             int[] tokensInDoc = new int[docLength]; // reconstruct the document here
-                            Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
-                            // For each term...
-                            for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
-                                int termId = e.getKey();
-                                inTermVectorFile.seek(e.getValue());
-                                int nOccurrences = inTermVectorFile.readInt();
-                                // For each occurrence...
-                                for (int i = 0; i < nOccurrences; i++) {
-                                    int position = inTermVectorFile.readInt();
-                                    tokensInDoc[position] = termId;
+                            // The special document holding the index metadata will be 0, as will
+                            // a document that doesn't have any value for this annotated field.
+                            if (docLength > 0) {
+                                // NOTE: sometimes docs won't have any values for a field, but we'll
+                                //   still write all NO_TERMs in this case. This is similar to sparse
+                                //   fields (e.g. the field that stores <p> <s> etc.) which also have a
+                                //   lot of NO_TERMs.
+                                // TODO: worth it to compress these cases using a sparse representation of the
+                                //       values (e.g. with run-length encoding or something)? This does make
+                                //       retrieval slower though.
+                                Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
+                                // For each term...
+                                for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
+                                    int termId = e.getKey();
+                                    inTermVectorFile.seek(e.getValue());
+                                    int nOccurrences = inTermVectorFile.readInt();
+                                    // For each occurrence...
+                                    for (int i = 0; i < nOccurrences; i++) {
+                                        int position = inTermVectorFile.readInt();
+                                        tokensInDoc[position] = termId;
+                                    }
                                 }
                             }
                             // Write the forward index for this document (reconstructed doc)
@@ -305,12 +314,12 @@ public class BLFieldsConsumer extends FieldsConsumer {
                     }
                 } finally {
                     // Clean up after ourselves
-                    deleteIndexFile(BLCodecPostingsFormat.TERMVEC_TMP_EXT);
+                    deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
                 }
             }
 
             // Write fields file, now that we know all the relevant offsets
-            try (IndexOutput fieldsFile = createOutput(BLCodecPostingsFormat.FIELDS_EXT)) {
+            try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
                 for (String field: fields) { // for each field
                     // If it's (part of) an annotated field...
                     if (field2TermIndexOffsets.containsKey(field)) {
@@ -321,7 +330,6 @@ public class BLFieldsConsumer extends FieldsConsumer {
                     }
                 }
             }
-
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
@@ -340,7 +348,7 @@ public class BLFieldsConsumer extends FieldsConsumer {
 
         // Write standard header, with the codec name and version, segment info.
         // Also write the delegate codec name (Lucene's default codec).
-        CodecUtil.writeIndexHeader(output, codecName, BLCodecPostingsFormat.VERSION_CURRENT,
+        CodecUtil.writeIndexHeader(output, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_CURRENT,
                 state.segmentInfo.getId(), state.segmentSuffix);
         output.writeString(delegatePostingsFormatName);
 
@@ -353,8 +361,8 @@ public class BLFieldsConsumer extends FieldsConsumer {
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).
-        CodecUtil.checkIndexHeader(input, codecName, BLCodecPostingsFormat.VERSION_START,
-                BLCodecPostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
+        CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
+                BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
         String delegatePFN = input.readString();
         if (!delegatePostingsFormatName.equals(delegatePFN))
             throw new IOException("Segment file " + fileName +

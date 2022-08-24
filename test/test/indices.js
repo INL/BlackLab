@@ -185,7 +185,8 @@ describe('Indexing tests', () => {
         assert.isTrue(createRes.ok);
 
         let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-        assert.isTrue(addReq.ok);
+        //assert.isTrue(addReq.ok);
+        assert.equal(200, addReq.status);
 
         const indexMetadata = await getIndexMetadata(indexName);
         const body = indexMetadata.body;

@@ -32,9 +32,9 @@ import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter.SensitivitySetting;
+import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.StringUtil;
 
 /**
@@ -158,7 +158,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             documentDone(documentName);
 
             // Reset contents field for next document
-            contentsField.clear(true);
+            contentsField.clear();
             currentLuceneDoc = null;
 
             // Stop if required
@@ -385,18 +385,17 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         return contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), includePayloads);
     }
 
-    public AnnotationWriter addAnnotation(String propName, SensitivitySetting sensitivity) {
+    public AnnotationWriter addAnnotation(String propName, AnnotationSensitivities sensitivity) {
         return contentsField.addAnnotation(null, propName, sensitivity);
     }
 
-    @SuppressWarnings("deprecation")
     public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
         super(docWriter, fileName, reader);
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
-                SensitivitySetting.defaultForAnnotation(mainPropName), false);
+                AnnotationSensitivities.defaultForAnnotation(mainPropName), false);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
         propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
@@ -405,7 +404,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
     }
 
     public void registerContentsField() {
-        IndexMetadataImpl indexMetadata = (IndexMetadataImpl) getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 
@@ -596,9 +595,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         } catch (MaxDocsReached e) {
             // OK; just stop indexing prematurely
         }
-
-        if (nDocumentsSkipped > 0)
-            System.err.println("Skipped " + nDocumentsSkipped + " large documents");
     }
 
     public String describePosition() {
