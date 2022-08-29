@@ -21,6 +21,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -84,6 +85,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return new IndexMetadataIntegrated(index, config);
     }
 
+    public Query metadataDocQuery() {
+        return metadataDocument.query();
+    }
+
     /**
      * Manages the index metadata document.
      *
@@ -132,6 +137,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
 
         private int metadataDocId = -1;
+
+        public Query query() {
+            return METADATA_DOC_QUERY;
+        }
 
         public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata) {
             try {
