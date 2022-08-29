@@ -92,7 +92,7 @@ public class CapturedGroupsImpl implements CapturedGroups {
             return null;
         Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
         for (int i = 0; i < names.size(); i++) {
-            if (!omitEmpty || groups[i].length() > 0)
+            if (groups[i] != null && (!omitEmpty || groups[i].length() > 0))
                 result.put(names.get(i), groups[i]);
         }
         return Collections.unmodifiableMap(result);
