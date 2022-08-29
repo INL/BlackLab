@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -30,7 +31,8 @@ public class TestTokenFilters {
     @Test
     public void testAddSecondaryValuePayloadFilter() throws IOException {
         List<String> tokens = List.of("Hé", "he", "JIJ", "jij", "daar!", "daar");
-        List<Integer> increments = List.of(0, 0, 1, 0, 1, 0);
+        IntArrayList increments = new IntArrayList();
+        increments.addAll(0, 0, 1, 0, 1, 0);
         TokenStream tokenStream = new TokenStreamFromList(tokens, increments, null);
 
         TokenFilter filter = new AddIsPrimaryValueAttributeFilter(tokenStream);

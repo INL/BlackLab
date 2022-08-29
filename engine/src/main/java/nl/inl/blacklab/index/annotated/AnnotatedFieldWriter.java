@@ -57,6 +57,8 @@ public class AnnotatedFieldWriter {
 
     private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
+    private final boolean needsPrimaryTokenPayloads;
+
     private AnnotatedField field;
 
     public void setNoForwardIndexProps(Set<String> noForwardIndexAnnotations) {
@@ -74,7 +76,7 @@ public class AnnotatedFieldWriter {
      * @param mainPropHasPayloads does the main annotation have payloads?
      */
     public AnnotatedFieldWriter(String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
-            boolean mainPropHasPayloads) {
+            boolean mainPropHasPayloads, boolean needsPrimaryTokenPayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -83,7 +85,9 @@ public class AnnotatedFieldWriter {
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
+        this.needsPrimaryTokenPayloads = needsPrimaryTokenPayloads;
         mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets, mainPropHasPayloads);
+        mainAnnotation.setNeedsPrimaryTokenPayload(needsPrimaryTokenPayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
     }
 
@@ -96,6 +100,7 @@ public class AnnotatedFieldWriter {
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
+        p.setNeedsPrimaryTokenPayload(needsPrimaryTokenPayloads);
         if (noForwardIndexAnnotations.contains(name) || annot != null && !annot.createForwardIndex()) {
             p.setHasForwardIndex(false);
         }

@@ -84,4 +84,22 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
 
         writer().updateDocument(term, document);
     }
+
+    /**
+     * Should TokenStream payloads contain information about primary/secondary token values?
+     *
+     * These are temporary values used to decide which value is the primary value that should be
+     * stored in the forward index so it can be used for concordances, sort, grouping, etc.
+     *
+     * Secondary values are not stored in the forward index. This might be synonyms or stemmed
+     * values.
+     *
+     * The indicator in the payload (if one was added, which we try to avoid if possible) will be
+     * removed before the payloads are written to disk.
+     *
+     * Used by the integrated index format.
+     *
+     * @return whether or not TokenStream payloads should include primary value indicators
+     */
+    boolean needsPrimaryTokenPayloads();
 }

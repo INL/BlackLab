@@ -15,6 +15,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.analysis.AddIsPrimaryValueAttributeFilter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -99,6 +100,9 @@ public class AnnotationWriter {
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
 
+    /** Should we prepend a byte to the payload indicating whether this token is primary or secondary? */
+    private boolean needsPrimaryTokenPayload = false;
+
     public String mainSensitivity() {
         return mainSensitivity;
     }
@@ -173,6 +177,15 @@ public class AnnotationWriter {
         TokenFilterAdder filterAdder = sensitivities.get(altName);
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
+
+        if (hasForwardIndex && needsPrimaryTokenPayload) {
+            // When writing the segment, we'll need to know which of our values was our "primary"
+            // value (the original word, to be used in concordances, sort, group, etc., to be stored
+            // in the forward index) and which were the secondary ones (e.g. stemmed, lowercased, synonyms).
+            // This information is encoded into the payloads and later removed again before actually writing them.
+            ts = new AddIsPrimaryValueAttributeFilter(ts);
+        }
+
         return ts;
     }
 
@@ -216,6 +229,10 @@ public class AnnotationWriter {
 
     public void setHasForwardIndex(boolean b) {
         hasForwardIndex = b;
+    }
+
+    public void setNeedsPrimaryTokenPayload(boolean b) {
+        needsPrimaryTokenPayload = b;
     }
 
     /**

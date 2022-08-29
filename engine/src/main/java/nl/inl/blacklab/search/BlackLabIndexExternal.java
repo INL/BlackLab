@@ -118,4 +118,9 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     public Query getAllRealDocsQuery() {
         return new MatchAllDocsQuery(); // there are no non-real documents in this index type
     }
+
+    @Override
+    public boolean needsPrimaryTokenPayloads() {
+        return false;
+    }
 }

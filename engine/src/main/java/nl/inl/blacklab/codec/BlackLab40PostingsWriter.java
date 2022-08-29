@@ -34,6 +34,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -125,17 +126,21 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
 
-        // Content store: implement custom type of stored field for
+        // Content store: implement custom type of stored field for content store
+        //   (that is removed before calling the delegate)
+
+        // TODO: expand write() to recognize content store fields and write those to a content store file
+        // This will strip the "is primary value" indicator from the payloads (insofar as there are any)
+        // before Lucene writes the payloads to disk.
+        write(state.fieldInfos, fields);
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
 
-        // TODO: expand write() to recognize content store fields and write those to a content store file
-        write(state.fieldInfos, fields);
     }
 
     /**
-     * Write our additions to the default postings (i.e. the forward index and various trees)
+     * Write our additions to the default postings (i.e. the forward index)
      *
      * Iterates over the term vector to build the forward index in a temporary file.
      *
@@ -211,7 +216,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                 termsFile.writeString(termString);          // term string
 
                                 // For each document containing this term...
-                                postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS);
+                                postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
                                 while (true) {
                                     Integer docId = postingsEnum.nextDoc();
                                     if (docId.equals(DocIdSetIterator.NO_MORE_DOCS))
@@ -230,7 +235,33 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                         int position = postingsEnum.nextPosition();
                                         if (position >= docLength)
                                             docLength = position + 1;
-                                        outTempTermVectorFile.writeInt(position);
+
+                                        // Is this a primary value or a secondary one?
+                                        // Primary values are e.g. the original word from the document,
+                                        // and will be stored in the forward index to be used for concordances,
+                                        // sorting and grouping. Secondary values may be synonyms or stemmed versions
+                                        // and will not be stored in the forward index.
+                                        // We also remove the indicator from the payload (if there's any) so the
+                                        // original payloads are written to disk by Lucene.
+                                        BytesRef payload = postingsEnum.getPayload();
+                                        if (PayloadUtils.isPrimaryValue(payload)) {
+
+                                            // HACK: Make sure we remove the indicator if it's there,
+                                            //   because we don't want it to be stored on disk.
+                                            //   (most payloads won't contain an indicator; this simply
+                                            //    means that it is a primary value)
+
+                                            // @@@@ according to Lucene we cannot modify anything in the
+                                            //   returned payload... it might work anyway here, but that's not
+                                            //   guaranteed. Might be better to accept that some tokens will have
+                                            //   the indicator (it won't be that many), and we always need to
+                                            //   check if we're dealing with payloads that might have them.
+
+                                            if (PayloadUtils.containsIsPrimaryValueIndicator(payload))
+                                                payload.offset += 2;
+
+                                            outTempTermVectorFile.writeInt(position);
+                                        }
                                     }
                                     docLengths.put(docId, docLength);
                                 }
