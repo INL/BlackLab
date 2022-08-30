@@ -45,8 +45,9 @@ Where we take the metadata document into account:
 
 
 ### Forward index
- 
-- [ ] PROBLEM: we normally only store the first value indexed at a position in the forward index. But with the integrated index, we can't tell what value was first anymore by the time we write the forward index (because we reverse the reverse index). So we should either change it to store all values in the forward index (doable but complicated and doesn't tell us how to build concordances), or we need to add extra information to the tokens (payload?) that tells us what value was first. Probably refer to Mtas (they do store all values in the forward index, but they still need to know what token to use for concordances).
+
+- [x] Ensure that we can store only the first value indexed at a position in the forward index. Use payload for this, making sure the most common case doesn't touch the payload at all. Take into account when using payload (e.g. for tags)
+- [ ] Include "format" bytes per document, so we can more easily add new ways to store e.g. forward index information (e.g. RLE for annotations that have few values, or many of the same value) without breaking backward compatibility. (also applies to CS)
 - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
 - [ ] Only create forward index for annotations that should have one (fieldsconsumer)
       (need access to index metadata)

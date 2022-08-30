@@ -15,7 +15,7 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.analysis.AddIsPrimaryValueAttributeFilter;
+import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -100,7 +100,7 @@ public class AnnotationWriter {
     /** Does this annotation get its own forward index? */
     private boolean hasForwardIndex = true;
 
-    /** Should we prepend a byte to the payload indicating whether this token is primary or secondary? */
+    /** Should the payload indicate whether this token is primary or secondary? (see PayloadUtils) */
     private boolean needsPrimaryTokenPayload = false;
 
     public String mainSensitivity() {
@@ -129,9 +129,10 @@ public class AnnotationWriter {
      * @param includeOffsets whether to include character offsets in the main
      *            sensitivity variant
      * @param includePayloads will this annotation include payloads?
+     * @param needsPrimaryTokenPayloads should payloads indicate whether this is a primary value? (forces payloads)
      */
     public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, AnnotationSensitivities sensitivity,
-            boolean includeOffsets, boolean includePayloads) {
+            boolean includeOffsets, boolean includePayloads, boolean needsPrimaryTokenPayloads) {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
@@ -159,6 +160,9 @@ public class AnnotationWriter {
         }
 
         this.includeOffsets = includeOffsets;
+        this.needsPrimaryTokenPayload = needsPrimaryTokenPayloads;
+        if (!includePayloads && needsPrimaryTokenPayloads)
+            includePayloads = true;
         if (includePayloads)
             payloads = new ArrayList<>();
     }
@@ -181,9 +185,10 @@ public class AnnotationWriter {
         if (hasForwardIndex && needsPrimaryTokenPayload) {
             // When writing the segment, we'll need to know which of our values was our "primary"
             // value (the original word, to be used in concordances, sort, group, etc., to be stored
-            // in the forward index) and which were the secondary ones (e.g. stemmed, lowercased, synonyms).
-            // This information is encoded into the payloads and later removed again before actually writing them.
-            ts = new AddIsPrimaryValueAttributeFilter(ts);
+            // in the forward index) and which were the secondary ones (e.g. stemmed, synonyms).
+            // This information is encoded into the payloads. When using payloads for an annotation that
+            // has these indicator, you should check if the indicator is there and skip it (see PayloadUtils).
+            ts = new AddIsPrimaryValueToPayloadFilter(ts);
         }
 
         return ts;
@@ -229,10 +234,6 @@ public class AnnotationWriter {
 
     public void setHasForwardIndex(boolean b) {
         hasForwardIndex = b;
-    }
-
-    public void setNeedsPrimaryTokenPayload(boolean b) {
-        needsPrimaryTokenPayload = b;
     }
 
     /**

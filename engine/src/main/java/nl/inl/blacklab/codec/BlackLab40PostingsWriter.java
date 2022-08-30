@@ -18,7 +18,6 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
-import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.MappedMultiFields;
@@ -48,7 +47,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsWriter.class);
 
-    private final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
+    private static final int NO_TERM = nl.inl.blacklab.forwardindex.Terms.NO_TERM;
 
     /** The FieldsConsumer we're adapting and delegating some requests to. */
     private final FieldsConsumer delegateFieldsConsumer;
@@ -130,9 +129,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         //   (that is removed before calling the delegate)
 
         // TODO: expand write() to recognize content store fields and write those to a content store file
-        // This will strip the "is primary value" indicator from the payloads (insofar as there are any)
-        // before Lucene writes the payloads to disk.
-        write(state.fieldInfos, fields);
+        write(fields);
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
@@ -154,7 +151,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      *
      * This method also records metadata about fields in the FieldInfo attributes.
      */
-    private void write(FieldInfos fieldInfos, Fields fields) {
+    private void write(Fields fields) {
 
         try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
                 IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
@@ -241,25 +238,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                         // and will be stored in the forward index to be used for concordances,
                                         // sorting and grouping. Secondary values may be synonyms or stemmed versions
                                         // and will not be stored in the forward index.
-                                        // We also remove the indicator from the payload (if there's any) so the
-                                        // original payloads are written to disk by Lucene.
                                         BytesRef payload = postingsEnum.getPayload();
                                         if (PayloadUtils.isPrimaryValue(payload)) {
-
-                                            // HACK: Make sure we remove the indicator if it's there,
-                                            //   because we don't want it to be stored on disk.
-                                            //   (most payloads won't contain an indicator; this simply
-                                            //    means that it is a primary value)
-
-                                            // @@@@ according to Lucene we cannot modify anything in the
-                                            //   returned payload... it might work anyway here, but that's not
-                                            //   guaranteed. Might be better to accept that some tokens will have
-                                            //   the indicator (it won't be that many), and we always need to
-                                            //   check if we're dealing with payloads that might have them.
-
-                                            if (PayloadUtils.containsIsPrimaryValueIndicator(payload))
-                                                payload.offset += 2;
-
                                             outTempTermVectorFile.writeInt(position);
                                         }
                                     }
@@ -386,6 +366,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         return output;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private IndexInput openInput(String ext) throws IOException {
         String fileName = getSegmentFileName(ext);
         IndexInput input = state.directory.openInput(getSegmentFileName(ext), state.context);
@@ -403,6 +384,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         return input;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private void deleteIndexFile(String ext) throws IOException {
         state.directory.deleteFile(getSegmentFileName(ext));
     }

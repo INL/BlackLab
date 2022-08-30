@@ -9,19 +9,21 @@ import org.apache.lucene.analysis.tokenattributes.PayloadAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
 /**
- * For every token that is not the first value at this position
+ * Make sure we can tell primary from secondary values using the payload.
+ *
+ * A primary value is the first value indexed at a token position
  * (e.g. tokenIncrement greater than zero, except for the first token
- * which is by definition the first value), add a small payload that
- * indicates this.
+ * which is by definition the first value),
  *
- * The actual payload logic is this:
- * - if the first byte is 127, the next byte indicates whether this is a primary value (1) or not (0).
- * - if the first byte is NOT 127, this is a primary value and no bytes have been prepended here.
+ * This ensures that we can identify which value to store in the forward index.
  *
- * This ensures we shouldn't have to change or add many payloads, as most values wiill be primary.
+ * See PayloadUtils for how the encoding works. We only change the payload
+ * if we absolutely have to; if you only have primary values, very few
+ * payloads will have to be changed.
  *
- * This ensures that we can identify which value to
- * store in the forward index.
+ * When using the payloads later, you must know whether or not this annotation
+ * passed through this filter or not, in order to be able to remove the
+ * indicator if it's there.
  */
 public class AddIsPrimaryValueToPayloadFilter extends TokenFilter {
 
@@ -48,8 +50,10 @@ public class AddIsPrimaryValueToPayloadFilter extends TokenFilter {
             // at the same position)?
             boolean isPrimary = first || posIncAtt.getPositionIncrement() > 0;
             payloadAtt.setPayload(PayloadUtils.addIsPrimary(isPrimary, payloadAtt.getPayload()));
+            first = false;
             return true;
         }
+        first = false;
         return false;
     }
 

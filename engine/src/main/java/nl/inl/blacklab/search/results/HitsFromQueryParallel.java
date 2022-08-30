@@ -359,7 +359,7 @@ public class HitsFromQueryParallel extends HitsMutable {
     protected final long maxHitsToCount;
 
     // state
-    protected final HitQueryContext hitQueryContext = new HitQueryContext();
+    protected final HitQueryContext hitQueryContext = new HitQueryContext(index());
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
     protected boolean allSourceSpansFullyRead = false;

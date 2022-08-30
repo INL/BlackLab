@@ -74,6 +74,7 @@ public class AnnotatedFieldWriter {
      * @param sensitivity ways to index main annotation, with respect to case- and
      *            diacritics-sensitivity.
      * @param mainPropHasPayloads does the main annotation have payloads?
+     * @param needsPrimaryTokenPayloads should payloads indicate whether value is primary or not?
      */
     public AnnotatedFieldWriter(String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryTokenPayloads) {
@@ -86,8 +87,8 @@ public class AnnotatedFieldWriter {
         boolean includeOffsets = true;
         fieldName = name;
         this.needsPrimaryTokenPayloads = needsPrimaryTokenPayloads;
-        mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets, mainPropHasPayloads);
-        mainAnnotation.setNeedsPrimaryTokenPayload(needsPrimaryTokenPayloads);
+        mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets,
+                mainPropHasPayloads, needsPrimaryTokenPayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
     }
 
@@ -99,8 +100,7 @@ public class AnnotatedFieldWriter {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
-        AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads);
-        p.setNeedsPrimaryTokenPayload(needsPrimaryTokenPayloads);
+        AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads, needsPrimaryTokenPayloads);
         if (noForwardIndexAnnotations.contains(name) || annot != null && !annot.createForwardIndex()) {
             p.setHasForwardIndex(false);
         }
