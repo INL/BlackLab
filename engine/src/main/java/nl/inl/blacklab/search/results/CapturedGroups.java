@@ -54,6 +54,9 @@ public interface CapturedGroups {
      *
      * Relatively slow. If you care about performance, prefer {@link #get(Hit)}.
      *
+     * Please note that if a group was not matched, its key will be in the map,
+     * but the associated value will be null.
+     *
      * @param hit hit to get groups for
      * @param omitEmpty if true, instead of a Span with length 0, null will be returned (default: false)
      * @return groups
