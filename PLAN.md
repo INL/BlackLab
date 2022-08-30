@@ -47,10 +47,15 @@ Where we take the metadata document into account:
 ### Forward index
 
 - [x] Ensure that we can store only the first value indexed at a position in the forward index. Use payload for this, making sure the most common case doesn't touch the payload at all. Take into account when using payload (e.g. for tags)
+- [x] Only create forward index for annotations that should have one (fieldsconsumer) (need access to index metadata)
+  - [ ] PROBLEM: we now have access to indexmetadata when creating the index,
+          but not when opening the index for appending to it. How do we get
+          access here as well? Metadata is contained in the index, so shouldn't
+          be an issue, but where to do this neatly?
+  - [ ] improve the tests so they fail if they don't handle the is primary value
+        indicator correctly.
 - [ ] Include "format" bytes per document, so we can more easily add new ways to store e.g. forward index information (e.g. RLE for annotations that have few values, or many of the same value) without breaking backward compatibility. (also applies to CS)
 - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
-- [ ] Only create forward index for annotations that should have one (fieldsconsumer)
-      (need access to index metadata)
 - [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
   (need access to index metadata)
 - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>

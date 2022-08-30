@@ -13,6 +13,7 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 /**
@@ -70,13 +71,13 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
     }
 
     /**
-     * Get the BlackLabIndexWriter.
+     * Get the BlackLabIndex.
      *
      * Needed to access the index metadata while indexing.
      *
-     * @return the BlackLabIndexWriter
+     * @return the BlackLabIndexWriter, or null if not available
      */
-    public BlackLabIndexWriter getBlackLabIndexWriter() {
+    public BlackLabIndex getBlackLabIndex() {
         return index;
     }
 

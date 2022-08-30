@@ -18,6 +18,8 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.MappedMultiFields;
@@ -35,6 +37,13 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -58,6 +67,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
+    /** Our index metadata */
+    private final IndexMetadata metadata;
+
     /**
      * Instantiates a fields consumer.
      *
@@ -71,6 +83,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
+
+        BlackLabIndex index = ((BlackLab40Codec) state.segmentInfo.getCodec()).getBlackLabIndex();
+        this.metadata = index == null ? null : index.metadata();
     }
 
     /**
@@ -125,11 +140,12 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
 
+
         // Content store: implement custom type of stored field for content store
         //   (that is removed before calling the delegate)
 
         // TODO: expand write() to recognize content store fields and write those to a content store file
-        write(fields);
+        write(state.fieldInfos, fields);
 
         // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
@@ -151,7 +167,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      *
      * This method also records metadata about fields in the FieldInfo attributes.
      */
-    private void write(Fields fields) {
+    private void write(FieldInfos fieldInfos, Fields fields) {
 
         try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
                 IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
@@ -179,17 +195,38 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
-                    for (String field: fields) { // for each field
+                    for (String luceneField: fields) { // for each field
                         // If it's (part of) an annotated field...
-                        // TODO: we probably only want to create a forward index for one sensitivity
-                        //   of each annotation; the case/accent-sensitive one if it exists.
-                        //   we need the index metadata for this though.
-                        if (isAnnotationField(field)) {
+                        boolean shouldGetForwardIndex = false;
+                        if (isAnnotationField(luceneField)) {
+                            String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
+                            if (nameComponents.length >= 3) {
+                                AnnotatedField annotatedField = metadata.annotatedField(nameComponents[0]);
+                                Annotation annotation = annotatedField.annotation(nameComponents[1]);
+                                MatchSensitivity s = MatchSensitivity.fromLuceneFieldSuffix(nameComponents[2]);
+                                if (annotation.hasForwardIndex() && s == annotation.mainSensitivity().sensitivity()) {
+                                    // Annotation should get a forward index, and this is the main sensitivity.
+                                    shouldGetForwardIndex = true;
+                                }
+                            }
+                        }
 
-                            Terms terms = fields.terms(field);
+                        if (shouldGetForwardIndex) {
+                            // We're creating a forward index for this field. That means that the payloads
+                            // will include an "is-primary-value" indicator, so we know which value to store
+                            // in the forward index (the primary value, i.e. the first value, to be used
+                            // in concordances, sort, group, etc.).
+                            // We must remember that there may be "is-primary-value" indicators in our payloads,
+                            // so we can skip those when working with other payload info. See PayloadUtils
+                            // for details.
+                            FieldInfo fieldInfo = fieldInfos.fieldInfo(luceneField);
+                            fieldInfo.putAttribute(
+                                    BlackLabIndexIntegrated.FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR,
+                                    "true");
+
 
                             // Record starting offset of field in termindex file (written to fields file later)
-                            field2TermIndexOffsets.put(field, termIndexFile.getFilePointer());
+                            field2TermIndexOffsets.put(luceneField, termIndexFile.getFilePointer());
 
                             // Keep track of where to find term positions for each document
                             // (for reversing index)
@@ -197,11 +234,11 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             // temporary termvector file where the occurrences for each term can be
                             // found.
                             Map<Integer, Map<Integer, Long>> docId2TermVecFileOffsets =
-                                    field2docTermVecFileOffsets.computeIfAbsent(field, k -> new TreeMap<>());
-                            // keep docs in order
+                                    field2docTermVecFileOffsets.computeIfAbsent(luceneField, k -> new TreeMap<>());
 
                             // For each term in this field...
                             PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
+                            Terms terms = fields.terms(luceneField);
                             TermsEnum termsEnum = terms.iterator();
                             int termId = 0;
                             while (true) {

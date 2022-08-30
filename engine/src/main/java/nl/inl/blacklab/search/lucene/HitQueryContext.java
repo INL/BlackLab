@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 
 /**
@@ -17,8 +16,6 @@ import nl.inl.blacklab.search.Span;
  */
 public class HitQueryContext {
 
-    private final BlackLabIndex index;
-
     /** Root of the BLSpans tree for this query. */
     private BLSpans rootSpans;
 
@@ -28,17 +25,16 @@ public class HitQueryContext {
     /** We use this to check if subclauses capture groups or not */
     private int numberOfTimesGroupRegistered = 0;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans) {
-        this.index = index;
+    public HitQueryContext(BLSpans spans) {
         this.rootSpans = spans;
     }
 
-    public HitQueryContext(BlackLabIndex index) {
-        this(index, null);
+    public HitQueryContext() {
+        this(null);
     }
 
     public HitQueryContext copyWith(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(index, spans);
+        HitQueryContext result = new HitQueryContext(spans);
         result.groupNames = groupNames;
         result.numberOfTimesGroupRegistered = numberOfTimesGroupRegistered;
         return result;
@@ -101,9 +97,5 @@ public class HitQueryContext {
 
     public int getCaptureRegisterNumber() {
         return numberOfTimesGroupRegistered;
-    }
-
-    public BlackLabIndex index() {
-        return index;
     }
 }

@@ -101,7 +101,7 @@ public class HitsFromQuery extends HitsMutable {
         this.searchSettings = searchSettings;
         this.maxStats = new MaxStats();
         hitsCounted = 0;
-        hitQueryContext = new HitQueryContext(queryInfo.index());
+        hitQueryContext = new HitQueryContext();
         try {
             BlackLabIndex index = queryInfo.index();
             IndexReader reader = index.reader();

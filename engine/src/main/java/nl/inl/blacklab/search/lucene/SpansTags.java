@@ -22,13 +22,19 @@ class SpansTags extends BLSpans {
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private boolean payloadIndicatesPrimaryValues;
 
-    public SpansTags(BLSpans startTags) {
+    /**
+     * Construct SpansTags.
+     *
+     * NOTE: start tag payloads contain the location of the end tag. To work with these,
+     * we also need to know if there's "is primary value" indicators in (some of) the payloads,
+     * so we can skip these. See {@link PayloadUtils}.
+     *
+     * @param startTags the positions of our start tags
+     * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
+     */
+    public SpansTags(BLSpans startTags, boolean payloadIndicatesPrimaryValues) {
         this.tags = startTags;
-    }
-
-    @Override
-    public void setHitQueryContext(HitQueryContext context) {
-        this.payloadIndicatesPrimaryValues = context.index().needsPrimaryTokenPayloads();
+        this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
     }
 
     @Override
@@ -79,12 +85,13 @@ class SpansTags extends BLSpans {
             if (end == -2) {
                 collector.reset();
 
-                // NOTE: tags is a BLSpanTermQuery, so we know there can only be one payload
+                // NOTE: tags is a BLSpanTermQuery, a leaf, so we know there can only be one payload
                 //   each start tag gets a payload, so there should always be one
                 tags.collect(collector);
                 byte[] payload = collector.getPayloads().iterator().next();
                 ByteBuffer bb = ByteBuffer.wrap(payload);
-                bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator
+                if (payloadIndicatesPrimaryValues)
+                    bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator
                 end = bb.getInt();
             }
             return end;

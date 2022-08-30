@@ -16,12 +16,22 @@ public class TestSpansTags {
         int[] aStart = { 10, 1, 4 };
         int[] aEnd = { 21, 2, 6 };
         BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
-        Spans spans = new SpansTags(a);
+        Spans spans = new SpansTags(a, false);
 
-        int[] expDoc = { 1, 2, 2 };
-        int[] expStart = { 10, 1, 4 };
-        int[] expEnd = { 21, 2, 6 };
-        Spans exp = new MockSpans(expDoc, expStart, expEnd);
+        Spans exp = new MockSpans(aDoc, aStart, aEnd);
+        TestUtil.assertEquals(exp, spans);
+    }
+
+    @Test
+    public void testWithIsPrimary() throws IOException {
+        int[] aDoc = { 1, 2, 2 };
+        int[] aStart = { 10, 1, 4 };
+        int[] aEnd = { 21, 2, 6 };
+        boolean[] aIsPrimary = { true, false, true };
+        BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd, aIsPrimary);
+        Spans spans = new SpansTags(a, true);
+
+        Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
     }
 
@@ -32,12 +42,9 @@ public class TestSpansTags {
         int[] aEnd = { 7, 5 };
         BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-        Spans spans = new SpansTags(a);
+        Spans spans = new SpansTags(a, false);
 
-        int[] expDoc = { 1, 1 };
-        int[] expStart = { 2, 4 };
-        int[] expEnd = { 7, 5 };
-        Spans exp = new MockSpans(expDoc, expStart, expEnd);
+        Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
     }
 
@@ -54,12 +61,9 @@ public class TestSpansTags {
         int[] aEnd = { 2, 7 };
         BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-        Spans spans = new SpansTags(a);
+        Spans spans = new SpansTags(a, false);
 
-        int[] expDoc = { 1, 1 };
-        int[] expStart = { 2, 4 };
-        int[] expEnd = { 2, 7 };
-        Spans exp = new MockSpans(expDoc, expStart, expEnd);
+        Spans exp = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(exp, spans);
     }
 
@@ -70,7 +74,7 @@ public class TestSpansTags {
         int[] aEnd = { 5, 7, 17, 15 };
         BLSpans a = MockSpans.withEndInPayload(aDoc, aStart, aEnd);
 
-        Spans spans = new SpansTags(a);
+        Spans spans = new SpansTags(a, false);
         spans.advance(2);
 
         int[] expDoc = { 2, 2 };

@@ -63,7 +63,10 @@ public class TokenStreamFromList extends TokenStream {
             termAttr.copyBuffer(word.toCharArray(), 0, word.length());
             positionIncrementAttr.setPositionIncrement(incrementIt == null ? 1 : incrementIt.next());
             if (payloadAttr != null) {
-                payloadAttr.setPayload(payloadIt.next());
+                if (payloadIt.hasNext())
+                    payloadAttr.setPayload(payloadIt.next());
+                else
+                    payloadAttr.setPayload(null);
             }
             return true;
         }
