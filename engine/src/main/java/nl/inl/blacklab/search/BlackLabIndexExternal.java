@@ -120,7 +120,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     }
 
     @Override
-    public boolean needsPrimaryTokenPayloads() {
+    public boolean needsPrimaryValuePayloads() {
         return false;
     }
 }

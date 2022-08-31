@@ -96,7 +96,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public boolean needsPrimaryTokenPayloads() {
+    public boolean needsPrimaryValuePayloads() {
         // we need these because we store the forward index when the segment is about to be written,
         // at which point this information would otherwise be lost.
         return true;

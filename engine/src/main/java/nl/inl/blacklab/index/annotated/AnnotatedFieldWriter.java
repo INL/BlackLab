@@ -57,7 +57,7 @@ public class AnnotatedFieldWriter {
 
     private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
-    private final boolean needsPrimaryTokenPayloads;
+    private final boolean needsPrimaryValuePayloads;
 
     private AnnotatedField field;
 
@@ -74,10 +74,10 @@ public class AnnotatedFieldWriter {
      * @param sensitivity ways to index main annotation, with respect to case- and
      *            diacritics-sensitivity.
      * @param mainPropHasPayloads does the main annotation have payloads?
-     * @param needsPrimaryTokenPayloads should payloads indicate whether value is primary or not?
+     * @param needsPrimaryValuePayloads should payloads indicate whether value is primary or not?
      */
     public AnnotatedFieldWriter(String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
-            boolean mainPropHasPayloads, boolean needsPrimaryTokenPayloads) {
+            boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -86,9 +86,9 @@ public class AnnotatedFieldWriter {
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         boolean includeOffsets = true;
         fieldName = name;
-        this.needsPrimaryTokenPayloads = needsPrimaryTokenPayloads;
+        this.needsPrimaryValuePayloads = needsPrimaryValuePayloads;
         mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets,
-                mainPropHasPayloads, needsPrimaryTokenPayloads);
+                mainPropHasPayloads, needsPrimaryValuePayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
     }
 
@@ -100,7 +100,8 @@ public class AnnotatedFieldWriter {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
-        AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads, needsPrimaryTokenPayloads);
+        AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads,
+                needsPrimaryValuePayloads);
         if (noForwardIndexAnnotations.contains(name) || annot != null && !annot.createForwardIndex()) {
             p.setHasForwardIndex(false);
         }

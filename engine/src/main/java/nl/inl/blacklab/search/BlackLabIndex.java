@@ -59,7 +59,7 @@ public interface BlackLabIndex extends AutoCloseable {
      *
      * @return whether or not TokenStream payloads should include primary value indicators
      */
-    boolean needsPrimaryTokenPayloads();
+    boolean needsPrimaryValuePayloads();
 
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.

@@ -75,7 +75,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public boolean needsPrimaryTokenPayloads() {
+    public boolean needsPrimaryValuePayloads() {
         return false;
     }
 

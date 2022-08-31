@@ -142,11 +142,17 @@ public class PayloadUtils {
         return new BytesRef(payload.bytes, payload.offset + 1, payload.length - 1);
     }
 
-    public static byte[] getBytes(BytesRef secondaryPayload) {
+    /**
+     * Get the bytes from a BytesRef in a separate array.
+     *
+     * @param bytesRef source
+     * @return a new array with the same bytes
+     */
+    public static byte[] getBytes(BytesRef bytesRef) {
         byte[] bytes = null;
-        if (secondaryPayload != null) {
-            bytes = new byte[secondaryPayload.length];
-            System.arraycopy(secondaryPayload.bytes, secondaryPayload.offset, bytes, 0, secondaryPayload.length);
+        if (bytesRef != null) {
+            bytes = new byte[bytesRef.length];
+            System.arraycopy(bytesRef.bytes, bytesRef.offset, bytes, 0, bytesRef.length);
         }
         return bytes;
     }

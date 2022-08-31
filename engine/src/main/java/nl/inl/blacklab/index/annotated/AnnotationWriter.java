@@ -101,7 +101,7 @@ public class AnnotationWriter {
     private boolean hasForwardIndex = true;
 
     /** Should the payload indicate whether this token is primary or secondary? (see PayloadUtils) */
-    private boolean needsPrimaryTokenPayload = false;
+    private boolean needsPrimaryValuePayload = false;
 
     public String mainSensitivity() {
         return mainSensitivity;
@@ -129,10 +129,10 @@ public class AnnotationWriter {
      * @param includeOffsets whether to include character offsets in the main
      *            sensitivity variant
      * @param includePayloads will this annotation include payloads?
-     * @param needsPrimaryTokenPayloads should payloads indicate whether this is a primary value? (forces payloads)
+     * @param needsPrimaryValuePayloads should payloads indicate whether this is a primary value? (forces payloads)
      */
     public AnnotationWriter(AnnotatedFieldWriter fieldWriter, String name, AnnotationSensitivities sensitivity,
-            boolean includeOffsets, boolean includePayloads, boolean needsPrimaryTokenPayloads) {
+            boolean includeOffsets, boolean includePayloads, boolean needsPrimaryValuePayloads) {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
@@ -160,8 +160,8 @@ public class AnnotationWriter {
         }
 
         this.includeOffsets = includeOffsets;
-        this.needsPrimaryTokenPayload = needsPrimaryTokenPayloads;
-        if (!includePayloads && needsPrimaryTokenPayloads)
+        this.needsPrimaryValuePayload = needsPrimaryValuePayloads;
+        if (!includePayloads && needsPrimaryValuePayloads)
             includePayloads = true;
         if (includePayloads)
             payloads = new ArrayList<>();
@@ -182,7 +182,7 @@ public class AnnotationWriter {
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
 
-        if (hasForwardIndex && needsPrimaryTokenPayload) {
+        if (hasForwardIndex && needsPrimaryValuePayload) {
             // When writing the segment, we'll need to know which of our values was our "primary"
             // value (the original word, to be used in concordances, sort, group, etc., to be stored
             // in the forward index) and which were the secondary ones (e.g. stemmed, synonyms).
