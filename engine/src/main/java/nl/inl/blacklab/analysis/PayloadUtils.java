@@ -2,9 +2,13 @@ package nl.inl.blacklab.analysis;
 
 import org.apache.lucene.util.BytesRef;
 
+/**
+ * Utilities for dealing with payloads in BlackLab.
+ */
 public class PayloadUtils {
 
-    // Annotations to be stored in a forward index start with a byte indicating whether a value is primary or secondary.
+    // Annotations to be stored in a forward index sometimes start with a byte indicating whether a value is primary
+    // or secondary. Primary is the default if there is no indicator or no payload.
 
     /** First payload byte for primary token values (original value, to be used for concordances) */
     static final byte BYTE_PRIMARY = 127;
