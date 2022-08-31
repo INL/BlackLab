@@ -35,7 +35,11 @@ public class TestIndexIntegrated {
 
     BlackLabIndex.IndexType indexType()  { return BlackLabIndex.IndexType.INTEGRATED; }
 
-    private static final int NUMBER_OF_TERMS = 26;
+    int numberOfTerms() {
+        // HACK. This is the correct value (including secondary values not stored in the forward index)
+        //   but TestIndexExternal overrides this with 26, excluding the two secondary values.
+        return 28;
+    }
 
     private static TestIndex testIndex;
 
@@ -74,16 +78,21 @@ public class TestIndexIntegrated {
 
     @Test
     public void testSimple() {
-        Assert.assertEquals("Number of terms", NUMBER_OF_TERMS, wordTerms.numberOfTerms());
+        Assert.assertEquals("Number of terms", numberOfTerms(), wordTerms.numberOfTerms());
     }
 
     @Test
     public void testIndexOfAndGet() {
         MutableIntSet s = new IntHashSet();
-        for (int i = 0; i < NUMBER_OF_TERMS; i++) {
-            Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(wordTerms.get(i)));
+        int n = numberOfTerms();
+        if (this instanceof TestIndexExternal) {
+            n -= 2;
+        }
+        for (int i = 0; i < numberOfTerms(); i++) {
+            String term = wordTerms.get(i);
+            Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
             s.clear();
-            wordTerms.indexOf(s, wordTerms.get(i), MatchSensitivity.SENSITIVE);
+            wordTerms.indexOf(s, term, MatchSensitivity.SENSITIVE);
             Assert.assertEquals("indexOf(get(" + i + "))", i, s.intIterator().next());
         }
     }
@@ -105,8 +114,8 @@ public class TestIndexIntegrated {
         Collator collator = wordFi.collators().get(sensitive);
         Random random = new Random(123_456);
         for (int i = 0; i < 100; i++) {
-            int a = random.nextInt(NUMBER_OF_TERMS);
-            int b = random.nextInt(NUMBER_OF_TERMS);
+            int a = random.nextInt(numberOfTerms());
+            int b = random.nextInt(numberOfTerms());
             String ta = terms.get(a);
             String tb = terms.get(b);
             int expected = collator.compare(ta, tb);

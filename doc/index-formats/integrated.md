@@ -49,11 +49,20 @@ This is a temporary file. It is eventually replaced by the tokens file.
 - For each field annotation:
   * For each document:
     - offset in the tokens file (long)
-  * Offset after last document (to be used instead of "offset of next doc" for when calculating last doc's length) (long)
+    - number of tokens in the document (int)
+    - encoding used (byte)
+
+See below for the tokens encodings.
 
 ## tokens - sequence of tokens in each document, per annotation
 
 - For each field annotation:
   * For each document:
-    - For each token:
-      * Term id (int)
+    - the document, in the encoding given by the tokensindex file. See below.
+
+## Tokens encodings
+
+| Name                | Code | Description                                                                     |
+|---------------------|-----:|---------------------------------------------------------------------------------|
+| INT_PER_TOKEN       |    1 | One 4-byte integer for each token in the document.                              |
+| ALL_TOKENS_THE_SAME |    2 | A single 4-byte value representing the value of all the tokens in the document. |

@@ -9,7 +9,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.WildcardTermTooBroad;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.mocks.DocIndexerExample;
+import nl.inl.blacklab.mocks.DocIndexerTest;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLab;
@@ -73,7 +73,7 @@ public class Example {
         cleanupOldIndexDir(indexDir);
 
         // Register our custom DocIndexer.
-        DocumentFormats.registerFormat("exampleformat", DocIndexerExample.class);
+        DocumentFormats.registerFormat("exampleformat", DocIndexerTest.class);
 
         // Create an index and add our test documents.
         Indexer indexer = null;

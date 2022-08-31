@@ -61,44 +61,31 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
      */
     static final String TERMVEC_TMP_EXT = "termvec.tmp";
 
-    /** Name of the PostingsFormat we delegate most requests to. */
-    private final String delegateCodecName;
-
     /** The PostingsFormat we're wrapping and we delegate most requests to. */
     private final PostingsFormat delegatePostingsFormat;
 
+    // Used when opening index (see corresponding PostingsReader constructor)
+    @SuppressWarnings("unused")
     public BlackLab40PostingsFormat() {
-        this(NAME);
+        super(NAME);
+        BlackLab40PostingsFormat pf = ((BlackLab40Codec)Codec.forName(BlackLab40Codec.NAME)).postingsFormat();
+        delegatePostingsFormat = pf.delegatePostingsFormat;
     }
 
     public BlackLab40PostingsFormat(PostingsFormat delegate) {
         super(NAME);
-        delegateCodecName = delegate.getName();
         delegatePostingsFormat = delegate;
     }
 
-    public BlackLab40PostingsFormat(String codecName) {
-        super(NAME);
-        delegateCodecName = codecName;
-        delegatePostingsFormat = null;
-    }
-
     @Override
-    public final FieldsProducer fieldsProducer(SegmentReadState state)
-            throws IOException {
+    public final FieldsProducer fieldsProducer(SegmentReadState state) throws IOException {
         return new BlackLab40PostingsReader(state);
     }
 
     @Override
-    public final FieldsConsumer fieldsConsumer(SegmentWriteState state)
-            throws IOException {
-        if (delegatePostingsFormat != null) {
-            return new BlackLab40PostingsWriter(
-                    delegatePostingsFormat.fieldsConsumer(state), state,
-                    delegatePostingsFormat.getName());
-        }
-        PostingsFormat pf = Codec.forName(delegateCodecName).postingsFormat();
-        return pf.fieldsConsumer(state);
+    public final FieldsConsumer fieldsConsumer(SegmentWriteState state) throws IOException {
+        return new BlackLab40PostingsWriter(delegatePostingsFormat.fieldsConsumer(state), state,
+                delegatePostingsFormat.getName());
     }
 
 }

@@ -16,7 +16,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.mocks.DocIndexerExample;
+import nl.inl.blacklab.mocks.DocIndexerTest;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -69,16 +69,20 @@ public class TestIndex {
     /**
      * Some test XML data to index.
      */
-    final static String[] testData = {
-            "<doc pid='0'><s><entity><w l='the'   p='art' >The</w> "
-                    + "<w l='quick' p='adj'>quick</w> "
-                    + "<w l='brown' p='adj'>brown</w> "
-                    + "<w l='fox'   p='nou'>fox</w></entity> "
-                    + "<w l='jump'  p='vrb' >jumps</w> "
-                    + "<w l='over'  p='pre' >over</w> "
-                    + "<entity><w l='the'   p='art' >the</w> "
-                    + "<w l='lazy'  p='adj'>lazy</w> "
-                    + "<w l='dog'   p='nou'>dog</w></entity>" + ".</s></doc>",
+    final static String[] TEST_DATA = {
+            // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
+            // All values will be searchable in the reverse index, but only the first will be stored in the
+            // forward index.
+            "<doc pid='0'><s><entity>"
+                + "<w l='the'   p='art'>The|DOH|ZZZ</w> "
+                + "<w l='quick' p='adj'>quick</w> "
+                + "<w l='brown' p='adj'>brown</w> "
+                + "<w l='fox'   p='nou'>fox</w></entity> "
+                + "<w l='jump'  p='vrb' >jumps</w> "
+                + "<w l='over'  p='pre' >over</w> "
+                + "<entity><w l='the'   p='art' >the</w> "
+                + "<w l='lazy'  p='adj'>lazy</w> "
+                + "<w l='dog'   p='nou'>dog</w></entity>" + ".</s></doc>",
 
             // This doc contains no p annotations.
             // This is intentional, to test this case.
@@ -141,15 +145,15 @@ public class TestIndex {
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
-        DocumentFormats.registerFormat(testFormat, DocIndexerExample.class);
+        DocumentFormats.registerFormat(testFormat, DocIndexerTest.class);
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
             Indexer indexer = Indexer.get(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
                 // Index each of our test "documents".
-                for (int i = 0; i < testData.length; i++) {
-                    indexer.index("test" + (i + 1), testData[i].getBytes());
+                for (int i = 0; i < TEST_DATA.length; i++) {
+                    indexer.index("test" + (i + 1), TEST_DATA[i].getBytes());
                 }
                 if (testDelete) {
                     // Delete the first doc, to test deletion.

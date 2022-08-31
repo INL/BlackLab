@@ -2,6 +2,7 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +21,9 @@ import nl.inl.blacklab.forwardindex.TermsSegmentReader;
  */
 @ThreadSafe
 class SegmentForwardIndex implements AutoCloseable {
+
+    /** Tokens index file record consists of offset in tokens file, doc length in tokens, and tokens encoding scheme. */
+    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES;
 
     /** Information about Lucene fields that represent BlackLab annotations */
     private static class Fields {
@@ -136,6 +140,9 @@ class SegmentForwardIndex implements AutoCloseable {
         // Used by retrievePart(s)
         private int docLength;
 
+        // Used by retrievePart(s)
+        private TokensEncoding tokensEncoding;
+
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
                 _tokensIndex = _tokensIndexFile.clone();
@@ -190,10 +197,23 @@ class SegmentForwardIndex implements AutoCloseable {
 
             // Read the snippet from the tokens file
             try {
-                _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
                 int[] snippet = new int[end - start];
-                for (int j = 0; j < snippet.length; j++) {
-                    snippet[j] = _tokens.readInt();
+                switch (tokensEncoding) {
+                case INT_PER_TOKEN:
+                    // Simplest encoding, just one 4-byte int per token
+                    _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
+                    for (int j = 0; j < snippet.length; j++) {
+                        snippet[j] = _tokens.readInt();
+                    }
+                    break;
+                case ALL_TOKENS_THE_SAME:
+                    // All tokens have the same value, so we only have one value stored
+                    _tokens.seek(docTokensOffset);
+                    int value = _tokens.readInt();
+                    Arrays.fill(snippet, value);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Cannot read tokens encoding: " + tokensEncoding);
                 }
                 return snippet;
             } catch (IOException e) {
@@ -205,10 +225,10 @@ class SegmentForwardIndex implements AutoCloseable {
             try {
                 tokensIndex(); // ensure input available
                 long fieldTokensIndexOffset = fields.get(luceneField).getTokensIndexOffset();
-                _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * Long.BYTES);
+                _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
-                long nextDocTokensOffset = _tokensIndex.readLong(); // (always exists because we write an extra value at the end)
-                docLength = (int)((nextDocTokensOffset - docTokensOffset) / Integer.BYTES);
+                docLength = _tokensIndex.readInt();
+                tokensEncoding = TokensEncoding.fromCode(_tokensIndex.readByte());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
