@@ -1,9 +1,11 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.util.Collection;
 
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.StoredFieldVisitor;
+import org.apache.lucene.util.Accountable;
 
 /**
  * Provides random access to values stored as a content store.
@@ -36,5 +38,20 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     @Override public long ramBytesUsed() {
         return delegate.ramBytesUsed();
+    }
+
+    @Override
+    public StoredFieldsReader getMergeInstance() {
+        return delegate.getMergeInstance();
+    }
+
+    @Override
+    public Collection<Accountable> getChildResources() {
+        return delegate.getChildResources();
+    }
+
+    @Override
+    public String toString() {
+        return "BlackLab40StoredFieldsReader(" + delegate.toString() + ")";
     }
 }
