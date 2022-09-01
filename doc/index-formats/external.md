@@ -31,10 +31,17 @@ The forward index contains:
     - int: size of following data block in bytes, d
     - d bytes: term string data block
     (you're done reading blocks when you've read n terms in total)
+- int[number of terms n]: empty (for file compatibility)
+- int[number of terms n]: case-insensitive sort positions of the terms (i.e. what position would the term have after sorting the list of terms)
+- int[number of terms n]: empty (for file compatibility)
+- int[number of terms n]: case-sensitive sort positions of the terms
 
-(NOTE: the reason for storing terms in blocks is to prevent integer overflow 
+NOTE: the reason for storing terms in blocks is to prevent integer overflow 
 for the offset values. We could've used longs for offsets as well, but
-if you have that many terms, this saves a nontrivial amount of space)
+if you have that many terms, this saves a nontrivial amount of space.
+Every block essentially _resets_ the byte offset of the next term to 0, 
+so this way we can store an infinite number of bytes (until we hit the 2^31-1 limit on the total number of terms).
+
 
 ### docs.dat (Documents file)
 
