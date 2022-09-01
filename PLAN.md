@@ -56,7 +56,7 @@ Where we take the metadata document into account:
 ### Content store
 
 - [ ] Make content store part of the Lucene index. Approach:
-  - [ ] `FieldType` for annotated field with content store should get an attribute that indicates this (this is copied to the `FieldInfo` by Lucene)
+  - [x] `FieldType` for annotated field with content store should get an attribute that indicates this (this is copied to the `FieldInfo` by Lucene)
   - [ ] implement `BlackLab40StoredFieldsFormat extends StoredFieldsFormat` plus corresponding `StoredFieldsReader` and `-Writer` (based on `CompressingStoredFields*`) which can recognize this attribute and either delegate to Lucene's stored field implementation or use our own that allows us to read parts of the document.
   - [ ] poke a hole similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()` to get direct access to the forward index. 
 

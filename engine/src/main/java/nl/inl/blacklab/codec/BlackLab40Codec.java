@@ -125,7 +125,7 @@ public class BlackLab40Codec extends Codec {
 
     @Override
     public StoredFieldsFormat storedFieldsFormat() {
-        return delegate().storedFieldsFormat();
+        return new BlackLab40StoredFieldsFormat(delegate().storedFieldsFormat());
     }
 
     @Override
