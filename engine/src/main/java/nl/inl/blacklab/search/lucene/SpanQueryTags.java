@@ -16,6 +16,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -113,7 +114,9 @@ public class SpanQueryTags extends BLSpanQuery {
             BLSpans startTags = weight.getSpans(context, requiredPostings);
             if (startTags == null)
                 return null;
-            return new SpansTags(startTags);
+            boolean primaryIndicator = BlackLabIndexIntegrated.hasPrimaryValueIndicator(context,
+                    startTagFieldName);
+            return new SpansTags(startTags, primaryIndicator);
         }
 
     }

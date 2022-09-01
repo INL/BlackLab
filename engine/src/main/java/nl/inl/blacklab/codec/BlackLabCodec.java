@@ -1,6 +1,6 @@
 package nl.inl.blacklab.codec;
 
-import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 public interface BlackLabCodec {
     /**
@@ -10,5 +10,5 @@ public interface BlackLabCodec {
      *
      * @return the BlackLabIndexWriter
      */
-    BlackLabIndexWriter getBlackLabIndexWriter();
+    BlackLabIndex getBlackLabIndex();
 }

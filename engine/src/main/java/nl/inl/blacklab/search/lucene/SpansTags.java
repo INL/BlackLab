@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Span;
 
@@ -18,8 +19,22 @@ class SpansTags extends BLSpans {
 
     private int end = -1; // -1: not nexted yet. -2: payload not read yet.
 
-    public SpansTags(BLSpans startTags) {
+    /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
+    private boolean payloadIndicatesPrimaryValues;
+
+    /**
+     * Construct SpansTags.
+     *
+     * NOTE: start tag payloads contain the location of the end tag. To work with these,
+     * we also need to know if there's "is primary value" indicators in (some of) the payloads,
+     * so we can skip these. See {@link PayloadUtils}.
+     *
+     * @param startTags the positions of our start tags
+     * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
+     */
+    public SpansTags(BLSpans startTags, boolean payloadIndicatesPrimaryValues) {
         this.tags = startTags;
+        this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
     }
 
     @Override
@@ -69,9 +84,14 @@ class SpansTags extends BLSpans {
         try {
             if (end == -2) {
                 collector.reset();
+
+                // NOTE: tags is a BLSpanTermQuery, a leaf, so we know there can only be one payload
+                //   each start tag gets a payload, so there should always be one
                 tags.collect(collector);
                 byte[] payload = collector.getPayloads().iterator().next();
                 ByteBuffer bb = ByteBuffer.wrap(payload);
+                if (payloadIndicatesPrimaryValues)
+                    bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator
                 end = bb.getInt();
             }
             return end;

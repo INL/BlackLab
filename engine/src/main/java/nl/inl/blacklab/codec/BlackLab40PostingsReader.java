@@ -85,12 +85,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
-    private final SegmentReadState state;
-
-    public BlackLab40PostingsReader(SegmentReadState state)
-            throws IOException {
-
-        this.state = state;
+    public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
 
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.

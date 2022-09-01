@@ -13,6 +13,7 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 /**
@@ -41,14 +42,26 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
 public class BlackLab40Codec extends Codec implements BlackLabCodec {
 
     /** Our codec's name. */
-    private static final String NAME = "BlackLab40";
+    static final String NAME = "BlackLab40";
 
     /** The codec we're basing this codec on. */
     private Codec _delegate;
 
-    private PostingsFormat postingsFormat;
+    /** Our postings format. */
+    private BlackLab40PostingsFormat postingsFormat;
 
-    /** The BlackLab index writer, or null if not available (i.e. searching, not indexing) */
+    /** The BlackLab index writer, or null if not available (i.e. searching, not indexing).
+     *
+     * HACK: this is arguably wrong because this class should represent the codec, not a specific
+     *   index. However, we have no other way to access the metadata object while writing to the index.
+     *   And we know it's safe because we always open an IndexWriter with a specific instance of this class
+     *   that has the correct index reference.
+     *
+     * On reading, Lucene will instantiate this using the no-argument constructor, or it might even reuse
+     * an older version it caches. So while reading from the index, we cannot access the BlackLabIndex or
+     * IndexMetadata objects. Of course, we don't need to; any information we need will be duplicated in each
+     * segments (or fields) attributes.
+     */
     private BlackLabIndexWriter index = null;
 
     // Needed for SPI
@@ -60,7 +73,7 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
     /**
      * Construct a BlackLab40Codec that has access to the BlackLabIndexWriter.
      *
-     * This is needed to access the metadata.
+     * This is needed to access the metadata while writing. See above.
      *
      * @param index our BlackLabIndexWriter
      */
@@ -70,13 +83,14 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
     }
 
     /**
-     * Get the BlackLabIndexWriter.
+     * Get the BlackLabIndex.
      *
-     * Needed to access the index metadata while indexing.
+     * Only valid while writing to an index.
+     * Needed to access the index metadata. See above.
      *
-     * @return the BlackLabIndexWriter
+     * @return the BlackLabIndexWriter, or null if not available
      */
-    public BlackLabIndexWriter getBlackLabIndexWriter() {
+    public BlackLabIndex getBlackLabIndex() {
         return index;
     }
 
@@ -94,7 +108,7 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
      *
      * @return our postingsformat
      */
-    private PostingsFormat determinePostingsFormat() {
+    private BlackLab40PostingsFormat determinePostingsFormat() {
         /*
 
         // This causes errors. We cannot handle a per-field postings format properly yet.
@@ -141,7 +155,7 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
     }
 
     @Override
-    public synchronized PostingsFormat postingsFormat() {
+    public synchronized BlackLab40PostingsFormat postingsFormat() {
         if (postingsFormat == null)
             postingsFormat = determinePostingsFormat();
         return postingsFormat;

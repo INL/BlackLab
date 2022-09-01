@@ -5,6 +5,7 @@ import java.io.File;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -25,6 +26,29 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  * A BlackLab index with all files included in the Lucene index.
  */
 public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
+
+    public static final String FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR = "hasPrimaryValueIndicator";
+
+    /**
+     * Does the specified Lucene field have "is primary value" indicators in the payload?
+     *
+     * If yes, we can deduce from the payload if a value is the primary value (e.g. original word,
+     * to use for concordances, sort, group, etc.) or a secondary value (e.g. stemmed, synonym).
+     *
+     * We need to know this whenever we work with payloads too, so we can skip this indicator.
+     * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
+     *
+     * @param context leaf reader we're working in
+     * @param luceneFieldName Lucene field to check
+     * @return true if payload indicates whether this is a primary value
+     */
+    public static boolean hasPrimaryValueIndicator(LeafReaderContext context, String luceneFieldName) {
+        String strHasPrimaryValueIndicator1 = context.reader().getFieldInfos().fieldInfo(luceneFieldName)
+                .getAttribute(FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR);
+        boolean hasPrimaryValueIndicator = strHasPrimaryValueIndicator1 != null &&
+                strHasPrimaryValueIndicator1.equals("true");
+        return hasPrimaryValueIndicator;
+    }
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -69,6 +93,13 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     public IndexMetadataIntegrated metadata() {
         return (IndexMetadataIntegrated)super.metadata();
+    }
+
+    @Override
+    public boolean needsPrimaryValuePayloads() {
+        // we need these because we store the forward index when the segment is about to be written,
+        // at which point this information would otherwise be lost.
+        return true;
     }
 
     @Override

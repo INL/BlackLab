@@ -98,5 +98,4 @@ public class HitQueryContext {
     public int getCaptureRegisterNumber() {
         return numberOfTimesGroupRegistered;
     }
-
 }

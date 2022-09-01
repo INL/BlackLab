@@ -500,16 +500,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             logger.debug("  Setting maxClauseCount...");
         BooleanQuery.setMaxClauseCount(100_000);
 
-        // (NOTE: with integrated, we cannot open the forward index if
-        //   the index is empty. The reason is that the forward index is attached
-        //   to the main sensitivity of the field, and we don't know what sensitivities
-        //   the field has, because it is not stored in the index metadata, it is normally detected
-        //   from the index fields.
-        // TODO kinda messy, should be improved
-        boolean preventOpeningForwardIndex = false; //isEmptyIndex && this instanceof BlackLabIndexIntegrated;
-
         // Open the forward indices
-        if (!createNewIndex && !preventOpeningForwardIndex) {
+        if (!createNewIndex) {
             if (traceIndexOpening())
                 logger.debug("  Opening forward indices...");
             for (AnnotatedField field: annotatedFields()) {

@@ -84,4 +84,5 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
 
         writer().updateDocument(term, document);
     }
+
 }

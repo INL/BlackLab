@@ -75,6 +75,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
+    public boolean needsPrimaryValuePayloads() {
+        return false;
+    }
+
+    @Override
     public void close() {
         blackLab.removeIndex(this);
     }

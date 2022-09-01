@@ -8,6 +8,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -166,6 +167,17 @@ public class MockSpans extends BLSpans {
         }
     }
 
+    private void setPayloadsInt(int[] aEnd, boolean[] aIsPrimary) {
+        this.payloads = new byte[aEnd.length][];
+        for (int i = 0; i < aEnd.length; i++) {
+            BytesRef bytesRef = new BytesRef(ByteBuffer.allocate(4).putInt(aEnd[i]).array());
+            BytesRef withPrimary = PayloadUtils.addIsPrimary(aIsPrimary[i], bytesRef);
+            byte[] b = new byte[withPrimary.length];
+            System.arraycopy(withPrimary.bytes, withPrimary.offset, b, 0, b.length);
+            this.payloads[i] = b;
+        }
+    }
+
     @Override
     public int nextDoc() throws IOException {
         if (noMoreDocs)
@@ -236,6 +248,12 @@ public class MockSpans extends BLSpans {
     public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
         spans.setPayloadsInt(aEnd);
+        return spans;
+    }
+
+    public static BLSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
+        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
+        spans.setPayloadsInt(aEnd, aIsPrimary);
         return spans;
     }
 

@@ -15,7 +15,7 @@ import org.eclipse.collections.api.iterator.IntIterator;
  *
  * The Strings are taken as terms, and the position increment is always 1.
  */
-class TokenStreamFromList extends TokenStream {
+public class TokenStreamFromList extends TokenStream {
 
     /** Iterator over the terms */
     protected final Iterator<String> iterator;
@@ -48,7 +48,7 @@ class TokenStreamFromList extends TokenStream {
         positionIncrementAttr.setPositionIncrement(1);
 
         iterator = tokens.iterator();
-        incrementIt = increments.intIterator();
+        incrementIt = increments == null ? null : increments.intIterator();
         if (payload != null) {
             payloadAttr = addAttribute(PayloadAttribute.class);
             payloadIt = payload.iterator();
@@ -61,9 +61,12 @@ class TokenStreamFromList extends TokenStream {
         if (iterator.hasNext()) {
             String word = iterator.next();
             termAttr.copyBuffer(word.toCharArray(), 0, word.length());
-            positionIncrementAttr.setPositionIncrement(incrementIt.next());
+            positionIncrementAttr.setPositionIncrement(incrementIt == null ? 1 : incrementIt.next());
             if (payloadAttr != null) {
-                payloadAttr.setPayload(payloadIt.next());
+                if (payloadIt.hasNext())
+                    payloadAttr.setPayload(payloadIt.next());
+                else
+                    payloadAttr.setPayload(null);
             }
             return true;
         }

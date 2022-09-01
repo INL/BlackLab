@@ -45,14 +45,8 @@ Where we take the metadata document into account:
 
 
 ### Forward index
- 
-- [ ] Search for "with integrated, we cannot open the forward index ...". This is no longer a problem.
-- [ ] PROBLEM: we normally only store the first value indexed at a position in the forward index. But with the integrated index, we can't tell what value was first anymore by the time we write the forward index (because we reverse the reverse index). So we should either change it to store all values in the forward index (doable but complicated and doesn't tell us how to build concordances), or we need to add extra information to the tokens (payload?) that tells us what value was first. Probably refer to Mtas (they do store all values in the forward index, but they still need to know what token to use for concordances).
+
 - [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
-- [ ] Only create forward index for annotations that should have one (fieldsconsumer)
-      (need access to index metadata)
-- [ ] Improve how we decide what Lucene field holds the forward index for an annotation (which sensitivity)
-  (need access to index metadata)
 - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
@@ -61,7 +55,10 @@ Where we take the metadata document into account:
 
 ### Content store
 
-- [ ] Make content store part of the Lucene index (using the same compression as we have now, or perhaps a compression mechanism Lucene already provides..? Look in to this)<br>How do we add the content to the index? Could we create a custom field type for this or something (or otherwise register the field to be a content store field, maybe via a field attribute..?), which we store in such a way that it allows us random access..? Or do we simply obtain a reference to the FieldsConsumer and call a separate method to add the content to the store?
+- [ ] Make content store part of the Lucene index. Approach:
+  - [ ] `FieldType` for annotated field with content store should get an attribute that indicates this (this is copied to the `FieldInfo` by Lucene)
+  - [ ] implement `BlackLab40StoredFieldsFormat extends StoredFieldsFormat` plus corresponding `StoredFieldsReader` and `-Writer` (based on `CompressingStoredFields*`) which can recognize this attribute and either delegate to Lucene's stored field implementation or use our own that allows us to read parts of the document.
+  - [ ] poke a hole similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()` to get direct access to the forward index. 
 
 
 ## Refactoring opportunities
