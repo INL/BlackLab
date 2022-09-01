@@ -71,6 +71,7 @@ public class IndexTool {
                     usage();
                     return;
                 }
+                // create --nothreads --integrate-external-files true E:/code/ivdnt/data/corpora/gysseling E:/code/ivdnt/data/to-import/gysseling E:/code/ivdnt/data/interface/gysseling/gysseling.blf.yaml
                 i++;
                 String value = args[i];
                 indexerParam.put(name, value);
@@ -263,42 +264,39 @@ public class IndexTool {
 
         DocumentFormats.registerFormatsInDirectories(formatDirs);
 
-        if (formatIdentifier == null) {
-            System.err.println("No document format given; trying to detect it from the index...");
-        }
 
         // Create the indexer and index the files
         if (!forceCreateNew || indexTemplateFile == null || !indexTemplateFile.canRead()) {
             indexTemplateFile = null;
         }
+        // First check if the format is a file: if so, load it before continuing.
+        if (formatIdentifier != null && !DocumentFormats.isSupported(formatIdentifier)) {
+            File maybeFormatFile = new File(formatIdentifier);
+            if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
+                try {
+                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile, null);
+                    DocumentFormats.registerFormat(format);
+                    formatIdentifier = format.getName();
+                } catch (IOException e) {
+                    System.err.println("Not a format, not a valid file: " + formatIdentifier + " . " + e.getMessage());
+                    System.err.println("Please specify a correct format on the command line.");
+                    usage();
+                    return;
+                }
+            }
+        }
+
         Indexer indexer = null;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
-                    formatIdentifier, indexTemplateFile, indexType);
+                formatIdentifier, indexTemplateFile, indexType);
             indexer = Indexer.get(indexWriter, formatIdentifier);
-            //indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
-        } catch (DocumentFormatNotFound e1) {
-            // Maybe formatIdentifier isn't a format name but the path to a format file?
-        	File docFormatFile = new File(formatIdentifier);
-            try {
-                if (docFormatFile.isFile() && docFormatFile.canRead()) {
-                	ConfigInputFormat format = new ConfigInputFormat(docFormatFile, null);
-                    DocumentFormats.registerFormat(format);
-                    formatIdentifier = format.getName();
-                    indexer = Indexer.openIndex(indexDir, forceCreateNew, formatIdentifier, indexTemplateFile);
-                }
-            } catch (DocumentFormatNotFound|IOException e) {
-                // legit swallow this.
-            	System.err.println("Not a format, not a file: " + docFormatFile + " . " + e.getMessage());
-            }
-
-            if (indexer == null) {
-            	System.err.println(e1.getMessage());
-            	System.err.println("Please specify a correct format on the command line.");
-            	usage();
-            	return;
-            }
+        } catch (DocumentFormatNotFound e) {
+            System.err.println(e.getMessage());
+            usage();
+            return;
         }
+
         indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         if (forceCreateNew)
             indexer.indexWriter().metadata().setDocumentFormat(formatIdentifier);
@@ -321,8 +319,10 @@ public class IndexTool {
             e.printStackTrace();
             indexer.rollback();
         } finally {
+            System.out.println("Saving index, please wait...");
             // Close the index.
             indexer.close();
+            System.out.println("Finished!");
         }
     }
 
