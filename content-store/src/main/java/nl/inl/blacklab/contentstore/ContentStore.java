@@ -36,10 +36,17 @@ public abstract class ContentStore {
         }
     }
 
-    /** A task to perform on a document in the content store. */
-    public interface DocTask {
-        void perform(int cid, String contents);
-    }
+    /**
+     * Store a document.
+     *
+     * It is possible to first call storePart() several times, as long as you finish
+     * with a call to store. The parameter may be the empty string if you wish.
+     *
+     * @param content (part of) the content of the document to store
+     * @return the content store id assigned to the document
+     */
+    public abstract int store(TextContent content);
+
 
     /**
      * Store a document.
@@ -50,9 +57,9 @@ public abstract class ContentStore {
      * @param content (part of) the content of the document to store
      * @return the content store id assigned to the document
      */
-    public abstract int store(String content);
-
-    public abstract int store(byte[] content, int offset, int length, Charset cs);
+    public int store(String content) {
+        return store(new TextContent(content));
+    }
     
     
     /**
@@ -63,9 +70,8 @@ public abstract class ContentStore {
      *
      * @param content part of the content of the document to store
      */
-    public abstract void storePart(String content);
-    
-    public abstract void storePart(byte[] content, int offset, int length, Charset cs); 
+    public abstract void storePart(TextContent content);
+
 
     /**
      * Retrieve a document from the content store.
@@ -146,15 +152,6 @@ public abstract class ContentStore {
      * @return the length in characters
      */
     public abstract int docLength(int id);
-
-    /**
-     * Perform a task on each document in the content store.
-     * 
-     * @param task the task to perform
-     */
-    public void forEachDocument(DocTask task) {
-        idSet().forEach(cid -> task.perform(cid, retrieve(cid)));
-    }
 
     public abstract void initialize();
 

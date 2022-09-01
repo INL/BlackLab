@@ -34,6 +34,7 @@ import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -892,7 +893,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(inputDocument, documentByteOffset, documentLengthBytes);
+        storeWholeDocument(new TextContent(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
     }
 
     @Override

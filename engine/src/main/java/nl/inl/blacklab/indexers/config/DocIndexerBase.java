@@ -10,7 +10,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -27,6 +26,7 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -430,6 +430,18 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param document document to store
      */
     protected void storeWholeDocument(String document) {
+        storeWholeDocument(new TextContent(document));
+    }
+
+    /**
+     * Store the entire document at once.
+     *
+     * Subclasses that simply capture the entire document can use this in their
+     * storeDocument implementation.
+     *
+     * @param document document to store
+     */
+    protected void storeWholeDocument(TextContent document) {
         // Finish storing the document in the document store,
         // retrieve the content id, and store that in Lucene.
         // (Note that we do this after adding the "extra closing token", so the character
@@ -452,34 +464,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (getDocWriter() != null) {
             ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
             contentId = contentStore.store(document);
-        }
-        currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
-        currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
-    }
-
-    protected void storeWholeDocument(byte[] content, int offset, int length) {
-        // Finish storing the document in the document store,
-        // retrieve the content id, and store that in Lucene.
-        // (Note that we do this after adding the "extra closing token", so the character
-        // positions for the closing token still make (some) sense)
-        String contentIdFieldName;
-        String contentStoreName = getContentStoreName();
-        if (contentStoreName == null) {
-            AnnotatedFieldWriter main = getMainAnnotatedField();
-            if (main == null) {
-                contentStoreName = "metadata";
-                contentIdFieldName = "metadataCid";
-            } else {
-                contentStoreName = main.name();
-                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
-            }
-        } else {
-            contentIdFieldName = contentStoreName + "Cid";
-        }
-        int contentId = -1;
-        if (getDocWriter() != null) {
-            ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
-            contentId = contentStore.store(content, offset, length, StandardCharsets.UTF_8);
         }
         currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
         currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));

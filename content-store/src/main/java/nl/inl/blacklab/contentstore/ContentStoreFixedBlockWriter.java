@@ -6,11 +6,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.Arrays;
 import java.util.zip.Deflater;
 
@@ -307,37 +305,11 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * @param content the content to store
      */
     @Override
-    public synchronized void storePart(String content) {
-        if (content.length() == 0)
+    public synchronized void storePart(TextContent content) {
+        if (content.isEmpty())
             return;
 
-        unwrittenContents.append(content);
-        writeBlocks(false);
-    }
-
-    /**
-     * Store part of a piece of large content. This may be called several times to
-     * store chunks of content, but MUST be *finished* by calling the "normal"
-     * store() method. You may call store() with the empty string if you wish.
-     *
-     * @param content content to store
-     * @param offset byte offset to begin storing
-     * @param length number of bytes to store
-     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
-     */
-    @Override
-    public synchronized void storePart(byte[] content, int offset, int length, Charset cs) {
-        if (length == 0) {
-            return;
-        }
-        CharsetDecoder cd = cs.newDecoder();
-        ByteBuffer in = ByteBuffer.wrap(content, offset, length);
-        CharBuffer out = CharBuffer.allocate(1024);
-        while (in.hasRemaining()) {
-            cd.decode(in, out, true);
-            unwrittenContents.append(out.array(), 0, out.position());
-            ((Buffer)out).position(0);
-        }
+        content.appendToStringBuilder(unwrittenContents);
         writeBlocks(false);
     }
 
@@ -354,26 +326,8 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      * @return the id assigned to the content
      */
     @Override
-    public synchronized int store(String content) {
+    public synchronized int store(TextContent content) {
         storePart(content);
-        return store();
-    }
-
-    /**
-     * Store the given content and assign an id to it.
-     *
-     * Parts of the document may already have been stored before. This is the final part and will
-     * assign and return the document's content id.
-     *
-     * @param content the content of the document
-     * @param offset byte offset to begin storing
-     * @param length number of bytes to store
-     * @param cs the charset the document is in. Required to convert the bytes to their proper characters.
-     * @return the id assigned to the document
-     */
-    @Override
-    public synchronized int store(byte[] content, int offset, int length, Charset cs) {
-        storePart(content, offset, length, cs);
         return store();
     }
 

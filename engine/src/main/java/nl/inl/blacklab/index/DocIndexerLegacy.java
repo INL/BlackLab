@@ -15,6 +15,7 @@ import java.util.Map;
 import org.apache.lucene.document.Field;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -67,7 +68,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         int id = -1;
         if (!skippingCurrentDocument) {
             ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            id = contentStore.store(content.toString());
+            id = contentStore.store(new TextContent(content));
         }
         content.setLength(0);
         charsContentAlreadyStored = 0;
@@ -78,7 +79,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         charsContentAlreadyStored += content.length();
         if (!skippingCurrentDocument) {
             ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            contentStore.storePart(content.toString());
+            contentStore.storePart(new TextContent(content));
         }
         content.setLength(0);
     }
