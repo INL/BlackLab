@@ -39,13 +39,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -69,9 +63,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
-    /** Our index metadata */
-    private final IndexMetadata metadata;
-
     /**
      * Instantiates a fields consumer.
      *
@@ -85,9 +76,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
-
-        BlackLabIndex index = ((BlackLab40Codec) state.segmentInfo.getCodec()).getBlackLabIndex();
-        this.metadata = index == null ? null : index.metadata();
     }
 
     /**
@@ -199,18 +187,15 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     // Process fields
                     for (String luceneField: fields) { // for each field
                         // If this field should get a forward index...
-                        if (shouldGetForwardIndex(luceneField)) {
-                            // We're creating a forward index for this field. That means that the payloads
-                            // will include an "is-primary-value" indicator, so we know which value to store
-                            // in the forward index (the primary value, i.e. the first value, to be used
-                            // in concordances, sort, group, etc.).
-                            // We must remember that there may be "is-primary-value" indicators in our payloads,
-                            // so we can skip those when working with other payload info. See PayloadUtils
+                        if (shouldGetForwardIndex(fieldInfos.fieldInfo(luceneField))) {
+                            // We're creating a forward index for this field. Record this fact.
+                            // That also means that the payloads will include an "is-primary-value" indicator,
+                            // so we know which value to store in the forward index (the primary value, i.e.
+                            // the first value, to be used in concordances, sort, group, etc.).
+                            // We must skip these indicators when working with other payload info. See PayloadUtils
                             // for details.
                             FieldInfo fieldInfo = fieldInfos.fieldInfo(luceneField);
-                            fieldInfo.putAttribute(
-                                    BlackLabIndexIntegrated.FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR,
-                                    "true");
+                            fieldInfo.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
 
                             // Record starting offset of field in termindex file (written to fields file later)
                             field2TermIndexOffsets.put(luceneField, termIndexFile.getFilePointer());
@@ -428,18 +413,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @return true if we should store a forward index for this field
      * @throws IOException
      */
-    private boolean shouldGetForwardIndex(String luceneField) throws IOException {
-        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-        if (nameComponents.length >= 3) {
-            AnnotatedField annotatedField = metadata.annotatedField(nameComponents[0]);
-            Annotation annotation = annotatedField.annotation(nameComponents[1]);
-            MatchSensitivity s = MatchSensitivity.fromLuceneFieldSuffix(nameComponents[2]);
-            if (annotation.hasForwardIndex() && s == annotation.mainSensitivity().sensitivity()) {
-                // Annotation should get a forward index, and this is its main sensitivity.
-                return true;
-            }
-        }
-        return false;
+    private boolean shouldGetForwardIndex(FieldInfo fieldInfo) throws IOException {
+        String hasForwardIndex = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX);
+        return hasForwardIndex != null && hasForwardIndex.equals("true");
     }
 
     private String getSegmentFileName(String ext) {

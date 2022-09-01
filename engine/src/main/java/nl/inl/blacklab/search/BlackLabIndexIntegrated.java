@@ -27,7 +27,12 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  */
 public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
-    public static final String FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR = "hasPrimaryValueIndicator";
+    /** Lucene field attribute. Does the field have a forward index?
+        If yes, payloads will indicate primary/secondary values. */
+    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+
+    /** Lucene field attribute. Does the field have a content store */
+    public static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
 
     /**
      * Does the specified Lucene field have "is primary value" indicators in the payload?
@@ -44,7 +49,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public static boolean hasPrimaryValueIndicator(LeafReaderContext context, String luceneFieldName) {
         String strHasPrimaryValueIndicator1 = context.reader().getFieldInfos().fieldInfo(luceneFieldName)
-                .getAttribute(FIELDINFO_ATTRIBUTE_PRIMARY_VALUE_INDICATOR);
+                .getAttribute(BLFA_FORWARD_INDEX);
         boolean hasPrimaryValueIndicator = strHasPrimaryValueIndicator1 != null &&
                 strHasPrimaryValueIndicator1.equals("true");
         return hasPrimaryValueIndicator;
@@ -81,8 +86,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
-        config.setCodec(new BlackLab40Codec(this)); // our own custom codec (extended from Lucene)
-        config.setUseCompoundFile(false); // @@@ TEST
+        config.setCodec(new BlackLab40Codec()); // our own custom codec (extended from Lucene)
+
+        // disabling this can speed up indexing a bit but also uses a lot of file descriptors;
+        // it can be useful to see individual files during development. maybe make this configurable?
+        config.setUseCompoundFile(false);
     }
 
     @Override

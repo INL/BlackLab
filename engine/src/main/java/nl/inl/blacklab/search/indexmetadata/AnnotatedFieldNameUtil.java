@@ -246,7 +246,7 @@ public final class AnnotatedFieldNameUtil {
         
         */
 
-        String baseName, annotName, altName, bookkeepingName;
+        String baseName, annotName, sensitivityName, bookkeepingName;
 
         int annotSepPos = luceneFieldName.indexOf(ANNOT_SEP);
         int altSepPos = luceneFieldName.indexOf(SENSITIVITY_SEP);
@@ -262,8 +262,8 @@ public final class AnnotatedFieldNameUtil {
             if (altSepPos >= 0) {
                 // Annotation and alternative given (4)
                 annotName = luceneFieldName.substring(afterAnnotSepPos, altSepPos);
-                altName = luceneFieldName.substring(altSepPos + SENSITIVITY_SEP_LEN);
-                return new String[] { baseName, annotName, altName };
+                sensitivityName = luceneFieldName.substring(altSepPos + SENSITIVITY_SEP_LEN);
+                return new String[] { baseName, annotName, sensitivityName };
             }
 
             // Maybe it's a bookkeeping field?
@@ -287,8 +287,8 @@ public final class AnnotatedFieldNameUtil {
         if (bookkeepingSepPos >= 0) {
             // Main bookkeeping field (2)
             baseName = luceneFieldName.substring(0, bookkeepingSepPos);
-            altName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP_LEN);
-            return new String[] { baseName, null, null, altName };
+            sensitivityName = luceneFieldName.substring(bookkeepingSepPos + BOOKKEEPING_SEP_LEN);
+            return new String[] { baseName, null, null, sensitivityName };
         }
 
         // Just the base name given (A).

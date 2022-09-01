@@ -16,6 +16,7 @@ import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -30,29 +31,38 @@ public class AnnotationWriter {
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
 
-    /** The field type for annotations without character offsets */
-    private static final FieldType tokenStreamFieldNoOffsets;
+    /** Provides Lucene FieldTypes for annotated fields. */
+    static class BLAnnotFieldTypes {
+        private static Map<String, FieldType> fieldTypeCache = new HashMap<>();
 
-    /**
-     * The field type for annotations with character offsets (on the main sensitivity variant)
-     */
-    private static final FieldType tokenStreamFieldWithOffsets;
+        /** Get the appropriate FieldType given the options for an annotation sensitivity. */
+        public static FieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
+            String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-");
+            return fieldTypeCache.computeIfAbsent(key, (__) -> {
+                IndexOptions indexOptions = offsets ?
+                        IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS :
+                        IndexOptions.DOCS_AND_FREQS_AND_POSITIONS;
 
-    static {
-        FieldType type = tokenStreamFieldNoOffsets = new FieldType();
-        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
-        type.setTokenized(true);
-        type.setOmitNorms(true);
-        type.setStored(false);
-        type.setStoreTermVectors(true);
-        type.setStoreTermVectorPositions(true);
-        type.setStoreTermVectorOffsets(false);
-        type.freeze();
-
-        type = tokenStreamFieldWithOffsets = new FieldType(tokenStreamFieldNoOffsets);
-        type.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        type.setStoreTermVectorOffsets(true);
-        type.freeze();
+                FieldType type = new FieldType();
+                type.setIndexOptions(indexOptions);
+                type.setTokenized(true);
+                type.setOmitNorms(true);
+                type.setStored(contentStore);
+                type.setStoreTermVectors(true);
+                type.setStoreTermVectorPositions(true);
+                type.setStoreTermVectorOffsets(offsets);
+                if (contentStore) {
+                    // store field in content store (for random access)
+                    type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
+                }
+                if (forwardIndex) {
+                    // store field in content store (for random access)
+                    type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
+                }
+                type.freeze();
+                return type;
+            });
+        }
     }
 
     private final AnnotatedFieldWriter fieldWriter;
@@ -171,14 +181,14 @@ public class AnnotationWriter {
         return Collections.unmodifiableCollection(sensitivities.keySet());
     }
 
-    TokenStream tokenStream(String altName, IntArrayList startChars, IntArrayList endChars) {
+    TokenStream tokenStream(String sensitivityName, IntArrayList startChars, IntArrayList endChars) {
         TokenStream ts;
         if (includeOffsets) {
             ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
         } else {
             ts = new TokenStreamFromList(values, increments, payloads);
         }
-        TokenFilterAdder filterAdder = sensitivities.get(altName);
+        TokenFilterAdder filterAdder = sensitivities.get(sensitivityName);
         if (filterAdder != null)
             return filterAdder.addFilters(ts);
 
@@ -194,21 +204,27 @@ public class AnnotationWriter {
         return ts;
     }
 
-    FieldType termVectorOptionFieldType(String altName) {
-        // Main sensitivity of a annotation may get character offsets
-        // (if it's the main annotation of an annotated field)
-        if (includeOffsets && altName.equals(mainSensitivity))
-            return tokenStreamFieldWithOffsets;
+    FieldType getFieldType(String sensitivityName) {
+        boolean isMainAnnotation = fieldWriter.mainAnnotation() == this;
+        boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
-        // Named sensitivities and additional annotations don't get character offsets
-        return tokenStreamFieldNoOffsets;
+        // Main sensitivity of main annotation gets character offsets
+        // (if it's the main annotation of an annotated field)
+        boolean offsets = includeOffsets && isMainSensitivity;
+
+        // Main sensitivity of main annotation may get content store
+        boolean contentStore = false; // @@@ WIP  isMainAnnotation && isMainSensitivity && field().hasContentStore();
+        return BLAnnotFieldTypes.get(offsets, hasForwardIndex, contentStore);
     }
 
-    public void addToLuceneDoc(Document doc, String fieldName, IntArrayList startChars,
+    public void addToLuceneDoc(Document doc, String annotatedFieldName, IntArrayList startChars,
             IntArrayList endChars) {
-        for (String altName : sensitivities.keySet()) {
-            doc.add(new Field(AnnotatedFieldNameUtil.annotationField(fieldName, annotationName, altName),
-                    tokenStream(altName, startChars, endChars), termVectorOptionFieldType(altName)));
+        for (String sensitivityName : sensitivities.keySet()) {
+            FieldType fieldType = getFieldType(sensitivityName);
+            TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
+            String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
+                    annotationName, sensitivityName);
+            doc.add(new Field(luceneFieldName, tokenStream, fieldType));
         }
     }
 

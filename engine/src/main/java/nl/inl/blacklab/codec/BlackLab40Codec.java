@@ -13,9 +13,6 @@ import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
 
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
-
 /**
  * The custom codec that BlackLab uses.
  *
@@ -39,7 +36,7 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
  *
  * Adapted from <a href="https://github.com/meertensinstituut/mtas/">MTAS</a>.
  */
-public class BlackLab40Codec extends Codec implements BlackLabCodec {
+public class BlackLab40Codec extends Codec {
 
     /** Our codec's name. */
     static final String NAME = "BlackLab40";
@@ -50,48 +47,8 @@ public class BlackLab40Codec extends Codec implements BlackLabCodec {
     /** Our postings format. */
     private BlackLab40PostingsFormat postingsFormat;
 
-    /** The BlackLab index writer, or null if not available (i.e. searching, not indexing).
-     *
-     * HACK: this is arguably wrong because this class should represent the codec, not a specific
-     *   index. However, we have no other way to access the metadata object while writing to the index.
-     *   And we know it's safe because we always open an IndexWriter with a specific instance of this class
-     *   that has the correct index reference.
-     *
-     * On reading, Lucene will instantiate this using the no-argument constructor, or it might even reuse
-     * an older version it caches. So while reading from the index, we cannot access the BlackLabIndex or
-     * IndexMetadata objects. Of course, we don't need to; any information we need will be duplicated in each
-     * segments (or fields) attributes.
-     */
-    private BlackLabIndexWriter index = null;
-
-    // Needed for SPI
-    @SuppressWarnings("unused")
     public BlackLab40Codec() {
         super(NAME);
-    }
-
-    /**
-     * Construct a BlackLab40Codec that has access to the BlackLabIndexWriter.
-     *
-     * This is needed to access the metadata while writing. See above.
-     *
-     * @param index our BlackLabIndexWriter
-     */
-    public BlackLab40Codec(BlackLabIndexWriter index) {
-        super(NAME);
-        this.index = index;
-    }
-
-    /**
-     * Get the BlackLabIndex.
-     *
-     * Only valid while writing to an index.
-     * Needed to access the index metadata. See above.
-     *
-     * @return the BlackLabIndexWriter, or null if not available
-     */
-    public BlackLabIndex getBlackLabIndex() {
-        return index;
     }
 
     private synchronized Codec delegate() {
