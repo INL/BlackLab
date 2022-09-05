@@ -45,6 +45,8 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public long ramBytesUsed() {
         return delegate.ramBytesUsed();
+
+        // @@@ TODO: use Lucene's RamUsageEstimator to estimate RAM usage
     }
 
     @Override

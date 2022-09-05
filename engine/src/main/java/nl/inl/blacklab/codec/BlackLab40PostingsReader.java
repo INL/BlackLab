@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
@@ -45,14 +44,18 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
+    private static String fieldNameForCodecAccess;
+
+    private final SegmentReadState state;
+
     /**
-     * Get the BLFieldsProducer for the given leafreader.
+     * Get the BlackLab40PostingsReader for the given leafreader.
      *
      * The luceneField must be any existing Lucene field in the index.
      * It doesn't matter which. This is because BLTerms is used as an
-     * intermediate to get access to BLFieldsProducer.
+     * intermediate to get access to BlackLab40StoredFieldsReader.
      *
-     * The returned BLFieldsProducer is not specific for the specified field,
+     * The returned BlackLab40PostingsReader is not specific for the specified field,
      * but can be used to read information related to any field from the segment.
      *
      * @param lrc leafreader to get the BLFieldsProducer for
@@ -60,14 +63,9 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
         try {
-            // We need to find a field that is indexed and therefore has terms.
-            // TODO: determine an appropriate field once and reuse that so we don't always have to loop here.
-            for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-                BLTerms terms = (BLTerms)(lrc.reader().terms(fieldInfo.name));
-                if (terms != null)
-                    return terms.getFieldsProducer();
-            }
-            return null;
+            if (fieldNameForCodecAccess == null)
+                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
+            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getFieldsProducer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -86,6 +84,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
     public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
+
+        this.state = state;
 
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
@@ -113,11 +113,18 @@ public class BlackLab40PostingsReader extends FieldsProducer {
             terms = termsPerField.get(field);
             if (terms == null) {
                 Terms delegateTerms = delegateFieldsProducer.terms(field);
+
                 terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
                 termsPerField.put(field, terms);
             }
         }
         return terms;
+    }
+
+    BlackLab40StoredFieldsReader getStoredFieldReader() throws IOException {
+        BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
+        return codec.storedFieldsFormat().fieldsReader(
+                state.segmentInfo.dir, state.segmentInfo, state.fieldInfos, state.context);
     }
 
     @Override

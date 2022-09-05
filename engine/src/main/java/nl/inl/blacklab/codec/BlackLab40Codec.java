@@ -1,5 +1,7 @@
 package nl.inl.blacklab.codec;
 
+import java.io.IOException;
+
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
 import org.apache.lucene.codecs.DocValuesFormat;
@@ -9,9 +11,10 @@ import org.apache.lucene.codecs.NormsFormat;
 import org.apache.lucene.codecs.PointsFormat;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.codecs.SegmentInfoFormat;
-import org.apache.lucene.codecs.StoredFieldsFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
+import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.LeafReaderContext;
 
 /**
  * The custom codec that BlackLab uses.
@@ -44,11 +47,25 @@ public class BlackLab40Codec extends Codec {
     /** The codec we're basing this codec on. */
     private Codec _delegate;
 
-    /** Our postings format. */
+    /** Our postings format, that takes care of the forward index as well. */
     private BlackLab40PostingsFormat postingsFormat;
+
+    /** Our stored fields format, that takes care of the content stores as well. */
+    private BlackLab40StoredFieldsFormat storedFieldsFormat;
 
     public BlackLab40Codec() {
         super(NAME);
+    }
+
+    static String findFieldNameForCodecAccess(LeafReaderContext lrc) throws IOException {
+        // We need to find a field that is indexed and therefore has terms.
+        for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
+            BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
+            if (terms != null) {
+                return fieldInfo.name;
+            }
+        }
+        throw new IllegalStateException("No suitable field found for codec access!");
     }
 
     private synchronized Codec delegate() {
@@ -124,8 +141,10 @@ public class BlackLab40Codec extends Codec {
     }
 
     @Override
-    public StoredFieldsFormat storedFieldsFormat() {
-        return new BlackLab40StoredFieldsFormat(delegate().storedFieldsFormat());
+    public synchronized BlackLab40StoredFieldsFormat storedFieldsFormat() {
+        if (storedFieldsFormat == null)
+            storedFieldsFormat = new BlackLab40StoredFieldsFormat(delegate().storedFieldsFormat());
+        return storedFieldsFormat;
     }
 
     @Override

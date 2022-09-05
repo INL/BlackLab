@@ -23,13 +23,17 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
         this.delegate = delegate;
     }
 
-    @Override public StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
+    @Override
+    public BlackLab40StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
-        return new BlackLab40StoredFieldsReader(delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext));
+        StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
+        return new BlackLab40StoredFieldsReader(fieldInfos, delegateReader);
     }
 
-    @Override public StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
+    @Override
+    public BlackLab40StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
             throws IOException {
-        return new BlackLab40StoredFieldsWriter(delegate.fieldsWriter(directory, segmentInfo, ioContext));
+        StoredFieldsWriter delegateWriter = delegate.fieldsWriter(directory, segmentInfo, ioContext);
+        return new BlackLab40StoredFieldsWriter(delegateWriter);
     }
 }
