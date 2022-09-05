@@ -56,7 +56,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     @Override
     public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
-
         for (FieldInfo fieldInfo: fieldInfos) {
             switch (storedFieldVisitor.needsField(fieldInfo)) {
             case YES:

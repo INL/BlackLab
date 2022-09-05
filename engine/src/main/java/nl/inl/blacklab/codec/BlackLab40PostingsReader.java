@@ -161,11 +161,11 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * Open a custom file for reading and check the header.
      *
      * @param state segment read state
-     * @param extension extension of the file to open (will automatically be prefixed with "bl")
+     * @param extension extension of the file to open (will automatically be prefixed with "blfi.")
      * @return handle to the opened segment file
      */
     IndexInput openIndexFile(SegmentReadState state, String extension) throws IOException {
-        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, "bl" + extension);
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, BlackLab40PostingsFormat.FORWARD_INDEX_EXT_PREFIX + extension);
         IndexInput input = state.directory.openInput(fileName, state.context);
         try {
             // Check index header

@@ -4,6 +4,7 @@ This describes the new index format that integrates all previously external file
 
 > **NOTE:** this index format is in development and documentation may still be a little rough.
 
+The integrated index has a codec name `BlackLab40Codec` and version of 1. (Additional versions or codecs may be added in the future)
 
 ## Index metadata
 
@@ -14,6 +15,8 @@ The document can be found by searching for a field with the name and value `__in
 For now, we also write the contents to a file called `debug-indexmetadata.json`. This file is only written, never read. The JSON structure corresponds to the JAXB annotations in the `IndexMetadataIntegrated` class.
 
 ## Forward index
+
+Forward index files currently have a codec name of `BlackLab40Postings` and a version of 1. (Additional versions or codecs may be added in the future)
 
 ### fields - where to find information about each Lucene field
 
@@ -28,6 +31,8 @@ For now, we also write the contents to a file called `debug-indexmetadata.json`.
   * offset of field in termindex file (long)
   * offset of field in tokensindex file (long)
 
+This file will have an extension of `.blfi.fields`.
+
 ### termindex - where to find term strings
 
 **NOTE:** we don't store number of terms as it follows from the file size. If we decide to switch to using VInts, we could write the number of terms at the end of the file. We don't know it at the beginning, we can only iterate through terms at that time.
@@ -35,6 +40,8 @@ For now, we also write the contents to a file called `debug-indexmetadata.json`.
 - For each field annotation:
   * For each term:
     - offset of term string in terms file (long)
+
+This file will have an extension of `.blfi.termindex`.
 
 ### terms - term strings
 
@@ -44,6 +51,8 @@ For now, we also write the contents to a file called `debug-indexmetadata.json`.
 - For each field annotation:
   * For each term:
     - Term string (str)
+
+This file will have an extension of `.blfi.terms`.
 
 ### termvec - occurrences of terms in documents (temporary)
 
@@ -67,11 +76,15 @@ This is a temporary file. It is eventually replaced by the tokens file.
 
 See below for the tokens encodings.
 
+This file will have an extension of `.blfi.tokensindex`.
+
 ### tokens - sequence of tokens in each document, per annotation
 
 - For each field annotation:
   * For each document:
     - the document, in the encoding given by the tokensindex file. See below.
+
+This file will have an extension of `.blfi.tokens`.
 
 ### Tokens encodings
 
@@ -82,6 +95,12 @@ See below for the tokens encodings.
 
 ## Content store
 
+Content store files currently have a codec name of `BlackLab40ContentStore` and a version of 1. (Additional versions or codecs may be added in the future)
+
+Please note: the classic (external) content store used a format with a fixed size compressed block; this was to enable reuse of space. This is no longer needed (Lucene will optimize the index by merging segments), so we now use a fixed-character block. This avoids wasting space and is easier to deal with during compression. The compressed blocks therefore all have different sizes, and we store a (relative) byte offset to each block.
+
+> **FUTURE IMPROVEMENTS:** compression could be improved by using a preset dictionary (see https://www.ietf.org/rfc/rfc1950.txt). A reasonable approach could be to take a chunk from the middle of the first file added (middle to increase the chance we're inside actual text, not metadata) and use that as the dictionary for the entire segment. This should ensure common strings (e.g. XML tags, attributes, common words, etc.) are stored more efficiently in each block.
+
 ### fields - where to find information about each Lucene field
 
 **NOTE:** the Lucene field we're talking about here belongs to an annotated field. For example, `contents%cs`.
@@ -90,17 +109,50 @@ See below for the tokens encodings.
 
 **NOTE:** a Lucene field with a content store will have a `FieldInfo` attribute `BL_hasContentStore` with a value of `true`.
 
+- block size in characters `CHARS_PER_BLOCK` (int)
+  Higher values improve compression ratio. Lower values may improve access time and reduce wasted space. Default is 4096.
 - For each field with a content store:
-  * Lucene field name (str), e.g. `contents`
-  * index of field in docsindex file (byte) (the order in which the fields will be written for each doc)
-    
-### docsindex - where to find the document contents
+  * Lucene field name (str), e.g. `contents%cs`
+
+This file will have an extension of `.blcs.fields`.
+
+### docindex - where each document starts in the docfields file
+
+- For each document:
+  * Offset in the valueindex file (int)
+  * Number of fields with a content store for this document (byte)
+
+This file will have an extension of `.blcs.docindex`.
+
+### valueindex - where each document+field value starts in the blockindex file
 
 - For each document:
   * For each field with a content store:
-    - offset in the docs file
-    - length in bytes
-    - length in characters
-    - ....
+    - field id (based on order in the fields file) (byte)
+    - value length in characters (int)\
+      from this follows: `NUMBER_OF_BLOCKS = Math.ceil(LENGTH_IN_CHAR / CHARS_PER_BLOCK)`.
+    - offset in the blockindex file (long)
+    - base byte offset in the blocks file (long)\
+      (block offsets in blockindex file are relative to this)
 
-### docs - contents
+This file will have an extension of `.blcs.valueindex`.
+
+### blockindex - where to find data blocks for each document+field
+
+- For each document:
+  * For each field with a content store:
+    - For each block:
+      * byte offset AFTER this block in the blocks file, relative to base offset (int)\
+        (determine block size by subtracting this offset from the previous int in the file, except for the first block, where the offset after the block is equal to the length)
+
+The character offset of block `i` is obviously `i * CHARS_PER_BLOCK`, so the character at offset `j` is stored in the block with index `Math.floor(j / CHARS_PER_BLOCK)`, at offset `j % CHARS_PER_BLOCK`)
+
+This file will have an extension of `.blcs.blockindex`.
+
+### blocks - compressed blocks with the field values
+
+- a number of variable-sized blocks (containing `CHARS_PER_BLOCK` characters) containing zlib-compressed utf-8 fragments of values.
+
+`CHARS_PER_BLOCK` is recorded in the fields file, see above.
+
+This file will have an extension of `.blcs.blocks`.
