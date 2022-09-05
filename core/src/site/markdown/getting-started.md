@@ -86,6 +86,8 @@ If you can't use your own data yet, we've provided a [tokenized, annotated TEI v
 
 The [Brown corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedia.org/wiki/Brown_Corpus") is a corpus compiled in the 1960s by [Nelson Francis and Henry Kucera](http://archive.org/details/BrownCorpus) at Brown University. It is small by today's standard (500 documents, 1M words). It was converted to TEI format by [Lou Burnard](http://users.ox.ac.uk/~lou/). It is available from archive.org under the [CC-BY-NC 3.0](http://creativecommons.org/licenses/by-nc/3.0/) license, but we've created our own version which includes lemmata. (Please note that we didn't check the lemmatization, and it probably contains errors - useful for testing purposes only!)
 
+> **NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format.
+
 ### Indexing data
 
 Get the blacklab JAR and the required libraries (see above). The libraries should be in a directory called "lib" that's in the same directory as the BlackLab JAR (or elsewhere on the classpath).
@@ -104,13 +106,15 @@ We want to create a new index, so we need to supply an index directory, input fi
 
 If you specify a directory as the INPUT_FILES, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
-For example, if you have TEI data in /tmp/my-tei/ and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
+For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create an index as a subdirectory of the current directory called "test-index", run the following command:
 
-	java -cp "blacklab.jar" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei
+	java -cp "blacklab.jar" nl.inl.blacklab.tools.IndexTool create test-index /tmp/my-tei/ tei-p5
 
 Your data is indexed and placed in a new BlackLab index in the "test-index" directory.
 
 Please note that if you're indexing large files, you should [give java more than the default heap memory](https://docs.oracle.com/cd/E15523_01/web.1111/e13814/jvm_tuning.htm#PERFM161), using the `-Xmx` option. For really large files, and if you have the memory, you could use `-Xmx 6G`, for example.
+
+> **About TEI variants:** BlackLab now includes three TEI variants: `tei-p5` (TEI-P5 using the `pos` attribute), `tei-p5-legacy` (same but using the nonstandard `type` attribute for part of speech) and `tei-p4-legacy` (TEI-P5 using the `type` attribute). Make sure you pick the right variant for you, or copy one of the `tei-*.blf.yaml` files and customize it to your needs.
 
 See also:
 
