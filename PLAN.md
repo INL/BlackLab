@@ -58,7 +58,9 @@ Where we take the metadata document into account:
 - [ ] Make content store part of the Lucene index. Approach:
   - [ ] finish implementing `BlackLab40StoredFieldsReader/Writer` (see TODOS)
   - [ ] actually compress content store
-  - [ ] include an encoding byte per doc, same as the forward index, so we can experiment with additional encodings later while easily staying backwards compatible.
+  - [ ] Right now `BlackLab40StoredFieldsReader` is made threadsafe using expensive synchronization of a whole long method, `getValueSubstring()`. It's probably better to clone the file handles and use those in a nonthreadsafe class, similar to `SegmentForwardIndex` / `ForwardIndexSegmentReader`.\
+    (**Assuming it needs to be threadsafe!** Or does Lucene guarantee that one segment is only ever read by one thread? For writing that seems to be the case, but that's very different of course)
+  - [ ] include a codec byte per doc, same as the forward index, so we can experiment with additional codecs later while easily staying backwards compatible.
   - [ ] poke a hole to get direct access to the content store, similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()`.
 
 

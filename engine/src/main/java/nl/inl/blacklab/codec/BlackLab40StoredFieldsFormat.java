@@ -19,6 +19,8 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
 
     public static final String NAME = "BlackLab40ContentStore";
 
+    public static final int VERSION_START = 1;
+
     public static final int VERSION_CURRENT = 1;
 
     /** Every file extension will be prefixed with this to indicate it is part of the forward index. */
@@ -50,7 +52,7 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     public BlackLab40StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
         StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
-        return new BlackLab40StoredFieldsReader(fieldInfos, delegateReader);
+        return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos, delegateReader);
     }
 
     @Override

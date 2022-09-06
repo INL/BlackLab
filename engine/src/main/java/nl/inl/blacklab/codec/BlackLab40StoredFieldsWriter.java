@@ -1,7 +1,6 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,6 +17,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.RamUsageEstimator;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
@@ -40,11 +40,14 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     /** Fields with a content store and their field index. */
     private final Map<String, Integer> fields = new HashMap<>();
 
+    /** How we (de)compress our blocks. */
+    private final ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode((byte)0);
+
     /** Lucene's default stored fields writer, for regular stored fields. */
     private final StoredFieldsWriter delegate;
 
     /** How many characters per compressed block. */
-    private final int blockSize = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
+    private final int blockSizeChars = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
 
     /** How many CS fields were written for the current document? */
     private int numberOfFieldsWritten;
@@ -57,7 +60,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
         // NOTE: we can make this configurable later (to optimize for specific usage scenarios),
         // but for now we'll just use the default value.
-        fieldsFile.writeInt(blockSize);
+        fieldsFile.writeInt(blockSizeChars);
 
         docIndexFile = createOutput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
         valueIndexFile = createOutput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
@@ -95,7 +98,6 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      *
      * @param fieldInfo field to write
      * @param indexableField value to write
-     * @throws IOException
      */
     @Override
     public void writeField(FieldInfo fieldInfo, IndexableField indexableField) throws IOException {
@@ -113,27 +115,27 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      *
      * @param fieldInfo field to write
      * @param value string value for the field
-     * @throws IOException
      */
     private void writeContentStoreField(FieldInfo fieldInfo, String value) throws IOException {
         // Write some info about this value
         valueIndexFile.writeInt(getFieldIndex(fieldInfo)); // which field is this?
         int lengthChars = value.length();
         valueIndexFile.writeInt(lengthChars);
+        valueIndexFile.writeByte(blockCodec.getCode());
         valueIndexFile.writeLong(blockIndexFile.getFilePointer());
         long baseOffset = blocksFile.getFilePointer();
         valueIndexFile.writeLong(baseOffset);
 
         // Write blocks and block offsets
-        int numberOfBlocks = (lengthChars + blockSize - 1) / blockSize; // Math.ceil(lengthInChars / blockSize)
+        int numberOfBlocks = (lengthChars + blockSizeChars - 1) / blockSizeChars; // ceil(lengthInChars/blockSizeChars)
         for (int i = 0; i < numberOfBlocks; i++) {
 
-            int blockOffset = i * blockSize;
-            int blockLength = Math.min(blockSize, value.length() - blockOffset);
+            int blockOffset = i * blockSizeChars;
+            int blockLength = Math.min(blockSizeChars, value.length() - blockOffset);
             String block = value.substring(blockOffset, blockOffset + blockLength);
 
             // Compress block and write to values file
-            byte[] compressedBlock = block.getBytes(StandardCharsets.UTF_8); // @@@ TODO: actually compress this!
+            byte[] compressedBlock = blockCodec.compress(block);
 
             blocksFile.writeBytes(compressedBlock, 0, compressedBlock.length);
 
@@ -154,7 +156,6 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      *
      * @param fieldInfo field to get index for
      * @return index for the field
-     * @throws IOException
      */
     private int getFieldIndex(FieldInfo fieldInfo) throws IOException {
         String name = fieldInfo.name;
@@ -177,7 +178,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         // Close our files
         fieldsFile.close();
         docIndexFile.close();
-        valueIndexFile.close();;
+        valueIndexFile.close();
         blockIndexFile.close();
         blocksFile.close();
 
@@ -187,9 +188,14 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public long ramBytesUsed() {
-        return delegate.ramBytesUsed();
-
-        // @@@ TODO: use Lucene's RamUsageEstimator to estimate RAM usage
+        return delegate.ramBytesUsed() +
+                RamUsageEstimator.sizeOfObject(fieldsFile) +
+                RamUsageEstimator.sizeOfObject(docIndexFile) +
+                RamUsageEstimator.sizeOfObject(valueIndexFile) +
+                RamUsageEstimator.sizeOfObject(blockIndexFile) +
+                RamUsageEstimator.sizeOfObject(blocksFile) +
+                Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
+                RamUsageEstimator.sizeOfMap(fields);
     }
 
     @Override

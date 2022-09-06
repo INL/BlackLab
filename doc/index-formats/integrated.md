@@ -116,7 +116,7 @@ Please note: the classic (external) content store used a format with a fixed siz
 
 This file will have an extension of `.blcs.fields`.
 
-### docindex - where each document starts in the docfields file
+### docindex - where each document starts in the valueindex file
 
 - For each document:
   * Offset in the valueindex file (int)
@@ -131,13 +131,15 @@ This file will have an extension of `.blcs.docindex`.
     - field id (based on order in the fields file) (byte)
     - value length in characters (int)\
       from this follows: `NUMBER_OF_BLOCKS = Math.ceil(LENGTH_IN_CHAR / CHARS_PER_BLOCK)`.
+    - codec used (byte)\
+      (right now it can either be 0 (uncompressed) or 1 (basic zlib compression))
     - offset in the blockindex file (long)
     - base byte offset in the blocks file (long)\
       (block offsets in blockindex file are relative to this)
 
 This file will have an extension of `.blcs.valueindex`.
 
-### blockindex - where to find data blocks for each document+field
+### blockindex - where to find data blocks in the blocks file
 
 - For each document:
   * For each field with a content store:
