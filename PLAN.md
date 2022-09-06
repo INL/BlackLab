@@ -58,6 +58,7 @@ Where we take the metadata document into account:
 - [ ] Make content store part of the Lucene index. Approach:
   - [ ] finish implementing `BlackLab40StoredFieldsReader/Writer` (see TODOS)
   - [ ] actually compress content store
+  - [ ] include an encoding byte per doc, same as the forward index, so we can experiment with additional encodings later while easily staying backwards compatible.
   - [ ] poke a hole to get direct access to the content store, similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()`.
 
 
