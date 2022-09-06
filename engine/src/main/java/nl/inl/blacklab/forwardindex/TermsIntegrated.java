@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -42,8 +44,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         Integer[] sortedInsensitive = determineSort(terms, collatorInsensitive);
 
         // Process the values we've determined so far the same way as with the external forward index.
-        int[] termId2SensitivePosition = invert(terms, sortedSensitive, collator);
-        int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, collatorInsensitive);
+        int[] termId2SensitivePosition = invert(Arrays.asList(terms), sortedSensitive, collator);
+        int[] termId2InsensitivePosition = invert(Arrays.asList(terms), sortedInsensitive, collatorInsensitive);
         finishInitialization(terms, termId2SensitivePosition, termId2InsensitivePosition);
     }
 
@@ -80,14 +82,14 @@ public class TermsIntegrated extends TermsReaderAbstract {
      * @param array array to invert
      * @return inverted array
      */
-    private int[] invert(String[] terms, Integer[] array, Collator collator) {
+    public static int[] invert(List<String> terms, Integer[] array, Collator collator) {
         int[] result = new int[array.length];
         int prevSortPosition = -1;
         int prevTermId = -1;
         for (int i = 0; i < array.length; i++) {
             int termId = array[i];
             int sortPosition = i;
-            if (prevTermId >= 0 && collator.compare(terms[prevTermId], terms[termId]) == 0) {
+            if (prevTermId >= 0 && collator.equals(terms.get(prevTermId), terms.get(termId))) {
                 // Keep the same sort position because the terms are the same
                 sortPosition = prevSortPosition;
             } else {

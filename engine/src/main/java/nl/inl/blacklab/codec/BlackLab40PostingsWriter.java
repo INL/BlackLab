@@ -1,6 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -34,11 +35,15 @@ import org.apache.lucene.store.ByteArrayDataOutput;
 import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
+import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.TermsIntegrated;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -167,7 +172,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
             // Write our postings extension information
             try (IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
-                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT)) {
+                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
+                    IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT_ORDER)
+            ) {
 
                 // We'll keep track of doc lengths so we can preallocate our forward index structure.
                 Map<Integer, Integer> docLengths = new HashMap<>();
@@ -209,15 +216,21 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
                             Terms terms = fields.terms(luceneField);
                             TermsEnum termsEnum = terms.iterator();
+
+
                             int termId = 0;
+                            List<String> termsList = new ArrayList<>();
+
                             while (true) {
                                 BytesRef term = termsEnum.next();
                                 if (term == null)
                                     break;
 
                                 // Write the term to the terms file
+                                String termString = term.utf8ToString();
                                 termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
-                                termsFile.writeString(term.utf8ToString());          // term string
+                                termsFile.writeString(termString);
+                                termsList.add(termString);
 
                                 // For each document containing this term...
                                 postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
@@ -270,6 +283,19 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
                                 termId++;
                             }
+
+                            // begin writing term IDs and sort orders
+                            Collators collators = Collators.defaultCollator();
+                            Integer[] sensitivePos2TermID = this.getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
+                            Integer[] insensitivePos2TermID = this.getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
+                            int[] termID2SensitivePos = TermsIntegrated.invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
+                            int[] termID2InsensitivePos = TermsIntegrated.invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
+
+                            // write out, specific order.
+                            for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
+                            for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
                         }
                     }
                 }
@@ -355,7 +381,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @param outTokensIndexFile token index file
      * @param outTokensFile      tokens file
      * @param tokensInDoc        tokens to write
-     * @throws IOException
+     * @throws IOException       When failing to write
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
         TokensEncoding tokensEncoding = allTheSame(tokensInDoc) ?
@@ -397,6 +423,21 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 return false;
         }
         return true;
+    }
+
+    /**
+     * Check if a Lucene field must store a forward index.
+     *
+     * The forward index is stored for some annotations (as configured),
+     * and is stored with the main sensitivity of that annotation. Here we
+     * check if this field represents such a sensitivity.
+     *
+     * @param fieldInfo the FieldInfo of the field to check
+     * @return true if we should store a forward index for this field
+     */
+    private boolean shouldGetForwardIndex(FieldInfo fieldInfo) {
+        String hasForwardIndex = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX);
+        return hasForwardIndex != null && hasForwardIndex.equals("true");
     }
 
     private String getSegmentFileName(String ext) {
@@ -443,5 +484,14 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     public void close() throws IOException {
         delegateFieldsConsumer.close();
     }
-
+    /**
+     * Given a list of terms, return the indices to sort them.
+     * E.G: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
+     */
+    private Integer[] getTermSortOrder(List<String> terms, Collator coll) {
+        Integer[] ret = new Integer[terms.size()];
+        for (int i = 0; i < ret.length; ++i) ret[i] = i;
+        ArrayUtil.timSort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
+        return ret;
+    }
 }

@@ -53,6 +53,9 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
     /** Extension for the terms file, where the term strings are stored. */
     static final String TERMS_EXT = "terms";
 
+    /** pos2IDInsensitive, id2PosInsensitive, pos2IDSensitive, id2PosSensitive */
+    static final String TERMS_EXT_ORDER = "terms.order";
+
     /** Extension for the tokens index file, that stores the offsets in the tokens file
         where the tokens for each document are stored. */
     static final String TOKENS_INDEX_EXT = "tokensindex";
