@@ -18,7 +18,11 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.index.annotated.BLAnnotFieldTypes;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -144,6 +148,19 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public List<String> getMetadataField(String name) {
         return metadataFieldValues.get(name);
+    }
+
+    protected void storeInContentStore(TextContent document, String contentIdFieldName, String contentStoreName) {
+        if (getDocWriter().indexWriter() instanceof BlackLabIndexIntegrated) {
+            String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
+            org.apache.lucene.document.FieldType fieldType = BLAnnotFieldTypes.get(false, false, true);
+            currentLuceneDoc.add(new Field(luceneFieldName, document.toString(), fieldType));
+        } else {
+            ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
+            int contentId = contentStore.store(document);
+            currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
+            currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
+        }
     }
 
     @Override

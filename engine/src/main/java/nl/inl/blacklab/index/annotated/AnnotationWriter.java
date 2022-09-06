@@ -11,12 +11,10 @@ import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -30,40 +28,6 @@ public class AnnotationWriter {
 
     /** Maximum length a value is allowed to be. */
     private static final int MAXIMUM_VALUE_LENGTH = 1000;
-
-    /** Provides Lucene FieldTypes for annotated fields. */
-    static class BLAnnotFieldTypes {
-        private static Map<String, FieldType> fieldTypeCache = new HashMap<>();
-
-        /** Get the appropriate FieldType given the options for an annotation sensitivity. */
-        public static FieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
-            String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-");
-            return fieldTypeCache.computeIfAbsent(key, (__) -> {
-                IndexOptions indexOptions = offsets ?
-                        IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS :
-                        IndexOptions.DOCS_AND_FREQS_AND_POSITIONS;
-
-                FieldType type = new FieldType();
-                type.setIndexOptions(indexOptions);
-                type.setTokenized(true);
-                type.setOmitNorms(true);
-                type.setStored(contentStore);
-                type.setStoreTermVectors(true);
-                type.setStoreTermVectorPositions(true);
-                type.setStoreTermVectorOffsets(offsets);
-                if (contentStore) {
-                    // store field in content store (for random access)
-                    type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
-                }
-                if (forwardIndex) {
-                    // store field in content store (for random access)
-                    type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
-                }
-                type.freeze();
-                return type;
-            });
-        }
-    }
 
     private final AnnotatedFieldWriter fieldWriter;
 

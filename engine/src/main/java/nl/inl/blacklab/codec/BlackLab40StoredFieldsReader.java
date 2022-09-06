@@ -59,7 +59,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         for (FieldInfo fieldInfo: fieldInfos) {
             switch (storedFieldVisitor.needsField(fieldInfo)) {
             case YES:
-                if (fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE).equals("true")) {
+                if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
                     // This is a content store field.
                     visitContentStoreDocument(docId, fieldInfo, storedFieldVisitor);
                 } else {

@@ -37,10 +37,13 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     private final IndexOutput blocksFile;
 
+    /** Fields with a content store and their field index. */
     private final Map<String, Integer> fields = new HashMap<>();
 
+    /** Lucene's default stored fields writer, for regular stored fields. */
     private final StoredFieldsWriter delegate;
 
+    /** How many characters per compressed block. */
     private final int blockSize = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
 
     /** How many CS fields were written for the current document? */
@@ -84,25 +87,37 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         delegate.startDocument();
     }
 
+    /**
+     * Write a single stored field or content store value.
+     *
+     * Will either delegate to the default stored field writer,
+     * or will store the value in the content store.
+     *
+     * @param fieldInfo field to write
+     * @param indexableField value to write
+     * @throws IOException
+     */
     @Override
     public void writeField(FieldInfo fieldInfo, IndexableField indexableField) throws IOException {
-        if (isContentStore(fieldInfo)) {
+        if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
             // This is a content store field.
-            writeContentStoreField(fieldInfo, indexableField);
+            writeContentStoreField(fieldInfo, indexableField.stringValue());
         } else {
             // This is a regular stored field. Delegate.
             delegate.writeField(fieldInfo, indexableField);
         }
     }
 
-    private boolean isContentStore(FieldInfo fieldInfo) {
-        return fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE).equals("true");
-    }
-
-    private void writeContentStoreField(FieldInfo fieldInfo, IndexableField indexableField) throws IOException {
+    /**
+     * Write a content store field to the content store files.
+     *
+     * @param fieldInfo field to write
+     * @param value string value for the field
+     * @throws IOException
+     */
+    private void writeContentStoreField(FieldInfo fieldInfo, String value) throws IOException {
         // Write some info about this value
         valueIndexFile.writeInt(getFieldIndex(fieldInfo)); // which field is this?
-        String value = indexableField.stringValue();
         int lengthChars = value.length();
         valueIndexFile.writeInt(lengthChars);
         valueIndexFile.writeLong(blockIndexFile.getFilePointer());
@@ -114,7 +129,8 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         for (int i = 0; i < numberOfBlocks; i++) {
 
             int blockOffset = i * blockSize;
-            String block = value.substring(blockOffset, blockOffset + blockSize);
+            int blockLength = Math.min(blockSize, value.length() - blockOffset);
+            String block = value.substring(blockOffset, blockOffset + blockLength);
 
             // Compress block and write to values file
             byte[] compressedBlock = block.getBytes(StandardCharsets.UTF_8); // @@@ TODO: actually compress this!
@@ -130,6 +146,16 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         numberOfFieldsWritten++;
     }
 
+    /**
+     * Get the index (in the fields file) of a field we're writing.
+     *
+     * If the field did not have an index yet, write it to the fields file and
+     * assign the index.
+     *
+     * @param fieldInfo field to get index for
+     * @return index for the field
+     * @throws IOException
+     */
     private int getFieldIndex(FieldInfo fieldInfo) throws IOException {
         String name = fieldInfo.name;
         Integer id = fields.get(name);
@@ -148,7 +174,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public void close() throws IOException {
-        // Close all our files
+        // Close our files
         fieldsFile.close();
         docIndexFile.close();
         valueIndexFile.close();;
@@ -177,13 +203,21 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public int merge(MergeState mergeState) throws IOException {
 
-        // TODO: merge our stuff as well!
+        // TODO: the default implementation just reads all the fields for each document
+        //   and writes them again. This works but is relatively slow.
+        //   More efficient is to copy most information (esp. compressed blocks)
+        //   directly from the readers to the new contentstore files.
+        return super.merge(mergeState);
 
-        return delegate.merge(mergeState);
+        // Don't call the delegate here because the default implementation processes all the fields,
+        // both the regular stored fields and the content store fields.
+        //return delegate.merge(mergeState);
     }
 
     @Override
     public Collection<Accountable> getChildResources() {
+        // TODO: add any Accountables we hold (none?)
+
         return delegate.getChildResources();
     }
 

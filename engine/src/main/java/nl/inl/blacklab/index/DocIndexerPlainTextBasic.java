@@ -6,15 +6,13 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.StoredField;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
@@ -192,10 +190,9 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
             // retrieve the content id, and store that in Lucene.
             // (Note that we do this after adding the "extra closing token", so the character
             // positions for the closing token still make (some) sense)
-            int contentId = storeCapturedContent();
-            String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentsField.name());
-            currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
-            currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
+            stopContentCapture();
+            storeDocument();
+            resetCapturedContent();
 
             // Store the different properties of the annotated contents field that
             // were gathered in lists while parsing.

@@ -4,8 +4,9 @@ import java.io.File;
 
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -29,30 +30,54 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
-    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
 
     /** Lucene field attribute. Does the field have a content store */
-    public static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
 
     /**
-     * Does the specified Lucene field have "is primary value" indicators in the payload?
+     * Does the specified Lucene field have a forward index stored with it?
      *
      * If yes, we can deduce from the payload if a value is the primary value (e.g. original word,
      * to use for concordances, sort, group, etc.) or a secondary value (e.g. stemmed, synonym).
+     * This is used because we only store the primary value in the forward index.
      *
      * We need to know this whenever we work with payloads too, so we can skip this indicator.
      * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
      *
-     * @param context leaf reader we're working in
-     * @param luceneFieldName Lucene field to check
-     * @return true if payload indicates whether this is a primary value
+     * @param fieldInfo Lucene field to check
+     * @return true if it's a forward index field
      */
-    public static boolean hasPrimaryValueIndicator(LeafReaderContext context, String luceneFieldName) {
-        String strHasPrimaryValueIndicator1 = context.reader().getFieldInfos().fieldInfo(luceneFieldName)
-                .getAttribute(BLFA_FORWARD_INDEX);
-        boolean hasPrimaryValueIndicator = strHasPrimaryValueIndicator1 != null &&
-                strHasPrimaryValueIndicator1.equals("true");
-        return hasPrimaryValueIndicator;
+    public static boolean isForwardIndexField(FieldInfo fieldInfo) {
+        String v = fieldInfo.getAttribute(BLFA_FORWARD_INDEX);
+        return v != null && v.equals("true");
+    }
+
+    /**
+     * Set this field type to be a forward index field
+     * @param type field type
+     */
+    public static void setForwardIndexField(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
+    }
+
+    /**
+     * Is the specified field a content store field?
+     *
+     * @param fieldInfo field to check
+     * @return true if it's a content store field
+     */
+    public static boolean isContentStoreField(FieldInfo fieldInfo) {
+        String v = fieldInfo.getAttribute(BLFA_CONTENT_STORE);
+        return v != null && v.equals("true");
+    }
+
+    /**
+     * Set this field type to be a content store field
+     * @param type field type
+     */
+    public static void setContentStoreFIeld(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
     }
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,

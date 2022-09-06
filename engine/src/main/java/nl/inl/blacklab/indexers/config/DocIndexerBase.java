@@ -21,11 +21,8 @@ import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -451,6 +448,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (contentStoreName == null) {
             AnnotatedFieldWriter main = getMainAnnotatedField();
             if (main == null) {
+                // TODO: get rid of this special case!
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
             } else {
@@ -460,13 +458,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         } else {
             contentIdFieldName = contentStoreName + "Cid";
         }
-        int contentId = -1;
-        if (getDocWriter() != null) {
-            ContentStore contentStore = getDocWriter().contentStore(contentStoreName);
-            contentId = contentStore.store(document);
-        }
-        currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
-        currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
+        storeInContentStore(document, contentIdFieldName, contentStoreName);
     }
 
     /**

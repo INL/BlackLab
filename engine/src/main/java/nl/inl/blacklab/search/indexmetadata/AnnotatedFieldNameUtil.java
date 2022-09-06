@@ -11,7 +11,11 @@ public final class AnnotatedFieldNameUtil {
 
     public static final String FORWARD_INDEX_ID_BOOKKEEP_NAME = "fiid";
 
+    /** Used in classic external index format to store content store id in Lucene doc */
     private static final String CONTENT_ID_BOOKKEEP_NAME = "cid";
+
+    /** Used in integrated index format to store content in Lucene doc */
+    public static final String CONTENT_STORE_BOOKKEEP_NAME = "cs";
 
     private static final String LENGTH_TOKENS_BOOKKEEP_NAME = "length_tokens";
 
@@ -117,6 +121,10 @@ public final class AnnotatedFieldNameUtil {
         default:
             throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
         }
+    }
+
+    public static String contentStoreField(String fieldName) {
+        return bookkeepingField(fieldName, CONTENT_STORE_BOOKKEEP_NAME);
     }
 
     public static String contentIdField(String fieldName) {

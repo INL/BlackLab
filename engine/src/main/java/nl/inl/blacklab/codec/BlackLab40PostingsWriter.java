@@ -18,7 +18,6 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
@@ -187,15 +186,13 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     // Process fields
                     for (String luceneField: fields) { // for each field
                         // If this field should get a forward index...
-                        if (shouldGetForwardIndex(fieldInfos.fieldInfo(luceneField))) {
-                            // We're creating a forward index for this field. Record this fact.
+                        if (BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
+                            // We're creating a forward index for this field.
                             // That also means that the payloads will include an "is-primary-value" indicator,
                             // so we know which value to store in the forward index (the primary value, i.e.
                             // the first value, to be used in concordances, sort, group, etc.).
                             // We must skip these indicators when working with other payload info. See PayloadUtils
                             // for details.
-                            FieldInfo fieldInfo = fieldInfos.fieldInfo(luceneField);
-                            fieldInfo.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
 
                             // Record starting offset of field in termindex file (written to fields file later)
                             field2TermIndexOffsets.put(luceneField, termIndexFile.getFilePointer());
@@ -400,22 +397,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 return false;
         }
         return true;
-    }
-
-    /**
-     * Check if a Lucene field must store a forward index.
-     *
-     * The forward index is stored for some annotations (as configured),
-     * and is stored with the main sensitivity of that annotation. Here we
-     * check if this field represents such a sensitivity.
-     *
-     * @param luceneField a Lucene field to check
-     * @return true if we should store a forward index for this field
-     * @throws IOException
-     */
-    private boolean shouldGetForwardIndex(FieldInfo fieldInfo) throws IOException {
-        String hasForwardIndex = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX);
-        return hasForwardIndex != null && hasForwardIndex.equals("true");
     }
 
     private String getSegmentFileName(String ext) {

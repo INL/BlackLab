@@ -15,8 +15,6 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -31,8 +29,8 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.StringUtil;
@@ -119,10 +117,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             // retrieve the content id, and store that in Lucene.
             // (Note that we do this after adding the "extra closing token", so the character
             // positions for the closing token still make (some) sense)
-            int contentId = storeCapturedContent();
-            String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentsField.name());
-            currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
-            currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
+            stopContentCapture();
+            storeDocument();
+            resetCapturedContent();
 
             // Store the different properties of the annotated contents field that
             // were gathered in

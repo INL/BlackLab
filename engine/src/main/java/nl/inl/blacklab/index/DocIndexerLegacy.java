@@ -32,8 +32,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
      */
     private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
 
-    protected final boolean skippingCurrentDocument = false;
-
     protected CountingReader reader;
 
     /**
@@ -63,24 +61,19 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         content.setLength(0);
     }
 
-    public int storeCapturedContent() {
+    public void stopContentCapture() {
         captureContent = false;
-        int id = -1;
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            id = contentStore.store(new TextContent(content));
-        }
+    }
+
+    public void resetCapturedContent() {
         content.setLength(0);
         charsContentAlreadyStored = 0;
-        return id;
     }
 
     public void storePartCapturedContent() {
         charsContentAlreadyStored += content.length();
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            contentStore.storePart(new TextContent(content));
-        }
+        ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
+        contentStore.storePart(new TextContent(content));
         content.setLength(0);
     }
 
@@ -401,5 +394,12 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
                 currentLuceneDoc.add(new Field(fieldName, fieldValue, getDocWriter().metadataFieldType(false)));
             }
         }
+    }
+
+    protected void storeDocument() {
+        TextContent document = new TextContent(content);
+        String contentStoreName = captureContentFieldName;
+        String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
+        storeInContentStore(document, contentStoreName, contentIdFieldName);
     }
 }
