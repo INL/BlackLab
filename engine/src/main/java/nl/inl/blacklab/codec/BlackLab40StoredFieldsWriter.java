@@ -41,7 +41,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     private final Map<String, Integer> fields = new HashMap<>();
 
     /** How we (de)compress our blocks. */
-    private final ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode((byte)0);
+    private final ContentStoreBlockCodec blockCodec = ContentStoreBlockCodecZlib.INSTANCE;
 
     /** Lucene's default stored fields writer, for regular stored fields. */
     private final StoredFieldsWriter delegate;

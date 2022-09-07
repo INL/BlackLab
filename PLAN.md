@@ -52,16 +52,15 @@ Where we take the metadata document into account:
 - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
-- [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS.
+- [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS. Consider pooling encoder/decoder as well if useful.
 - [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
 - [ ] Retrieving a Lucene doc will read all stored fields by default, but we don't want that with (potentially large) content store fields. We can make visitDocument skip content store fields, but only if we also make a cusotm merge function that doesn't rely on this. In the long run, we should do this for performance reasons. Until then, we should be careful that we specify which fields we want to read when retrieving a document.
 
 
 ### Content store
 
-- [ ] actually compress content store
+- [ ] pool encoder/decoder?
 - [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
-
 
 ## Refactoring opportunities
 
