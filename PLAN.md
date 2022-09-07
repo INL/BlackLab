@@ -30,6 +30,7 @@ Integrating with Solr will involve the following steps.
 ### Metadata
 
 - [ ] custom should be freezable?
+- [ ] unit tests should also test fetching document metadata. Give TestIndex some metadata and write a simple test for it.
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
           OTOH, changing metadata as documents are added to the index would be tricky in distributed env...

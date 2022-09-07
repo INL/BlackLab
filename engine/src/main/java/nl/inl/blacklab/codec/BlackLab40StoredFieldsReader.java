@@ -151,19 +151,23 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     @Override
     public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
+        // Visit each regular stored field.
+        delegate.visitDocument(docId, storedFieldVisitor);
+
+        // Visit each content store field.
         for (FieldInfo fieldInfo: fieldInfos) {
             switch (storedFieldVisitor.needsField(fieldInfo)) {
             case YES:
+                // Visit this field.
                 if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
-                    // This is a content store field.
                     visitContentStoreDocument(docId, fieldInfo, storedFieldVisitor);
-                } else {
-                    // This is a regular stored field. Delegate.
-                    delegate.visitDocument(docId, storedFieldVisitor);
                 }
+                break;
             case NO:
-                continue;
+                // No, we don't want to visit this field.
+                break;
             case STOP:
+                // We should stop visiting fields altogether.
                 return;
             }
         }
@@ -345,8 +349,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      * Get several parts of the field value.
      *
      * @param docId document id
-     * @param fieldInfo field to get
-     * @param star positions of the first character to get. Must all be zero or greater.
+     * @param fi field to get
+     * @param start positions of the first character to get. Must all be zero or greater.
      * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
      * @return requested parts
      */
