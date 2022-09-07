@@ -29,6 +29,7 @@ Integrating with Solr will involve the following steps.
 
 ### Metadata
 
+- [ ] custom should be freezable?
 - [x] Store metadata in "special" document. Preferably, don't treat it as a special document, just a document in the index that doesn't have a value for the contents field.
     - [ ] metadata may change during indexing after all? no more undeclared metadata field warning?
           OTOH, changing metadata as documents are added to the index would be tricky in distributed env...

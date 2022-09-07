@@ -21,7 +21,7 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-final class AnnotatedFieldsImpl implements AnnotatedFields {
+public final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     /** The annotated fields in our index */
     @JsonProperty("fields")
@@ -166,9 +166,8 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     public void addFromConfig(ConfigAnnotatedField f) {
         AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(f.getName());
-        CustomPropsMap custom = annotatedField.custom();
-        custom.put("displayName", f.getDisplayName());
-        custom.put("description", f.getDescription());
+        annotatedField.putCustom("displayName", f.getDisplayName());
+        annotatedField.putCustom("description", f.getDescription());
         List<String> displayOrder = new ArrayList<>();
 
         if (!f.getAnnotations().isEmpty())
@@ -187,7 +186,7 @@ final class AnnotatedFieldsImpl implements AnnotatedFields {
                 n++;
             }
         }
-        custom.put("displayOrder", displayOrder);
+        annotatedField.putCustom("displayOrder", displayOrder);
         put(annotatedField.name(), annotatedField);
     }
 

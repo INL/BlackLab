@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil.BookkeepField
 /** An annotated field */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({ "custom", "mainAnnotation", "hasContentStore", "hasXmlTags", "annotations" })
-public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Freezable {
+public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     public final class AnnotationsImpl implements Annotations {
         @Override
@@ -93,9 +93,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
     /** These annotations should not get a forward index. */
     @XmlTransient
     private Set<String> noForwardIndexAnnotations = Collections.emptySet();
-
-    @XmlTransient
-    private boolean frozen;
 
     @XmlTransient
     private final AnnotationsImpl annotations = new AnnotationsImpl();
@@ -288,15 +285,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField, Fre
 
     @Override
     synchronized public void freeze() {
-        this.frozen = true;
+        super.freeze();
         this.annots.values().forEach(AnnotationImpl::freeze);
     }
     
-    @Override
-    public boolean isFrozen() {
-        return this.frozen;
-    }
-
     @Override
     public String offsetsField() {
         AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();

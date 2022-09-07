@@ -754,7 +754,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     @Override
     public synchronized MetadataField registerMetadataField(String fieldName) {
-        MetadataField f = metadataFields.register(fieldName);
+        MetadataFieldImpl f = metadataFields.register(fieldName);
         // We don't keep track of metadata field values in the integrated
         // index format because it cannot change during indexing.
         // Instead we will use DocValues to get the field values when necessary.

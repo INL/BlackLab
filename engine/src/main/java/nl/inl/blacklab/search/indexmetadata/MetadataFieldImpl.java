@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
  * A metadata field in an index.
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freezable {
+public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     
 //    private static final Logger logger = LogManager.getLogger(MetadataFieldImpl.class);
 
@@ -42,20 +42,19 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
                 metadataFields.getMetadataFieldValuesFactory());
 
         // Custom properties
-        CustomPropsMap custom = field.custom();
-        custom.put("displayName", config.getDisplayName());
-        custom.put("description", config.getDescription());
-        custom.put("uiType", config.getUiType());
-        custom.put("unknownCondition", (
+        field.putCustom("displayName", config.getDisplayName());
+        field.putCustom("description", config.getDescription());
+        field.putCustom("uiType", config.getUiType());
+        field.putCustom("unknownCondition", (
                 config.getUnknownCondition() == null ?
                         UnknownCondition.fromStringValue(metadataFields.defaultUnknownCondition()) :
                         config.getUnknownCondition()
                 ).stringValue()
         );
-        custom.put("unknownValue", config.getUnknownValue() == null ? metadataFields.defaultUnknownValue() :
+        field.putCustom("unknownValue", config.getUnknownValue() == null ? metadataFields.defaultUnknownValue() :
                 config.getUnknownValue());
-        custom.put("displayValues", config.getDisplayValues());
-        custom.put("displayOrder", config.getDisplayOrder());
+        field.putCustom("displayValues", config.getDisplayValues());
+        field.putCustom("displayOrder", config.getDisplayOrder());
 
         field.setAnalyzer(!StringUtils.isEmpty(config.getAnalyzer()) ? config.getAnalyzer() : metadataFields.defaultAnalyzerName());
         return field;
@@ -80,13 +79,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     @XmlTransient
     private MetadataFieldValues values;
 
-    /**
-     * If true, this instance is frozen and may not be mutated anymore.
-     * Doing so anyway will throw an exception.
-     */
-    @XmlTransient
-    private boolean frozen;
-
     // For JAXB deserialization
     @SuppressWarnings("unused")
     MetadataFieldImpl() {
@@ -102,6 +94,14 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
         this.values = values;
     }
 
+	/**
+	 * Should we store the values for this field?
+	 *
+	 * We're moving away from storing values separately, because we can just
+	 * use DocValues to find the values when we need them.
+	 *
+	 * @param keepTrackOfValues whether or not to store values here
+	 */
     public void setKeepTrackOfValues(boolean keepTrackOfValues) {
         this.keepTrackOfValues = keepTrackOfValues;
     }
@@ -182,15 +182,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField, Freez
     
 
 
-    @Override
-    public synchronized void freeze() {
-        this.frozen = true;
-    }
-    
-    @Override
-    public synchronized boolean isFrozen() {
-        return this.frozen;
-    }
     
     public void setAnalyzer(String analyzer) {
         if (this.analyzer == null || !this.analyzer.equals(analyzer)) {

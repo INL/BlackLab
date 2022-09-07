@@ -326,7 +326,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     @Override
-    public AnnotatedFields annotatedFields() {
+    public AnnotatedFieldsImpl annotatedFields() {
         return annotatedFields;
     }
 
@@ -592,22 +592,22 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 FieldType fieldType = FieldType.fromStringValue(Json.getString(fieldConfig, "type", "tokenized"));
                 MetadataFieldImpl fieldDesc = new MetadataFieldImpl(fieldName, fieldType, metadataFields.getMetadataFieldValuesFactory());
                 fieldDesc.setDisplayName(Json.getString(fieldConfig, "displayName", fieldName));
-                fieldDesc.custom().put("uiType", Json.getString(fieldConfig, "uiType", ""));
+                fieldDesc.putCustom("uiType", Json.getString(fieldConfig, "uiType", ""));
                 fieldDesc.setDescription(Json.getString(fieldConfig, "description", ""));
                 //fieldDesc.setGroup(Json.getString(fieldConfig, "group", ""));
                 fieldDesc.setAnalyzer(Json.getString(fieldConfig, "analyzer", "DEFAULT"));
-                fieldDesc.custom().put("unknownValue",
+                fieldDesc.putCustom("unknownValue",
                         Json.getString(fieldConfig, "unknownValue", metadataFields.defaultUnknownValue()));
                 UnknownCondition unk = UnknownCondition
                         .fromStringValue(Json.getString(fieldConfig, "unknownCondition",
                                 metadataFields.defaultUnknownCondition()));
-                fieldDesc.custom().put("unknownCondition", unk.stringValue());
+                fieldDesc.putCustom("unknownCondition", unk.stringValue());
                 if (fieldConfig.has("values"))
                     fieldDesc.setValues(fieldConfig.get("values"));
                 if (fieldConfig.has("displayValues"))
                     fieldDesc.setDisplayValues(fieldConfig.get("displayValues"));
                 if (fieldConfig.has("displayOrder"))
-                    fieldDesc.custom().put("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
+                    fieldDesc.putCustom("displayOrder", Json.getListOfStrings(fieldConfig, "displayOrder"));
                 if (fieldConfig.has("valueListComplete"))
                     fieldDesc.setValueListComplete(Json.getBoolean(fieldConfig, "valueListComplete", false));
                 metadataFields.put(fieldName, fieldDesc);
@@ -733,8 +733,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                         // Metadata field, not found in metadata JSON file
                         FieldType type = getFieldType(name);
                         MetadataFieldImpl metadataFieldDesc = new MetadataFieldImpl(name, type, metadataFields.getMetadataFieldValuesFactory());
-                        metadataFieldDesc.custom().put("unknownCondition", metadataFields.defaultUnknownCondition());
-                        metadataFieldDesc.custom().put("unknownValue", metadataFields.defaultUnknownValue());
+                        metadataFieldDesc.putCustom("unknownCondition", metadataFields.defaultUnknownCondition());
+                        metadataFieldDesc.putCustom("unknownValue", metadataFields.defaultUnknownValue());
                         //metadataFieldDesc.setDocValuesType(fi.getDocValuesType());
                         metadataFields.put(name, metadataFieldDesc);
                     }

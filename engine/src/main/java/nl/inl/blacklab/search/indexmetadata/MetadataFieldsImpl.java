@@ -73,7 +73,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
      */
     @XmlTransient
-    private final Map<String, MetadataField> implicitFields = new ConcurrentHashMap<>();
+    private final Map<String, MetadataFieldImpl> implicitFields = new ConcurrentHashMap<>();
 
     void addFromConfig(ConfigMetadataField f) {
         put(f.getName(), MetadataFieldImpl.fromConfig(f, this));
@@ -146,7 +146,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return d;
     }
 
-    private MetadataField registerImplicit(String fieldName) {
+    private MetadataFieldImpl registerImplicit(String fieldName) {
         return implicitFields.computeIfAbsent(fieldName,
                 __ -> {
                     logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
@@ -199,7 +199,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     // ------------------------------------
 
     @Override
-    public synchronized MetadataField register(String fieldName) {
+    public synchronized MetadataFieldImpl register(String fieldName) {
         if (fieldName == null)
             throw new IllegalArgumentException("Tried to register a metadata field with null as name");
         // Synchronized because we might be using the map in another indexing thread
@@ -225,8 +225,8 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                     fieldType = FieldType.UNTOKENIZED;
                 }
                 mf = new MetadataFieldImpl(fieldName, fieldType, metadataFieldValuesFactory);
-                mf.custom().put("unknownCondition", defaultUnknownCondition());
-                mf.custom().put("unknownValue", defaultUnknownValue());
+                mf.putCustom("unknownCondition", defaultUnknownCondition());
+                mf.putCustom("unknownValue", defaultUnknownValue());
                 metadataFieldInfos.put(fieldName, mf);
             }
             return mf;
