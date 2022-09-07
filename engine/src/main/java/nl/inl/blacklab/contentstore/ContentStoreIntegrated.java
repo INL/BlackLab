@@ -37,6 +37,7 @@ public class ContentStoreIntegrated implements ContentStore {
 
     @Override
     public String retrievePart(int docId, int start, int end) {
+        if (start == -1) start = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
         ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
         return cs.getValueSubstring(docId - lrc.docBase, luceneField, start, end);
@@ -44,6 +45,8 @@ public class ContentStoreIntegrated implements ContentStore {
 
     @Override
     public String[] retrieveParts(int docId, int[] start, int[] end) {
+        for (int i = 0; i < start.length; i++)
+            if (start[i] == -1)  start[i] = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
         ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
         return cs.getValueSubstrings(docId - lrc.docBase, luceneField, start, end);

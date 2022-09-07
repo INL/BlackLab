@@ -24,19 +24,19 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     public static final int VERSION_CURRENT = 1;
 
     /** Every file extension will be prefixed with this to indicate it is part of the forward index. */
-    public static final String CONTENT_STORE_EXT_PREFIX = "blcs.";
+    public static final String EXT_PREFIX = "blcs.";
 
     /** Extension for the fields file, that stores block size and Lucene fields with a CS. */
-    public static final String FIELDS_EXT = "fields";
+    public static final String FIELDS_EXT = EXT_PREFIX + "fields";
 
     /** Extension for the docindex file. */
-    public static final String DOCINDEX_EXT = "docindex";
+    public static final String DOCINDEX_EXT = EXT_PREFIX + "docindex";
 
-    public static final String VALUEINDEX_EXT = "valueindex";
+    public static final String VALUEINDEX_EXT = EXT_PREFIX + "valueindex";
 
-    public static final String BLOCKINDEX_EXT = "blockindex";
+    public static final String BLOCKINDEX_EXT = EXT_PREFIX + "blockindex";
 
-    public static final String BLOCKS_EXT = "blocks";
+    public static final String BLOCKS_EXT = EXT_PREFIX + "blocks";
 
     /** Default compressed block size (in characters) in the values file */
     public static final int DEFAULT_BLOCK_SIZE_CHARS = 4096;
@@ -52,13 +52,16 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     public BlackLab40StoredFieldsReader fieldsReader(Directory directory, SegmentInfo segmentInfo,
             FieldInfos fieldInfos, IOContext ioContext) throws IOException {
         StoredFieldsReader delegateReader = delegate.fieldsReader(directory, segmentInfo, fieldInfos, ioContext);
-        return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos, delegateReader);
+        String delegateFormatName = delegate.getClass().getSimpleName();
+        return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos, delegateReader,
+                delegateFormatName);
     }
 
     @Override
     public BlackLab40StoredFieldsWriter fieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
             throws IOException {
         StoredFieldsWriter delegateWriter = delegate.fieldsWriter(directory, segmentInfo, ioContext);
-        return new BlackLab40StoredFieldsWriter(directory, segmentInfo, ioContext, delegateWriter);
+        String delegateFormatName = delegate.getClass().getSimpleName();
+        return new BlackLab40StoredFieldsWriter(directory, segmentInfo, ioContext, delegateWriter, delegateFormatName);
     }
 }

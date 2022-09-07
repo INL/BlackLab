@@ -88,15 +88,15 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     }
 
     public BlackLab40StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
-            StoredFieldsReader delegate)
+            StoredFieldsReader delegate, String delegateFormatName)
             throws IOException {
         this.directory = directory;
         this.segmentInfo = segmentInfo;
         this.ioContext = ioContext;
         this.fieldInfos = fieldInfos;
         this.delegate = delegate;
+        this.delegateFormatName = delegateFormatName; //delegateFormat.getClass().getSimpleName(); // check that this matches what was written
 
-        delegateFormatName = delegate.getClass().getSimpleName(); // check that this matches what was written to the files
         fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
         while (fieldsFile.getFilePointer() < fieldsFile.length()) {
@@ -123,11 +123,12 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     private IndexInput openInput(String extension, Directory directory, SegmentInfo segmentInfo, IOContext ioContext) throws IOException {
         String segmentSuffix = "";
-        String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, BlackLab40StoredFieldsFormat.CONTENT_STORE_EXT_PREFIX + extension);
+        String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, extension);
         IndexInput input = directory.openInput(fileName, ioContext);
         try {
             // Check index header
-            CodecUtil.checkIndexHeader(input, BlackLab40StoredFieldsFormat.NAME, BlackLab40StoredFieldsFormat.VERSION_START,
+            String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + extension;
+            CodecUtil.checkIndexHeader(input, codecName, BlackLab40StoredFieldsFormat.VERSION_START,
                     BlackLab40StoredFieldsFormat.VERSION_CURRENT, segmentInfo.getId(), segmentSuffix);
 
             // Set or check delegate format name
@@ -217,7 +218,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
         if (endChar < -1)
             throw new IllegalArgumentException("Illegal endChar value, must be >= -1: " + endChar);
-        if (startChar > endChar)
+        if (endChar != -1 && startChar > endChar)
             throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
                     startChar + "-" + endChar);
 
@@ -228,7 +229,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             int valueLengthChar = findValueLengthChar(docId, fieldInfo);
             if (startChar > valueLengthChar)
                 startChar = valueLengthChar;
-            if (endChar > valueLengthChar)
+            if (endChar == -1 || endChar > valueLengthChar)
                 endChar = valueLengthChar;
             ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
             long blockIndexOffset = valueIndexFile.readLong();
@@ -333,6 +334,15 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         return valueIndexFile.readInt();
     }
 
+    /**
+     * Get several parts of the field value.
+     *
+     * @param docId document id
+     * @param fieldInfo field to get
+     * @param star positions of the first character to get. Must all be zero or greater.
+     * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
+     * @return requested parts
+     */
     private String[] getValueSubstrings(int docId, FieldInfo fi, int[] start, int[] end) {
         if (start.length != end.length)
             throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);
@@ -364,7 +374,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     public StoredFieldsReader clone() {
         try {
             return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
-                    delegate.clone());
+                    delegate.clone(), delegateFormatName);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -420,7 +430,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         if (mergeInstance != delegate) {
             try {
                 return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
-                        mergeInstance);
+                        mergeInstance, delegateFormatName);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

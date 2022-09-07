@@ -406,6 +406,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         TextContent document = new TextContent(content);
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
-        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentStoreName, contentIdFieldName);
+        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
     }
 }

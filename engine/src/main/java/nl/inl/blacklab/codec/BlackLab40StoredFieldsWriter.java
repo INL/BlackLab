@@ -46,15 +46,22 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     /** Lucene's default stored fields writer, for regular stored fields. */
     private final StoredFieldsWriter delegate;
 
+    /** Class name for the delegate StoredFieldsFormat, which we will write to our file headers,
+     * so we can ensure we're using the right delegate format when reading.
+     */
+    private final String delegateFormatName;
+
     /** How many characters per compressed block. */
     private final int blockSizeChars = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
 
     /** How many CS fields were written for the current document? */
     private int numberOfFieldsWritten;
 
-    public BlackLab40StoredFieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, StoredFieldsWriter delegate)
+    public BlackLab40StoredFieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext,
+            StoredFieldsWriter delegate, String delegateFormatName)
             throws IOException {
         this.delegate = delegate;
+        this.delegateFormatName = delegateFormatName;
 
         fieldsFile = createOutput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
 
@@ -70,16 +77,16 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     private IndexOutput createOutput(String ext, Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
             throws IOException {
-        final IndexOutput fieldsFile;
-        ext = BlackLab40StoredFieldsFormat.CONTENT_STORE_EXT_PREFIX + ext;
+        final IndexOutput indexOutput;
         String codecName = BlackLab40StoredFieldsFormat.NAME + "_" + ext;
         String segmentSuffix = "";
-        fieldsFile = directory.createOutput(IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, ext),
+        indexOutput = directory.createOutput(IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, ext),
                 ioContext);
-        CodecUtil.writeIndexHeader(fieldsFile, codecName, BlackLab40StoredFieldsFormat.VERSION_CURRENT,
+        CodecUtil.writeIndexHeader(indexOutput, codecName, BlackLab40StoredFieldsFormat.VERSION_CURRENT,
                 segmentInfo.getId(), segmentSuffix);
-        assert CodecUtil.indexHeaderLength(codecName, segmentSuffix) == fieldsFile.getFilePointer();
-        return fieldsFile;
+        assert CodecUtil.indexHeaderLength(codecName, segmentSuffix) == indexOutput.getFilePointer();
+        indexOutput.writeString(delegateFormatName);
+        return indexOutput;
     }
 
     @Override
