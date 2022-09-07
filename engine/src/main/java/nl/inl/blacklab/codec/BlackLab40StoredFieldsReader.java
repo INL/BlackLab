@@ -19,6 +19,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
 
+import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**
@@ -396,5 +397,28 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     @Override
     public String toString() {
         return "BlackLab40StoredFieldsReader(" + delegate.toString() + ")";
+    }
+
+    /**
+     * Create a content store reader for this segment.
+     *
+     * The returned reader is not threadsafe and shouldn't be stored.
+     * A single thread may use it for reading from this segment. It
+     * can then be discarded.
+     *
+     * @return content store segment reader
+     */
+    public ContentStoreSegmentReader contentStore() {
+        return new ContentStoreSegmentReader() {
+            @Override
+            public String getValue(int docId, String luceneField) {
+                return BlackLab40StoredFieldsReader.this.getValue(docId, fieldInfos.fieldInfo(luceneField));
+            }
+
+            @Override
+            public String getValueSubstring(int docId, String luceneField) {
+                return BlackLab40StoredFieldsReader.this.getValue(docId, fieldInfos.fieldInfo(luceneField));
+            }
+        };
     }
 }

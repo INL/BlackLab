@@ -50,18 +50,16 @@ Where we take the metadata document into account:
 - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
-
+- [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS.
 
 
 ### Content store
 
-- [ ] Make content store part of the Lucene index. Approach:
-  - [ ] finish implementing `BlackLab40StoredFieldsReader/Writer` (see TODOS)
-  - [ ] actually compress content store
-  - [ ] Right now `BlackLab40StoredFieldsReader` is made threadsafe using expensive synchronization of a whole long method, `getValueSubstring()`. It's probably better to clone the file handles and use those in a nonthreadsafe class, similar to `SegmentForwardIndex` / `ForwardIndexSegmentReader`.\
-    (**Assuming it needs to be threadsafe!** Or does Lucene guarantee that one segment is only ever read by one thread? For writing that seems to be the case, but that's very different of course)
-  - [ ] include a codec byte per doc, same as the forward index, so we can experiment with additional codecs later while easily staying backwards compatible.
-  - [ ] poke a hole to get direct access to the content store, similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()`.
+- [ ] poke a hole to get direct access to the content store, similar to `BlackLab40PostingsReader.get(lrc).forwardIndex()`.
+- [ ] Right now `BlackLab40StoredFieldsReader` is made threadsafe using expensive synchronization of a whole long method, `getValueSubstring()`. It's probably better to clone the file handles and use those in a nonthreadsafe class, similar to `SegmentForwardIndex` / `ForwardIndexSegmentReader`.\
+ (**Assuming it needs to be threadsafe!** Or does Lucene guarantee that one segment is only ever read by one thread? For writing that seems to be the case, but that's very different of course)
+- [ ] actually compress content store
+- [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
 
 
 ## Refactoring opportunities
