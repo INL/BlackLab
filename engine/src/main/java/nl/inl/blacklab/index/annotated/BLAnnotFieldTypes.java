@@ -17,7 +17,7 @@ public class BLAnnotFieldTypes {
     /**
      * Get the appropriate FieldType given the options for an annotation sensitivity.
      */
-    public static FieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
+    public static synchronized FieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
         String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-");
         return fieldTypeCache.computeIfAbsent(key, (__) -> {
             IndexOptions indexOptions = offsets ?

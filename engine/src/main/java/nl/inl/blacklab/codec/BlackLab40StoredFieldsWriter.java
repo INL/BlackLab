@@ -125,7 +125,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      */
     private void writeContentStoreField(FieldInfo fieldInfo, String value) throws IOException {
         // Write some info about this value
-        valueIndexFile.writeInt(getFieldIndex(fieldInfo)); // which field is this?
+        valueIndexFile.writeByte(getFieldIndex(fieldInfo)); // which field is this?
         int lengthChars = value.length();
         valueIndexFile.writeInt(lengthChars);
         valueIndexFile.writeByte(blockCodec.getCode());
@@ -153,8 +153,8 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
         // Keep track of the number of values written for this doc, so we can record that later.
         numberOfFieldsWritten++;
-        if (numberOfFieldsWritten == 127) {
-            throw new IllegalStateException("Too many content store fields (>=127)");
+        if (numberOfFieldsWritten == 128) {
+            throw new IllegalStateException("Too many content store fields for document (>127)");
         }
     }
 
@@ -167,15 +167,17 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      * @param fieldInfo field to get index for
      * @return index for the field
      */
-    private int getFieldIndex(FieldInfo fieldInfo) throws IOException {
+    private byte getFieldIndex(FieldInfo fieldInfo) throws IOException {
         String name = fieldInfo.name;
         Integer id = fields.get(name);
         if (id == null) {
             id = fields.size();
+            if (id == 128)
+                throw new IllegalStateException("Too many content store fields (>127)");
             fields.put(name, id);
             fieldsFile.writeString(name);
         }
-        return id;
+        return (byte)(int)id;
     }
 
     @Override
