@@ -55,7 +55,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     private final int blockSizeChars = BlackLab40StoredFieldsFormat.DEFAULT_BLOCK_SIZE_CHARS;
 
     /** How many CS fields were written for the current document? */
-    private int numberOfFieldsWritten;
+    private byte numberOfFieldsWritten;
 
     public BlackLab40StoredFieldsWriter(Directory directory, SegmentInfo segmentInfo, IOContext ioContext,
             StoredFieldsWriter delegate, String delegateFormatName)
@@ -153,6 +153,9 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
         // Keep track of the number of values written for this doc, so we can record that later.
         numberOfFieldsWritten++;
+        if (numberOfFieldsWritten == 127) {
+            throw new IllegalStateException("Too many content store fields (>=127)");
+        }
     }
 
     /**
@@ -208,7 +211,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public void finishDocument() throws IOException {
         // Record how many fields were written for this doc (could be 0)
-        docIndexFile.writeInt(numberOfFieldsWritten);
+        docIndexFile.writeByte(numberOfFieldsWritten);
 
         delegate.finishDocument();
     }

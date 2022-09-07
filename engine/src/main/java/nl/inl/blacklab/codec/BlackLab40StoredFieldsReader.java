@@ -60,6 +60,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     private final IndexInput blocksFile;
 
+    /** Offset in docIndex file after header, so we can calculate doc offsets. */
+    private final long docIndexFileOffset;
+
     private final int blockSizeChars;
 
     private String delegateFormatName;
@@ -105,6 +108,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             fields.put(fieldName, id);
         }
         docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        docIndexFileOffset = docIndexFile.getFilePointer(); // remember offset after header so we can calculdate doc offsets.
         valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
         blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
         blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
@@ -227,6 +231,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             // to read the rest of the information we need: where to find the block indexes
             // and where the blocks start.
             int valueLengthChar = findValueLengthChar(docId, fieldInfo);
+            if (valueLengthChar == 0)
+                return ""; // no value stored for this document
             if (startChar > valueLengthChar)
                 startChar = valueLengthChar;
             if (endChar == -1 || endChar > valueLengthChar)
@@ -313,7 +319,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         int fieldId = getFieldIndex(fieldInfo);
 
         // Find the document
-        docIndexFile.seek((long) docId * DOCINDEX_RECORD_SIZE);
+        docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);
         int valueIndexOffset = docIndexFile.readInt();
         byte numberOfContentStoreFields = docIndexFile.readByte();
 
@@ -327,8 +333,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             i++;
         }
         if (i == numberOfContentStoreFields)
-            throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
-                    ") not found for docId " + docId);
+            return 0;
+        //    throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
+        //            ") not found for docId " + docId);
 
         // Read document length, where to find the block indexes and where the blocks start.
         return valueIndexFile.readInt();

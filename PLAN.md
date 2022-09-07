@@ -52,6 +52,7 @@ Where we take the metadata document into account:
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS.
 - [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
+- [ ] Retrieving a Lucene doc will read all stored fields by default, but we don't want that with (potentially large) content store fields. We can make visitDocument skip content store fields, but only if we also make a cusotm merge function that doesn't rely on this. In the long run, we should do this for performance reasons. Until then, we should be careful that we specify which fields we want to read when retrieving a document.
 
 
 ### Content store
