@@ -50,15 +50,13 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     /**  */
     private static String fieldNameForCodecAccess;
 
-    private final IndexInput fieldsFile;
+    private final IndexInput _docIndexFile;
 
-    private final IndexInput docIndexFile;
+    private final IndexInput _valueIndexFile;
 
-    private final IndexInput valueIndexFile;
+    private final IndexInput _blockIndexFile;
 
-    private final IndexInput blockIndexFile;
-
-    private final IndexInput blocksFile;
+    private final IndexInput _blocksFile;
 
     /** Offset in docIndex file after header, so we can calculate doc offsets. */
     private final long docIndexFileOffset;
@@ -100,18 +98,19 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         this.delegate = delegate;
         this.delegateFormatName = delegateFormatName; //delegateFormat.getClass().getSimpleName(); // check that this matches what was written
 
-        fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
+        IndexInput fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
         while (fieldsFile.getFilePointer() < fieldsFile.length()) {
             String fieldName = fieldsFile.readString();
             int id = fields.size();
             fields.put(fieldName, id);
         }
-        docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
-        docIndexFileOffset = docIndexFile.getFilePointer(); // remember offset after header so we can calculdate doc offsets.
-        valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
-        blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
-        blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+        fieldsFile.close();
+        _docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
+        docIndexFileOffset = _docIndexFile.getFilePointer(); // remember offset after header so we can calculdate doc offsets.
+        _valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
+        _blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
+        _blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
     /**
@@ -183,189 +182,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        byte[] contents = getBytes(docId, fieldInfo);
+        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
         storedFieldVisitor.stringField(fieldInfo, contents);
-    }
-
-    /**
-     * Get the field value as bytes.
-     *
-     * @param docId     document id
-     * @param fieldInfo field to get
-     * @return field value as bytes
-     */
-    private byte[] getBytes(int docId, FieldInfo fieldInfo) {
-        // TODO: we might not need to get a String first, then decode it into bytes, but can get the
-        //   bytes directly. The reason for going through String is that we use character offsets within
-        //   the document, but that doesn't matter when getting the whole document.
-        return getValue(docId, fieldInfo).getBytes(StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Get the entire field value.
-     *
-     * @param docId document id
-     * @param fieldInfo field to get
-     * @return field value
-     */
-    public String getValue(int docId, FieldInfo fieldInfo) {
-        return getValueSubstring(docId, fieldInfo, 0, -1);
-    }
-
-    /**
-     * Get part of the field value.
-     *
-     * @param docId document id
-     * @param fieldInfo field to get
-     * @param startChar first character to get. Must be zero or greater.
-     * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
-     * @return requested part
-     */
-    public synchronized String getValueSubstring(int docId, FieldInfo fieldInfo, int startChar, int endChar) {
-        if (startChar < 0)
-            throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
-        if (endChar < -1)
-            throw new IllegalArgumentException("Illegal endChar value, must be >= -1: " + endChar);
-        if (endChar != -1 && startChar > endChar)
-            throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
-                    startChar + "-" + endChar);
-
-        try {
-            // Find the value length in characters, and position the valueIndex file pointer
-            // to read the rest of the information we need: where to find the block indexes
-            // and where the blocks start.
-            int valueLengthChar = findValueLengthChar(docId, fieldInfo);
-            if (valueLengthChar == 0)
-                return ""; // no value stored for this document
-            if (startChar > valueLengthChar)
-                startChar = valueLengthChar;
-            if (endChar == -1 || endChar > valueLengthChar)
-                endChar = valueLengthChar;
-            ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
-            long blockIndexOffset = valueIndexFile.readLong();
-            long blocksOffset = valueIndexFile.readLong();
-
-            // Determine what blocks we'll need
-            int firstBlockNeeded = startChar / blockSizeChars;
-            int lastBlockNeeded = endChar / blockSizeChars;
-            int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
-
-            // Determine where our first block starts, and position blockindex file
-            // to start reading subsequent after-block positions
-            int blockStartOffset;
-            if (firstBlockNeeded == 0) {
-                // Start of the first block is always 0. We don't store that.
-                blockStartOffset = 0;
-                blockIndexFile.seek(blockIndexOffset);
-                blocksFile.seek(blocksOffset);
-            } else {
-                // Start of block n is end of block n-1; read it from the block index file.
-                blockIndexFile.seek(blockIndexOffset + (long) (firstBlockNeeded - 1) * BLOCKINDEX_RECORD_SIZE);
-                blockStartOffset = blockIndexFile.readInt();
-                blocksFile.seek(blocksOffset + blockStartOffset);
-            }
-
-            int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
-            int blocksRead = 0;
-            StringBuilder result = new StringBuilder();
-            while (blocksRead < numBlocksNeeded) {
-
-                // Read a block and decompress it.
-                int blockEndOffset = blockIndexFile.readInt();
-                int blockSizeBytes = blockEndOffset - blockStartOffset;
-                byte[] block = new byte[blockSizeBytes];
-                blocksFile.readBytes(block, 0, blockSizeBytes);
-                String blockDecompressed = blockCodec.decompress(block, 0, blockSizeBytes);
-
-                // Append the content we need to the result.
-                if (blocksRead == 0) {
-                    // First block. Only take the part we need.
-                    if (numBlocksNeeded == 1) {
-                        // This is the only block we need. Take the requested part from the middle.
-                        result.append(blockDecompressed, startChar - currentBlockCharOffset,
-                                endChar - currentBlockCharOffset);
-                    } else {
-                        // We'll need more blocks. Take part at the end.
-                        result.append(blockDecompressed, startChar - currentBlockCharOffset, blockSizeChars);
-                    }
-                } else if (blocksRead == numBlocksNeeded - 1) {
-                    // Last block. Take the part we need from the beginning.
-                    result.append(blockDecompressed, 0, endChar - currentBlockCharOffset);
-                } else {
-                    // Middle block. Append the whole thing.
-                    result.append(blockDecompressed);
-                }
-
-                // Update variables to read the next block
-                blockStartOffset = blockEndOffset;
-                currentBlockCharOffset += blockSizeChars;
-                blocksRead++;
-            }
-            return result.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * Finds the length in characters of a stored value.
-     *
-     * Also positions the valueIndexFile pointer to just after the doc length,
-     * from which we can continue reading information about the value (such as where
-     * to find the actual value itself).
-     *
-     * @param docId document id
-     * @param fieldInfo field to get length for
-     * @return length of the value in characters
-     */
-    private int findValueLengthChar(int docId, FieldInfo fieldInfo) throws IOException {
-        // What's the id of the field that is references in the value index file?
-        int fieldId = getFieldIndex(fieldInfo);
-
-        // Find the document
-        docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);
-        int valueIndexOffset = docIndexFile.readInt();
-        byte numberOfContentStoreFields = docIndexFile.readByte();
-
-        // Find the correct field in this document
-        int i = 0;
-        while (i < numberOfContentStoreFields) {
-            valueIndexFile.seek(valueIndexOffset + (long) i * VALUEINDEX_RECORD_SIZE);
-            byte thisFieldId = valueIndexFile.readByte();
-            if (thisFieldId == fieldId)
-                break;
-            i++;
-        }
-        if (i == numberOfContentStoreFields)
-            return 0;
-        //    throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
-        //            ") not found for docId " + docId);
-
-        // Read document length, where to find the block indexes and where the blocks start.
-        return valueIndexFile.readInt();
-    }
-
-    /**
-     * Get several parts of the field value.
-     *
-     * @param docId document id
-     * @param fi field to get
-     * @param start positions of the first character to get. Must all be zero or greater.
-     * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
-     * @return requested parts
-     */
-    private String[] getValueSubstrings(int docId, FieldInfo fi, int[] start, int[] end) {
-        if (start.length != end.length)
-            throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);
-        // TODO: we could optimize this to avoid reading blocks twice!
-        //   easiest is to determine the lowest start and highest end, read the entire document part,
-        //   then cut the snippets from that. More efficient is to figure out exactly which blocks we
-        //   need, retrieve those, then cut the snippets.
-        String[] results = new String[start.length];
-        for (int i = 0; i < start.length; i++) {
-            results[i] = getValueSubstring(docId, fi, start[i], end[i]);
-        }
-        return results;
     }
 
     /**
@@ -374,11 +192,11 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      * If the field did not have an index yet, write it to the fields file and
      * assign the index.
      *
-     * @param fieldInfo field to get index for
+     * @param luceneField field to get index for
      * @return index for the field
      */
-    private int getFieldIndex(FieldInfo fieldInfo) {
-        return fields.get(fieldInfo.name);
+    private int getFieldIndex(String luceneField) {
+        return fields.get(luceneField);
     }
 
     @Override
@@ -401,11 +219,10 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     @Override
     public void close() throws IOException {
         // Close our files
-        fieldsFile.close();
-        docIndexFile.close();
-        valueIndexFile.close();
-        blockIndexFile.close();
-        blocksFile.close();
+        _docIndexFile.close();
+        _valueIndexFile.close();
+        _blockIndexFile.close();
+        _blocksFile.close();
 
         // Let the delegate close its files.
         delegate.close();
@@ -465,31 +282,199 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      */
     public ContentStoreSegmentReader contentStore() {
         return new ContentStoreSegmentReader() {
-            @Override
+
+            private final IndexInput docIndexFile = _docIndexFile.clone();
+            private final IndexInput valueIndexFile = _valueIndexFile.clone();
+            private final IndexInput blockIndexFile = _blockIndexFile.clone();
+            private final IndexInput blocksFile = _blocksFile.clone();
+
+            /**
+             * Get the field value as bytes.
+             *
+             * @param docId     document id
+             * @param luceneField field to get
+             * @return field value as bytes
+             */
+            public byte[] getBytes(int docId, String luceneField) {
+                // TODO: we might not need to get a String first, then decode it into bytes, but can get the
+                //   bytes directly. The reason for going through String is that we use character offsets within
+                //   the document, but that doesn't matter when getting the whole document.
+                return getValue(docId, luceneField).getBytes(StandardCharsets.UTF_8);
+            }
+
+            /**
+             * Get the entire field value.
+             *
+             * @param docId document id
+             * @param luceneField field to get
+             * @return field value
+             */
             public String getValue(int docId, String luceneField) {
-                return BlackLab40StoredFieldsReader.this.getValue(docId, fieldInfos.fieldInfo(luceneField));
+                return getValueSubstring(docId, luceneField, 0, -1);
             }
 
-            @Override
-            public String getValueSubstring(int docId, String luceneField, int start, int end) {
-                FieldInfo fi = fieldInfos.fieldInfo(luceneField);
-                return BlackLab40StoredFieldsReader.this.getValueSubstring(docId, fi, start, end);
-            }
+            /**
+             * Get part of the field value.
+             *
+             * @param docId document id
+             * @param luceneField field to get
+             * @param startChar first character to get. Must be zero or greater.
+             * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
+             * @return requested part
+             */
+            public String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
+                if (startChar < 0)
+                    throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
+                if (endChar < -1)
+                    throw new IllegalArgumentException("Illegal endChar value, must be >= -1: " + endChar);
+                if (endChar != -1 && startChar > endChar)
+                    throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
+                            startChar + "-" + endChar);
 
-            @Override
-            public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
-                FieldInfo fi = fieldInfos.fieldInfo(luceneField);
-                return BlackLab40StoredFieldsReader.this.getValueSubstrings(docId, fi, start, end);
-            }
-
-            @Override
-            public int valueLength(int docId, String luceneField) {
                 try {
-                    FieldInfo fi = fieldInfos.fieldInfo(luceneField);
-                    return BlackLab40StoredFieldsReader.this.findValueLengthChar(docId, fi);
+                    // Find the value length in characters, and position the valueIndex file pointer
+                    // to read the rest of the information we need: where to find the block indexes
+                    // and where the blocks start.
+                    int valueLengthChar = findValueLengthChar(docId, luceneField);
+                    if (valueLengthChar == 0)
+                        return ""; // no value stored for this document
+                    if (startChar > valueLengthChar)
+                        startChar = valueLengthChar;
+                    if (endChar == -1 || endChar > valueLengthChar)
+                        endChar = valueLengthChar;
+                    ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
+                    long blockIndexOffset = valueIndexFile.readLong();
+                    long blocksOffset = valueIndexFile.readLong();
+
+                    // Determine what blocks we'll need
+                    int firstBlockNeeded = startChar / blockSizeChars;
+                    int lastBlockNeeded = endChar / blockSizeChars;
+                    int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
+
+                    // Determine where our first block starts, and position blockindex file
+                    // to start reading subsequent after-block positions
+                    int blockStartOffset;
+                    if (firstBlockNeeded == 0) {
+                        // Start of the first block is always 0. We don't store that.
+                        blockStartOffset = 0;
+                        blockIndexFile.seek(blockIndexOffset);
+                        blocksFile.seek(blocksOffset);
+                    } else {
+                        // Start of block n is end of block n-1; read it from the block index file.
+                        blockIndexFile.seek(blockIndexOffset + (long) (firstBlockNeeded - 1) * BLOCKINDEX_RECORD_SIZE);
+                        blockStartOffset = blockIndexFile.readInt();
+                        blocksFile.seek(blocksOffset + blockStartOffset);
+                    }
+
+                    int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
+                    int blocksRead = 0;
+                    StringBuilder result = new StringBuilder();
+                    while (blocksRead < numBlocksNeeded) {
+
+                        // Read a block and decompress it.
+                        int blockEndOffset = blockIndexFile.readInt();
+                        int blockSizeBytes = blockEndOffset - blockStartOffset;
+                        byte[] block = new byte[blockSizeBytes];
+                        blocksFile.readBytes(block, 0, blockSizeBytes);
+                        String blockDecompressed = blockCodec.decompress(block, 0, blockSizeBytes);
+
+                        // Append the content we need to the result.
+                        if (blocksRead == 0) {
+                            // First block. Only take the part we need.
+                            if (numBlocksNeeded == 1) {
+                                // This is the only block we need. Take the requested part from the middle.
+                                result.append(blockDecompressed, startChar - currentBlockCharOffset,
+                                        endChar - currentBlockCharOffset);
+                            } else {
+                                // We'll need more blocks. Take part at the end.
+                                result.append(blockDecompressed, startChar - currentBlockCharOffset, blockSizeChars);
+                            }
+                        } else if (blocksRead == numBlocksNeeded - 1) {
+                            // Last block. Take the part we need from the beginning.
+                            result.append(blockDecompressed, 0, endChar - currentBlockCharOffset);
+                        } else {
+                            // Middle block. Append the whole thing.
+                            result.append(blockDecompressed);
+                        }
+
+                        // Update variables to read the next block
+                        blockStartOffset = blockEndOffset;
+                        currentBlockCharOffset += blockSizeChars;
+                        blocksRead++;
+                    }
+                    return result.toString();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+            }
+
+            /**
+             * Finds the length in characters of a stored value.
+             *
+             * Also positions the valueIndexFile pointer to just after the doc length,
+             * from which we can continue reading information about the value (such as where
+             * to find the actual value itself).
+             *
+             * @param docId document id
+             * @param luceneField field to get length for
+             * @return length of the value in characters
+             */
+            private int findValueLengthChar(int docId, String luceneField) throws IOException {
+                // What's the id of the field that is references in the value index file?
+                int fieldId = getFieldIndex(luceneField);
+
+                // Find the document
+                docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);
+                int valueIndexOffset = docIndexFile.readInt();
+                byte numberOfContentStoreFields = docIndexFile.readByte();
+
+                // Find the correct field in this document
+                int i = 0;
+                while (i < numberOfContentStoreFields) {
+                    valueIndexFile.seek(valueIndexOffset + (long) i * VALUEINDEX_RECORD_SIZE);
+                    byte thisFieldId = valueIndexFile.readByte();
+                    if (thisFieldId == fieldId)
+                        break;
+                    i++;
+                }
+                if (i == numberOfContentStoreFields)
+                    return 0;
+                //    throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
+                //            ") not found for docId " + docId);
+
+                // Read document length, where to find the block indexes and where the blocks start.
+                return valueIndexFile.readInt();
+            }
+
+            public int valueLength(int docId, String luceneField) {
+                try {
+                    return findValueLengthChar(docId, luceneField);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            /**
+             * Get several parts of the field value.
+             *
+             * @param docId document id
+             * @param luceneField field to get
+             * @param start positions of the first character to get. Must all be zero or greater.
+             * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
+             * @return requested parts
+             */
+            public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
+                if (start.length != end.length)
+                    throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);
+                // TODO: we could optimize this to avoid reading blocks twice!
+                //   easiest is to determine the lowest start and highest end, read the entire document part,
+                //   then cut the snippets from that. More efficient is to figure out exactly which blocks we
+                //   need, retrieve those, then cut the snippets.
+                String[] results = new String[start.length];
+                for (int i = 0; i < start.length; i++) {
+                    results[i] = getValueSubstring(docId, luceneField, start[i], end[i]);
+                }
+                return results;
             }
         };
     }
