@@ -82,20 +82,6 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         super.close();
     }
 
-    /**
-     * Retrieve content with given id
-     *
-     * @param id the id
-     * @return the string
-     */
-    @Override
-    public String retrieve(int id) {
-        if (!initialized)
-            initialize();
-        String[] rv = retrieveParts(id, new int[] { -1 }, new int[] { -1 });
-        return rv == null ? null : rv[0];
-    }
-
     @Override
     public synchronized String[] retrieveParts(int contentId, int[] start, int[] end) {
         if (!initialized)

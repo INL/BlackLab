@@ -39,7 +39,7 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
     static final int VERSION_CURRENT = 1;
 
     /** Every file extension will be prefixed with this to indicate it is part of the forward index. */
-    public static final String FORWARD_INDEX_EXT_PREFIX = "blfi.";
+    public static final String EXT_PREFIX = "blfi.";
 
     /** Extension for the fields file. This stores the annotated field name and the offset
         in the term index file where the term offsets ares stored.*/

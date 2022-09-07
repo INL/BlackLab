@@ -458,7 +458,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         } else {
             contentIdFieldName = contentStoreName + "Cid";
         }
-        storeInContentStore(document, contentIdFieldName, contentStoreName);
+        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
     }
 
     /**

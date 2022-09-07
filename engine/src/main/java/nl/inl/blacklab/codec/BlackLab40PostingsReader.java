@@ -72,7 +72,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     }
 
     /** Name of PF we delegate to (the one from Lucene) */
-    private String delegatePostingsFormatName;
+    private String delegateFormatName;
 
     /** The delegate whose functionality we're extending */
     private final FieldsProducer delegateFieldsProducer;
@@ -91,7 +91,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this, state);
 
-        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegatePostingsFormatName);
+        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
     }
 
@@ -150,6 +150,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     @Override
     public void checkIntegrity() throws IOException {
         delegateFieldsProducer.checkIntegrity();
+
+        // TODO: check integrity of our own (FI) files?
     }
 
     @Override
@@ -165,21 +167,22 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * @return handle to the opened segment file
      */
     IndexInput openIndexFile(SegmentReadState state, String extension) throws IOException {
-        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, BlackLab40PostingsFormat.FORWARD_INDEX_EXT_PREFIX + extension);
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix,
+                BlackLab40PostingsFormat.EXT_PREFIX + extension);
         IndexInput input = state.directory.openInput(fileName, state.context);
         try {
             // Check index header
             CodecUtil.checkIndexHeader(input, BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
                     BlackLab40PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
 
-            // Check delegate postings format name
-            String delegatePFN = input.readString();
-            if (delegatePostingsFormatName == null)
-                delegatePostingsFormatName = delegatePFN;
-            if (!delegatePostingsFormatName.equals(delegatePFN))
+            // Check delegate format name
+            String delegateFN = input.readString();
+            if (delegateFormatName == null)
+                delegateFormatName = delegateFN;
+            if (!delegateFormatName.equals(delegateFN))
                 throw new IOException("Segment file " + fileName +
-                        " contains wrong delegate postings format name: " + delegatePFN +
-                        " (expected " + delegatePostingsFormatName + ")");
+                        " contains wrong delegate format name: " + delegateFN +
+                        " (expected " + delegateFormatName + ")");
 
             return input;
         } catch (Exception e) {

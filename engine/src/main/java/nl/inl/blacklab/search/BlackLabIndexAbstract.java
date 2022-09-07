@@ -36,6 +36,8 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
+import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -45,6 +47,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -324,7 +327,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             if (indexMode && ca == null) {
                 // Index mode. Create new content store or open existing one.
                 try {
-                    openContentStore(field);
+                    boolean createNewContentStore = isEmptyIndex;
+                    openContentStore(field, true, createNewContentStore, indexLocation);
                 } catch (ErrorOpeningIndex e) {
                     throw BlackLabRuntimeException.wrap(e);
                 }
@@ -481,12 +485,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 logger.debug("  Opening content stores...");
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
                 if (field.hasContentStore()) {
-                    File dir = new File(indexDir, "cs_" + field.name());
-                    if (dir.exists()) {
-                        if (traceIndexOpening())
-                            logger.debug("    " + dir + "...");
-                        registerContentStore(field, ContentStore.open(dir, indexMode, false));
-                    }
+                    openContentStore(field, indexMode, false, indexDir);
                 }
             }
         }
@@ -578,10 +577,24 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         return reader;
     }
 
-    private void openContentStore(Field field) throws ErrorOpeningIndex {
-        File contentStoreDir = new File(indexLocation, "cs_" + field.name());
-        ContentStore contentStore = ContentStore.open(contentStoreDir, indexMode, isEmptyIndex);
-        registerContentStore(field, contentStore);
+    protected void openContentStore(Field field, boolean indexMode, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex {
+        ContentStore cs;
+        if (this instanceof BlackLabIndexIntegrated) {
+            String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
+            cs = ContentStoreIntegrated.open(reader, luceneField);
+        } else {
+            // Classic external index format. Open external content store.
+            File dir = new File(indexDir, "cs_" + field.name());
+            if (dir.exists() || createNewContentStore) {
+                if (traceIndexOpening())
+                    logger.debug("    " + dir + "...");
+                cs = ContentStoreExternal.open(dir, indexMode, createNewContentStore);
+            } else {
+                throw new IllegalStateException("Field " + field.name() +
+                        " should have content store, but directory " + dir + " not found!");
+            }
+        }
+        registerContentStore(field, cs);
     }
 
     @Override

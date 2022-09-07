@@ -3,6 +3,7 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 
 /**
@@ -20,7 +21,7 @@ public class GetDocFromContentStore {
         File csDir = new File(args[0]);
         int id = Integer.parseInt(args[1]);
 
-        ContentStore cs = ContentStore.open(csDir, false, false);
+        ContentStore cs = ContentStoreExternal.open(csDir, false, false);
         String content = cs.retrieve(id);
         System.out.println(content);
     }

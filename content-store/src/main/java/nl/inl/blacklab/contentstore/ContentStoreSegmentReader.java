@@ -13,6 +13,9 @@ public interface ContentStoreSegmentReader {
 
     String getValue(int docId, String luceneField);
 
-    String getValueSubstring(int docId, String luceneField);
+    String getValueSubstring(int docId, String luceneField, int start, int end);
 
+    String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end);
+
+    int valueLength(int docId, String luceneField);
 }

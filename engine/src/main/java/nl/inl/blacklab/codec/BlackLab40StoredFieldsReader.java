@@ -221,28 +221,11 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
                     startChar + "-" + endChar);
 
-        int fieldId = getFieldIndex(fieldInfo);
         try {
-            // Find the document
-            docIndexFile.seek((long) docId * DOCINDEX_RECORD_SIZE);
-            int valueIndexOffset = docIndexFile.readInt();
-            byte numberOfContentStoreFields = docIndexFile.readByte();
-
-            // Find the correct field in this document
-            int i = 0;
-            while (i < numberOfContentStoreFields) {
-                valueIndexFile.seek(valueIndexOffset + (long) i * VALUEINDEX_RECORD_SIZE);
-                byte thisFieldId = valueIndexFile.readByte();
-                if (thisFieldId == fieldId)
-                    break;
-                i++;
-            }
-            if (i == numberOfContentStoreFields)
-                throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
-                        ") not found for docId " + docId);
-
-            // Read document length, where to find the block indexes and where the blocks start.
-            int valueLengthChar = valueIndexFile.readInt();
+            // Find the value length in characters, and position the valueIndex file pointer
+            // to read the rest of the information we need: where to find the block indexes
+            // and where the blocks start.
+            int valueLengthChar = findValueLengthChar(docId, fieldInfo);
             if (startChar > valueLengthChar)
                 startChar = valueLengthChar;
             if (endChar > valueLengthChar)
@@ -311,6 +294,57 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Finds the length in characters of a stored value.
+     *
+     * Also positions the valueIndexFile pointer to just after the doc length,
+     * from which we can continue reading information about the value (such as where
+     * to find the actual value itself).
+     *
+     * @param docId document id
+     * @param fieldInfo field to get length for
+     * @return length of the value in characters
+     */
+    private int findValueLengthChar(int docId, FieldInfo fieldInfo) throws IOException {
+        // What's the id of the field that is references in the value index file?
+        int fieldId = getFieldIndex(fieldInfo);
+
+        // Find the document
+        docIndexFile.seek((long) docId * DOCINDEX_RECORD_SIZE);
+        int valueIndexOffset = docIndexFile.readInt();
+        byte numberOfContentStoreFields = docIndexFile.readByte();
+
+        // Find the correct field in this document
+        int i = 0;
+        while (i < numberOfContentStoreFields) {
+            valueIndexFile.seek(valueIndexOffset + (long) i * VALUEINDEX_RECORD_SIZE);
+            byte thisFieldId = valueIndexFile.readByte();
+            if (thisFieldId == fieldId)
+                break;
+            i++;
+        }
+        if (i == numberOfContentStoreFields)
+            throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
+                    ") not found for docId " + docId);
+
+        // Read document length, where to find the block indexes and where the blocks start.
+        return valueIndexFile.readInt();
+    }
+
+    private String[] getValueSubstrings(int docId, FieldInfo fi, int[] start, int[] end) {
+        if (start.length != end.length)
+            throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);
+        // TODO: we could optimize this to avoid reading blocks twice!
+        //   easiest is to determine the lowest start and highest end, read the entire document part,
+        //   then cut the snippets from that. More efficient is to figure out exactly which blocks we
+        //   need, retrieve those, then cut the snippets.
+        String[] results = new String[start.length];
+        for (int i = 0; i < start.length; i++) {
+            results[i] = getValueSubstring(docId, fi, start[i], end[i]);
+        }
+        return results;
     }
 
     /**
@@ -416,8 +450,25 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             }
 
             @Override
-            public String getValueSubstring(int docId, String luceneField) {
-                return BlackLab40StoredFieldsReader.this.getValue(docId, fieldInfos.fieldInfo(luceneField));
+            public String getValueSubstring(int docId, String luceneField, int start, int end) {
+                FieldInfo fi = fieldInfos.fieldInfo(luceneField);
+                return BlackLab40StoredFieldsReader.this.getValueSubstring(docId, fi, start, end);
+            }
+
+            @Override
+            public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
+                FieldInfo fi = fieldInfos.fieldInfo(luceneField);
+                return BlackLab40StoredFieldsReader.this.getValueSubstrings(docId, fi, start, end);
+            }
+
+            @Override
+            public int valueLength(int docId, String luceneField) {
+                try {
+                    FieldInfo fi = fieldInfos.fieldInfo(luceneField);
+                    return BlackLab40StoredFieldsReader.this.findValueLengthChar(docId, fi);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         };
     }

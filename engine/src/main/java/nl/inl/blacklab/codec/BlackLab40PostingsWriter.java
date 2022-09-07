@@ -400,7 +400,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     }
 
     private String getSegmentFileName(String ext) {
-        return IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, BlackLab40PostingsFormat.FORWARD_INDEX_EXT_PREFIX + ext);
+        return IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix,
+                BlackLab40PostingsFormat.EXT_PREFIX + ext);
     }
 
     private IndexOutput createOutput(String ext) throws IOException {

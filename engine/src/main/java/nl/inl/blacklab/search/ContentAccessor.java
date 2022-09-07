@@ -3,6 +3,7 @@ package nl.inl.blacklab.search;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
@@ -76,7 +77,10 @@ public class ContentAccessor {
     }
 
     private void delete(int contentId) {
-        contentStore.delete(contentId);
+        if (contentStore instanceof ContentStoreExternal)
+            ((ContentStoreExternal)contentStore).delete(contentId);
+        else
+            throw new UnsupportedOperationException("Cannot delete from content store in integrated index format");
     }
 
     public void close() {
