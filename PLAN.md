@@ -59,7 +59,7 @@ Where we take the metadata document into account:
 
 ### Content store
 
-- [ ] pool encoder/decoder?
+- [ ] pool encoder/decoder (re-use buffer, Inflater/Deflater)
 - [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
 
 ## Refactoring opportunities

@@ -136,6 +136,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         // Write blocks and block offsets
         int numberOfBlocks = (lengthChars + blockSizeChars - 1) / blockSizeChars; // ceil(lengthInChars/blockSizeChars)
         ContentStoreBlockCodec.Encoder encoder = blockCodec.createEncoder();
+        byte[] buffer = new byte[blockSizeChars * 2]; // should always be plenty of room
         for (int i = 0; i < numberOfBlocks; i++) {
 
             int blockOffset = i * blockSizeChars;
@@ -143,9 +144,12 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
             //String block = value.substring(blockOffset, blockOffset + blockLength);
 
             // Compress block and write to values file
-            byte[] compressedBlock = encoder.encode(value, blockOffset, blockLength);
+            int bytesWritten = encoder.encode(value, blockOffset, blockLength, buffer, 0, buffer.length);
+            if (bytesWritten >= buffer.length) {
+                throw new IOException("Insufficient buffer space for encoding block");
+            }
 
-            blocksFile.writeBytes(compressedBlock, 0, compressedBlock.length);
+            blocksFile.writeBytes(buffer, 0, bytesWritten);
 
             // Write offset after block to index file
             int offset = (int)(blocksFile.getFilePointer() - baseOffset);

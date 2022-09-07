@@ -11,6 +11,13 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
     public static final ContentStoreBlockCodec INSTANCE = new ContentStoreBlockCodecZlib();
 
+    /** How large is the buffer allowed to get when automatically reallocating? */
+    private static final int MAX_ALLOWABLE_BUFFER_SIZE = 100_000;
+
+    private static final int STARTING_ENCODE_BUFFER_SIZE = 3125;
+
+    private static final int STARTING_DECODE_BUFFER_SIZE = 12500;
+
     /** Uncompressed blocks probably shouldn't get larger than this. */
     private static final int MAX_UNCOMPRESSED_BLOCK_SIZE = 10_000;
 
@@ -25,10 +32,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             Inflater inflater = new Inflater();
 
-            byte[] zipbuf = new byte[MAX_UNCOMPRESSED_BLOCK_SIZE];
-
-            /** Have we reallocated zipbuf already? Next time, just fail. */
-            boolean zipbufReallocated = false;
+            byte[] zipbuf = new byte[STARTING_DECODE_BUFFER_SIZE];
 
             @Override
             public String decode(byte[] buffer, int offset, int length) throws IOException {
@@ -48,15 +52,11 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                         // We're done; return the result.
                         return new String(zipbuf, 0, resultLength, StandardCharsets.UTF_8);
                     } else {
-                        // This shouldn't happen because our max block size prevents it
-                        if (!zipbufReallocated) {
-                            // Try growing the zip buffer, hoping that will fix it
-                            zipbufReallocated = true;
-                            zipbuf = new byte[Math.max(zipbuf.length * 2, length * MAX_COMPRESSION_FACTOR)];
-                        } else {
-                            throw new IOException(
-                                    "Unzip buffer size " + zipbuf.length + " insufficient even after reallocation");
-                        }
+                        // Try growing the zip buffer, hoping that will fix it
+                        if (zipbuf.length > MAX_ALLOWABLE_BUFFER_SIZE)
+                            throw new IOException("Error, could not decode input of length " + length +
+                                    " even with largest buffer (" + zipbuf.length + ")");
+                        zipbuf = new byte[zipbuf.length * 2];
                     }
                 }
             }
@@ -69,39 +69,36 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             Deflater deflater = new Deflater();
 
-            byte[] zipbuf = new byte[MAX_UNCOMPRESSED_BLOCK_SIZE];
+            byte[] zipbuf = new byte[STARTING_ENCODE_BUFFER_SIZE];
 
-            /** Have we reallocated zipbuf already? Next time, just fail. */
-            boolean zipbufReallocated = false;
+            @Override
+            public int encode(String block, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException {
+                deflater.reset();
+                byte[] input = block.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
+                deflater.setInput(input);
+                deflater.finish();
+                int compressedDataLength = deflater.deflate(encoded, encodedOffset, encodedMaxLength, Deflater.FULL_FLUSH);
+                if (compressedDataLength <= 0) {
+                    throw new IOException("Error, deflate returned " + compressedDataLength);
+                }
+                return compressedDataLength;
+            }
 
             @Override
             public byte[] encode(String block, int offset, int length) throws IOException {
                 while (true) {
-                    deflater.reset();
-                    byte[] input = block.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
-                    deflater.setInput(input);
-                    deflater.finish();
-                    int compressedDataLength = deflater.deflate(zipbuf, 0, zipbuf.length, Deflater.FULL_FLUSH);
-                    if (compressedDataLength <= 0) {
-                        throw new IOException("Error, deflate returned " + compressedDataLength);
-                    }
+                    int compressedDataLength = encode(block, offset, length, zipbuf, 0, zipbuf.length);
                     if (compressedDataLength < zipbuf.length) {
-                        // Succesfully compressed.
+                        // Return in a new buffer.
                         byte[] result = new byte[compressedDataLength];
                         System.arraycopy(zipbuf, 0, result, 0, compressedDataLength);
                         return result;
-                    } else {
-                        // We ran out of space in the buffer.
-                        if (!zipbufReallocated) {
-                            // Try growing the zip buffer, hoping that will fix it
-                            zipbufReallocated = true;
-                            zipbuf = new byte[Math.max(zipbuf.length * 2, length * MAX_COMPRESSION_FACTOR)];
-                        } else {
-                            throw new IOException(
-                                    "Error, deflate returned size of zipbuf (" + zipbuf.length +
-                                            "), this indicates insufficient space");
-                        }
                     }
+                    // Try again with a larger buffer
+                    if (zipbuf.length > MAX_ALLOWABLE_BUFFER_SIZE)
+                        throw new IOException("Error, could not encode input of length " + length +
+                                " even with largest buffer (" + zipbuf.length + ")");
+                    zipbuf = new byte[zipbuf.length * 2];
                 }
             }
         };

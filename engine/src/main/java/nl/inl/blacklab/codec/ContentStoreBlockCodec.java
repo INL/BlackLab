@@ -6,7 +6,26 @@ import java.io.IOException;
 interface ContentStoreBlockCodec {
 
     interface Encoder {
+        /** Encode and return a new byte buffer.
+         *
+         * @param block value to encode
+         * @param offset starting offset in the value to encode
+         * @param length number of characters from value to encode
+         * @return encoded buffer
+         */
         byte[] encode(String block, int offset, int length) throws IOException;
+
+        /** Encode in provided buffer.
+         *
+         * @param block value to encode
+         * @param offset starting offset in the value to encode
+         * @param length number of characters from value to encode
+         * @param encoded output buffer
+         * @param encodedOffset where to start writing in the output buffer
+         * @param encodedMaxLength maximum number of bytes to write in the output buffer
+         * @return compressed data length; was succesful if LESS THAN encodedMaxLength
+         */
+        int encode(String block, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException;
     }
 
     interface Decoder {
