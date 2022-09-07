@@ -3,6 +3,14 @@ package nl.inl.blacklab.codec;
 /** A codec for blocks in the content store. */
 interface ContentStoreBlockCodec {
 
+    interface Encoder {
+        byte[] encode(String block, int offset, int length);
+    }
+
+    interface Decoder {
+        String decode(byte[] buffer, int offset, int length);
+    }
+
     static ContentStoreBlockCodec fromCode(byte code) {
         switch (code) {
         case 0:
@@ -12,9 +20,9 @@ interface ContentStoreBlockCodec {
         }
     }
 
-    public byte[] compress(String block);
+    Encoder createEncoder();
 
-    public String decompress(byte[] block, int offset, int length);
+    Decoder createDecoder();
 
     byte getCode();
 }

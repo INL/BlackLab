@@ -135,14 +135,15 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
         // Write blocks and block offsets
         int numberOfBlocks = (lengthChars + blockSizeChars - 1) / blockSizeChars; // ceil(lengthInChars/blockSizeChars)
+        ContentStoreBlockCodec.Encoder encoder = blockCodec.createEncoder();
         for (int i = 0; i < numberOfBlocks; i++) {
 
             int blockOffset = i * blockSizeChars;
             int blockLength = Math.min(blockSizeChars, value.length() - blockOffset);
-            String block = value.substring(blockOffset, blockOffset + blockLength);
+            //String block = value.substring(blockOffset, blockOffset + blockLength);
 
             // Compress block and write to values file
-            byte[] compressedBlock = blockCodec.compress(block);
+            byte[] compressedBlock = encoder.encode(value, blockOffset, blockLength);
 
             blocksFile.writeBytes(compressedBlock, 0, compressedBlock.length);
 

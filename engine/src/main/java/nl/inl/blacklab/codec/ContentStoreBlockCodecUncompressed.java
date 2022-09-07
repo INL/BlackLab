@@ -8,12 +8,14 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
 
     private ContentStoreBlockCodecUncompressed() { }
 
-    public byte[] compress(String block) {
-        return block.getBytes(StandardCharsets.UTF_8);
+    @Override
+    public Decoder createDecoder() {
+        return (block, offset, length) -> new String(block, offset, length, StandardCharsets.UTF_8);
     }
 
-    public String decompress(byte[] block, int offset, int length) {
-        return new String(block, offset, length, StandardCharsets.UTF_8);
+    @Override
+    public Encoder createEncoder() {
+        return (block, offset, length) -> block.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
     }
 
     public byte getCode() {

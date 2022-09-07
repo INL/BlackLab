@@ -59,8 +59,6 @@ Where we take the metadata document into account:
 
 ### Content store
 
-- [ ] Right now `BlackLab40StoredFieldsReader` is made threadsafe using expensive synchronization of a whole long method, `getValueSubstring()`. It's probably better to clone the file handles and use those in a nonthreadsafe class, similar to `SegmentForwardIndex` / `ForwardIndexSegmentReader`.\
- (**Assuming it needs to be threadsafe!** Or does Lucene guarantee that one segment is only ever read by one thread? For writing that seems to be the case, but that's very different of course)
 - [ ] actually compress content store
 - [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
 

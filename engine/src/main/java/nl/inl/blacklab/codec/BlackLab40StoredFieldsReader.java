@@ -369,6 +369,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                     int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
                     int blocksRead = 0;
                     StringBuilder result = new StringBuilder();
+                    ContentStoreBlockCodec.Decoder decoder = blockCodec.createDecoder();
                     while (blocksRead < numBlocksNeeded) {
 
                         // Read a block and decompress it.
@@ -376,7 +377,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                         int blockSizeBytes = blockEndOffset - blockStartOffset;
                         byte[] block = new byte[blockSizeBytes];
                         blocksFile.readBytes(block, 0, blockSizeBytes);
-                        String blockDecompressed = blockCodec.decompress(block, 0, blockSizeBytes);
+                        String blockDecompressed = decoder.decode(block, 0, blockSizeBytes);
 
                         // Append the content we need to the result.
                         if (blocksRead == 0) {
