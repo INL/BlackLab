@@ -1,12 +1,14 @@
 package nl.inl.blacklab.mocks;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
@@ -14,6 +16,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
@@ -260,5 +263,16 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public Query getAllRealDocsQuery() {
         return new MatchAllDocsQuery();
+    }
+
+    @Override
+    public Document luceneDoc(int docId, boolean includeContentStores) {
+        if (includeContentStores)
+            throw new UnsupportedOperationException("Always skips content stores");
+        try {
+            return reader().document(docId);
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
     }
 }

@@ -1,9 +1,13 @@
 package nl.inl.blacklab.search;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -17,6 +21,7 @@ import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
@@ -109,14 +114,33 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
     }
 
+    /** A list of stored fields that doesn't include content store fields. */
+    private Set<String> allExceptContentStoreFields;
+
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, config);
+        init();
     }
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+        init();
+    }
+
+    private void init() {
+        // Determine the list of all fields in the index, but skip fields that
+        // represent a content store as they contain very large values (i.e. the
+        // whole input document) we don't generally want returned when requesting
+        // a Document)
+        allExceptContentStoreFields = new HashSet<>();
+        for (LeafReaderContext lrc: reader().leaves()) {
+            for (FieldInfo fi: lrc.reader().getFieldInfos()) {
+                if (!isContentStoreField(fi))
+                    allExceptContentStoreFields.add(fi.name);
+            }
+        }
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
@@ -177,6 +201,31 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         builder.add(new MatchAllDocsQuery(), BooleanClause.Occur.SHOULD);
         builder.add(metadata().metadataDocQuery(), BooleanClause.Occur.MUST_NOT);
         return builder.build();
+    }
+
+    @Override
+    public Document luceneDoc(int docId, boolean includeContentStores) {
+        try {
+            if (includeContentStores) {
+                return reader().document(docId);
+            } else {
+                return reader().document(docId, allExceptContentStoreFields);
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(Query q) {
+        if (!indexMode())
+            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+        try {
+            logger.debug("Delete query: " + q);
+            indexWriter.deleteDocuments(q);
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
 }

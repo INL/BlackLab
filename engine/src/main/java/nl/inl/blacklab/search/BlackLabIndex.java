@@ -466,13 +466,26 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     BlackLabEngine blackLab();
 
+    /**
+     * Get the Lucene document from the index.
+     *
+     * Skips content store fields.
+     *
+     * @param docId document id
+     * @return Lucene document
+     */
     default Document luceneDoc(int docId) {
-        try {
-            return reader().document(docId);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
-        }
+        return luceneDoc(docId, false);
     }
+
+    /**
+     * Get the Lucene document from the index.
+     *
+     * @param docId document id
+     * @param includeContentStores include content store fields or not?
+     * @return Lucene document
+     */
+    Document luceneDoc(int docId, boolean includeContentStores);
 
     /**
      * Return a query matching all "real" documents in the index.

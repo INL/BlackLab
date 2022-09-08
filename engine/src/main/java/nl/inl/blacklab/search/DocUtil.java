@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.PostingsEnum;
@@ -227,15 +228,20 @@ public class DocUtil {
      * @return (part) of the contents
      */
     public static String contentsByCharPos(BlackLabIndex index, int docId, Document d, Field field, int startAtChar, int endAtChar) {
-        if (d == null && (!field.hasContentStore() || !(index instanceof BlackLabIndexIntegrated))) {
-            // We need the document (classic index format so we need to look op content store id, or it's a regular stored field)
-            d = index.luceneDoc(docId);
+        try {
+            if (!field.hasContentStore()) {
+                String fieldName = field.contentsFieldName();
+                if (d == null)
+                    d = index.reader().document(docId, Set.of(fieldName));
+                return d.get(fieldName).substring(startAtChar, endAtChar);
+            } else {
+                if (d == null && index instanceof BlackLabIndexExternal)
+                    d = index.reader().document(docId, Set.of(field.contentIdField()));
+                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        if (!field.hasContentStore()) {
-            // No special content accessor set; assume a stored field
-            return d.get(field.contentsFieldName()).substring(startAtChar, endAtChar);
-        }
-        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
     }
 
     /**
@@ -280,18 +286,29 @@ public class DocUtil {
 
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
             int docId, Document d, Field field, int[] starts, int[] ends) {
-        if (!field.hasContentStore()) {
-            String[] content;
-            // No special content accessor set; assume a non-annotated stored field
-            String fieldContent = d.get(field.contentsFieldName());
-            content = new String[starts.length];
-            for (int i = 0; i < starts.length; i++) {
-                content[i] = fieldContent.substring(starts[i], ends[i]);
+        try {
+            if (!field.hasContentStore()) {
+                // No special content accessor set; assume a non-annotated stored field
+                String[] content;
+                String fieldName = field.contentsFieldName();
+                if (d == null)
+                    d = index.reader().document(docId, Set.of(fieldName));
+                String fieldContent = d.get(fieldName);
+                content = new String[starts.length];
+                for (int i = 0; i < starts.length; i++) {
+                    content[i] = fieldContent.substring(starts[i], ends[i]);
+                }
+                return content;
+            } else {
+                // Content accessor set. Use it to retrieve the content.
+                if (d == null && index instanceof BlackLabIndexExternal) {
+                    d = index.reader().document(docId, Set.of(field.contentIdField()));
+                }
+                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
             }
-            return content;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        // Content accessor set. Use it to retrieve the content.
-        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
     }
 
     /**
@@ -320,8 +337,7 @@ public class DocUtil {
         }
 
         // Retrieve 'em all
-        Document d = index.luceneDoc(docId);
-        String[] content = getSubstringsFromDocument(index, docId, d, field, starts, ends);
+        String[] content = getSubstringsFromDocument(index, docId, null, field, starts, ends);
 
         // Cut 'em up
         List<Concordance> rv = new ArrayList<>();
@@ -362,20 +378,28 @@ public class DocUtil {
      * @return contents
      */
     public static String contents(BlackLabIndex index, int docId, Document d) {
-        Field field = index.mainAnnotatedField();
-        if (d == null && (!field.hasContentStore() || !(index instanceof BlackLabIndexIntegrated))) {
-            // We need the document (classic index format so we need to look op content store id, or it's a regular stored field)
-            d = index.luceneDoc(docId);
+        try {
+            Field field = index.mainAnnotatedField();
+            if (!field.hasContentStore()) {
+                // Regular stored field
+                String fieldName = field.contentsFieldName();
+                if (d == null)
+                    d = index.reader().document(docId, Set.of(fieldName));
+                // No special content accessor set; assume a stored field
+                String content = d.get(fieldName);
+                if (content == null)
+                    throw new IllegalArgumentException("Field not found: " + field.name());
+                return content;
+            } else {
+                if (d == null && index instanceof BlackLabIndexExternal) {
+                    // We need the document (classic index format so we need to look op content store id)
+                    d = index.reader().document(docId, Set.of(field.contentIdField()));
+                }
+                int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
+                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        if (!field.hasContentStore()) {
-            // No special content accessor set; assume a stored field
-            String content = d.get(field.contentsFieldName());
-            if (content == null)
-                throw new IllegalArgumentException("Field not found: " + field.name());
-            return content;
-        }
-
-        int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
     }
 }

@@ -11,10 +11,6 @@ public class PropertyValueDoc extends PropertyValue {
     public Integer value() {
         return docId;
     }
-    
-    /*public Document luceneDoc() {
-        return index.luceneDoc(docId);
-    }*/
 
     public PropertyValueDoc(BlackLabIndex index, int id) {
         this.docId = id;

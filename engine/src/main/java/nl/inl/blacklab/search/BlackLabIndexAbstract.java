@@ -21,15 +21,10 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
@@ -94,7 +89,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     /** Structure of our index */
     private final IndexMetadataWriter indexMetadata;
 
-    private final ContentStoresManager contentStores = new ContentStoresManager();
+    final ContentStoresManager contentStores = new ContentStoresManager();
 
     /**
      * ForwardIndices allow us to quickly find what token occurs at a specific
@@ -660,62 +655,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         try {
             indexWriter.rollback();
             indexWriter = null;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public void delete(Query q) {
-        logger.debug("Delete query: " + q);
-        if (!indexMode)
-            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
-        try {
-            // Open a fresh reader to execute the query
-            try (IndexReader freshReader = DirectoryReader.open(indexWriter, false, false)) {
-                // Execute the query, iterate over the docs and delete from FI and CS.
-                IndexSearcher s = new IndexSearcher(freshReader);
-                Weight w = s.createWeight(q, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
-                for (LeafReaderContext leafContext: freshReader.leaves()) {
-                    Bits liveDocs = leafContext.reader().getLiveDocs();
-
-                    Scorer scorer = w.scorer(leafContext);
-                    if (scorer == null) {
-                        logger.debug("  No hits in leafcontext");
-                        continue; // no matching documents
-                    }
-
-                    // Iterate over matching docs
-                    DocIdSetIterator it = scorer.iterator();
-                    logger.debug("  Iterate over matching docs in leaf");
-                    while (true) {
-                        int docId = it.nextDoc();
-                        if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                            break;
-                        if (liveDocs != null && !liveDocs.get(docId)) {
-                            // already deleted.
-                            continue;
-                        }
-                        docId += leafContext.docBase;
-                        Document d = freshReader.document(docId);
-                        logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile")
-                                + " from FI and CS");
-
-                        deleteFromForwardIndices(d);
-
-                        // Delete this document in all content stores
-                        contentStores.deleteDocument(d);
-                    }
-                }
-            } finally {
-                reader.close();
-            }
-
-            // Finally, delete the documents from the Lucene index
-            logger.debug("  Delete docs from Lucene index");
-            indexWriter.deleteDocuments(q);
-
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
