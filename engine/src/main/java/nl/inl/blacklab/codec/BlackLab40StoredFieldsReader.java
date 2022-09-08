@@ -39,6 +39,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     /** Size in bytes of a record in the blockindex file */
     private static final int BLOCKINDEX_RECORD_SIZE = Integer.BYTES;
 
+    /** How many bytes a UTF-8 codepoint can take at most, for reserving buffer space */
+    private static final int UTF8_MAX_BYTES_PER_CHAR = 4;
+
     /** Which field we use to access our Codec, so we can access the segment content store. */
     private static String fieldNameForCodecAccess;
 
@@ -200,7 +203,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
         byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
-        storedFieldVisitor.stringField(fieldInfo, contents);
+        if (contents != null)
+            storedFieldVisitor.stringField(fieldInfo, contents);
     }
 
     /**
@@ -298,6 +302,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     public ContentStoreSegmentReader contentStore() {
         return new ContentStoreSegmentReader() {
 
+            // Buffer for decoding blocks. Automatically reallocated if needed.
+            byte[] decodedValue;
+
             // Clones of the various file handles, so we can reposition them without
             // causing problems. Cloned IndexInputs don't need to be closed.
             private final IndexInput docIndexFile = _docIndexFile.clone();
@@ -310,13 +317,79 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
              *
              * @param docId     document id
              * @param luceneField field to get
-             * @return field value as bytes
+             * @return field value as bytes, or null if no value
              */
             public byte[] getBytes(int docId, String luceneField) {
-                // TODO: we might not need to get a String first, then decode it into bytes, but can get the
-                //   bytes directly. The reason for going through String is that we use character offsets within
-                //   the document, but that doesn't matter when getting the whole document.
-                return getValue(docId, luceneField).getBytes(StandardCharsets.UTF_8);
+                try {
+                    // Find the value length in characters, and position the valueIndex file pointer
+                    // to read the rest of the information we need: where to find the block indexes
+                    // and where the blocks start.
+                    int valueLengthChar = findValueLengthChar(docId, luceneField);
+                    if (valueLengthChar == 0)
+                        return null; // no value stored for this document
+                    ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
+                    long blockIndexOffset = valueIndexFile.readLong();
+                    long blocksOffset = valueIndexFile.readLong();
+
+                    // Determine what blocks we'll need
+                    int firstBlockNeeded = 0;
+                    int lastBlockNeeded = valueLengthChar / blockSizeChars;
+                    int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
+
+                    // Determine where our first block starts, and position blockindex file
+                    // to start reading subsequent after-block positions
+                    int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
+
+                    // Make sure we have a large enough buffer available
+                    int maxDecodedValueLength = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR;
+                    if (decodedValue == null || decodedValue.length < maxDecodedValueLength)
+                        decodedValue = new byte[maxDecodedValueLength];
+
+                    int decodedOffset = 0;
+                    int blocksRead = 0;
+                    try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
+                        while (blocksRead < numBlocksNeeded) {
+
+                            // Read a block and decompress it.
+                            int blockEndOffset = blockIndexFile.readInt();
+                            int blockSizeBytes = blockEndOffset - blockStartOffset;
+
+                            byte[] block = new byte[blockSizeBytes];
+                            blocksFile.readBytes(block, 0, blockSizeBytes);
+                            int decodedSize = decoder.decodeToBytes(block, 0, blockSizeBytes, decodedValue, decodedOffset, decodedValue.length - decodedOffset);
+                            if (decodedSize < 0)
+                                throw new IllegalStateException("Insufficient buffer size!"); // should not happen
+                            decodedOffset += decodedSize;
+
+                            // Update variables to read the next block
+                            blockStartOffset = blockEndOffset;
+                            blocksRead++;
+                        }
+                    }
+                    // Copy result to a new array of the right size
+                    byte[] result = new byte[decodedOffset];
+                    System.arraycopy(decodedValue, 0, result, 0, result.length);
+                    return result;
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            private int findBlockStartOffset(long blockIndexOffset, long blocksOffset, int blockNumber)
+                    throws IOException {
+                int blockStartOffset;
+                if (blockNumber == 0) {
+                    // Start of the first block is always 0. We don't store that.
+                    blockStartOffset = 0;
+                    blockIndexFile.seek(blockIndexOffset);
+                    blocksFile.seek(blocksOffset);
+                } else {
+                    // Start of block n is end of block n-1; read it from the block index file.
+                    blockIndexFile.seek(blockIndexOffset + (long) (blockNumber - 1) * BLOCKINDEX_RECORD_SIZE);
+                    blockStartOffset = blockIndexFile.readInt();
+                    blocksFile.seek(blocksOffset + blockStartOffset);
+                }
+                return blockStartOffset;
             }
 
             /**
@@ -332,6 +405,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
             /**
              * Get part of the field value.
+             *
+             * If startChar or endChar are larger than <code>value.length()</code>, they will be clamped to that value.
              *
              * @param docId document id
              * @param luceneField field to get
@@ -370,31 +445,20 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
                     // Determine where our first block starts, and position blockindex file
                     // to start reading subsequent after-block positions
-                    int blockStartOffset;
-                    if (firstBlockNeeded == 0) {
-                        // Start of the first block is always 0. We don't store that.
-                        blockStartOffset = 0;
-                        blockIndexFile.seek(blockIndexOffset);
-                        blocksFile.seek(blocksOffset);
-                    } else {
-                        // Start of block n is end of block n-1; read it from the block index file.
-                        blockIndexFile.seek(blockIndexOffset + (long) (firstBlockNeeded - 1) * BLOCKINDEX_RECORD_SIZE);
-                        blockStartOffset = blockIndexFile.readInt();
-                        blocksFile.seek(blocksOffset + blockStartOffset);
-                    }
+                    int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
                     int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
                     int blocksRead = 0;
                     StringBuilder result = new StringBuilder();
+                    byte[] decodedBlock = new byte[blockSizeChars * UTF8_MAX_BYTES_PER_CHAR];
                     try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
                         while (blocksRead < numBlocksNeeded) {
 
                             // Read a block and decompress it.
                             int blockEndOffset = blockIndexFile.readInt();
                             int blockSizeBytes = blockEndOffset - blockStartOffset;
-                            byte[] block = new byte[blockSizeBytes];
-                            blocksFile.readBytes(block, 0, blockSizeBytes);
-                            String blockDecompressed = decoder.decode(block, 0, blockSizeBytes);
+                            int decodedSize = readAndDecodeBlock(decoder, decodedBlock, blockSizeBytes);
+                            String blockDecompressed = new String(decodedBlock, 0, decodedSize, StandardCharsets.UTF_8);
 
                             // Append the content we need to the result.
                             if (blocksRead == 0) {
@@ -426,6 +490,13 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+            }
+
+            int readAndDecodeBlock(ContentStoreBlockCodec.Decoder decoder, byte[] buffer, int blockSizeBytes)
+                    throws IOException {
+                byte[] block = new byte[blockSizeBytes];
+                blocksFile.readBytes(block, 0, blockSizeBytes);
+                return decoder.decodeToBytes(block, 0, blockSizeBytes, buffer, 0, buffer.length);
             }
 
             /**

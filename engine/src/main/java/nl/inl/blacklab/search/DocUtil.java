@@ -227,13 +227,15 @@ public class DocUtil {
      * @return (part) of the contents
      */
     public static String contentsByCharPos(BlackLabIndex index, int docId, Document d, Field field, int startAtChar, int endAtChar) {
-        if (d == null)
+        if (d == null && (!field.hasContentStore() || !(index instanceof BlackLabIndexIntegrated))) {
+            // We need the document (classic index format so we need to look op content store id, or it's a regular stored field)
             d = index.luceneDoc(docId);
+        }
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
             return d.get(field.contentsFieldName()).substring(startAtChar, endAtChar);
         }
-        return index.contentAccessor(field).getSubstringsFromDocument(d, new int[] { startAtChar }, new int[] { endAtChar })[0];
+        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
     }
 
     /**
@@ -277,7 +279,7 @@ public class DocUtil {
     }
 
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
-            Document d, Field field, int[] starts, int[] ends) {
+            int docId, Document d, Field field, int[] starts, int[] ends) {
         if (!field.hasContentStore()) {
             String[] content;
             // No special content accessor set; assume a non-annotated stored field
@@ -289,7 +291,7 @@ public class DocUtil {
             return content;
         }
         // Content accessor set. Use it to retrieve the content.
-        return index.contentAccessor(field).getSubstringsFromDocument(d, starts, ends);
+        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, starts, ends);
     }
 
     /**
@@ -319,7 +321,7 @@ public class DocUtil {
 
         // Retrieve 'em all
         Document d = index.luceneDoc(docId);
-        String[] content = getSubstringsFromDocument(index, d, field, starts, ends);
+        String[] content = getSubstringsFromDocument(index, docId, d, field, starts, ends);
 
         // Cut 'em up
         List<Concordance> rv = new ArrayList<>();
@@ -360,19 +362,20 @@ public class DocUtil {
      * @return contents
      */
     public static String contents(BlackLabIndex index, int docId, Document d) {
-        Document d1 = d;
         Field field = index.mainAnnotatedField();
-        if (d1 == null)
-            d1 = index.luceneDoc(docId);
+        if (d == null && (!field.hasContentStore() || !(index instanceof BlackLabIndexIntegrated))) {
+            // We need the document (classic index format so we need to look op content store id, or it's a regular stored field)
+            d = index.luceneDoc(docId);
+        }
         if (!field.hasContentStore()) {
             // No special content accessor set; assume a stored field
-            String content = d1.get(field.contentsFieldName());
+            String content = d.get(field.contentsFieldName());
             if (content == null)
                 throw new IllegalArgumentException("Field not found: " + field.name());
             return content;
         }
 
         int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-        return index.contentAccessor(field).getSubstringsFromDocument(d1, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
+        return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startEnd[0] }, new int[] { startEnd[1] })[0];
     }
 }

@@ -20,6 +20,14 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
         public String decode(byte[] buffer, int offset, int length) throws IOException {
             return new String(buffer, offset, length, StandardCharsets.UTF_8);
         }
+
+        @Override
+        public int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
+            if (length > decodedMaxLength)
+                throw new IOException("Insufficient buffer space available");
+            System.arraycopy(buffer, offset, decoded, decodedOffset, length);
+            return length;
+        }
     };
 
     private static final Encoder ENCODER = new Encoder() {

@@ -31,7 +31,29 @@ interface ContentStoreBlockCodec {
     }
 
     interface Decoder extends AutoCloseable {
+
+        /**
+         * Decode a block to a string.
+         *
+         * @param buffer buffer containing block to decode
+         * @param offset start of the block in the buffer
+         * @param length length of the block in the buffer
+         * @return decoded block as a string
+         */
         String decode(byte[] buffer, int offset, int length) throws IOException;
+
+        /**
+         * Decode a block to a byte array.
+         *
+         * @param buffer buffer containing block to decode
+         * @param offset start of the block in the buffer
+         * @param length length of the block in the buffer
+         * @param decoded where to decode the block to
+         * @param decodedOffset where to start writing the decoded block
+         * @param decodedMaxLength max. size of the decoded block
+         * @return number of bytes in decoded block, or -1 if the buffer size was too small
+         */
+        int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException;
 
         void close();
     }

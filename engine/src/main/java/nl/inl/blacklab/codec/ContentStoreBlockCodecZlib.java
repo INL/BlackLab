@@ -20,6 +20,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
     private static final int STARTING_DECODE_BUFFER_SIZE = 12500;
 
+    private static final int ZIPBUF_GROW_FACTOR = 2;
+
     private static final int MAX_FREE_POOL_SIZE = 20;
 
     private final SimpleResourcePool<Encoder> encoderPool;
@@ -66,18 +68,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
             @Override
             public String decode(byte[] buffer, int offset, int length) throws IOException {
                 while (true) {
-                    inflater.reset();
-                    inflater.setInput(buffer, offset, length);
-                    int resultLength;
-                    try {
-                        resultLength = inflater.inflate(zipbuf);
-                    } catch (DataFormatException e) {
-                        throw new IOException(e);
-                    }
-                    if (resultLength <= 0) {
-                        throw new IOException("Error, inflate returned " + resultLength);
-                    }
-                    if (inflater.finished()) {
+                    int resultLength = decodeToBytes(buffer, offset, length, zipbuf, 0, zipbuf.length);
+                    if (resultLength > 0) {
                         // We're done; return the result.
                         return new String(zipbuf, 0, resultLength, StandardCharsets.UTF_8);
                     } else {
@@ -85,8 +77,25 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                         if (zipbuf.length > MAX_ALLOWABLE_BUFFER_SIZE)
                             throw new IOException("Error, could not decode input of length " + length +
                                     " even with largest buffer (" + zipbuf.length + ")");
-                        zipbuf = new byte[zipbuf.length * 2];
+                        zipbuf = new byte[zipbuf.length * ZIPBUF_GROW_FACTOR];
                     }
+                }
+            }
+
+            @Override
+            public int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
+                inflater.reset();
+                inflater.setInput(buffer, offset, length);
+                try {
+                    int resultLength = inflater.inflate(decoded, decodedOffset, decodedMaxLength);
+                    if (resultLength <= 0) {
+                        throw new IOException("Error, inflate returned " + resultLength);
+                    }
+                    if (inflater.finished())
+                        return resultLength;
+                    return -1;
+                } catch (DataFormatException e) {
+                    throw new IOException(e);
                 }
             }
         };
@@ -131,7 +140,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                     if (zipbuf.length > MAX_ALLOWABLE_BUFFER_SIZE)
                         throw new IOException("Error, could not encode input of length " + length +
                                 " even with largest buffer (" + zipbuf.length + ")");
-                    zipbuf = new byte[zipbuf.length * 2];
+                    zipbuf = new byte[zipbuf.length * ZIPBUF_GROW_FACTOR];
                 }
             }
         };

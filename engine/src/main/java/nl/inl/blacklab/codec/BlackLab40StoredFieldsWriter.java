@@ -233,15 +233,19 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public int merge(MergeState mergeState) throws IOException {
-
-        // TODO: the default implementation just reads all the fields for each document
+        // NOTE: the default implementation just reads all the fields for each document
         //   and writes them again. This works but is relatively slow.
         //   More efficient is to copy most information (esp. compressed blocks)
         //   directly from the readers to the new contentstore files.
+        // Problem is that we cannot instantiate MergeState, which we would need to do
+        // (we would split MergeState into one for us and one for the delegate,
+        //  passing all the regular stored fields to the delegate and handling the other
+        //  fields ourselves).
         return super.merge(mergeState);
 
         // Don't call the delegate here because the default implementation processes all the fields,
-        // both the regular stored fields and the content store fields.
+        // both the regular stored fields and the content store fields. So the regular stored fields
+        // will be written to the new segment in the normal way.
         //return delegate.merge(mergeState);
     }
 
