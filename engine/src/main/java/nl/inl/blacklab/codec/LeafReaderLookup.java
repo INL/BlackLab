@@ -14,6 +14,7 @@ import org.apache.lucene.index.LeafReaderContext;
  */
 public class LeafReaderLookup {
 
+    /** Map docBase (lowest docId in segment) to leafreadercontext */
     private final Map<Integer, LeafReaderContext> leafReadersByDocBase = new TreeMap<>();
 
     public LeafReaderLookup(IndexReader indexReader) {

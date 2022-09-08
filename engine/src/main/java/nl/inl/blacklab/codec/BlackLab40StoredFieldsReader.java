@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
@@ -18,6 +19,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.Accountables;
 
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -28,41 +30,56 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  */
 public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
+    /** Size in bytes of a record in the docindex file */
     private static final int DOCINDEX_RECORD_SIZE = Integer.BYTES + Byte.BYTES;
 
+    /** Size in bytes of a record in the valueindex file */
     private static final int VALUEINDEX_RECORD_SIZE = Byte.BYTES + Integer.BYTES + 2 * Long.BYTES;
 
+    /** Size in bytes of a record in the blockindex file */
     private static final int BLOCKINDEX_RECORD_SIZE = Integer.BYTES;
 
+    /** Which field we use to access our Codec, so we can access the segment content store. */
+    private static String fieldNameForCodecAccess;
+
+    /** Our segment directory */
     private final Directory directory;
 
+    /** Info about our segment */
     private final SegmentInfo segmentInfo;
 
+    /** Lucene I/O context (?) */
     private final IOContext ioContext;
 
+    /** Information about the fields in this segment */
     private final FieldInfos fieldInfos;
 
+    /** Lucene stored fields reader we delegate to for non-content-store fields */
     private final StoredFieldsReader delegate;
 
     /** Fields with a content store and their field index. */
     private final Map<String, Integer> fields = new HashMap<>();
 
-    /**  */
-    private static String fieldNameForCodecAccess;
-
+    /** Offset for each doc in the valueindex file, and number of fields stored */
     private final IndexInput _docIndexFile;
 
+    /** Information about field, value length, codec, and offsets in the block* files */
     private final IndexInput _valueIndexFile;
 
+    /** Offsets in the blocks file (1 or more for each value stored) */
     private final IndexInput _blockIndexFile;
 
+    /** Encoded data blocks */
     private final IndexInput _blocksFile;
 
     /** Offset in docIndex file after header, so we can calculate doc offsets. */
     private final long docIndexFileOffset;
 
+    /** How many characters from the document do we encode into a data block? */
     private final int blockSizeChars;
 
+    /** Name of the StoredFieldsFormat we delegate to.
+     *  We check the index files to make sure this matches. */
     private String delegateFormatName;
 
     /**
@@ -243,9 +260,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     @Override
     public Collection<Accountable> getChildResources() {
-        return delegate.getChildResources();
-
-        // TODO: Add any Accountable's we hold a reference to
+        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override
@@ -283,6 +298,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     public ContentStoreSegmentReader contentStore() {
         return new ContentStoreSegmentReader() {
 
+            // Clones of the various file handles, so we can reposition them without
+            // causing problems. Cloned IndexInputs don't need to be closed.
             private final IndexInput docIndexFile = _docIndexFile.clone();
             private final IndexInput valueIndexFile = _valueIndexFile.clone();
             private final IndexInput blockIndexFile = _blockIndexFile.clone();
@@ -449,6 +466,13 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 return valueIndexFile.readInt();
             }
 
+            /**
+             * Get the length of a value in the content store.
+             *
+             * @param docId document id
+             * @param luceneField field to get length for
+             * @return length of the value in characters
+             */
             public int valueLength(int docId, String luceneField) {
                 try {
                     return findValueLengthChar(docId, luceneField);

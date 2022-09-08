@@ -1,9 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -142,9 +140,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     @Override
     public Collection<Accountable> getChildResources() {
-        List<Accountable> resources = new ArrayList<>(delegateFieldsProducer.getChildResources());
-        resources.add(Accountables.namedAccountable("delegate", delegateFieldsProducer));
-        return Collections.unmodifiableList(resources);
+        return List.of(Accountables.namedAccountable("delegate", delegateFieldsProducer));
     }
 
     @Override

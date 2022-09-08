@@ -181,8 +181,4 @@ public class BlackLab40Codec extends Codec {
     public PointsFormat pointsFormat() {
         return delegate().pointsFormat();
     }
-
-    public Codec getDelegateCodec() {
-        return delegate();
-    }
 }

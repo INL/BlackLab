@@ -3,6 +3,7 @@ package nl.inl.blacklab.codec;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
@@ -17,6 +18,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.Accountables;
 import org.apache.lucene.util.RamUsageEstimator;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -27,14 +29,19 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  */
 public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
+    /** What fields are stored in the content store? */
     private final IndexOutput fieldsFile;
 
+    /** Offset for each doc in the valueindex file, and number of fields stored */
     private final IndexOutput docIndexFile;
 
+    /** Information about field, value length, codec, and offsets in the block* files */
     private final IndexOutput valueIndexFile;
 
+    /** Offsets in the blocks file (1 or more for each value stored) */
     private final IndexOutput blockIndexFile;
 
+    /** Encoded data blocks */
     private final IndexOutput blocksFile;
 
     /** Fields with a content store and their field index. */
@@ -240,9 +247,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public Collection<Accountable> getChildResources() {
-        // TODO: add any Accountables we hold (none?)
-
-        return delegate.getChildResources();
+        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override

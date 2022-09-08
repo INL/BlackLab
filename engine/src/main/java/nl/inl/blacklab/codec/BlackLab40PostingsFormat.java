@@ -30,12 +30,13 @@ import org.apache.lucene.index.SegmentWriteState;
  */
 public class BlackLab40PostingsFormat extends PostingsFormat {
 
+    /** Name of this codec. Written to the files and checked on reading. */
     static final String NAME = "BlackLab40Postings";
 
-    /** Oldest postings version still supported */
+    /** Oldest version still supported */
     static final int VERSION_START = 1;
 
-    /** Current postings version */
+    /** Current version */
     static final int VERSION_CURRENT = 1;
 
     /** Every file extension will be prefixed with this to indicate it is part of the forward index. */

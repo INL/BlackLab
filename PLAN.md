@@ -61,7 +61,10 @@ Where we take the metadata document into account:
 
 ### Content store
 
+- [ ] how to deal with full content store values being retrieved when you retrieve a `Document`? Is this what we want or not?
 - [ ] implement custom merge
+- [ ] add unit tests to e.g. block codec
+- [ ] comments
 - [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
 
 ## Refactoring opportunities

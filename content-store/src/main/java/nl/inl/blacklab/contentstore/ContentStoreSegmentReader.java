@@ -54,10 +54,6 @@ public interface ContentStoreSegmentReader {
     /**
      * Finds the length in characters of a stored value.
      *
-     * Also positions the valueIndexFile pointer to just after the doc length,
-     * from which we can continue reading information about the value (such as where
-     * to find the actual value itself).
-     *
      * @param docId document id
      * @param luceneField field to get length for
      * @return length of the value in characters

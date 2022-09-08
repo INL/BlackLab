@@ -17,13 +17,16 @@ import org.apache.lucene.store.IOContext;
  */
 public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
 
+    /** Name of this codec. Written to the files and checked on reading. */
     public static final String NAME = "BlackLab40ContentStore";
 
+    /** Oldest version still supported */
     public static final int VERSION_START = 1;
 
+    /** Current version */
     public static final int VERSION_CURRENT = 1;
 
-    /** Every file extension will be prefixed with this to indicate it is part of the forward index. */
+    /** Every file extension will be prefixed with this to indicate it is part of the content store. */
     public static final String EXT_PREFIX = "blcs.";
 
     /** Extension for the fields file, that stores block size and Lucene fields with a CS. */
@@ -32,10 +35,13 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     /** Extension for the docindex file. */
     public static final String DOCINDEX_EXT = EXT_PREFIX + "docindex";
 
+    /** Extension for the valueindex file. */
     public static final String VALUEINDEX_EXT = EXT_PREFIX + "valueindex";
 
+    /** Extension for the blockindex file. */
     public static final String BLOCKINDEX_EXT = EXT_PREFIX + "blockindex";
 
+    /** Extension for the blocks file. */
     public static final String BLOCKS_EXT = EXT_PREFIX + "blocks";
 
     /** Default compressed block size (in characters) in the values file */
