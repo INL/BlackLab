@@ -6,9 +6,9 @@ import java.util.List;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -83,7 +83,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     @Override
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
+        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         List<int[]> segmentResults = fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
         return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
     }
@@ -91,7 +91,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     @Override
     public int docLength(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
+        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         return (int)fi.docLength(luceneField, docId - lrc.docBase);
     }
 

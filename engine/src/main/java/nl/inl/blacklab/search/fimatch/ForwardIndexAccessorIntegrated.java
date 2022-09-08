@@ -8,11 +8,11 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -54,9 +54,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
-            BlackLab40PostingsReader fieldsProducer = BlackLab40PostingsReader.get(readerContext);
-            forwardIndexReader = fieldsProducer.forwardIndex();
+            forwardIndexReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
             for (int i = 0; i < luceneFields.size(); i++) {
                 termsSegmentReaders.add(forwardIndexReader.terms(luceneFields.get(i)));
             }

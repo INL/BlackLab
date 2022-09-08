@@ -7,15 +7,20 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.codec.BlackLab40Codec;
+import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
+import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -70,6 +75,30 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public static boolean isContentStoreField(FieldInfo fieldInfo) {
         String v = fieldInfo.getAttribute(BLFA_CONTENT_STORE);
         return v != null && v.equals("true");
+    }
+
+    /**
+     * Get the content store for an index segment.
+     *
+     * The returned content store should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the content store for.
+     * @return content store
+     */
+    public static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
+        return BlackLab40StoredFieldsReader.get(lrc).contentStore();
+    }
+
+    /**
+     * Get the forward index for an index segment.
+     *
+     * The returned forward index should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the forward index for.
+     * @return forward index
+     */
+    public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
+        return BlackLab40PostingsReader.get(lrc).forwardIndex();
     }
 
     /**

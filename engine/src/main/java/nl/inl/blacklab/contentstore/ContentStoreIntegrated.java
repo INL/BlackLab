@@ -3,8 +3,8 @@ package nl.inl.blacklab.contentstore;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
 import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**
  * Global content store interface for the integrated index format.
@@ -31,7 +31,7 @@ public class ContentStoreIntegrated implements ContentStore {
     @Override
     public String retrieve(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
+        ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValue(docId - lrc.docBase, luceneField);
     }
 
@@ -39,7 +39,7 @@ public class ContentStoreIntegrated implements ContentStore {
     public String retrievePart(int docId, int start, int end) {
         if (start == -1) start = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
+        ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValueSubstring(docId - lrc.docBase, luceneField, start, end);
     }
 
@@ -48,14 +48,14 @@ public class ContentStoreIntegrated implements ContentStore {
         for (int i = 0; i < start.length; i++)
             if (start[i] == -1)  start[i] = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
+        ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValueSubstrings(docId - lrc.docBase, luceneField, start, end);
     }
 
     @Override
     public int docLength(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
-        ContentStoreSegmentReader cs = BlackLab40StoredFieldsReader.get(lrc).contentStore();
+        ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.valueLength(docId - lrc.docBase, luceneField);
     }
 
