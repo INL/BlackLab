@@ -135,31 +135,32 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
         // Write blocks and block offsets
         int numberOfBlocks = (lengthChars + blockSizeChars - 1) / blockSizeChars; // ceil(lengthInChars/blockSizeChars)
-        ContentStoreBlockCodec.Encoder encoder = blockCodec.createEncoder();
-        byte[] buffer = new byte[blockSizeChars * 2]; // should always be plenty of room
-        for (int i = 0; i < numberOfBlocks; i++) {
+        try (ContentStoreBlockCodec.Encoder encoder = blockCodec.getEncoder()) {
+            byte[] buffer = new byte[blockSizeChars * 2]; // should always be plenty of room
+            for (int i = 0; i < numberOfBlocks; i++) {
 
-            int blockOffset = i * blockSizeChars;
-            int blockLength = Math.min(blockSizeChars, value.length() - blockOffset);
-            //String block = value.substring(blockOffset, blockOffset + blockLength);
+                int blockOffset = i * blockSizeChars;
+                int blockLength = Math.min(blockSizeChars, value.length() - blockOffset);
+                //String block = value.substring(blockOffset, blockOffset + blockLength);
 
-            // Compress block and write to values file
-            int bytesWritten = encoder.encode(value, blockOffset, blockLength, buffer, 0, buffer.length);
-            if (bytesWritten >= buffer.length) {
-                throw new IOException("Insufficient buffer space for encoding block");
+                // Compress block and write to values file
+                int bytesWritten = encoder.encode(value, blockOffset, blockLength, buffer, 0, buffer.length);
+                if (bytesWritten >= buffer.length) {
+                    throw new IOException("Insufficient buffer space for encoding block");
+                }
+
+                blocksFile.writeBytes(buffer, 0, bytesWritten);
+
+                // Write offset after block to index file
+                int offset = (int) (blocksFile.getFilePointer() - baseOffset);
+                blockIndexFile.writeInt(offset);
             }
-
-            blocksFile.writeBytes(buffer, 0, bytesWritten);
-
-            // Write offset after block to index file
-            int offset = (int)(blocksFile.getFilePointer() - baseOffset);
-            blockIndexFile.writeInt(offset);
         }
 
         // Keep track of the number of values written for this doc, so we can record that later.
         numberOfFieldsWritten++;
-        if (numberOfFieldsWritten == 128) {
-            throw new IllegalStateException("Too many content store fields for document (>127)");
+        if (numberOfFieldsWritten == 127) {
+            throw new IllegalStateException("Too many content store fields for document (>=127)");
         }
     }
 

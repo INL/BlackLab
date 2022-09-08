@@ -369,39 +369,41 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                     int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
                     int blocksRead = 0;
                     StringBuilder result = new StringBuilder();
-                    ContentStoreBlockCodec.Decoder decoder = blockCodec.createDecoder();
-                    while (blocksRead < numBlocksNeeded) {
+                    try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
+                        while (blocksRead < numBlocksNeeded) {
 
-                        // Read a block and decompress it.
-                        int blockEndOffset = blockIndexFile.readInt();
-                        int blockSizeBytes = blockEndOffset - blockStartOffset;
-                        byte[] block = new byte[blockSizeBytes];
-                        blocksFile.readBytes(block, 0, blockSizeBytes);
-                        String blockDecompressed = decoder.decode(block, 0, blockSizeBytes);
+                            // Read a block and decompress it.
+                            int blockEndOffset = blockIndexFile.readInt();
+                            int blockSizeBytes = blockEndOffset - blockStartOffset;
+                            byte[] block = new byte[blockSizeBytes];
+                            blocksFile.readBytes(block, 0, blockSizeBytes);
+                            String blockDecompressed = decoder.decode(block, 0, blockSizeBytes);
 
-                        // Append the content we need to the result.
-                        if (blocksRead == 0) {
-                            // First block. Only take the part we need.
-                            if (numBlocksNeeded == 1) {
-                                // This is the only block we need. Take the requested part from the middle.
-                                result.append(blockDecompressed, startChar - currentBlockCharOffset,
-                                        endChar - currentBlockCharOffset);
+                            // Append the content we need to the result.
+                            if (blocksRead == 0) {
+                                // First block. Only take the part we need.
+                                if (numBlocksNeeded == 1) {
+                                    // This is the only block we need. Take the requested part from the middle.
+                                    result.append(blockDecompressed, startChar - currentBlockCharOffset,
+                                            endChar - currentBlockCharOffset);
+                                } else {
+                                    // We'll need more blocks. Take part at the end.
+                                    result.append(blockDecompressed, startChar - currentBlockCharOffset,
+                                            blockSizeChars);
+                                }
+                            } else if (blocksRead == numBlocksNeeded - 1) {
+                                // Last block. Take the part we need from the beginning.
+                                result.append(blockDecompressed, 0, endChar - currentBlockCharOffset);
                             } else {
-                                // We'll need more blocks. Take part at the end.
-                                result.append(blockDecompressed, startChar - currentBlockCharOffset, blockSizeChars);
+                                // Middle block. Append the whole thing.
+                                result.append(blockDecompressed);
                             }
-                        } else if (blocksRead == numBlocksNeeded - 1) {
-                            // Last block. Take the part we need from the beginning.
-                            result.append(blockDecompressed, 0, endChar - currentBlockCharOffset);
-                        } else {
-                            // Middle block. Append the whole thing.
-                            result.append(blockDecompressed);
-                        }
 
-                        // Update variables to read the next block
-                        blockStartOffset = blockEndOffset;
-                        currentBlockCharOffset += blockSizeChars;
-                        blocksRead++;
+                            // Update variables to read the next block
+                            blockStartOffset = blockEndOffset;
+                            currentBlockCharOffset += blockSizeChars;
+                            blocksRead++;
+                        }
                     }
                     return result.toString();
                 } catch (IOException e) {

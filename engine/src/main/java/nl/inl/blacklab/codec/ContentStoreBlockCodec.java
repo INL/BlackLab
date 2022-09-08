@@ -5,19 +5,19 @@ import java.io.IOException;
 /** A codec for blocks in the content store. */
 interface ContentStoreBlockCodec {
 
-    interface Encoder {
+    interface Encoder extends AutoCloseable {
         /** Encode and return a new byte buffer.
          *
-         * @param block value to encode
+         * @param input value to encode
          * @param offset starting offset in the value to encode
          * @param length number of characters from value to encode
          * @return encoded buffer
          */
-        byte[] encode(String block, int offset, int length) throws IOException;
+        byte[] encode(String input, int offset, int length) throws IOException;
 
         /** Encode in provided buffer.
          *
-         * @param block value to encode
+         * @param input value to encode
          * @param offset starting offset in the value to encode
          * @param length number of characters from value to encode
          * @param encoded output buffer
@@ -25,11 +25,15 @@ interface ContentStoreBlockCodec {
          * @param encodedMaxLength maximum number of bytes to write in the output buffer
          * @return compressed data length; was succesful if LESS THAN encodedMaxLength
          */
-        int encode(String block, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException;
+        int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException;
+
+        void close();
     }
 
-    interface Decoder {
+    interface Decoder extends AutoCloseable {
         String decode(byte[] buffer, int offset, int length) throws IOException;
+
+        void close();
     }
 
     static ContentStoreBlockCodec fromCode(byte code) {
@@ -43,9 +47,9 @@ interface ContentStoreBlockCodec {
         }
     }
 
-    Encoder createEncoder();
+    Encoder getEncoder();
 
-    Decoder createDecoder();
+    Decoder getDecoder();
 
     byte getCode();
 }

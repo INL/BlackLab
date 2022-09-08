@@ -53,13 +53,15 @@ Where we take the metadata document into account:
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
 - [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS. Consider pooling encoder/decoder as well if useful.
+- [ ] check the maximum token id in each document. If less than 256, use a single byte per token, two bytes if less than 16384, etc. Store this number of bytes per token as a parameter for the tokens codec.
 - [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
+- [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
 - [ ] Retrieving a Lucene doc will read all stored fields by default, but we don't want that with (potentially large) content store fields. We can make visitDocument skip content store fields, but only if we also make a cusotm merge function that doesn't rely on this. In the long run, we should do this for performance reasons. Until then, we should be careful that we specify which fields we want to read when retrieving a document.
 
 
 ### Content store
 
-- [ ] pool encoder/decoder (re-use buffer, Inflater/Deflater)
+- [ ] implement custom merge
 - [ ] completely finish implementing `BlackLab40StoredFieldsReader/Writer` (see remaining TODOS)
 
 ## Refactoring opportunities

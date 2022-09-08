@@ -1,24 +1,42 @@
 package nl.inl.blacklab.codec;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-/** A codec for blocks in the content store that performs no compression but just stores UTF-8 data as-is. */
+/**
+ * A codec for blocks in the content store that performs no compression but just stores UTF-8 data as-is.
+ */
 public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCodec {
 
     public static final ContentStoreBlockCodec INSTANCE = new ContentStoreBlockCodecUncompressed();
 
-    private static final Decoder DECODER = (block, offset, length) -> new String(block, offset, length,
-            StandardCharsets.UTF_8);
-
-    private static final Encoder ENCODER = new Encoder() {
+    private static final Decoder DECODER = new Decoder() {
         @Override
-        public byte[] encode(String block, int offset, int length) {
-            return block.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
+        public void close() {
+            // nothing to do, this is a reusable singleton.
         }
 
         @Override
-        public int encode(String block, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) {
-            byte[] bytes = encode(block, offset, length);
+        public String decode(byte[] buffer, int offset, int length) throws IOException {
+            return new String(buffer, offset, length, StandardCharsets.UTF_8);
+        }
+    };
+
+    private static final Encoder ENCODER = new Encoder() {
+        @Override
+        public void close() {
+            // nothing to do, this is a reusable singleton.
+        }
+
+        @Override
+        public byte[] encode(String input, int offset, int length) {
+            return input.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
+        }
+
+        @Override
+        public int encode(String input, int offset, int length, byte[] encoded, int encodedOffset,
+                int encodedMaxLength) {
+            byte[] bytes = encode(input, offset, length);
             if (bytes.length <= encodedMaxLength) {
                 // This fits in the buffer; copy it
                 System.arraycopy(bytes, 0, encodedOffset, encodedOffset, bytes.length);
@@ -28,15 +46,16 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
         }
     };
 
-    private ContentStoreBlockCodecUncompressed() { }
+    private ContentStoreBlockCodecUncompressed() {
+    }
 
     @Override
-    public Decoder createDecoder() {
+    public Decoder getDecoder() {
         return DECODER;
     }
 
     @Override
-    public Encoder createEncoder() {
+    public Encoder getEncoder() {
         return ENCODER;
     }
 

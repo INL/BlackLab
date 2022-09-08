@@ -6,6 +6,8 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
+import nl.inl.util.SimpleResourcePool;
+
 /** A codec for blocks in the content store that performs no compression but just stores UTF-8 data as-is. */
 public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
@@ -18,28 +20,55 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
     private static final int STARTING_DECODE_BUFFER_SIZE = 12500;
 
-    /** Uncompressed blocks probably shouldn't get larger than this. */
-    private static final int MAX_UNCOMPRESSED_BLOCK_SIZE = 10_000;
+    private static final int MAX_FREE_POOL_SIZE = 20;
 
-    /** We probably won't achieve a better compression factor than this. */
-    private static final int MAX_COMPRESSION_FACTOR = 6;
+    private final SimpleResourcePool<Encoder> encoderPool;
 
-    private ContentStoreBlockCodecZlib() { }
+    private final SimpleResourcePool<Decoder> decoderPool;
+
+    private ContentStoreBlockCodecZlib() {
+        encoderPool = new SimpleResourcePool<>(MAX_FREE_POOL_SIZE) {
+            @Override
+            public Encoder createResource() {
+                return createEncoder();
+            }
+        };
+        decoderPool = new SimpleResourcePool<>(MAX_FREE_POOL_SIZE) {
+            @Override
+            public Decoder createResource() {
+                return createDecoder();
+            }
+        };
+    }
 
     @Override
+    public Encoder getEncoder() {
+        return encoderPool.acquire();
+    }
+
+    @Override
+    public Decoder getDecoder() {
+        return decoderPool.acquire();
+    }
+
     public Decoder createDecoder() {
         return new Decoder() {
 
-            Inflater inflater = new Inflater();
+            final Inflater inflater = new Inflater();
 
             byte[] zipbuf = new byte[STARTING_DECODE_BUFFER_SIZE];
+
+            @Override
+            public void close() {
+                decoderPool.release(this);
+            }
 
             @Override
             public String decode(byte[] buffer, int offset, int length) throws IOException {
                 while (true) {
                     inflater.reset();
                     inflater.setInput(buffer, offset, length);
-                    int resultLength = 0;
+                    int resultLength;
                     try {
                         resultLength = inflater.inflate(zipbuf);
                     } catch (DataFormatException e) {
@@ -63,19 +92,23 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
         };
     }
 
-    @Override
     public Encoder createEncoder() {
         return new Encoder() {
 
-            Deflater deflater = new Deflater();
+            final Deflater deflater = new Deflater();
 
             byte[] zipbuf = new byte[STARTING_ENCODE_BUFFER_SIZE];
 
             @Override
-            public int encode(String block, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException {
+            public void close() {
+                encoderPool.release(this);
+            }
+
+            @Override
+            public int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException {
                 deflater.reset();
-                byte[] input = block.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
-                deflater.setInput(input);
+                byte[] inputBytes = input.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
+                deflater.setInput(inputBytes);
                 deflater.finish();
                 int compressedDataLength = deflater.deflate(encoded, encodedOffset, encodedMaxLength, Deflater.FULL_FLUSH);
                 if (compressedDataLength <= 0) {
@@ -85,9 +118,9 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
             }
 
             @Override
-            public byte[] encode(String block, int offset, int length) throws IOException {
+            public byte[] encode(String input, int offset, int length) throws IOException {
                 while (true) {
-                    int compressedDataLength = encode(block, offset, length, zipbuf, 0, zipbuf.length);
+                    int compressedDataLength = encode(input, offset, length, zipbuf, 0, zipbuf.length);
                     if (compressedDataLength < zipbuf.length) {
                         // Return in a new buffer.
                         byte[] result = new byte[compressedDataLength];
