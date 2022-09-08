@@ -24,6 +24,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
     private static final int MAX_FREE_POOL_SIZE = 20;
 
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
+
     private final SimpleResourcePool<Encoder> encoderPool;
 
     private final SimpleResourcePool<Decoder> decoderPool;
@@ -67,6 +69,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             @Override
             public String decode(byte[] buffer, int offset, int length) throws IOException {
+                if (length == 0)
+                    return "";
                 while (true) {
                     int resultLength = decodeToBytes(buffer, offset, length, zipbuf, 0, zipbuf.length);
                     if (resultLength > 0) {
@@ -84,6 +88,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             @Override
             public int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
+                if (length == 0)
+                    return 0;
                 inflater.reset();
                 inflater.setInput(buffer, offset, length);
                 try {
@@ -115,6 +121,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             @Override
             public int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException {
+                if (length == 0)
+                    return 0;
                 deflater.reset();
                 byte[] inputBytes = input.substring(offset, offset + length).getBytes(StandardCharsets.UTF_8);
                 deflater.setInput(inputBytes);
@@ -128,6 +136,8 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
             @Override
             public byte[] encode(String input, int offset, int length) throws IOException {
+                if (length == 0)
+                    return EMPTY_BYTE_ARRAY;
                 while (true) {
                     int compressedDataLength = encode(input, offset, length, zipbuf, 0, zipbuf.length);
                     if (compressedDataLength < zipbuf.length) {

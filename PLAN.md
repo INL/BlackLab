@@ -61,14 +61,11 @@ Where we take the metadata document into account:
 
 ### Content store
 
-- [ ] how to deal with full content store values being retrieved when you retrieve a `Document`? Is this what we want or not? This is required for the default merge to work though, so we need to work around it for now.
 - [ ] add unit tests to e.g. block codec
-- [ ] ContentStoreSegmentReader getBytes more efficient impl?
-- [ ] ContentStoreSegmentReader getValueSubstrings more efficient impl?
-- [ ] store original content size in bytes, so we can accurately allocate buffer in getBytes() ..?
 - [ ] Use VInt where useful/possible (i.e. values that are written many millions of times and we don't need to calculate offsets to values after them)
 
 LATER? 
+- [ ] ContentStoreSegmentReader getValueSubstrings more efficient impl? This is possible, but maybe not the highest priority.
 - [ ] implement custom merge? The problem is that we need to split the `MergeState` we get into two separate ones, one with content store fields (which we must merge) and one with regular stored fields (which must be merged by the delegate), but we cannot instantiate `MergeState`. Probably doable through a hack (placing class in Lucene's package or using reflection), but let's hold off until we're sure this is necessary.
 
 
