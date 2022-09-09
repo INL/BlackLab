@@ -26,7 +26,7 @@ public abstract class FieldImpl implements Field, Freezable {
      * Doing so anyway will throw an exception.
      */
     @XmlTransient
-    private boolean frozen;
+    private FreezeStatus frozen = new FreezeStatus();
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -137,13 +137,13 @@ public abstract class FieldImpl implements Field, Freezable {
     }
 
     @Override
-    public synchronized void freeze() {
-        this.frozen = true;
+    public boolean freeze() {
+        return frozen.freeze();
     }
 
     @Override
-    public synchronized boolean isFrozen() {
-        return this.frozen;
+    public boolean isFrozen() {
+        return frozen.isFrozen();
     }
 
 }

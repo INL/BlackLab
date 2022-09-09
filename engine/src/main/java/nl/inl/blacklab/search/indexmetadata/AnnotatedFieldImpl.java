@@ -284,9 +284,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     }
 
     @Override
-    synchronized public void freeze() {
-        super.freeze();
-        this.annots.values().forEach(AnnotationImpl::freeze);
+    public boolean freeze() {
+        boolean b = super.freeze();
+        if (b)
+            this.annots.values().forEach(AnnotationImpl::freeze);
+        return b;
     }
     
     @Override

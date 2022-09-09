@@ -61,7 +61,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     /** Is the object frozen, not allowing any modifications? */
     @XmlTransient
-    private boolean frozen = false;
+    private FreezeStatus frozen = new FreezeStatus();
 
     /** If we try to get() a missing field, should we throw or return a default config?
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
@@ -279,7 +279,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     @Override
     public void setSpecialField(String specialFieldType, String fieldName) {
         ensureNotFrozen();
-        if (specialFieldType.equals("pid"))
+        if (specialFieldType.equals("pid")) // TODO: get rid of this special case?
             setPidField(fieldName);
         else
             topLevelCustom.put(specialFieldType + "Field", fieldName);
@@ -296,16 +296,19 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     }
 
     @Override
-    public void freeze() {
-        this.frozen = true;
-        for (MetadataFieldImpl field: metadataFieldInfos.values()) {
-            field.freeze();
+    public boolean freeze() {
+        boolean b = frozen.freeze();
+        if (b) {
+            for (MetadataFieldImpl field: metadataFieldInfos.values()) {
+                field.freeze();
+            }
         }
+        return b;
     }
 
     @Override
-    public synchronized boolean isFrozen() {
-        return this.frozen;
+    public boolean isFrozen() {
+        return frozen.isFrozen();
     }
 
     @Override
