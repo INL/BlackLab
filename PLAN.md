@@ -58,10 +58,7 @@ Where we take the metadata document into account:
 - [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
 - [ ] Retrieving a Lucene doc will read all stored fields by default, but we don't want that with (potentially large) content store fields. We can make visitDocument skip content store fields, but only if we also make a cusotm merge function that doesn't rely on this. In the long run, we should do this for performance reasons. Until then, we should be careful that we specify which fields we want to read when retrieving a document.
 
-
 ### Content store
-
-- [ ] Use VInt where useful/possible (i.e. values that are written many millions of times and we don't need to calculate offsets to values after them)
 
 LATER? 
 - [ ] ContentStoreSegmentReader getValueSubstrings more efficient impl? This is possible, but maybe not the highest priority.

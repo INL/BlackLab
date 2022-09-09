@@ -30,7 +30,7 @@ public class ContentStoreIntegrated implements ContentStore {
 
     @Override
     public String retrieve(int docId) {
-        LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValue(docId - lrc.docBase, luceneField);
     }
@@ -38,7 +38,7 @@ public class ContentStoreIntegrated implements ContentStore {
     @Override
     public String retrievePart(int docId, int start, int end) {
         if (start == -1) start = 0; // fix legacy quirk
-        LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValueSubstring(docId - lrc.docBase, luceneField, start, end);
     }
@@ -47,14 +47,14 @@ public class ContentStoreIntegrated implements ContentStore {
     public String[] retrieveParts(int docId, int[] start, int[] end) {
         for (int i = 0; i < start.length; i++)
             if (start[i] == -1)  start[i] = 0; // fix legacy quirk
-        LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.getValueSubstrings(docId - lrc.docBase, luceneField, start, end);
     }
 
     @Override
     public int docLength(int docId) {
-        LeafReaderContext lrc = leafReaderLookup.forDocId(docId);
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ContentStoreSegmentReader cs = BlackLabIndexIntegrated.contentStore(lrc);
         return cs.valueLength(docId - lrc.docBase, luceneField);
     }

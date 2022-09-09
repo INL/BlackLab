@@ -11,23 +11,31 @@ import nl.inl.util.SimpleResourcePool;
 /** A codec for blocks in the content store that performs no compression but just stores UTF-8 data as-is. */
 public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
 
+    /** Our singleton instance. */
     public static final ContentStoreBlockCodec INSTANCE = new ContentStoreBlockCodecZlib();
 
     /** How large is the buffer allowed to get when automatically reallocating? */
     private static final int MAX_ALLOWABLE_BUFFER_SIZE = 100_000;
 
+    /** When encoding, what buffer size should we start with? We will automatically grow this when needed. */
     private static final int STARTING_ENCODE_BUFFER_SIZE = 3125;
 
+    /** When decoding, what buffer size should we start with? We will automatically grow this when needed. */
     private static final int STARTING_DECODE_BUFFER_SIZE = 12500;
 
+    /** When growing a buffer, how much bigger do we make them? */
     private static final int ZIPBUF_GROW_FACTOR = 2;
 
+    /** How many encoders and decoders to keep in the pool? */
     private static final int MAX_FREE_POOL_SIZE = 20;
 
+    /** An empty input encodes to this. */
     public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
+    /** Our pool of encoders. */
     private final SimpleResourcePool<Encoder> encoderPool;
 
+    /** Our pool of decoders. */
     private final SimpleResourcePool<Decoder> decoderPool;
 
     private ContentStoreBlockCodecZlib() {
