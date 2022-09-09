@@ -29,6 +29,9 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  */
 public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
 
+    /** How large we allow the block encoding buffer to become before throwing an error. */
+    private static final int MAX_ENCODE_BUFFER_LENGTH = 100_000;
+
     /** What fields are stored in the content store? */
     private final IndexOutput fieldsFile;
 
@@ -143,7 +146,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         // Write blocks and block offsets
         int numberOfBlocks = (lengthChars + blockSizeChars - 1) / blockSizeChars; // ceil(lengthInChars/blockSizeChars)
         try (ContentStoreBlockCodec.Encoder encoder = blockCodec.getEncoder()) {
-            byte[] buffer = new byte[blockSizeChars * 2]; // should always be plenty of room
+            byte[] buffer = new byte[blockSizeChars * 3]; // hopefully be enough space, or we'll grow it
             for (int i = 0; i < numberOfBlocks; i++) {
 
                 int blockOffset = i * blockSizeChars;
@@ -151,9 +154,14 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
                 //String block = value.substring(blockOffset, blockOffset + blockLength);
 
                 // Compress block and write to values file
-                int bytesWritten = encoder.encode(value, blockOffset, blockLength, buffer, 0, buffer.length);
-                if (bytesWritten >= buffer.length) {
-                    throw new IOException("Insufficient buffer space for encoding block");
+                int bytesWritten = -1;
+                while (bytesWritten < 0) {
+                    bytesWritten = encoder.encode(value, blockOffset, blockLength, buffer, 0, buffer.length);
+                    if (bytesWritten < 0) {
+                        if (buffer.length > MAX_ENCODE_BUFFER_LENGTH)
+                            throw new IOException("Insufficient buffer space for encoding block, even at max (" + MAX_ENCODE_BUFFER_LENGTH + ")");
+                        buffer = new byte[buffer.length * 2];
+                    }
                 }
 
                 blocksFile.writeBytes(buffer, 0, bytesWritten);

@@ -72,7 +72,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                 if (length == 0)
                     return "";
                 while (true) {
-                    int resultLength = decodeToBytes(buffer, offset, length, zipbuf, 0, zipbuf.length);
+                    int resultLength = decode(buffer, offset, length, zipbuf, 0, zipbuf.length);
                     if (resultLength > 0) {
                         // We're done; return the result.
                         return new String(zipbuf, 0, resultLength, StandardCharsets.UTF_8);
@@ -87,7 +87,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
             }
 
             @Override
-            public int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
+            public int decode(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
                 if (length == 0)
                     return 0;
                 inflater.reset();
@@ -120,7 +120,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
             }
 
             @Override
-            public int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException {
+            public int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) {
                 if (length == 0)
                     return 0;
                 deflater.reset();
@@ -128,8 +128,9 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                 deflater.setInput(inputBytes);
                 deflater.finish();
                 int compressedDataLength = deflater.deflate(encoded, encodedOffset, encodedMaxLength, Deflater.FULL_FLUSH);
-                if (compressedDataLength <= 0) {
-                    throw new IOException("Error, deflate returned " + compressedDataLength);
+                if (compressedDataLength <= 0 || compressedDataLength == encodedMaxLength) {
+                    // Insufficient buffer space
+                    return -1;
                 }
                 return compressedDataLength;
             }
@@ -140,7 +141,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
                     return EMPTY_BYTE_ARRAY;
                 while (true) {
                     int compressedDataLength = encode(input, offset, length, zipbuf, 0, zipbuf.length);
-                    if (compressedDataLength < zipbuf.length) {
+                    if (compressedDataLength >= 0) {
                         // Return in a new buffer.
                         byte[] result = new byte[compressedDataLength];
                         System.arraycopy(zipbuf, 0, result, 0, compressedDataLength);

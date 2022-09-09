@@ -30,6 +30,9 @@ import nl.inl.blacklab.search.BlackLabIndexIntegrated;
  */
 public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
+    /** How large we allow the block decoding buffer to become before throwing an error. */
+    private static final int MAX_DECODE_BUFFER_LENGTH = 100_000;
+
     /** Size in bytes of a record in the docindex file */
     private static final int DOCINDEX_RECORD_SIZE = Integer.BYTES + Byte.BYTES;
 
@@ -41,6 +44,9 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
     /** How many bytes a UTF-8 codepoint can take at most, for reserving buffer space */
     private static final int UTF8_MAX_BYTES_PER_CHAR = 4;
+
+    /** How much space to reserve in the buffer for decoding overhead*/
+    private static final int ESTIMATED_DECODE_OVERHEAD = 1024;
 
     /** Which field we use to access our Codec, so we can access the segment content store. */
     private static String fieldNameForCodecAccess;
@@ -324,50 +330,60 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                     // Find the value length in characters, and position the valueIndex file pointer
                     // to read the rest of the information we need: where to find the block indexes
                     // and where the blocks start.
-                    int valueLengthChar = findValueLengthChar(docId, luceneField);
+                    final int valueLengthChar = findValueLengthChar(docId, luceneField);
                     if (valueLengthChar == 0)
                         return null; // no value stored for this document
                     ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
-                    long blockIndexOffset = valueIndexFile.readLong();
-                    long blocksOffset = valueIndexFile.readLong();
+                    final long blockIndexOffset = valueIndexFile.readLong();
+                    final long blocksOffset = valueIndexFile.readLong();
 
                     // Determine what blocks we'll need
-                    int firstBlockNeeded = 0;
-                    int lastBlockNeeded = valueLengthChar / blockSizeChars;
-                    int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
+                    final int firstBlockNeeded = 0;
+                    final int lastBlockNeeded = valueLengthChar / blockSizeChars;
+                    final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
 
                     // Determine where our first block starts, and position blockindex file
                     // to start reading subsequent after-block positions
                     int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
-                    // Make sure we have a large enough buffer available
-                    int maxDecodedValueLength = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR;
-                    if (decodedValue == null || decodedValue.length < maxDecodedValueLength)
-                        decodedValue = new byte[maxDecodedValueLength];
+                    // Try to make sure we have a large enough buffer available
+                    final int decodeBufferLength = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
+                    if (decodedValue == null || decodedValue.length < decodeBufferLength)
+                        decodedValue = new byte[decodeBufferLength];
 
-                    int decodedOffset = 0;
-                    int blocksRead = 0;
+                    int decodedOffset = 0; // write position in the decodedValue buffer
+                    int numBlocksRead = 0;
                     try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
-                        while (blocksRead < numBlocksNeeded) {
+                        while (numBlocksRead < numBlocksNeeded) {
 
                             // Read a block and decompress it.
-                            int blockEndOffset = blockIndexFile.readInt();
-                            int blockSizeBytes = blockEndOffset - blockStartOffset;
+                            final int blockEndOffset = blockIndexFile.readInt();
+                            final int blockSizeBytes = blockEndOffset - blockStartOffset;
 
-                            byte[] block = new byte[blockSizeBytes];
-                            blocksFile.readBytes(block, 0, blockSizeBytes);
-                            int decodedSize = decoder.decodeToBytes(block, 0, blockSizeBytes, decodedValue, decodedOffset, decodedValue.length - decodedOffset);
-                            if (decodedSize < 0)
-                                throw new IllegalStateException("Insufficient buffer size!"); // should not happen
+                            int decodedSize = -1;
+                            while (decodedSize < 0) {
+                                decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedValue, decodedOffset);
+                                if (decodedSize < 0) {
+                                    // Not enough buffer space. Reallocate and try again (up to a point).
+                                    final int availableSpace = decodedValue.length - decodedOffset;
+                                    if (availableSpace > MAX_DECODE_BUFFER_LENGTH)
+                                        throw new IOException("Insufficient buffer space for decoding block, even at max (" + MAX_DECODE_BUFFER_LENGTH + ")");
+                                    // Double the available space for the remaining blocks (probably always just 1 block)
+                                    final int blocksLeftToRead = numBlocksNeeded - numBlocksRead;
+                                    final byte[] newBuffer = new byte[decodedOffset + blocksLeftToRead * availableSpace * 2];
+                                    System.arraycopy(decodedValue, 0, newBuffer, 0, decodedOffset);
+                                    decodedValue = newBuffer;
+                                }
+                            }
                             decodedOffset += decodedSize;
 
                             // Update variables to read the next block
                             blockStartOffset = blockEndOffset;
-                            blocksRead++;
+                            numBlocksRead++;
                         }
                     }
                     // Copy result to a new array of the right size
-                    byte[] result = new byte[decodedOffset];
+                    final byte[] result = new byte[decodedOffset];
                     System.arraycopy(decodedValue, 0, result, 0, result.length);
                     return result;
                 } catch (IOException e) {
@@ -450,14 +466,22 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                     int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
                     int blocksRead = 0;
                     StringBuilder result = new StringBuilder();
-                    byte[] decodedBlock = new byte[blockSizeChars * UTF8_MAX_BYTES_PER_CHAR];
+                    byte[] decodedBlock = new byte[blockSizeChars * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD];
                     try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
                         while (blocksRead < numBlocksNeeded) {
 
                             // Read a block and decompress it.
                             int blockEndOffset = blockIndexFile.readInt();
                             int blockSizeBytes = blockEndOffset - blockStartOffset;
-                            int decodedSize = readAndDecodeBlock(decoder, decodedBlock, blockSizeBytes);
+                            int decodedSize = -1;
+                            while (decodedSize < 0) {
+                                decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedBlock, 0);
+                                if (decodedSize < 0) {
+                                    if (decodedBlock.length > MAX_DECODE_BUFFER_LENGTH)
+                                        throw new IOException("Insufficient buffer space for decoding block, even at max (" + MAX_DECODE_BUFFER_LENGTH + ")");
+                                    decodedBlock = new byte[decodedBlock.length * 2];
+                                }
+                            }
                             String blockDecompressed = new String(decodedBlock, 0, decodedSize, StandardCharsets.UTF_8);
 
                             // Append the content we need to the result.
@@ -492,11 +516,15 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 }
             }
 
-            int readAndDecodeBlock(ContentStoreBlockCodec.Decoder decoder, byte[] buffer, int blockSizeBytes)
+            int readAndDecodeBlock(int blockSizeBytes, ContentStoreBlockCodec.Decoder decoder, byte[] buffer, int offset)
                     throws IOException {
+                // Read block (file is already positioned)
                 byte[] block = new byte[blockSizeBytes];
                 blocksFile.readBytes(block, 0, blockSizeBytes);
-                return decoder.decodeToBytes(block, 0, blockSizeBytes, buffer, 0, buffer.length);
+
+                // Decode block into buffer
+                int maxLength = buffer.length - offset;
+                return decoder.decode(block, 0, blockSizeBytes, buffer, offset, maxLength);
             }
 
             /**

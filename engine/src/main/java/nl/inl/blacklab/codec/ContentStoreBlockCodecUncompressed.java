@@ -22,7 +22,7 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
         }
 
         @Override
-        public int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
+        public int decode(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException {
             if (length > decodedMaxLength)
                 throw new IOException("Insufficient buffer space available");
             System.arraycopy(buffer, offset, decoded, decodedOffset, length);
@@ -47,7 +47,7 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
             byte[] bytes = encode(input, offset, length);
             if (bytes.length <= encodedMaxLength) {
                 // This fits in the buffer; copy it
-                System.arraycopy(bytes, 0, encodedOffset, encodedOffset, bytes.length);
+                System.arraycopy(bytes, 0, encoded, encodedOffset, bytes.length);
             }
             // return the actual length; the called can compare to the max it provided to know if we were succesful
             return bytes.length;

@@ -23,7 +23,7 @@ interface ContentStoreBlockCodec {
          * @param encoded output buffer
          * @param encodedOffset where to start writing in the output buffer
          * @param encodedMaxLength maximum number of bytes to write in the output buffer
-         * @return compressed data length; was succesful if LESS THAN encodedMaxLength
+         * @return compressed data length, or -1 if not enough buffer space
          */
         int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException;
 
@@ -53,7 +53,7 @@ interface ContentStoreBlockCodec {
          * @param decodedMaxLength max. size of the decoded block
          * @return number of bytes in decoded block, or -1 if the buffer size was too small
          */
-        int decodeToBytes(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException;
+        int decode(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException;
 
         void close();
     }

@@ -61,7 +61,6 @@ Where we take the metadata document into account:
 
 ### Content store
 
-- [ ] add unit tests to e.g. block codec
 - [ ] Use VInt where useful/possible (i.e. values that are written many millions of times and we don't need to calculate offsets to values after them)
 
 LATER? 

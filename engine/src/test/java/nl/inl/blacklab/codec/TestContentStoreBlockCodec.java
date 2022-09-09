@@ -1,6 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 
@@ -49,8 +50,12 @@ public class TestContentStoreBlockCodec {
                 Triple.of(null, 0, 0) // cannot be null
         );
         for (Triple<String, Integer, Integer> test: tests) {
-            testEncodeDecode(test.getLeft(), test.getMiddle(), test.getRight());
+            testEncodeDecode(test);
         }
+    }
+
+    private String getTestTitle(Triple<String, Integer, Integer> test) {
+        return "\"" + test.getLeft() + "\" " + test.getMiddle() + "-" + test.getRight();
     }
 
     @Test
@@ -62,14 +67,30 @@ public class TestContentStoreBlockCodec {
                 Triple.of("a", 0, 1)
         );
         for (Triple<String, Integer, Integer> test: tests) {
-            testEncodeDecode(test.getLeft(), test.getMiddle(), test.getRight());
+            testEncodeDecode(test);
         }
     }
 
-    private void testEncodeDecode(String inputBuffer, int offset, int length) throws IOException {
-        byte[] encoded = encoder.encode(inputBuffer, offset, length);
+    private void testEncodeDecode(Triple<String, Integer, Integer> test) throws IOException {
+        String testTitle = getTestTitle(test);
+        String inputBuffer = test.getLeft();
+        int offset = test.getMiddle();
+        int length = test.getRight();
+
         String expected = inputBuffer.substring(offset, offset + length);
+
+        // Basic encode/decode
+        byte[] encoded = encoder.encode(inputBuffer, offset, length);
         String decoded = decoder.decode(encoded, 0, encoded.length);
-        Assert.assertEquals(expected, decoded);
+        Assert.assertEquals(testTitle + " method 1", expected, decoded);
+
+        // Encode/decode into existing buffer
+        byte[] encodeBuffer = new byte[1024];
+        int encodedLength = encoder.encode(inputBuffer, offset, length, encodeBuffer, 0, encodeBuffer.length);
+        byte[] decodeBuffer = new byte[1024];
+        int decodedLength = decoder.decode(encodeBuffer, 0, encodedLength, decodeBuffer, 0, decodeBuffer.length);
+        Assert.assertTrue(testTitle + " method 2 success", decodedLength >= 0);
+        String decoded2 = new String(decodeBuffer, 0, decodedLength, StandardCharsets.UTF_8);
+        Assert.assertEquals(testTitle + " method 2 result", expected, decoded2);
     }
 }
