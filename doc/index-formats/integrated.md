@@ -28,6 +28,8 @@ Forward index files currently have a codec name of `BlackLab40Postings` and a ve
 
 - For each field annotation:
   * Lucene field name (str), e.g. "contents%lemma"
+  * number of terms in this field (int)
+  * offset of field in termorder file (long)
   * offset of field in termindex file (long)
   * offset of field in tokensindex file (long)
 

@@ -46,29 +46,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     private final SegmentReadState state;
 
-    /**
-     * Get the BlackLab40PostingsReader for the given leafreader.
-     *
-     * The luceneField must be any existing Lucene field in the index.
-     * It doesn't matter which. This is because BLTerms is used as an
-     * intermediate to get access to BlackLab40StoredFieldsReader.
-     *
-     * The returned BlackLab40PostingsReader is not specific for the specified field,
-     * but can be used to read information related to any field from the segment.
-     *
-     * @param lrc leafreader to get the BLFieldsProducer for
-     * @return BLFieldsProducer for this leafreader
-     */
-    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-        try {
-            if (fieldNameForCodecAccess == null)
-                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
-            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getFieldsProducer();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /** Name of PF we delegate to (the one from Lucene) */
     private String delegateFormatName;
 
@@ -198,6 +175,22 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public ForwardIndexSegmentReader forwardIndex() {
         return forwardIndex.reader();
+    }
+
+    /**
+     * Get the BlackLab40PostingsReader for the given leafreader.
+     *
+     * @param lrc leafreader to get the BlackLab40PostingsReader for
+     * @return BlackLab40PostingsReader for this leafreader
+     */
+    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
+        try {
+            if (fieldNameForCodecAccess == null)
+                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
+            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getFieldsProducer();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
