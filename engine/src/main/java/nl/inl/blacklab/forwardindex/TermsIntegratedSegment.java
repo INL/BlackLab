@@ -23,14 +23,17 @@ public class TermsIntegratedSegment implements AutoCloseable {
     private boolean isClosed = false;
     private BlackLab40PostingsReader segmentReader;
     private BlackLab40PostingsWriter.Field field;
+    private int ord;
 
     private IndexInput _termIndexFile;
     private IndexInput _termsFile;
     private IndexInput _termOrderFile;
 
-    public TermsIntegratedSegment(BlackLab40PostingsReader segmentReader, String luceneField) {
+
+    public TermsIntegratedSegment(BlackLab40PostingsReader segmentReader, String luceneField, int ord) {
         try {
             this.segmentReader = segmentReader;
+            this.ord = ord;
             this._termIndexFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
             this._termsFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMS_EXT);
             this._termOrderFile = segmentReader.openIndexFile(BlackLab40PostingsFormat.TERMORDER_EXT);
@@ -63,8 +66,9 @@ public class TermsIntegratedSegment implements AutoCloseable {
         segmentReader = null;
     }
 
-    private static class TermInSegment {
+    public static class TermInSegment {
         public String term;
+        /** The local term id. */
         public int id;
         public int sortPosition;
     }
@@ -92,10 +96,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
             // first navigate to where the sensitive iteration order is stored in the _termOrderFile.
             /*
             for reference, the file contains:
-                int[n] insensitivePos2TermID    [0*n*int]
-                int[n] termID2InsensitivePos    [1*n*int]
-                int[n] sensitivePos2TermID      [2*n*int]
-                int[n] termID2sensitivePos      [3*n*int]
+                int[n] insensitivePos2TermID    ( offset [0*n*int] )
+                int[n] termID2InsensitivePos    ( offset [1*n*int] )
+                int[n] sensitivePos2TermID      ( offset [2*n*int] )
+                int[n] termID2sensitivePos      ( offset [3*n*int] )
              */
             try {
                 _termOrderFile.seek(((long)n)*Integer.BYTES*(order == IterationOrder.sensitive ? 3 : 1));
@@ -115,7 +119,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
 
         @Override
         public TermInSegment next() {
-            // ex: [next, peek] = [1,2]. swap to [next,peek] = [2,1]. Then read a new entry into peek: [next, peek] = [2,3]
+            // eg.: [next, peek] = [1,2]. swap to [next,peek] = [2,1]. Then read a new entry into peek: [next, peek] = [2,3]
             TermInSegment tmp = this.next;
             this.next = this.peek;
             this.peek = tmp;
@@ -137,6 +141,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
             }
             return this.next;
         }
+
+        public TermsIntegratedSegment source() {
+            return TermsIntegratedSegment.this;
+        }
     }
 
     /** Return an iterator that returns the terms in order of case- and diacritic sensitive sorting */
@@ -148,5 +156,9 @@ public class TermsIntegratedSegment implements AutoCloseable {
     public TermInSegmentIterator iteratorInsensitive() {
         if (isClosed) throw new UnsupportedOperationException("Cannot iterate terms after closing");
         return new TermInSegmentIterator(IterationOrder.insensitive);
+    }
+
+    public int ord() {
+        return this.ord;
     }
 }

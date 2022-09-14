@@ -83,14 +83,6 @@ class SegmentForwardIndex implements AutoCloseable {
         return new Reader();
     }
 
-    public static class SegmentTerm {
-        public String term;
-        public int segmentTermID;
-        public int segmentTermOrderSensitive;
-        public int segmentTermOrderInsensitive;
-    }
-
-
     /** 
      * Whereas SegmentForwardIndex manages the entire forward index for an entire segment (LeafReader),
      * This manages the forward index for a specific annotation.
