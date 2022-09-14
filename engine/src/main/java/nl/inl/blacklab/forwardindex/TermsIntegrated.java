@@ -29,7 +29,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
      *  global term ids.
      *  Hopefully eventually no longer needed.
      */
-    private final Map<Integer, List<Integer>> segmentToGlobalTermIds = new HashMap<>();
+    private final Map<Integer, int[]> segmentToGlobalTermIds = new HashMap<>();
 
     public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
         super(collators);
@@ -59,8 +59,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         // x (global) termId2SensitivePosition
         // x (global) termId2InsensitivePosition
 
-        Map<Integer, TIntArrayList> perSegmentLocalID2GlobalID = new HashMap<>();
-        
+        for (TermsIntegratedSegment s : segments) segmentToGlobalTermIds.put(s.ord(), new int[s.field().getNumberOfTerms()]);
+
         Map<String, Integer> term2GlobalID = new LinkedHashMap<>();
         
         PriorityQueue<TermInSegmentIterator> q = new PriorityQueue<>((a,b) -> a.peek().term.equals(b.peek().term) ? 0 : collator.compare(a.peek().term, b.peek().term));
@@ -74,7 +74,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             int segmentID = i.source().ord();
             int localID = t.id;
             int globalID = term2GlobalID.computeIfAbsent(t.term, __ -> term2GlobalID.size());
-            perSegmentLocalID2GlobalID.computeIfAbsent(segmentID, TIntArrayList::new).set(localID, globalID);
+            segmentToGlobalTermIds.get(segmentID)[localID] = globalID;
         }
 
         // let's create the insensitive order
@@ -89,7 +89,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             TermInSegment t = i.next();
             if (i.hasNext()) q.add(i);
 
-            int globalID = perSegmentLocalID2GlobalID.get(i.source().ord()).get(t.id);
+            int globalID = segmentToGlobalTermIds.get(i.source().ord())[t.id];
             String term = t.term;
             termId2InsensitivePosition[globalID] = (prevTerm == null || prevTerm.equals(term) || collatorInsensitive.equals(prevTerm, term)) ? insensitivePosition : insensitivePosition++;
         }
@@ -112,16 +112,16 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     @Override
     public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
-        List<Integer> mapping = segmentToGlobalTermIds.get(ord);
+        int[] mapping = segmentToGlobalTermIds.get(ord);
         int[] converted = new int[snippet.length];
         for (int i = 0; i < snippet.length; i++) {
-            converted[i] = snippet[i] < 0 ? snippet[i] : mapping.get(snippet[i]);
+            converted[i] = snippet[i] < 0 ? snippet[i] : mapping[snippet[i]];
         }
         return converted;
     }
 
     public int segmentIdToGlobalId(int ord, int id) {
-        List<Integer> mapping = segmentToGlobalTermIds.get(ord);
-        return id < 0 ? id : mapping.get(id);
+        int[] mapping = segmentToGlobalTermIds.get(ord);
+        return id < 0 ? id : mapping[id];
     }
 }

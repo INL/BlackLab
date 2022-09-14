@@ -148,6 +148,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
     /** 
      * Information about a Lucene field that represents a BlackLab annotation in the forward index.
+     * A Field's information is only valid for the segment (leafreadercontext) of the index it was read from.
      * Contains offsets into files comprising the terms strings and forward index information.
      * Such as where in the term strings file the strings for this field begin.
      * See integrated.md
