@@ -344,10 +344,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
                             // begin writing term IDs and sort orders
                             Collators collators = Collators.defaultCollator();
-                            int[] sensitivePos2TermID = this.getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
-                            int[] insensitivePos2TermID = this.getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
-                            int[] termID2SensitivePos = TermsIntegrated.invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
-                            int[] termID2InsensitivePos = TermsIntegrated.invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
+                            int[] sensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
+                            int[] insensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
+                            int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
+                            int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
                             
                             int numTerms = termsList.size();
                             fiFields.get(luceneField).setNumberOfTerms(numTerms);
@@ -546,10 +546,37 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * Given a list of terms, return the indices to sort them.
      * E.G: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
      */
-    private int[] getTermSortOrder(List<String> terms, Collator coll) {
+    private static int[] getTermSortOrder(List<String> terms, Collator coll) {
         int[] ret = new int[terms.size()];
         for (int i = 0; i < ret.length; ++i) ret[i] = i;
         IntArrays.quickSort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
         return ret;
+    }
+
+    
+    /**
+     * Invert the given array so the values become the indexes and vice versa.
+     *
+     * @param array array to invert
+     * @return inverted array
+     */
+    private static int[] invert(List<String> terms, int[] array, Collator collator) {
+        int[] result = new int[array.length];
+        int prevSortPosition = -1;
+        int prevTermId = -1;
+        for (int i = 0; i < array.length; i++) {
+            int termId = array[i];
+            int sortPosition = i;
+            if (prevTermId >= 0 && collator.equals(terms.get(prevTermId), terms.get(termId))) {
+                // Keep the same sort position because the terms are the same
+                sortPosition = prevSortPosition;
+            } else {
+                // Remember the sort position in case the next term is identical
+                prevSortPosition = sortPosition;
+            }
+            result[termId] = sortPosition;
+            prevTermId = termId;
+        }
+        return result;
     }
 }

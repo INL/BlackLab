@@ -47,10 +47,10 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Contains presorted indices for the terms file */
     private IndexInput _termOrderFile;
 
-    public SegmentForwardIndex(BlackLab40PostingsReader postingsReader, SegmentReadState state) throws IOException {
+    public SegmentForwardIndex(BlackLab40PostingsReader postingsReader) throws IOException {
         this.fieldsProducer = postingsReader;
 
-        try (IndexInput fieldsFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.FIELDS_EXT)) {
+        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
             long size = fieldsFile.length();
             while (fieldsFile.getFilePointer() < size) {
                 Field f = new Field(fieldsFile);
@@ -58,11 +58,11 @@ class SegmentForwardIndex implements AutoCloseable {
             }
         }
 
-        _termIndexFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.TERMINDEX_EXT);
-        _termsFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.TERMS_EXT);
-        _termOrderFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.TERMORDER_EXT);
-        _tokensIndexFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-        _tokensFile = postingsReader.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_EXT);
+        _termIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
+        _termsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMS_EXT);
+        _termOrderFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMORDER_EXT);
+        _tokensIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+        _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
     }
 
     @Override
@@ -82,6 +82,52 @@ class SegmentForwardIndex implements AutoCloseable {
     ForwardIndexSegmentReader reader() {
         return new Reader();
     }
+
+    public static class SegmentTerm {
+        public String term;
+        public int segmentTermID;
+        public int segmentTermOrderSensitive;
+        public int segmentTermOrderInsensitive;
+    }
+
+
+    /** 
+     * Whereas SegmentForwardIndex manages the entire forward index for an entire segment (LeafReader),
+     * This manages the forward index for a specific annotation.
+     */
+    public class SegmentForwardIndexField {
+        private Field field;
+
+        public SegmentForwardIndexField(Field field) {
+            this.field = field;
+        }
+        // ahh yes, this is for a single field only.
+        // so we should be able to do this properly.
+
+        // so where do we orchestrate the global list?
+        // ideally we'd store the term to global list in this object here
+        // so we don't need it in the TermsIntegrated class.
+
+        // MISSING:
+        // interaction from *this* -> TermsIntegrated (i.e. local 2 global magic)
+
+        // what do we need to do to perform that?
+        // generate the following fields:
+        // - segmentToGlobalTermIds
+        // - terms (global list, any order as long as the sort arrays are correct)
+        // - termId2SensitivePosition
+        // - termId2InsensitivePosition
+
+
+
+        // how do we do this?
+        // we have the smart merge algo
+        // where to put it?
+
+
+    }
+
+    
 
     /**
      * A forward index reader for a single segment.

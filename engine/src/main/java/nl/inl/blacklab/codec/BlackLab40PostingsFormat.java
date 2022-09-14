@@ -44,18 +44,18 @@ public class BlackLab40PostingsFormat extends PostingsFormat {
 
     /** Extension for the fields file. This stores the annotated field name and the offset
         in the term index file where the term offsets ares stored.*/
-    static final String FIELDS_EXT = "fields";
+    public static final String FIELDS_EXT = "fields";
 
     /** Extension for the term index file, that stores the offset in the terms file where
         the term strings start for each term (in each annotated field). */
-    static final String TERMINDEX_EXT = "termindex";
+    public static final String TERMINDEX_EXT = "termindex";
 
     /** Extension for the terms file, where the term strings are stored. */
-    static final String TERMS_EXT = "terms";
+    public static final String TERMS_EXT = "terms";
 
     /** Extension for the terms order file, where indices for different sorts of the term strings are stored.
      * pos2IDInsensitive, id2PosInsensitive, pos2IDSensitive, id2PosSensitive */
-    static final String TERMORDER_EXT = "termorder";
+    public static final String TERMORDER_EXT = "termorder";
 
     /** Extension for the tokens index file, that stores the offsets in the tokens file
         where the tokens for each document are stored. */

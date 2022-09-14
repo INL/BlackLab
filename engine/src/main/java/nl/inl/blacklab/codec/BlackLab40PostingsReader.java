@@ -59,12 +59,11 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
     public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
-
         this.state = state;
 
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
-        forwardIndex = new SegmentForwardIndex(this, state);
+        forwardIndex = new SegmentForwardIndex(this);
 
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
@@ -139,7 +138,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * @param extension extension of the file to open (will automatically be prefixed with "blfi.")
      * @return handle to the opened segment file
      */
-    IndexInput openIndexFile(SegmentReadState state, String extension) throws IOException {
+    public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix,
                 BlackLab40PostingsFormat.EXT_PREFIX + extension);
         IndexInput input = state.directory.openInput(fileName, state.context);

@@ -35,6 +35,13 @@ Forward index files currently have a codec name of `BlackLab40Postings` and a ve
 
 This file will have an extension of `.blfi.fields`.
 
+### termorder - indexbuffers for a sorted view on the terms
+- int[number of terms n]: insensitive - what term would be at this position if the list was sorted?
+- int[number of terms n]: case-insensitive sort positions of the terms (i.e. what position would the term have after sorting the list of terms)
+- int[number of terms n]: insensitive - what term would be at this position if the list was sorted?
+- int[number of terms n]: case-sensitive sort positions of the terms (i.e. what position would the term have after sorting the list of terms)
+
+
 ### termindex - where to find term strings
 
 **NOTE:** we don't store number of terms as it follows from the file size. If we decide to switch to using VInts, we could write the number of terms at the end of the file. We don't know it at the beginning, we can only iterate through terms at that time.
