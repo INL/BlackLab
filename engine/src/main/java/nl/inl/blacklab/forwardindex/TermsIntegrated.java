@@ -21,8 +21,6 @@ import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegmentIterator
  * This version is integrated into the Lucene index.
  */
 public class TermsIntegrated extends TermsReaderAbstract {
-
-  
     private final IndexReader indexReader;
 
     private final String luceneField;
@@ -33,18 +31,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
      */
     private final Map<Integer, List<Integer>> segmentToGlobalTermIds = new HashMap<>();
 
-    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) throws IOException {
+    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
         super(collators);
         this.indexReader = indexReader;
         this.luceneField = luceneField;
 
-        // dit object maken we maar 1x, en die moet dan zelf alle leaves af,
-        // daarvoor heb je die postingsformat nodig.
-        // dus die moeten we gewoon ophalen per segment, daar zit weinig anders op.
-        // we hebben N segments * K fields/annotaties
-        // dan moet je nou eenmaal een lookup doen in al die segments, daar zit niets anders op.
-
-        // ord, segment
         List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
         for (LeafReaderContext lrc : indexReader.leaves()) {
             BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
@@ -52,12 +43,15 @@ public class TermsIntegrated extends TermsReaderAbstract {
             termsPerSegment.add(s);
         }
 
-        readFromAndMerge(termsPerSegment);
-
+        try {
+            readFromAndMerge(termsPerSegment);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load terms", e);
+        }
     }
 
 
-    private void readFromAndMerge(List<TermsIntegratedSegment> segments) {
+    private void readFromAndMerge(List<TermsIntegratedSegment> segments) throws IOException {
         // what do we need to perform
         // generate the following fields:
         // x segmentToGlobalTermIds
@@ -106,6 +100,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         String[] terms = new String[term2GlobalID.size()];
         int i = 0;
         for (String s : term2GlobalID.keySet()) terms[i++] = s;
+
+        for (TermsIntegratedSegment s : segments) s.close();
 
         finishInitialization(
             terms,

@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -35,17 +34,12 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Contains offsets into termsFile where the string for each term can be found */
     private IndexInput _termIndexFile;
 
-    /** Contains term strings for all fields */
-    private IndexInput _termsFile;
-
     /** Contains indexes into the tokens file for all field and documents */
     private IndexInput _tokensIndexFile;
 
     /** Contains the tokens for all fields and documents */
     private IndexInput _tokensFile;
 
-    /** Contains presorted indices for the terms file */
-    private IndexInput _termOrderFile;
 
     public SegmentForwardIndex(BlackLab40PostingsReader postingsReader) throws IOException {
         this.fieldsProducer = postingsReader;
@@ -59,8 +53,6 @@ class SegmentForwardIndex implements AutoCloseable {
         }
 
         _termIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
-        _termsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMS_EXT);
-        _termOrderFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMORDER_EXT);
         _tokensIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
         _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
     }
@@ -70,10 +62,8 @@ class SegmentForwardIndex implements AutoCloseable {
         try {
             _tokensFile.close();
             _tokensIndexFile.close();
-            _termsFile.close();
-            _termOrderFile.close();
             _termIndexFile.close();
-            _termIndexFile = _termsFile = _termOrderFile = _tokensIndexFile = _tokensFile = null;
+            _termIndexFile = _tokensIndexFile = _tokensFile = null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -82,44 +72,6 @@ class SegmentForwardIndex implements AutoCloseable {
     ForwardIndexSegmentReader reader() {
         return new Reader();
     }
-
-    /** 
-     * Whereas SegmentForwardIndex manages the entire forward index for an entire segment (LeafReader),
-     * This manages the forward index for a specific annotation.
-     */
-    public class SegmentForwardIndexField {
-        private Field field;
-
-        public SegmentForwardIndexField(Field field) {
-            this.field = field;
-        }
-        // ahh yes, this is for a single field only.
-        // so we should be able to do this properly.
-
-        // so where do we orchestrate the global list?
-        // ideally we'd store the term to global list in this object here
-        // so we don't need it in the TermsIntegrated class.
-
-        // MISSING:
-        // interaction from *this* -> TermsIntegrated (i.e. local 2 global magic)
-
-        // what do we need to do to perform that?
-        // generate the following fields:
-        // - segmentToGlobalTermIds
-        // - terms (global list, any order as long as the sort arrays are correct)
-        // - termId2SensitivePosition
-        // - termId2InsensitivePosition
-
-
-
-        // how do we do this?
-        // we have the smart merge algo
-        // where to put it?
-
-
-    }
-
-    
 
     /**
      * A forward index reader for a single segment.

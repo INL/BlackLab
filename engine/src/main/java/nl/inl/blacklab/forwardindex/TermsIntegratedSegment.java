@@ -57,7 +57,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() throws IOException {
         isClosed = true;
         _termIndexFile.close();
         _termsFile.close();
