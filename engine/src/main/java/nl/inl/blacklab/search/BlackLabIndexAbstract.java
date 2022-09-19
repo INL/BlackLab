@@ -21,21 +21,18 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.Scorer;
-import org.apache.lucene.search.Weight;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
+import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -45,6 +42,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -91,7 +89,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     /** Structure of our index */
     private final IndexMetadataWriter indexMetadata;
 
-    private final ContentStoresManager contentStores = new ContentStoresManager();
+    final ContentStoresManager contentStores = new ContentStoresManager();
 
     /**
      * ForwardIndices allow us to quickly find what token occurs at a specific
@@ -324,7 +322,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             if (indexMode && ca == null) {
                 // Index mode. Create new content store or open existing one.
                 try {
-                    openContentStore(field);
+                    boolean createNewContentStore = isEmptyIndex;
+                    openContentStore(field, true, createNewContentStore, indexLocation);
                 } catch (ErrorOpeningIndex e) {
                     throw BlackLabRuntimeException.wrap(e);
                 }
@@ -481,12 +480,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 logger.debug("  Opening content stores...");
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
                 if (field.hasContentStore()) {
-                    File dir = new File(indexDir, "cs_" + field.name());
-                    if (dir.exists()) {
-                        if (traceIndexOpening())
-                            logger.debug("    " + dir + "...");
-                        registerContentStore(field, ContentStore.open(dir, indexMode, false));
-                    }
+                    openContentStore(field, indexMode, false, indexDir);
                 }
             }
         }
@@ -578,10 +572,24 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         return reader;
     }
 
-    private void openContentStore(Field field) throws ErrorOpeningIndex {
-        File contentStoreDir = new File(indexLocation, "cs_" + field.name());
-        ContentStore contentStore = ContentStore.open(contentStoreDir, indexMode, isEmptyIndex);
-        registerContentStore(field, contentStore);
+    protected void openContentStore(Field field, boolean indexMode, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex {
+        ContentStore cs;
+        if (this instanceof BlackLabIndexIntegrated) {
+            String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
+            cs = ContentStoreIntegrated.open(reader, luceneField);
+        } else {
+            // Classic external index format. Open external content store.
+            File dir = new File(indexDir, "cs_" + field.name());
+            if (dir.exists() || createNewContentStore) {
+                if (traceIndexOpening())
+                    logger.debug("    " + dir + "...");
+                cs = ContentStoreExternal.open(dir, indexMode, createNewContentStore);
+            } else {
+                throw new IllegalStateException("Field " + field.name() +
+                        " should have content store, but directory " + dir + " not found!");
+            }
+        }
+        registerContentStore(field, cs);
     }
 
     @Override
@@ -647,62 +655,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         try {
             indexWriter.rollback();
             indexWriter = null;
-        } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
-        }
-    }
-
-    @Override
-    public void delete(Query q) {
-        logger.debug("Delete query: " + q);
-        if (!indexMode)
-            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
-        try {
-            // Open a fresh reader to execute the query
-            try (IndexReader freshReader = DirectoryReader.open(indexWriter, false, false)) {
-                // Execute the query, iterate over the docs and delete from FI and CS.
-                IndexSearcher s = new IndexSearcher(freshReader);
-                Weight w = s.createWeight(q, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                logger.debug("Doing delete. Number of leaves: " + freshReader.leaves().size());
-                for (LeafReaderContext leafContext: freshReader.leaves()) {
-                    Bits liveDocs = leafContext.reader().getLiveDocs();
-
-                    Scorer scorer = w.scorer(leafContext);
-                    if (scorer == null) {
-                        logger.debug("  No hits in leafcontext");
-                        continue; // no matching documents
-                    }
-
-                    // Iterate over matching docs
-                    DocIdSetIterator it = scorer.iterator();
-                    logger.debug("  Iterate over matching docs in leaf");
-                    while (true) {
-                        int docId = it.nextDoc();
-                        if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                            break;
-                        if (liveDocs != null && !liveDocs.get(docId)) {
-                            // already deleted.
-                            continue;
-                        }
-                        docId += leafContext.docBase;
-                        Document d = freshReader.document(docId);
-                        logger.debug("    About to delete docId " + docId + ", fromInputFile=" + d.get("fromInputFile")
-                                + " from FI and CS");
-
-                        deleteFromForwardIndices(d);
-
-                        // Delete this document in all content stores
-                        contentStores.deleteDocument(d);
-                    }
-                }
-            } finally {
-                reader.close();
-            }
-
-            // Finally, delete the documents from the Lucene index
-            logger.debug("  Delete docs from Lucene index");
-            indexWriter.deleteDocuments(q);
-
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

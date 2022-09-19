@@ -107,4 +107,7 @@ public interface IndexMetadataWriter extends IndexMetadata {
 	 * freeze it to enforce this.
 	 */
 	void freezeBeforeIndexing();
+
+    @Override
+    AnnotatedFieldsImpl annotatedFields();
 }

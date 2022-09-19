@@ -20,6 +20,7 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
@@ -878,7 +879,12 @@ public class QueryTool {
             metadata.put(f.name(), f.stringValue());
         }
         for (Map.Entry<String, String> e : metadata.entrySet()) {
-            outprintln(e.getKey() + ": " + e.getValue());
+            String value = e.getValue();
+            if (value.length() > 255) {
+                outprintln(e.getKey() + ": " + StringUtils.abbreviate(value, 255) + " (total length: " + value.length() + ")");
+            } else {
+                outprintln(e.getKey() + ": " + value);
+            }
         }
     }
 

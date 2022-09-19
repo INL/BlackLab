@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.StringUtil;
 
-public abstract class FieldImpl implements Field {
+public abstract class FieldImpl implements Field, Freezable {
     /** Field's name */
     @XmlTransient
     protected String fieldName;
@@ -20,6 +20,13 @@ public abstract class FieldImpl implements Field {
 
     /** Custom field properties */
     protected CustomPropsMap custom = new CustomPropsMap();
+
+    /**
+     * If true, this instance is frozen and may not be mutated anymore.
+     * Doing so anyway will throw an exception.
+     */
+    @XmlTransient
+    private boolean frozen;
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -45,7 +52,14 @@ public abstract class FieldImpl implements Field {
      */
     @Deprecated
     public void setDisplayName(String displayName) {
-        custom.put("displayName", displayName);
+        putCustom("displayName", displayName);
+    }
+
+    void putCustom(String name, Object value) {
+        if (!value.equals(custom.get(name))) {
+            ensureNotFrozen();
+            custom.put(name, value);
+        }
     }
 
     /**
@@ -66,7 +80,7 @@ public abstract class FieldImpl implements Field {
      */
     @Deprecated
     public void setDescription(String description) {
-        custom.put("description", description);
+        putCustom("description", description);
     }
 
     /**
@@ -79,12 +93,15 @@ public abstract class FieldImpl implements Field {
     }
 
     @Override
-    public CustomPropsMap custom() {
+    public CustomProps custom() {
         return custom;
     }
 
     public void setContentStore(boolean contentStore) {
-        this.contentStore = contentStore;
+        if (contentStore != this.contentStore) {
+            ensureNotFrozen();
+            this.contentStore = contentStore;
+        }
     }
 
     @Override
@@ -115,7 +132,18 @@ public abstract class FieldImpl implements Field {
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
+        ensureNotFrozen();
         this.fieldName = fieldName;
+    }
+
+    @Override
+    public synchronized void freeze() {
+        this.frozen = true;
+    }
+
+    @Override
+    public synchronized boolean isFrozen() {
+        return this.frozen;
     }
 
 }

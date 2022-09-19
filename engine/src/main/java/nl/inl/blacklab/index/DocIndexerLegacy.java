@@ -14,9 +14,11 @@ import java.util.Map;
 
 import org.apache.lucene.document.Field;
 
-import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.UnicodeStream;
@@ -30,8 +32,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
      * times)
      */
     private static final long WRITE_CONTENT_CHUNK_SIZE = 10_000_000;
-
-    protected final boolean skippingCurrentDocument = false;
 
     protected CountingReader reader;
 
@@ -62,25 +62,25 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         content.setLength(0);
     }
 
-    public int storeCapturedContent() {
+    public void stopContentCapture() {
         captureContent = false;
-        int id = -1;
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            id = contentStore.store(content.toString());
-        }
+    }
+
+    public void resetCapturedContent() {
         content.setLength(0);
         charsContentAlreadyStored = 0;
-        return id;
     }
 
     public void storePartCapturedContent() {
-        charsContentAlreadyStored += content.length();
-        if (!skippingCurrentDocument) {
-            ContentStore contentStore = getDocWriter().contentStore(captureContentFieldName);
-            contentStore.storePart(content.toString());
+        // storePart only works for the classic external index format.
+        // for internal, we just ignore it (will be fully stored eventually by final call to store())
+        if (getDocWriter().indexWriter() instanceof BlackLabIndexExternal) {
+            charsContentAlreadyStored += content.length();
+            ContentStoreExternal contentStore = (ContentStoreExternal) getDocWriter().contentStore(
+                    captureContentFieldName);
+            contentStore.storePart(new TextContent(content));
+            content.setLength(0);
         }
-        content.setLength(0);
     }
 
     private void appendContentInternal(String str) {
@@ -400,5 +400,12 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
                 currentLuceneDoc.add(new Field(fieldName, fieldValue, getDocWriter().metadataFieldType(false)));
             }
         }
+    }
+
+    protected void storeDocument() {
+        TextContent document = new TextContent(content);
+        String contentStoreName = captureContentFieldName;
+        String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
+        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
     }
 }

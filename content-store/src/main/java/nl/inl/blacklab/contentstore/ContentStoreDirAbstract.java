@@ -9,7 +9,7 @@ import nl.inl.util.VersionFile;
  * Store string content by id in a directory of compound files with a TOC file.
  * Quickly retrieve (parts of) the string content.
  */
-public abstract class ContentStoreDirAbstract extends ContentStore {
+public abstract class ContentStoreDirAbstract extends ContentStoreExternal {
     /**
      * Dir to store the content and TOC
      */

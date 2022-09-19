@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -114,8 +115,8 @@ public class SpanQueryTags extends BLSpanQuery {
             BLSpans startTags = weight.getSpans(context, requiredPostings);
             if (startTags == null)
                 return null;
-            boolean primaryIndicator = BlackLabIndexIntegrated.hasPrimaryValueIndicator(context,
-                    startTagFieldName);
+            FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(startTagFieldName);
+            boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
             return new SpansTags(startTags, primaryIndicator);
         }
 

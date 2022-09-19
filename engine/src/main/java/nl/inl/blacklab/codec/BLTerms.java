@@ -21,6 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class BLTerms extends Terms implements TermsSegmentReader {
 
+    /** FieldProducer, so it can be accessed from outside the Codec (for access to forward index) */
     private final BlackLab40PostingsReader fieldsProducer;
 
     /** The Lucene terms object we're wrapping */
@@ -39,6 +40,10 @@ public class BLTerms extends Terms implements TermsSegmentReader {
 
     public BlackLab40PostingsReader getFieldsProducer() {
         return fieldsProducer;
+    }
+
+    public BlackLab40StoredFieldsReader getStoredFieldsReader() throws IOException {
+        return fieldsProducer.getStoredFieldReader();
     }
 
     @Override
@@ -156,4 +161,5 @@ public class BLTerms extends Terms implements TermsSegmentReader {
         this.termsIntegrated = termsIntegrated;
         this.ord = ord;
     }
+
 }

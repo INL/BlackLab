@@ -7,7 +7,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
-import java.nio.charset.Charset;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -81,20 +80,6 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         decompresserPool.close();
         closeMappedToc();
         super.close();
-    }
-
-    /**
-     * Retrieve content with given id
-     *
-     * @param id the id
-     * @return the string
-     */
-    @Override
-    public String retrieve(int id) {
-        if (!initialized)
-            initialize();
-        String[] rv = retrieveParts(id, new int[] { -1 }, new int[] { -1 });
-        return rv == null ? null : rv[0];
     }
 
     @Override
@@ -218,22 +203,12 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
-    public int store(String content) {
+    public int store(TextContent content) {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 
     @Override
-    public int store(byte[] content, int offset, int length, Charset cs) {
-        throw new UnsupportedOperationException("Not supported if not in index mode");
-    }
-
-    @Override
-    public void storePart(String content) {
-        throw new UnsupportedOperationException("Not supported if not in index mode");
-    }
-    
-    @Override
-    public void storePart(byte[] content, int offset, int length, Charset cs) {
+    public void storePart(TextContent content) {
         throw new UnsupportedOperationException("Not supported if not in index mode");
     }
 

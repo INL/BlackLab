@@ -1,9 +1,15 @@
 package nl.inl.blacklab.search;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.FieldType;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
@@ -12,9 +18,14 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.codec.BlackLab40Codec;
+import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
+import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -29,40 +40,107 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
-    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
 
     /** Lucene field attribute. Does the field have a content store */
-    public static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
 
     /**
-     * Does the specified Lucene field have "is primary value" indicators in the payload?
+     * Does the specified Lucene field have a forward index stored with it?
      *
      * If yes, we can deduce from the payload if a value is the primary value (e.g. original word,
      * to use for concordances, sort, group, etc.) or a secondary value (e.g. stemmed, synonym).
+     * This is used because we only store the primary value in the forward index.
      *
      * We need to know this whenever we work with payloads too, so we can skip this indicator.
      * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
      *
-     * @param context leaf reader we're working in
-     * @param luceneFieldName Lucene field to check
-     * @return true if payload indicates whether this is a primary value
+     * @param fieldInfo Lucene field to check
+     * @return true if it's a forward index field
      */
-    public static boolean hasPrimaryValueIndicator(LeafReaderContext context, String luceneFieldName) {
-        String strHasPrimaryValueIndicator1 = context.reader().getFieldInfos().fieldInfo(luceneFieldName)
-                .getAttribute(BLFA_FORWARD_INDEX);
-        boolean hasPrimaryValueIndicator = strHasPrimaryValueIndicator1 != null &&
-                strHasPrimaryValueIndicator1.equals("true");
-        return hasPrimaryValueIndicator;
+    public static boolean isForwardIndexField(FieldInfo fieldInfo) {
+        String v = fieldInfo.getAttribute(BLFA_FORWARD_INDEX);
+        return v != null && v.equals("true");
     }
+
+    /**
+     * Set this field type to be a forward index field
+     * @param type field type
+     */
+    public static void setForwardIndexField(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
+    }
+
+    /**
+     * Is the specified field a content store field?
+     *
+     * @param fieldInfo field to check
+     * @return true if it's a content store field
+     */
+    public static boolean isContentStoreField(FieldInfo fieldInfo) {
+        String v = fieldInfo.getAttribute(BLFA_CONTENT_STORE);
+        return v != null && v.equals("true");
+    }
+
+    /**
+     * Get the content store for an index segment.
+     *
+     * The returned content store should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the content store for.
+     * @return content store
+     */
+    public static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
+        return BlackLab40StoredFieldsReader.get(lrc).contentStore();
+    }
+
+    /**
+     * Get the forward index for an index segment.
+     *
+     * The returned forward index should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the forward index for.
+     * @return forward index
+     */
+    public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
+        return BlackLab40PostingsReader.get(lrc).forwardIndex();
+    }
+
+    /**
+     * Set this field type to be a content store field
+     * @param type field type
+     */
+    public static void setContentStoreFIeld(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
+    }
+
+    /** A list of stored fields that doesn't include content store fields. */
+    private Set<String> allExceptContentStoreFields;
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, config);
+        init();
     }
 
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+        init();
+    }
+
+    private void init() {
+        // Determine the list of all fields in the index, but skip fields that
+        // represent a content store as they contain very large values (i.e. the
+        // whole input document) we don't generally want returned when requesting
+        // a Document)
+        allExceptContentStoreFields = new HashSet<>();
+        for (LeafReaderContext lrc: reader().leaves()) {
+            for (FieldInfo fi: lrc.reader().getFieldInfos()) {
+                if (!isContentStoreField(fi))
+                    allExceptContentStoreFields.add(fi.name);
+            }
+        }
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
@@ -123,6 +201,31 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         builder.add(new MatchAllDocsQuery(), BooleanClause.Occur.SHOULD);
         builder.add(metadata().metadataDocQuery(), BooleanClause.Occur.MUST_NOT);
         return builder.build();
+    }
+
+    @Override
+    public Document luceneDoc(int docId, boolean includeContentStores) {
+        try {
+            if (includeContentStores) {
+                return reader().document(docId);
+            } else {
+                return reader().document(docId, allExceptContentStoreFields);
+            }
+        } catch (IOException e) {
+            throw new BlackLabRuntimeException(e);
+        }
+    }
+
+    @Override
+    public void delete(Query q) {
+        if (!indexMode())
+            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+        try {
+            logger.debug("Delete query: " + q);
+            indexWriter.deleteDocuments(q);
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 
 }

@@ -2,15 +2,13 @@ package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -53,7 +51,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     private final Terms terms;
 
     /** Index of segments by their doc base (the number to add to get global docId) */
-    private final Map<Integer, LeafReaderContext> leafReadersByDocBase = new TreeMap<>();
+    private final LeafReaderLookup leafReaderLookup;
 
     public AnnotationForwardIndexIntegrated(IndexReader indexReader, Annotation annotation, Collators collators) {
         super();
@@ -67,37 +65,14 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
         this.luceneField = annotSens.luceneField();
 
         // Ensure quick lookup of the segment we need
-        for (LeafReaderContext rc : indexReader.leaves()) {
-            leafReadersByDocBase.put(rc.docBase, rc);
-        }
+        leafReaderLookup = new LeafReaderLookup(indexReader);
+
         terms = new TermsIntegrated(collators, indexReader, luceneField);
     }
 
     @Override
     public void initialize() {
         // ...
-    }
-
-    /**
-     * Find the leafReader a given docId occurs in.
-     *
-     * @param docId (global) docId we're looking for
-     * @return matching leafReaderContext, which gives us the leaf reader and docBase
-     */
-    private LeafReaderContext getLeafReader(int docId) {
-        Entry<Integer, LeafReaderContext> prev = null;
-        for (Entry<Integer, LeafReaderContext> e : leafReadersByDocBase.entrySet()) {
-            Integer docBase = e.getKey();
-            if (docBase > docId) {
-                // Previous segment (the highest docBase lower than docId) is the right one
-                assert prev != null;
-                return prev.getValue();
-            }
-            prev = e;
-        }
-        // Last segment is the right one
-        assert prev != null;
-        return prev.getValue();
     }
 
     @Override
@@ -107,16 +82,16 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
 
     @Override
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
-        LeafReaderContext lrc = getLeafReader(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         List<int[]> segmentResults = fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
         return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
     }
 
     @Override
     public int docLength(int docId) {
-        LeafReaderContext lrc = getLeafReader(docId);
-        ForwardIndexSegmentReader fi = BlackLab40PostingsReader.get(lrc).forwardIndex();
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         return (int)fi.docLength(luceneField, docId - lrc.docBase);
     }
 

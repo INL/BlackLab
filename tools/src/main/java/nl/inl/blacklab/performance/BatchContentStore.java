@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.FileUtil;
@@ -66,7 +66,7 @@ public class BatchContentStore {
         }
 
         System.err.print("Opening content store... ");
-        ContentStore cs = ContentStore.open(indexDir, false, false);
+        ContentStoreExternal cs = ContentStoreExternal.open(indexDir, false, false);
         System.err.println("done. [#docs: " + cs.idSet().size() + "]");
 
         System.out.println("First\tNumber\tSkip\tSnippets\tTime");
@@ -108,7 +108,7 @@ public class BatchContentStore {
      * @param snippets number of random snippets to retrieve from each document
      * @return elapsed time in ms
      */
-    public static long doPerformanceTest(ContentStore cs, int first, int number,
+    public static long doPerformanceTest(ContentStoreExternal cs, int first, int number,
                                          int snippets) {
         int[] start = new int[snippets];
         int[] end = new int[snippets];

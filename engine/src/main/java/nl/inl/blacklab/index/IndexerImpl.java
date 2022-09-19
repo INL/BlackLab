@@ -31,10 +31,8 @@ import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.ContentAccessor;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
@@ -531,11 +529,11 @@ class IndexerImpl implements DocWriter, Indexer {
         if (contentAccessor == null)
             return null;
 
-        if (indexWriter instanceof BlackLabIndexIntegrated) {
-            // Make sure the existence of the content store is known in the metadata.
-            AnnotatedFieldImpl af = (AnnotatedFieldImpl) indexWriter.metadata().annotatedFields().get(fieldName);
-            af.setContentStore(true);
-        }
+//        if (indexWriter instanceof BlackLabIndexIntegrated) {
+//            // Make sure the existence of the content store is known in the metadata.
+//            AnnotatedFieldImpl af = (AnnotatedFieldImpl) indexWriter.metadata().annotatedFields().get(fieldName);
+//            af.setContentStore(true);
+//        }
 
         return contentAccessor.getContentStore();
     }

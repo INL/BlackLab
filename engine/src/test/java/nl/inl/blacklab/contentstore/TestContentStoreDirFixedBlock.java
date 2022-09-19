@@ -24,7 +24,7 @@ public class TestContentStoreDirFixedBlock {
     /** How many test operations to perform */
     private static final int OPERATIONS = 500;
     
-    private ContentStore store;
+    private ContentStoreExternal store;
 
     private File testDir;
 
@@ -197,7 +197,7 @@ public class TestContentStoreDirFixedBlock {
             return;
         try {
             store.close();
-            store = ContentStore.open(testDir, write, false);
+            store = ContentStoreExternal.open(testDir, write, false);
             currentlyWriteMode = write;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
