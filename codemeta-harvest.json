@@ -1,6 +1,4 @@
 {
-   "description": "[BlackLab](https://inl.github.io/BlackLab/) is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
-",    
     "targetProduct": [
         {
             "@type": "WebService",
@@ -16,9 +14,9 @@
         "name": "INT",
         "url": "https://www.ivdnt.org"
    },
-   {
-    "developmentStatus": "https://www.repostatus.org/#active"
-   },
+
+    "developmentStatus": "https://www.repostatus.org/#active",
+   
       "funding": {
         "@type": "Grant",
         "name": "CLARIAH-CORE",

@@ -9,20 +9,20 @@
     "@type": "SoftwareSourceCode",
     "author": [
         {
-            "@id": "/person/jan-niestadt",
-            "@type": "Person",
-            "email": "jan.niestadt@ivdnt.org",
-            "familyName": "Niestadt",
-            "givenName": "Jan",
-            "url": "https://github.com/jan-niestadt"
-        },
-        {
             "@id": "/person/koen-mertens",
             "@type": "Person",
             "email": "koen.mertens@ivdnt.org",
             "familyName": "Mertens",
             "givenName": "Koen",
             "url": "https://github.com/KCMertens"
+        },
+        {
+            "@id": "/person/jan-niestadt",
+            "@type": "Person",
+            "email": "jan.niestadt@ivdnt.org",
+            "familyName": "Niestadt",
+            "givenName": "Jan",
+            "url": "https://github.com/jan-niestadt"
         }
     ],
     "codeRepository": "https://github.com/INL/BlackLab",
@@ -43,15 +43,35 @@
         }
     ],
     "description": "The parent project for BlackLab Core and BlackLab Server.",
+    "developmentStatus": "https://www.repostatus.org/#active",
+    "funding": {
+        "@id": "/stub/Na27c933346204de191c73ee832c6b44b",
+        "@type": "Grant",
+        "funder": {
+            "@id": "/stub/Na212bbc065b9460287b883b01f9fec0e",
+            "@type": "Organization",
+            "name": "NWO",
+            "url": "https://www.nwo.nl"
+        },
+        "name": "CLARIAH-CORE"
+    },
     "identifier": "data",
     "issueTracker": "https://github.com/INL/BlackLab/issues",
     "license": "http://spdx.org/licenses/Apache-2.0",
     "name": "BlackLab Corpus Search",
-    "producer": {
-        "@id": "/org/instituut-voor-nederlandse-taal-(int)",
-        "name": "Instituut voor Nederlandse Taal (INT)",
-        "url": "https://www.ivdnt.org/"
-    },
+    "producer": [
+        {
+            "@id": "/stub/Ncefd68d873c648efa30ec66d7db970ca",
+            "@type": "Organization",
+            "name": "INT",
+            "url": "https://www.ivdnt.org"
+        },
+        {
+            "@id": "/org/instituut-voor-nederlandse-taal-(int)",
+            "name": "Instituut voor Nederlandse Taal (INT)",
+            "url": "https://www.ivdnt.org/"
+        }
+    ],
     "programmingLanguage": "Java",
     "readme": "/blob/README.md",
     "runtimePlatform": "Java",
@@ -110,6 +130,18 @@
             "identifier": "org.mockito.mockito-core",
             "name": "mockito-core",
             "version": "4.5.0"
+        }
+    ],
+    "targetProduct": [
+        {
+            "@id": "/stub/N831305de02404922a04f808d016ce8cf",
+            "@type": "WebService",
+            "name": "BlackLab Server"
+        },
+        {
+            "@id": "/stub/N06e360e1a45d4d5f9a239985ddff3249",
+            "@type": "SoftwareLibrary",
+            "name": "Blacklab Core"
         }
     ],
     "version": "4.0.0-SNAPSHOT"
