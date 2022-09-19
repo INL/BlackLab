@@ -1,0 +1,116 @@
+{
+    "@context": [
+        "https://raw.githubusercontent.com/codemeta/codemeta/2.0/codemeta.jsonld",
+        "https://w3id.org/software-iodata",
+        "https://raw.githubusercontent.com/schemaorg/schemaorg/main/data/releases/13.0/schemaorgcontext.jsonld",
+        "https://w3id.org/software-types"
+    ],
+    "@id": "https://github.com/INL/BlackLab",
+    "@type": "SoftwareSourceCode",
+    "author": [
+        {
+            "@id": "/person/jan-niestadt",
+            "@type": "Person",
+            "email": "jan.niestadt@ivdnt.org",
+            "familyName": "Niestadt",
+            "givenName": "Jan",
+            "url": "https://github.com/jan-niestadt"
+        },
+        {
+            "@id": "/person/koen-mertens",
+            "@type": "Person",
+            "email": "koen.mertens@ivdnt.org",
+            "familyName": "Mertens",
+            "givenName": "Koen",
+            "url": "https://github.com/KCMertens"
+        }
+    ],
+    "codeRepository": "https://github.com/INL/BlackLab",
+    "contributor": [
+        {
+            "@id": "/person/eduard-drenth",
+            "@type": "Person",
+            "email": "edrenth@fryske-akademy.nl",
+            "familyName": "Drenth",
+            "givenName": "Eduard"
+        },
+        {
+            "@id": "/person/jesse-de-does",
+            "@type": "Person",
+            "email": "jesse.dedoes@ivdnt.org",
+            "familyName": "de Does",
+            "givenName": "Jesse"
+        }
+    ],
+    "description": "The parent project for BlackLab Core and BlackLab Server.",
+    "identifier": "data",
+    "issueTracker": "https://github.com/INL/BlackLab/issues",
+    "license": "http://spdx.org/licenses/Apache-2.0",
+    "name": "BlackLab Corpus Search",
+    "producer": {
+        "@id": "/org/instituut-voor-nederlandse-taal-(int)",
+        "name": "Instituut voor Nederlandse Taal (INT)",
+        "url": "https://www.ivdnt.org/"
+    },
+    "programmingLanguage": "Java",
+    "readme": "/blob/README.md",
+    "runtimePlatform": "Java",
+    "softwareRequirements": [
+        {
+            "@id": "/dependency/org.apache.commons.commons-compress.1.21",
+            "@type": "SoftwareApplication",
+            "identifier": "org.apache.commons.commons-compress",
+            "name": "commons-compress",
+            "version": "1.21"
+        },
+        {
+            "@id": "/dependency/org.apache.commons.commons-csv.1.9.0",
+            "@type": "SoftwareApplication",
+            "identifier": "org.apache.commons.commons-csv",
+            "name": "commons-csv",
+            "version": "1.9.0"
+        },
+        {
+            "@id": "/dependency/commons-io.commons-io.2.11.0",
+            "@type": "SoftwareApplication",
+            "identifier": "commons-io.commons-io",
+            "name": "commons-io",
+            "version": "2.11.0"
+        },
+        {
+            "@id": "/dependency/org.apache.commons.commons-lang3.3.12.0",
+            "@type": "SoftwareApplication",
+            "identifier": "org.apache.commons.commons-lang3",
+            "name": "commons-lang3",
+            "version": "3.12.0"
+        },
+        {
+            "@id": "/dependency/org.apache.commons.commons-text.1.9",
+            "@type": "SoftwareApplication",
+            "identifier": "org.apache.commons.commons-text",
+            "name": "commons-text",
+            "version": "1.9"
+        },
+        {
+            "@id": "/dependency/junit.junit.4.13.2",
+            "@type": "SoftwareApplication",
+            "identifier": "junit.junit",
+            "name": "junit",
+            "version": "4.13.2"
+        },
+        {
+            "@id": "/dependency/org.apache.logging.log4j.log4j-core.",
+            "@type": "SoftwareApplication",
+            "identifier": "org.apache.logging.log4j.log4j-core",
+            "name": "log4j-core"
+        },
+        {
+            "@id": "/dependency/org.mockito.mockito-core.4.5.0",
+            "@type": "SoftwareApplication",
+            "identifier": "org.mockito.mockito-core",
+            "name": "mockito-core",
+            "version": "4.5.0"
+        }
+    ],
+    "version": "4.0.0-SNAPSHOT"
+}
