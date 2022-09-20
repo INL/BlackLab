@@ -168,6 +168,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             Map<String, String> param = step.getParam();
             switch (method) {
             case "replace":
+                if (param.getOrDefault("keep", "replaced").equals("all"))
+                    warn("'replace' processing step with 'keep: all', but multiple values not allowed");
                 result = opReplace(result, param);
                 break;
             case "default":

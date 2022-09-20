@@ -834,7 +834,7 @@ metadata:
 
 These are all the available generic processing steps:
 
-- `replace(find, replace)`: do a regex search for 'find' and replace each match with 'replace'. Group references may be used. An optional parameter `keep` can be set to `all` to keep both  the original strings and the results after applying the replace operation.
+- `replace(find, replace)`: do a regex search for 'find' and replace each match with 'replace'. Group references may be used. An optional parameter `keep` can be set to `all` to keep both  the original strings and the results after applying the replace operation (annotation must have `multipleValues: true` for this to work).
 - `default(value)` or `default(field)`: if the field is empty, set its value to either the specified value or the value of the specified field. If you refer to a field, make sure it is defined before this field (fields are processed in order).
 - `append(value)` or `append(field)`: append the specified value or the value of the specified field, using a space as the separator character. You may also specify a different `separator` is you wish, including the empty string (`""`).
 - `split(separator, keep)`: split the field's value on the given separator and keep only the part indicated by keep (a 1-based integer). If `keep` is omitted, keep the first part. If `separator` is omitted, use `;`.  
