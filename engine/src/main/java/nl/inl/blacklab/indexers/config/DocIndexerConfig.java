@@ -289,8 +289,19 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
             switch (method) {
             case "replace":
+                // keep only replaced strings, or originals as well?
+                boolean keepAll = param.getOrDefault("keep", "replaced").equals("all");
                 for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opReplace(result.get(i), param));
+                    String afterReplace = opReplace(result.get(i), param);
+                    if (keepAll) {
+                        // We want to keep the original and add the result as well.
+                        // Note that we insert it after the original to keep things in a nice order.
+                        result.add(i + 1, afterReplace);
+                        i++;
+                    } else {
+                        // Replace the original version with the result.
+                        result.set(i, afterReplace);
+                    }
                 }
                 break;
             case "default":
