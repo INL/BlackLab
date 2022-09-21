@@ -1,6 +1,7 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,9 +40,14 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
 
+    /** Classic external index format */
     private static TestIndex testIndexExternal;
 
+    /** Integrated index format */
     private static TestIndex testIndexIntegrated;
+
+    /** External, pre-indexed (to test that we don't accidentally break file compatibility). */
+    private static TestIndex testIndexExternalPre;
 
     public static TestIndex get() {
         return get(null);
@@ -49,6 +55,21 @@ public class TestIndex {
 
     public static TestIndex get(IndexType indexType) {
         return new TestIndex(false, indexType);
+    }
+
+    private synchronized static TestIndex getPreindexed(IndexType indexType) {
+        if (indexType == IndexType.INTEGRATED)
+            throw new UnsupportedOperationException("Integrated index still in development, no preindexed version!");
+        if (testIndexExternalPre == null) {
+            String strType = indexType == IndexType.EXTERNAL_FILES ? "external" : "integrated";
+            try {
+                File indexDir = new File(TestIndex.class.getResource("/test-index-" + strType).toURI());
+                testIndexExternalPre = new TestIndex(indexDir);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return testIndexExternalPre;
     }
 
     public synchronized static TestIndex getReusable(IndexType indexType) {
@@ -73,6 +94,7 @@ public class TestIndex {
 
     public static Collection<TestIndex> typesForTests() {
         return List.of(
+                getPreindexed(BlackLabIndex.IndexType.EXTERNAL_FILES),
                 getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
                 getReusable(BlackLabIndex.IndexType.INTEGRATED)
         );
@@ -156,12 +178,26 @@ public class TestIndex {
 
     private final File indexDir;
 
+    private final boolean deleteAfterTest;
+
     private final Annotation word;
+
+    private TestIndex(File indexDir) {
+        this.indexDir = indexDir;
+        this.deleteAfterTest = false;
+        try {
+            index = BlackLab.open(indexDir);
+            word = index.mainAnnotatedField().annotation("word");
+        } catch (ErrorOpeningIndex e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private TestIndex(boolean testDelete, IndexType indexType) {
 
         // Get a temporary directory for our test index
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
+        this.deleteAfterTest = true;
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
@@ -201,7 +237,7 @@ public class TestIndex {
 
     @Override
     public String toString() {
-        return indexFormat().toString();
+        return (deleteAfterTest ? "" : "PREINDEXED ") + indexFormat().toString();
     }
 
     public BlackLabIndex index() {
@@ -211,7 +247,9 @@ public class TestIndex {
     public void close() {
         if (index != null)
             index.close();
-        FileUtil.deleteTree(indexDir);
+        if (deleteAfterTest && indexDir.getName().startsWith(UtilsForTesting.TEST_DIR_PREFIX)) {
+            FileUtil.deleteTree(indexDir);
+        }
     }
 
     /**

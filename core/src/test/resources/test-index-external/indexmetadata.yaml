@@ -1,0 +1,107 @@
+---
+displayName: "BlackLabTest_TestIndex_0e96eb9f-7af6-41e1-89ba-c304b7b354a7"
+description: ""
+contentViewable: false
+textDirection: "ltr"
+documentFormat: "testformat"
+tokenCount: 37
+versionInfo:
+  blackLabBuildTime: "UNKNOWN"
+  blackLabVersion: "UNKNOWN"
+  indexFormat: "3.1"
+  timeCreated: "2022-09-21 14:26:35"
+  timeModified: "2022-09-21 14:26:35"
+  alwaysAddClosingToken: true
+  tagLengthInPayload: true
+fieldInfo:
+  namingScheme: "DEFAULT"
+  defaultAnalyzer: "DEFAULT"
+  unknownCondition: "never"
+  unknownValue: "unknown"
+  titleField: "fromInputFile"
+  metadataFieldGroups: []
+  annotationGroups: {}
+  metadataFields:
+    fromInputFile:
+      displayName: "From input file"
+      uiType: ""
+      description: ""
+      type: "untokenized"
+      analyzer: "DEFAULT"
+      unknownValue: "unknown"
+      unknownCondition: "NEVER"
+      valueListComplete: true
+      values:
+        test4: 1
+        test2: 1
+        test3: 1
+        test1: 1
+      displayValues: {}
+      displayOrder: []
+    pid:
+      displayName: "Pid"
+      uiType: ""
+      description: ""
+      type: "tokenized"
+      analyzer: "DEFAULT"
+      unknownValue: "unknown"
+      unknownCondition: "NEVER"
+      valueListComplete: true
+      values:
+        "0": 1
+        "1": 1
+        "2": 1
+        "3": 1
+      displayValues: {}
+      displayOrder: []
+    title:
+      displayName: "Title"
+      uiType: ""
+      description: ""
+      type: "tokenized"
+      analyzer: "DEFAULT"
+      unknownValue: "unknown"
+      unknownCondition: "NEVER"
+      valueListComplete: true
+      values:
+        Star Wars: 1
+        Pangram: 1
+        Learning words: 1
+        Bastardized Shakespeare: 1
+      displayValues: {}
+      displayOrder: []
+  complexFields:
+    contents:
+      displayName: "Contents"
+      description: "Contents of the documents."
+      mainProperty: "word"
+      displayOrder:
+      - "word"
+      - "lemma"
+      - "pos"
+      annotations:
+      - name: "word"
+        displayName: "Word"
+        description: ""
+        uiType: ""
+        isInternal: false
+      - name: "lemma"
+        displayName: "Lemma"
+        description: ""
+        uiType: ""
+        isInternal: false
+      - name: "pos"
+        displayName: "PoS"
+        description: ""
+        uiType: ""
+        isInternal: false
+      - name: "starttag"
+        displayName: "Starttag"
+        description: ""
+        uiType: ""
+        isInternal: true
+      - name: "punct"
+        displayName: "Punct"
+        description: ""
+        uiType: ""
+        isInternal: true

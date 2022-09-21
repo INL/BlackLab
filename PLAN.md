@@ -14,11 +14,8 @@ Integrating with Solr will involve the following steps.
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
 ## Improve testing
- 
-### Integration tests
 
-- [ ] Test that file formats remain unchanged, by including small already-indexed corpora for both supported index formats in the repo and test those.
-
+- [ ] Remove old test indexes (use a marker file REMOVE_THIS.txt so we can recognize them). Don't remove any indexes that may be currently in use, only ones that are e.g. at least 10 hours old?
 
 ## Incorporate all information into the Lucene index
 
@@ -26,18 +23,8 @@ Integrating with Solr will involve the following steps.
 
 - [ ] metadata may change during indexing after all? no more undeclared metadata field warning? OTOH, changing metadata as documents are added to the index would be tricky in distributed env... You should probably check for metadata document updates semi-regularly, and keep more critical information in field attributes.
 
-Where we take the metadata document into account:
-- whenever we iterate over all documents to do something (BlackLabIndex.forEachDocument explicitly skips metadata document)
-- DocValues (metadata doc just won't have a value for any of the fields)
-- SpansNGrams, SpansNot (use lengthgetter which returns 0 if annotated field is not in document)
-- HitsFromQuery[Parallel] (only if one of the Spans could potentially produce the metadata document as hit, which they shouldn't)
-- anywhere where `liveDocs` is used (checked, see some the above)
-- anywhere where `MatchAllDocsQuery` is used (replaced with BlackLabIndex.getAllRealDocsQuery())
-
-
 ### Forward index
 
-- [ ] ForwardIndexAccessorLeafReader: implement per-segment terms class (or as part of ForwardIndexSegmentReader). Use same approach as global terms when comparing insensitively.
 - [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
   Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
  (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
@@ -45,7 +32,6 @@ Where we take the metadata document into account:
 - [ ] check the maximum token id in each document. If less than 256, use a single byte per token, two bytes if less than 16384, etc. Store this number of bytes per token as a parameter for the tokens codec.
 - [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
 - [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
-- [ ] Retrieving a Lucene doc will read all stored fields by default, but we don't want that with (potentially large) content store fields. We can make visitDocument skip content store fields, but only if we also make a cusotm merge function that doesn't rely on this. In the long run, we should do this for performance reasons. Until then, we should be careful that we specify which fields we want to read when retrieving a document.
 
 ### Content store
 
@@ -56,14 +42,16 @@ LATER?
 
 ## Refactoring opportunities
 
-- [ ] In general:
+- [ ] Tasks:
+    - [ ] search for uses of `instanceof`; usually a smell of bad design
+          (but allowable for legacy exceptions that will go away eventually)
+    - [ ] addToForwardIndex shouldn't be a separate method in DocIndexers and Indexer; there should be an addDocument method that adds the document to all parts of the BlackLab index.
+    - [ ] Don't rely on BlackLab.defaultConfigDirs() in multiple places.
+      Specifically DocIndexerFactoryConfig: this should use an option from blacklab(-server).yaml,
+      with a sane default. Remove stuff like /vol1/... and /tmp/ from default config dirs.
+- [ ] Principles:
   - [ ] refactor for looser coupling / improved testability.
   - [ ] Use more clean interfaces instead of abstract classes for external API.
-  - [ ] search for uses of `instanceof`; usually a smell of bad design
-- [ ] addToForwardIndex shouldn't be a separate method in DocIndexers and Indexer; there should be an addDocument method that adds the document to all parts of the BlackLab index.
-- [ ] Don't rely on BlackLab.defaultConfigDirs() in multiple places.
-      Specifically DocIndexerFactoryConfig: this should use an option from blacklab(-server).yaml, 
-      with a sane default. Remove stuff like /vol1/... and /tmp/ from default config dirs.
 
 ## Optimization opportunities
 
@@ -73,8 +61,7 @@ Because this is a completely new index format, we are free to change its layout 
 
 - [ ] ForwardIndexDocumentImpl does a lot of work (e.g. filling chunks list with a lot of nulls), but it regularly used to only read 1-2 tokens from a document; is it worth it at all? Could we use a more efficient implementation?
 - [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil
-- [ ] `TermsIntegrated` doesn't read the terms files we wrote but gets the terms using `TermsEnum` from Lucene. It seems good not to store the terms twice (once by Lucene and once by us), but this does mean we can't use memory-mapped random access to the term strings. So switching to our own terms file might be necessary.
-- [ ] Investigate if there is a more efficient way to read from Lucene's `IndexInput` than calling `readInt()` etc. repeatedly. How does Lucene read larger blocks of data from its files?
+- [ ] Investigate if there is a more efficient way to read from Lucene's `IndexInput` than calling `readInt()` etc. repeatedly. How does Lucene read larger blocks of data from its files? (you can read/write blocks of bytes, but then you're responsible for endianness-issues)
 - [ ] Interesting (if old) [article](https://blog.thetaphi.de/2012/07/use-lucenes-mmapdirectory-on-64bit.html) about Lucene and memory-mapping. Recommends 1/4 of physical memory should be Java heap, rest for OS cache. Use `iotop` to check how much I/O swapping is occurring.
 - [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
 

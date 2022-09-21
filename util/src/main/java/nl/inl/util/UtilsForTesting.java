@@ -8,6 +8,8 @@ import java.util.UUID;
  */
 public final class UtilsForTesting {
 
+    public static final String TEST_DIR_PREFIX = "BlackLabTest_";
+
     private UtilsForTesting() {
     }
 
@@ -23,7 +25,7 @@ public final class UtilsForTesting {
      */
     public static File createBlackLabTestDir(String name) {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File file = new File(tempDir, "BlackLabTest_" + name + "_" + UUID.randomUUID());
+        File file = new File(tempDir, TEST_DIR_PREFIX + name + "_" + UUID.randomUUID());
         file.mkdir();
         return file;
     }
