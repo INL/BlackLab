@@ -1,36 +1,41 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestSearchesNfa {
 
-    static TestIndex testIndex;
-
-    /**
-     * Expected search results;
-     */
-    List<String> expected;
-
-    @BeforeClass
-    public static void setUp() {
-        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
-        testIndex = TestIndex.get();
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<TestIndex> typeToUse() {
+        return TestIndex.typesForTests();
     }
 
-    @AfterClass
-    public static void tearDown() {
-        if (testIndex != null)
-            testIndex.close();
+    @Parameterized.Parameter
+    public TestIndex testIndex;
+
+    /** Expected search results; */
+    List<String> expected;
+
+    @Before
+    public void setUp() {
+        ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
+    }
+
+    @After
+    public void tearDown() {
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.defaultForwardIndexMatchingThreshold);
     }
 
@@ -124,12 +129,6 @@ public class TestSearchesNfa {
         Assert.assertEquals(expected, testIndex.findConc(" 'May' []+ 'Force' "));
     }
 
-//	@Test
-//	public void testRelativeFreqs1() {
-//		expected = Arrays.asList("aap [noot mier aap] noot");
-//		Assert.assertEquals(expected, testIndex.findConc(" 'noot' 'mier' 'aap' "));
-//	}
-
     @Test
     public void testRelativeFreqs2() {
         expected = List.of("[noot mier aap] mier");
@@ -153,12 +152,5 @@ public class TestSearchesNfa {
         expected = List.of("mier [mier noot noot aap] aap");
         Assert.assertEquals(expected, testIndex.findConc("'mier' [word != 'aap|mier']+ 'aap'"));
     }
-
-//
-//	@Test
-//	public void testRelativeFreqs3() {
-//		expected = Arrays.asList("noot [mier aap noot] aap");
-//		Assert.assertEquals(expected, testIndex.findConc(" 'mier' 'aap' 'noot' "));
-//	}
 
 }

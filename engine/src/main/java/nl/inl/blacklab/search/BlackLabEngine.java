@@ -43,7 +43,7 @@ public final class BlackLabEngine implements AutoCloseable {
     private static final Map<IndexReader, BlackLabEngine> indexReader2BlackLabEngine = new IdentityHashMap<>();
 
     /** Close all opened engines */
-    static void closeAll() {
+    static synchronized void closeAll() {
         List<BlackLabEngine> copy = new ArrayList<>(engines);
         engines.clear();
         for (BlackLabEngine engine : copy) {
@@ -209,14 +209,17 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         if (wasClosed)
             return;
         wasClosed = true;
         closeExecutorPool(searchExecutorService);
         closeExecutorPool(initializationExecutorService);
-        for (BlackLabIndex index: indexReader2BlackLabIndex.values()) {
-            index.close();
+        synchronized (indexReader2BlackLabIndex) {
+            List<BlackLabIndex> copy = new ArrayList<>(indexReader2BlackLabIndex.values()); // avoid concurrent mod.
+            for (BlackLabIndex index: copy) {
+                index.close();
+            }
         }
         synchronized (engines) {
             engines.remove(this);
@@ -378,7 +381,7 @@ public final class BlackLabEngine implements AutoCloseable {
         return searchExecutorService;
     }
 
-    BlackLabIndex getIndexFromReader(IndexReader reader) {
+    synchronized BlackLabIndex getIndexFromReader(IndexReader reader) {
         return indexReader2BlackLabIndex.get(reader);
     }
 

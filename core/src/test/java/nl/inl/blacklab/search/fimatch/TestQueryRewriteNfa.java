@@ -1,9 +1,13 @@
 package nl.inl.blacklab.search.fimatch;
 
-import org.junit.AfterClass;
+import java.util.Collection;
+
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -16,28 +20,30 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestQueryRewriteNfa {
 
-    static TestIndex testIndex;
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<TestIndex> typeToUse() {
+        return TestIndex.typesForTests();
+    }
 
-    private static BlackLabIndex index;
+    @Parameterized.Parameter
+    public TestIndex testIndex;
 
-    @BeforeClass
-    public static void setUp() {
-        testIndex = TestIndex.get();
+    private BlackLabIndex index;
+
+    @Before
+    public void setUp() {
         index = testIndex.index();
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.MAX_NFA_MATCHING);
         ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(false);
     }
 
-    @AfterClass
-    public static void tearDown() {
+    @After
+    public void tearDown() {
         ClauseCombinerNfa.setOnlyUseNfaForManyUniqueTerms(true);
         ClauseCombinerNfa.setNfaThreshold(ClauseCombinerNfa.defaultForwardIndexMatchingThreshold);
-        if (index != null)
-            index.close();
-        if (testIndex != null)
-            testIndex.close();
     }
 
     static TextPattern getPatternFromCql(String cqlQuery) {
@@ -47,10 +53,6 @@ public class TestQueryRewriteNfa {
         } catch (InvalidQuery e) {
             throw BlackLabRuntimeException.wrap(e);
         }
-    }
-
-    void assertNoRewrite(String cql, String result) {
-        assertRewrite(cql, result, result);
     }
 
     void assertRewrite(String cql, String before, String after) {

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,10 +11,10 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -22,7 +23,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -32,30 +32,21 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestSearches {
 
-    static TestIndex testIndex;
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<TestIndex> typeToUse() {
+        return TestIndex.typesForTests();
+    }
+
+    @Parameterized.Parameter
+    public TestIndex testIndex;
 
     /**
      * Expected search results;
      */
     List<String> expected;
-
-    @Before
-    public void setUp() {
-        if (testIndex == null)
-            testIndex = TestIndex.get(indexType());
-    }
-
-    IndexType indexType()  { return IndexType.EXTERNAL_FILES; }
-
-    @AfterClass
-    public static void tearDown() {
-        if (testIndex != null) {
-            testIndex.close();
-            testIndex = null;
-        }
-    }
 
     @Test
     public void testSimple() {
@@ -467,7 +458,7 @@ public class TestSearches {
         // Check that the number is correct (e.g. metadata document is not matched)
         Assert.assertEquals(4, allDocs.size());
 
-        // Check that all pids are there
+        // Check that all pids and titles are there
         Set<String> pids = new HashSet<>();
         Set<String> titles = new HashSet<>();
         for (DocResult d: allDocs) {

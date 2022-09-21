@@ -92,8 +92,8 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
                 "chat", "cmdi", "csv",
                 "eaf", "folia", "naf", "sketch-wpl",
                 "tcf", "tei-p5", "tei-p4-legacy",
-                "tei-p5-legacy", "tsv-frog", "tsv",
-                "txt" };
+                "tei-p5-legacy", "testformat", "tsv-frog",
+                "tsv", "txt" };
         for (String formatIdentifier : formats) {
             String fileNameRelative = "formats/" + formatIdentifier + ".blf.yaml";
             try (InputStream is = DocumentFormats.class.getClassLoader()

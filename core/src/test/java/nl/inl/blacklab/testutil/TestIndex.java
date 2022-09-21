@@ -1,7 +1,9 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,16 +15,15 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.mocks.DocIndexerTest;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
+import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -39,6 +40,15 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
 
+    /** Classic external index format */
+    private static TestIndex testIndexExternal;
+
+    /** Integrated index format */
+    private static TestIndex testIndexIntegrated;
+
+    /** External, pre-indexed (to test that we don't accidentally break file compatibility). */
+    private static TestIndex testIndexExternalPre;
+
     public static TestIndex get() {
         return get(null);
     }
@@ -47,12 +57,47 @@ public class TestIndex {
         return new TestIndex(false, indexType);
     }
 
-    public static TestIndex getWithTestDelete() {
-        return getWithTestDelete(null);
+    private synchronized static TestIndex getPreindexed(IndexType indexType) {
+        if (indexType == IndexType.INTEGRATED)
+            throw new UnsupportedOperationException("Integrated index still in development, no preindexed version!");
+        if (testIndexExternalPre == null) {
+            String strType = indexType == IndexType.EXTERNAL_FILES ? "external" : "integrated";
+            try {
+                File indexDir = new File(TestIndex.class.getResource("/test-index-" + strType).toURI());
+                testIndexExternalPre = new TestIndex(indexDir);
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return testIndexExternalPre;
+    }
+
+    public synchronized static TestIndex getReusable(IndexType indexType) {
+        if (testIndexExternal == null) {
+            // Instantiate reusable testindexes
+            testIndexExternal = new TestIndex(false, IndexType.EXTERNAL_FILES);
+            testIndexIntegrated = new TestIndex(false, IndexType.INTEGRATED);
+            // Make sure files are cleaned up at the end
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                testIndexExternal.close();
+                testIndexIntegrated.close();
+            }));
+        }
+        if (indexType == null)
+            indexType = BlackLab.implicitInstance().getDefaultIndexType();
+        return indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
     }
 
     public static TestIndex getWithTestDelete(IndexType indexType) {
         return new TestIndex(true, indexType);
+    }
+
+    public static Collection<TestIndex> typesForTests() {
+        return List.of(
+                getPreindexed(BlackLabIndex.IndexType.EXTERNAL_FILES),
+                getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
+                getReusable(BlackLabIndex.IndexType.INTEGRATED)
+        );
     }
 
     private static final class IndexListenerAbortOnError extends IndexListener {
@@ -69,7 +114,7 @@ public class TestIndex {
     /**
      * Some test XML data to index.
      */
-    final static String[] TEST_DATA = {
+    public static final String[] TEST_DATA = {
             // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
             // All values will be searchable in the reverse index, but only the first will be stored in the
             // forward index.
@@ -133,19 +178,28 @@ public class TestIndex {
 
     private final File indexDir;
 
+    private final boolean deleteAfterTest;
+
     private final Annotation word;
 
-    private TestIndex(IndexType indexType) {
-        this(false, indexType);
+    private TestIndex(File indexDir) {
+        this.indexDir = indexDir;
+        this.deleteAfterTest = false;
+        try {
+            index = BlackLab.open(indexDir);
+            word = index.mainAnnotatedField().annotation("word");
+        } catch (ErrorOpeningIndex e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private TestIndex(boolean testDelete, IndexType indexType) {
 
         // Get a temporary directory for our test index
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
+        this.deleteAfterTest = true;
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
-        DocumentFormats.registerFormat(testFormat, DocIndexerTest.class);
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
             Indexer indexer = Indexer.get(indexWriter);
@@ -177,6 +231,15 @@ public class TestIndex {
         }
     }
 
+    public IndexType indexFormat() {
+        return index instanceof BlackLabIndexExternal ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
+    }
+
+    @Override
+    public String toString() {
+        return (deleteAfterTest ? "" : "PREINDEXED ") + indexFormat().toString();
+    }
+
     public BlackLabIndex index() {
         return index;
     }
@@ -184,7 +247,9 @@ public class TestIndex {
     public void close() {
         if (index != null)
             index.close();
-        FileUtil.deleteTree(indexDir);
+        if (deleteAfterTest && indexDir.getName().startsWith(UtilsForTesting.TEST_DIR_PREFIX)) {
+            FileUtil.deleteTree(indexDir);
+        }
     }
 
     /**

@@ -16,22 +16,21 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class TestContentStoreBlockCodec {
 
-    @Parameters
-    public static Collection<Integer> data() {
+    @Parameters(name = "codec #{0}")
+    public static Collection<Integer> codecToUse() {
         return List.of(0, 1);
     }
 
-    int blockCodecCode;
+    /** Code of the codec to use */
+    @Parameterized.Parameter
+    public int blockCodecCode;
 
+    /** Codec to use */
     ContentStoreBlockCodec blockCodec;
 
     private ContentStoreBlockCodec.Encoder encoder;
 
     private ContentStoreBlockCodec.Decoder decoder;
-
-    public TestContentStoreBlockCodec(Integer blockCodecCode) {
-        this.blockCodecCode = blockCodecCode;
-    }
 
     @Before
     public void setUp() {

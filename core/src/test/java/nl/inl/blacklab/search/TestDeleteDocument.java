@@ -1,18 +1,37 @@
 package nl.inl.blacklab.search;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestDeleteDocument {
 
-    static TestIndex testIndex;
+    static TestIndex testIndexExternal;
+
+    static TestIndex testIndexIntegrated;
+
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<BlackLabIndex.IndexType> typeToUse() {
+        // FIXME: re-enable tests with IndexType.INTEGRATED when the issue with term ids has been solved
+        //        (should be the case in branch speedup-terms-integrated, which will be merged soon)
+        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES /*, BlackLabIndex.IndexType.INTEGRATED*/);
+    }
+
+    @Parameterized.Parameter
+    public BlackLabIndex.IndexType indexType;
+
+    TestIndex testIndex;
 
     /**
      * Expected search results;
@@ -20,14 +39,20 @@ public class TestDeleteDocument {
     List<String> expected;
 
     @BeforeClass
-    public static void setUp() {
-        testIndex = TestIndex.getWithTestDelete();
+    public static void setUpClass() {
+        testIndexExternal = TestIndex.getWithTestDelete(BlackLabIndex.IndexType.EXTERNAL_FILES);
+        testIndexIntegrated = TestIndex.getWithTestDelete(BlackLabIndex.IndexType.INTEGRATED);
     }
 
     @AfterClass
-    public static void tearDown() {
-        if (testIndex != null)
-            testIndex.close();
+    public static void tearDownClass() {
+        testIndexExternal.close();
+        testIndexIntegrated.close();
+    }
+
+    @Before
+    public void setUp() {
+        testIndex = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
     }
 
     @Test
