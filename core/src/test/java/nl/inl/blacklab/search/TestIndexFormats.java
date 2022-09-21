@@ -211,7 +211,7 @@ public class TestIndexFormats {
             Assert.assertEquals(4, substrings.length);
             for (int j = 0; j < substrings.length; j++) {
                 int a = start[j], b = end[j];
-                String docContents = expectedDocContents(i);
+                String docContents = TestIndex.TEST_DATA[i];
                 if (b < 0)
                     b = docContents.length();
                 String expected = docContents.substring(a, b);
@@ -220,19 +220,4 @@ public class TestIndexFormats {
         }
     }
 
-    /**
-     * Return the document as we expect to get it back from the content store.
-     * (indexing currently reconstructs the document, changing minor
-     * things like quotes and whitespace)
-     *
-     * @param i test document index
-     * @return expected contents
-     */
-    private String expectedDocContents(int i) {
-        String docContents = TestIndex.TEST_DATA[i];
-        docContents = docContents.replaceAll("'", "\"");
-        docContents = docContents.replaceAll("\\s+", " ");
-        docContents = docContents.replaceAll("\" >", "\">");
-        return docContents;
-    }
 }

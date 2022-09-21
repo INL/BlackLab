@@ -14,11 +14,6 @@ Integrating with Solr will involve the following steps.
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
 ## Improve testing
-
-### Unit tests
-
-- [ ] Run more of the unit test suites on both the classic and the integrated index format. See e.g. TestSearches.
-- [ ] Make sure (basic) config-based indexing is unit tested too.
  
 ### Integration tests
 

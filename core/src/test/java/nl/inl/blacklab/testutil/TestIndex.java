@@ -14,10 +14,8 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.mocks.DocIndexerTest;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -166,7 +164,6 @@ public class TestIndex {
         indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
-        DocumentFormats.registerFormat(testFormat, DocIndexerTest.class);
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
             Indexer indexer = Indexer.get(indexWriter);
