@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -78,6 +79,14 @@ public class TestSearches {
         expected = List.of("May [the] Force");
         int docId = testIndex.getDocIdForDocNumber(2);
         Assert.assertEquals(expected, testIndex.findConc(" 'the' ", new SingleDocIdFilter(docId)));
+    }
+
+    @Test
+    public void testSimpleTitleFilter() {
+        expected = List.of("May [the] Force");
+        // metadata is tokenized and lowercased by default
+        Query filter = new TermQuery(new Term("title", "star"));
+        Assert.assertEquals(expected, testIndex.findConc(" 'the' ", filter));
     }
 
     @Test

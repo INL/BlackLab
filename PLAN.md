@@ -29,7 +29,6 @@ Integrating with Solr will involve the following steps.
 
 ### Metadata
 
-- [ ] unit tests should also test fetching document metadata. Give TestIndex some metadata and write a simple test for it.
 - [ ] QueryTool: enter command `filter *:*`, then command `docs`. The index metadata document is not skipped. ideally, there should be a guarantee that DocResults cannot include the metadata document.
 - [ ] metadata may change during indexing after all? no more undeclared metadata field warning? OTOH, changing metadata as documents are added to the index would be tricky in distributed env... You should probably check for metadata document updates semi-regularly, and keep more critical information in field attributes.
 
