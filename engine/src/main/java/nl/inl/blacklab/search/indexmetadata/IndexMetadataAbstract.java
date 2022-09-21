@@ -136,7 +136,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
-    private boolean frozen;
+    private FreezeStatus frozen = new FreezeStatus();
 
     public IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
@@ -1130,15 +1130,18 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     @Override
-    public void freeze() {
-        this.frozen = true;
-        annotatedFields.freeze();
-        metadataFields.freeze();
+    public boolean freeze() {
+        boolean b = frozen.freeze();
+        if (b) {
+            annotatedFields.freeze();
+            metadataFields.freeze();
+        }
+        return b;
     }
 
     @Override
     public boolean isFrozen() {
-        return this.frozen;
+        return frozen.isFrozen();
     }
 
     protected void detectMainAnnotation(IndexReader reader) {

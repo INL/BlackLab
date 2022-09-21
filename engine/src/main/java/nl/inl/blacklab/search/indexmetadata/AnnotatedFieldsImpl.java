@@ -21,7 +21,7 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public final class AnnotatedFieldsImpl implements AnnotatedFields {
+public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
     /** The annotated fields in our index */
     @JsonProperty("fields")
@@ -43,6 +43,10 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields {
 
     @XmlTransient
     private CustomPropsMap topLevelCustom;
+
+    /** Frozen or not? */
+    @XmlTransient
+    FreezeStatus freezeStatus = new FreezeStatus();
 
     public AnnotatedFieldsImpl() {
         annotatedFields = new TreeMap<>();
@@ -86,8 +90,16 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields {
         return annotatedFields.containsKey(fieldName);
     }
 
-    public void freeze() {
-        annotatedFields.values().forEach(AnnotatedFieldImpl::freeze);
+    public boolean freeze() {
+        boolean b = freezeStatus.freeze();
+        if (b)
+            annotatedFields.values().forEach(AnnotatedFieldImpl::freeze);
+        return b;
+    }
+
+    @Override
+    public boolean isFrozen() {
+        return freezeStatus.isFrozen();
     }
 
     public void put(String fieldName, AnnotatedFieldImpl fieldDesc) {
@@ -106,6 +118,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields {
     private Map<String, AnnotationGroups> annotationGroupsPerField() {
         Map<String, AnnotationGroups> map = (Map<String, AnnotationGroups>) topLevelCustom.get("annotationGroups");
         if (map == null) {
+            ensureNotFrozen();
             map = new LinkedHashMap<>();
             topLevelCustom.put("annotationGroups", map);
         }

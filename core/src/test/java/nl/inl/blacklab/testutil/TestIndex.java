@@ -73,7 +73,7 @@ public class TestIndex {
             // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
             // All values will be searchable in the reverse index, but only the first will be stored in the
             // forward index.
-            "<doc pid='0'><s><entity>"
+            "<doc pid='0' title='Pangram'><s><entity>"
                 + "<w l='the'   p='art'>The|DOH|ZZZ</w> "
                 + "<w l='quick' p='adj'>quick</w> "
                 + "<w l='brown' p='adj'>brown</w> "
@@ -88,7 +88,7 @@ public class TestIndex {
             // This is intentional, to test this case.
             // It is not the last doc, because we need to make
             // sure that doesn't mess up docs indexed after this one.
-            "<doc pid='1'> <w l='noot'>noot</w> "
+            "<doc pid='1' title='Learning words'> <w l='noot'>noot</w> "
                     + "<w l='mier'>mier</w> "
                     + "<w l='aap'>aap</w> "
                     + "<w l='mier'>mier</w> "
@@ -102,14 +102,14 @@ public class TestIndex {
                     + "<w l='aap'>aap</w> "
                     + "</doc>",
 
-            "<doc pid='2'> <s><w l='may' p='vrb'>May</w> "
+            "<doc pid='2' title='Star Wars'> <s><w l='may' p='vrb'>May</w> "
                     + "<entity><w l='the' p='art'>the</w> "
                     + "<w l='force' p='nou'>Force</w></entity> "
                     + "<w l='be' p='vrb'>be</w> "
                     + "<w l='with' p='pre'>with</w> "
                     + "<w l='you' p='pro'>you</w>" + ".</s></doc>",
 
-            "<doc pid='3'> <s><w l='to' p='pre'>To</w> "
+            "<doc pid='3' title='Bastardized Shakespeare'> <s><w l='to' p='pre'>To</w> "
                     + "<w l='find' p='vrb'>find</w> "
                     + "<w l='or' p='con'>or</w> "
                     + "<w l='be' p='adv'>not</w> "

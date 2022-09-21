@@ -6,8 +6,40 @@ package nl.inl.blacklab.search.indexmetadata;
  * A frozen object may not be modified.
  */
 public interface Freezable {
-    
-    void freeze();
+
+    /** Can be used as a delegate to easily implement Freezable */
+    class FreezeStatus implements Freezable {
+        boolean frozen;
+
+        public FreezeStatus() {
+            this(false);
+        }
+
+        public FreezeStatus(boolean frozen) {
+            this.frozen = frozen;
+        }
+
+        public synchronized boolean isFrozen() {
+            return frozen;
+        }
+
+        @Override
+        public synchronized boolean freeze() {
+            if (!frozen) {
+                // apply freeze now
+                frozen = true;
+                return true;
+            }
+            // was already frozen
+            return false;
+        }
+    }
+
+    /**
+     * Freeze if not already frozen
+     * @return true if freeze was applied, false if it was already frozen
+     */
+    boolean freeze();
     
     boolean isFrozen();
     

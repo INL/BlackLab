@@ -56,16 +56,12 @@ public class CustomPropsMap implements CustomProps {
     public CustomPropsMap() { }
 
     public CustomPropsMap(Map<String, Object> props) {
-        putAll(props);
+        customFields.putAll(props);
     }
 
     @Override
     public Object get(String key) {
         return customFields.get(key);
-    }
-
-    public void clear() {
-        customFields.clear();
     }
 
     public void put(String key, Object value) {
@@ -74,14 +70,6 @@ public class CustomPropsMap implements CustomProps {
         } else {
             customFields.put(key, value);
         }
-    }
-
-    public void putAll(CustomProps props) {
-        putAll(props.asMap());
-    }
-
-    public void putAll(Map<String, Object> props) {
-        customFields.putAll(props);
     }
 
     @Override

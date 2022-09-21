@@ -8,6 +8,7 @@ import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestDocResults {
 

@@ -192,11 +192,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         documentCount = 0;
         tokenCountCalculated = false;
         // (already set) metadataDocument = new MetadataDocument();
-        frozen = !index.indexMode();
 
         annotatedFields.fixAfterDeserialization(index, this);
         MetadataFieldValues.Factory factory = createMetadataFieldValuesFactory();
         metadataFields.fixAfterDeserialization(this, factory);
+        if (!index.indexMode())
+            freeze();
     }
 
     /** Our index */
@@ -275,7 +276,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     @XmlTransient
-    private boolean frozen;
+    private FreezeStatus frozen = new FreezeStatus();
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -663,15 +664,18 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
-    public void freeze() {
-        this.frozen = true;
-        annotatedFields.freeze();
-        metadataFields.freeze();
+    public boolean freeze() {
+        boolean b = frozen.freeze();
+        if (b) {
+            annotatedFields.freeze();
+            metadataFields.freeze();
+        }
+        return b;
     }
 
     @Override
     public boolean isFrozen() {
-        return this.frozen;
+        return frozen.isFrozen();
     }
 
     protected void ensureMainAnnotatedFieldSet() {
@@ -739,8 +743,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void freezeBeforeIndexing() {
         // Contrary to the "classic" index format, with this one the metadata
         // cannot change while indexing. So freeze it now to enforce that.
-        if (!isFrozen())
-            freeze();
+        // TODO: reconsider this now that we CAN update metadata (document instead of segment attributes)?
+        freeze();
     }
 
     @Override

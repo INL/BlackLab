@@ -18,7 +18,7 @@ public class MockIndexMetadata implements IndexMetadata {
     
     private final List<AnnotatedField> fields;
     
-    private boolean frozen;
+    private FreezeStatus frozen = new FreezeStatus();
 
     public MockIndexMetadata() {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
@@ -138,13 +138,13 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public void freeze() {
-        this.frozen = true;
+    public boolean freeze() {
+        return frozen.freeze();
     }
 
     @Override
     public boolean isFrozen() {
-        return this.frozen;
+        return frozen.isFrozen();
     }
 
 }
