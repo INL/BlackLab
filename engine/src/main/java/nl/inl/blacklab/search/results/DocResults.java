@@ -40,13 +40,23 @@ import nl.inl.blacklab.search.BlackLabIndexAbstract;
 public class DocResults extends ResultsList<DocResult, DocProperty> implements ResultGroups<Hit> {
 
     private static final class SimpleDocCollector extends SimpleCollector {
-        private final List<DocResult> results;
+
+        /** Info about our query (needed to instantiate DocResult) */
         private final QueryInfo queryInfo;
+
+        /** Where to collect results. */
+        private final List<DocResult> results;
+
+        /** First docId of the current segment. */
         private int docBase;
+
+        /** Global document id of the metadata document, so we can skip it. */
+        private final int metadataDocumentId;
 
         SimpleDocCollector(List<DocResult> results, QueryInfo queryInfo) {
             this.results = results;
             this.queryInfo = queryInfo;
+            metadataDocumentId = queryInfo.index().metadata().metadataDocId();
         }
 
         @Override
@@ -59,6 +69,11 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         @Override
         public void collect(int docId) {
             int globalDocId = docId + docBase;
+            if (globalDocId == metadataDocumentId) {
+                // The metadata document shouldn't match any filter query
+                // (only used internally)
+                return;
+            }
             if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)

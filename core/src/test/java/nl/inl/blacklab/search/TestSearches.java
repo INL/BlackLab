@@ -1,9 +1,13 @@
 package nl.inl.blacklab.search;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
@@ -23,6 +27,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
+import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -452,6 +458,25 @@ public class TestSearches {
         Assert.assertEquals(1, group.length);
         Assert.assertEquals(2, group[0].start());
         Assert.assertEquals(3, group[0].end());
+    }
+
+    @Test
+    public void testDocResults() {
+        DocResults allDocs = testIndex.index().queryDocuments(new MatchAllDocsQuery());
+
+        // Check that the number is correct (e.g. metadata document is not matched)
+        Assert.assertEquals(4, allDocs.size());
+
+        // Check that all pids are there
+        Set<String> pids = new HashSet<>();
+        Set<String> titles = new HashSet<>();
+        for (DocResult d: allDocs) {
+            Document doc = testIndex.index().luceneDoc(d.docId());
+            pids.add(doc.get("pid"));
+            titles.add(doc.get("title"));
+        }
+        Assert.assertEquals(Set.of("0", "1", "2", "3"), pids);
+        Assert.assertEquals(Set.of("Pangram", "Learning words", "Star Wars", "Bastardized Shakespeare"), titles);
     }
 
 }
