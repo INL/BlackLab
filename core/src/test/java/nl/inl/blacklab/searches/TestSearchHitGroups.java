@@ -1,11 +1,13 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Collection;
 import java.util.Iterator;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
@@ -23,24 +25,25 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnnotation;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestSearchHitGroups {
 
-    private static TestIndex testIndex;
-
-    private static BlackLabIndex index;
-
-    private static AnnotatedField contents;
-
-    @BeforeClass
-    public static void setUp() {
-        testIndex = TestIndex.get();
-        index = testIndex.index();
-        contents = index.mainAnnotatedField();
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<TestIndex> typeToUse() {
+        return TestIndex.typesForTests();
     }
 
-    @AfterClass
-    public static void tearDown() {
-        testIndex.close();
+    @Parameterized.Parameter
+    public TestIndex testIndex;
+
+    private BlackLabIndex index;
+
+    private AnnotatedField contents;
+
+    @Before
+    public void setUp() {
+        index = testIndex.index();
+        contents = index.mainAnnotatedField();
     }
 
     @Test

@@ -2,6 +2,7 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -68,12 +69,15 @@ public class TestIndex {
         return indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
     }
 
-    public static TestIndex getWithTestDelete() {
-        return getWithTestDelete(null);
-    }
-
     public static TestIndex getWithTestDelete(IndexType indexType) {
         return new TestIndex(true, indexType);
+    }
+
+    public static Collection<TestIndex> typesForTests() {
+        return List.of(
+                getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
+                getReusable(BlackLabIndex.IndexType.INTEGRATED)
+        );
     }
 
     private static final class IndexListenerAbortOnError extends IndexListener {

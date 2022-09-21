@@ -37,10 +37,7 @@ public class TestSearches {
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<TestIndex> typeToUse() {
-        return List.of(
-                TestIndex.getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
-                TestIndex.getReusable(BlackLabIndex.IndexType.INTEGRATED)
-        );
+        return TestIndex.typesForTests();
     }
 
     @Parameterized.Parameter

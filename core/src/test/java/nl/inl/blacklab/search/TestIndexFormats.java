@@ -40,10 +40,7 @@ public class TestIndexFormats {
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<TestIndex> typeToUse() {
-        return List.of(
-            TestIndex.getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
-            TestIndex.getReusable(BlackLabIndex.IndexType.INTEGRATED)
-        );
+        return TestIndex.typesForTests();
     }
 
     @Parameterized.Parameter
@@ -65,7 +62,6 @@ public class TestIndexFormats {
 
     @Before
     public void setUp() {
-        //testIndex = TestIndex.getReusable(indexType);
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();

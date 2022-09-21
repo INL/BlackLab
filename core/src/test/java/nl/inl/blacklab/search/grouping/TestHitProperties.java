@@ -1,9 +1,12 @@
 package nl.inl.blacklab.search.grouping;
 
-import org.junit.AfterClass;
+import java.util.Collection;
+
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
@@ -21,34 +24,34 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestHitProperties {
 
     private final static int NO_TERM = Terms.NO_TERM;
 
-    private static TestIndex testIndex;
-    
-    private static BlackLabIndex index;
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<TestIndex> typeToUse() {
+        return TestIndex.typesForTests();
+    }
 
-    private static Terms terms;
+    @Parameterized.Parameter
+    public TestIndex testIndex;
 
-    private static Annotation wordAnnotation;
+    private BlackLabIndex index;
 
-    @BeforeClass
-    public static void setUp() {
-        testIndex = TestIndex.get();
+    private Terms terms;
+
+    private Annotation wordAnnotation;
+
+    @Before
+    public void setUp() {
         index = testIndex.index();
         wordAnnotation = index.mainAnnotatedField().annotation("word");
         terms = index.annotationForwardIndex(wordAnnotation).terms();
     }
 
-    private static int term(String word) {
+    private int term(String word) {
         return terms.indexOf(word);
-    }
-
-    @AfterClass
-    public static void tearDown() {
-        if (testIndex != null)
-            testIndex.close();
     }
 
     @Test
