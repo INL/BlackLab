@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 
@@ -82,14 +83,60 @@ public class TermsIntegratedSegment implements AutoCloseable {
 
     @NotThreadSafe
     public class TermInSegmentIterator implements Iterator<TermInSegment> {
-        /** Contains the result of the last call to next() */
+        // example for 3 terms [0,1,2]
+
+        // before initialize 
+        // n = 3
+        // i = 0 (how many terms have we already returned - how many times has next() been called)
+        
+        // when just initialized
+        // i = 0
+        // next = _
+        // peek = 0
+        // hasnext = true (i < n)
+
+        // get 1 term
+        // i = 1
+        // next = 0 
+        // peek = 1
+        // hasnext = true 
+
+        // get 1 term
+        // i = 2
+        // next = 1
+        // peek = 2
+        // hasnext = true
+
+        // get 1 term
+        // next = 2
+        // peek = _
+        // hasnext = false
+
+
+        // example for 0 terms []
+
+        // before initialize
+        // n = 0
+        
+        // when just initialized
+        // next = _
+        // peek = _
+        // hasnext = false = 
+
+        
+        
+        // peek now contains the term at index 1
+
+        // get 1 term
+        // next contains 
+        
+        
         private TermInSegment next = new TermInSegment();
-        /** Contains the next term returned by next() */
         private TermInSegment peek = new TermInSegment();
 
+        // index of the term CURRENTLY loaded in peek/how many times has next() been called.
         int i = 0;
         int n = field.getNumberOfTerms();
-
 
         public TermInSegmentIterator(IterationOrder order) {
 
@@ -104,21 +151,24 @@ public class TermsIntegratedSegment implements AutoCloseable {
             try {
                 _termOrderFile.seek(((long)n)*Integer.BYTES*(order == IterationOrder.sensitive ? 3 : 1) + field.getTermOrderOffset());
                 _termIndexFile.seek(field.getTermIndexOffset());
-                load();
+                loadPeek();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
-
-        private void load() throws IOException {
-            if (i < n) {
-                peek.id = _termOrderFile.readInt(); // read int a i
-                peek.sortPosition = i;
-
-                long offsetInTermStringFile = _termIndexFile.readLong(); // read long at i
-                _termsFile.seek(offsetInTermStringFile);
-                peek.term = _termsFile.readString();
-                ++i;
+ 
+        private void loadPeek() {
+            try {
+                if (i < n) {
+                    peek.sortPosition = _termOrderFile.readInt(); // read int a i
+                    peek.id = i;
+    
+                    long offsetInTermStringFile = _termIndexFile.readLong(); // read long at i
+                    _termsFile.seek(offsetInTermStringFile);
+                    peek.term = _termsFile.readString();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -127,17 +177,21 @@ public class TermsIntegratedSegment implements AutoCloseable {
             return i < n;
         }
 
+        /** Returns null if no more data */
         public TermInSegment peek() {
-            return this.peek;
+            return i < n ? peek : null;
         }
 
         @Override
         public TermInSegment next() {
-            // eg.: [next, peek] = [1,2]. swap to [next,peek] = [2,1]. Then read a new entry into peek: [next, peek] = [2,3]
+            if (i >= n) return null;
+            
+            // load peek into next
             TermInSegment tmp = this.next;
             this.next = this.peek;
             this.peek = tmp;
-            try { load(); } catch (IOException e) { throw new RuntimeException(e); }
+            ++i;
+            loadPeek();
             return this.next;
         }
 

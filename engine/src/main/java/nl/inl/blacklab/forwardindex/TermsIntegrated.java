@@ -55,7 +55,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         // what do we need to perform
         // generate the following fields:
         // x segmentToGlobalTermIds
-        // x terms (global list, any order as long as the sort arrays are correct)
+        // x (global) terms (global list, any order as long as the sort arrays are correct)
         // x (global) termId2SensitivePosition
         // x (global) termId2InsensitivePosition
 

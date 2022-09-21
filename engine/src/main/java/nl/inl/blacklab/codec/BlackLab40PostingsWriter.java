@@ -242,7 +242,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 //  (we're trying to reconstruct the document), so we will do that below.
                 //   we use temporary files because this might take a huge amount of memory)
                 // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
-                Map<String, SortedMap<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
+                Map<String/*field*/, SortedMap<Integer/*lucene doc id*/, Map<Integer/*termID*/, Long/*filePointer*/>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
                 try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
@@ -348,15 +348,20 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
                             int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
                             
+                            List<String> debugSensitiveSorting = new ArrayList<>(termsList);
+                            debugSensitiveSorting.sort(collators.get(MatchSensitivity.SENSITIVE));
+                            List<String> debugInensitiveSorting = new ArrayList<>(termsList);
+                            debugInensitiveSorting.sort(collators.get(MatchSensitivity.INSENSITIVE));
+
                             int numTerms = termsList.size();
                             fiFields.get(luceneField).setNumberOfTerms(numTerms);
                             fiFields.get(luceneField).setTermOrderOffset(termsOrderFile.getFilePointer());
                             // write out, specific order.
-                             // write out, specific order.
-                             for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
-                             for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
-                             for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
-                             for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
+                            // write out, specific order.
+                            for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
+                            for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
                         }
                     }
                 }
@@ -369,14 +374,14 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     // For each field...
                     for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
                         String luceneField = fieldEntry.getKey();
-                        SortedMap<Integer, Map<Integer, Long>> docPosOffsets = fieldEntry.getValue();
+                        SortedMap<Integer/*docID*/, Map<Integer/*termID*/, Long/*file offset*/>> docPosOffsets = fieldEntry.getValue();
 
                         // Record starting offset of field in tokensindex file (written to fields file later)
                         fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
 
                         // For each document...
                         for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
-                            Map<Integer, Long> termPosOffsets = docPosOffsets.get(docId);
+                            Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.get(docId);
                             if (termPosOffsets == null)
                                 termPosOffsets = Collections.emptyMap();
                             int docLength = docLengths.getOrDefault(docId, 0);
@@ -393,7 +398,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                 //       retrieval slower though.
                                 Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
                                 // For each term...
-                                for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
+                                for (Map.Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
                                     int termId = e.getKey();
                                     inTermVectorFile.seek(e.getValue());
                                     int nOccurrences = inTermVectorFile.readInt();
