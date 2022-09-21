@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +14,10 @@ import org.apache.lucene.search.TermQuery;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -32,29 +36,43 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.testutil.TestIndex;
 
+@RunWith(Parameterized.class)
 public class TestSearches {
 
-    static TestIndex testIndex;
+    private static TestIndex testIndexExternal;
+
+    private static TestIndex testIndexIntegrated;
+
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<IndexType> typeToUse() {
+        return List.of(IndexType.EXTERNAL_FILES, IndexType.INTEGRATED);
+    }
+
+    @Parameterized.Parameter
+    public IndexType indexType;
+
+    TestIndex testIndex;
 
     /**
      * Expected search results;
      */
     List<String> expected;
 
-    @Before
-    public void setUp() {
-        if (testIndex == null)
-            testIndex = TestIndex.get(indexType());
+    @BeforeClass
+    public static void setUpClass() {
+        testIndexExternal = TestIndex.get(IndexType.EXTERNAL_FILES);
+        testIndexIntegrated = TestIndex.get(IndexType.INTEGRATED);
     }
 
-    IndexType indexType()  { return IndexType.EXTERNAL_FILES; }
-
     @AfterClass
-    public static void tearDown() {
-        if (testIndex != null) {
-            testIndex.close();
-            testIndex = null;
-        }
+    public static void tearDownClass() {
+        testIndexExternal.close();
+        testIndexIntegrated.close();
+    }
+
+    @Before
+    public void setUp() {
+        testIndex = indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
     }
 
     @Test
@@ -467,7 +485,7 @@ public class TestSearches {
         // Check that the number is correct (e.g. metadata document is not matched)
         Assert.assertEquals(4, allDocs.size());
 
-        // Check that all pids are there
+        // Check that all pids and titles are there
         Set<String> pids = new HashSet<>();
         Set<String> titles = new HashSet<>();
         for (DocResult d: allDocs) {
