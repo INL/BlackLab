@@ -13,9 +13,6 @@ Integrating with Solr will involve the following steps.
 - [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
   (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
 
-## Improve testing
-
-- [ ] Remove old test indexes (use a marker file REMOVE_THIS.txt so we can recognize them). Don't remove any indexes that may be currently in use, only ones that are e.g. at least 10 hours old?
 
 ## Incorporate all information into the Lucene index
 
