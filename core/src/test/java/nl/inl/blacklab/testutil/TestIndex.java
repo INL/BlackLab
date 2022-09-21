@@ -23,6 +23,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
+import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -39,12 +40,32 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
 
+    private static TestIndex testIndexExternal;
+
+    private static TestIndex testIndexIntegrated;
+
     public static TestIndex get() {
         return get(null);
     }
 
     public static TestIndex get(IndexType indexType) {
         return new TestIndex(false, indexType);
+    }
+
+    public synchronized static TestIndex getReusable(IndexType indexType) {
+        if (testIndexExternal == null) {
+            // Instantiate reusable testindexes
+            testIndexExternal = new TestIndex(false, IndexType.EXTERNAL_FILES);
+            testIndexIntegrated = new TestIndex(false, IndexType.INTEGRATED);
+            // Make sure files are cleaned up at the end
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                testIndexExternal.close();
+                testIndexIntegrated.close();
+            }));
+        }
+        if (indexType == null)
+            indexType = BlackLab.implicitInstance().getDefaultIndexType();
+        return indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
     }
 
     public static TestIndex getWithTestDelete() {
@@ -135,10 +156,6 @@ public class TestIndex {
 
     private final Annotation word;
 
-    private TestIndex(IndexType indexType) {
-        this(false, indexType);
-    }
-
     private TestIndex(boolean testDelete, IndexType indexType) {
 
         // Get a temporary directory for our test index
@@ -175,6 +192,15 @@ public class TestIndex {
         } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    public IndexType indexFormat() {
+        return index instanceof BlackLabIndexExternal ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
+    }
+
+    @Override
+    public String toString() {
+        return indexFormat().toString();
     }
 
     public BlackLabIndex index() {

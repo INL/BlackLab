@@ -11,10 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -26,7 +23,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -39,41 +35,21 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestSearches {
 
-    private static TestIndex testIndexExternal;
-
-    private static TestIndex testIndexIntegrated;
-
     @Parameterized.Parameters(name = "index type {0}")
-    public static Collection<IndexType> typeToUse() {
-        return List.of(IndexType.EXTERNAL_FILES, IndexType.INTEGRATED);
+    public static Collection<TestIndex> typeToUse() {
+        return List.of(
+                TestIndex.getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
+                TestIndex.getReusable(BlackLabIndex.IndexType.INTEGRATED)
+        );
     }
 
     @Parameterized.Parameter
-    public IndexType indexType;
-
-    TestIndex testIndex;
+    public TestIndex testIndex;
 
     /**
      * Expected search results;
      */
     List<String> expected;
-
-    @BeforeClass
-    public static void setUpClass() {
-        testIndexExternal = TestIndex.get(IndexType.EXTERNAL_FILES);
-        testIndexIntegrated = TestIndex.get(IndexType.INTEGRATED);
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        testIndexExternal.close();
-        testIndexIntegrated.close();
-    }
-
-    @Before
-    public void setUp() {
-        testIndex = indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
-    }
 
     @Test
     public void testSimple() {

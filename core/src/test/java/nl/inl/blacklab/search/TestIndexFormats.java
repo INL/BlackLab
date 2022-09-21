@@ -14,10 +14,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -40,24 +38,21 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestIndexFormats {
 
-    private static TestIndex testIndexExternal;
-
-    private static TestIndex testIndexIntegrated;
-
     @Parameterized.Parameters(name = "index type {0}")
-    public static Collection<BlackLabIndex.IndexType> typeToUse() {
-        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES, BlackLabIndex.IndexType.INTEGRATED);
+    public static Collection<TestIndex> typeToUse() {
+        return List.of(
+            TestIndex.getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
+            TestIndex.getReusable(BlackLabIndex.IndexType.INTEGRATED)
+        );
     }
 
     @Parameterized.Parameter
-    public BlackLabIndex.IndexType indexType;
-
-    TestIndex testIndex;
+    public TestIndex testIndex;
 
     int numberOfTerms() {
         // HACK. 28 is the "correcter" value (including secondary values that are not stored in the forward index)
         //   but the external index excludes the two secondary values.
-        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
+        return testIndex.indexFormat() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
     }
 
     private static BlackLabIndex index;
@@ -68,21 +63,9 @@ public class TestIndexFormats {
 
     private static Terms wordTerms;
 
-    @BeforeClass
-    public static void setUpClass() {
-        testIndexExternal = TestIndex.get(BlackLabIndex.IndexType.EXTERNAL_FILES);
-        testIndexIntegrated = TestIndex.get(BlackLabIndex.IndexType.INTEGRATED);
-    }
-
-    @AfterClass
-    public static void tearDownClass() {
-        testIndexExternal.close();
-        testIndexIntegrated.close();
-    }
-
     @Before
     public void setUp() {
-        testIndex = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
+        //testIndex = TestIndex.getReusable(indexType);
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();
