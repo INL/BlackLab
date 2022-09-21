@@ -16,7 +16,7 @@ public final class UtilsForTesting {
     public static final String MARKER_FILE_NAME = "REMOVE_TEST_DIR";
 
     /** How old must marker file be to be automatically removed? (10h) */
-    public static final long REMOVE_TEST_DIRS_OLDER_THAN_MS = 10000; //10 * 3600 * 1000;
+    public static final long REMOVE_TEST_DIRS_OLDER_THAN_MS = 10 * 3600 * 1000;
 
     /** Have we tried to clean up old test dirs? */
     private static boolean cleanedUpTestDirs = false;
