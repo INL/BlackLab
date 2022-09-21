@@ -69,7 +69,7 @@ public class TestIndex {
     /**
      * Some test XML data to index.
      */
-    final static String[] TEST_DATA = {
+    public static final String[] TEST_DATA = {
             // Note that "The|DOH|ZZZ" will be indexed as multiple values at the same token position.
             // All values will be searchable in the reverse index, but only the first will be stored in the
             // forward index.

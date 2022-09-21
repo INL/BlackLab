@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -9,13 +10,17 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -29,25 +34,33 @@ import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.testutil.TestIndex;
 
 /**
- * Test the integrated index.
+ * Test the basic functionality of the external and integrated index formats.
+ * (terms, forward index)
  */
-public class TestIndexIntegrated {
+@RunWith(Parameterized.class)
+public class TestIndexFormats {
 
-    BlackLabIndex.IndexType indexType()  { return BlackLabIndex.IndexType.INTEGRATED; }
+    private static TestIndex testIndexExternal;
 
-    int numberOfTerms() {
-        // HACK. This is the correct value (including secondary values not stored in the forward index)
-        //   but TestIndexExternal overrides this with 26, excluding the two secondary values.
-        return 28;
+    private static TestIndex testIndexIntegrated;
+
+    @Parameterized.Parameters(name = "index type {0}")
+    public static Collection<BlackLabIndex.IndexType> typeToUse() {
+        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES, BlackLabIndex.IndexType.INTEGRATED);
     }
 
-    private static TestIndex testIndex;
+    @Parameterized.Parameter
+    public BlackLabIndex.IndexType indexType;
+
+    TestIndex testIndex;
+
+    int numberOfTerms() {
+        // HACK. 28 is the "correcter" value (including secondary values that are not stored in the forward index)
+        //   but the external index excludes the two secondary values.
+        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
+    }
 
     private static BlackLabIndex index;
-
-    private static AnnotatedField contents;
-
-    private static Annotation word;
 
     private static AnnotationForwardIndex wordFi;
 
@@ -55,25 +68,27 @@ public class TestIndexIntegrated {
 
     private static Terms wordTerms;
 
-    @Before
-    public void setUp() {
-        if (testIndex == null) {
-            testIndex = TestIndex.get(indexType());
-            index = testIndex.index();
-            contents = index.mainAnnotatedField();
-            word = contents.mainAnnotation();
-            wordFi = index.forwardIndex(contents).get(word);
-            posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
-            wordTerms = wordFi.terms();
-        }
+    @BeforeClass
+    public static void setUpClass() {
+        testIndexExternal = TestIndex.get(BlackLabIndex.IndexType.EXTERNAL_FILES);
+        testIndexIntegrated = TestIndex.get(BlackLabIndex.IndexType.INTEGRATED);
     }
 
     @AfterClass
-    public static void tearDown() {
-        if (testIndex != null) {
-            testIndex.close();
-            testIndex = null;
-        }
+    public static void tearDownClass() {
+        testIndexExternal.close();
+        testIndexIntegrated.close();
+    }
+
+    @Before
+    public void setUp() {
+        testIndex = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
+        index = testIndex.index();
+        AnnotatedField contents = index.mainAnnotatedField();
+        Annotation word = contents.mainAnnotation();
+        wordFi = index.forwardIndex(contents).get(word);
+        posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
+        wordTerms = wordFi.terms();
     }
 
     @Test
@@ -84,10 +99,6 @@ public class TestIndexIntegrated {
     @Test
     public void testIndexOfAndGet() {
         MutableIntSet s = new IntHashSet();
-        int n = numberOfTerms();
-        if (this instanceof TestIndexExternal) {
-            n -= 2;
-        }
         for (int i = 0; i < numberOfTerms(); i++) {
             String term = wordTerms.get(i);
             Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
@@ -198,13 +209,51 @@ public class TestIndexIntegrated {
     @Test
     public void testMetadataAnnotatedField() {
         AnnotatedField field = index.metadata().annotatedFields().get("contents");
-        Assert.assertEquals(true, field.hasXmlTags());
-        Assert.assertEquals(true, field.hasContentStore());
+        Assert.assertTrue(field.hasXmlTags());
+        Assert.assertTrue(field.hasContentStore());
         Set<String> expectedAnnotations = new HashSet<>(Arrays.asList("word", "lemma", "pos", "starttag", "punct"));
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());
         Assert.assertEquals(AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE, field.mainAnnotation().sensitivitySetting());
         Assert.assertEquals(MatchSensitivity.SENSITIVE, field.mainAnnotation().offsetsSensitivity().sensitivity());
+    }
+
+    @Test
+    public void testContentStoreRetrieve() {
+        AnnotatedField fieldsContents = index.mainAnnotatedField();
+        ContentAccessor ca = index.contentAccessor(fieldsContents);
+        int[] start = { 0, 0, 10, 20 };
+        int[] end = { 10, -1, 20, -1 };
+        for (int i = 0; i < TestIndex.TEST_DATA.length; i++) {
+            int docId = testIndex.getDocIdForDocNumber(i);
+            Document document = index.luceneDoc(docId);
+            String[] substrings = ca.getSubstringsFromDocument(docId, document, start, end);
+            Assert.assertEquals(4, substrings.length);
+            for (int j = 0; j < substrings.length; j++) {
+                int a = start[j], b = end[j];
+                String docContents = expectedDocContents(i);
+                if (b < 0)
+                    b = docContents.length();
+                String expected = docContents.substring(a, b);
+                Assert.assertEquals(expected, substrings[j]);
+            }
+        }
+    }
+
+    /**
+     * Return the document as we expect to get it back from the content store.
+     * (indexing currently reconstructs the document, changing minor
+     * things like quotes and whitespace)
+     *
+     * @param i test document index
+     * @return expected contents
+     */
+    private String expectedDocContents(int i) {
+        String docContents = TestIndex.TEST_DATA[i];
+        docContents = docContents.replaceAll("'", "\"");
+        docContents = docContents.replaceAll("\\s+", " ");
+        docContents = docContents.replaceAll("\" >", "\">");
+        return docContents;
     }
 }
