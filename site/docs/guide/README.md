@@ -22,6 +22,7 @@ BlackLab is available as a web service (BlackLab Server), making it easy to use 
 
 BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It is free and open source software (Apache License 2.0).
 
+> **OLD SITE?**: for now, the old site is still [available](./old-site/) for reference (but contains mostly the same information).
 
 ## Features
 
@@ -46,7 +47,7 @@ For a quick example of the BlackLab Frontend web application, have a look at eit
 - [Brieven als Buit](https://brievenalsbuit.ivdnt.org/) ("Letters as Loot"), where you can search a collection of historical letters to and from sailors from the 17th to the 19th century
 - [Corpus Gysseling](https://corpusgysseling.ivdnt.org/), a small corpus of historic Dutch (1200-1300)
 
-If you have a [CLARIN](https://clarin.eu/) account, you might also want to check out:
+With a [free CLARIN account](https://idm.clarin.eu/unitygw/pub#!registration-CLARIN%20Identity%20Registration) account, you can also check out:
 
 - [Corpus Hedendaags Nederlands](https://chn.ivdnt.org/)
 - [OpenSonar](https://opensonar.ivdnt.org/)
