@@ -42,7 +42,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     // Used by HitPropertyContextBase.deserializeProp() (see above)
     @SuppressWarnings("unused")
-    HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
+    public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
         this(index, annotation, sensitivity, "");
     }
 

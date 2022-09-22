@@ -58,3 +58,7 @@ expectHitsGroupedUnchanged('any token grouped by word with filter',
         { patt: '[word != "abcdefg"]', filter, group: 'hit:word:i'}); // regular path
 expectHitsGroupedUnchanged('any token grouped by word with filter',
         { patt: '[]', filter, group: 'hit:word:i'}); // fast path
+
+// Group by capture
+expectHitsGroupedUnchanged('group by capture',
+        { patt: '"a|the" X:[]', filter, group: 'capture:word:i:X'});
