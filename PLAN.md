@@ -6,12 +6,31 @@ The current major task is to enable BlackLab to integrate with Solr. The goal is
 
 Integrating with Solr will involve the following steps.
 
-## Useful independent tasks:
+## Solve existing issues
 
-- [ ] Perform more hits operations per index segment instead of "globally"<br> Filtering, sorting and grouping could be done per segment instead of how it is done now. Of course a merge step would be needed to combine sorted/grouped results from each segment, just as with distributed search.<br>
-  (OPTIONAL BUT RECOMMENDED - Because the forward index is now part of a segment, it makes sense to try to do everything related to this segment before merging segment results, as this minimizes resource contention, makes disk reads less disjointed, and is more efficient in general (because it stays closer to Lucene's design))
-- [ ] [Other open issues](https://github.com/INL/BlackLab/issues)<br>
-  (probably prioritize issues that can be solved quickly, bugs, and features we actually need or were requested by users; tackle very complex issues and enhancements that may be of limited use for later)
+Probably prioritize [issues](https://github.com/INL/BlackLab/issues) that:
+
+- can be done quickly
+- bugs that (are likely to) affect us(ers)
+- features we actually need or were requested by users
+ 
+Very complex issues and enhancements that may be of limited use should be tackled later.
+
+## How to phase out the global FI API
+
+We would like to eventually eliminate the global forward index API. This means forward index related tasks (sort/group/filter on context, produce KWICs, NFA matching) should operate per index segment, followed by a merge step.
+
+The merge step would use string comparisons instead of term sort order comparisons, so we don't need to keep track of global term sort orders, which is expensive and difficult to do when dynamically adding/removing documents. Such a merge would work in a similar way as with distributed search. 
+
+Other advantages of this appraoch: makes operations more parallellizable, minimizes resource contention, makes disk reads less disjointed, and stays closer to Lucene's design.
+
+This is how the global forward index is currently used, and what it would take to change these uses, from hardest to easiest:
+
+- Kwics / Contexts (constructor, makeKwicsSingleDocForwardIndex, getContextWordsSingleDocument)<br>
+  Sorting, grouping, filtering and making KWICs should be done per segment, followed by a merge step that does not use sort positions but string comparisons.
+- HitGroupsTokenFrequencies / CalcTokenFrequencies. Should be converted to work per segment. A bit of work but very doable.
+- ForwardIndexAccessor: forward index matching (NFAs). Should be relatively easy because forward index matching happens from Spans classes that are already per-segment.
+- IndexMetadataIntegrated: counting the total number of tokens. Doesn't use tokens or terms file, and is easy to do per segment.
 
 
 ## Incorporate all information into the Lucene index
@@ -63,6 +82,17 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
 
 
+## Integrate with Solr (standalone)
+
+- [ ] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
+- [ ] Study how Mtas integrates with Solr
+- [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
+- [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
+- [ ] Enable indexing via Solr (custom or via standard import mechanisms?)
+- [ ] Make it possible to run the tests on the Solr version too
+- [ ] Create a Dockerfile for Solr+BlackLab
+
+
 ## BlackLab Proxy
 
 The proxy supports the full BlackLab Server API, but forwards requests to be executed by another server:
@@ -77,15 +107,6 @@ Tasks:
 - [ ] Translate between BLS API version 1 to 2.
 - [ ] (optional) implement logic to decide per-corpus what backend we need to send the request to. I.e. if it's an old index, send it to the old BLS, otherwise send it to Solr. Also implement a merged "list corpora" view.
 
-## Integrate with Solr (standalone)
-
-- [ ] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
-- [ ] Study how Mtas integrates with Solr
-- [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
-- [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
-- [ ] Enable indexing via Solr (custom or via standard import mechanisms?)
-- [ ] Make it possible to run the tests on the Solr version too
-- [ ] Create a Dockerfile for Solr+BlackLab
 
 ## Enable Solr distributed
 
