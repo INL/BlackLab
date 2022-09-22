@@ -1,6 +1,13 @@
 # vmtouch
 
-At the Dutch Language Institute, we use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
+::: warn Not recommended 
+
+These days, we don't recommend using vmtouch unless you are certain you need it. Operating systems are good at managing disk cache, so leaving it to the OS will likely result in better overall performance.
+
+:::
+
+
+At the Dutch Language Institute, we used to use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
 
 vmtouch is a tool that can "lock" a file in disk cache. It benefits applications that need to perform fast random access to large files (i.e. several gigabytes). Corpus search applications fall into this domain: they need random access to the "forward index" component of the index to do fast sorting and grouping.
 
@@ -8,17 +15,7 @@ You should be careful to ensure the machine you're using has enough RAM to keep 
 
 Also important is to run vmtouch as the root user; user accounts have a limit to the amount of memory they may lock. Vmtouch will terminate with an out of memory error if it hits that limit. (it may be possible to raise this limit for a user by changing a configuration file - we haven't experimented with this)
 
-The [official page for vmtouch](http://hoytech.com/vmtouch/) has the C source code and the online manual. We've made a slight modification to the source code to allow for larger files to be cached. The full source code of the version we're using is included in the vmtouch/ directory of the BlackLab source distribution.
-
-## Building vmtouch
-
-The BlackLab source distribution includes a vmtouch/ directory with the source code for vmtouch, modified to increase the limit to 6 GB per file.
-
-**NOTE**: [Doug Hoyte](http://hoytech.com/vmtouch/) wrote and holds the copyright for the vmtouch code. He has released it under a permissive license (see vmtouch.c for the complete license text).
-
-To build it using gcc and GNU Make, just type:
-
-	make
+The [official page for vmtouch](http://hoytech.com/vmtouch/) has the C source code and the online manual. In the past, we have made a slight modification to the source code to allow for larger files to be cached.
 
 ### Filesize limit
 

@@ -14,7 +14,6 @@
 **/.apt_generated_tests/
 
 .git
-vmtouch
 
 # vi temporary files
 **/*.swp
