@@ -22,7 +22,7 @@ BlackLab is available as a web service (BlackLab Server), making it easy to use 
 
 BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It is free and open source software (Apache License 2.0).
 
-> **OLD SITE?**: for now, the old site is still [available](./old-site/) for reference (but contains mostly the same information).
+> **OLD SITE?**: for now, the old site is still [available](https://inl.github.io/BlackLab/old-site/) for reference (but contains mostly the same information).
 
 ## Features
 
