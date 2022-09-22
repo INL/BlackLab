@@ -10,12 +10,11 @@ import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
- * A hit property for grouping on the context of the hit. Requires
- * HitConcordances as input (so we have the hit text available).
+ * A hit property for grouping on the context of the hit.
  */
 public class HitPropertyWordLeft extends HitPropertyContextBase {
     
-    protected static final ContextSize contextSize = ContextSize.get(1, 0, false);
+    protected static final ContextSize CONTEXT_SIZE = ContextSize.get(1, 0, false);
     
     static HitPropertyWordLeft deserializeProp(BlackLabIndex index, AnnotatedField field, String info) {
         return deserializeProp(HitPropertyWordLeft.class, index, field, info);
@@ -90,11 +89,11 @@ public class HitPropertyWordLeft extends HitPropertyContextBase {
     
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + contextSize.hashCode();
+        return 31 * super.hashCode() + CONTEXT_SIZE.hashCode();
     }
 
     @Override
     public ContextSize needsContextSize(BlackLabIndex index) {
-        return contextSize;
+        return CONTEXT_SIZE;
     }
 }
