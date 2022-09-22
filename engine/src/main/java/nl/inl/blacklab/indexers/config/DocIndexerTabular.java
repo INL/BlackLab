@@ -129,10 +129,8 @@ public class DocIndexerTabular extends DocIndexerConfig {
             tabularFormat = tabularFormat.withQuote(opt.get("quote").charAt(0));
         else
             tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether
-        allowSeparatorsAfterInlineTags = false;
-        if (opt.containsKey("allowSeparatorsAfterInlineTags")
-                && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true"))
-            allowSeparatorsAfterInlineTags = true;
+        allowSeparatorsAfterInlineTags = opt.containsKey("allowSeparatorsAfterInlineTags")
+                && opt.get("allowSeparatorsAfterInlineTags").equalsIgnoreCase("true");
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
         if (opt.containsKey("multipleValuesSeparator"))
@@ -252,7 +250,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             } else {
                                 inlineTag(tagName, isOpenTag, attributes);
                                 if (selfClosing)
-                                    inlineTag(tagName, !isOpenTag, null);
+                                    inlineTag(tagName, false, null);
                             }
                             continue;
                         }

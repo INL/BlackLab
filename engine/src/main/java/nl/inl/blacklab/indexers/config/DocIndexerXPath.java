@@ -232,21 +232,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
         for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
             Function<String, String> xpathProcessor = xpath -> {
                 // Resolve value using XPath
-                AutoPilot apLinkPath = null;
-                String result = null;
-                apLinkPath = acquireAutoPilot(xpath);
-                result = apLinkPath.evalXPathToString();
+                AutoPilot apLinkPath = acquireAutoPilot(xpath);
+                String result = apLinkPath.evalXPathToString();
                 if (result == null || result.isEmpty()) {
-                    switch (ld.getIfLinkPathMissing()) {
-                        case IGNORE:
-                            break;
-                        case WARN:
-                            getDocWriter().listener()
-                                    .warning("Link path " + xpath + " not found in document " + documentName);
-                            break;
-                        case FAIL:
-                            throw new BlackLabRuntimeException("Link path " + xpath + " not found in document " + documentName);
-                    }
+                    linkPathMissing(ld, xpath);
                 }
                 releaseAutoPilot(apLinkPath);
                 return result;
@@ -459,8 +448,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         fragPos = fragPosStack.remove(fragPosStack.size() - 1);
     }
 
-    protected void processMetadataBlock(ConfigMetadataBlock b)
-            throws XPathParseException, XPathEvalException, NavException {
+    protected void processMetadataBlock(ConfigMetadataBlock b) throws XPathEvalException, NavException {
         // For each instance of this metadata block...
         navpush();
         AutoPilot apMetadataBlock = acquireAutoPilot(b.getContainerPath());
@@ -468,6 +456,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             // For each configured metadata field...
             List<ConfigMetadataField> fields = b.getFields();
+            //noinspection ForLoopReplaceableByForEach
             for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
                 ConfigMetadataField f = fields.get(i);
                 // Metadata field configs without a valuePath are just for
@@ -693,12 +682,16 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected AutoPilot apDot = null;
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, Collection<String> reuseValueFromParentAnnot)
-            throws XPathParseException, XPathEvalException, NavException {
+            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot)
+                throws XPathEvalException, NavException {
         boolean evalXml = annotation.isCaptureXml();
+        List<ConfigProcessStep> processingSteps = annotation.getProcess();
+        boolean hasProcessing = !processingSteps.isEmpty();
 
-        if (reuseValueFromParentAnnot == null) {
-            reuseValueFromParentAnnot = new ArrayList<>();
+        Collection<String> values = reuseValueFromParentAnnot;
+        if (values == null) {
+            // Not the same values as the parent annotation; we have to find our own.
+            values = new ArrayList<>();
             navpush();
 
             AutoPilot apValuePath = acquireAutoPilot(valuePath);
@@ -708,17 +701,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 while (apValuePath.evalXPath() != -1) {
                     String unprocessedValue = evalXml ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
-                    reuseValueFromParentAnnot.add(unprocessedValue);
+                    values.add(unprocessedValue);
                 }
 
                 // No annotations have been added, the result of the xPath query must have been empty.
-                if (reuseValueFromParentAnnot.isEmpty()) {
-                    reuseValueFromParentAnnot.add("");
+                if (values.isEmpty()) {
+                    values.add("");
                 }
             } else {
                 // Single value expected
                 String unprocessedValue = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
-                reuseValueFromParentAnnot.add(unprocessedValue);
+                values.add(unprocessedValue);
             }
             releaseAutoPilot(apValuePath);
             navpop();
@@ -726,33 +719,35 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // Now apply process and add to index
         if (annotation.isMultipleValues()) {
+            // Could there be multiple values here? (either there already are, or a processing step might create them)
+            // (this is to prevent allocating a set if we don't have to)
+            boolean mightHaveDuplicates = hasProcessing || values.size() > 1;
 
             // If duplicates are not allowed, keep track of values we've already added
-            boolean duplicatesOkay = annotation.isAllowDuplicateValues();
-            Set<String> valuesAlreadyAdded = duplicatesOkay ? null : new HashSet<>();
+            boolean duplicatesOkay = annotation.isAllowDuplicateValues() || !mightHaveDuplicates;
+            Set<String> valuesSeen = duplicatesOkay ? null : new HashSet<>();
 
-            boolean firstValue = true; // first value gets position increment 1, subsequent values 0
-            for (String raw : reuseValueFromParentAnnot) {
-                for (String processed : processStringMultipleValues(raw, annotation.getProcess(), null)) {
-                    if (duplicatesOkay || !valuesAlreadyAdded.contains(processed)) {
+            int positionIncrement = 1; // only the first value gets increment 1, the rest get 0
+            for (String rawValue: values) {
+                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
+                    if (duplicatesOkay || !valuesSeen.contains(processedValue)) {
                         // Not a duplicate, or we don't care about duplicates. Add it.
-                        int increment = firstValue ? 1 : 0;
-                        annotation(annotation.getName(), processed, increment, indexAtPositions);
-                        firstValue = false;
-                        if (valuesAlreadyAdded != null)
-                            valuesAlreadyAdded.add(processed);
+                        annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions);
+                        positionIncrement = 0;
+                        if (valuesSeen != null)
+                            valuesSeen.add(processedValue);
                     }
                 }
             }
         } else {
-            // single value (the collection should only contain one entry)
-            for (String raw : reuseValueFromParentAnnot) {
-                String processed = processString(raw, annotation.getProcess(), null);
-                annotation(annotation.getName(), processed, 1, indexAtPositions);
+            // Single value (the collection should only contain one entry)
+            for (String rawValue: values) {
+                String processedValue = processString(rawValue, processingSteps, null);
+                annotation(annotation.getName(), processedValue, 1, indexAtPositions);
                 break;
             }
         }
-        return reuseValueFromParentAnnot; // so subannotations can reuse it if they use the same valuePath
+        return values; // so subannotations can reuse it if they use the same valuePath
     }
 
     @Override
@@ -770,9 +765,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 throw new BlackLabRuntimeException("DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding() + " (See VTD-XML's VTDNav.java for format codes)");
 
             boolean docDone = false;
+            AutoPilot documents;
             if (documentXPath != null) {
                 // Find our specific document
-                AutoPilot documents = acquireAutoPilot(documentXPath);
+                documents = acquireAutoPilot(documentXPath);
                 while (documents.evalXPath() != -1) {
                     if (docDone)
                         throw new BlackLabRuntimeException(
@@ -780,10 +776,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     indexDocument();
                     docDone = true;
                 }
-                releaseAutoPilot(documents);
             } else {
                 // Process whole file; must be 1 document
-                AutoPilot documents = acquireAutoPilot(config.getDocumentPath());
+                documents = acquireAutoPilot(config.getDocumentPath());
                 while (documents.evalXPath() != -1) {
                     if (docDone)
                         throw new BlackLabRuntimeException(
@@ -792,8 +787,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     indexDocument();
                     docDone = true;
                 }
-                releaseAutoPilot(documents);
             }
+            releaseAutoPilot(documents);
         } catch (Exception e1) {
             throw BlackLabRuntimeException.wrap(e1);
         }
@@ -860,7 +855,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         navpush();
         AutoPilot apAttr = new AutoPilot(nav);
         apAttr.selectAttr("*");
-        int i = -1;
+        int i;
         Map<String, String> attr = new HashMap<>();
         try {
             while ((i = apAttr.iterateAttr()) != -1) {

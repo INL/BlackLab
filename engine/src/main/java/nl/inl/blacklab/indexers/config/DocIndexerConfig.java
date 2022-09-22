@@ -157,6 +157,19 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         ensureInitialized();
     }
 
+    protected void linkPathMissing(ConfigLinkedDocument ld, String path) {
+        switch (ld.getIfLinkPathMissing()) {
+            case IGNORE:
+                break;
+            case WARN:
+                getDocWriter().listener()
+                        .warning("Link path " + path + " not found in document " + documentName);
+                break;
+            case FAIL:
+                throw new BlackLabRuntimeException("Link path " + path + " not found in document " + documentName);
+        }
+    }
+
     @Override
     public void indexSpecificDocument(String documentExpr) {
         ensureInitialized();
@@ -225,16 +238,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // Resolve value using XPath
                 String result = xpathProcessor.apply(valuePath);
                 if (result == null || result.isEmpty()) {
-                    switch (ld.getIfLinkPathMissing()) {
-                        case IGNORE:
-                            break;
-                        case WARN:
-                            getDocWriter().listener()
-                                    .warning("Link path " + valuePath + " not found in document " + documentName);
-                            break;
-                        case FAIL:
-                            throw new BlackLabRuntimeException("Link path " + valuePath + " not found in document " + documentName);
-                    }
+                    linkPathMissing(ld, valuePath);
                 }
                 results.add(result);
             } else if (valueField != null) {
@@ -281,7 +285,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
-        
+        // If there's no processing to be done (the most common case), skip the list allocation.
+        if (process.isEmpty() && (mapValues == null || mapValues.isEmpty()))
+            return List.of(input);
+
         List<String> result = new ArrayList<>();
         result.add(input);
 
@@ -365,17 +372,19 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return result;
     }
 
-    static final Pattern mainPosPattern = Pattern.compile("^([^(]+)(\\s*\\(.*\\))?$");
-    static final Pattern featurePattern = Pattern.compile("^[^(]+(\\s*\\((.*)\\))?$");
+    static final Pattern MAIN_POS_PATTERN = Pattern.compile("^([^(]+)(\\s*\\(.*\\))?$");
+
+    static final Pattern FEATURE_PATTERN = Pattern.compile("^[^(]+(\\s*\\((.*)\\))?$");
+
     static String opParsePartOfSpeech(String result, String field) {
         // Trim character/string from beginning and end
         result = result.trim();
         if (field.equals("_")) {
             //  Get main pos: A(b=c,d=e) -> A
-            return mainPosPattern.matcher(result).replaceAll("$1");
+            return MAIN_POS_PATTERN.matcher(result).replaceAll("$1");
         } else {
             //  Get feature: A(b=c,d=e) -> e  (if field == d)
-            String featuresString = featurePattern.matcher(result).replaceAll("$2");
+            String featuresString = FEATURE_PATTERN.matcher(result).replaceAll("$2");
             return Arrays.stream(featuresString.split(","))
                 .map(feat -> feat.split("="))
                 .filter(featParts -> featParts[0].trim().equals(field))

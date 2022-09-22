@@ -12,7 +12,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Configuration for a single annotation (formerly "property") of an annotated field.
@@ -82,7 +81,7 @@ public class ConfigAnnotation {
     private boolean multipleValues = false;
     
     /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
-    private boolean allowDuplicateValues = true;
+    private boolean allowDuplicateValues = false;
     
     /** Should we capture the innerXml of the node instead of the text */
     private boolean captureXml = false;
@@ -97,7 +96,7 @@ public class ConfigAnnotation {
     private boolean internal = false;
 
     /** What annotations have we warned about using special default sensitivity? */
-    private static Set<String> warnSensitivity = new HashSet<>();
+    private final static Set<String> warnSensitivity = new HashSet<>();
 
     public ConfigAnnotation() {
     }
@@ -314,19 +313,5 @@ public class ConfigAnnotation {
             }
         }
         return sensitivity;
-    }
-
-
-    public MatchSensitivity getMainSensitivity() {
-        switch (getSensitivitySetting()) {
-        case ONLY_INSENSITIVE:
-            return MatchSensitivity.INSENSITIVE;
-        case ONLY_SENSITIVE:
-        case SENSITIVE_AND_INSENSITIVE:
-        case CASE_AND_DIACRITICS_SEPARATE:
-            return MatchSensitivity.SENSITIVE;
-        default:
-            throw new IllegalStateException("Unknown sensitivity " + getSensitivitySetting());
-        }
     }
 }
