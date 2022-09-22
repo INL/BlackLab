@@ -11,6 +11,7 @@ import nl.inl.blacklab.codec.BlackLab40PostingsFormat;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Ideally short-lived and only used during setup of the forward index and terms instances.
@@ -58,6 +59,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
         }
     }
 
+    public TermInSegmentIterator iterator(MatchSensitivity sensitivity) {
+        return new TermInSegmentIterator(this, sensitivity);
+    }
+
     @Override
     public void close() throws IOException {
         isClosed = true;
@@ -75,82 +80,65 @@ public class TermsIntegratedSegment implements AutoCloseable {
         public int sortPosition;
     }
 
-    public enum IterationOrder {
-        insensitive,
-        sensitive,
-    }
-
-
     @NotThreadSafe
-    public class TermInSegmentIterator implements Iterator<TermInSegment> {
-        // example for 3 terms [0,1,2]
+    public static class TermInSegmentIterator implements Iterator<TermInSegment> {
+        /** 
+         * Metadata about this field(=annotation) in this segment(=section of the index).
+         * such as how many terms in the field in this segment, 
+         * file offsets where to find the data in the segment's files, etc. 
+         */
+        private final Field field;
+        /** Ord (ordinal) of the segment */
+        private final int ord;
 
-        // before initialize 
-        // n = 3
-        // i = 0 (how many terms have we already returned - how many times has next() been called)
-        
-        // when just initialized
-        // i = 0
-        // next = _
-        // peek = 0
-        // hasnext = true (i < n)
-
-        // get 1 term
-        // i = 1
-        // next = 0 
-        // peek = 1
-        // hasnext = true 
-
-        // get 1 term
-        // i = 2
-        // next = 1
-        // peek = 2
-        // hasnext = true
-
-        // get 1 term
-        // next = 2
-        // peek = _
-        // hasnext = false
-
-
-        // example for 0 terms []
-
-        // before initialize
-        // n = 0
-        
-        // when just initialized
-        // next = _
-        // peek = _
-        // hasnext = false = 
-
-        
-        
-        // peek now contains the term at index 1
-
-        // get 1 term
-        // next contains 
-        
+        /** 
+         * File with the iteration order.
+         * All term IDS are local to this segment.
+         * for reference, the file contains the following mappings:
+         *     int[n] insensitivePos2TermID    ( offset [0*n*int] )
+         *     int[n] termID2InsensitivePos    ( offset [1*n*int] )
+         *     int[n] sensitivePos2TermID      ( offset [2*n*int] )
+         *     int[n] termID2sensitivePos      ( offset [3*n*int] )
+         */
+        private final IndexInput termOrderFile;
+        /** File containing offsets to the strings */
+        private final IndexInput termIndexFile;
+        /** File containing the strings */
+        private final IndexInput termsFile;
         
         private TermInSegment next = new TermInSegment();
         private TermInSegment peek = new TermInSegment();
 
-        // index of the term CURRENTLY loaded in peek/how many times has next() been called.
-        int i = 0;
-        int n = field.getNumberOfTerms();
-
-        public TermInSegmentIterator(IterationOrder order) {
+        /** index of the term CURRENTLY loaded in peek/how many times has next() been called. */
+        private int i = 0;
+        /** Total number of terms in the segment */
+        private final int n;
+        
+        
+        /**
+         * @param segment only used for initialization, because we need to pass many parameters otherwise.
+         * @param order iterate over terms in the segment in case-sensitive or case-insensitive order? (ascending)
+         */
+        public TermInSegmentIterator(TermsIntegratedSegment segment, MatchSensitivity order) {
 
             // first navigate to where the sensitive iteration order is stored in the _termOrderFile.
-            /*
-            for reference, the file contains:
-                int[n] insensitivePos2TermID    ( offset [0*n*int] )
-                int[n] termID2InsensitivePos    ( offset [1*n*int] )
-                int[n] sensitivePos2TermID      ( offset [2*n*int] )
-                int[n] termID2sensitivePos      ( offset [3*n*int] )
-             */
             try {
-                _termOrderFile.seek(((long)n)*Integer.BYTES*(order == IterationOrder.sensitive ? 3 : 1) + field.getTermOrderOffset());
-                _termIndexFile.seek(field.getTermIndexOffset());
+                this.field = segment.field;
+                this.ord = segment.ord;
+                
+                // clone these file accessors, as they are not threadsafe
+                // while this code was written these file handles were only ever used in one thread, 
+                // but doing this ensures we don't break things in the future.
+                this.termOrderFile = segment._termOrderFile.clone();
+                this.termIndexFile = segment._termIndexFile.clone();
+                this.termsFile = segment._termsFile.clone();
+                
+                this.i = 0;
+                this.n = field.getNumberOfTerms();
+
+                // initialize first term so peek() will work.
+                this.termOrderFile.seek(((long)n)*Integer.BYTES*(order == MatchSensitivity.SENSITIVE ? 3 : 1) + field.getTermOrderOffset());
+                this.termIndexFile.seek(field.getTermIndexOffset());
                 loadPeek();
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -160,12 +148,13 @@ public class TermsIntegratedSegment implements AutoCloseable {
         private void loadPeek() {
             try {
                 if (i < n) {
-                    peek.sortPosition = _termOrderFile.readInt(); // read int a i
-                    peek.id = i;
+                    peek.sortPosition = i;
+                    peek.id = termOrderFile.readInt();
     
-                    long offsetInTermStringFile = _termIndexFile.readLong(); // read long at i
-                    _termsFile.seek(offsetInTermStringFile);
-                    peek.term = _termsFile.readString();
+                    termIndexFile.seek(field.getTermIndexOffset() + peek.id*Long.BYTES);
+                    long offsetInTermStringFile = termIndexFile.readLong(); 
+                    termsFile.seek(offsetInTermStringFile);
+                    peek.term = termsFile.readString();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -195,20 +184,15 @@ public class TermsIntegratedSegment implements AutoCloseable {
             return this.next;
         }
 
-        public TermsIntegratedSegment source() {
-            return TermsIntegratedSegment.this;
+        /** Get the ord (ordinal) of the segment this iterator was constructed on. */
+        public int ord() {
+            return this.ord;
         }
-    }
 
-    /** Return an iterator that returns the terms in order of case- and diacritic sensitive sorting */
-    public TermInSegmentIterator iteratorSensitive() {
-        if (isClosed) throw new UnsupportedOperationException("Cannot iterate terms after closing");
-        return new TermInSegmentIterator(IterationOrder.sensitive);
-    }
-
-    public TermInSegmentIterator iteratorInsensitive() {
-        if (isClosed) throw new UnsupportedOperationException("Cannot iterate terms after closing");
-        return new TermInSegmentIterator(IterationOrder.insensitive);
+        /** returns the total number of terms in this segment */
+        public int size() {
+            return this.n;
+        }
     }
 
     public int ord() {
