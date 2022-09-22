@@ -28,40 +28,48 @@
     "codeRepository": "https://github.com/INL/BlackLab",
     "contributor": [
         {
-            "@id": "/person/eduard-drenth",
-            "@type": "Person",
-            "email": "edrenth@fryske-akademy.nl",
-            "familyName": "Drenth",
-            "givenName": "Eduard"
-        },
-        {
             "@id": "/person/jesse-de-does",
             "@type": "Person",
             "email": "jesse.dedoes@ivdnt.org",
             "familyName": "de Does",
             "givenName": "Jesse"
+        },
+        {
+            "@id": "/person/eduard-drenth",
+            "@type": "Person",
+            "email": "edrenth@fryske-akademy.nl",
+            "familyName": "Drenth",
+            "givenName": "Eduard"
         }
     ],
     "description": "The parent project for BlackLab Core and BlackLab Server.",
     "developmentStatus": "https://www.repostatus.org/#active",
     "funding": {
-        "@id": "/stub/Na27c933346204de191c73ee832c6b44b",
+        "@id": "/stub/N499c91ecc67f418e9f15926a182d3caa",
         "@type": "Grant",
         "funder": {
-            "@id": "/stub/Na212bbc065b9460287b883b01f9fec0e",
+            "@id": "/stub/N8c14edbbc71a4a249a967e826c07b742",
             "@type": "Organization",
             "name": "NWO",
             "url": "https://www.nwo.nl"
         },
-        "name": "CLARIAH-CORE"
+        "name": "CLARIAH-CORE (NWO grant 184.034.023)"
     },
     "identifier": "data",
     "issueTracker": "https://github.com/INL/BlackLab/issues",
     "license": "http://spdx.org/licenses/Apache-2.0",
+    "maintainer": {
+        "@id": "/person/jan-niestadt",
+        "@type": "Person",
+        "email": "jan.niestadt@ivdnt.org",
+        "familyName": "Niestadt",
+        "givenName": "Jan",
+        "url": "https://github.com/jan-niestadt"
+    },
     "name": "BlackLab Corpus Search",
     "producer": [
         {
-            "@id": "/stub/Ncefd68d873c648efa30ec66d7db970ca",
+            "@id": "/stub/N6bcc363ab05145d58489314bc3ba9c28",
             "@type": "Organization",
             "name": "INT",
             "url": "https://www.ivdnt.org"
@@ -134,12 +142,12 @@
     ],
     "targetProduct": [
         {
-            "@id": "/stub/N831305de02404922a04f808d016ce8cf",
+            "@id": "/stub/N9e477ba64c6745998b51ab93ae7fcb6d",
             "@type": "WebService",
             "name": "BlackLab Server"
         },
         {
-            "@id": "/stub/N06e360e1a45d4d5f9a239985ddff3249",
+            "@id": "/stub/Nc5b68fb459e149d58a404a0b9152ac16",
             "@type": "SoftwareLibrary",
             "name": "Blacklab Core"
         }

@@ -1,5 +1,5 @@
 {
-    "targetProduct": [
+   "targetProduct": [
         {
             "@type": "WebService",
             "name": "BlackLab Server"
@@ -9,17 +9,27 @@
            "name" : "Blacklab Core"
         }
    ],
-     "producer": {
+   "producer": {
         "@type": "Organization",
         "name": "INT",
         "url": "https://www.ivdnt.org"
    },
+   "maintainer": [
+        {
+            "@id": "/person/jan-niestadt",
+            "@type": "Person",
+            "email": "jan.niestadt@ivdnt.org",
+            "familyName": "Niestadt",
+            "givenName": "Jan",
+            "url": "https://github.com/jan-niestadt"
+        }
 
-    "developmentStatus": "https://www.repostatus.org/#active",
+   ],
+   "developmentStatus": "https://www.repostatus.org/#active",
    
       "funding": {
         "@type": "Grant",
-        "name": "CLARIAH-CORE",
+        "name": "CLARIAH-CORE (NWO grant 184.034.023)",
         "funder": {
             "@type": "Organization",
             "name": "NWO", 
