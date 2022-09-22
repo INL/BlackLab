@@ -1,9 +1,5 @@
-package nl.inl.blacklab.server.util;
+package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -14,47 +10,17 @@ import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 
+/**
+ * Servlet-specific utilities.
+ */
 public class ServletUtil {
     private static final Logger logger = LogManager.getLogger(ServletUtil.class);
-
-    static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
-
-    /**
-     * Returns the value of a servlet parameter
-     * 
-     * @param request the request object
-     * @param name name of the parameter
-     * @return value of the paramater
-     */
-    private static String getParameter(HttpServletRequest request, String name) {
-        return request.getParameter(name);
-    }
-
-    /**
-     * Returns the value of a servlet parameter, or the default value
-     * 
-     * @param request the request object
-     *
-     * @param name name of the parameter
-     * @param defaultValue default value
-     * @return value of the paramater
-     */
-    public static int getParameter(HttpServletRequest request, String name, int defaultValue) {
-        final String stringToParse = getParameter(request, name, "" + defaultValue);
-        try {
-            return Integer.parseInt(stringToParse);
-        } catch (NumberFormatException e) {
-            logger.info("Could not parse parameter '" + name + "', value '" + stringToParse
-                    + "'. Using default (" + defaultValue + ")");
-            return defaultValue;
-        }
-    }
 
     /**
      * Returns the value of a servlet parameter, or the default value
@@ -87,7 +53,7 @@ public class ServletUtil {
      * @return value of the paramater
      */
     public static String getParameter(HttpServletRequest request, String name, String defaultValue) {
-        String value = getParameter(request, name);
+        String value = request.getParameter(name);
         if (value == null || value.length() == 0)
             value = defaultValue; // default action
         return value;
@@ -99,7 +65,7 @@ public class ServletUtil {
      * unknown value or is missing, null is returned.
      *
      * @param request the request object
-     * @return the type of content the user would like
+     * @return the type of content the user would like, or null if unknown
      */
     public static DataFormat getOutputType(HttpServletRequest request) {
         // See if jsonp callback parameter specified. If so, we want JSON (the "P" part is handled elsewhere)
@@ -111,7 +77,7 @@ public class ServletUtil {
         // See if there was an explicit outputformat parameter. If so, use that.
         String outputTypeString = getParameter(request, "outputformat", "").toLowerCase();
         if (outputTypeString.length() > 0) {
-            return getOutputTypeFromString(outputTypeString, null);
+            return DataFormat.fromString(outputTypeString, null);
         }
 
         // No explicit parameter. Check if the Accept header contains either json or xml
@@ -131,54 +97,6 @@ public class ServletUtil {
         return null;
     }
 
-    /**
-     * Returns the desired content type for the output. This is based on the
-     * "outputformat" parameter.
-     * 
-     * @param outputType the request object
-     * @return the MIME content type
-     */
-    public static String getContentType(DataFormat outputType) {
-        if (outputType == DataFormat.XML)
-            return "application/xml";
-        if (outputType == DataFormat.CSV)
-            return "text/csv";
-
-        return "application/json";
-    }
-
-    /**
-     * Translate the string value for outputType to the enum OutputType value.
-     *
-     * @param typeString the outputType string
-     * @param defaultValue what to use if neither matches
-     * @return the OutputType enum value
-     */
-    public static DataFormat getOutputTypeFromString(String typeString, DataFormat defaultValue) {
-        if (typeString.equalsIgnoreCase("xml"))
-            return DataFormat.XML;
-        if (typeString.equalsIgnoreCase("json"))
-            return DataFormat.JSON;
-        if (typeString.equalsIgnoreCase("csv"))
-            return DataFormat.CSV;
-        logger.warn("Onbekend outputtype gevraagd: " + typeString);
-        return defaultValue;
-    }
-
-    /**
-     * Get a PrintStream for writing the response
-     * 
-     * @param responseObject the response object
-     * @return the PrintStream
-     */
-    public static PrintStream getPrintStream(HttpServletResponse responseObject) {
-        try {
-            return new PrintStream(responseObject.getOutputStream(), true, DEFAULT_ENCODING.name());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /** The HTTP date format, to use for the cache header */
     static final DateFormat httpDateFormat;
 
@@ -186,10 +104,6 @@ public class ServletUtil {
     static {
         httpDateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
         httpDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
-    }
-
-    public static void writeNoCacheHeaders(HttpServletResponse response) {
-        writeCacheHeaders(response, 0);
     }
 
     /**
@@ -217,26 +131,6 @@ public class ServletUtil {
         }
     }
 
-    public static String internalErrorMessage(String code) {
-        return "An internal error occurred. Please contact the administrator. Error code: " + code + ".";
-    }
-
-    public static String internalErrorMessage(Exception e, boolean debugMode, String code) {
-        if (debugMode) {
-            if (e instanceof InternalServerError)
-                return internalErrorMessage(e.getMessage(), debugMode, code);
-            return internalErrorMessage(e.getClass().getName() + ": " + e.getMessage(), debugMode, code);
-        }
-        return ServletUtil.internalErrorMessage(code);
-    }
-
-    public static String internalErrorMessage(String message, boolean debugMode, String code) {
-        if (debugMode) {
-            return message + " (Internal error code " + code + ")";
-        }
-        return ServletUtil.internalErrorMessage(code);
-    }
-
     /**
      * Returns the path info and query string (if any) of the request URL
      *
@@ -257,31 +151,18 @@ public class ServletUtil {
     }
 
     /**
-     * Returns the servlte's base URL, including the context path
+     * Get the originating address.
      *
-     * @param request the servlet request
+     * This is either the "normal" remote address or, in the case of
+     * a reverse proxy setup, the value of the X-Forwarded-For header.
      *
-     * @return the base URL, e.g. http://myserver:8080/myroot
+     * @param request request
+     * @return originating address
      */
-    public static String getServletBaseUrl(HttpServletRequest request) {
-        int port = request.getLocalPort();
-        String optPort = port == 80 ? "" : ":" + port;
-        return request.getScheme() + "://" + request.getServerName() + optPort + request.getContextPath();
+    public static String getOriginatingAddress(HttpServletRequest request) {
+        String remoteAddr = request.getHeader("X-Forwarded-For");
+        if (StringUtils.isEmpty(remoteAddr))
+            remoteAddr = request.getRemoteAddr();
+        return remoteAddr;
     }
-
-    /**
-     * Returns the complete request URL
-     *
-     * @param request the servlet request
-     *
-     * @return the complete request URL
-     */
-    public static String getRequestUrl(HttpServletRequest request) {
-        return getServletBaseUrl(request) + getPathAndQueryString(request);
-    }
-
-    public static String shortenIpv6(String longAddress) {
-        return longAddress.replaceFirst("(^|:)(0+(:|$)){2,8}", "::").replaceAll("(:|^)0+([0-9A-Fa-f])", "$1$2");
-    }
-
 }

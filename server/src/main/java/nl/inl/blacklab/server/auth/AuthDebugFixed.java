@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  * Requests from debug IPs (specified in config file) are automatically logged
  * in as the specified userId.
  */
-public class AuthDebugFixed {
+public class AuthDebugFixed implements AuthMethod {
 
     static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
 

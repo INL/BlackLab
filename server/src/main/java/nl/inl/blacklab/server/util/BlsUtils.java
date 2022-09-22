@@ -29,6 +29,10 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
+/**
+ * Various utility methods for parsing filters and patterns, and other stuff
+ * used in BLS.
+ */
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
 
@@ -178,25 +182,12 @@ public class BlsUtils {
         return docResults.get(0).identity().value();
     }
 
-    // Copied from Apache Commons
-    // (as allowed under the Apache License 2.0)
-    public static boolean isSymlink(File file) throws IOException {
-        if (file == null)
-            throw new IOException("File must not be null");
-        File canon;
-        if (file.getParent() == null) {
-            canon = file;
-        } else {
-            File canonDir = file.getAbsoluteFile().getParentFile().getCanonicalFile();
-            canon = new File(canonDir, file.getName());
-        }
-        return !canon.getCanonicalFile().equals(canon.getAbsoluteFile());
-    }
-
     /**
      * Delete an entire tree with files, subdirectories, etc.
      *
      * CAREFUL, DANGEROUS!
+     *
+     * TODO: We also have FileUtil.deleteTree(), use that instead?
      *
      * @param root the directory tree to delete
      */

@@ -21,7 +21,7 @@ import nl.inl.blacklab.server.lib.User;
  * fix this would be to only use BLS from the client, but that would require
  * significant changes to the application.
  */
-public class AuthDebugCookie {
+public class AuthDebugCookie implements AuthMethod {
 
     static final Logger logger = LogManager.getLogger(AuthDebugCookie.class);
 
@@ -33,6 +33,7 @@ public class AuthDebugCookie {
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
+    @Override
     public User determineCurrentUser(HttpServlet servlet,
             HttpServletRequest request) {
 
@@ -61,12 +62,13 @@ public class AuthDebugCookie {
 
         // Return the appropriate User object
         String sessionId = request.getSession().getId();
-        if (userId == null || userId.length() == 0) {
+        if (userId.isEmpty()) {
             return User.anonymous(sessionId);
         }
         return User.loggedIn(userId, sessionId);
     }
 
+    @Override
     public void persistUser(HttpServlet servlet,
             HttpServletRequest request, HttpServletResponse response, User user) {
         Cookie cookie = new Cookie("autosearch-debug-user", user.getUserId());

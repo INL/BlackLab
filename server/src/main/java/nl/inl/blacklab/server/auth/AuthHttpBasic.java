@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
  * 
  * Note that you will have to enable this in web.xml for this to work.
  */
-public class AuthHttpBasic {
+public class AuthHttpBasic implements AuthMethod {
 
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
@@ -31,6 +31,7 @@ public class AuthHttpBasic {
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
+    @Override
     public User determineCurrentUser(HttpServlet servlet,
             HttpServletRequest request) {
 

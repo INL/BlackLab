@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.lib.User;
@@ -27,16 +26,7 @@ public class AuthManager {
      * The authentication object, giving information about the currently logged-in
      * user (or at least a session id)
      */
-    private Object authObj = null;
-
-    /** The method to invoke for determining the current user. */
-    private Method authMethodDetermineCurrentUser = null;
-
-    private Method authMethodPersistUser;
-
-    public AuthManager(String authClass, Map<String, Object> authParam) throws ConfigurationException {
-        init(authClass, authParam);
-    }
+    private AuthMethod authObj = null;
 
     public AuthManager(BLSConfigAuth authentication) throws ConfigurationException {
         Map<String, String> system = authentication.getSystem();
@@ -56,16 +46,8 @@ public class AuthManager {
                     // Allows us to abbreviate the built-in auth classes
                     authClass = "nl.inl.blacklab.server.auth." + authClass;
                 }
-                Class<?> cl = Class.forName(authClass);
+                Class<? extends AuthMethod> cl = (Class<? extends AuthMethod>)Class.forName(authClass);
                 authObj = cl.getConstructor(Map.class).newInstance(authParam);
-                authMethodDetermineCurrentUser = cl.getMethod("determineCurrentUser", HttpServlet.class,
-                        HttpServletRequest.class);
-                try {
-                    authMethodPersistUser = cl.getMethod("persistUser", HttpServlet.class, HttpServletRequest.class,
-                            HttpServletResponse.class, User.class);
-                } catch (NoSuchMethodException e) {
-                    authMethodPersistUser = null; // ok, optional method
-                }
             } catch (Exception e) {
                 throw new ConfigurationException("Error instantiating auth system: " + authClass, e);
             }
@@ -89,21 +71,14 @@ public class AuthManager {
 
         // Let auth system determine the current user.
         try {
-            return (User) authMethodDetermineCurrentUser.invoke(authObj, servlet, request);
+            return authObj.determineCurrentUser(servlet, request);
         } catch (Exception e) {
             throw new RuntimeException("Error determining current user", e);
         }
     }
 
     public void persistUser(HttpServlet servlet, HttpServletRequest request, HttpServletResponse response, User user) {
-        if (authMethodPersistUser != null) {
-            // i.e. set cookie
-            try {
-                authMethodPersistUser.invoke(authObj, servlet, request, response, user);
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-                throw new RuntimeException("Error persisting user information");
-            }
-        }
+        // i.e. set cookie
+        authObj.persistUser(servlet, request, response, user);
     }
-
 }

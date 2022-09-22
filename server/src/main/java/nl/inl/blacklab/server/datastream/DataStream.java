@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**
  * Class to stream out XML or JSON data.
@@ -80,15 +80,15 @@ public abstract class DataStream {
     }
 
     public void internalError(Exception e, boolean debugMode, String code) {
-        error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(e, debugMode, code), debugMode ? e : null);
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(e, debugMode, code), debugMode ? e : null);
     }
 
     public void internalError(String message, boolean debugMode, String code) {
-        error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(message, debugMode, code));
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(message, debugMode, code));
     }
 
     public void internalError(String code) {
-        error("INTERNAL_ERROR", ServletUtil.internalErrorMessage(code));
+        error("INTERNAL_ERROR", WebserviceUtil.internalErrorMessage(code));
     }
 
     protected final PrintWriter out;

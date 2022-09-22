@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.util;
+package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.File;
 import java.util.List;
@@ -15,6 +15,9 @@ import org.apache.commons.io.FileUtils;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
+/**
+ * Handles a servlet file upload.
+ */
 public class FileUploadHandler {
 
     private static final long MAX_UPLOAD_SIZE = FileUtils.ONE_GB * 2;

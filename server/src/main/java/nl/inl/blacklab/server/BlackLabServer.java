@@ -43,7 +43,8 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.SearchParameters;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.server.requesthandlers.ServletUtil;
+import nl.inl.blacklab.server.util.WebserviceUtil;
 
 public class BlackLabServer extends HttpServlet {
 
@@ -220,7 +221,8 @@ public class BlackLabServer extends HttpServlet {
         }
 
         // === Create RequestHandler object
-        boolean debugMode = searchManager.isDebugMode(getOriginatingAddress(request));
+
+        boolean debugMode = searchManager.isDebugMode(ServletUtil.getOriginatingAddress(request));
 
         // The outputType handling is a bit iffy:
         // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
@@ -233,7 +235,7 @@ public class BlackLabServer extends HttpServlet {
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
-            outputType = ServletUtil.getOutputTypeFromString(searchManager.config().getProtocol().getDefaultOutputType(), DataFormat.XML);
+            outputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(), DataFormat.XML);
 
         // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
         searchManager.getAuthSystem().persistUser(this, request, responseObject, requestHandler.getUser());
@@ -270,7 +272,7 @@ public class BlackLabServer extends HttpServlet {
             } catch (InvalidQuery e) {
                 httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
             } catch (InternalServerError e) {
-                String msg = ServletUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
+                String msg = WebserviceUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
                 httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
             } catch (BlsException e) {
                 httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
@@ -290,7 +292,7 @@ public class BlackLabServer extends HttpServlet {
         if (!isJsonp) // JSONP request always returns 200 OK because otherwise script doesn't load
             responseObject.setStatus(httpCode);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
-        responseObject.setContentType(ServletUtil.getContentType(outputType));
+        responseObject.setContentType(outputType.getContentType());
         optAddAllowOriginHeader(responseObject);
         ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
@@ -328,22 +330,6 @@ public class BlackLabServer extends HttpServlet {
             // This is okay, don't raise the alarm.
             logger.debug("(couldn't send response, client probably cancelled the request)");
         }
-    }
-
-    /**
-     * Get the originating address.
-     *
-     * This is either the "normal" remote address or, in the case of
-     * a reverse proxy setup, the value of the X-Forwarded-For header.
-     *
-     * @param request request
-     * @return originating address
-     */
-    public static String getOriginatingAddress(HttpServletRequest request) {
-        String remoteAddr = request.getHeader("X-Forwarded-For");
-        if (StringUtils.isEmpty(remoteAddr))
-            remoteAddr = request.getRemoteAddr();
-        return remoteAddr;
     }
 
     @Override

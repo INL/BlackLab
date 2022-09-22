@@ -320,12 +320,8 @@ public class IndexManager {
         }
 
         // Don't follow symlinks
-        try {
-            if (BlsUtils.isSymlink(indexDir)) {
-                throw new InternalServerError("Could not delete index. Is a symlink.", "INTERR_DELETING_INDEX5");
-            }
-        } catch (IOException e1) {
-            throw new InternalServerError("INTERR_DELETING_INDEX6");
+        if (FileUtils.isSymlink(indexDir)) {
+            throw new InternalServerError("Could not delete index. Is a symlink.", "INTERR_DELETING_INDEX5");
         }
 
         // Can we even delete the whole tree? If not, don't even try.

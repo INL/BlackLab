@@ -24,7 +24,6 @@ import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigCache;
 import nl.inl.blacklab.server.util.BlsUtils;
-import nl.inl.blacklab.server.util.MemoryUtil;
 
 public class BlsCache implements SearchCache {
 
@@ -38,6 +37,17 @@ public class BlsCache implements SearchCache {
 
     /** Very rough measure of how large result objects are, based on a Hit (3 ints + 12 bytes object overhead) */
     public static final int SIZE_OF_HIT = 24;
+
+    /**
+     * Returns the amount of memory that can still be allocated before we get the
+     * OutOfMemory exception.
+     *
+     * @return the amount of memory that can still be allocated
+     */
+    public static long getFreeMemory() {
+        Runtime runtime = Runtime.getRuntime();
+        return runtime.freeMemory() + (runtime.maxMemory() - runtime.totalMemory());
+    }
 
     /**
      * A thread that regularly calls cleanUpSearches() to
@@ -254,7 +264,7 @@ public class BlsCache implements SearchCache {
         if (trace) {
             String msg = getCacheStats();
             if (!msg.equals(previousCacheStatsMessage)) {
-                double freeGigs = (double)(MemoryUtil.getFree() * 10 / ONE_GB_BYTES) / 10;
+                double freeGigs = (double)(getFreeMemory() * 10 / ONE_GB_BYTES) / 10;
                 traceInfo("{}: {}, {}G free heap", "CACHE AFTER UPDATE", msg, freeGigs);
             }
             previousCacheStatsMessage = msg;
@@ -338,7 +348,7 @@ public class BlsCache implements SearchCache {
         int runningSearches = numberOfRunningSearches();
         if (runningSearches == 0)
             return true;
-        long freeMemory = MemoryUtil.getFree();
+        long freeMemory = getFreeMemory();
         int minFreeMemForSearchMegs = config.getMinFreeMemForSearchMegs();
         boolean enoughMemory = freeMemory / ONE_MB_BYTES >= minFreeMemForSearchMegs;
         boolean threadsAvailable = runningSearches < maxConcurrentSearches;
@@ -385,7 +395,7 @@ public class BlsCache implements SearchCache {
         // Get rid of completed searches that haven't been accessed in a while (maxJobAgeSec).
         // If we're low on memory, remove searches so they will be garbage collected (targetFreeMemMegs).
         boolean checkLastAccessTime = config.getMaxJobAgeSec() >= 0;
-        long freeMegs = MemoryUtil.getFree() / ONE_MB_BYTES;
+        long freeMegs = getFreeMemory() / ONE_MB_BYTES;
         long memoryToFreeUpMegs = config.getTargetFreeMemMegs() - freeMegs;
         for (int i = searches.size() - 1; i >= 0; i--) {
             BlsCacheEntry<?> search = searches.get(i);
@@ -469,7 +479,7 @@ public class BlsCache implements SearchCache {
             "maxSearchAgeSec", config.getMaxJobAgeSec(),
             "sizeBytes", cacheSizeBytes,
             "numberOfSearches", searches.size(),
-            "freeMemory", MemoryUtil.getFree(),
+            "freeMemory", getFreeMemory(),
             "countsPerStatus", Map.of(
                 "queued", counts.get("queued"),
                 "running", counts.get("running"),

@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  *
  * Can be used, for example, with Shibboleth authentication.
  */
-public class AuthRequestAttribute {
+public class AuthRequestAttribute implements AuthMethod {
     static final Logger logger = LogManager.getLogger(AuthRequestAttribute.class);
 
     private String attributeName = null;

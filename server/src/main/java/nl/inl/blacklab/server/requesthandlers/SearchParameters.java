@@ -41,7 +41,6 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -59,8 +58,6 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
-import nl.inl.blacklab.server.util.ParseUtil;
-import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * The parameters passed in the request.
@@ -154,7 +151,7 @@ public class SearchParameters {
                 continue;
             param.put(name, value);
         }
-        param.setDebugMode(searchMan.config().getDebug().isDebugMode(BlackLabServer.getOriginatingAddress(request)));
+        param.setDebugMode(searchMan.config().getDebug().isDebugMode(ServletUtil.getOriginatingAddress(request)));
         return param;
     }
 
@@ -255,8 +252,8 @@ public class SearchParameters {
     public int getInteger(String name) {
         String value = getString(name);
         try {
-            return ParseUtil.strToInt(value);
-        } catch (IllegalArgumentException e) {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
             logger.debug("Illegal integer value for parameter '" + name + "': " + value);
             return 0;
         }
@@ -265,8 +262,8 @@ public class SearchParameters {
     public long getLong(String name) {
         String value = getString(name);
         try {
-            return ParseUtil.strToLong(value);
-        } catch (IllegalArgumentException e) {
+            return Long.parseLong(value);
+        } catch (NumberFormatException e) {
             logger.debug("Illegal integer value for parameter '" + name + "': " + value);
             return 0L;
         }
@@ -275,8 +272,8 @@ public class SearchParameters {
     public float getFloat(String name) {
         String value = getString(name);
         try {
-            return ParseUtil.strToFloat(value);
-        } catch (IllegalArgumentException e) {
+            return Float.parseFloat(value);
+        } catch (NumberFormatException e) {
             logger.debug("Illegal integer value for parameter '" + name + "': " + value);
             return 0L;
         }
@@ -284,12 +281,12 @@ public class SearchParameters {
 
     public boolean getBoolean(String name) {
         String value = getString(name);
-        try {
-            return ParseUtil.strToBool(value);
-        } catch (IllegalArgumentException e) {
-            logger.debug("Illegal boolean value for parameter '" + name + "': " + value);
+        if (value.equals("true") || value.equals("1") || value.equals("yes") || value.equals("on"))
+            return true;
+        if (value.equals("false") || value.equals("0") || value.equals("no") || value.equals("off"))
             return false;
-        }
+        logger.debug("Illegal boolean value for parameter '" + name + "': " + value);
+        return false;
     }
 
     /**

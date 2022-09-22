@@ -70,7 +70,7 @@ import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -215,7 +215,7 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj
-                                .unauthorized("You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to do this.");
+                                .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
@@ -257,7 +257,7 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj.unauthorized(
-                                "You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to see this information.");
+                                "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
@@ -422,7 +422,7 @@ public abstract class RequestHandler {
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
-            logger.info(ServletUtil.shortenIpv6(BlackLabServer.getOriginatingAddress(request)) + " " + user.uniqueIdShort() + " "
+            logger.info(WebserviceUtil.shortenIpv6(ServletUtil.getOriginatingAddress(request)) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
 
