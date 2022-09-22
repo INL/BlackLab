@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.lib;
 
 /**
  * Keeps track of various timings we want to report to the client.

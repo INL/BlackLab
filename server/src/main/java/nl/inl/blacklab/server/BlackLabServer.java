@@ -33,6 +33,7 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.config.ConfigFileReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -46,64 +47,59 @@ import nl.inl.blacklab.server.util.ServletUtil;
 
 public class BlackLabServer extends HttpServlet {
 
-    /**
-     * Root element to use for XML responses.
-     */
-    public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
-
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
-    static final Charset CONFIG_ENCODING = StandardCharsets.UTF_8;
+    /** Root element to use for XML responses. */
+    public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
 
-    static final Charset OUTPUT_ENCODING = StandardCharsets.UTF_8;
+    private static final Charset REQUEST_ENCODING = StandardCharsets.UTF_8;
+
+    private static final Charset OUTPUT_ENCODING = StandardCharsets.UTF_8;
+
+    private static final String CONFIG_FILE_NAME = "blacklab-server";
 
     /** Manages all our searches */
     private SearchManager searchManager;
-
-    private boolean configRead = false;
 
     private RequestInstrumentationProvider requestInstrumentationProvider = null;
 
     @Override
     public void init() throws ServletException {
-        // Default init if no log4j.properties found
-        //LogUtil.initLog4jIfNotAlready(Level.DEBUG);
-
         logger.info("Starting BlackLab Server...");
         super.init();
         logger.info("BlackLab Server ready.");
     }
 
-    @SuppressWarnings("deprecation")
-    private void readConfig() throws BlsException {
-        try {
+    private synchronized void ensureSearchManagerAvailable() throws BlsException {
+        if (searchManager == null) {
+            try {
+                BLSConfig config = readConfig();
 
-            File servletPath = new File(getServletContext().getRealPath("."));
-            logger.debug("Running from dir: " + servletPath);
+                // Create our search manager (main webservice class)
+                searchManager = new SearchManager(config);
 
-            String configFileName = "blacklab-server";
+                // Set default parameter settings from config
+                SearchParameters.setDefaults(config.getParameters());
 
-            List<File> searchDirs = new ArrayList<>();
-            searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
-            searchDirs.addAll(BlackLab.defaultConfigDirs());
-            ConfigFileReader configFile = new ConfigFileReader(searchDirs, configFileName);
-            BLSConfig config = configFile.getConfig();
-            // load blacklab's internal config before doing anything
-            // It's important we do this as early as possible as some things are loaded depending on the config (such as plugins)
-            BlackLab.setConfig(config.getBLConfig());
+                // Configure metrics provider (e.g Prometheus)
+                setMetricsProvider(config);
+                this.requestInstrumentationProvider = getRequestInstrumentationProvider(config);
 
-            searchManager = new SearchManager(config);
-
-            // Set default parameter settings from config
-            SearchParameters.setDefaults(config.getParameters());
-            setMetricsProvider(config);
-            this.requestInstrumentationProvider = getRequestInstrumentationProvider(config);
-
-        } catch (JsonProcessingException e) {
-            throw new ConfigurationException("Invalid JSON in configuration file", e);
-        } catch (IOException e) {
-            throw new ConfigurationException("Error reading configuration file", e);
+            } catch (JsonProcessingException e) {
+                throw new ConfigurationException("Invalid JSON in configuration file", e);
+            } catch (IOException e) {
+                throw new ConfigurationException("Error reading configuration file", e);
+            }
         }
+    }
+
+    private BLSConfig readConfig() throws IOException, ConfigurationException {
+        File servletPath = new File(getServletContext().getRealPath("."));
+        logger.debug("Running from dir: " + servletPath);
+        List<File> searchDirs = new ArrayList<>();
+        searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
+        searchDirs.addAll(BlackLab.defaultConfigDirs());
+        return ConfigFileReader.getBlsConfig(searchDirs, CONFIG_FILE_NAME);
     }
 
     private void setMetricsProvider(BLSConfig config) throws ConfigurationException {
@@ -188,60 +184,35 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    protected void doOptions(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        super.doOptions(req, resp);
-        String allowOrigin = searchManager == null ? "*" : searchManager.config().getProtocol().getAccessControlAllowOrigin();
+    protected void doOptions(HttpServletRequest request, HttpServletResponse responseObject)
+            throws ServletException, IOException {
+        super.doOptions(request, responseObject);
+        String allowOrigin = optAddAllowOriginHeader(responseObject);
         if (allowOrigin != null) {
-        	resp.addHeader("Access-Control-Allow-Origin", allowOrigin);
-        	resp.addHeader("Access-Control-Allow-Headers", req.getHeader("Access-Control-Request-Headers"));
-        	resp.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
+            responseObject.addHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+        	responseObject.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         }
     }
 
-	private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
-        try {
-            request.setCharacterEncoding("utf-8");
-        } catch (UnsupportedEncodingException ex) {
-            logger.warn(ex.getMessage(),ex);
-        }
+    private String optAddAllowOriginHeader(HttpServletResponse responseObject) {
+        String allowOrigin = searchManager == null ? "*" : searchManager.config().getProtocol().getAccessControlAllowOrigin();
+        if (allowOrigin != null)
+            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
+        return allowOrigin;
+    }
 
+    private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
         try {
-            request.setCharacterEncoding("utf-8");
+            request.setCharacterEncoding(REQUEST_ENCODING.name());
         } catch (UnsupportedEncodingException ex) {
             logger.error(ex);
         }
 
-        synchronized (this) {
-            if (!configRead) {
-                try {
-                    readConfig();
-                    configRead = true;
-                } catch (BlsException e) {
-                    // Write HTTP headers (status code, encoding, content type and cache)
-                    responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                    responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
-                    responseObject.setContentType("text/xml");
-                    String allowOrigin = searchManager == null ? "*"
-                            : searchManager.config().getProtocol().getAccessControlAllowOrigin();
-                    if (allowOrigin != null)
-                        responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
-                    ServletUtil.writeCacheHeaders(responseObject, 0);
-
-                    // === Write the response that was captured in buf
-                    try {
-                        Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
-                        realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
-                                "<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ "
-                                + e.getMessage() + " ]]></message></error></blacklabResponse>");
-                        realOut.flush();
-                    } catch (IOException e2) {
-                        // Client cancelled the request midway through.
-                        // This is okay, don't raise the alarm.
-                        logger.debug("(couldn't send response, client probably cancelled the request)");
-                    }
-                    return;
-                }
-            }
+        try {
+            ensureSearchManagerAvailable();
+        } catch (BlsException e) {
+            initializationErrorResponse(responseObject, e);
+            return;
         }
 
         if (PrometheusMetricsProvider.handlePrometheus(Metrics.globalRegistry, request, responseObject, OUTPUT_ENCODING.name())) {
@@ -249,7 +220,7 @@ public class BlackLabServer extends HttpServlet {
         }
 
         // === Create RequestHandler object
-        boolean debugMode = searchManager.config().getDebug().isDebugMode(getOriginatingAddress(request));
+        boolean debugMode = searchManager.isDebugMode(getOriginatingAddress(request));
 
         // The outputType handling is a bit iffy:
         // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
@@ -289,11 +260,10 @@ public class BlackLabServer extends HttpServlet {
         es.outputProlog();
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
-        if (isJsonp && !callbackFunction.matches("[_a-zA-Z][_a-zA-Z0-9]+")) {
+        if (isJsonp && !callbackFunction.matches("[_a-zA-Z]\\w+")) {
             // Illegal JSONP callback name
             httpCode = Response.badRequest(es, "JSONP_ILLEGAL_CALLBACK",
                     "Illegal JSONP callback function name. Must be a valid Javascript name.");
-            callbackFunction = "";
         } else {
             try {
                 httpCode = requestHandler.handle(ds);
@@ -321,9 +291,7 @@ public class BlackLabServer extends HttpServlet {
             responseObject.setStatus(httpCode);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
         responseObject.setContentType(ServletUtil.getContentType(outputType));
-        String allowOrigin = searchManager.config().getProtocol().getAccessControlAllowOrigin();
-        if (allowOrigin != null)
-            responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
+        optAddAllowOriginHeader(responseObject);
         ServletUtil.writeCacheHeaders(responseObject, cacheTime);
 
         // === Write the response that was captured in buf
@@ -334,6 +302,28 @@ public class BlackLabServer extends HttpServlet {
             realOut.write(writeWhat.toString());
             realOut.flush();
         } catch (IOException e) {
+            // Client cancelled the request midway through.
+            // This is okay, don't raise the alarm.
+            logger.debug("(couldn't send response, client probably cancelled the request)");
+        }
+    }
+
+    private void initializationErrorResponse(HttpServletResponse responseObject, BlsException e) {
+        // Write HTTP headers (status code, encoding, content type and cache)
+        responseObject.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
+        responseObject.setContentType("text/xml");
+        optAddAllowOriginHeader(responseObject);
+        ServletUtil.writeCacheHeaders(responseObject, 0);
+
+        // === Write the response that was captured in buf
+        try {
+            Writer realOut = new OutputStreamWriter(responseObject.getOutputStream(), OUTPUT_ENCODING);
+            realOut.write("<?xml version=\"1.0\" encoding=\"utf-8\" ?>\n" +
+                    "<blacklabResponse><error><code>INTERNAL_ERROR</code><message><![CDATA[ "
+                    + e.getMessage() + " ]]></message></error></blacklabResponse>");
+            realOut.flush();
+        } catch (IOException e2) {
             // Client cancelled the request midway through.
             // This is okay, don't raise the alarm.
             logger.debug("(couldn't send response, client probably cancelled the request)");
@@ -374,30 +364,10 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Provides corpus search services on one or more BlackLab indices.\n"
-                + "Source available at http://github.com/INL/BlackLab\n"
+                + "Source available at https://github.com/INL/BlackLab\n"
                 + "(C) 2013-" + Calendar.getInstance().get(Calendar.YEAR)
-                + " Dutch Language Institute (http://ivdnt.org/)\n"
+                + " Dutch Language Institute (https://ivdnt.org/)\n"
                 + "Licensed under the Apache License v2.\n";
-    }
-
-    /**
-     * Get the search-related parameteers from the request object.
-     *
-     * This ignores stuff like the requested output type, etc.
-     *
-     * Note also that the request type is not part of the SearchParameters, so from
-     * looking at these parameters alone, you can't always tell what type of search
-     * we're doing. The RequestHandler subclass will add a jobclass parameter when
-     * executing the actual search.
-     *
-     * @param isDocs is this a docs operation? influences how the "sort" parameter
-     *            is interpreted
-     * @param request the HTTP request
-     * @param indexName the index to search
-     * @return the unique key
-     */
-    public SearchParameters getSearchParameters(boolean isDocs, HttpServletRequest request, String indexName) {
-        return SearchParameters.get(searchManager, isDocs, indexName, request);
     }
 
     public SearchManager getSearchManager() {

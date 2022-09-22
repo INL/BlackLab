@@ -29,7 +29,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /**

@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Get debug info about the servlet and index. Only available in debug mode
@@ -28,7 +28,7 @@ public class RequestHandlerDebug extends RequestHandler {
                 .entry("resource", urlResource)
                 .entry("rest", urlPathInfo)
                 .entry("queryString", request.getQueryString())
-                .entry("searchParam", servlet.getSearchParameters(false, request, indexName).toString())
+                .entry("searchParam", SearchParameters.get(servlet.getSearchManager(), false, indexName, request).toString())
                 .endMap();
         return HTTP_OK;
     }

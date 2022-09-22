@@ -31,7 +31,8 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * List documents, search for documents matching criteria.

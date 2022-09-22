@@ -128,6 +128,22 @@ public class SearchParameters {
         setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
     }
 
+    /**
+     * Get the search-related parameteers from the request object.
+     *
+     * This ignores stuff like the requested output type, etc.
+     *
+     * Note also that the request type is not part of the SearchParameters, so from
+     * looking at these parameters alone, you can't always tell what type of search
+     * we're doing. The RequestHandler subclass will add a jobclass parameter when
+     * executing the actual search.
+     *
+     * @param isDocs is this a docs operation? influences how the "sort" parameter
+     *            is interpreted
+     * @param indexName the index to search
+     * @param request the HTTP request
+     * @return the unique key
+     */
     public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName,
             HttpServletRequest request) {
         SearchParameters param = new SearchParameters(searchMan, isDocs);

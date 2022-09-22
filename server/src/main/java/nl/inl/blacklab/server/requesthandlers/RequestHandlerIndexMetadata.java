@@ -20,7 +20,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Get information about the structure of an index.

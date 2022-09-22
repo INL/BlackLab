@@ -25,7 +25,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Implementation of DocIndexerFactoryConfig that is able to load user's config

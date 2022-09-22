@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Set a cookie to simulate a logged-in user.

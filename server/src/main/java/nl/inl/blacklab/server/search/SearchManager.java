@@ -14,6 +14,7 @@ import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.requesthandlers.AuthManager;
 
 /**
  * Manages the lifetime of a number of objects needed for the web service.
@@ -39,6 +40,11 @@ public class SearchManager {
 
     public SearchManager(BLSConfig config) throws ConfigurationException {
         this.config = config;
+
+        // load blacklab's internal config before doing anything
+        // It's important we do this as early as possible as some things are loaded depending on the config
+        // (such as plugins)
+        BlackLab.setConfig(config.getBLConfig());
 
         // Create BlackLab instance with the desired number of search threads
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();
@@ -122,6 +128,10 @@ public class SearchManager {
             logger.error(message, ex);
             throw BlackLabRuntimeException.wrap(new ConfigurationException(message));
         }
+    }
+
+    public boolean isDebugMode(String originatingAddress) {
+        return config().getDebug().isDebugMode(originatingAddress);
     }
 
 }

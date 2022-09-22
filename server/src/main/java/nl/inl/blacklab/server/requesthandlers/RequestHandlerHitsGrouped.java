@@ -31,7 +31,9 @@ import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.util.BlockTimer;
 

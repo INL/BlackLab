@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.lib;
 
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;

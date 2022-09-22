@@ -8,6 +8,9 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
+/**
+ * Different BLS responses with response code and message.
+ */
 public class Response {
     static final Logger logger = LogManager.getLogger(Response.class);
 

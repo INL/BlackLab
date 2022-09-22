@@ -1,10 +1,12 @@
-package nl.inl.blacklab.server;
+package nl.inl.blacklab.server.config;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
@@ -18,7 +20,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Json;
@@ -26,10 +27,17 @@ import nl.inl.util.Json;
 /**
  * Finds and opens a config file to be read.
  */
-class ConfigFileReader {
+public class ConfigFileReader {
     private static final Logger logger = LogManager.getLogger(ConfigFileReader.class);
 
-    private static final List<String> exts = Arrays.asList("json", "yaml", "yml");
+    public static final Charset CONFIG_ENCODING = StandardCharsets.UTF_8;
+
+    private static final List<String> CONFIG_EXTENSIONS = Arrays.asList("json", "yaml", "yml");
+
+    public static BLSConfig getBlsConfig(List<File> searchDirs, String configFileName) throws ConfigurationException {
+        ConfigFileReader cfr = new ConfigFileReader(searchDirs, configFileName);
+        return cfr.getConfig();
+    }
 
     private String configFileRead = "(none)";
 
@@ -42,11 +50,11 @@ class ConfigFileReader {
     public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
         configFileIsJson = false;
 
-        File configFile = FileUtil.findFile(searchDirs, configFileName, exts);
+        File configFile = FileUtil.findFile(searchDirs, configFileName, CONFIG_EXTENSIONS);
         if (configFile != null && configFile.canRead()) {
             logger.debug("Reading configuration file " + configFile);
             try {
-                configFileContents = FileUtils.readFileToString(configFile, BlackLabServer.CONFIG_ENCODING);
+                configFileContents = FileUtils.readFileToString(configFile, CONFIG_ENCODING);
                 configFileRead = configFile.getAbsolutePath();
             } catch (FileNotFoundException e) {
                 throw new ConfigurationException("Config file not found", e);
@@ -59,14 +67,14 @@ class ConfigFileReader {
         if (configFileContents == null) {
             logger.debug(configFileName + ".(json|yaml) not found in webapps dir; searching classpath...");
 
-            for (String ext : exts) {
+            for (String ext : CONFIG_EXTENSIONS) {
                 InputStream is = getClass().getClassLoader().getResourceAsStream(configFileName + "." + ext);
                 if (is == null)
                     continue;
 
                 logger.debug("Reading configuration file from classpath: " + configFileName);
                 try {
-                    configFileContents = IOUtils.toString(is, BlackLabServer.CONFIG_ENCODING);
+                    configFileContents = IOUtils.toString(is, CONFIG_ENCODING);
                 } catch (IOException e) {
                     throw new ConfigurationException("Error reading config file from classpath: " + configFileName, e);
                 }

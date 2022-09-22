@@ -12,7 +12,11 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-// From: http://www.kuligowski.pl/java/rest-style-urls-and-url-mapping-for-static-content-apache-tomcat,5
+/**
+ * Used to forward static resource URLs to the default servlet.
+ *
+ * From: http://www.kuligowski.pl/java/rest-style-urls-and-url-mapping-for-static-content-apache-tomcat,5
+ */
 public class DefaultFilter implements Filter {
 
     private RequestDispatcher defaultRequestDispatcher;

@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Show a static response such as an error or succes message.

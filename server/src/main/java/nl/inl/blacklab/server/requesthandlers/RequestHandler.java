@@ -65,7 +65,10 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -163,7 +166,7 @@ public abstract class RequestHandler {
         // If we're modifying a private index, it must be our own.
         Index privateIndex = null;
         //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
-        if (indexName.contains(":")) {
+        if (IndexUtil.isUserIndex(indexName)) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access a private index.");
@@ -424,7 +427,7 @@ public abstract class RequestHandler {
         }
 
         boolean isDocs = isDocsOperation();
-        searchParam = servlet.getSearchParameters(isDocs, request, indexName);
+        searchParam = SearchParameters.get(searchMan, isDocs, indexName, request);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;

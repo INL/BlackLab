@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.search;
+package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 public class AuthManager {
 

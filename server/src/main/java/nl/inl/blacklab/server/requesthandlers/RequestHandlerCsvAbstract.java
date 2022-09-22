@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Base class for handling CSV requests for hits and documents.

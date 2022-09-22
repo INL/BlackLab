@@ -5,7 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Display the contents of the cache.

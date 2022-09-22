@@ -26,7 +26,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Get information about supported input formats.

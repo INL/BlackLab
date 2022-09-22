@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.jobs;
+package nl.inl.blacklab.server.lib;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
