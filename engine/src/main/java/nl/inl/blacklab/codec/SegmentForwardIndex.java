@@ -31,8 +31,6 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
     private final Map<String, Field> fieldsByName = new LinkedHashMap<>();
 
-    /** Contains offsets into termsFile where the string for each term can be found */
-    private IndexInput _termIndexFile;
 
     /** Contains indexes into the tokens file for all field and documents */
     private IndexInput _tokensIndexFile;
@@ -52,7 +50,6 @@ class SegmentForwardIndex implements AutoCloseable {
             }
         }
 
-        _termIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TERMINDEX_EXT);
         _tokensIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
         _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
     }
@@ -62,8 +59,7 @@ class SegmentForwardIndex implements AutoCloseable {
         try {
             _tokensFile.close();
             _tokensIndexFile.close();
-            _termIndexFile.close();
-            _termIndexFile = _tokensIndexFile = _tokensFile = null;
+            _tokensIndexFile = _tokensFile = null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
