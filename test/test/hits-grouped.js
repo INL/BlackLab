@@ -14,7 +14,7 @@ function expectHitsGroupedUnchanged(testName, params) {
     const groupBy = params.group;
     const filteredBy  = params.filter ? `, filtered by ${params.filter}` : '';
 
-    describe(`/hits with pattern ${pattern}${filteredBy}, grouped by ${groupBy}`, () => {
+    describe(testName, () => {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
@@ -58,3 +58,7 @@ expectHitsGroupedUnchanged('any token grouped by word with filter',
         { patt: '[word != "abcdefg"]', filter, group: 'hit:word:i'}); // regular path
 expectHitsGroupedUnchanged('any token grouped by word with filter',
         { patt: '[]', filter, group: 'hit:word:i'}); // fast path
+
+// Group by capture
+expectHitsGroupedUnchanged('group by capture',
+        { patt: '"a|the" X:[]', filter, group: 'capture:word:i:X'});

@@ -9,8 +9,7 @@ import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
 
 /**
- * A hit property for grouping on the context of the hit. Requires
- * HitConcordances as input (so we have the hit text available).
+ * A hit property for grouping on the context of the hit.
  */
 public class HitPropertyRightContext extends HitPropertyContextBase {
 
