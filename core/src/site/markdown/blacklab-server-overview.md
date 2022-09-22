@@ -319,6 +319,10 @@ The sort, group, hitfiltercrit and facets parameters receive one or more criteri
 		<td>Single word to the left or right of the matched text. Used for grouping/faceting. Examples: wordleft, wordleft:pos</td>
 	</tr>
 	<tr>
+		<td>capture</td>
+		<td>Contents of a named capture group. Examples: capture:word:i:A</td>
+	</tr>
+	<tr>
 		<td>field:name </td>
 		<td>Metadata field</td>
 	</tr>

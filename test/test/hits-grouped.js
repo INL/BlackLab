@@ -14,7 +14,7 @@ function expectHitsGroupedUnchanged(testName, params) {
     const groupBy = params.group;
     const filteredBy  = params.filter ? `, filtered by ${params.filter}` : '';
 
-    describe(`/hits with pattern ${pattern}${filteredBy}, grouped by ${groupBy}`, () => {
+    describe(testName, () => {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
