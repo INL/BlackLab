@@ -487,21 +487,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         return true;
     }
 
-    /**
-     * Check if a Lucene field must store a forward index.
-     *
-     * The forward index is stored for some annotations (as configured),
-     * and is stored with the main sensitivity of that annotation. Here we
-     * check if this field represents such a sensitivity.
-     *
-     * @param fieldInfo the FieldInfo of the field to check
-     * @return true if we should store a forward index for this field
-     */
-    private boolean shouldGetForwardIndex(FieldInfo fieldInfo) {
-        String hasForwardIndex = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX);
-        return hasForwardIndex != null && hasForwardIndex.equals("true");
-    }
-
     private String getSegmentFileName(String ext) {
         return IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix,
                 BlackLab40PostingsFormat.EXT_PREFIX + ext);
