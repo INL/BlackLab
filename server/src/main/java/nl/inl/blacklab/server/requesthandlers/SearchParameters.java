@@ -466,111 +466,9 @@ public class SearchParameters {
     }
 
 
-    // --------- LESS API dependent vars & methods -------------
 
     
-    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattGapData, String pattLang) throws BlsException {
-        if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
-            // CQL query with gaps, and TSV data to put in the gaps
-            try {
-                return GapFiller.parseGapQuery(patt, pattGapData);
-            } catch (InvalidQuery e) {
-                throw new BadRequest("PATT_SYNTAX_ERROR",
-                        "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
-            }
-        } else {
-            String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
-            return BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang, true);
-        }
-    }
-
-    private static Query parseFilterQuery(BlackLabIndex index, String docPid, String filter, String filterLang)
-            throws BlsException {
-        if (docPid != null) {
-            // Only hits in 1 doc (for highlighting)
-            int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
-            if (luceneDocId < 0)
-                throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-            logger.debug("Filtering on single doc-id");
-            return new SingleDocIdFilter(luceneDocId);
-        } else if (!StringUtils.isEmpty(filter)) {
-            return BlsUtils.parseFilter(index, filter, filterLang);
-        }
-        return null;
-    }
-
-    private static SampleParameters createSampleSettings(double sample, int sampleNum, boolean withSeed, long sampleSeed) {
-        SampleParameters p;
-        if (sample > 0.0) {
-            double fraction = Math.max(Math.min(sample, 100), 0) / 100.0;
-            if (withSeed)
-                p = SampleParameters.percentage(fraction, sampleSeed);
-            else
-                p = SampleParameters.percentage(fraction);
-        } else {
-            if (withSeed) {
-                p = SampleParameters.fixedNumber(sampleNum, sampleSeed);
-            } else
-                p = SampleParameters.fixedNumber(sampleNum);
-        }
-        return p;
-    }
-
-    private static SearchSettings createSearchSettings(BLSConfigParameters configParam, int fiMatchNfaFactor, long maxRetrieve, long maxCount) {
-        long maxHitsToProcessAllowed = configParam.getProcessHits().getMax();
-        if (maxHitsToProcessAllowed >= 0
-                && maxRetrieve > maxHitsToProcessAllowed) {
-            maxRetrieve = maxHitsToProcessAllowed;
-        }
-        long maxHitsToCountAllowed = configParam.getCountHits().getMax();
-        if (maxHitsToCountAllowed >= 0
-                && maxCount > maxHitsToCountAllowed) {
-            maxCount = maxHitsToCountAllowed;
-        }
-        return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
-    }
-
-    private static WindowSettings createWindowSettings(BLSConfigParameters configParam, long first, long number) {
-        long size = Math.min(Math.max(0, number), configParam.getPageSize().getMax());
-        return new WindowSettings(first, size);
-    }
-
-    private static ContextSettings createContextSettings(BLSConfigParameters configParam, ContextSize contextSize, ConcordanceType concType) {
-        int maxContextSize = configParam.getContextSize().getMaxInt();
-        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
-            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
-            contextSize = ContextSize.get(maxContextSize);
-        }
-        return new ContextSettings(contextSize, concType);
-    }
-
-    private static boolean determineIncludeGroupContents(BLSConfigParameters configParam, boolean includeGroupContents) {
-        return includeGroupContents || configParam.isWriteHitsAndDocsInGroupedHits();
-    }
-
-    private static boolean determineOmitEmptyCaptures(BLSConfigParameters configParam, boolean omitEmptyCaptures) {
-        return omitEmptyCaptures || configParam.isOmitEmptyCaptures();
-    }
-
-    private static List<DocProperty> createFacetProps(BlackLabIndex index, Optional<String> facets) {
-        if (!facets.isPresent()) {
-            return null;
-        }
-        DocProperty propMultipleFacets = DocProperty.deserialize(index, facets.get());
-        if (propMultipleFacets == null)
-            return null;
-        List<DocProperty> facetProps = new ArrayList<>();
-        if (propMultipleFacets instanceof DocPropertyMultiple) {
-            // Multiple facets requested
-            for (DocProperty prop : (DocPropertyMultiple) propMultipleFacets) {
-                facetProps.add(prop);
-            }
-        } else {
-            // Just a single facet requested
-            facetProps.add(propMultipleFacets);
-        }
-        return facetProps;
-    }
+    // --------- LESS API dependent vars & methods -------------
 
     /** The search manager, for querying default value for missing parameters */
     private final SearchManager searchManager;
@@ -616,9 +514,23 @@ public class SearchParameters {
         if (pattern == null) {
             String patt = getPattern();
             if (!StringUtils.isBlank(patt)) {
-                String pattGapData = getPattGapData();
                 String pattLang = getPattLanguage();
-                pattern = parsePattern(blIndex(), patt, pattGapData, pattLang);
+                String pattGapData = getPattGapData();
+                TextPattern result;
+                if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
+                    // CQL query with gaps, and TSV data to put in the gaps
+                    try {
+                        result = GapFiller.parseGapQuery(patt, pattGapData);
+                    } catch (InvalidQuery e) {
+                        throw new BadRequest("PATT_SYNTAX_ERROR",
+                                "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
+                    }
+                } else {
+                    BlackLabIndex index = blIndex();
+                    String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
+                    result = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang, true);
+                }
+                pattern = result;
             }
         }
         return pattern;
@@ -630,7 +542,22 @@ public class SearchParameters {
 
     Query filterQuery() throws BlsException {
         if (filterQuery == null) {
-            filterQuery = parseFilterQuery(blIndex(), getDocPid(), getDocumentFilterQuery(), getDocumentFilterLanguage());
+            BlackLabIndex index = blIndex();
+            String docPid = getDocPid();
+            String filter = getDocumentFilterQuery();
+            Query result;
+            if (docPid != null) {
+                // Only hits in 1 doc (for highlighting)
+                int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
+                if (luceneDocId < 0)
+                    throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
+                logger.debug("Filtering on single doc-id");
+                result = new SingleDocIdFilter(luceneDocId);
+            } else if (!StringUtils.isEmpty(filter)) {
+                result = BlsUtils.parseFilter(index, filter, getDocumentFilterLanguage());
+            } else
+                result = null;
+            filterQuery = result;
         }
         return filterQuery;
     }
@@ -646,15 +573,16 @@ public class SearchParameters {
     }
 
     public WindowSettings windowSettings() {
-        return createWindowSettings(configParam(), getFirstResultToShow(), getNumberOfResultsToShow());
+        long size = Math.min(Math.max(0, getNumberOfResultsToShow()), configParam().getPageSize().getMax());
+        return new WindowSettings(getFirstResultToShow(), size);
     }
 
     public boolean includeGroupContents() {
-        return determineIncludeGroupContents(configParam(), getIncludeGroupContents());
+        return getIncludeGroupContents() || configParam().isWriteHitsAndDocsInGroupedHits();
     }
 
     public boolean omitEmptyCapture() {
-        return determineOmitEmptyCaptures(configParam(), getOmitEmptyCaptures());
+        return getOmitEmptyCaptures() || configParam().isOmitEmptyCaptures();
     }
 
     private DocGroupSettings docGroupSettings() throws BlsException {
@@ -773,24 +701,73 @@ public class SearchParameters {
         if (!sample.isPresent() && !sampleNum.isPresent())
             return null;
         Optional<Long> sampleSeed = getSampleSeed();
-        return createSampleSettings(sample.orElse(0.0), sampleNum.orElse(0),
-                sampleSeed.isPresent(), sampleSeed.orElse(0L));
+        boolean withSeed = sampleSeed.isPresent();
+        SampleParameters p;
+        if (sample.isPresent()) {
+            double fraction = Math.max(Math.min(sample.get(), 100), 0) / 100.0;
+            if (withSeed)
+                p = SampleParameters.percentage(fraction, sampleSeed.get());
+            else
+                p = SampleParameters.percentage(fraction);
+        } else {
+            if (withSeed) {
+                p = SampleParameters.fixedNumber(sampleNum.orElse(0), sampleSeed.get());
+            } else
+                p = SampleParameters.fixedNumber(sampleNum.orElse(0));
+        }
+        return p;
     }
 
     private List<DocProperty> facetProps() {
         if (facetProps == null) {
-            facetProps = createFacetProps(blIndex(), getFacetProps());
+            Optional<String> facets = getFacetProps();
+            if (!facets.isPresent()) {
+                facetProps = null;
+            } else {
+                DocProperty propMultipleFacets = DocProperty.deserialize(blIndex(), facets.get());
+                if (propMultipleFacets == null)
+                    facetProps = null;
+                else {
+                    facetProps = new ArrayList<>();
+                    if (propMultipleFacets instanceof DocPropertyMultiple) {
+                        // Multiple facets requested
+                        for (DocProperty prop: (DocPropertyMultiple) propMultipleFacets) {
+                            facetProps.add(prop);
+                        }
+                    } else {
+                        // Just a single facet requested
+                        facetProps.add(propMultipleFacets);
+                    }
+                }
+            }
         }
         return facetProps;
     }
 
     public SearchSettings searchSettings() {
-        return createSearchSettings(configParam(), forwardIndexMatchFactor(), getMaxRetrieve(), getMaxCount());
+        long maxRetrieve = getMaxRetrieve();
+        long maxCount = getMaxCount();
+        long maxHitsToProcessAllowed = configParam().getProcessHits().getMax();
+        if (maxHitsToProcessAllowed >= 0
+                && maxRetrieve > maxHitsToProcessAllowed) {
+            maxRetrieve = maxHitsToProcessAllowed;
+        }
+        long maxHitsToCountAllowed = configParam().getCountHits().getMax();
+        if (maxHitsToCountAllowed >= 0
+                && maxCount > maxHitsToCountAllowed) {
+            maxCount = maxHitsToCountAllowed;
+        }
+        return SearchSettings.get(maxRetrieve, maxCount, forwardIndexMatchFactor());
     }
 
     public ContextSettings contextSettings() {
         ContextSize contextSize = ContextSize.get(getWordsAroundHit());
-        return createContextSettings(configParam(), contextSize, getConcordanceType());
+        int maxContextSize = configParam().getContextSize().getMaxInt();
+        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
+            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
+            contextSize = ContextSize.get(maxContextSize);
+        }
+        return new ContextSettings(contextSize, getConcordanceType());
     }
 
     boolean useCache() {
