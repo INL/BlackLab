@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -50,7 +51,6 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSortSettings;
 import nl.inl.blacklab.server.jobs.DocSortSettings;
-import nl.inl.blacklab.server.jobs.HitFilterSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
@@ -66,94 +66,6 @@ import nl.inl.blacklab.server.util.GapFiller;
  */
 public class SearchParameters {
     private static final Logger logger = LogManager.getLogger(SearchParameters.class);
-
-    /** Default values for request parameters */
-    final static private Map<String, String> defaultParameterValues;
-
-    static {
-        defaultParameterValues = new HashMap<>();
-        defaultParameterValues.put("filterlang", "luceneql");
-        defaultParameterValues.put("pattlang", "corpusql");
-        defaultParameterValues.put("sort", "");
-        defaultParameterValues.put("group", "");
-        defaultParameterValues.put("viewgroup", "");
-        defaultParameterValues.put("first", "0");
-        defaultParameterValues.put("hitstart", "0");
-        defaultParameterValues.put("hitend", "1");
-        defaultParameterValues.put("includetokencount", "no");
-        defaultParameterValues.put("usecontent", "fi");
-        defaultParameterValues.put("wordstart", "-1");
-        defaultParameterValues.put("wordend", "-1");
-        defaultParameterValues.put("calc", "");
-        defaultParameterValues.put("property", "word"); // deprecated, use "annotation" now
-        defaultParameterValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
-        defaultParameterValues.put("waitfortotal", "no");
-        defaultParameterValues.put("number", "50");
-        defaultParameterValues.put("wordsaroundhit", "5");
-        defaultParameterValues.put("maxretrieve", "1000000");
-        defaultParameterValues.put("maxcount", "10000000");
-        defaultParameterValues.put("sensitive", "no");
-        defaultParameterValues.put("fimatch", "-1");
-        defaultParameterValues.put("usecache", "yes");
-        defaultParameterValues.put("explain", "no");
-        defaultParameterValues.put("listvalues", "");
-        defaultParameterValues.put("listmetadatavalues", "");
-        defaultParameterValues.put("subprops", "");
-        defaultParameterValues.put("csvsummary", "no");
-        defaultParameterValues.put("csvsepline", "no");
-        defaultParameterValues.put("includegroupcontents", "no");
-        defaultParameterValues.put("omitemptycaptures", "no");
-    }
-
-    private static String getDefault(String paramName) {
-        return defaultParameterValues.get(paramName);
-    }
-
-    public static void setDefault(String name, String value) {
-        defaultParameterValues.put(name, value);
-    }
-
-    /**
-     * Set up parameter default values from the configuration.
-     */
-    public static void setDefaults(BLSConfigParameters param) {
-        // Set up the parameter default values
-        setDefault("number", "" + param.getPageSize().getDefaultValue());
-        setDefault("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
-        setDefault("maxretrieve", "" + param.getProcessHits().getDefaultValue());
-        setDefault("maxcount", "" + param.getCountHits().getDefaultValue());
-        setDefault("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-    }
-
-    /**
-     * Get the search-related parameteers from the request object.
-     *
-     * This ignores stuff like the requested output type, etc.
-     *
-     * Note also that the request type is not part of the SearchParameters, so from
-     * looking at these parameters alone, you can't always tell what type of search
-     * we're doing. The RequestHandler subclass will add a jobclass parameter when
-     * executing the actual search.
-     *
-     * @param isDocs is this a docs operation? influences how the "sort" parameter
-     *            is interpreted
-     * @param indexName the index to search
-     * @param request the HTTP request
-     * @return the unique key
-     */
-    public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName,
-            HttpServletRequest request) {
-        SearchParameters param = new SearchParameters(searchMan, isDocs);
-        param.put("indexname", indexName);
-        for (String name : SearchParameters.NAMES) {
-            String value = ServletUtil.getParameter(request, name, "");
-            if (value.length() == 0)
-                continue;
-            param.put(name, value);
-        }
-        param.setDebugMode(searchMan.config().getDebug().isDebugMode(ServletUtil.getOriginatingAddress(request)));
-        return param;
-    }
 
     /** Parameters involved in search */
     private static final List<String> NAMES = Arrays.asList(
@@ -211,40 +123,100 @@ public class SearchParameters {
 
     );
 
-    /** The search manager, for querying default value for missing parameters */
-    private final SearchManager searchManager;
+    /** Default values for request parameters */
+    final static private Map<String, String> defaultValues;
 
-    private boolean debugMode;
+    static {
+        defaultValues = new HashMap<>();
+        defaultValues.put("filterlang", "luceneql");
+        defaultValues.put("pattlang", "corpusql");
+        defaultValues.put("sort", "");
+        defaultValues.put("group", "");
+        defaultValues.put("viewgroup", "");
+        defaultValues.put("first", "0");
+        defaultValues.put("hitstart", "0");
+        defaultValues.put("hitend", "1");
+        defaultValues.put("includetokencount", "no");
+        defaultValues.put("usecontent", "fi");
+        defaultValues.put("wordstart", "-1");
+        defaultValues.put("wordend", "-1");
+        defaultValues.put("calc", "");
+        defaultValues.put("property", "word"); // deprecated, use "annotation" now
+        defaultValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
+        defaultValues.put("waitfortotal", "no");
+        defaultValues.put("number", "50");
+        defaultValues.put("wordsaroundhit", "5");
+        defaultValues.put("maxretrieve", "1000000");
+        defaultValues.put("maxcount", "10000000");
+        defaultValues.put("sensitive", "no");
+        defaultValues.put("fimatch", "-1");
+        defaultValues.put("usecache", "yes");
+        defaultValues.put("explain", "no");
+        defaultValues.put("listvalues", "");
+        defaultValues.put("listmetadatavalues", "");
+        defaultValues.put("subprops", "");
+        defaultValues.put("csvsummary", "no");
+        defaultValues.put("csvsepline", "no");
+        defaultValues.put("includegroupcontents", "no");
+        defaultValues.put("omitemptycaptures", "no");
+    }
+
+    /**
+     * Set up parameter default values from the configuration.
+     */
+    public static void setDefaults(BLSConfigParameters param) {
+        // Set up the parameter default values
+        defaultValues.put("number", "" + param.getPageSize().getDefaultValue());
+        defaultValues.put("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
+        defaultValues.put("maxretrieve", "" + param.getProcessHits().getDefaultValue());
+        defaultValues.put("maxcount", "" + param.getCountHits().getDefaultValue());
+        defaultValues.put("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
+    }
+
+    /**
+     * Get the search-related parameters from the request object.
+     *
+     * This ignores stuff like the requested output type, etc.
+     *
+     * Note also that the request type is not part of the SearchParameters, so from
+     * looking at these parameters alone, you can't always tell what type of search
+     * we're doing. The RequestHandler subclass will add a jobclass parameter when
+     * executing the actual search.
+     *
+     * @param isDocs is this a docs operation? influences how the "sort" parameter
+     *            is interpreted
+     * @param indexName the index to search
+     * @param request the HTTP request
+     * @return the unique key
+     */
+    public static SearchParameters get(SearchManager searchMan, boolean isDocs, String indexName,
+            HttpServletRequest request) {
+        SearchParameters param = new SearchParameters(searchMan, isDocs);
+        param.put("indexname", indexName);
+        for (String name : SearchParameters.NAMES) {
+            String value = ServletUtil.getParameter(request, name, "");
+            if (value.length() == 0)
+                continue;
+            param.put(name, value);
+        }
+        param.setDebugMode(searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request)));
+        return param;
+    }
 
     private final Map<String, String> map = new TreeMap<>();
-
-    /** The pattern, if parsed already */
-    private TextPattern pattern;
-
-    /** The filter query, if parsed already */
-    private Query filterQuery;
-
-    private final boolean isDocsOperation;
-
-    private List<DocProperty> facetProps;
-
-    private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
-        this.searchManager = searchManager;
-        this.isDocsOperation = isDocsOperation;
-    }
-
-    private void setDebugMode(boolean debugMode) {
-        this.debugMode = debugMode;
-    }
 
     public String put(String key, String value) {
         return map.put(key, value);
     }
 
+    public boolean containsKey(String key) {
+        return map.containsKey(key);
+    }
+
     public String getString(String key) {
         String value = map.get(key);
         if (value == null || value.length() == 0) {
-            value = getDefault(key);
+            value = defaultValues.get(key);
         }
         return value;
     }
@@ -269,16 +241,6 @@ public class SearchParameters {
         }
     }
 
-    public float getFloat(String name) {
-        String value = getString(name);
-        try {
-            return Float.parseFloat(value);
-        } catch (NumberFormatException e) {
-            logger.debug("Illegal integer value for parameter '" + name + "': " + value);
-            return 0L;
-        }
-    }
-
     public boolean getBoolean(String name) {
         String value = getString(name);
         if (value.equals("true") || value.equals("1") || value.equals("yes") || value.equals("on"))
@@ -287,6 +249,59 @@ public class SearchParameters {
             return false;
         logger.debug("Illegal boolean value for parameter '" + name + "': " + value);
         return false;
+    }
+
+    // another set of parse methods that won't complain but just return a default value if value is missing or wrong
+
+    private static double parse(String value, double defVal) {
+        if (value != null) {
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    private static int parse(String value, int defVal) {
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    private static long parse(String value, long defVal) {
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    private static boolean parse(String value, boolean defVal) {
+        if (value != null) {
+            switch (value) {
+            case "true":
+            case "1":
+            case "yes":
+            case "on":
+                return true;
+            case "false":
+            case "0":
+            case "no":
+            case "off":
+                return false;
+            }
+        }
+        return defVal;
     }
 
     /**
@@ -306,8 +321,279 @@ public class SearchParameters {
         ds.endMap();
     }
 
+
+    // ----- Specific parameters --------------
+
+
     public String getIndexName() {
         return getString("indexname");
+    }
+
+    public String getPattern() {
+        return getString("patt");
+    }
+
+    public String getPattLanguage() {
+        return getString("pattlang");
+    }
+
+    public String getPattGapData() {
+        return getString("pattgapdata");
+    }
+
+    public String getDocPid() {
+        return getString("docpid");
+    }
+
+    public String getDocumentFilterQuery() {
+        return getString("filter");
+    }
+
+    public String getDocumentFilterLanguage() {
+        return getString("filterlang");
+    }
+
+    private String getHitFilterCriterium() {
+        return getString("hitfiltercrit");
+    }
+
+    private String getHitFilterValue() {
+        return getString("hitfilterval");
+    }
+
+    public Optional<Double> getSampleFraction() {
+        return containsKey("sample") ?
+                Optional.of(parse(getString("sample"), 0.0)) :
+                Optional.empty();
+    }
+
+    public Optional<Integer> getSampleNumber() {
+        return containsKey("samplenum") ?
+                Optional.of(parse(getString("samplenum"), 0)) :
+                Optional.empty();
+    }
+
+    public Optional<Long> getSampleSeed() {
+        return containsKey("sampleseed") ?
+                Optional.of(parse(getString("sampleseed"), 0L)) :
+                Optional.empty();
+    }
+
+    private boolean getUseCache() {
+        return getBoolean("usecache");
+    }
+
+    private int getForwardIndexMatchFactor() {
+        return getInteger("fimatch");
+    }
+
+    private long getMaxRetrieve() {
+        return getLong("maxretrieve");
+    }
+
+    private long getMaxCount() {
+        return getLong("maxcount");
+    }
+
+    private long getFirstResultToShow() {
+        return getLong("first");
+    }
+
+    private long getNumberOfResultsToShow() {
+        return getLong("number");
+    }
+
+    private int getWordsAroundHit() {
+        return getInteger("wordsaroundhit");
+    }
+
+    private ConcordanceType getConcordanceType() {
+        return getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE :
+                ConcordanceType.FORWARD_INDEX;
+    }
+
+    private boolean getIncludeGroupContents() {
+        return getBoolean("includegroupcontents");
+    }
+
+    private boolean getOmitEmptyCaptures() {
+        return getBoolean("omitemptycaptures");
+    }
+
+    private Optional<String> getFacetProps() {
+        String paramFacets = getString("facets");
+        return paramFacets.isEmpty() ? Optional.empty() : Optional.of(paramFacets);
+    }
+
+    private Optional<String> getGroupProps() {
+        String paramGroup = getString("group");
+        return paramGroup.isEmpty() ? Optional.empty() : Optional.of(paramGroup);
+    }
+
+    private Optional<String> getSortProps() {
+        String paramSort = getString("sort");
+        return paramSort.isEmpty() ? Optional.empty() : Optional.of(paramSort);
+    }
+
+    private Optional<String> getViewGroup() {
+        String paramViewGroup = getString("viewgroup");
+        return paramViewGroup.isEmpty() ? Optional.empty() : Optional.of(paramViewGroup);
+    }
+
+    /**
+     * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
+     * IDs are not validated and may not actually exist!
+     * @return which annotations to list
+     */
+    public Set<String> getListValuesFor() {
+        String par = getString("listvalues").trim();
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+    }
+
+    /**
+     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
+     * IDs are not validated and may not actually exist!
+     * @return which metadata fields to list
+     */
+    public Set<String> getListMetadataValuesFor() {
+        String par = getString("listmetadatavalues").trim();
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+    }
+
+    public Set<String> getListSubpropsFor() {
+        String par = getString("subprops").trim();
+        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+    }
+
+
+    // --------- LESS API dependent vars & methods -------------
+
+    
+    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattGapData, String pattLang) throws BlsException {
+        if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
+            // CQL query with gaps, and TSV data to put in the gaps
+            try {
+                return GapFiller.parseGapQuery(patt, pattGapData);
+            } catch (InvalidQuery e) {
+                throw new BadRequest("PATT_SYNTAX_ERROR",
+                        "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
+            }
+        } else {
+            String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
+            return BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang, true);
+        }
+    }
+
+    private static Query parseFilterQuery(BlackLabIndex index, String docPid, String filter, String filterLang)
+            throws BlsException {
+        if (docPid != null) {
+            // Only hits in 1 doc (for highlighting)
+            int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
+            if (luceneDocId < 0)
+                throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
+            logger.debug("Filtering on single doc-id");
+            return new SingleDocIdFilter(luceneDocId);
+        } else if (!StringUtils.isEmpty(filter)) {
+            return BlsUtils.parseFilter(index, filter, filterLang);
+        }
+        return null;
+    }
+
+    private static SampleParameters createSampleSettings(double sample, int sampleNum, boolean withSeed, long sampleSeed) {
+        SampleParameters p;
+        if (sample > 0.0) {
+            double fraction = Math.max(Math.min(sample, 100), 0) / 100.0;
+            if (withSeed)
+                p = SampleParameters.percentage(fraction, sampleSeed);
+            else
+                p = SampleParameters.percentage(fraction);
+        } else {
+            if (withSeed) {
+                p = SampleParameters.fixedNumber(sampleNum, sampleSeed);
+            } else
+                p = SampleParameters.fixedNumber(sampleNum);
+        }
+        return p;
+    }
+
+    private static SearchSettings createSearchSettings(BLSConfigParameters configParam, int fiMatchNfaFactor, long maxRetrieve, long maxCount) {
+        long maxHitsToProcessAllowed = configParam.getProcessHits().getMax();
+        if (maxHitsToProcessAllowed >= 0
+                && maxRetrieve > maxHitsToProcessAllowed) {
+            maxRetrieve = maxHitsToProcessAllowed;
+        }
+        long maxHitsToCountAllowed = configParam.getCountHits().getMax();
+        if (maxHitsToCountAllowed >= 0
+                && maxCount > maxHitsToCountAllowed) {
+            maxCount = maxHitsToCountAllowed;
+        }
+        return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
+    }
+
+    private static WindowSettings createWindowSettings(BLSConfigParameters configParam, long first, long number) {
+        long size = Math.min(Math.max(0, number), configParam.getPageSize().getMax());
+        return new WindowSettings(first, size);
+    }
+
+    private static ContextSettings createContextSettings(BLSConfigParameters configParam, ContextSize contextSize, ConcordanceType concType) {
+        int maxContextSize = configParam.getContextSize().getMaxInt();
+        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
+            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
+            contextSize = ContextSize.get(maxContextSize);
+        }
+        return new ContextSettings(contextSize, concType);
+    }
+
+    private static boolean determineIncludeGroupContents(BLSConfigParameters configParam, boolean includeGroupContents) {
+        return includeGroupContents || configParam.isWriteHitsAndDocsInGroupedHits();
+    }
+
+    private static boolean determineOmitEmptyCaptures(BLSConfigParameters configParam, boolean omitEmptyCaptures) {
+        return omitEmptyCaptures || configParam.isOmitEmptyCaptures();
+    }
+
+    private static List<DocProperty> createFacetProps(BlackLabIndex index, Optional<String> facets) {
+        if (!facets.isPresent()) {
+            return null;
+        }
+        DocProperty propMultipleFacets = DocProperty.deserialize(index, facets.get());
+        if (propMultipleFacets == null)
+            return null;
+        List<DocProperty> facetProps = new ArrayList<>();
+        if (propMultipleFacets instanceof DocPropertyMultiple) {
+            // Multiple facets requested
+            for (DocProperty prop : (DocPropertyMultiple) propMultipleFacets) {
+                facetProps.add(prop);
+            }
+        } else {
+            // Just a single facet requested
+            facetProps.add(propMultipleFacets);
+        }
+        return facetProps;
+    }
+
+    /** The search manager, for querying default value for missing parameters */
+    private final SearchManager searchManager;
+
+    private boolean debugMode;
+
+    /** The pattern, if parsed already */
+    private TextPattern pattern;
+
+    /** The filter query, if parsed already */
+    private Query filterQuery;
+
+    private final boolean isDocsOperation;
+
+    private List<DocProperty> facetProps;
+
+    private SearchParameters(SearchManager searchManager, boolean isDocsOperation) {
+        this.searchManager = searchManager;
+        this.isDocsOperation = isDocsOperation;
+    }
+
+    private void setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
     }
 
     public BlackLabIndex blIndex() {
@@ -318,175 +604,82 @@ public class SearchParameters {
         }
     }
 
-    public boolean hasPattern() throws BlsException {
-        return getPattern() != null;
+    BLSConfigParameters configParam() {
+        return searchManager.config().getParameters();
     }
 
-    public TextPattern getPattern() throws BlsException {
+    public boolean hasPattern() throws BlsException {
+        return pattern() != null;
+    }
+
+    public TextPattern pattern() throws BlsException {
         if (pattern == null) {
-            String patt = getString("patt");
+            String patt = getPattern();
             if (!StringUtils.isBlank(patt)) {
-                String pattGapData = getString("pattgapdata");
-                String pattLang = getString("pattlang");
-                if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
-                    // CQL query with gaps, and TSV data to put in the gaps
-                    try {
-                        pattern = GapFiller.parseGapQuery(patt, pattGapData);
-                    } catch (InvalidQuery e) {
-                        throw new BadRequest("PATT_SYNTAX_ERROR",
-                                "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
-                    }
-                } else {
-                    String defaultAnnotation = blIndex().mainAnnotatedField().mainAnnotation().name();
-                    pattern = BlsUtils.parsePatt(blIndex(), defaultAnnotation, patt, pattLang, true);
-                }
+                String pattGapData = getPattGapData();
+                String pattLang = getPattLanguage();
+                pattern = parsePattern(blIndex(), patt, pattGapData, pattLang);
             }
         }
         return pattern;
     }
 
     public boolean hasFilter() throws BlsException {
-        return getFilterQuery() != null;
+        return filterQuery() != null;
     }
 
-    Query getFilterQuery() throws BlsException {
+    Query filterQuery() throws BlsException {
         if (filterQuery == null) {
-            String docId = getString("docpid");
-            if (docId != null) {
-                // Only hits in 1 doc (for highlighting)
-                int luceneDocId = BlsUtils.getDocIdFromPid(blIndex(), docId);
-                if (luceneDocId < 0)
-                    throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-                logger.debug("Filtering on single doc-id");
-                filterQuery = new SingleDocIdFilter(luceneDocId);
-            } else if (containsKey("filter")) {
-                filterQuery = BlsUtils.parseFilter(blIndex(), getString("filter"), getString("filterlang"));
-            }
+            filterQuery = parseFilterQuery(blIndex(), getDocPid(), getDocumentFilterQuery(), getDocumentFilterLanguage());
         }
         return filterQuery;
     }
 
-    private HitFilterSettings getHitFilterSettings() {
-        if (!containsKey("hitfiltercrit") || !containsKey("hitfilterval"))
-            return null;
-        return new HitFilterSettings(getString("hitfiltercrit"), getString("hitfilterval"));
+    /**
+     * @return hits - filtered then sorted then sampled then windowed
+     */
+    public SearchHits hitsWindow() throws BlsException {
+        WindowSettings windowSettings = windowSettings();
+        if (windowSettings == null)
+            return hitsSample();
+        return hitsSample().window(windowSettings.first(), windowSettings.size());
     }
 
-    public SampleParameters getSampleSettings() {
-        if (!(containsKey("sample") || containsKey("samplenum")))
-            return null;
-        SampleParameters p;
-        boolean withSeed = containsKey("sampleseed");
-        if (containsKey("sample")) {
-            if (withSeed)
-                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0) / 100.0, getLong("sampleseed"));
-            else
-                p = SampleParameters.percentage(Math.max(Math.min(getFloat("sample"), 100), 0) / 100.0);
-        } else {
-            if (withSeed)
-                p = SampleParameters.fixedNumber(getInteger("samplenum"), getLong("sampleseed"));
-            else
-                p = SampleParameters.fixedNumber(getInteger("samplenum"));
-        }
-        return p;
-    }
-
-    boolean getUseCache() {
-        return !debugMode || getBoolean("usecache");
-    }
-
-    public SearchSettings getSearchSettings() {
-        int fiMatchNfaFactor = debugMode ? getInteger("fimatch") : -1;
-        long maxRetrieve = getLong("maxretrieve");
-        long maxHitsToProcessAllowed = searchManager.config().getParameters().getProcessHits().getMax();
-        if (maxHitsToProcessAllowed >= 0
-                && maxRetrieve > maxHitsToProcessAllowed) {
-            maxRetrieve = maxHitsToProcessAllowed;
-        }
-        long maxCount = getLong("maxcount");
-        long maxHitsToCountAllowed = searchManager.config().getParameters().getCountHits().getMax();
-        if (maxHitsToCountAllowed >= 0
-                && maxCount > maxHitsToCountAllowed) {
-            maxCount = maxHitsToCountAllowed;
-        }
-        return SearchSettings.get(maxRetrieve, maxCount, fiMatchNfaFactor);
-    }
-
-    WindowSettings getWindowSettings() {
-        long first = getLong("first");
-        long size = Math.min(Math.max(0, getLong("number")), searchManager.config().getParameters().getPageSize().getMax());
-        return new WindowSettings(first, size);
-    }
-
-    public ContextSettings getContextSettings() {
-        ContextSize contextSize = ContextSize.get(getInteger("wordsaroundhit"));
-        int maxContextSize = searchManager.config().getParameters().getContextSize().getMaxInt();
-        if (contextSize.left() > maxContextSize) { // no check on right needed - same as left
-            //debug(logger, "Clamping context size to " + maxContextSize + " (" + contextSize + " requested)");
-            contextSize = ContextSize.get(maxContextSize);
-        }
-        ConcordanceType concType = getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE
-                : ConcordanceType.FORWARD_INDEX;
-        return new ContextSettings(contextSize, concType);
+    public WindowSettings windowSettings() {
+        return createWindowSettings(configParam(), getFirstResultToShow(), getNumberOfResultsToShow());
     }
 
     public boolean includeGroupContents() {
-        if (containsKey("includegroupcontents")) {
-            return getBoolean("includegroupcontents");
-        }
-        return searchManager.config().getParameters().isWriteHitsAndDocsInGroupedHits();
+        return determineIncludeGroupContents(configParam(), getIncludeGroupContents());
     }
 
     public boolean omitEmptyCapture() {
-        if (containsKey("omitemptycaptures")) {
-            return getBoolean("omitemptycaptures");
-        }
-        return searchManager.config().getParameters().isOmitEmptyCaptures();
-    }
-
-    private List<DocProperty> getFacets() {
-        if (facetProps == null) {
-            String facets = getString("facets");
-            if (facets == null) {
-                return null;
-            }
-            DocProperty propMultipleFacets = DocProperty.deserialize(blIndex(), facets);
-            if (propMultipleFacets == null)
-                return null;
-            facetProps = new ArrayList<>();
-            if (propMultipleFacets instanceof DocPropertyMultiple) {
-                // Multiple facets requested
-                for (DocProperty prop : (DocPropertyMultiple) propMultipleFacets) {
-                    facetProps.add(prop);
-                }
-            } else {
-                // Just a single facet requested
-                facetProps.add(propMultipleFacets);
-            }
-        }
-        return facetProps;
+        return determineOmitEmptyCaptures(configParam(), getOmitEmptyCaptures());
     }
 
     private DocGroupSettings docGroupSettings() throws BlsException {
         if (!isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
-        String groupBy = getString("group");
+        Optional<String> groupProps = getGroupProps();
         DocProperty groupProp = null;
-        if (groupBy == null || groupBy.length() == 0)
+        if (!groupProps.isPresent())
             return null;
-        groupProp = DocProperty.deserialize(blIndex(), groupBy);
+        groupProp = DocProperty.deserialize(blIndex(), groupProps.get());
         if (groupProp == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return new DocGroupSettings(groupProp);
     }
 
     private DocGroupSortSettings docGroupSortSettings() {
         DocGroupProperty sortProp = null;
         if (isDocsOperation) {
-            if (containsKey("group")) {
-                String sortBy = getString("sort");
-                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
-                    sortProp = DocGroupProperty.deserialize(sortBy);
+            Optional<String> groupProps = getGroupProps();
+            if (groupProps.isPresent()) {
+                Optional<String> sortBy = getSortProps();
+                Optional<String> viewGroup = getViewGroup();
+                if (sortBy.isPresent() && !viewGroup.isPresent()) {
+                    // Sorting refers to results within the group when viewing contents of a group
+                    sortProp = DocGroupProperty.deserialize(sortBy.get());
                 }
             }
         }
@@ -501,14 +694,17 @@ public class SearchParameters {
         if (!isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
 
-        String groupBy = getString("groupby");
-        if (groupBy != null && !groupBy.isEmpty())
-            return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
-
-        String sortBy = getString("sort");
-        if (sortBy == null || sortBy.length() == 0)
+        Optional<String> groupProps = getGroupProps();
+        if (!groupProps.isPresent()) {
+            // looking at groups, or results within a group, don't bother sorting the underlying
+            // results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
             return null;
-        DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy);
+        }
+
+        Optional<String> sortBy = getSortProps();
+        if (!sortBy.isPresent())
+            return null;
+        DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy.get());
         if (sortProp == null)
             return null;
         return new DocSortSettings(sortProp);
@@ -518,10 +714,12 @@ public class SearchParameters {
         HitGroupProperty sortProp = null;
         if (!isDocsOperation) {
             // not grouping, so no group sort
-            if (containsKey("group")) {
-                String sortBy = getString("sort");
-                if (sortBy != null && sortBy.length() > 0 && !containsKey("viewgroup")) { // Sorting refers to results within the group when viewing contents of a group
-                    sortProp = HitGroupProperty.deserialize(sortBy);
+            Optional<String> groupProps = getGroupProps();
+            if (groupProps.isPresent()) {
+                Optional<String> sortBy = getSortProps();
+                Optional<String> viewGroup = getViewGroup();
+                if (sortBy.isPresent() && !viewGroup.isPresent()) { // Sorting refers to results within the group when viewing contents of a group
+                    sortProp = HitGroupProperty.deserialize(sortBy.get());
                 }
             }
         }
@@ -535,74 +733,68 @@ public class SearchParameters {
     private HitGroupSettings hitGroupSettings() {
         if (isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
-        String groupBy = getString("group");
-        if (groupBy == null || groupBy.length() == 0)
+        Optional<String> groupBy = getGroupProps();
+        if (!groupBy.isPresent())
             return null;
-        return new HitGroupSettings(groupBy);
+        return new HitGroupSettings(groupBy.get());
     }
 
     public HitSortSettings hitsSortSettings() {
         if (isDocsOperation)
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 
-        String groupBy = getString("group");
-        if (groupBy != null && !groupBy.isEmpty())
+        Optional<String> groupBy = getGroupProps();
+        if (!groupBy.isPresent())
             return null; // looking at groups, or results within a group, don't bother sorting the underlying results themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
 
-        String sortBy = getString("sort");
-        if (sortBy == null || sortBy.length() == 0)
+        Optional<String> sortBy = getSortProps();
+        if (!sortBy.isPresent())
             return null;
-        HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy);
+        HitProperty sortProp = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), sortBy.get());
         return new HitSortSettings(sortProp);
     }
 
-    /**
-     * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
-     * @return which annotations to list
-     */
-    public Set<String> listValuesFor() {
-        String par = getString("listvalues").trim();
-        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
-    }
 
-    /**
-     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
-     * @return which metadata fields to list
-     */
-    public Set<String> listMetadataValuesFor() {
-        String par = getString("listmetadatavalues").trim();
-        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
-    }
 
-    public Set<String> listSubpropsFor() {
-        String par = getString("subprops").trim();
-        return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
-    }
-
-    public boolean containsKey(String key) {
-        return map.containsKey(key);
-    }
-
-    /**
-     * @return hits - filtered then sorted then sampled then windowed
-     */
-    public SearchHits hitsWindow() throws BlsException {
-        WindowSettings windowSettings = getWindowSettings();
-        if (windowSettings == null)
-            return hitsSample();
-        return hitsSample().window(windowSettings.first(), windowSettings.size());
-    }
 
     /**
      * @return hits - filtered then sorted then sampled
      */
     public SearchHits hitsSample() throws BlsException {
-        SampleParameters sampleSettings = getSampleSettings();
+        SampleParameters sampleSettings = sampleSettings();
         if (sampleSettings == null)
             return hitsSorted();
         return hitsSorted().sample(sampleSettings);
+    }
+
+    public SampleParameters sampleSettings() {
+        Optional<Double> sample = getSampleFraction();
+        Optional<Integer> sampleNum = getSampleNumber();
+        if (!sample.isPresent() && !sampleNum.isPresent())
+            return null;
+        Optional<Long> sampleSeed = getSampleSeed();
+        return createSampleSettings(sample.orElse(0.0), sampleNum.orElse(0),
+                sampleSeed.isPresent(), sampleSeed.orElse(0L));
+    }
+
+    private List<DocProperty> facetProps() {
+        if (facetProps == null) {
+            facetProps = createFacetProps(blIndex(), getFacetProps());
+        }
+        return facetProps;
+    }
+
+    public SearchSettings searchSettings() {
+        return createSearchSettings(configParam(), forwardIndexMatchFactor(), getMaxRetrieve(), getMaxCount());
+    }
+
+    public ContextSettings contextSettings() {
+        ContextSize contextSize = ContextSize.get(getWordsAroundHit());
+        return createContextSettings(configParam(), contextSize, getConcordanceType());
+    }
+
+    boolean useCache() {
+        return !debugMode || getUseCache();
     }
 
     /**
@@ -616,29 +808,36 @@ public class SearchParameters {
     }
 
     private SearchHits hitsFiltered() throws BlsException {
-        HitFilterSettings hitFilterSettings = getHitFilterSettings();
-        if (hitFilterSettings == null)
+        String hitFilterCrit = getHitFilterCriterium();
+        String hitFilterVal = getHitFilterValue();
+        if (StringUtils.isEmpty(hitFilterCrit) || StringUtils.isEmpty(hitFilterVal))
             return hits();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterSettings.getProperty());
-        PropertyValue value = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterSettings.getValue());
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterCrit);
+        PropertyValue value = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), hitFilterVal);
         return hits().filter(prop, value);
     }
 
     private SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(null, getUseCache());
+        SearchEmpty search = blIndex().search(null, useCache());
         try {
-            Query filter = hasFilter() ? getFilterQuery() : null;
-            TextPattern pattern = getPattern();
+            Query filter = hasFilter() ? filterQuery() : null;
+            TextPattern pattern = pattern();
             if (pattern == null)
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
-            return search.find(pattern.toQuery(search.queryInfo(), filter), getSearchSettings());
+
+            SearchSettings searchSettings = searchSettings();
+            return search.find(pattern.toQuery(search.queryInfo(), filter), searchSettings);
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }
     }
 
+    private int forwardIndexMatchFactor() {
+        return debugMode ? getForwardIndexMatchFactor() : -1;
+    }
+
     public SearchDocs docsWindow() throws BlsException {
-        WindowSettings windowSettings = getWindowSettings();
+        WindowSettings windowSettings = windowSettings();
         if (windowSettings == null)
             return docsSorted();
         return docsSorted().window(windowSettings.first(), windowSettings.size());
@@ -652,20 +851,20 @@ public class SearchParameters {
     }
 
     public SearchCount docsCount() throws BlsException {
-        if (getPattern() != null)
+        if (pattern() != null)
             return hitsSample().docCount();
         return docs().count();
     }
 
     public SearchDocs docs() throws BlsException {
-        TextPattern pattern = getPattern();
+        TextPattern pattern = pattern();
         if (pattern != null)
             return hitsSample().docs(-1);
-        Query docFilterQuery = getFilterQuery();
+        Query docFilterQuery = filterQuery();
         if (pattern == null && docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, getUseCache());
+        SearchEmpty search = blIndex().search(null, useCache());
         return search.findDocuments(docFilterQuery);
     }
 
@@ -678,27 +877,27 @@ public class SearchParameters {
      * @return subcorpus
      */
     public SearchDocs subcorpus() throws BlsException {
-        Query docFilterQuery = getFilterQuery();
+        Query docFilterQuery = filterQuery();
         if (docFilterQuery == null) {
             docFilterQuery = blIndex().getAllRealDocsQuery();
         }
-        SearchEmpty search = blIndex().search(null, getUseCache());
+        SearchEmpty search = blIndex().search(null, useCache());
         return search.findDocuments(docFilterQuery);
     }
 
     public SearchHitGroups hitsGroupedStats() throws BlsException {
-        String groupBy = hitGroupSettings().groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
+        String groupProps = hitGroupSettings().groupBy();
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
         if (prop == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return hitsSample().groupStats(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
     public SearchHitGroups hitsGroupedWithStoredHits() throws BlsException {
-        String groupBy = hitGroupSettings().groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupBy);
+        String groupProps = hitGroupSettings().groupBy();
+        HitProperty prop = HitProperty.deserialize(blIndex(), blIndex().mainAnnotatedField(), groupProps);
         if (prop == null)
-            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupBy + "'.");
+            throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return hitsSample().groupWithStoredHits(prop, Results.NO_LIMIT).sort(hitGroupSortSettings().sortBy());
     }
 
@@ -707,11 +906,11 @@ public class SearchParameters {
     }
 
     public SearchFacets facets() throws BlsException {
-        return docs().facet(getFacets());
+        return docs().facet(facetProps());
     }
 
     public boolean hasFacets() {
-        return getFacets() != null;
+        return facetProps() != null;
     }
 
 }

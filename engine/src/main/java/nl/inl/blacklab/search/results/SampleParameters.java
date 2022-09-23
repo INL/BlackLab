@@ -100,7 +100,7 @@ public class SampleParameters {
      * 
      * Only valid if isRelative() return true.
      * 
-     * @return desired percentage
+     * @return desired percentage (actually fraction 0-1)
      */
     public double percentageOfHits() {
         return percentageOfHits;

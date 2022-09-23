@@ -668,7 +668,7 @@ public abstract class RequestHandler {
      */
     public List<Annotation> getAnnotationsToWrite() throws BlsException {
         AnnotatedFields fields = this.blIndex().annotatedFields();
-        Set<String> requestedAnnotations = searchParam.listValuesFor();
+        Set<String> requestedAnnotations = searchParam.getListValuesFor();
 
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
@@ -692,7 +692,7 @@ public abstract class RequestHandler {
      */
     public Set<MetadataField> getMetadataToWrite() throws BlsException {
         MetadataFields fields = this.blIndex().metadataFields();
-        Set<String> requestedFields = searchParam.listMetadataValuesFor();
+        Set<String> requestedFields = searchParam.getListMetadataValuesFor();
 
         Set<MetadataField> ret = new HashSet<>();
         ret.add(optCustomField(blIndex().metadata(), "authorField"));
@@ -982,7 +982,7 @@ public abstract class RequestHandler {
                 }
             }
 
-            ContextSize contextSize = searchParam.getContextSettings().size();
+            ContextSize contextSize = searchParam.contextSettings().size();
             boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
             if (concordanceContext.isConcordances()) {
                 // Add concordance from original XML

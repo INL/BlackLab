@@ -142,7 +142,7 @@ public class RequestHandlerHits extends RequestHandler {
         }
 
 
-        WindowSettings windowSettings = searchParam.getWindowSettings();
+        WindowSettings windowSettings = searchParam.windowSettings();
         if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
             throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 
@@ -173,7 +173,7 @@ public class RequestHandlerHits extends RequestHandler {
         // Find KWICs/concordances from forward index or original XML
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
-        ContextSettings contextSettings = searchParam.getContextSettings();
+        ContextSettings contextSettings = searchParam.contextSettings();
         ConcordanceContext concordanceContext = ConcordanceContext.get(window, contextSettings.concType(), contextSettings.size());
         long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
@@ -198,7 +198,7 @@ public class RequestHandlerHits extends RequestHandler {
         datastreamMetadataFieldInfo(ds, index);
 
         if (searchParam.getBoolean("explain")) {
-            TextPattern tp = searchParam.getPattern();
+            TextPattern tp = searchParam.pattern();
             try {
                 BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
                 QueryExplanation explanation = index.explain(q);
@@ -257,7 +257,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         // see if this query matches only singular tokens
         // (we can't enhance multi-token queries such as ngrams yet)
-        TextPattern tp = searchParam.getPattern();
+        TextPattern tp = searchParam.pattern();
         if (!tp.toQuery(QueryInfo.create(blIndex())).producesSingleTokens())
             return null;
 
@@ -265,8 +265,8 @@ public class RequestHandlerHits extends RequestHandler {
         // Create the Query that will do the metadata filtering portion. (Token filtering is done through the TextPattern above)
         BooleanQuery.Builder fqb = new BooleanQuery.Builder();
         boolean usedFilter = false;
-        if (searchParam.getFilterQuery() != null) {
-            fqb.add(searchParam.getFilterQuery(), Occur.FILTER);
+        if (searchParam.filterQuery() != null) {
+            fqb.add(searchParam.filterQuery(), Occur.FILTER);
             usedFilter = true;
         }
 
@@ -303,15 +303,15 @@ public class RequestHandlerHits extends RequestHandler {
 
         // All specifiers merged!
         // Construct the query that will get us our hits.
-        SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.getUseCache());
+        SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), searchParam.useCache());
         QueryInfo queryInfo = QueryInfo.create(blIndex(), blIndex().mainAnnotatedField());
         BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
-        SearchHits hits = search.find(query, searchParam.getSearchSettings());
+        SearchHits hits = search.find(query, searchParam.searchSettings());
         if (searchParam.hitsSortSettings() != null) {
             hits = hits.sort(searchParam.hitsSortSettings().sortBy());
         }
-        if (searchParam.getSampleSettings() != null) {
-            hits = hits.sample(searchParam.getSampleSettings());
+        if (searchParam.sampleSettings() != null) {
+            hits = hits.sample(searchParam.sampleSettings());
         }
         return hits;
     }

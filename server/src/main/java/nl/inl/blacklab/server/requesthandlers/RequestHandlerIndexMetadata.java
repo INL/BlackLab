@@ -86,8 +86,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
                 ds.startAttrEntry("annotatedField", "name", field.name());
 
-                Set<String> setShowValuesFor = searchParam.listValuesFor();
-                Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
+                Set<String> setShowValuesFor = searchParam.getListValuesFor();
+                Set<String> setShowSubpropsFor = searchParam.getListSubpropsFor();
                 RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor,
                         setShowSubpropsFor);
 

@@ -211,7 +211,7 @@ public class RequestHandlerDocs extends RequestHandler {
             Hits hits2 = result.storedResults().window(0, 5); // TODO: make num. snippets configurable
             if (hits2.hitsStats().processedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
-                ContextSettings contextSettings = searchParam.getContextSettings();
+                ContextSettings contextSettings = searchParam.contextSettings();
                 Concordances concordances = null;
                 Kwics kwics = null;
                 if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)

@@ -37,7 +37,7 @@ public class RequestHandlerExplain extends RequestHandler {
         BlackLabIndex blIndex = blIndex();
         String patt = searchParam.getString("patt");
         try {
-            TextPattern tp = searchParam.getPattern();
+            TextPattern tp = searchParam.pattern();
             BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
             QueryExplanation explanation = blIndex.explain(q);
 
