@@ -3,6 +3,7 @@ package nl.inl.util;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+/** Utility class for checking {@link Thread#isInterrupted()} and throwing InterruptedException. */
 public class ThreadAborter {
     private static final Logger logger = LogManager.getLogger(ThreadAborter.class);
 
