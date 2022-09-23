@@ -46,6 +46,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
         try {
             readFromAndMerge(termsPerSegment);
+            termsPerSegment.forEach(TermsIntegratedSegment::close);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load terms", e);
         }

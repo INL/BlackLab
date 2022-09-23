@@ -2,7 +2,6 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.lucene.store.IndexInput;
 
@@ -64,13 +63,17 @@ public class TermsIntegratedSegment implements AutoCloseable {
     }
 
     @Override
-    public void close() throws IOException {
-        isClosed = true;
-        _termIndexFile.close();
-        _termsFile.close();
-        _termOrderFile.close();
-        _termIndexFile = _termsFile = _termOrderFile = null;
-        segmentReader = null;
+    public void close() {
+        try {
+            isClosed = true;
+            _termIndexFile.close();
+            _termsFile.close();
+            _termOrderFile.close();
+            _termIndexFile = _termsFile = _termOrderFile = null;
+            segmentReader = null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static class TermInSegment {
