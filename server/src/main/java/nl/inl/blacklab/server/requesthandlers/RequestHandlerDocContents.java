@@ -95,8 +95,8 @@ public class RequestHandlerDocContents extends RequestHandler {
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
 
-        int startAtWord = searchParam.getWordStart();
-        int endAtWord = searchParam.getWordEnd();
+        int startAtWord = searchParam.par().getWordStart();
+        int endAtWord = searchParam.par().getWordEnd();
 
         opGetDocContents = new ReqDocContents(startAtWord, endAtWord);
         surroundWithRootElement = opGetDocContents.isIllegalBoundariesSpecified() || !opGetDocContents.isFullDocument();
@@ -135,13 +135,13 @@ public class RequestHandlerDocContents extends RequestHandler {
 
         Hits hits = null;
         if (searchParam.hasPattern()) {
-            searchParam.put("docpid", docPid);
+            searchParam.setFilterByDocumentPid(docPid);
             hits = searchParam.hitsSample().execute();
         }
 
         String content;
-        int startAtWord = searchParam.getWordStart();
-        int endAtWord = searchParam.getWordEnd();
+        int startAtWord = searchParam.par().getWordStart();
+        int endAtWord = searchParam.par().getWordEnd();
         if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }

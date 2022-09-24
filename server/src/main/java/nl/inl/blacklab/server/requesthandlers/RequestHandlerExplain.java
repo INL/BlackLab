@@ -35,9 +35,9 @@ public class RequestHandlerExplain extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         BlackLabIndex blIndex = blIndex();
-        String patt = searchParam.getPattern();
+        String patt = searchParam.par().getPattern();
         try {
-            TextPattern tp = searchParam.pattern();
+            TextPattern tp = searchParam.pattern().get();
             BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
             QueryExplanation explanation = blIndex.explain(q);
 

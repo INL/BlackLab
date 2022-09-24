@@ -23,12 +23,16 @@ public class RequestHandlerDebug extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) {
+        boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
+        BlackLabServerParams params = new BlackLabServerParams(indexName, request);
+        SearchParameters searchParameters = SearchParameters.get(servlet.getSearchManager(), false,
+                isDebugMode, params);
         ds.startMap()
                 .entry("indexName", indexName)
                 .entry("resource", urlResource)
                 .entry("rest", urlPathInfo)
                 .entry("queryString", request.getQueryString())
-                .entry("searchParam", SearchParameters.get(servlet.getSearchManager(), false, indexName, request).toString())
+                .entry("searchParam", searchParameters.toString())
                 .endMap();
         return HTTP_OK;
     }

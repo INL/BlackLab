@@ -55,15 +55,15 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         ContextSize wordsAroundHit;
         int start, end;
         boolean isHit = false;
-        Optional<Integer> hitStart = searchParam.getHitStart();
+        Optional<Integer> hitStart = searchParam.par().getHitStart();
         if (hitStart.isPresent()) {
             start = hitStart.get();
-            end = searchParam.getHitEnd();
-            wordsAroundHit = ContextSize.get(searchParam.getWordsAroundHit());
+            end = searchParam.par().getHitEnd();
+            wordsAroundHit = ContextSize.get(searchParam.par().getWordsAroundHit());
             isHit = true;
         } else {
-            start = searchParam.getWordStart();
-            end = searchParam.getWordEnd();
+            start = searchParam.par().getWordStart();
+            end = searchParam.par().getWordEnd();
             wordsAroundHit = ContextSize.hitOnly();
         }
 
@@ -81,7 +81,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
-        boolean origContent = searchParam.getConcordanceType() == ConcordanceType.CONTENT_STORE;
+        boolean origContent = searchParam.par().getConcordanceType() == ConcordanceType.CONTENT_STORE;
         Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
         getHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
         return HTTP_OK;

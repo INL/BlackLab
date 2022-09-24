@@ -427,7 +427,9 @@ public abstract class RequestHandler {
         }
 
         boolean isDocs = isDocsOperation();
-        searchParam = SearchParameters.get(searchMan, isDocs, indexName, request);
+        boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
+        WebserviceParams params = new BlackLabServerParams(indexName, request);
+        searchParam = SearchParameters.get(searchMan, isDocs, isDebugMode, params);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;
@@ -474,7 +476,7 @@ public abstract class RequestHandler {
 
     public static void dataStream(SearchParameters searchParameters, DataStream ds) {
         ds.startMap();
-        for (Entry<String, String> e : searchParameters.getParameters().entrySet()) {
+        for (Entry<String, String> e : searchParameters.par().getParameters().entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
         ds.endMap();
@@ -676,7 +678,7 @@ public abstract class RequestHandler {
      */
     public List<Annotation> getAnnotationsToWrite() throws BlsException {
         AnnotatedFields fields = this.blIndex().annotatedFields();
-        Set<String> requestedAnnotations = searchParam.getListValuesFor();
+        Set<String> requestedAnnotations = searchParam.par().getListValuesFor();
 
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
@@ -700,7 +702,7 @@ public abstract class RequestHandler {
      */
     public Set<MetadataField> getMetadataToWrite() throws BlsException {
         MetadataFields fields = this.blIndex().metadataFields();
-        Set<String> requestedFields = searchParam.getListMetadataValuesFor();
+        Set<String> requestedFields = searchParam.par().getListMetadataValuesFor();
 
         Set<MetadataField> ret = new HashSet<>();
         ret.add(optCustomField(blIndex().metadata(), "authorField"));
@@ -829,7 +831,7 @@ public abstract class RequestHandler {
         dataStream(searchParam, ds);
         ds.endEntry();
 
-        IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
+        IndexStatus status = indexMan.getIndex(searchParam.par().getIndexName()).getStatus();
         if (status != IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", status.toString());
         }
@@ -986,7 +988,7 @@ public abstract class RequestHandler {
 
                     ds.endList().endEntry();
                 } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getPattern());
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.par().getPattern());
                 }
             }
 

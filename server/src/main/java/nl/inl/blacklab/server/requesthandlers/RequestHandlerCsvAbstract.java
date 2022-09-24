@@ -59,7 +59,7 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
             ResultGroups<T> groups,
             CorpusSize subcorpusSize
     ) {
-        for (Map.Entry<String, String> param : searchParam.getParameters().entrySet()) {
+        for (Map.Entry<String, String> param : searchParam.par().getParameters().entrySet()) {
             if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
                 continue;
             writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
