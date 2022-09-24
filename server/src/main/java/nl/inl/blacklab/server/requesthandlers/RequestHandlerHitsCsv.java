@@ -76,15 +76,9 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
     private Result getHits() throws BlsException, InvalidQuery {
         // Might be null
-        String groupBy = searchParam.getString("group");
-        if (StringUtils.isEmpty(groupBy))
-            groupBy = null;
-        String viewGroup = searchParam.getString("viewgroup");
-        if (StringUtils.isEmpty(viewGroup))
-            viewGroup = null;
-        String sortBy = searchParam.getString("sort");
-        if (StringUtils.isEmpty(sortBy))
-            sortBy = null;
+        String groupBy = searchParam.getGroupProps().orElse(null);
+        String viewGroup = searchParam.getViewGroup().orElse(null);
+        String sortBy = searchParam.getSortProps().orElse(null);
 
         SearchCacheEntry<?> cacheEntry;
         Hits hits;
@@ -130,14 +124,14 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
-            long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
+            long first = Math.max(0, searchParam.getFirstResultToShow()); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
 
             long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
-            if (searchParam.containsKey("number")) {
-                long requested = searchParam.getLong("number");
+            if (searchParam.optNumberOfResultsToShow().isPresent()) {
+                long requested = searchParam.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -265,9 +259,12 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             for (Annotation a : annotationsToWrite) {
                 row.add(a.name());
             }
-            // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the normal hit response does
+            // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the
+            // normal hit response does
             // Since it results in a MASSIVE amount of repeated data.
-            List<MetadataField> metadataFieldsToWrite = searchParam.containsKey("listmetadatavalues") ? new ArrayList<>(getMetadataToWrite()) : Collections.emptyList();
+            List<MetadataField> metadataFieldsToWrite = !searchParam.getListMetadataValuesFor().isEmpty() ?
+                    new ArrayList<>(getMetadataToWrite()) :
+                    Collections.emptyList();
             for (MetadataField f : metadataFieldsToWrite) {
                  row.add(f.name());
             }

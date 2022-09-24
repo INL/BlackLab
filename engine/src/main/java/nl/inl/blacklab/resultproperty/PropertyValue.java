@@ -46,6 +46,8 @@ public abstract class PropertyValue implements Comparable<Object> {
      * @return the HitPropValue object, or null if it could not be deserialized
      */
     public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return null;
 
         if (PropertySerializeUtil.isMultiple(serialized))
             return PropertyValueMultiple.deserialize(index, field, serialized);

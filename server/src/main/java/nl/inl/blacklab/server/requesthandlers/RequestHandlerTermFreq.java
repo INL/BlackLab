@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -37,25 +35,22 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String annotName = searchParam.getString("annotation");
-        if (annotName.length() == 0)
-            annotName = searchParam.getString("property"); // old parameter name, deprecated
+        String annotName = searchParam.getAnnotation();
         Annotation annotation = cfd.annotation(annotName);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
+        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getSensitive());
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!
         Query q = searchParam.hasFilter() ? searchParam.filterQuery() : null;
         // May also null/empty to retrieve all terms!
-        Set<String> terms = searchParam.getString("terms") != null ? new HashSet<>(Arrays.asList(searchParam.getString("terms").trim().split("\\s*,\\s*"))) : null;
-         
+        Set<String> terms = searchParam.getTerms();
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            long first = searchParam.getLong("first");
+            long first = searchParam.getFirstResultToShow();
             if (first < 0 || first >= tfl.size())
                 first = 0;
-            long number = searchParam.getLong("number");
+            long number = searchParam.getNumberOfResultsToShow();
             DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
                 number = pageSize.getDefaultValue();

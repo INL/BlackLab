@@ -64,7 +64,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         ds.startMap();
         ds.startEntry("summary").startMap();
-        WindowSettings windowSettings = searchParam.getWindowSettings();
+        WindowSettings windowSettings = searchParam.windowSettings();
         final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
         final long requestedWindowSize = windowSettings.size() < 0

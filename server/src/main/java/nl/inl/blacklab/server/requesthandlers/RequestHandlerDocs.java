@@ -54,12 +54,8 @@ public class RequestHandlerDocs extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
-        String groupBy = searchParam.getString("group");
-        if (groupBy == null)
-            groupBy = "";
-        String viewGroup = searchParam.getString("viewgroup");
-        if (viewGroup == null)
-            viewGroup = "";
+        String groupBy = searchParam.getGroupProps().orElse("");
+        String viewGroup = searchParam.getViewGroup().orElse("");
         int response = 0;
 
         // Make sure we have the hits search, so we can later determine totals.
@@ -108,16 +104,16 @@ public class RequestHandlerDocs extends RequestHandler {
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need
         // some more testing to see if everything is correct if we change this
-        String sortBy = searchParam.getString("sort");
-        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(blIndex(), sortBy) : null;
+        String sortBy = searchParam.getSortProps().orElse("");
         DocResults docsSorted = group.storedResults();
+        DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy);
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);
 
-        long first = searchParam.getLong("first");
+        long first = searchParam.getFirstResultToShow();
         if (first < 0)
             first = 0;
-        long number = searchParam.getLong("number");
+        long number = searchParam.getNumberOfResultsToShow();
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         totalDocResults = docsSorted;
@@ -144,7 +140,7 @@ public class RequestHandlerDocs extends RequestHandler {
         }
 
         // If "waitfortotal=yes" was passed, block until all results have been fetched
-        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
+        boolean waitForTotal = searchParam.getWaitForTotal();
         if (waitForTotal)
             totalDocResults.size();
 
@@ -157,7 +153,7 @@ public class RequestHandlerDocs extends RequestHandler {
     private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
 
-        boolean includeTokenCount = searchParam.getBoolean("includetokencount");
+        boolean includeTokenCount = searchParam.getIncludeTokenCount();
         long totalTokens = -1;
         if (includeTokenCount) {
             // Determine total number of tokens in result set

@@ -71,15 +71,9 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     // TODO share with regular RequestHandlerHits
     private Result getDocs() throws BlsException, InvalidQuery {
         // Might be null
-        String groupBy = searchParam.getString("group");
-        if (StringUtils.isEmpty(groupBy))
-            groupBy = null;
-        String viewGroup = searchParam.getString("viewgroup");
-        if (StringUtils.isEmpty(viewGroup))
-            viewGroup = null;
-        String sortBy = searchParam.getString("sort");
-        if (StringUtils.isEmpty(sortBy))
-            sortBy = null;
+        String groupBy = searchParam.getGroupProps().orElse(null);
+        String viewGroup = searchParam.getViewGroup().orElse(null);
+        String sortBy = searchParam.getSortProps().orElse(null);
 
         DocResults docs;
         DocGroups groups = null;
@@ -119,13 +113,13 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
-            long first = Math.max(0, searchParam.getLong("first")); // Defaults to 0
+            long first = Math.max(0, searchParam.getFirstResultToShow()); // Defaults to 0
             if (!docs.resultsStats().processedAtLeast(first))
                 first = 0;
 
             long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
-            if (searchParam.containsKey("number")) {
-                long requested = searchParam.getLong("number");
+            if (searchParam.optNumberOfResultsToShow().isPresent()) {
+                long requested = searchParam.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -139,11 +133,11 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     }
 
     private boolean includeSearchParameters() {
-        return searchParam.getBoolean("csvsummary");
+        return searchParam.getCsvIncludeSummary();
     }
 
     private boolean declareSeparator() {
-        return searchParam.getBoolean("csvsepline");
+        return searchParam.getCsvDeclareSeparator();
     }
 
     private CSVPrinter createHeader(List<String> row) throws IOException {

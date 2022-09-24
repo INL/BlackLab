@@ -472,6 +472,14 @@ public abstract class RequestHandler {
         ds.endEntry();
     }
 
+    public static void dataStream(SearchParameters searchParameters, DataStream ds) {
+        ds.startMap();
+        for (Entry<String, String> e : searchParameters.getParameters().entrySet()) {
+            ds.entry(e.getKey(), e.getValue());
+        }
+        ds.endMap();
+    }
+
     protected void setRequestId(String requestId) {
     }
 
@@ -818,7 +826,7 @@ public abstract class RequestHandler {
 
         // Our search parameters
         ds.startEntry("searchParam");
-        searchParam.dataStream(ds);
+        dataStream(searchParam, ds);
         ds.endEntry();
 
         IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
@@ -827,7 +835,7 @@ public abstract class RequestHandler {
         }
 
         // Information about hit sampling
-        SampleParameters sample = searchParam.getSampleSettings();
+        SampleParameters sample = searchParam.sampleSettings();
         if (sample != null) {
             ds.entry("sampleSeed", sample.seed());
             if (sample.isPercentage())
@@ -978,7 +986,7 @@ public abstract class RequestHandler {
 
                     ds.endList().endEntry();
                 } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getPattern());
                 }
             }
 

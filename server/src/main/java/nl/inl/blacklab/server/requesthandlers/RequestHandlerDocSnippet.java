@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -54,14 +55,15 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         ContextSize wordsAroundHit;
         int start, end;
         boolean isHit = false;
-        if (searchParam.containsKey("hitstart")) {
-            start = searchParam.getInteger("hitstart");
-            end = searchParam.getInteger("hitend");
-            wordsAroundHit = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
+        Optional<Integer> hitStart = searchParam.getHitStart();
+        if (hitStart.isPresent()) {
+            start = hitStart.get();
+            end = searchParam.getHitEnd();
+            wordsAroundHit = ContextSize.get(searchParam.getWordsAroundHit());
             isHit = true;
         } else {
-            start = searchParam.getInteger("wordstart");
-            end = searchParam.getInteger("wordend");
+            start = searchParam.getWordStart();
+            end = searchParam.getWordEnd();
             wordsAroundHit = ContextSize.hitOnly();
         }
 
@@ -79,7 +81,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             snippetEnd = end + clampedWindow;
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
-        boolean origContent = searchParam.getString("usecontent").equals("orig");
+        boolean origContent = searchParam.getConcordanceType() == ConcordanceType.CONTENT_STORE;
         Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
         getHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null, new HashSet<>(this.getAnnotationsToWrite()));
         return HTTP_OK;

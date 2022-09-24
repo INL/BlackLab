@@ -83,6 +83,9 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
     }
 
     public static DocProperty deserialize(BlackLabIndex index, String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return null;
+
         if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {

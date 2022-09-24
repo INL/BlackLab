@@ -43,7 +43,6 @@ import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -209,49 +208,17 @@ public class SearchParameters {
         return map.put(key, value);
     }
 
-    public boolean containsKey(String key) {
+    private boolean containsKey(String key) {
         return map.containsKey(key);
     }
 
-    public String getString(String key) {
+    private String getString(String key) {
         String value = map.get(key);
         if (value == null || value.length() == 0) {
             value = defaultValues.get(key);
         }
         return value;
     }
-
-    public int getInteger(String name) {
-        String value = getString(name);
-        try {
-            return Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            logger.debug("Illegal integer value for parameter '" + name + "': " + value);
-            return 0;
-        }
-    }
-
-    public long getLong(String name) {
-        String value = getString(name);
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            logger.debug("Illegal integer value for parameter '" + name + "': " + value);
-            return 0L;
-        }
-    }
-
-    public boolean getBoolean(String name) {
-        String value = getString(name);
-        if (value.equals("true") || value.equals("1") || value.equals("yes") || value.equals("on"))
-            return true;
-        if (value.equals("false") || value.equals("0") || value.equals("no") || value.equals("off"))
-            return false;
-        logger.debug("Illegal boolean value for parameter '" + name + "': " + value);
-        return false;
-    }
-
-    // another set of parse methods that won't complain but just return a default value if value is missing or wrong
 
     private static double parse(String value, double defVal) {
         if (value != null) {
@@ -304,26 +271,18 @@ public class SearchParameters {
         return defVal;
     }
 
+
+
+    // ----- Specific parameters --------------
+
     /**
-     * Get an unmodifiable view of the parameters.
+     * Get a view of the parameters.
      *
      * @return the view
      */
     public Map<String, String> getParameters() {
         return Collections.unmodifiableMap(map);
     }
-
-    public void dataStream(DataStream ds) {
-        ds.startMap();
-        for (Map.Entry<String, String> e : map.entrySet()) {
-            ds.entry(e.getKey(), e.getValue());
-        }
-        ds.endMap();
-    }
-
-
-    // ----- Specific parameters --------------
-
 
     public String getIndexName() {
         return getString("indexname");
@@ -353,11 +312,11 @@ public class SearchParameters {
         return getString("filterlang");
     }
 
-    private String getHitFilterCriterium() {
+    public String getHitFilterCriterium() {
         return getString("hitfiltercrit");
     }
 
-    private String getHitFilterValue() {
+    public String getHitFilterValue() {
         return getString("hitfilterval");
     }
 
@@ -379,63 +338,67 @@ public class SearchParameters {
                 Optional.empty();
     }
 
-    private boolean getUseCache() {
-        return getBoolean("usecache");
+    public boolean getUseCache() {
+        return parse(getString("usecache"), true);
     }
 
-    private int getForwardIndexMatchFactor() {
-        return getInteger("fimatch");
+    public int getForwardIndexMatchFactor() {
+        return parse(getString("fimatch"), 0);
     }
 
-    private long getMaxRetrieve() {
-        return getLong("maxretrieve");
+    public long getMaxRetrieve() {
+        return parse(getString("maxretrieve"), 0L);
     }
 
-    private long getMaxCount() {
-        return getLong("maxcount");
+    public long getMaxCount() {
+        return parse(getString("maxcount"), 0L);
     }
 
-    private long getFirstResultToShow() {
-        return getLong("first");
+    public long getFirstResultToShow() {
+        return parse(getString("first"), 0L);
     }
 
-    private long getNumberOfResultsToShow() {
-        return getLong("number");
+    public Optional<Long> optNumberOfResultsToShow() {
+        return containsKey("number") ? Optional.of(getNumberOfResultsToShow()) : Optional.empty();
     }
 
-    private int getWordsAroundHit() {
-        return getInteger("wordsaroundhit");
+    public long getNumberOfResultsToShow() {
+        return parse(getString("number"), 0L);
     }
 
-    private ConcordanceType getConcordanceType() {
+    public int getWordsAroundHit() {
+        return parse(getString("wordsaroundhit"), 0);
+    }
+
+    public ConcordanceType getConcordanceType() {
         return getString("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE :
                 ConcordanceType.FORWARD_INDEX;
     }
 
-    private boolean getIncludeGroupContents() {
-        return getBoolean("includegroupcontents");
+    public boolean getIncludeGroupContents() {
+        return parse(getString("includegroupcontents"), false);
     }
 
-    private boolean getOmitEmptyCaptures() {
-        return getBoolean("omitemptycaptures");
+    public boolean getOmitEmptyCaptures() {
+        return parse(getString("omitemptycaptures"), false);
     }
 
-    private Optional<String> getFacetProps() {
+    public Optional<String> getFacetProps() {
         String paramFacets = getString("facets");
         return paramFacets.isEmpty() ? Optional.empty() : Optional.of(paramFacets);
     }
 
-    private Optional<String> getGroupProps() {
+    public Optional<String> getGroupProps() {
         String paramGroup = getString("group");
         return paramGroup.isEmpty() ? Optional.empty() : Optional.of(paramGroup);
     }
 
-    private Optional<String> getSortProps() {
+    public Optional<String> getSortProps() {
         String paramSort = getString("sort");
         return paramSort.isEmpty() ? Optional.empty() : Optional.of(paramSort);
     }
 
-    private Optional<String> getViewGroup() {
+    public Optional<String> getViewGroup() {
         String paramViewGroup = getString("viewgroup");
         return paramViewGroup.isEmpty() ? Optional.empty() : Optional.of(paramViewGroup);
     }
@@ -465,9 +428,72 @@ public class SearchParameters {
         return par.isEmpty() ? Collections.emptySet() : new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
     }
 
+    public boolean getWaitForTotal() {
+        return parse(getString("waitfortotal"), false);
+    }
+
+    public boolean getIncludeTokenCount() {
+        return parse(getString("includetokencount"), false);
+    }
+
+    public boolean getCsvIncludeSummary() {
+        return parse(getString("csvsummary"), false);
+    }
+
+    public boolean getCsvDeclareSeparator() {
+        return parse(getString("csvsepline"), false);
+    }
+
+    public boolean getExplain() {
+        return parse(getString("explain"), false);
+    }
+
+    public boolean getSensitive() {
+        return parse(getString("sensitive"), false);
+    }
+
+    public int getWordStart() {
+        return parse(getString("wordstart"), 0);
+    }
+
+    public int getWordEnd() {
+        return parse(getString("wordend"), 0);
+    }
+
+    public Optional<Integer> getHitStart() {
+        return containsKey("hitstart") ? Optional.of(parse(getString("hitstart"), 0)) :
+                Optional.empty();
+    }
+
+    public int getHitEnd() {
+        return parse(getString("hitend"), 0);
+    }
+
+    public String getAutocompleteTerm() {
+        return getString("term");
+    }
+
+    public boolean getCalculateCollocations() {
+        return getString("calc").equals("colloc");
+    }
+
+    public String getAnnotation() {
+        String annotName = getString("annotation");
+        if (annotName.length() == 0)
+            annotName = getString("property"); // old parameter name, deprecated
+        return annotName;
+    }
+
+    public Set<String> getTerms() {
+        String strTerms = getString("terms");
+        Set<String> terms = strTerms != null ?
+                new HashSet<>(Arrays.asList(strTerms.trim().split("\\s*,\\s*"))) : null;
+        return terms;
+    }
 
 
-    
+
+
     // --------- LESS API dependent vars & methods -------------
 
     /** The search manager, for querying default value for missing parameters */
@@ -682,19 +708,6 @@ public class SearchParameters {
         return new HitSortSettings(sortProp);
     }
 
-
-
-
-    /**
-     * @return hits - filtered then sorted then sampled
-     */
-    public SearchHits hitsSample() throws BlsException {
-        SampleParameters sampleSettings = sampleSettings();
-        if (sampleSettings == null)
-            return hitsSorted();
-        return hitsSorted().sample(sampleSettings);
-    }
-
     public SampleParameters sampleSettings() {
         Optional<Double> sample = getSampleFraction();
         Optional<Integer> sampleNum = getSampleNumber();
@@ -744,6 +757,10 @@ public class SearchParameters {
         return facetProps;
     }
 
+    public boolean hasFacets() {
+        return facetProps() != null;
+    }
+
     public SearchSettings searchSettings() {
         long maxRetrieve = getMaxRetrieve();
         long maxCount = getMaxCount();
@@ -772,6 +789,24 @@ public class SearchParameters {
 
     boolean useCache() {
         return !debugMode || getUseCache();
+    }
+
+    private int forwardIndexMatchFactor() {
+        return debugMode ? getForwardIndexMatchFactor() : -1;
+    }
+
+
+
+    // -------- Create Search instances -----------
+
+    /**
+     * @return hits - filtered then sorted then sampled
+     */
+    public SearchHits hitsSample() throws BlsException {
+        SampleParameters sampleSettings = sampleSettings();
+        if (sampleSettings == null)
+            return hitsSorted();
+        return hitsSorted().sample(sampleSettings);
     }
 
     /**
@@ -807,10 +842,6 @@ public class SearchParameters {
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }
-    }
-
-    private int forwardIndexMatchFactor() {
-        return debugMode ? getForwardIndexMatchFactor() : -1;
     }
 
     public SearchDocs docsWindow() throws BlsException {
@@ -884,10 +915,6 @@ public class SearchParameters {
 
     public SearchFacets facets() throws BlsException {
         return docs().facet(facetProps());
-    }
-
-    public boolean hasFacets() {
-        return facetProps() != null;
     }
 
 }

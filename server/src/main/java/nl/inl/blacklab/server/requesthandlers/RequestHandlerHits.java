@@ -79,12 +79,8 @@ public class RequestHandlerHits extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
-        String groupBy = searchParam.getString("group");
-        if (groupBy == null)
-            groupBy = "";
-        String viewGroup = searchParam.getString("viewgroup");
-        if (viewGroup == null)
-            viewGroup = "";
+        String groupBy = searchParam.getGroupProps().orElse("");
+        String viewGroup = searchParam.getViewGroup().orElse("");
 
         SearchCacheEntry<?> cacheEntry;
         Hits hits;
@@ -92,7 +88,7 @@ public class RequestHandlerHits extends RequestHandler {
         ResultsStats docsStats = null; // [running] docs count
 
         boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
-        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
+        boolean waitForTotal = searchParam.getWaitForTotal();
         try {
             if (viewingGroup) {
                 // We're viewing a single group. Get the hits from the grouping results.
@@ -136,7 +132,7 @@ public class RequestHandlerHits extends RequestHandler {
             throw RequestHandler.translateSearchException(e);
         }
 
-        if (searchParam.getString("calc").equals("colloc")) {
+        if (searchParam.getCalculateCollocations()) {
             dataStreamCollocations(ds, hits);
             return HTTP_OK;
         }
@@ -162,7 +158,7 @@ public class RequestHandlerHits extends RequestHandler {
             window = hits.window(windowSettings.first(), windowSettings.size());
         }
 
-        boolean includeTokenCount = searchParam.getBoolean("includetokencount");
+        boolean includeTokenCount = searchParam.getIncludeTokenCount();
         long totalTokens = -1;
         if (includeTokenCount) {
             DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
@@ -197,7 +193,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         datastreamMetadataFieldInfo(ds, index);
 
-        if (searchParam.getBoolean("explain")) {
+        if (searchParam.getExplain()) {
             TextPattern tp = searchParam.pattern();
             try {
                 BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
@@ -229,9 +225,9 @@ public class RequestHandlerHits extends RequestHandler {
     }
 
     private void dataStreamCollocations(DataStream ds, Hits originalHits) {
-        ContextSize contextSize = ContextSize.get(searchParam.getInteger("wordsaroundhit"));
+        ContextSize contextSize = ContextSize.get(searchParam.getWordsAroundHit());
         ds.startMap().startEntry("tokenFrequencies").startMap();
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getSensitive());
         TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
                 sensitivity);
         for (TermFrequency tf : tfl) {
@@ -362,11 +358,8 @@ public class RequestHandlerHits extends RequestHandler {
         // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-        String sortBy = searchParam.getString("sort");
-        HitProperty sortProp = (sortBy != null && !sortBy.isEmpty())
-                ? HitProperty.deserialize(hits, sortBy)
-                : null;
-
+        String sortBy = searchParam.getSortProps().orElse(null);
+        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
         if (sortProp != null)
             hits = hits.sort(sortProp);
 

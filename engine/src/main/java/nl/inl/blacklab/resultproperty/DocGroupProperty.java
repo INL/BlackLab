@@ -24,6 +24,8 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     }
     
     public static DocGroupProperty deserialize(String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return null;
         boolean reverse = false;
         if (serialized.length() > 0 && serialized.charAt(0) == '-') {
             reverse = true;

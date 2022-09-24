@@ -73,7 +73,7 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
             writeRow(printer, numColumns, "summary.largestGroupSize", groups.largestGroupSize());
         }
 
-        SampleParameters sample = searchParam.getSampleSettings();
+        SampleParameters sample = searchParam.sampleSettings();
         if (sample != null) {
             writeRow(printer, numColumns, "summary.sampleSeed", sample.seed());
             if (sample.isPercentage())

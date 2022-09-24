@@ -50,10 +50,10 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
         // Search is done; construct the results object
 
-        long first = searchParam.getLong("first");
+        long first = searchParam.getFirstResultToShow();
         if (first < 0)
             first = 0;
-        long number = searchParam.getLong("number");
+        long number = searchParam.getNumberOfResultsToShow();
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         long numberOfGroupsInWindow = 0;
