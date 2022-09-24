@@ -76,19 +76,19 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
     private Result getHits() throws BlsException, InvalidQuery {
         // Might be null
-        String groupBy = searchParam.par().getGroupProps().orElse(null);
-        String viewGroup = searchParam.par().getViewGroup().orElse(null);
-        String sortBy = searchParam.par().getSortProps().orElse(null);
+        String groupBy = params.getGroupProps().orElse(null);
+        String viewGroup = params.getViewGroup().orElse(null);
+        String sortBy = params.getSortProps().orElse(null);
 
         SearchCacheEntry<?> cacheEntry;
         Hits hits;
         HitGroups groups = null;
-        DocResults subcorpus = searchParam.subcorpus().execute();
+        DocResults subcorpus = params.subcorpus().execute();
 
         try {
             if (!StringUtils.isEmpty(groupBy)) {
-                hits = searchParam.hitsSample().execute();
-                groups = searchParam.hitsGroupedWithStoredHits().execute();
+                hits = params.hitsSample().execute();
+                groups = params.hitsGroupedWithStoredHits().execute();
 
                 if (viewGroup != null) {
                     PropertyValue groupId = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
@@ -113,7 +113,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
                 }
             } else {
                 // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                cacheEntry = searchParam.hitsSample().executeAsync();
+                cacheEntry = params.hitsSample().executeAsync();
                 hits = (Hits) cacheEntry.get();
             }
         } catch (InterruptedException | ExecutionException e) {
@@ -124,14 +124,14 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hits != null) {
-            long first = Math.max(0, searchParam.par().getFirstResultToShow()); // Defaults to 0
+            long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
 
             long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
-            if (searchParam.par().optNumberOfResultsToShow().isPresent()) {
-                long requested = searchParam.par().optNumberOfResultsToShow().get();
+            if (params.optNumberOfResultsToShow().isPresent()) {
+                long requested = params.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -175,7 +175,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                    CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), metadataGroupProperties, docPropValues);
+                    CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(params, subcorpusResults.query(), metadataGroupProperties, docPropValues);
                     long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
@@ -262,7 +262,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the
             // normal hit response does
             // Since it results in a MASSIVE amount of repeated data.
-            List<MetadataField> metadataFieldsToWrite = !searchParam.par().getListMetadataValuesFor().isEmpty() ?
+            List<MetadataField> metadataFieldsToWrite = !params.getListMetadataValuesFor().isEmpty() ?
                     new ArrayList<>(getMetadataToWrite()) :
                     Collections.emptyList();
             for (MetadataField f : metadataFieldsToWrite) {
@@ -276,7 +276,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
-            Kwics kwics = hits.kwics(searchParam.contextSettings().size());
+            Kwics kwics = hits.kwics(params.contextSettings().size());
             for (Hit hit : hits) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {

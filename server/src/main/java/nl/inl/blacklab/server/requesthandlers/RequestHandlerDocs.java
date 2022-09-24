@@ -54,14 +54,14 @@ public class RequestHandlerDocs extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
-        String groupBy = searchParam.par().getGroupProps().orElse("");
-        String viewGroup = searchParam.par().getViewGroup().orElse("");
+        String groupBy = params.getGroupProps().orElse("");
+        String viewGroup = params.getViewGroup().orElse("");
         int response = 0;
 
         // Make sure we have the hits search, so we can later determine totals.
         originalHitsSearch = null;
-        if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
+        if (params.hasPattern()) {
+            originalHitsSearch = params.hitsSample().hitCount().executeAsync();
         }
 
         if (groupBy.length() > 0 && viewGroup.length() > 0) {
@@ -81,7 +81,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
         SearchCacheEntry<DocGroups> docGroupFuture;
         // Yes. Group, then show hits from the specified group
-        search = docGroupFuture = searchParam.docsGrouped().executeAsync();
+        search = docGroupFuture = params.docsGrouped().executeAsync();
         DocGroups groups;
         try {
             groups = docGroupFuture.get();
@@ -104,16 +104,16 @@ public class RequestHandlerDocs extends RequestHandler {
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need
         // some more testing to see if everything is correct if we change this
-        String sortBy = searchParam.par().getSortProps().orElse("");
+        String sortBy = params.getSortProps().orElse("");
         DocResults docsSorted = group.storedResults();
         DocProperty sortProp = DocProperty.deserialize(blIndex(), sortBy);
         if (sortProp != null)
             docsSorted = docsSorted.sort(sortProp);
 
-        long first = searchParam.par().getFirstResultToShow();
+        long first = params.getFirstResultToShow();
         if (first < 0)
             first = 0;
-        long number = searchParam.par().getNumberOfResultsToShow();
+        long number = params.getNumberOfResultsToShow();
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         totalDocResults = docsSorted;
@@ -126,11 +126,11 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
-        SearchCacheEntry<DocResults> searchWindow = searchParam.docsWindow().executeAsync();
+        SearchCacheEntry<DocResults> searchWindow = params.docsWindow().executeAsync();
         search = searchWindow;
 
         // Also determine the total number of hits
-        SearchCacheEntry<DocResults> total = searchParam.docs().executeAsync();
+        SearchCacheEntry<DocResults> total = params.docs().executeAsync();
 
         try {
             window = searchWindow.get();
@@ -140,7 +140,7 @@ public class RequestHandlerDocs extends RequestHandler {
         }
 
         // If "waitfortotal=yes" was passed, block until all results have been fetched
-        boolean waitForTotal = searchParam.par().getWaitForTotal();
+        boolean waitForTotal = params.getWaitForTotal();
         if (waitForTotal)
             totalDocResults.size();
 
@@ -153,7 +153,7 @@ public class RequestHandlerDocs extends RequestHandler {
     private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
 
-        boolean includeTokenCount = searchParam.par().getIncludeTokenCount();
+        boolean includeTokenCount = params.getIncludeTokenCount();
         long totalTokens = -1;
         if (includeTokenCount) {
             // Determine total number of tokens in result set
@@ -168,9 +168,9 @@ public class RequestHandlerDocs extends RequestHandler {
         ds.startEntry("summary").startMap();
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
-        docsStats = searchParam.docsCount().executeAsync().peek();
+        docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
+        datastreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
             datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
@@ -207,7 +207,7 @@ public class RequestHandlerDocs extends RequestHandler {
             Hits hits2 = result.storedResults().window(0, 5); // TODO: make num. snippets configurable
             if (hits2.hitsStats().processedAtLeast(1)) {
                 ds.startEntry("snippets").startList();
-                ContextSettings contextSettings = searchParam.contextSettings();
+                ContextSettings contextSettings = params.contextSettings();
                 Concordances concordances = null;
                 Kwics kwics = null;
                 if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
@@ -237,10 +237,10 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.endMap().endItem();
         }
         ds.endList().endEntry();
-        if (searchParam.hasFacets()) {
+        if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, searchParam.facets());
+            dataStreamFacets(ds, params.facets());
             ds.endEntry();
         }
         ds.endMap();

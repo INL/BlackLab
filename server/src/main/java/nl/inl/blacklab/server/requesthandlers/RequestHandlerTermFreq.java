@@ -35,22 +35,22 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String annotName = searchParam.par().getAnnotation();
+        String annotName = params.getAnnotation();
         Annotation annotation = cfd.annotation(annotName);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.par().getSensitive());
+        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!
-        Query q = searchParam.hasFilter() ? searchParam.filterQuery() : null;
+        Query q = params.hasFilter() ? params.filterQuery() : null;
         // May also null/empty to retrieve all terms!
-        Set<String> terms = searchParam.par().getTerms();
+        Set<String> terms = params.getTerms();
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            long first = searchParam.par().getFirstResultToShow();
+            long first = params.getFirstResultToShow();
             if (first < 0 || first >= tfl.size())
                 first = 0;
-            long number = searchParam.par().getNumberOfResultsToShow();
+            long number = params.getNumberOfResultsToShow();
             DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
                 number = pageSize.getDefaultValue();

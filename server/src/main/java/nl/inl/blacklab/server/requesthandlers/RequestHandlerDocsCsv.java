@@ -70,17 +70,17 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     // TODO share with regular RequestHandlerHits
     private Result getDocs() throws BlsException, InvalidQuery {
         // Might be null
-        String groupBy = searchParam.par().getGroupProps().orElse(null);
-        String viewGroup = searchParam.par().getViewGroup().orElse(null);
-        String sortBy = searchParam.par().getSortProps().orElse(null);
+        String groupBy = params.getGroupProps().orElse(null);
+        String viewGroup = params.getViewGroup().orElse(null);
+        String sortBy = params.getSortProps().orElse(null);
 
         DocResults docs;
         DocGroups groups = null;
-        DocResults subcorpusResults = searchParam.subcorpus().execute();
+        DocResults subcorpusResults = params.subcorpus().execute();
 
         if (groupBy != null) {
-            groups = searchParam.docsGrouped().execute();
-            docs = searchParam.docs().execute();
+            groups = params.docsGrouped().execute();
+            docs = params.docs().execute();
 
             if (viewGroup != null) {
                 PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
@@ -105,20 +105,20 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
             }
         } else {
             // Don't use JobDocsAll, as we only might not need them all.
-            docs = searchParam.docsSorted().execute();
+            docs = params.docsSorted().execute();
         }
 
         // apply window settings
         // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
-            long first = Math.max(0, searchParam.par().getFirstResultToShow()); // Defaults to 0
+            long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
             if (!docs.resultsStats().processedAtLeast(first))
                 first = 0;
 
             long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
-            if (searchParam.par().optNumberOfResultsToShow().isPresent()) {
-                long requested = searchParam.par().optNumberOfResultsToShow().get();
+            if (params.optNumberOfResultsToShow().isPresent()) {
+                long requested = params.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
@@ -132,11 +132,11 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
     }
 
     private boolean includeSearchParameters() {
-        return searchParam.par().getCsvIncludeSummary();
+        return params.getCsvIncludeSummary();
     }
 
     private boolean declareSeparator() {
-        return searchParam.par().getCsvDeclareSeparator();
+        return params.getCsvDeclareSeparator();
     }
 
     private CSVPrinter createHeader(List<String> row) throws IOException {
@@ -172,9 +172,9 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
                 if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
                     row.add(Long.toString(group.totalTokens()));
 
-                    if (searchParam.hasPattern()) {
+                    if (params.hasPattern()) {
                         PropertyValue docPropValues = group.identity();
-                        CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpusResults.query(), groups.groupCriteria(), docPropValues);
+                        CorpusSize groupSubcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(params, subcorpusResults.query(), groups.groupCriteria(), docPropValues);
                         row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) : "[unknown]");
                         row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) : "[unknown]");
                     } else {

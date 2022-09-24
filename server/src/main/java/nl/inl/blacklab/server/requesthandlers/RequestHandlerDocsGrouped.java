@@ -35,12 +35,12 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
         // Make sure we have the hits search, so we can later determine totals.
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
-        if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
+        if (params.hasPattern()) {
+            originalHitsSearch = params.hitsSample().hitCount().executeAsync();
         }
         // Get the window we're interested in
-        DocResults docResults = searchParam.docs().execute();
-        SearchCacheEntry<DocGroups> groupSearch = searchParam.docsGrouped().executeAsync();
+        DocResults docResults = params.docs().execute();
+        SearchCacheEntry<DocGroups> groupSearch = params.docsGrouped().executeAsync();
         DocGroups groups;
         try {
             groups = groupSearch.get();
@@ -50,10 +50,10 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
         // Search is done; construct the results object
 
-        long first = searchParam.par().getFirstResultToShow();
+        long first = params.getFirstResultToShow();
         if (first < 0)
             first = 0;
-        long number = searchParam.par().getNumberOfResultsToShow();
+        long number = params.getNumberOfResultsToShow();
         if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
             number = searchMan.config().getParameters().getPageSize().getDefaultValue();
         long numberOfGroupsInWindow = 0;
@@ -68,21 +68,21 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
         ResultsStats hitsStats, docsStats;
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
-        docsStats = searchParam.docsCount().executeAsync().peek();
+        docsStats = params.docsCount().executeAsync().peek();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
         DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
-        boolean hasPattern = searchParam.hasPattern();
+        boolean hasPattern = params.hasPattern();
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria();
-            subcorpus = searchParam.subcorpus().execute();
+            subcorpus = params.subcorpus().execute();
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        datastreamSummaryCommonFields(ds, searchParam, timings, groups, ourWindow);
+        datastreamSummaryCommonFields(ds, params, timings, groups, ourWindow);
         if (hitsStats == null)
             datastreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
@@ -126,7 +126,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                 if (hasPattern) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
+                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
                     datastreamSubcorpusSize(ds, subcorpusSize);
                 }
             }

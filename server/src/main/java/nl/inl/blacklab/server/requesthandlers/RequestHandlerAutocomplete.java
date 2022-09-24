@@ -46,7 +46,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
 
         String annotatedFieldName = pathParts.length > 1 ? pathParts[0] : null;
         String fieldName = pathParts.length > 1 ? pathParts[1] : pathParts[0];
-        String term = searchParam.par().getAutocompleteTerm();
+        String term = params.getAutocompleteTerm();
 
         if (fieldName.isEmpty()) {
             throw new BadRequest("UNKNOWN_OPERATION",

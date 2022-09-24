@@ -87,8 +87,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         IndexMetadata indexMetadata = blIndex.metadata();
 
         if (indexMetadata.annotatedFields().exists(fieldName)) {
-            Set<String> setShowValuesFor = searchParam.par().getListValuesFor();
-            Set<String> setShowSubpropsFor = searchParam.par().getListSubpropsFor();
+            Set<String> setShowValuesFor = params.getListValuesFor();
+            Set<String> setShowSubpropsFor = params.getListSubpropsFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             describeAnnotatedField(ds, indexName, fieldDesc, blIndex, setShowValuesFor, setShowSubpropsFor);
         } else {

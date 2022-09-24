@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 
 /**
@@ -55,11 +56,11 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
     private static <T> void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,
-            SearchParameters searchParam,
+            SearchCreator searchParam,
             ResultGroups<T> groups,
             CorpusSize subcorpusSize
     ) {
-        for (Map.Entry<String, String> param : searchParam.par().getParameters().entrySet()) {
+        for (Map.Entry<String, String> param : searchParam.getParameters().entrySet()) {
             if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
                 continue;
             writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
@@ -92,7 +93,7 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
      * @param subcorpusSize (optional) if available
      */
     protected void addSummaryCsvHits(CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
-        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
         writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
         writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
     }
@@ -110,7 +111,7 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
             DocGroups groups,
             CorpusSize subcorpusSize
     ) {
-        addSummaryCsvCommon(printer, numColumns, searchParam, groups, subcorpusSize);
+        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
 
         writeRow(printer, numColumns, "summary.numberOfDocs", docResults.size());
         writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().mapToLong(Group::size).sum());

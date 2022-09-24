@@ -32,6 +32,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -55,7 +56,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         SearchCacheEntry<HitGroups> search;
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
-            search = searchParam.hitsGroupedStats().executeAsync();
+            search = params.hitsGroupedStats().executeAsync();
             // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -64,7 +65,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         ds.startMap();
         ds.startEntry("summary").startMap();
-        WindowSettings windowSettings = searchParam.windowSettings();
+        WindowSettings windowSettings = params.windowSettings();
         final long first = Math.max(windowSettings.first(), 0);
         DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
         final long requestedWindowSize = windowSettings.size() < 0
@@ -75,11 +76,11 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
-        datastreamSummaryCommonFields(ds, searchParam, timings, groups, ourWindow);
+        datastreamSummaryCommonFields(ds, params, timings, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
-            docsStats = searchParam.docsCount().execute();
+            docsStats = params.docsCount().execute();
 
         // The list of groups found
         DocProperty metadataGroupProperties = null;
@@ -87,7 +88,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         CorpusSize subcorpusSize = null;
         if (INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-            subcorpus = searchParam.subcorpus().execute();
+            subcorpus = params.subcorpus().execute();
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
@@ -114,7 +115,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
-                    subcorpusSize = findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
+                    subcorpusSize = findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
 //                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
@@ -145,9 +146,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     }
                 }
 
-                if (searchParam.includeGroupContents()) {
+                if (params.includeGroupContents()) {
                     Hits hitsInGroup = group.storedResults();
-                    ContextSettings contextSettings = searchParam.contextSettings();
+                    ContextSettings contextSettings = params.contextSettings();
                     ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
                     datastreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
                 }
@@ -157,7 +158,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         }
         ds.endList().endEntry();
 
-        if (searchParam.includeGroupContents()) {
+        if (params.includeGroupContents()) {
             datastreamDocInfos(ds, blIndex(), luceneDocs, getMetadataToWrite());
         }
         ds.endMap();
@@ -165,7 +166,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         return HTTP_OK;
     }
 
-    static CorpusSize findSubcorpusSize(SearchParameters searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
+    static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value

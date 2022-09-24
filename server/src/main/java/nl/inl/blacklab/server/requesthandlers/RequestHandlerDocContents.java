@@ -95,8 +95,8 @@ public class RequestHandlerDocContents extends RequestHandler {
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
 
-        int startAtWord = searchParam.par().getWordStart();
-        int endAtWord = searchParam.par().getWordEnd();
+        int startAtWord = params.getWordStart();
+        int endAtWord = params.getWordEnd();
 
         opGetDocContents = new ReqDocContents(startAtWord, endAtWord);
         surroundWithRootElement = opGetDocContents.isIllegalBoundariesSpecified() || !opGetDocContents.isFullDocument();
@@ -134,14 +134,14 @@ public class RequestHandlerDocContents extends RequestHandler {
             throw new NotAuthorized("Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://inl.github.io/BlackLab/how-to-configure-indexing.html.");
 
         Hits hits = null;
-        if (searchParam.hasPattern()) {
-            searchParam.setFilterByDocumentPid(docPid);
-            hits = searchParam.hitsSample().execute();
+        if (params.hasPattern()) {
+            params.setFilterByDocumentPid(docPid);
+            hits = params.hitsSample().execute();
         }
 
         String content;
-        int startAtWord = searchParam.par().getWordStart();
-        int endAtWord = searchParam.par().getWordEnd();
+        int startAtWord = params.getWordStart();
+        int endAtWord = params.getWordEnd();
         if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }

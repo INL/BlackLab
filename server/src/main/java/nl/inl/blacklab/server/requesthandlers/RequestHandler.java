@@ -66,9 +66,10 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.IndexUtil;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
@@ -373,40 +374,40 @@ public abstract class RequestHandler {
         return true;
     }
 
-    boolean debugMode;
+    protected boolean debugMode;
 
     /** The servlet object */
-    BlackLabServer servlet;
+    protected BlackLabServer servlet;
 
     /** The HTTP request object */
-    HttpServletRequest request;
+    protected HttpServletRequest request;
 
-    /** Search parameters from request */
-    SearchParameters searchParam;
+    /** Interprets parameters to create searches. */
+    protected SearchCreator params;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
      * "/opensonar/doc/1/content"
      */
-    String indexName;
+    protected String indexName;
 
     /**
      * The type of REST resource we're accessing, e.g. "doc" for
      * "/opensonar/doc/1/content"
      */
-    String urlResource;
+    protected String urlResource;
 
     /**
      * The part of the URL path after the resource name, e.g. "1/content" for
      * "/opensonar/doc/1/content"
      */
-    String urlPathInfo;
+    protected String urlPathInfo;
 
     /** The search manager, which executes and caches our searches */
-    SearchManager searchMan;
+    protected SearchManager searchMan;
 
     /** User id (if logged in) and/or session id */
-    User user;
+    protected User user;
 
     protected IndexManager indexMan;
 
@@ -428,8 +429,8 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        WebserviceParams params = new BlackLabServerParams(indexName, request);
-        searchParam = SearchParameters.get(searchMan, isDocs, isDebugMode, params);
+        BlackLabServerParams blsParams = new BlackLabServerParams(indexName, request);
+        params = SearchCreator.get(searchMan, isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;
@@ -474,9 +475,9 @@ public abstract class RequestHandler {
         ds.endEntry();
     }
 
-    public static void dataStream(SearchParameters searchParameters, DataStream ds) {
+    public static void dataStream(SearchCreator searchParameters, DataStream ds) {
         ds.startMap();
-        for (Entry<String, String> e : searchParameters.par().getParameters().entrySet()) {
+        for (Entry<String, String> e : searchParameters.getParameters().entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
         ds.endMap();
@@ -678,7 +679,7 @@ public abstract class RequestHandler {
      */
     public List<Annotation> getAnnotationsToWrite() throws BlsException {
         AnnotatedFields fields = this.blIndex().annotatedFields();
-        Set<String> requestedAnnotations = searchParam.par().getListValuesFor();
+        Set<String> requestedAnnotations = params.getListValuesFor();
 
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
@@ -702,7 +703,7 @@ public abstract class RequestHandler {
      */
     public Set<MetadataField> getMetadataToWrite() throws BlsException {
         MetadataFields fields = this.blIndex().metadataFields();
-        Set<String> requestedFields = searchParam.par().getListMetadataValuesFor();
+        Set<String> requestedFields = params.getListMetadataValuesFor();
 
         Set<MetadataField> ret = new HashSet<>();
         ret.add(optCustomField(blIndex().metadata(), "authorField"));
@@ -820,7 +821,7 @@ public abstract class RequestHandler {
      */
     protected <T> void datastreamSummaryCommonFields(
             DataStream ds,
-            SearchParameters searchParam,
+            SearchCreator searchParam,
             SearchTimings timings,
             ResultGroups<T> groups,
             WindowStats window
@@ -831,7 +832,7 @@ public abstract class RequestHandler {
         dataStream(searchParam, ds);
         ds.endEntry();
 
-        IndexStatus status = indexMan.getIndex(searchParam.par().getIndexName()).getStatus();
+        IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
         if (status != IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", status.toString());
         }
@@ -972,7 +973,7 @@ public abstract class RequestHandler {
             ds.entry("end", hit.end());
 
             if (hits.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit, searchParam.omitEmptyCapture());
+                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
                 if (capturedGroups != null) {
                     ds.startEntry("captureGroups").startList();
 
@@ -988,11 +989,11 @@ public abstract class RequestHandler {
 
                     ds.endList().endEntry();
                 } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.par().getPattern());
+                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + params.getPattern());
                 }
             }
 
-            ContextSize contextSize = searchParam.contextSettings().size();
+            ContextSize contextSize = params.contextSettings().size();
             boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
             if (concordanceContext.isConcordances()) {
                 // Add concordance from original XML
