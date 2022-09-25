@@ -33,6 +33,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 /**
  * List documents, search for documents matching criteria.
@@ -122,7 +123,8 @@ public class RequestHandlerDocs extends RequestHandler {
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = docGroupFuture.timer().time();
-        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), true);
+        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()),
+                WebserviceOperations.getMetadataToWrite(blIndex(), params), true);
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
@@ -147,7 +149,8 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = totalDocResults;
         totalTime = total.threwException() ? 0 : total.timer().time();
 
-        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), waitForTotal);
+        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()),
+                WebserviceOperations.getMetadataToWrite(blIndex(), params), waitForTotal);
     }
 
     private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {

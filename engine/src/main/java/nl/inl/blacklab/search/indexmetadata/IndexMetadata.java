@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.indexers.config.TextDirection;
 
 /** Information about a BlackLab index, including its fields structure. */

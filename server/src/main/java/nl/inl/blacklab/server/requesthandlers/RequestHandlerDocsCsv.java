@@ -32,6 +32,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 /**
  * Handle /docs requests that produce CSV.
@@ -206,7 +207,8 @@ public class RequestHandlerDocsCsv extends RequestHandlerCsvAbstract {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = this.getMetadataToWrite().stream().map(Field::name)
+            Collection<String> metadataFieldIds = WebserviceOperations.getMetadataToWrite(blIndex(), params).stream()
+                    .map(Field::name)
                     .collect(Collectors.toList());
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated
             metadataFieldIds.remove("lengthInTokens");

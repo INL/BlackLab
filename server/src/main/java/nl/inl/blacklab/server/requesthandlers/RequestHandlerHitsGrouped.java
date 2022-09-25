@@ -36,6 +36,7 @@ import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 import nl.inl.util.BlockTimer;
 
 /**
@@ -159,7 +160,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.endList().endEntry();
 
         if (params.includeGroupContents()) {
-            datastreamDocInfos(ds, blIndex(), luceneDocs, getMetadataToWrite());
+            datastreamDocInfos(ds, blIndex(), luceneDocs, WebserviceOperations.getMetadataToWrite(blIndex(), params));
         }
         ds.endMap();
 

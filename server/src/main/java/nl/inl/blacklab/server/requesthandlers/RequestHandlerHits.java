@@ -61,6 +61,7 @@ import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
@@ -210,7 +211,7 @@ public class RequestHandlerHits extends RequestHandler {
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
         datastreamHits(ds, window, concordanceContext, luceneDocs);
-        datastreamDocInfos(ds, index, luceneDocs, getMetadataToWrite());
+        datastreamDocInfos(ds, index, luceneDocs, WebserviceOperations.getMetadataToWrite(blIndex(), params));
 
         if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.

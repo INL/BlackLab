@@ -6,11 +6,11 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,7 +39,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -67,6 +66,7 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.IndexUtil;
+import nl.inl.blacklab.server.lib.ResultMetadataGroupInfo;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
@@ -80,8 +80,6 @@ import nl.inl.blacklab.server.util.WebserviceUtil;
  */
 public abstract class RequestHandler {
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
-
-    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
@@ -467,11 +465,11 @@ public abstract class RequestHandler {
      */
     static void datastreamMetadataFieldInfo(DataStream ds, BlackLabIndex index) {
         ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, index.metadata());
+        dataStreamDocFields(ds, index.metadata());
         ds.endEntry();
 
         ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
+        dataStreamMetadataFieldDisplayNames(ds, index.metadata());
         ds.endEntry();
     }
 
@@ -588,32 +586,46 @@ public abstract class RequestHandler {
      * @param metadataFieldsToList fields to include in the document info
      */
     static void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
+        Map<String, List<String>> metadata = new LinkedHashMap<>();
+        for (MetadataField f: metadataFieldsToList) {
+            if (f.name().equals("lengthInTokens") || f.name().equals("mayView"))
+                continue;
+            String[] values = document.getValues(f.name());
+            if (values.length == 0)
+                continue;
+            metadata.put(f.name(), List.of(values));
+        }
+        String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
+        Integer lengthInTokens = null;
+        if (tokenLengthField != null) {
+            lengthInTokens =
+                    Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        }
+        boolean mayView = index.mayView(document);
+
+        dataStreamDocumentInfo(ds, metadata, lengthInTokens, mayView);
+    }
+
+    public static void dataStreamDocumentInfo(DataStream ds, nl.inl.blacklab.server.lib.ResultDocInfo docInfo) {
+        dataStreamDocumentInfo(ds, docInfo.getMetadata(), docInfo.getLengthInTokens(), docInfo.isMayView());
+    }
+
+    public static void dataStreamDocumentInfo(DataStream ds, Map<String, List<String>> metadata, Integer lengthInTokens,
+            boolean mayView) {
         ds.startMap();
         {
-            for (MetadataField f: metadataFieldsToList) {
-                if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
-                    continue;
-                }
-                String[] values = document.getValues(f.name());
-                if (values.length == 0) {
-                    continue;
-                }
-
-                ds.startEntry(f.name()).startList();
+            for (Entry<String, List<String>> e: metadata.entrySet()) {
+                ds.startEntry(e.getKey()).startList();
                 {
-                    for (String v: values) {
+                    for (String v: e.getValue()) {
                         ds.item("value", v);
                     }
                 }
                 ds.endList().endEntry();
             }
-
-            String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
-
-            if (tokenLengthField != null)
-                ds.entry("lengthInTokens",
-                        Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
-            ds.entry("mayView", mayView(index.metadata(), document));
+            if (lengthInTokens != null)
+                ds.entry("lengthInTokens", lengthInTokens);
+            ds.entry("mayView", mayView);
         }
         ds.endMap();
     }
@@ -629,25 +641,10 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
-        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
-        // TODO: This synchronization was necessary when testing many simultaneous
-        //   requests with Artillery. It should no longer be possible for metadata field
-        //   groups to change after the IndexMetadata object has been constructed though,
-        //   so it's been disabled. Verify this is using Artillery.
-        //synchronized (metaGroups) { // concurrent requests
-        Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
-                .collect(Collectors.toSet());
-        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
-            for (String fieldName: metaGroup) {
-                MetadataField field = index.metadata().metadataFields().get(fieldName);
-                metadataFieldsNotInGroups.remove(field);
-            }
-        }
-
+    public static void dataStreamMetadataGroupInfo(DataStream ds, ResultMetadataGroupInfo info) {
         ds.startEntry("metadataFieldGroups").startList();
         boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
+        for (MetadataFieldGroup metaGroup : info.getMetaGroups().values()) {
             ds.startItem("metadataFieldGroup").startMap();
             ds.entry("name", metaGroup.name());
             ds.startEntry("fields").startList();
@@ -656,7 +653,7 @@ public abstract class RequestHandler {
             }
             if (!addedRemaining && metaGroup.addRemainingFields()) {
                 addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
+                List<MetadataField> rest = new ArrayList<>(info.getMetadataFieldsNotInGroups());
                 rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
                 for (MetadataField field: rest) {
                     ds.item("field", field.name());
@@ -666,7 +663,6 @@ public abstract class RequestHandler {
             ds.endMap().endItem();
         }
         ds.endList().endEntry();
-        //}
     }
 
     /**
@@ -691,51 +687,6 @@ public abstract class RequestHandler {
         }
 
         return ret;
-    }
-
-    /**
-     * Returns a list of metadata fields to write out.
-     *
-     * By default, all metadata fields are returned.
-     * Special fields (pidField, titleField, etc...) are always returned.
-     *
-     * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
-     */
-    public Set<MetadataField> getMetadataToWrite() throws BlsException {
-        MetadataFields fields = this.blIndex().metadataFields();
-        Set<String> requestedFields = params.getListMetadataValuesFor();
-
-        Set<MetadataField> ret = new HashSet<>();
-        ret.add(optCustomField(blIndex().metadata(), "authorField"));
-        ret.add(optCustomField(blIndex().metadata(), "dateField"));
-        ret.add(optCustomField(blIndex().metadata(), "titleField"));
-        ret.add(fields.pidField());
-        for (MetadataField field  : fields) {
-            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
-                ret.add(field);
-            }
-        }
-        ret.remove(null); // for missing special fields.
-        return ret;
-    }
-
-    private MetadataField optCustomField(IndexMetadata metadata, String propName) {
-        String fieldName = metadata.custom().get(propName, "");
-        return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
-    }
-
-    /**
-     * a document may be viewed when a contentViewable metadata field with a value
-     * true is registered with either the document or with the index metadata.
-     *
-     * @param indexMetadata our index metadata
-     * @param document document we want to view
-     * @return true iff the content from documents in the index may be viewed
-     */
-    protected static boolean mayView(IndexMetadata indexMetadata, Document document) {
-        if (indexMetadata.metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
-            return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
-        return indexMetadata.contentViewable();
     }
 
     protected void dataStreamFacets(DataStream ds, SearchFacets facetDesc) throws InvalidQuery {

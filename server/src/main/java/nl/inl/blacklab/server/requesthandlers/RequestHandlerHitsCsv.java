@@ -39,6 +39,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 /**
  * Request handler for hit results.
@@ -263,7 +264,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             // normal hit response does
             // Since it results in a MASSIVE amount of repeated data.
             List<MetadataField> metadataFieldsToWrite = !params.getListMetadataValuesFor().isEmpty() ?
-                    new ArrayList<>(getMetadataToWrite()) :
+                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(blIndex(), params)) :
                     Collections.emptyList();
             for (MetadataField f : metadataFieldsToWrite) {
                  row.add(f.name());
