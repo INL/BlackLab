@@ -154,7 +154,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     Hits hitsInGroup = group.storedResults();
                     ContextSettings contextSettings = params.contextSettings();
                     ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
-                    dataStreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
+                    Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(hitsInGroup, blIndex(), luceneDocs);
+                    dataStreamHits(ds, hitsInGroup, concordanceContext, docIdToPid);
                 }
 
                 ds.endMap().endItem();

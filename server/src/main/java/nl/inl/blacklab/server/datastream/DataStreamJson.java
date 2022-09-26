@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.datastream;
 
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -119,7 +119,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream contextList(List<Annotation> annotations, Set<Annotation> annotationsToList, List<String> values) {
+    public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList, List<String> values) {
         openbl("{");
         int valuesPerWord = annotations.size();
         int numberOfWords = values.size() / valuesPerWord;

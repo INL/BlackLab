@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,8 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
 public class WebserviceOperations {
@@ -218,5 +221,17 @@ public class WebserviceOperations {
             facetInfo.put(facetName, facetItems);
         }
         return facetInfo;
+    }
+
+    public static Map<Integer, String> collectDocsAndPids(Hits hits, BlackLabIndex index,
+            Map<Integer, Document> luceneDocs) {
+        // Collect Lucene docs (for writing docInfos later) and find pids
+        Map<Integer, String> docIdToPid = new HashMap<>();
+        for (Hit hit : hits) {
+            Document document = luceneDocs.computeIfAbsent(hit.doc(), __ -> index.luceneDoc(hit.doc()));
+            String docPid = getDocumentPid(index, hit.doc(), document);
+            docIdToPid.put(hit.doc(), docPid);
+        }
+        return docIdToPid;
     }
 }

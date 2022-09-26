@@ -2,12 +2,11 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.Constructor;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -567,9 +566,7 @@ public abstract class RequestHandler {
      * Stream document information (metadata, contents authorization)
      *
      * @param ds where to stream information
-     * @param index our index
-     * @param luceneDocs Lucene documents to stream
-     * @param metadataFieldsToList fields to include in the document info
+     * @param docInfos infos to write
      */
     static void dataStreamDocInfos(DataStream ds, Map<String, ResultDocInfo> docInfos) {
         ds.startEntry("docInfos").startMap();
@@ -769,75 +766,81 @@ public abstract class RequestHandler {
         }
     }
 
-    public void dataStreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, Document> luceneDocs) throws BlsException {
+    public void dataStreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, String> docIdToPid) throws BlsException {
         BlackLabIndex index = hits.index();
+
+        Collection<Annotation> annotationsToList = null;
+        if (!concordanceContext.isConcordances())
+            annotationsToList = WebserviceOperations.getAnnotationsToWrite(index, params);
 
         ds.startEntry("hits").startList();
         for (Hit hit : hits) {
-            ds.startItem("hit").startMap();
+            ds.startItem("hit");
 
-            // Collect Lucene docs (for writing docInfos later) and find pid
-            Document document = luceneDocs.get(hit.doc());
-            if (document == null) {
-                document = index.luceneDoc(hit.doc());
-                luceneDocs.put(hit.doc(), document);
-            }
-            String pid = WebserviceOperations.getDocumentPid(index, hit.doc(), document);
-
-            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-
-            // Add basic hit info
-            ds.entry("docPid", pid);
-            ds.entry("start", hit.start());
-            ds.entry("end", hit.end());
-
+            String docPid = docIdToPid.get(hit.doc());
+            Map<String, Span> capturedGroups = null;
             if (hits.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
-                if (capturedGroups != null) {
-                    ds.startEntry("captureGroups").startList();
-
-                    for (Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                        if (capturedGroup.getValue() != null) {
-                            ds.startItem("group").startMap();
-                            ds.entry("name", capturedGroup.getKey());
-                            ds.entry("start", capturedGroup.getValue().start());
-                            ds.entry("end", capturedGroup.getValue().end());
-                            ds.endMap().endItem();
-                        }
-                    }
-
-                    ds.endList().endEntry();
-                } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + params.getPattern());
-                }
+                capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
+                if (capturedGroups == null)
+                    logger.warn("MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
             }
 
-            ContextSize contextSize = params.contextSettings().size();
-            boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
-            if (concordanceContext.isConcordances()) {
-                // Add concordance from original XML
-                Concordance c = concordanceContext.getConcordance(hit);
-                if (includeContext) {
-                    ds.startEntry("left").xmlFragment(c.left()).endEntry()
-                            .startEntry("match").xmlFragment(c.match()).endEntry()
-                            .startEntry("right").xmlFragment(c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").xmlFragment(c.match()).endEntry();
-                }
-            } else {
-                // Add KWIC info
-                Kwic c = concordanceContext.getKwic(hit);
-                Set<Annotation> annotationsToList = new HashSet<>(WebserviceOperations.getAnnotationsToWrite(index, params));
-                if (includeContext) {
-                    ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
-                            .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                            .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
-                }
-            }
-            ds.endMap().endItem();
+            dataStreamHit(ds, concordanceContext, annotationsToList, hit, docPid, capturedGroups);
+
+            ds.endItem();
         }
         ds.endList().endEntry();
+    }
+
+    private void dataStreamHit(DataStream ds, ConcordanceContext concordanceContext,
+            Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, Span> capturedGroups) {
+        ds.startMap();
+        if (docPid != null) {
+            // Add basic hit info
+            ds.entry("docPid", docPid);
+            ds.entry("start", hit.start());
+            ds.entry("end", hit.end());
+        }
+
+        if (capturedGroups != null) {
+            ds.startEntry("captureGroups").startList();
+            for (Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+                if (capturedGroup.getValue() != null) {
+                    ds.startItem("group").startMap();
+                    {
+                        ds.entry("name", capturedGroup.getKey());
+                        ds.entry("start", capturedGroup.getValue().start());
+                        ds.entry("end", capturedGroup.getValue().end());
+                    }
+                    ds.endMap().endItem();
+                }
+            }
+            ds.endList().endEntry();
+        }
+
+        ContextSize contextSize = params.contextSettings().size();
+        boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
+        if (concordanceContext.isConcordances()) {
+            // Add concordance from original XML
+            Concordance c = concordanceContext.getConcordance(hit);
+            if (includeContext) {
+                ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                        .startEntry("match").xmlFragment(c.match()).endEntry()
+                        .startEntry("right").xmlFragment(c.right()).endEntry();
+            } else {
+                ds.startEntry("match").xmlFragment(c.match()).endEntry();
+            }
+        } else {
+            // Add KWIC info
+            Kwic c = concordanceContext.getKwic(hit);
+            if (includeContext) {
+                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+            } else {
+                ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+            }
+        }
+        ds.endMap();
     }
 }

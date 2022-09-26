@@ -217,8 +217,9 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry();
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
-        dataStreamHits(ds, window, concordanceContext, luceneDocs);
 
+        Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(hits, index, luceneDocs);
+        dataStreamHits(ds, window, concordanceContext, docIdToPid);
         Set<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(blIndex(), params);
         Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
 

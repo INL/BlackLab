@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -84,7 +84,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
         boolean origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
         Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
-        getHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
+        dataStreamHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
                 new HashSet<>(WebserviceOperations.getAnnotationsToWrite(blIndex, params)));
         return HTTP_OK;
     }
@@ -104,8 +104,9 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      * @param docPid if not null, include doc pid, hit start and end info
      * @param annotationsTolist what annotations to include
      */
-    public static void getHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
-            boolean useOrigContent, boolean isFragment, String docPid, Set<Annotation> annotationsTolist) {
+    public static void dataStreamHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
+            boolean useOrigContent, boolean isFragment, String docPid, Collection<Annotation> annotationsTolist) {
+        // TODO: use RequestHandler.dataStreamHit()?
         ds.startMap();
         if (docPid != null) {
             // Add basic hit info
