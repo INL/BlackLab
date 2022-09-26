@@ -123,7 +123,7 @@ public class SearchManager {
             logger.info("Created cache with class: {}", fqClassName);
             return cache;
         } catch (Exception ex) {
-            String message = String.format("Can not create cache with class: %s. Did you check your implementation" +
+            String message = String.format("Can not create cache with class: %s. Did you check your implementation " +
                 "matches the expected arguments", fqClassName);
             logger.error(message, ex);
             throw BlackLabRuntimeException.wrap(new ConfigurationException(message));

@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -32,12 +31,7 @@ public class RequestHandlerIndexStatus extends RequestHandler {
         Index index = indexMan.getIndex(indexName);
         synchronized (index) {
             IndexStatus status = index.getStatus();
-            IndexMetadata indexMetadata;
-            try {
-                indexMetadata = index.getIndexMetadata();
-            } catch (IndexVersionMismatch e) {
-                throw BlsException.indexVersionMismatch(e);
-            }
+            IndexMetadata indexMetadata = index.getIndexMetadata();
 
             // Assemble response
             ds.startMap()

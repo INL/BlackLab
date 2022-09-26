@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -38,13 +37,9 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
         }
 
         for (Index i : indexMan.getAvailablePrivateIndices(user.getUserId())) {
-            try {
-                if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
-                    throw new BadRequest("CANNOT_DELETE_INDEX ",
-                            "Could not delete format. The format is still being used by a corpus.");
-            } catch (IndexVersionMismatch e) {
-                throw BlsException.indexVersionMismatch(e);
-            }
+            if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
+                throw new BadRequest("CANNOT_DELETE_INDEX ",
+                        "Could not delete format. The format is still being used by a corpus.");
         }
 
         formatMan.deleteUserFormat(user, formatIdentifier);

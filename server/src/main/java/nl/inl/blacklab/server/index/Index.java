@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -190,11 +191,7 @@ public class Index {
     // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
     // (this is a large job)
     public synchronized BlackLabIndex blIndex() throws InternalServerError, ServiceUnavailable {
-        try {
-            openForSearching();
-        } catch (IndexVersionMismatch e) {
-            throw BlsException.indexVersionMismatch(e);
-        }
+        openForSearching();
         return index;
     }
 
@@ -207,7 +204,7 @@ public class Index {
      * @throws InternalServerError if index couldn't be opened
      * @throws IndexVersionMismatch if the index was too old or too new to open by this versio of BlackLab
      */
-    public synchronized IndexMetadata getIndexMetadata() throws InternalServerError, IndexVersionMismatch {
+    public synchronized IndexMetadata getIndexMetadata() {
         try {
             openForSearching();
         } catch (ServiceUnavailable e) {
@@ -240,9 +237,8 @@ public class Index {
      * @throws ServiceUnavailable if the index could not be opened due to currently
      *             ongoing indexing
      * @throws InternalServerError if there was some other error opening the index
-     * @throws IndexVersionMismatch if the index was too old or too new to open by this version of BlackLab
      */
-    private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError, IndexVersionMismatch {
+    private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError {
         cleanupClosedIndexerOrThrow();
 
         if (this.index != null)
@@ -254,9 +250,9 @@ public class Index {
             index.setCache(searchMan.getBlackLabCache());
             //logger.debug("Done opening index '" + id + "'");
         } catch (IndexVersionMismatch e) {
-            throw e;
+            throw BlsException.indexVersionMismatch(e);
         } catch (ErrorOpeningIndex e) {
-            throw new InternalServerError("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
+            throw new BlsIndexOpenException("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
         }
     }
 

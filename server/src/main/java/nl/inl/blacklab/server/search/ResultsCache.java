@@ -205,12 +205,12 @@ public class ResultsCache implements SearchCache {
     }
 
     @Override
-    public Map<String, Object> getCacheStatus() {
+    public Map<String, Object> getStatus() {
         return null;
     }
 
     @Override
-    public List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+    public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
         return null;
     }
 }

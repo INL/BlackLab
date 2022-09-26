@@ -82,11 +82,11 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         }
 
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        dataStreamSummaryCommonFields(ds, params, timings, groups, ourWindow);
+        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
         if (hitsStats == null)
-            dataStreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
+            DataStreamUtil.numberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+            DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 
@@ -127,7 +127,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = group.identity();
                     subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
-                    dataStreamSubcorpusSize(ds, subcorpusSize);
+                    DataStreamUtil.subcorpusSize(ds, subcorpusSize);
                 }
             }
             ds.endMap().endItem();

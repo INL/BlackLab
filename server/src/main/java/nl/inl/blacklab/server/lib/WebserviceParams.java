@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -76,7 +77,7 @@ public interface WebserviceParams {
      *
      * @return which annotations to list
      */
-    Set<String> getListValuesFor();
+    Collection<String> getListValuesFor();
 
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
@@ -84,9 +85,9 @@ public interface WebserviceParams {
      *
      * @return which metadata fields to list
      */
-    Set<String> getListMetadataValuesFor();
+    Collection<String> getListMetadataValuesFor();
 
-    Set<String> getListSubpropsFor();
+    Collection<String> getListSubpropsFor();
 
     boolean getWaitForTotal();
 

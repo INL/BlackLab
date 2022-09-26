@@ -182,7 +182,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
 
         ds.startMap();
-        dataStreamUserInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        DataStreamUtil.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
         // List supported input formats
         // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)

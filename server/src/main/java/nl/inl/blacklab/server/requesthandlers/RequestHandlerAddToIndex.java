@@ -16,7 +16,6 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.search.BlackLab;
@@ -46,14 +45,6 @@ public class RequestHandlerAddToIndex extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         debug(logger, "REQ add data: " + indexName);
 
-        Index index = indexMan.getIndex(indexName);
-        IndexMetadata indexMetadata;
-        try {
-            indexMetadata = index.getIndexMetadata();
-        } catch (IndexVersionMismatch e) {
-            throw BlsException.indexVersionMismatch(e);
-        }
-
         // Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
         List<FileItem> dataFiles = new ArrayList<>();
@@ -79,8 +70,12 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                 }
             }
         } catch (IOException e) {
-            throw new InternalServerError("Error occured during indexing: " + e.getMessage(), "INTERR_WHILE_INDEXING1");
+            throw new InternalServerError("Error occurred during indexing: " + e.getMessage(),
+                    "INTERR_WHILE_INDEXING1");
         }
+
+        Index index = indexMan.getIndex(indexName);
+        IndexMetadata indexMetadata = index.getIndexMetadata();
 
         if (!index.userMayAddData(user))
             throw new NotAuthorized("You can only add new data to your own private indices.");

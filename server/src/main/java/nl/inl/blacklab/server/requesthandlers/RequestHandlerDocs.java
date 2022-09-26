@@ -1,8 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -126,7 +125,7 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = group.storedResults();
         totalTime = docGroupFuture.timer().time();
         return doResponse(ds, true,
-                new HashSet<>(WebserviceOperations.getAnnotationsToWrite(blIndex(), params)),
+                WebserviceOperations.getAnnotationsToWrite(blIndex(), params),
                 WebserviceOperations.getMetadataToWrite(blIndex(), params), true);
     }
 
@@ -153,11 +152,11 @@ public class RequestHandlerDocs extends RequestHandler {
         totalTime = total.threwException() ? 0 : total.timer().time();
 
         return doResponse(ds, false,
-                new HashSet<>(WebserviceOperations.getAnnotationsToWrite(blIndex(), params)),
+                WebserviceOperations.getAnnotationsToWrite(blIndex(), params),
                 WebserviceOperations.getMetadataToWrite(blIndex(), params), waitForTotal);
     }
 
-    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
+    private int doResponse(DataStream ds, boolean isViewGroup, Collection<Annotation> annotationsTolist, Collection<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
         BlackLabIndex blIndex = blIndex();
 
         boolean includeTokenCount = params.getIncludeTokenCount();
@@ -177,18 +176,18 @@ public class RequestHandlerDocs extends RequestHandler {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        dataStreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
+        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
-            dataStreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
+            DataStreamUtil.numberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
+            DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex);
-        dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
+        DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
 
         ds.endMap().endEntry();
 
@@ -198,7 +197,6 @@ public class RequestHandlerDocs extends RequestHandler {
             // Find pid
             Document document = blIndex().luceneDoc(result.docId());
             String pid = WebserviceOperations.getDocumentPid(blIndex, result.identity().value(), document);
-
             ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex, document, metadataFieldsToList);
 
             ds.startItem("doc").startMap();
@@ -211,7 +209,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, docInfo);
+            DataStreamUtil.documentInfo(ds, docInfo);
             ds.endEntry();
 
             // Snippets
@@ -253,7 +251,7 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.startEntry("facets");
 
             Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
-            dataStreamFacets(ds, WebserviceOperations.getFacetInfo(counts));
+            DataStreamUtil.facets(ds, WebserviceOperations.getFacetInfo(counts));
             ds.endEntry();
         }
         ds.endMap();

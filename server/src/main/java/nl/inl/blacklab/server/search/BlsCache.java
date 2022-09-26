@@ -468,7 +468,7 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public Map<String, Object> getCacheStatus() {
+    public Map<String, Object> getStatus() {
         Map<String, Integer> counts = getCountsPerStatus();
         return Map.of(
             "targetFreeMemMegs", config.getTargetFreeMemMegs(),
@@ -490,7 +490,7 @@ public class BlsCache implements SearchCache {
     }
 
     @Override
-    public List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+    public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
         return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).collect(Collectors.toList());
     }
 

@@ -42,22 +42,21 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         String[] pathParts = StringUtils.split(urlPathInfo, '/');
         if (pathParts.length == 0)
             throw new BadRequest("UNKNOWN_OPERATION",
-                    "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
+                    "Bad URL. Specify a field name and optionally an annotation to autocomplete.");
 
-        String annotatedFieldName = pathParts.length > 1 ? pathParts[0] : null;
-        String fieldName = pathParts.length > 1 ? pathParts[1] : pathParts[0];
-        String term = params.getAutocompleteTerm();
-
-        if (fieldName.isEmpty()) {
+        String fieldNameOrAnnotation = pathParts.length > 1 ? pathParts[1] : pathParts[0];
+        if (fieldNameOrAnnotation.isEmpty()) {
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Specify a field name and optionally a annotation to autocomplete.");
         }
         BlackLabIndex blIndex = blIndex();
         IndexMetadata indexMetadata = blIndex.metadata();
-        if (annotatedFieldName == null && indexMetadata.annotatedFields().exists(fieldName))
+        String annotatedFieldName = pathParts.length > 1 ? pathParts[0] : null;
+        if (annotatedFieldName == null && indexMetadata.annotatedFields().exists(fieldNameOrAnnotation))
             throw new BadRequest("UNKNOWN_OPERATION",
-                    "Bad URL. Also specify a annotation to autocomplete for annotated field: " + fieldName);
+                    "Bad URL. Also specify a annotation to autocomplete for annotated field: " + fieldNameOrAnnotation);
 
+        String term = params.getAutocompleteTerm();
         if (term == null || term.isEmpty())
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
@@ -76,32 +75,36 @@ public class RequestHandlerAutocomplete extends RequestHandler {
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
         boolean sensitiveMatching = true;
-        if (annotatedFieldName != null && !annotatedFieldName.isEmpty()) {
+        String luceneField;
+        if (!StringUtils.isEmpty(annotatedFieldName)) {
             if (!indexMetadata.annotatedFields().exists(annotatedFieldName))
                 throw new BadRequest("UNKNOWN_FIELD", "Annotated field '" + annotatedFieldName + "' does not exist.");
             AnnotatedField annotatedField = indexMetadata.annotatedField(annotatedFieldName);
             Annotations annotations = annotatedField.annotations();
-            if (!annotations.exists(fieldName))
+            String annotationName = fieldNameOrAnnotation;
+            if (!annotations.exists(annotationName))
                 throw new BadRequest("UNKNOWN_ANNOTATION",
-                        "Annotated field '" + annotatedFieldName + "' has no annotation '" + fieldName + "'.");
-            Annotation annotation = annotations.get(fieldName);
+                        "Annotated field '" + annotatedFieldName + "' has no annotation '" + annotationName + "'.");
+            Annotation annotation = annotations.get(annotationName);
             if (annotation.hasSensitivity(MatchSensitivity.INSENSITIVE)) {
                 sensitiveMatching = false;
-                fieldName = annotation.sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
+                luceneField = annotation.sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
             } else {
                 sensitiveMatching = true;
-                fieldName = annotation.offsetsSensitivity().luceneField();
+                luceneField = annotation.offsetsSensitivity().luceneField();
             }
+        } else {
+            luceneField = fieldNameOrAnnotation;
         }
 
-        autoComplete(ds, fieldName, term, blIndex.reader(), sensitiveMatching);
+        autoComplete(ds, luceneField, term, blIndex.reader(), sensitiveMatching);
         return HTTP_OK;
     }
 
-    public static void autoComplete(DataStream ds, String fieldName, String term, IndexReader reader,
+    public static void autoComplete(DataStream ds, String luceneField, String term, IndexReader reader,
             boolean sensitive) {
         ds.startList();
-        LuceneUtil.findTermsByPrefix(reader, fieldName, term, sensitive, MAX_VALUES).forEach((v) -> ds.item("term", v));
+        LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitive, MAX_VALUES).forEach((v) -> ds.item("term", v));
         ds.endList();
     }
 

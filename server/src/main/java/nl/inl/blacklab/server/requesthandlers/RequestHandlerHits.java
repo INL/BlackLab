@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,13 +30,11 @@ import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.SingleDocIdFilter;
-import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -61,11 +59,11 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
 import nl.inl.blacklab.server.util.BlsUtils;
 
@@ -139,10 +137,10 @@ public class RequestHandlerHits extends RequestHandler {
         }
 
         if (params.getCalculateCollocations()) {
-            dataStreamCollocations(ds, hits);
+            TermFrequencyList tfl = WebserviceOperations.getCollocations(params, hits);
+            DataStreamUtil.collocations(ds, tfl);
             return HTTP_OK;
         }
-
 
         WindowSettings windowSettings = params.windowSettings();
         if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
@@ -192,14 +190,14 @@ public class RequestHandlerHits extends RequestHandler {
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
         logger.info("Total search time is:{} ms", searchTime);
         SearchTimings timings = new SearchTimings(searchTime, countTime);
-        dataStreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
-        dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
+        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
+        DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
-        dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
+        DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
 
         if (params.getExplain()) {
             TextPattern tp = params.pattern().get();
@@ -218,19 +216,19 @@ public class RequestHandlerHits extends RequestHandler {
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
 
-        Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(window, index, luceneDocs);
-        dataStreamHits(ds, window, concordanceContext, docIdToPid);
-        Set<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(index, window, luceneDocs);
+        DataStreamUtil.hits(ds, params, window, concordanceContext, docIdToPid);
+        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(blIndex(), params);
         Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
 
-        dataStreamDocInfos(ds, docInfos);
+        DataStreamUtil.documentInfos(ds, docInfos);
 
         if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
             {
                 Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
-                dataStreamFacets(ds, WebserviceOperations.getFacetInfo(counts));
+                DataStreamUtil.facets(ds, WebserviceOperations.getFacetInfo(counts));
             }
             ds.endEntry();
         }
@@ -238,18 +236,6 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap();
 
         return HTTP_OK;
-    }
-
-    private void dataStreamCollocations(DataStream ds, Hits originalHits) {
-        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
-        ds.startMap().startEntry("tokenFrequencies").startMap();
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
-                sensitivity);
-        for (TermFrequency tf : tfl) {
-            ds.attrEntry("token", "text", tf.term, tf.frequency);
-        }
-        ds.endMap().endEntry().endMap();
     }
 
     /**

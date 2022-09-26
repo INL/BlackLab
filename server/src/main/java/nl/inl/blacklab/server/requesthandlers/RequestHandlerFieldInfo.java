@@ -4,6 +4,7 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -87,8 +88,8 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         IndexMetadata indexMetadata = blIndex.metadata();
 
         if (indexMetadata.annotatedFields().exists(fieldName)) {
-            Set<String> setShowValuesFor = params.getListValuesFor();
-            Set<String> setShowSubpropsFor = params.getListSubpropsFor();
+            Collection<String> setShowValuesFor = params.getListValuesFor();
+            Collection<String> setShowSubpropsFor = params.getListSubpropsFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             describeAnnotatedField(ds, indexName, fieldDesc, blIndex, setShowValuesFor, setShowSubpropsFor);
         } else {
@@ -174,7 +175,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     }
 
     public static void describeAnnotatedField(DataStream ds, String indexName,
-            AnnotatedField fieldDesc, BlackLabIndex index, Set<String> showValuesFor, Set<String> showSubpropsFor) {
+            AnnotatedField fieldDesc, BlackLabIndex index, Collection<String> showValuesFor, Collection<String> showSubpropsFor) {
         if (fieldDesc.isDummyFieldToStoreLinkedDocuments())
             return; // skip this, not really an annotated field, just exists to store linked (metadata) document.
         ds.startMap();
@@ -270,7 +271,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.endMap();
     }
 
-    private static boolean annotationMatches(String name, Set<String> showValuesFor) {
+    private static boolean annotationMatches(String name, Collection<String> showValuesFor) {
         //return showValuesFor.contains(name);
         for (String expr: showValuesFor) {
             if (name.matches("^" + expr + "$")) {

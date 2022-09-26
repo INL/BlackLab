@@ -4,12 +4,12 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.lib.User;
@@ -55,7 +55,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.entry("description", description);
                     ds.entry("status", status);
 
-                    RequestHandlerIndexMetadata.addIndexProgress(ds, index, indexMetadata, status);
+                    DataStreamUtil.indexProgress(ds, index, indexMetadata, status);
                     ds.entry("timeModified", indexMetadata.timeModified());
                     ds.entry("tokenCount", indexMetadata.tokenCount());
 
@@ -63,19 +63,19 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.endAttrEntry();
                 }
 
-            } catch (ErrorOpeningIndex e) {
+            } catch (BlsIndexOpenException e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }
         }
         ds.endMap().endEntry();
 
-        RequestHandler.dataStreamUserInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        DataStreamUtil.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
         ds.entry("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
         if (debugMode) {
             ds.startEntry("cacheStatus");
-            ds.value(searchMan.getBlackLabCache().getCacheStatus());
+            ds.value(searchMan.getBlackLabCache().getStatus());
             ds.endEntry();
         }
         ds.endMap();

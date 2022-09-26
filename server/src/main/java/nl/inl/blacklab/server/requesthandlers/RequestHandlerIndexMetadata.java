@@ -1,12 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -60,7 +60,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("contentViewable", indexMetadata.contentViewable())
                     .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            addIndexProgress(ds, index, indexMetadata, status);
+            DataStreamUtil.indexProgress(ds, index, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());
             ds.entry("documentCount", indexMetadata.documentCount());
 
@@ -87,8 +87,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
                 ds.startAttrEntry("annotatedField", "name", field.name());
 
-                Set<String> setShowValuesFor = params.getListValuesFor();
-                Set<String> setShowSubpropsFor = params.getListSubpropsFor();
+                Collection<String> setShowValuesFor = params.getListValuesFor();
+                Collection<String> setShowSubpropsFor = params.getListSubpropsFor();
                 RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor,
                         setShowSubpropsFor);
 
@@ -106,7 +106,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             }
             ds.endMap().endEntry();
 
-            dataStreamMetadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
+            DataStreamUtil.metadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
 
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {
@@ -151,24 +151,6 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
             return HTTP_OK;
         }
-    }
-
-    static void addIndexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, IndexStatus status)
-            throws BlsException {
-        if (status.equals(IndexStatus.INDEXING)) {
-            IndexListener indexProgress = index.getIndexerListener();
-            synchronized (indexProgress) {
-                ds.startEntry("indexProgress").startMap()
-                        .entry("filesProcessed", indexProgress.getFilesProcessed())
-                        .entry("docsDone", indexProgress.getDocsDone())
-                        .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                        .endMap().endEntry();
-            }
-        }
-
-        String formatIdentifier = indexMetadata.documentFormat();
-        if (formatIdentifier != null && formatIdentifier.length() > 0)
-            ds.entry("documentFormat", formatIdentifier);
     }
 
 }

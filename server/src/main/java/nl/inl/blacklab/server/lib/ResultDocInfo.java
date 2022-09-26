@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.document.Document;
 
@@ -24,7 +24,7 @@ public class ResultDocInfo {
 
     private Document document;
 
-    private final Set<MetadataField> metadataToWrite;
+    private final Collection<MetadataField> metadataToWrite;
 
     private Map<String, List<String>> metadata;
 
@@ -32,7 +32,8 @@ public class ResultDocInfo {
 
     private boolean mayView;
 
-    public ResultDocInfo(BlackLabIndex index, String docPid, Document document, Set<MetadataField> metadataToWrite) throws BlsException {
+    public ResultDocInfo(BlackLabIndex index, String docPid, Document document,
+            Collection<MetadataField> metadataToWrite) throws BlsException {
         this.index = index;
         this.metadataToWrite = metadataToWrite;
         initDoc(docPid, document);

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -648,17 +649,17 @@ public class SearchCreator implements WebserviceParams {
     }
 
     @Override
-    public Set<String> getListValuesFor() {
+    public Collection<String> getListValuesFor() {
         return params.getListValuesFor();
     }
 
     @Override
-    public Set<String> getListMetadataValuesFor() {
+    public Collection<String> getListMetadataValuesFor() {
         return params.getListMetadataValuesFor();
     }
 
     @Override
-    public Set<String> getListSubpropsFor() {
+    public Collection<String> getListSubpropsFor() {
         return params.getListSubpropsFor();
     }
 

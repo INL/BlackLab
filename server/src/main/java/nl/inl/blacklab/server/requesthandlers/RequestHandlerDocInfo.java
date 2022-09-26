@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -28,7 +28,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        Set<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
         ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex(), docPid, metadataToWrite);
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
@@ -40,13 +40,13 @@ public class RequestHandlerDocInfo extends RequestHandler {
         {
             ds.startEntry("docInfo");
             {
-                dataStreamDocumentInfo(ds, docInfo);
+                DataStreamUtil.documentInfo(ds, docInfo);
             }
             ds.endEntry();
 
 
-            dataStreamMetadataGroupInfo(ds, metadataFieldGroups);
-            dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
+            DataStreamUtil.metadataGroupInfo(ds, metadataFieldGroups);
+            DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
         }
         ds.endMap();
         return HTTP_OK;

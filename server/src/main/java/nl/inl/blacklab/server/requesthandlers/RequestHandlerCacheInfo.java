@@ -28,10 +28,10 @@ public class RequestHandlerCacheInfo extends RequestHandler {
         ds.startMap()
                 .startEntry("cacheStatus");
         SearchCache blackLabCache = searchMan.getBlackLabCache();
-        ds.value(blackLabCache.getCacheStatus());
+        ds.value(blackLabCache.getStatus());
         ds.endEntry()
             .startEntry("cacheContents");
-        ds.value(blackLabCache.getCacheContent(debugInfo));
+        ds.value(blackLabCache.getContents(debugInfo));
         ds.endEntry()
                 .endMap();
         return HTTP_OK;

@@ -1,6 +1,8 @@
 package nl.inl.blacklab.server.lib;
 
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,25 +19,38 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.search.SearchManager;
 
 public class WebserviceOperations {
 
     private WebserviceOperations() {}
 
-    public static ResultDocContents getDocContents(SearchCreator params, String docPid)
-            throws BlsException, InvalidQuery {
+    /**
+     * Get the requested (partial) contents of a document
+     *
+     * TODO: get rid of separate parameter, it shouldn't matter if it was part of the URL or not
+     *
+     * @param params search parameters
+     * @param docPid docpid (separate because it's part of URL...)
+     * @return
+     */
+    public static ResultDocContents getDocContents(SearchCreator params, String docPid) throws InvalidQuery {
         return new ResultDocContents(params, docPid);
     }
 
@@ -47,10 +62,9 @@ public class WebserviceOperations {
      *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      */
-    public static Set<MetadataField> getMetadataToWrite(BlackLabIndex index, SearchCreator params) throws BlsException {
+    public static Collection<MetadataField> getMetadataToWrite(BlackLabIndex index, SearchCreator params) {
         MetadataFields fields = index.metadataFields();
-        Set<String> requestedFields = params.getListMetadataValuesFor();
-
+        Collection<String> requestedFields = params.getListMetadataValuesFor();
         Set<MetadataField> ret = new HashSet<>();
         ret.add(optCustomField(index.metadata(), "authorField"));
         ret.add(optCustomField(index.metadata(), "dateField"));
@@ -108,13 +122,13 @@ public class WebserviceOperations {
         return metadataFieldGroups;
     }
 
-    public static ResultDocInfo getDocInfo(BlackLabIndex index, String docPid, Set<MetadataField> metadataToWrite)
-            throws BlsException {
+    public static ResultDocInfo getDocInfo(BlackLabIndex index, String docPid,
+            Collection<MetadataField> metadataToWrite) {
         return new ResultDocInfo(index, docPid, null, metadataToWrite);
     }
 
-    public static ResultDocInfo getDocInfo(BlackLabIndex index, Document document, Set<MetadataField> metadataToWrite)
-            throws BlsException {
+    public static ResultDocInfo getDocInfo(BlackLabIndex index, Document document,
+            Collection<MetadataField> metadataToWrite) {
         return new ResultDocInfo(index, null, document, metadataToWrite);
     }
 
@@ -167,9 +181,9 @@ public class WebserviceOperations {
      *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
-    public static List<Annotation> getAnnotationsToWrite(BlackLabIndex index, WebserviceParams params) throws BlsException {
+    public static List<Annotation> getAnnotationsToWrite(BlackLabIndex index, WebserviceParams params) {
         AnnotatedFields fields = index.annotatedFields();
-        Set<String> requestedAnnotations = params.getListValuesFor();
+        Collection<String> requestedAnnotations = params.getListValuesFor();
 
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
@@ -184,7 +198,7 @@ public class WebserviceOperations {
     }
 
     public static Map<String, ResultDocInfo> getDocInfos(BlackLabIndex index, Map<Integer, Document> luceneDocs,
-            Set<MetadataField> metadataFieldsToList) {
+            Collection<MetadataField> metadataFieldsToList) {
         Map<String, ResultDocInfo> docInfos = new LinkedHashMap<>();
         for (Map.Entry<Integer, Document> e: luceneDocs.entrySet()) {
             Integer docId = e.getKey();
@@ -223,15 +237,33 @@ public class WebserviceOperations {
         return facetInfo;
     }
 
-    public static Map<Integer, String> collectDocsAndPids(Hits hits, BlackLabIndex index,
+    public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, Hits hits,
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
         Map<Integer, String> docIdToPid = new HashMap<>();
         for (Hit hit : hits) {
-            Document document = luceneDocs.computeIfAbsent(hit.doc(), __ -> index.luceneDoc(hit.doc()));
+            Document document = luceneDocs.computeIfAbsent(hit.doc(),
+                    __ -> index.luceneDoc(hit.doc()));
             String docPid = getDocumentPid(index, hit.doc(), document);
             docIdToPid.put(hit.doc(), docPid);
         }
         return docIdToPid;
+    }
+
+    public static TermFrequencyList getCollocations(SearchCreator params, Hits originalHits) {
+        ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
+        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
+                sensitivity);
+        return tfl;
+    }
+
+    public static void addUserFileFormat(SearchManager searchMan, User user, String fileName,
+            InputStream fileInputStream) {
+        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        if (formatMan == null)
+            throw new BadRequest("CANNOT_CREATE_INDEX ",
+                    "Could not create/overwrite format. The server is not configured with support for user content.");
+        formatMan.createUserFormat(user, fileName, fileInputStream);
     }
 }
