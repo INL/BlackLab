@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +11,6 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.ResultDocInfo;
-import nl.inl.blacklab.server.lib.ResultMetadataGroupInfo;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
 
@@ -30,7 +30,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         Set<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
         ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex(), docPid, metadataToWrite);
-        ResultMetadataGroupInfo metadataGroupInfo = WebserviceOperations.getMetadataGroupInfo(blIndex());
+        Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
 
@@ -43,7 +43,9 @@ public class RequestHandlerDocInfo extends RequestHandler {
                 dataStreamDocumentInfo(ds, docInfo);
             }
             ds.endEntry();
-            dataStreamMetadataGroupInfo(ds, metadataGroupInfo);
+
+
+            dataStreamMetadataGroupInfo(ds, metadataFieldGroups);
             dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
         }
         ds.endMap();

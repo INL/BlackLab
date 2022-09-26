@@ -106,7 +106,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             }
             ds.endMap().endEntry();
 
-            dataStreamMetadataGroupInfo(ds, WebserviceOperations.getMetadataGroupInfo(blIndex));
+            dataStreamMetadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
 
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {

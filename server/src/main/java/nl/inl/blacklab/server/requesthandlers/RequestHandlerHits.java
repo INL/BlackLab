@@ -18,6 +18,7 @@ import org.apache.lucene.search.DocValuesTermsQuery;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
@@ -36,6 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -225,7 +227,10 @@ public class RequestHandlerHits extends RequestHandler {
         if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, params.facets());
+            {
+                Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
+                dataStreamFacets(ds, WebserviceOperations.getFacetInfo(counts));
+            }
             ds.endEntry();
         }
 

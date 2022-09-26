@@ -1,9 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -25,22 +24,14 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
-import nl.inl.blacklab.resultproperty.DocGroupProperty;
-import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Facets;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
@@ -48,7 +39,6 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
-import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -62,7 +52,6 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.ResultDocInfo;
-import nl.inl.blacklab.server.lib.ResultMetadataGroupInfo;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
@@ -432,6 +421,30 @@ public abstract class RequestHandler {
 
     }
 
+    protected BlackLabIndex blIndex() throws BlsException {
+        return indexMan.getIndex(indexName).blIndex();
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    protected static BlsException translateSearchException(Exception e) {
+        if (e instanceof InterruptedException) {
+            throw new InterruptedSearch(e);
+        } else {
+            try {
+                throw e.getCause();
+            } catch (BlackLabException e1) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (BlsException e1) {
+                return e1;
+            } catch (Throwable e1) {
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
+            }
+        }
+    }
+
     @SuppressWarnings("unused")
     public RequestInstrumentationProvider getInstrumentationProvider() {
         return instrumentationProvider;
@@ -601,23 +614,14 @@ public abstract class RequestHandler {
         ds.endMap();
     }
 
-    public static void dataStreamMetadataGroupInfo(DataStream ds, ResultMetadataGroupInfo info) {
+    public static void dataStreamMetadataGroupInfo(DataStream ds, Map<String, List<String>> metadataFieldGroups) {
         ds.startEntry("metadataFieldGroups").startList();
-        boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : info.getMetaGroups().values()) {
+        for (Map.Entry<String, List<String>> e: metadataFieldGroups.entrySet()) {
             ds.startItem("metadataFieldGroup").startMap();
-            ds.entry("name", metaGroup.name());
+            ds.entry("name", e.getKey());
             ds.startEntry("fields").startList();
-            for (String field: metaGroup) {
+            for (String field: e.getValue()) {
                 ds.item("field", field);
-            }
-            if (!addedRemaining && metaGroup.addRemainingFields()) {
-                addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(info.getMetadataFieldsNotInGroups());
-                rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
-                for (MetadataField field: rest) {
-                    ds.item("field", field.name());
-                }
             }
             ds.endList().endEntry();
             ds.endMap().endItem();
@@ -625,40 +629,19 @@ public abstract class RequestHandler {
         ds.endList().endEntry();
     }
 
-    protected void dataStreamFacets(DataStream ds, SearchFacets facetDesc) throws InvalidQuery {
-
-        Facets facets = facetDesc.execute();
-        Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
-
+    protected void dataStreamFacets(DataStream ds, Map<String, List<Pair<String, Long>>> facetInfo) {
         ds.startMap();
-        for (Entry<DocProperty, DocGroups> e : counts.entrySet()) {
-            DocProperty facetBy = e.getKey();
-            DocGroups facetCounts = e.getValue();
-            facetCounts = facetCounts.sort(DocGroupProperty.size());
-            ds.startAttrEntry("facet", "name", facetBy.name())
-                    .startList();
-            int n = 0, maxFacetValues = 10;
-            int totalSize = 0;
-            for (DocGroup count : facetCounts) {
+        for (Map.Entry<String, List<Pair<String,  Long>>> e: facetInfo.entrySet()) {
+            String facetBy = e.getKey();
+            List<Pair<String,  Long>> facetCounts = e.getValue();
+            ds.startAttrEntry("facet", "name", facetBy).startList();
+            for (Pair<String, Long> count : facetCounts) {
                 ds.startItem("item").startMap()
-                        .entry("value", count.identity().toString())
-                        .entry("size", count.size())
+                        .entry("value", count.getLeft())
+                        .entry("size", count.getRight())
                         .endMap().endItem();
-                totalSize += count.size();
-                n++;
-                if (n >= maxFacetValues)
-                    break;
             }
-            if (totalSize < facetCounts.sumOfGroupSizes()) {
-                ds.startItem("item")
-                        .startMap()
-                        .entry("value", "[REST]")
-                        .entry("size", facetCounts.sumOfGroupSizes() - totalSize)
-                        .endMap()
-                        .endItem();
-            }
-            ds.endList()
-                    .endAttrEntry();
+            ds.endList().endAttrEntry();
         }
         ds.endMap();
     }
@@ -669,10 +652,6 @@ public abstract class RequestHandler {
             ds.entry(e.getKey(), e.getValue());
         }
         ds.endMap();
-    }
-
-    protected BlackLabIndex blIndex() throws BlsException {
-        return indexMan.getIndex(indexName).blIndex();
     }
 
     /**
@@ -732,7 +711,9 @@ public abstract class RequestHandler {
         }
     }
 
-    protected void dataStreamNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+    protected void dataStreamNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats,
+            ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
 
@@ -772,45 +753,19 @@ public abstract class RequestHandler {
             // Viewing single group of documents, possibly based on a hits search.
             // group.getResults().getOriginalHits() returns null in this case,
             // so we have to iterate over the DocResults and sum up the hits ourselves.
-            long numberOfHits = 0;
-            for (DocResult dr : docResults) {
-                numberOfHits += dr.size();
-            }
-            ds.entry("numberOfHits", numberOfHits)
-                    .entry("numberOfHitsRetrieved", numberOfHits);
+            long numberOfHits = docResults.getNumberOfHits();
+            ds  .entry("numberOfHits", numberOfHits)
+                .entry("numberOfHitsRetrieved", numberOfHits);
 
-            long numberOfDocsCounted = docResults.size();
-            if (countFailed)
-                numberOfDocsCounted = -1;
-            ds.entry("numberOfDocs", numberOfDocsCounted)
-                    .entry("numberOfDocsRetrieved", docResults.size());
-        } else {
-            // Documents-only search (no hits). Get the info from the DocResults.
-            ds.entry("numberOfDocs", docResults.size())
-                    .entry("numberOfDocsRetrieved", docResults.size());
         }
+        long numberOfDocsRetrieved = docResults.size();
+        long numberOfDocsCounted = numberOfDocsRetrieved;
+        if (countFailed)
+            numberOfDocsCounted = -1;
+        ds  .entry("numberOfDocs", numberOfDocsCounted)
+            .entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
         if (subcorpusSize != null) {
             dataStreamSubcorpusSize(ds, subcorpusSize);
-        }
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    protected static BlsException translateSearchException(Exception e) {
-        if (e instanceof InterruptedException) {
-            throw new InterruptedSearch(e);
-        } else {
-            try {
-                throw e.getCause();
-            } catch (BlackLabException e1) {
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
-            } catch (BlsException e1) {
-                return e1;
-            } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
-            }
         }
     }
 
@@ -818,7 +773,6 @@ public abstract class RequestHandler {
         BlackLabIndex index = hits.index();
 
         ds.startEntry("hits").startList();
-        Set<Annotation> annotationsToList = new HashSet<>(WebserviceOperations.getAnnotationsToWrite(index, params));
         for (Hit hit : hits) {
             ds.startItem("hit").startMap();
 
@@ -873,6 +827,7 @@ public abstract class RequestHandler {
             } else {
                 // Add KWIC info
                 Kwic c = concordanceContext.getKwic(hit);
+                Set<Annotation> annotationsToList = new HashSet<>(WebserviceOperations.getAnnotationsToWrite(index, params));
                 if (includeContext) {
                     ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
                             .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()

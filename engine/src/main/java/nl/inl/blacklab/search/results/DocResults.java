@@ -563,4 +563,12 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         return query;
     }
 
+    public long getNumberOfHits() {
+        long numberOfHits = 0;
+        for (DocResult dr : this) {
+            numberOfHits += dr.size();
+        }
+        return numberOfHits;
+    }
+
 }

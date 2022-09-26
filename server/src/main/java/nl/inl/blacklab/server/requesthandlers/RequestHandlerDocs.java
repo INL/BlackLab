@@ -251,7 +251,9 @@ public class RequestHandlerDocs extends RequestHandler {
         if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
-            dataStreamFacets(ds, params.facets());
+
+            Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
+            dataStreamFacets(ds, WebserviceOperations.getFacetInfo(counts));
             ds.endEntry();
         }
         ds.endMap();
