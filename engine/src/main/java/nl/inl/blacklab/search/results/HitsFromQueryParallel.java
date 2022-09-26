@@ -212,7 +212,7 @@ public class HitsFromQueryParallel extends HitsMutable {
             // but that may just be a RuntimeException wrapping some kind of checked exception (ioexception, interruptedexception, etc.)
             // we're only interested in the actual deepest cause.
             Throwable cause = e;
-            while (e.getCause() != null) cause = e.getCause(); 
+            while (cause.getCause() != null) cause = cause.getCause(); 
             throw new BlackLabRuntimeException(cause);
         } catch (Exception e) {
             // something unforseen happened in our thread

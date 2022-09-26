@@ -65,7 +65,8 @@ class SpansReader implements Runnable {
     boolean isDone = false;
     private final ThreadAborter threadAborter = ThreadAborter.create();
     private boolean isInitialized;
-    private final int docBase;
+    /* only valid after initialize() */
+    private int docBase; 
 
     private boolean hasPrefetchedHit = false;
     private int prevDoc = -1;
@@ -148,8 +149,6 @@ class SpansReader implements Runnable {
         this.globalHitsToCount = globalHitsToCount;
         this.globalHitsToProcess = globalHitsToProcess;
 
-        this.docBase = leafReaderContext.docBase;
-
         this.isInitialized = false;
         this.isDone = false;
     }
@@ -157,6 +156,7 @@ class SpansReader implements Runnable {
     void initialize() {
         try {
             this.isInitialized = true;
+            this.docBase = this.leafReaderContext.docBase;
             this.spans = this.weight.getSpans(this.leafReaderContext, Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
             this.weight = null;
             if (spans == null) { // This is normal, sometimes a section of the index does not contain hits.
