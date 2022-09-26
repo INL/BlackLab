@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,7 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -32,6 +34,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
@@ -77,7 +80,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
-        datastreamSummaryCommonFields(ds, params, timings, groups, ourWindow);
+        dataStreamSummaryCommonFields(ds, params, timings, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
@@ -93,7 +96,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             subcorpusSize = subcorpus.subcorpusSize();
         }
 
-        datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+        dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
         ds.endMap().endEntry();
 
         /* Gather group values per property:
@@ -143,7 +146,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 if (INCLUDE_RELATIVE_FREQ) {
                     ds.entry("numberOfDocs", numberOfDocsInGroup);
                     if (metadataGroupProperties != null) {
-                        datastreamSubcorpusSize(ds, subcorpusSize);
+                        dataStreamSubcorpusSize(ds, subcorpusSize);
                     }
                 }
 
@@ -151,7 +154,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     Hits hitsInGroup = group.storedResults();
                     ContextSettings contextSettings = params.contextSettings();
                     ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
-                    datastreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
+                    dataStreamHits(ds, hitsInGroup, concordanceContext, luceneDocs);
                 }
 
                 ds.endMap().endItem();
@@ -160,7 +163,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
         ds.endList().endEntry();
 
         if (params.includeGroupContents()) {
-            datastreamDocInfos(ds, blIndex(), luceneDocs, WebserviceOperations.getMetadataToWrite(blIndex(), params));
+            Set<MetadataField> meatadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+            Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(blIndex(), luceneDocs,
+                    meatadataToWrite);
+            dataStreamDocInfos(ds, docInfos);
         }
         ds.endMap();
 

@@ -275,6 +275,9 @@ public class IndexManager {
     }
 
     public boolean canCreateIndex(User user) {
+        if (!user.isLoggedIn())
+            return false;
+
         int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
 
         // No limit on the number of indices

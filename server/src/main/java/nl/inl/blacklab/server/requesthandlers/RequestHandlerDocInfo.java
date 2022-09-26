@@ -1,11 +1,16 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Map;
+import java.util.Set;
+
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.ResultDocInfo;
+import nl.inl.blacklab.server.lib.ResultMetadataGroupInfo;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
 
@@ -23,7 +28,11 @@ public class RequestHandlerDocInfo extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex(), params, docPid);
+        Set<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex(), docPid, metadataToWrite);
+        ResultMetadataGroupInfo metadataGroupInfo = WebserviceOperations.getMetadataGroupInfo(blIndex());
+        Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
+        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
 
         // Document info
         debug(logger, "REQ doc info: " + indexName + "-" + docPid);
@@ -34,8 +43,8 @@ public class RequestHandlerDocInfo extends RequestHandler {
                 dataStreamDocumentInfo(ds, docInfo);
             }
             ds.endEntry();
-            dataStreamMetadataGroupInfo(ds, WebserviceOperations.getMetadataGroupInfo(blIndex()));
-            datastreamMetadataFieldInfo(ds, blIndex());
+            dataStreamMetadataGroupInfo(ds, metadataGroupInfo);
+            dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
         }
         ds.endMap();
         return HTTP_OK;

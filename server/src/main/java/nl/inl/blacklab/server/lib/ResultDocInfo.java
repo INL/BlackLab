@@ -18,13 +18,13 @@ import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocInfo {
 
-    private final SearchCreator params;
+    private final BlackLabIndex index;
 
-    private final String docPid;
-
-    private final Set<MetadataField> metadataToWrite;
+    private String docPid;
 
     private Document document;
+
+    private final Set<MetadataField> metadataToWrite;
 
     private Map<String, List<String>> metadata;
 
@@ -32,26 +32,32 @@ public class ResultDocInfo {
 
     private boolean mayView;
 
-    public ResultDocInfo(SearchCreator params, String docPid, Set<MetadataField> metadataToWrite) throws BlsException {
-        this.params = params;
-        this.docPid = docPid;
+    public ResultDocInfo(BlackLabIndex index, String docPid, Document document, Set<MetadataField> metadataToWrite) throws BlsException {
+        this.index = index;
         this.metadataToWrite = metadataToWrite;
+        initDoc(docPid, document);
         getDocInfo();
     }
 
+    private void initDoc(String docPid, Document document) throws BlsException {
+        if (document == null) {
+            this.docPid = docPid;
+            if (docPid.length() == 0)
+                throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+            int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
+            if (luceneDocId < 0)
+                throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
+            document = index.luceneDoc(luceneDocId);
+            if (document == null)
+                throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.",
+                        "INTERR_FETCHING_DOCUMENT_INFO");
+        } else {
+            this.document = document;
+            this.docPid = document.get(index.metadataFields().pidField().name());
+        }
+    }
+
     private void getDocInfo() throws BlsException {
-        if (docPid.length() == 0)
-            throw new BadRequest("NO_DOC_ID", "Specify document pid.");
-
-        BlackLabIndex blIndex = params.blIndex();
-        int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docPid);
-        if (luceneDocId < 0)
-            throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-        this.document = blIndex.luceneDoc(luceneDocId);
-        if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.",
-                    "INTERR_FETCHING_DOCUMENT_INFO");
-
         metadata = new LinkedHashMap<>();
         for (MetadataField f: metadataToWrite) {
             if (f.name().equals("lengthInTokens") || f.name().equals("mayView"))
@@ -61,22 +67,18 @@ public class ResultDocInfo {
                 continue;
             metadata.put(f.name(), List.of(values));
         }
-        String tokenLengthField = blIndex.mainAnnotatedField().tokenLengthField();
+        String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
         lengthInTokens = null;
         if (tokenLengthField != null) {
             lengthInTokens =
                     Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
-        mayView = blIndex.mayView(document);
+        mayView = index.mayView(document);
 
     }
 
     public String getPid() {
         return docPid;
-    }
-
-    public Document getDocument() {
-        return document;
     }
 
     public Map<String, List<String>> getMetadata() {

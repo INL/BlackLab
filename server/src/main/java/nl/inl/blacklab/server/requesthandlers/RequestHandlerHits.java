@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
@@ -32,6 +33,7 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -58,6 +60,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.jobs.WindowSettings;
@@ -187,12 +190,14 @@ public class RequestHandlerHits extends RequestHandler {
         long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
         logger.info("Total search time is:{} ms", searchTime);
         SearchTimings timings = new SearchTimings(searchTime, countTime);
-        datastreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
-        datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
+        dataStreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
+        dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        datastreamMetadataFieldInfo(ds, index);
+        Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
+        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
+        dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
 
         if (params.getExplain()) {
             TextPattern tp = params.pattern().get();
@@ -210,8 +215,12 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry();
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
-        datastreamHits(ds, window, concordanceContext, luceneDocs);
-        datastreamDocInfos(ds, index, luceneDocs, WebserviceOperations.getMetadataToWrite(blIndex(), params));
+        dataStreamHits(ds, window, concordanceContext, luceneDocs);
+
+        Set<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
+
+        dataStreamDocInfos(ds, docInfos);
 
         if (params.hasFacets()) {
             // Now, group the docs according to the requested facets.

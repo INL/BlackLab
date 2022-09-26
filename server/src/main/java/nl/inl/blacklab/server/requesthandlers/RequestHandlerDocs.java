@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -31,6 +32,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.lib.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
@@ -123,7 +125,8 @@ public class RequestHandlerDocs extends RequestHandler {
         originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
         docResults = group.storedResults();
         totalTime = docGroupFuture.timer().time();
-        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()),
+        return doResponse(ds, true,
+                new HashSet<>(WebserviceOperations.getAnnotationsToWrite(blIndex(), params)),
                 WebserviceOperations.getMetadataToWrite(blIndex(), params), true);
     }
 
@@ -149,7 +152,8 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = totalDocResults;
         totalTime = total.threwException() ? 0 : total.timer().time();
 
-        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()),
+        return doResponse(ds, false,
+                new HashSet<>(WebserviceOperations.getAnnotationsToWrite(blIndex(), params)),
                 WebserviceOperations.getMetadataToWrite(blIndex(), params), waitForTotal);
     }
 
@@ -173,27 +177,31 @@ public class RequestHandlerDocs extends RequestHandler {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        datastreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
+        dataStreamSummaryCommonFields(ds, params, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
-            datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
+            dataStreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
+            dataStreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
-        datastreamMetadataFieldInfo(ds, blIndex);
+        Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
+        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex);
+        dataStreamMetadataFieldInfo(ds, docFields, metaDisplayNames);
 
         ds.endMap().endEntry();
 
         // The hits and document info
         ds.startEntry("docs").startList();
         for (DocResult result : window) {
-            ds.startItem("doc").startMap();
-
             // Find pid
             Document document = blIndex().luceneDoc(result.docId());
-            String pid = getDocumentPid(blIndex, result.identity().value(), document);
+            String pid = WebserviceOperations.getDocumentPid(blIndex, result.identity().value(), document);
+
+            ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex, document, metadataFieldsToList);
+
+            ds.startItem("doc").startMap();
 
             // Combine all
             ds.entry("docPid", pid);
@@ -203,7 +211,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, blIndex, document, metadataFieldsToList);
+            dataStreamDocumentInfo(ds, docInfo);
             ds.endEntry();
 
             // Snippets

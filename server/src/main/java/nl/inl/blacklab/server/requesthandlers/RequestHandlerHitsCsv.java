@@ -284,7 +284,7 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
                     doc = blIndex().luceneDoc(hit.doc());
                     luceneDocs.put(hit.doc(), doc);
                 }
-                writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, getDocumentPid(blIndex(), hit.doc(), doc), metadataFieldsToWrite, row);
+                writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, WebserviceOperations.getDocumentPid(blIndex(), hit.doc(), doc), metadataFieldsToWrite, row);
                 printer.printRecord(row);
             }
             printer.flush();
@@ -300,7 +300,8 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
         if (result.groups != null && !result.isViewGroup)
             writeGroups(result.hits, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
         else
-            writeHits(result.hits, result.groups, getAnnotationsToWrite(), result.subcorpusResults, (DataStreamPlain) ds);
+            writeHits(result.hits, result.groups, WebserviceOperations.getAnnotationsToWrite(blIndex(), params), result.subcorpusResults,
+                    (DataStreamPlain) ds);
 
         return HTTP_OK;
     }

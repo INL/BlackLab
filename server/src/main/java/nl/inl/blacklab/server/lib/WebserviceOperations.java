@@ -3,13 +3,19 @@ package nl.inl.blacklab.server.lib;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.document.Document;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
@@ -72,9 +78,91 @@ public class WebserviceOperations {
         return info;
     }
 
-    public static ResultDocInfo getDocInfo(BlackLabIndex index, SearchCreator params, String docPid)
+    public static ResultDocInfo getDocInfo(BlackLabIndex index, String docPid, Set<MetadataField> metadataToWrite)
             throws BlsException {
-        return new ResultDocInfo(params, docPid, WebserviceOperations.getMetadataToWrite(index, params));
+        return new ResultDocInfo(index, docPid, null, metadataToWrite);
     }
 
+    public static ResultDocInfo getDocInfo(BlackLabIndex index, Document document, Set<MetadataField> metadataToWrite)
+            throws BlsException {
+        return new ResultDocInfo(index, null, document, metadataToWrite);
+    }
+
+    public static Map<String, String> getDocFields(IndexMetadata indexMetadata) {
+        Map<String, String> docFields = new LinkedHashMap<>();
+        MetadataField pidField = indexMetadata.metadataFields().pidField();
+        if (pidField != null)
+            docFields.put("pidField", pidField.name());
+        for (String propName: List.of("titleField", "authorField", "dateField")) {
+            String fieldName = indexMetadata.custom().get(propName, "");
+            if (!fieldName.isEmpty())
+                docFields.put(propName, fieldName);
+        }
+        return docFields;
+    }
+
+    public static Map<String, String> getMetaDisplayNames(BlackLabIndex index) {
+        Map<String, String> metaDisplayNames = new LinkedHashMap<>();
+        for (MetadataField f: index.metadata().metadataFields()) {
+            String displayName = f.displayName();
+            if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
+                metaDisplayNames.put(f.name(),displayName);
+            }
+        }
+        return metaDisplayNames;
+    }
+
+    /**
+     * Get the pid for the specified document
+     *
+     * @param index where we got this document from
+     * @param luceneDocId Lucene document id
+     * @param document the document object
+     * @return the pid string (or Lucene doc id in string form if index has no pid
+     *         field)
+     */
+    public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
+        MetadataField pidField = index.metadataFields().pidField();
+        String pid = pidField == null ? null : document.get(pidField.name());
+        if (pid == null)
+            return Integer.toString(luceneDocId);
+        return pid;
+    }
+
+    /**
+     * Returns the annotations to write out.
+     *
+     * By default, all annotations are returned.
+     * Annotations are returned in requested order, or in their definition/display order.
+     *
+     * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
+     */
+    public static List<Annotation> getAnnotationsToWrite(BlackLabIndex index, WebserviceParams params) throws BlsException {
+        AnnotatedFields fields = index.annotatedFields();
+        Set<String> requestedAnnotations = params.getListValuesFor();
+
+        List<Annotation> ret = new ArrayList<>();
+        for (AnnotatedField f : fields) {
+            for (Annotation a : f.annotations()) {
+                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
+                    ret.add(a);
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    public static Map<String, ResultDocInfo> getDocInfos(BlackLabIndex index, Map<Integer, Document> luceneDocs,
+            Set<MetadataField> metadataFieldsToList) {
+        Map<String, ResultDocInfo> docInfos = new LinkedHashMap<>();
+        for (Map.Entry<Integer, Document> e: luceneDocs.entrySet()) {
+            Integer docId = e.getKey();
+            Document luceneDoc = e.getValue();
+            String pid = getDocumentPid(index, docId, luceneDoc);
+            ResultDocInfo docInfo = getDocInfo(index, luceneDoc, metadataFieldsToList);
+            docInfos.put(pid, docInfo);
+        }
+        return docInfos;
+    }
 }
