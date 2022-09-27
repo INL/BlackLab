@@ -285,6 +285,20 @@ public class RequestHandlerHits extends RequestHandler {
             return Pair.of(jobHitGroups, hits);
         }
 
+        private Map<String, List<Pair<String, Long>>> getFacetInfo() throws InvalidQuery {
+            Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
+            Map<String, List<Pair<String, Long>>> facetInfo = WebserviceOperations.getFacetInfo(counts);
+            return facetInfo;
+        }
+
+        private SearchTimings getSearchTimings() {
+            long searchTime = getSearchTime();
+            long countTime = getCountTime();
+            logger.info("Total search time is:{} ms", searchTime);
+            SearchTimings timings = new SearchTimings(searchTime, countTime);
+            return timings;
+        }
+
         public Hits getHits() {
             return hits;
         }
@@ -344,6 +358,10 @@ public class RequestHandlerHits extends RequestHandler {
         public ConcordanceContext getConcordanceContext() {
             return concordanceContext;
         }
+
+        public boolean hasFacets() {
+            return params.hasFacets();
+        }
     }
 
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
@@ -353,7 +371,6 @@ public class RequestHandlerHits extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-
         ResultHits resultHits = new ResultHits(params);
         Hits hits = resultHits.getHits();
 
@@ -363,25 +380,22 @@ public class RequestHandlerHits extends RequestHandler {
             return HTTP_OK;
         }
 
+        // Get window and hits/docs stats for "regular" hits search
         resultHits.finishSearch();
-        Hits window = resultHits.getWindow();
 
         // Search is done; construct the results object
-        ds.startMap();
-
-        // The summary
         BlackLabIndex index = hits.index();
+        Hits window = resultHits.getWindow();
+        ds.startMap();
+        // The summary
         ds.startEntry("summary").startMap();
         {
             // Search time should be time user (originally) had to wait for the response to this request.
             // Count time is the time it took (or is taking) to iterate through all the results to count the total.
-            long searchTime = resultHits.getSearchTime();
-            long countTime = resultHits.getCountTime();
-            logger.info("Total search time is:{} ms", searchTime);
-            SearchTimings timings = new SearchTimings(searchTime, countTime);
+            SearchTimings timings = resultHits.getSearchTimings();
             DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
             DataStreamUtil.numberOfResultsSummaryTotalHits(ds, resultHits.hitsStats, resultHits.docsStats,
-                    params.getWaitForTotal(), countTime < 0, null);
+                    params.getWaitForTotal(), timings.getCountTime() < 0, null);
             if (params.getIncludeTokenCount())
                 ds.entry("tokensInMatchingDocuments", resultHits.getTotalTokens());
 
@@ -406,7 +420,6 @@ public class RequestHandlerHits extends RequestHandler {
                     throw new BadRequest("INVALID_QUERY", e.getMessage());
                 }
             }
-
         }
         ds.endMap().endEntry();
 
@@ -415,15 +428,14 @@ public class RequestHandlerHits extends RequestHandler {
         DataStreamUtil.hits(ds, params, window, resultHits.getConcordanceContext(), docIdToPid);
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(index, params);
         Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
-
         DataStreamUtil.documentInfos(ds, docInfos);
 
-        if (params.hasFacets()) {
+        if (resultHits.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
             {
-                Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
-                DataStreamUtil.facets(ds, WebserviceOperations.getFacetInfo(counts));
+                Map<String, List<Pair<String, Long>>> facetInfo = resultHits.getFacetInfo();
+                DataStreamUtil.facets(ds, facetInfo);
             }
             ds.endEntry();
         }
