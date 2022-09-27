@@ -12,6 +12,7 @@ import java.util.PriorityQueue;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegment;
 import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegmentIterator;
@@ -37,14 +38,17 @@ public class TermsIntegrated extends TermsReaderAbstract {
         this.indexReader = indexReader;
         this.luceneField = luceneField;
 
-        List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
-        for (LeafReaderContext lrc : indexReader.leaves()) {
-            BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
-            TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
-            termsPerSegment.add(s);
-        }
-
         try {
+            List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
+            for (LeafReaderContext lrc : indexReader.leaves()) {
+                BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
+                TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
+                termsPerSegment.add(s);
+                BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
+                if (segmentTerms != null) { // can happen if segment only contains index metadata doc
+                    segmentTerms.setTermsIntegrated(this, lrc.ord);
+                }
+            }
             readFromAndMerge(termsPerSegment);
             termsPerSegment.forEach(TermsIntegratedSegment::close);
         } catch (IOException e) {
