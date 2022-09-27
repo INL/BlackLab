@@ -62,6 +62,7 @@ import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultDocInfo;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
@@ -74,151 +75,345 @@ public class RequestHandlerHits extends RequestHandler {
 
     private static final Logger logger = LogManager.getLogger(RequestHandlerHits.class);
 
+    public static class ResultHits {
+
+        private final SearchCreator params;
+
+        private final Hits hits;
+
+        private ResultsStats hitsStats = null;
+
+        private ResultsStats docsStats = null;
+
+        private final boolean viewingGroup;
+
+        private final SearchCacheEntry<?> cacheEntry;
+
+        private SearchCacheEntry<Hits> cacheEntryWindow;
+
+        private long kwicTimeMs;
+
+        private Hits window;
+
+        private long totalTokens;
+
+        private ConcordanceContext concordanceContext;
+
+        @SuppressWarnings("unchecked")
+        public ResultHits(SearchCreator params) {
+            this.params = params;
+
+            // Do we want to view a single group after grouping?
+            String groupBy = params.getGroupProps().orElse("");
+            String viewGroup = params.getViewGroup().orElse("");
+
+            viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
+            boolean waitForTotal = params.getWaitForTotal();
+            try {
+                if (viewingGroup) {
+                    // We're viewing a single group. Get the hits from the grouping results.
+                    Pair<SearchCacheEntry<?>, Hits> res = getHitsFromGroup(params, viewGroup);
+                    cacheEntry = res.getLeft();
+                    hits = res.getRight();
+                    // The hits are already complete - get the stats directly.
+                    hitsStats = hits.hitsStats();
+                    docsStats = hits.docsStats();
+                } else {
+                    // Regular hits request.
+                    // Create the search objects
+                    SearchHits searchHits = params.hitsSample();
+                    SearchCount searchHitCount = searchHits.hitCount();
+                    SearchCount searchDocCount = searchHits.docCount();
+                    // Start the search.
+                    // - First start the hit count, which will start the underlying hits search.
+                    // - Then get the underlying hits search from the cache (this may take a while as
+                    //   it will complete when the Hits object is available)
+                    cacheEntry = searchHitCount.executeAsync();
+                    hits = searchHits.execute();
+                    try {
+                        hitsStats = ((SearchCacheEntry<ResultsStats>)cacheEntry).peek();
+                        docsStats = searchDocCount.executeAsync().peek();
+                        // Wait until all hits have been counted.
+                        if (waitForTotal) {
+                            hitsStats.countedTotal();
+                            docsStats.countedTotal();
+                        }
+                    } catch (InterruptedSearch e) {
+                        // Our count was probably aborted.
+                        logger.debug("Error getting count(s)", e);
+                        if (hitsStats == null)
+                            hitsStats = ResultsStatsStatic.INVALID;
+                        if (docsStats == null)
+                            docsStats = ResultsStatsStatic.INVALID;
+                    }
+                }
+            } catch (InterruptedException | ExecutionException | InvalidQuery e) {
+                logger.debug("Searching threw an exception", e);
+                throw RequestHandler.translateSearchException(e);
+            }
+        }
+
+        /**
+         * Translate the normal Hits query in the searchparams object into a query yielding only those Hits in the group with the specified PropertyValue
+         *
+         * @param viewGroupVal identity of group to view
+         * @param hitsGrouped grouped hits
+         *
+         * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
+         */
+        private static SearchHits getQueryForHitsInSpecificGroupOnly(SearchCreator params, PropertyValue viewGroupVal, HitGroups hitsGrouped) throws BlsException, InvalidQuery {
+            // see if we can enhance this query
+            if (hitsGrouped.isSample())
+                return null;
+
+            HitProperty groupByProp = hitsGrouped.groupCriteria();
+
+            // see if this query matches only singular tokens
+            // (we can't enhance multi-token queries such as ngrams yet)
+            TextPattern tp = params.pattern().orElseThrow();
+            BlackLabIndex index = params.blIndex();
+            if (!tp.toQuery(QueryInfo.create(index)).producesSingleTokens())
+                return null;
+
+            // Alright, the original query for the Hits lends itself to enhancement.
+            // Create the Query that will do the metadata filtering portion. (Token filtering is done through the TextPattern above)
+            BooleanQuery.Builder fqb = new BooleanQuery.Builder();
+            boolean usedFilter = false;
+            if (params.filterQuery() != null) {
+                fqb.add(params.filterQuery(), Occur.FILTER);
+                usedFilter = true;
+            }
+
+            // Decode the grouping properties, and the values for those properties in the requested group.
+            // So we can enhance the BooleanQuery and TextPattern with these  criteria
+            List<PropertyValue> vals = viewGroupVal instanceof PropertyValueMultiple ? viewGroupVal.values() : List.of(viewGroupVal);
+            List<HitProperty> props = groupByProp instanceof HitPropertyMultiple ? groupByProp.props() : List.of(groupByProp);
+
+            int i = 0;
+            for (HitProperty p : props) {
+                if (p instanceof HitPropertyHitText) {
+                    String valueForAnnotation = vals.get(i).toString();
+                    HitPropertyHitText prop = ((HitPropertyHitText) p);
+                    Annotation annot = prop.needsContext().get(0);
+                    MatchSensitivity sensitivity = prop.getSensitivities().get(0);
+
+                    tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(), new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
+                } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
+                    Object value = vals.get(i).value();
+                    int luceneDocId = value instanceof Integer ? ((int) value): BlsUtils.getDocIdFromPid(index, (String) value);
+                    fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
+                    usedFilter = true;
+                }
+                else if (p instanceof HitPropertyDocumentStoredField) {
+                    fqb.add(new DocValuesTermsQuery(((HitPropertyDocumentStoredField) p).fieldName(), (String) vals.get(i).value()), Occur.FILTER);
+                    usedFilter = true;
+                } else {
+                    logger.debug("Cannot merge group specifier into query: {} with value {}", p, vals.get(i));
+                    return null;
+                }
+
+                ++i;
+            }
+
+            // All specifiers merged!
+            // Construct the query that will get us our hits.
+            SearchEmpty search = index.search(index.mainAnnotatedField(), params.useCache());
+            QueryInfo queryInfo = QueryInfo.create(index, index.mainAnnotatedField());
+            BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
+            SearchHits hits = search.find(query, params.searchSettings());
+            if (params.hitsSortSettings() != null) {
+                hits = hits.sort(params.hitsSortSettings().sortBy());
+            }
+            if (params.sampleSettings() != null) {
+                hits = hits.sample(params.sampleSettings());
+            }
+            return hits;
+        }
+
+        private static Pair<SearchCacheEntry<?>, Hits> getHitsFromGroup(SearchCreator params, String viewGroup) throws InterruptedException, ExecutionException, InvalidQuery, BlsException {
+            BlackLabIndex index = params.blIndex();
+            PropertyValue viewGroupVal = PropertyValue.deserialize(index, index.mainAnnotatedField(), viewGroup);
+            if (viewGroupVal == null)
+                throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+            SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
+            HitGroups hitGroups = jobHitGroups.get();
+            HitGroup group = hitGroups.get(viewGroupVal);
+            if (group == null)
+                throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+
+            Hits hits;
+            // Groups don't always store their backing hits (see HitGroupsTokenFrequencies for example)
+            // When the group has some hits available, show those (the rest may have been culled on purpose due to maximum result limitations)
+            // Only launch a separate search when there are ZERO hits stored in the group
+            if (group.storedResults().size() > 0) {
+                // Some hits available: return those.
+                hits = group.storedResults();
+            } else {
+                // No results were actually stored. Fire a separate query to retrieve them.
+                SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(params, viewGroupVal, hitGroups);
+                if (findHitsFromOnlyRequestedGroup != null) {
+                    // place the group-contents query in the cache and return the results.
+                    SearchCacheEntry<ResultsStats> cacheEntry = findHitsFromOnlyRequestedGroup.count().executeAsync();
+                    hits = (findHitsFromOnlyRequestedGroup.executeAsync()).get();
+                    return Pair.of(cacheEntry, hits);
+                }
+
+                // This is a special case:
+                // Since the group we got from the cached results didn't contain the hits, we need to get the hits from their original query
+                // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
+                // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
+                SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) params.hitsSample().groupWithStoredHits(hitGroups.groupCriteria(), Results.NO_LIMIT);
+                // now run the separate grouping search, making sure not to actually store the hits.
+                // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
+                // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
+                jobHitGroups = searchGroups.executeAsync(); // place groups with hits in search cache
+                hits = jobHitGroups
+                    .get() //get grouped results
+                    .get(viewGroupVal) // get group
+                    .storedResults(); // get results in group
+            }
+
+            // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+            // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+            // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+            // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+            String sortBy = params.getSortProps().orElse(null);
+            HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+            if (sortProp != null)
+                hits = hits.sort(sortProp);
+
+            return Pair.of(jobHitGroups, hits);
+        }
+
+        public Hits getHits() {
+            return hits;
+        }
+
+        public void finishSearch() {
+            WindowSettings windowSettings = params.windowSettings();
+            if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
+                throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
+
+            cacheEntryWindow = null;
+            if (!viewingGroup) {
+                // Request the window of hits we're interested in.
+                // (we hold on to the cache entry so that we can differentiate between search and count time later)
+                cacheEntryWindow = params.hitsWindow().executeAsync();
+                try {
+                    window = cacheEntryWindow.get(); // blocks until requested hits window is available
+                } catch (InterruptedException | ExecutionException e) {
+                    throw RequestHandler.translateSearchException(e);
+                }
+            } else {
+                // We're viewing a single group in a grouping result. Just get the hits window directly.
+                window = hits.window(windowSettings.first(), windowSettings.size());
+            }
+
+            boolean includeTokenCount = params.getIncludeTokenCount();
+            totalTokens = -1;
+            if (includeTokenCount) {
+                DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
+                // Determine total number of tokens in result set
+                totalTokens = perDocResults.subcorpusSize().getTokens();
+            }
+
+            // Find KWICs/concordances from forward index or original XML
+            // (note that on large indexes, this can actually take significant time)
+            long startTimeKwicsMs = System.currentTimeMillis();
+            ContextSettings contextSettings = params.contextSettings();
+            concordanceContext = ConcordanceContext.get(window, contextSettings.concType(), contextSettings.size());
+            kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
+        }
+
+        public long getSearchTime() {
+            return (cacheEntryWindow == null ? cacheEntry.timer().time() : cacheEntryWindow.timer().time()) + kwicTimeMs;
+        }
+
+        public long getCountTime() {
+            return cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
+        }
+
+        public Hits getWindow() {
+            return window;
+        }
+
+        public long getTotalTokens() {
+            return totalTokens;
+        }
+
+        public ConcordanceContext getConcordanceContext() {
+            return concordanceContext;
+        }
+    }
+
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        // Do we want to view a single group after grouping?
-        String groupBy = params.getGroupProps().orElse("");
-        String viewGroup = params.getViewGroup().orElse("");
 
-        SearchCacheEntry<?> cacheEntry;
-        Hits hits;
-        ResultsStats hitsStats = null; // [running] hits count
-        ResultsStats docsStats = null; // [running] docs count
+        ResultHits resultHits = new ResultHits(params);
+        Hits hits = resultHits.getHits();
 
-        boolean viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
-        boolean waitForTotal = params.getWaitForTotal();
-        try {
-            if (viewingGroup) {
-                // We're viewing a single group. Get the hits from the grouping results.
-                Pair<SearchCacheEntry<?>, Hits> res = getHitsFromGroup(viewGroup);
-                cacheEntry = res.getLeft();
-                hits = res.getRight();
-                // The hits are already complete - get the stats directly.
-                hitsStats = hits.hitsStats();
-                docsStats = hits.docsStats();
-            } else {
-                // Regular hits request.
-                // Create the search objects
-                SearchHits searchHits = params.hitsSample();
-                SearchCount searchHitCount = searchHits.hitCount();
-                SearchCount searchDocCount = searchHits.docCount();
-                // Start the search.
-                // - First start the hit count, which will start the underlying hits search.
-                // - Then get the underlying hits search from the cache (this may take a while as
-                //   it will complete when the Hits object is available)
-                cacheEntry = searchHitCount.executeAsync();
-                hits = searchHits.execute();
-                try {
-                    hitsStats = ((SearchCacheEntry<ResultsStats>) cacheEntry).peek();
-                    docsStats = searchDocCount.executeAsync().peek();
-                    // Wait until all hits have been counted.
-                    if (waitForTotal) {
-                        hitsStats.countedTotal();
-                        docsStats.countedTotal();
-                    }
-                } catch (InterruptedSearch e) {
-                    // Our count was probably aborted.
-                    logger.debug("Error getting count(s)", e);
-                    if (hitsStats == null)
-                        hitsStats = ResultsStatsStatic.INVALID;
-                    if (docsStats == null)
-                        docsStats = ResultsStatsStatic.INVALID;
-                }
-            }
-        } catch (InterruptedException | ExecutionException | InvalidQuery e) {
-            logger.debug("Searching threw an exception", e);
-            throw RequestHandler.translateSearchException(e);
-        }
-
-        if (params.getCalculateCollocations()) {
+        if (params.isCalculateCollocations()) {
             TermFrequencyList tfl = WebserviceOperations.getCollocations(params, hits);
             DataStreamUtil.collocations(ds, tfl);
             return HTTP_OK;
         }
 
-        WindowSettings windowSettings = params.windowSettings();
-        if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
-            throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
-
-        SearchCacheEntry<Hits> cacheEntryWindow = null;
-        Hits window;
-        if (!viewingGroup) {
-            // Request the window of hits we're interested in.
-            // (we hold on to the cache entry so that we can differentiate between search and count time later)
-            cacheEntryWindow = params.hitsWindow().executeAsync();
-            try {
-                window = cacheEntryWindow.get(); // blocks until requested hits window is available
-            } catch (InterruptedException | ExecutionException e) {
-                throw RequestHandler.translateSearchException(e);
-            }
-        } else {
-            // We're viewing a single group in a grouping result. Just get the hits window directly.
-            window = hits.window(windowSettings.first(), windowSettings.size());
-        }
-
-        boolean includeTokenCount = params.getIncludeTokenCount();
-        long totalTokens = -1;
-        if (includeTokenCount) {
-            DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
-            // Determine total number of tokens in result set
-            totalTokens = perDocResults.subcorpusSize().getTokens();
-        }
-
-        // Find KWICs/concordances from forward index or original XML
-        // (note that on large indexes, this can actually take significant time)
-        long startTimeKwicsMs = System.currentTimeMillis();
-        ContextSettings contextSettings = params.contextSettings();
-        ConcordanceContext concordanceContext = ConcordanceContext.get(window, contextSettings.concType(), contextSettings.size());
-        long kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
+        resultHits.finishSearch();
+        Hits window = resultHits.getWindow();
 
         // Search is done; construct the results object
-
         ds.startMap();
 
         // The summary
         BlackLabIndex index = hits.index();
         ds.startEntry("summary").startMap();
-        // Search time should be time user (originally) had to wait for the response to this request.
-        // Count time is the time it took (or is taking) to iterate through all the results to count the total.
-        long searchTime = (cacheEntryWindow == null ? cacheEntry.timer().time() : cacheEntryWindow.timer().time()) + kwicTimeMs;
-        long countTime = cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
-        logger.info("Total search time is:{} ms", searchTime);
-        SearchTimings timings = new SearchTimings(searchTime, countTime);
-        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
-        DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countTime < 0, null);
-        if (includeTokenCount)
-            ds.entry("tokensInMatchingDocuments", totalTokens);
+        {
+            // Search time should be time user (originally) had to wait for the response to this request.
+            // Count time is the time it took (or is taking) to iterate through all the results to count the total.
+            long searchTime = resultHits.getSearchTime();
+            long countTime = resultHits.getCountTime();
+            logger.info("Total search time is:{} ms", searchTime);
+            SearchTimings timings = new SearchTimings(searchTime, countTime);
+            DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
+            DataStreamUtil.numberOfResultsSummaryTotalHits(ds, resultHits.hitsStats, resultHits.docsStats,
+                    params.getWaitForTotal(), countTime < 0, null);
+            if (params.getIncludeTokenCount())
+                ds.entry("tokensInMatchingDocuments", resultHits.getTotalTokens());
 
-        Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
-        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
-        DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
+            // Write docField (pidField, titleField, etc.) and metadata display names
+            // (these arguably shouldn't be included with every hits response; can be read once from the index
+            //  metadata response)
+            Map<String, String> docFields = WebserviceOperations.getDocFields(index.metadata());
+            Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
+            DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
 
-        if (params.getExplain()) {
-            TextPattern tp = params.pattern().get();
-            try {
-                BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
-                QueryExplanation explanation = index.explain(q);
-                ds.startEntry("explanation").startMap()
-                        .entry("originalQuery", explanation.originalQuery())
-                        .entry("rewrittenQuery", explanation.rewrittenQuery())
-                        .endMap().endEntry();
-            } catch (InvalidQuery e) {
-                throw new BadRequest("INVALID_QUERY", e.getMessage());
+            // Include explanation of how the query was executed?
+            if (params.getExplain()) {
+                TextPattern tp = params.pattern().orElseThrow();
+                try {
+                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
+                    QueryExplanation explanation = index.explain(q);
+                    ds.startEntry("explanation").startMap()
+                            .entry("originalQuery", explanation.originalQuery())
+                            .entry("rewrittenQuery", explanation.rewrittenQuery())
+                            .endMap().endEntry();
+                } catch (InvalidQuery e) {
+                    throw new BadRequest("INVALID_QUERY", e.getMessage());
+                }
             }
+
         }
         ds.endMap().endEntry();
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
-
         Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(index, window, luceneDocs);
-        DataStreamUtil.hits(ds, params, window, concordanceContext, docIdToPid);
-        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        DataStreamUtil.hits(ds, params, window, resultHits.getConcordanceContext(), docIdToPid);
+        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(index, params);
         Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
 
         DataStreamUtil.documentInfos(ds, docInfos);
@@ -238,133 +433,4 @@ public class RequestHandlerHits extends RequestHandler {
         return HTTP_OK;
     }
 
-    /**
-     * Translate the normal Hits query in the searchparams object into a query yielding only those Hits in the group with the specified PropertyValue
-     *
-     * @param viewGroupVal identity of group to view
-     * @param hitsGrouped grouped hits
-     *
-     * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
-     */
-    private SearchHits getQueryForHitsInSpecificGroupOnly(PropertyValue viewGroupVal, HitGroups hitsGrouped) throws BlsException, InvalidQuery {
-        // see if we can enhance this query
-        if (hitsGrouped.isSample())
-            return null;
-
-        HitProperty groupByProp = hitsGrouped.groupCriteria();
-
-        // see if this query matches only singular tokens
-        // (we can't enhance multi-token queries such as ngrams yet)
-        TextPattern tp = params.pattern().get();
-        if (!tp.toQuery(QueryInfo.create(blIndex())).producesSingleTokens())
-            return null;
-
-        // Alright, the original query for the Hits lends itself to enhancement.
-        // Create the Query that will do the metadata filtering portion. (Token filtering is done through the TextPattern above)
-        BooleanQuery.Builder fqb = new BooleanQuery.Builder();
-        boolean usedFilter = false;
-        if (params.filterQuery() != null) {
-            fqb.add(params.filterQuery(), Occur.FILTER);
-            usedFilter = true;
-        }
-
-        // Decode the grouping properties, and the values for those properties in the requested group.
-        // So we can enhance the BooleanQuery and TextPattern with these  criteria
-        List<PropertyValue> vals = viewGroupVal instanceof PropertyValueMultiple ? viewGroupVal.values() : List.of(viewGroupVal);
-        List<HitProperty> props = groupByProp instanceof HitPropertyMultiple ? groupByProp.props() : List.of(groupByProp);
-
-        int i = 0;
-        for (HitProperty p : props) {
-            if (p instanceof HitPropertyHitText) {
-                String valueForAnnotation = vals.get(i).toString();
-                HitPropertyHitText prop = ((HitPropertyHitText) p);
-                Annotation annot = prop.needsContext().get(0);
-                MatchSensitivity sensitivity = prop.getSensitivities().get(0);
-
-                tp = new TextPatternAnd(tp, new TextPatternAnnotation(annot.name(), new TextPatternSensitive(sensitivity, new TextPatternTerm(valueForAnnotation))));
-            } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
-                Object value = vals.get(i).value();
-                int luceneDocId = value instanceof Integer ? ((int) value): BlsUtils.getDocIdFromPid(blIndex(), (String) value);
-                fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
-                usedFilter = true;
-            }
-            else if (p instanceof HitPropertyDocumentStoredField) {
-                fqb.add(new DocValuesTermsQuery(((HitPropertyDocumentStoredField) p).fieldName(), (String) vals.get(i).value()), Occur.FILTER);
-                usedFilter = true;
-            } else {
-                logger.debug("Cannot merge group specifier into query: {} with value {}", p, vals.get(i));
-                return null;
-            }
-
-            ++i;
-        }
-
-        // All specifiers merged!
-        // Construct the query that will get us our hits.
-        SearchEmpty search = blIndex().search(blIndex().mainAnnotatedField(), params.useCache());
-        QueryInfo queryInfo = QueryInfo.create(blIndex(), blIndex().mainAnnotatedField());
-        BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
-        SearchHits hits = search.find(query, params.searchSettings());
-        if (params.hitsSortSettings() != null) {
-            hits = hits.sort(params.hitsSortSettings().sortBy());
-        }
-        if (params.sampleSettings() != null) {
-            hits = hits.sample(params.sampleSettings());
-        }
-        return hits;
-    }
-
-    private Pair<SearchCacheEntry<?>, Hits> getHitsFromGroup(String viewGroup) throws InterruptedException, ExecutionException, InvalidQuery, BlsException {
-        PropertyValue viewGroupVal = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
-        if (viewGroupVal == null)
-            throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-        SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
-        HitGroups hitGroups = jobHitGroups.get();
-        HitGroup group = hitGroups.get(viewGroupVal);
-        if (group == null)
-            throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
-
-        Hits hits;
-        // Groups don't always store their backing hits (see HitGroupsTokenFrequencies for example)
-        // When the group has some hits available, show those (the rest may have been culled on purpose due to maximum result limitations)
-        // Only launch a separate search when there are ZERO hits stored in the group
-        if (group.storedResults().size() > 0) {
-            // Some hits available: return those.
-            hits = group.storedResults();
-        } else {
-            // No results were actually stored. Fire a separate query to retrieve them.
-            SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(viewGroupVal, hitGroups);
-            if (findHitsFromOnlyRequestedGroup != null) {
-                // place the group-contents query in the cache and return the results.
-                SearchCacheEntry<ResultsStats> cacheEntry = findHitsFromOnlyRequestedGroup.count().executeAsync();
-                hits = (findHitsFromOnlyRequestedGroup.executeAsync()).get();
-                return Pair.of(cacheEntry, hits);
-            }
-
-            // This is a special case:
-            // Since the group we got from the cached results didn't contain the hits, we need to get the hits from their original query
-            // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
-            // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
-            SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) params.hitsSample().groupWithStoredHits(hitGroups.groupCriteria(), Results.NO_LIMIT);
-            // now run the separate grouping search, making sure not to actually store the hits.
-            // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
-            // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
-            jobHitGroups = searchGroups.executeAsync(); // place groups with hits in search cache
-            hits = jobHitGroups
-                .get() //get grouped results
-                .get(viewGroupVal) // get group
-                .storedResults(); // get results in group
-        }
-
-        // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-        // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-        // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-        // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-        String sortBy = params.getSortProps().orElse(null);
-        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
-        if (sortProp != null)
-            hits = hits.sort(sortProp);
-
-        return Pair.of(jobHitGroups, hits);
-    }
 }

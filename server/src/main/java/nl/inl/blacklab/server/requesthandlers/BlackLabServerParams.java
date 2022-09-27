@@ -457,7 +457,7 @@ public class BlackLabServerParams implements WebserviceParams {
     }
 
     @Override
-    public boolean getCalculateCollocations() {
+    public boolean isCalculateCollocations() {
         return getString("calc").equals("colloc");
     }
 

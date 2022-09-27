@@ -719,8 +719,8 @@ public class SearchCreator implements WebserviceParams {
     }
 
     @Override
-    public boolean getCalculateCollocations() {
-        return params.getCalculateCollocations();
+    public boolean isCalculateCollocations() {
+        return params.isCalculateCollocations();
     }
 
     @Override

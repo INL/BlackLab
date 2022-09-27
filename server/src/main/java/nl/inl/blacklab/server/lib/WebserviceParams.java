@@ -111,7 +111,7 @@ public interface WebserviceParams {
 
     String getAutocompleteTerm();
 
-    boolean getCalculateCollocations();
+    boolean isCalculateCollocations();
 
     String getAnnotation();
 
