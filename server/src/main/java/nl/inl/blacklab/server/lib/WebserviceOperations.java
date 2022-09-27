@@ -1,8 +1,12 @@
 package nl.inl.blacklab.server.lib;
 
 import java.io.InputStream;
+import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -18,11 +23,14 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -36,8 +44,13 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.util.LuceneUtil;
 
 public class WebserviceOperations {
+
+    private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
+
+    private static RuleBasedCollator fieldValueSortCollator = null;
 
     private WebserviceOperations() {}
 
@@ -265,5 +278,100 @@ public class WebserviceOperations {
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
         formatMan.createUserFormat(user, fileName, fileInputStream);
+    }
+
+    /**
+     * Returns a collator that sort field values "properly", ignoring parentheses.
+     *
+     * @return the collator
+     */
+    public static Collator getFieldValueSortCollator() {
+        if (fieldValueSortCollator == null) {
+            fieldValueSortCollator = (RuleBasedCollator) BlackLab.defaultCollator();
+            try {
+                // Make sure it ignores parentheses when comparing
+                String rules = fieldValueSortCollator.getRules();
+                // Set parentheses equal to NULL, which is ignored.
+                rules += "&\u0000='('=')'";
+                fieldValueSortCollator = new RuleBasedCollator(rules);
+            } catch (ParseException e) {
+                // Oh well, we'll use the collator as-is
+                //throw new RuntimeException();//DEBUG
+            }
+        }
+        return fieldValueSortCollator;
+    }
+
+    /**
+     * Get field value distribution in the right order for the response.
+     *
+     * The right order is: display order first, then sorted by displayValue
+     * as a fallback, or regular value as the second fallback.
+     *
+     * @param fd field to get values for
+     * @return properly sorted values
+     */
+    public static Map<String, Integer> getFieldValuesInOrder(MetadataField fd) {
+        Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
+
+        // Show values in display order (if defined)
+        // If not all values are mentioned in display order, show the rest at the end,
+        // sorted by their displayValue (or regular value if no displayValue specified)
+        Map<String, Integer> fieldValues = new LinkedHashMap<>();
+        Map<String, Integer> valueDistribution = fd.valueDistribution();
+        Set<String> valuesLeft = new HashSet<>(valueDistribution.keySet());
+        for (String value : fd.custom().get("displayOrder", Collections.<String>emptyList())) {
+            fieldValues.put(value, valueDistribution.get(value));
+            valuesLeft.remove(value);
+        }
+        List<String> sortedLeft = new ArrayList<>(valuesLeft);
+        final Collator defaultCollator = getFieldValueSortCollator();
+        sortedLeft.sort((o1, o2) -> {
+            String d1 = displayValues.getOrDefault(o1, o1);
+            String d2 = displayValues.getOrDefault(o2, o2);
+            //return d1.compareTo(d2);
+            return defaultCollator.compare(d1, d2);
+        });
+        for (String value : sortedLeft) {
+            fieldValues.put(value, valueDistribution.get(value));
+        }
+        return fieldValues;
+    }
+
+    public static Set<String> getTerms(BlackLabIndex index, Annotation annotation,
+            boolean[] valueListComplete) {
+        boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        final Set<String> terms = new TreeSet<>();
+        MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
+                MatchSensitivity.INSENSITIVE :
+                MatchSensitivity.SENSITIVE;
+        AnnotationSensitivity as = annotation.sensitivity(sensitivity);
+        String luceneField = as.luceneField();
+        if (isInlineTagAnnotation) {
+            // Tags. Skip attribute values, only show elements.
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                if (!term.startsWith("@") && !terms.contains(term)) {
+                    if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
+                        valueListComplete[0] = false;
+                        return false;
+                    }
+                    terms.add(term);
+                }
+                return true;
+            });
+        } else {
+            // Regular annotated field.
+            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
+                if (!terms.contains(term)) {
+                    if (terms.size() >= MAX_FIELD_VALUES_TO_RETURN) {
+                        valueListComplete[0] = false;
+                        return false;
+                    }
+                    terms.add(term);
+                }
+                return true;
+            });
+        }
+        return terms;
     }
 }

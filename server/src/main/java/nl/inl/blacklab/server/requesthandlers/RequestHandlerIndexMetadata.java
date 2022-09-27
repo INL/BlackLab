@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,9 +89,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 ds.startAttrEntry("annotatedField", "name", field.name());
 
                 Collection<String> setShowValuesFor = params.getListValuesFor();
-                Collection<String> setShowSubpropsFor = params.getListSubpropsFor();
-                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor,
-                        setShowSubpropsFor);
+                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor);
 
                 ds.endAttrEntry();
             }
@@ -101,7 +100,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
             for (MetadataField f: fields) {
                 ds.startAttrEntry("metadataField", "name", f.name());
-                RequestHandlerFieldInfo.describeMetadataField(ds, null, f, true);
+                Map<String, Integer> fieldValuesInOrder = WebserviceOperations.getFieldValuesInOrder(f);
+                DataStreamUtil.metadataField(ds, null, f, true, fieldValuesInOrder);
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();

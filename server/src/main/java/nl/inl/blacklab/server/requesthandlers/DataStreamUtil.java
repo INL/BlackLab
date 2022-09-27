@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +17,8 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -452,4 +455,45 @@ public class DataStreamUtil {
         if (formatIdentifier != null && formatIdentifier.length() > 0)
             ds.entry("documentFormat", formatIdentifier);
     }
+
+    public static void metadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues, Map<String, Integer> fieldValuesInOrder) {
+        ds.startMap();
+        // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
+        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
+
+        // Assemble response
+        if (indexName != null)
+            ds.entry("indexName", indexName);
+        ds.entry("fieldName", fd.name())
+                .entry("isAnnotatedField", false)
+                .entry("displayName", fd.displayName())
+                .entry("description", fd.description())
+                .entry("uiType", fd.uiType());
+        ds
+                .entry("type", fd.type().toString())
+                .entry("analyzer", fd.analyzerName())
+                .entry("unknownCondition", fd.unknownCondition().toString())
+                .entry("unknownValue", fd.unknownValue());
+        if (listValues) {
+            final Map<String, String> displayValues = fd.custom().get("displayValues",
+                    Collections.emptyMap());
+            ds.startEntry("displayValues").startMap();
+            for (Map.Entry<String, String> e : displayValues.entrySet()) {
+                ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
+            }
+            ds.endMap().endEntry();
+
+            // Show values in display order (if defined)
+            // If not all values are mentioned in display order, show the rest at the end,
+            // sorted by their displayValue (or regular value if no displayValue specified)
+            ds.startEntry("fieldValues").startMap();
+            for (Map.Entry<String, Integer> e: fieldValuesInOrder.entrySet()) {
+                ds.attrEntry("value", "text", e.getKey(), e.getValue());
+            }
+            ds.endMap().endEntry();
+            ds.entry("valueListComplete", valueListComplete);
+        }
+        ds.endMap();
+    }
+
 }

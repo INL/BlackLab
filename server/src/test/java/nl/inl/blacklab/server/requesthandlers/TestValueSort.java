@@ -11,6 +11,7 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 public class TestValueSort {
 
@@ -18,7 +19,7 @@ public class TestValueSort {
     public void testValueSortFieldInfo() {
         List<String> list = Arrays.asList("vuur", ")vis(", "noot", "(mies)", "aap", "aa(n)", "aa(s)");
         List<String> expected = Arrays.asList("aa(n)", "aap", "aa(s)", "(mies)", "noot", ")vis(", "vuur");
-        Collator coll = RequestHandlerFieldInfo.getValueSortCollator();
+        Collator coll = WebserviceOperations.getFieldValueSortCollator();
         list.sort(coll);
         Assert.assertEquals(expected, list);
     }

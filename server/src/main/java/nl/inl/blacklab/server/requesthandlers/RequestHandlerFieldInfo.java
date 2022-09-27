@@ -1,68 +1,33 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.util.LuceneUtil;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 /**
  * Get information about a field in the index.
  */
 public class RequestHandlerFieldInfo extends RequestHandler {
-
-    private static final int MAX_FIELD_VALUES = 500;
-
-    private static RuleBasedCollator valueSortCollator = null;
-
-    /**
-     * Returns a collator that sort values "properly", ignoring parentheses.
-     *
-     * @return the collator
-     */
-    static Collator getValueSortCollator() {
-        if (valueSortCollator == null) {
-            valueSortCollator = (RuleBasedCollator) BlackLab.defaultCollator();
-            try {
-                // Make sure it ignores parentheses when comparing
-                String rules = valueSortCollator.getRules();
-                // Set parentheses equal to NULL, which is ignored.
-                rules += "&\u0000='('=')'";
-                valueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
-                // Oh well, we'll use the collator as-is
-                //throw new RuntimeException();//DEBUG
-            }
-        }
-        return valueSortCollator;
-    }
 
     public RequestHandlerFieldInfo(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -76,7 +41,6 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-
         int i = urlPathInfo.indexOf('/');
         String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         if (fieldName.length() == 0) {
@@ -86,74 +50,26 @@ public class RequestHandlerFieldInfo extends RequestHandler {
 
         BlackLabIndex blIndex = blIndex();
         IndexMetadata indexMetadata = blIndex.metadata();
-
         if (indexMetadata.annotatedFields().exists(fieldName)) {
+            // Annotated field
             Collection<String> setShowValuesFor = params.getListValuesFor();
-            Collection<String> setShowSubpropsFor = params.getListSubpropsFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
-            describeAnnotatedField(ds, indexName, fieldDesc, blIndex, setShowValuesFor, setShowSubpropsFor);
+            if (!fieldDesc.isDummyFieldToStoreLinkedDocuments()) {
+                describeAnnotatedField(ds, indexName, fieldDesc, blIndex, setShowValuesFor);
+            } else {
+                // skip this, not really an annotated field, just exists to store linked (metadata) document.
+            }
         } else {
+            // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            describeMetadataField(ds, indexName, fieldDesc, true);
+            Map<String, Integer> fieldValues = WebserviceOperations.getFieldValuesInOrder(fieldDesc);
+            DataStreamUtil.metadataField(ds, indexName, fieldDesc, true, fieldValues);
         }
 
         // Remove any empty settings
         //response.removeEmptyMapValues();
 
         return HTTP_OK;
-    }
-
-    public static void describeMetadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues) {
-        ds.startMap();
-        // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
-        boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
-
-        // Assemble response
-        if (indexName != null)
-            ds.entry("indexName", indexName);
-        ds.entry("fieldName", fd.name())
-                .entry("isAnnotatedField", false)
-                .entry("displayName", fd.displayName())
-                .entry("description", fd.description())
-                .entry("uiType", fd.uiType());
-        ds
-                .entry("type", fd.type().toString())
-                .entry("analyzer", fd.analyzerName())
-                .entry("unknownCondition", fd.unknownCondition().toString())
-                .entry("unknownValue", fd.unknownValue());
-        if (listValues) {
-            final Map<String, String> displayValues = fd.custom().get("displayValues", Collections.emptyMap());
-            ds.startEntry("displayValues").startMap();
-            for (Map.Entry<String, String> e : displayValues.entrySet()) {
-                ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
-            }
-            ds.endMap().endEntry();
-
-            // Show values in display order (if defined)
-            // If not all values are mentioned in display order, show the rest at the end,
-            // sorted by their displayValue (or regular value if no displayValue specified)
-            ds.startEntry("fieldValues").startMap();
-            Map<String, Integer> values = fd.valueDistribution();
-            Set<String> valuesLeft = new HashSet<>(values.keySet());
-            for (String value : fd.displayOrder()) {
-                ds.attrEntry("value", "text", value, values.get(value));
-                valuesLeft.remove(value);
-            }
-            List<String> sortedLeft = new ArrayList<>(valuesLeft);
-            final Collator defaultCollator = getValueSortCollator();
-            sortedLeft.sort((o1, o2) -> {
-                String d1 = displayValues.getOrDefault(o1, o1);
-                String d2 = displayValues.getOrDefault(o2, o2);
-                //return d1.compareTo(d2);
-                return defaultCollator.compare(d1, d2);
-            });
-            for (String value : sortedLeft) {
-                ds.attrEntry("value", "text", value, values.get(value));
-            }
-            ds.endMap().endEntry()
-                    .entry("valueListComplete", valueListComplete);
-        }
-        ds.endMap();
     }
 
     public static String sensitivitySettingDesc(Annotation annotation) {
@@ -174,10 +90,24 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         return sensitivityDesc;
     }
 
+    static class ResultAnnotationInfo {
+
+        Annotation annotation;
+
+        boolean showValues;
+
+        Set<String> terms;
+
+        boolean valueListComplete;
+
+        List<String> subannot;
+
+        public String parentAnnot;
+
+    }
+
     public static void describeAnnotatedField(DataStream ds, String indexName,
-            AnnotatedField fieldDesc, BlackLabIndex index, Collection<String> showValuesFor, Collection<String> showSubpropsFor) {
-        if (fieldDesc.isDummyFieldToStoreLinkedDocuments())
-            return; // skip this, not really an annotated field, just exists to store linked (metadata) document.
+            AnnotatedField fieldDesc, BlackLabIndex index, Collection<String> showValuesFor) {
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
@@ -194,11 +124,37 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
-        ds.startEntry("annotations").startMap();
+        Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         for (Annotation annotation: annotations) {
-            ds.startAttrEntry("annotation", "name", annotation.name()).startMap();
+            ResultAnnotationInfo ai = new ResultAnnotationInfo();
+            ai.annotation = annotation;
+            if (!index.isEmpty()) {
+                ai.showValues = annotationMatches(annotation.name(), showValuesFor);
+                if (ai.showValues) {
+                    boolean[] valueListCompleteArray = {
+                            true }; // array because we have to access them from the closures
+                    ai.terms = WebserviceOperations.getTerms(index, annotation, valueListCompleteArray);
+                    ai.valueListComplete = valueListCompleteArray[0];
+                }
+                ai.subannot = new ArrayList<>();
+                for (String name: annotation.subannotationNames()) {
+                    ai.subannot.add(name);
+                }
+                if (annotation.isSubannotation()) {
+                    ai.parentAnnot = annotation.parentAnnotation().name();
+                }
+                annotInfos.put(annotation.name(), ai);
+            }
+        }
+
+        ds.startEntry("annotations").startMap();
+        for (Map.Entry<String, ResultAnnotationInfo> e: annotInfos.entrySet()) {
+            ds.startAttrEntry("annotation", "name", e.getKey()).startMap();
+            ResultAnnotationInfo ai = e.getValue();
+            Annotation annotation = ai.annotation;
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
-            String offsetsAlternative = offsetsSensitivity == null ? "" : offsetsSensitivity.sensitivity().luceneFieldSuffix();
+            String offsetsAlternative = offsetsSensitivity == null ? "" :
+                    offsetsSensitivity.sensitivity().luceneFieldSuffix();
             ds
                     .entry("displayName", annotation.displayName())
                     .entry("description", annotation.description())
@@ -207,54 +163,21 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     .entry("sensitivity", sensitivitySettingDesc(annotation))
                     .entry("offsetsAlternative", offsetsAlternative)
                     .entry("isInternal", annotation.isInternal());
-            if (!index.isEmpty() || !(index instanceof BlackLabIndexIntegrated)) {
-                AnnotationSensitivity as = annotation.sensitivity(
-                        annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
-                                MatchSensitivity.INSENSITIVE :
-                                MatchSensitivity.SENSITIVE);
-                String luceneField = as.luceneField();
+            if (!index.isEmpty() /*|| !(index instanceof BlackLabIndexIntegrated)*/) {
                 if (annotationMatches(annotation.name(), showValuesFor)) {
-                    boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
                     ds.startEntry("values").startList();
 
-                    // Arrays because we have to access them from the closures
-                    boolean[] valueListComplete = { true };
+                    boolean[] valueListCompleteArray = { true }; // array because we have to access them from the closures
+                    Set<String> terms = WebserviceOperations.getTerms(index, annotation, valueListCompleteArray);
+                    boolean valueListComplete = valueListCompleteArray[0];
 
-                    final Set<String> terms = new TreeSet<>();
-                    if (isInlineTagAnnotation) {
-                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                            if (!term.startsWith("@") && !terms.contains(term)) {
-                                if (terms.size() >= MAX_FIELD_VALUES) {
-                                    valueListComplete[0] = false;
-                                    return false;
-                                }
-                                terms.add(term);
-                            }
-                            return true;
-                        });
-                    } else {
-                        LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
-                            if (!term.contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR) && !terms.contains(
-                                    term)) {
-                                if (terms.size() >= MAX_FIELD_VALUES) {
-                                    valueListComplete[0] = false;
-                                    return false;
-                                }
-                                terms.add(term);
-                            }
-                            return true;
-                        });
-                    }
                     for (String term: terms) {
                         ds.item("value", term);
                     }
-
                     ds.endList().endEntry();
-                    ds.entry("valueListComplete", valueListComplete[0]);
+                    ds.entry("valueListComplete", valueListComplete);
                 }
                 if (!annotation.subannotationNames().isEmpty()) {
-                    // Newer index, where the subannotations are stored in their own Lucene fields.
-                    // Always show these.
                     ds.startEntry("subannotations").startList();
                     for (String name: annotation.subannotationNames()) {
                         ds.item("subannotation", name);
@@ -271,7 +194,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         ds.endMap();
     }
 
-    private static boolean annotationMatches(String name, Collection<String> showValuesFor) {
+    public static boolean annotationMatches(String name, Collection<String> showValuesFor) {
         //return showValuesFor.contains(name);
         for (String expr: showValuesFor) {
             if (name.matches("^" + expr + "$")) {
