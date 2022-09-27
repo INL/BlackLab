@@ -46,7 +46,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         protected final LeafReaderContext readerContext;
 
-        private final ForwardIndexSegmentReader forwardIndexReader;
+        private final ForwardIndexSegmentReader forwardIndexSegmentReader;
 
         private final DocFieldLengthGetter lengthGetter;
 
@@ -54,35 +54,40 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            forwardIndexReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
+            forwardIndexSegmentReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
             for (int i = 0; i < luceneFields.size(); i++) {
-                termsSegmentReaders.add(forwardIndexReader.terms(luceneFields.get(i)));
+                termsSegmentReaders.add(forwardIndexSegmentReader.terms(luceneFields.get(i)));
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
 
         @Override
-        public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
-            return new ForwardIndexDocumentImpl(this, docId);
+        public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+            return new ForwardIndexDocumentImpl(this, segmentDocId);
         }
 
         @Override
-        public int getDocLength(int docId) {
+        public int getDocLength(int segmentDocId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return lengthGetter.getFieldLength(docId)
+            return lengthGetter.getFieldLength(segmentDocId)
                     - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
         @Override
-        public int[] getChunk(int annotIndex, int docId, int start, int end) {
+        public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
+            int[] part = getChunkSegmentTermIds(annotIndex, segmentDocId, start, end);
+            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext.ord, part);
+        }
+
+        @Override
+        public int[] getChunkSegmentTermIds(int annotIndex, int segmentDocId, int start, int end) {
             Annotation annotation = annotations.get(annotIndex);
             AnnotationSensitivity sensitivity = annotation.hasSensitivity(
                     MatchSensitivity.SENSITIVE) ?
                     annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                     annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-            int[] part = forwardIndexReader.retrievePart(sensitivity.luceneField(), docId, start, end);
-            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext.ord, part);
+            return forwardIndexSegmentReader.retrievePart(sensitivity.luceneField(), segmentDocId, start, end);
         }
 
         @Override
@@ -96,7 +101,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
             return termsSegmentReaders.get(annotIndex).termsEqual(segmentTermIds, sensitivity);
         }
     }

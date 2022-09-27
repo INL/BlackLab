@@ -36,12 +36,12 @@ public abstract class NfaState {
      * Build a token state.
      *
      * @param luceneField what annotation to match
-     * @param inputTokens what tokens to match
+     * @param inputTokensGlobalTermIds what tokens to match
      * @param nextState what state to go to after a succesful match
      * @return the state object
      */
-    public static NfaState token(String luceneField, Set<String> inputTokens, NfaState nextState) {
-        return new NfaStateToken(luceneField, inputTokens, nextState);
+    public static NfaState token(String luceneField, Set<String> inputTokensGlobalTermIds, NfaState nextState) {
+        return new NfaStateToken(luceneField, inputTokensGlobalTermIds, nextState);
     }
 
     public static NfaState regex(String luceneField, String pattern, NfaState nextState) {

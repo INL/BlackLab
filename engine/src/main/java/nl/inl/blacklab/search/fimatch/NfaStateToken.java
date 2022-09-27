@@ -36,7 +36,7 @@ public class NfaStateToken extends NfaState {
     /**
      * The tokens this state accepts. Only valid after lookupPropertNumber() called.
      */
-    private MutableIntSet inputTokens = null;
+    private MutableIntSet inputTokensGlobalTermIds = null;
 
     /** Do we accept any token? */
     private boolean acceptAnyToken = false;
@@ -72,8 +72,8 @@ public class NfaStateToken extends NfaState {
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
-        int actualToken = fiDoc.getToken(propertyNumber, pos);
-        if (acceptAnyToken && actualToken >= 0 || inputTokens.contains(actualToken)) {
+        int actualTokenGlobalTermId = fiDoc.getTokenGlobalTermId(propertyNumber, pos);
+        if (acceptAnyToken && actualTokenGlobalTermId >= 0 || inputTokensGlobalTermIds.contains(actualTokenGlobalTermId)) {
             if (nextState == null) {
                 // null stands for the match state
                 if (matchEnds != null)
@@ -143,9 +143,9 @@ public class NfaStateToken extends NfaState {
         String annotationName = comp[1];
         propertyNumber = fiAccessor.getAnnotationNumber(annotationName);
         MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
-        inputTokens = new IntHashSet();
+        inputTokensGlobalTermIds = new IntHashSet();
         for (String token : inputTokenStrings) {
-            fiAccessor.getTermNumbers(inputTokens, propertyNumber, token, sensitivity);
+            fiAccessor.getGlobalTermNumbers(inputTokensGlobalTermIds, propertyNumber, token, sensitivity);
         }
         if (nextState != null)
             nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);

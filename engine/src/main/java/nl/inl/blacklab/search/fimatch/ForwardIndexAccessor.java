@@ -34,7 +34,7 @@ public interface ForwardIndexAccessor {
      * @param annotationValue which term string to get term number for
      * @param sensitivity match sensitively or not? (currently both or neither)
      */
-    void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
+    void getGlobalTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
             MatchSensitivity sensitivity);
 
     /**

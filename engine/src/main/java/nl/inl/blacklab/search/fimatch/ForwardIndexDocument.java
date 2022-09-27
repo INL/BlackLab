@@ -15,30 +15,43 @@ public interface ForwardIndexDocument {
     /**
      * Return token at specified position.
      *
+     * NOTE: returns segment-local term id!
+     *
      * @param annotIndex annotation to read
      * @param pos position to read
      * @return token at this position
      */
-    int getToken(int annotIndex, int pos);
+    int getTokenSegmentTermId(int annotIndex, int pos);
+
+    /**
+     * Return token at specified position.
+     *
+     * NOTE: returns global term id!
+     *
+     * @param annotIndex annotation to read
+     * @param pos position to read
+     * @return token at this position
+     */
+    int getTokenGlobalTermId(int annotIndex, int pos);
 
     /**
      * Return string for term id
      * 
      * @param annotIndex annotation for which we want a term string
-     * @param termId term id
+     * @param segmentTermId term id
      * @return corresponding term string
      */
-    String getTermString(int annotIndex, int termId);
+    String getTermString(int annotIndex, int segmentTermId);
 
     /**
      * Are all the specified term ids equal given these sensitivity settings?
      *
      * @param annotIndex annotation we're looking at
-     * @param termId term ids we're comparing
+     * @param segmentTermId term ids we're comparing
      * @param sensitivity whether we're comparing case-/diacritics-sensitively
      * @return true if all are equal, false if not
      */
-    boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity);
+    boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity);
 
     /**
      * Is this position valid in this document?
