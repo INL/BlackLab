@@ -48,6 +48,7 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -421,5 +422,38 @@ public class WebserviceOperations {
         ResultHits resultHits = new ResultHits(params);
         resultHits.finishSearch();
         return resultHits;
+    }
+
+    public static TermFrequencyList getTermFrequencies(SearchCreator params, SearchManager searchMan) {
+        //TODO: use background job?
+
+        BlackLabIndex blIndex = params.blIndex();
+        AnnotatedField cfd = blIndex.mainAnnotatedField();
+        String annotName = params.getAnnotation();
+        Annotation annotation = cfd.annotation(annotName);
+        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
+        AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
+
+        // May be null!
+        Query q = params.hasFilter() ? params.filterQuery() : null;
+        // May also null/empty to retrieve all terms!
+        Set<String> terms = params.getTerms();
+        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
+
+        if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
+            long first = params.getFirstResultToShow();
+            if (first < 0 || first >= tfl.size())
+                first = 0;
+            long number = params.getNumberOfResultsToShow();
+            DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
+            if (number < 0 || number > pageSize.getMax())
+                number = pageSize.getDefaultValue();
+            long last = first + number;
+            if (last > tfl.size())
+                last = tfl.size();
+
+            tfl = tfl.subList(first, last);
+        }
+        return tfl;
     }
 }
