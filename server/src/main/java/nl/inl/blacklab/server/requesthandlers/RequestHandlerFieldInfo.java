@@ -1,11 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collection;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -41,19 +39,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
                     "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
         }
 
-        BlackLabIndex blIndex = blIndex();
-        IndexMetadata indexMetadata = blIndex.metadata();
+        IndexMetadata indexMetadata = blIndex().metadata();
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
-            Collection<String> showValuesFor = params.getListValuesFor();
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
-            if (!fieldDesc.isDummyFieldToStoreLinkedDocuments()) {
-                Map<String, ResultAnnotationInfo> annotInfos = WebserviceOperations.getAnnotInfos(params,
-                        fieldDesc.annotations());
-                DStream.annotatedField(ds, indexName, fieldDesc, annotInfos);
-            } else {
-                // skip this, not really an annotated field, just exists to store linked (metadata) document.
-            }
+            Map<String, ResultAnnotationInfo> annotInfos = WebserviceOperations.getAnnotInfos(params,
+                    fieldDesc.annotations());
+            DStream.annotatedField(ds, indexName, fieldDesc, annotInfos);
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);

@@ -8,8 +8,7 @@ import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 
 /**
- * Get debug info about the servlet and index. Only available in debug mode
- * (BlackLabServer.DEBUG_MODE == true)
+ * Get debug info about the servlet and index. Only available in debug mode.
  */
 public class RequestHandlerDebug extends RequestHandler {
     public RequestHandlerDebug(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,

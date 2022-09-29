@@ -34,10 +34,6 @@ public interface AnnotatedField extends Field {
         return offsetsSensitivity.luceneField();
     }
 
-    default boolean isDummyFieldToStoreLinkedDocuments() {
-        return annotations().isEmpty();
-    }
-
 	default Annotation tagsAnnotation() {
 		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME): null;
 	}

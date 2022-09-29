@@ -218,9 +218,6 @@ public abstract class RequestHandler {
                     }
                     requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
-                } else if (indexName.equals("help")) {
-                    requestHandler = new RequestHandlerBlsHelp(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
                 } else if (indexName.equals("input-formats")) {
                     requestHandler = new RequestHandlerListInputFormats(servlet, request, user, indexName, urlResource,
                             urlPathInfo);

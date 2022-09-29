@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -83,17 +82,13 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .endMap().endEntry();
 
             ds.startEntry("annotatedFields").startMap();
-            // Annotated fields
             for (AnnotatedField field: indexMetadata.annotatedFields()) {
-                if (field.isDummyFieldToStoreLinkedDocuments())
-                    continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
                 ds.startAttrEntry("annotatedField", "name", field.name());
-
-                Collection<String> showValuesFor = params.getListValuesFor();
-                Map<String, ResultAnnotationInfo> annotInfos =
-                        WebserviceOperations.getAnnotInfos(params, field.annotations());
-                DStream.annotatedField(ds, null, field, annotInfos);
-
+                {
+                    Map<String, ResultAnnotationInfo> annotInfos =
+                            WebserviceOperations.getAnnotInfos(params, field.annotations());
+                    DStream.annotatedField(ds, null, field, annotInfos);
+                }
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();

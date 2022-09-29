@@ -33,15 +33,16 @@ public class RequestHandlerDocContents extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream dso) throws BlsException, InvalidQuery {
+    public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Find the document pid
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-
         ResultDocContents resultDocContents = ResultDocContents.get(params, docPid);
+        dstreamDocContents((DataStreamXml)ds, resultDocContents);
+        return HTTP_OK;
+    }
 
-        DataStreamXml ds = (DataStreamXml)dso;
-
+    private void dstreamDocContents(DataStreamXml ds, ResultDocContents resultDocContents) {
         if (resultDocContents.needsXmlDeclaration()) {
             // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
             ds.outputProlog();
@@ -69,7 +70,6 @@ public class RequestHandlerDocContents extends RequestHandler {
             // Close the root el we opened
             ds.closeEl();
         }
-        return HTTP_OK;
     }
 
     @Override

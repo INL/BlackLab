@@ -80,7 +80,6 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
         DStream.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
-        ds.entry("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
         if (debugMode) {
             ds.startEntry("cacheStatus");
             ds.value(searchMan.getBlackLabCache().getStatus());
