@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib;
+package nl.inl.blacklab.server.lib.requests;
 
 import java.util.Collection;
 import java.util.Map;

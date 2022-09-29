@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.lib.requests;
 
 import java.text.Collator;
 import java.util.Arrays;
@@ -11,7 +11,6 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
 
 public class TestValueSort {
 

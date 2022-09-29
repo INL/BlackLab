@@ -22,7 +22,8 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Get information about the structure of an index.
@@ -61,7 +62,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("contentViewable", indexMetadata.contentViewable())
                     .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            DataStreamUtil.indexProgress(ds, index, indexMetadata, status);
+            DStream.indexProgress(ds, index, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());
             ds.entry("documentCount", indexMetadata.documentCount());
 
@@ -88,8 +89,11 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
                 ds.startAttrEntry("annotatedField", "name", field.name());
 
-                Collection<String> setShowValuesFor = params.getListValuesFor();
-                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor);
+                Collection<String> showValuesFor = params.getListValuesFor();
+                Map<String, ResultAnnotationInfo> annotInfos =
+                        WebserviceOperations.getAnnotInfos(params, field.annotations());
+                DStream.annotatedField(ds, null, field, blIndex,
+                        showValuesFor, annotInfos);
 
                 ds.endAttrEntry();
             }
@@ -101,12 +105,12 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             for (MetadataField f: fields) {
                 ds.startAttrEntry("metadataField", "name", f.name());
                 Map<String, Integer> fieldValuesInOrder = WebserviceOperations.getFieldValuesInOrder(f);
-                DataStreamUtil.metadataField(ds, null, f, true, fieldValuesInOrder);
+                DStream.metadataField(ds, null, f, true, fieldValuesInOrder);
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
 
-            DataStreamUtil.metadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
+            DStream.metadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
 
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: indexMetadata.annotatedFields()) {

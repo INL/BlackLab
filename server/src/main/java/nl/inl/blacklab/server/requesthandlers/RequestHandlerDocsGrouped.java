@@ -21,7 +21,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Request handler for grouped doc results.
@@ -77,18 +77,16 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         DocResults subcorpus = null;
         CorpusSize subcorpusSize = null;
         boolean hasPattern = params.hasPattern();
-        if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-            metadataGroupProperties = groups.groupCriteria();
-            subcorpus = params.subcorpus().execute();
-            subcorpusSize = subcorpus.subcorpusSize();
-        }
+        metadataGroupProperties = groups.groupCriteria();
+        subcorpus = params.subcorpus().execute();
+        subcorpusSize = subcorpus.subcorpusSize();
 
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
+        DStream.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
         if (hitsStats == null)
-            DataStreamUtil.numberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
+            DStream.numberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else
-            DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+            DStream.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 
@@ -123,14 +121,12 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
             }
             ds.endList().endEntry();
 
-            if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-                ds.entry("numberOfTokens", group.totalTokens());
-                if (hasPattern) {
-                    // Find size of corresponding subcorpus group
-                    PropertyValue docPropValues = group.identity();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
-                    DataStreamUtil.subcorpusSize(ds, subcorpusSize);
-                }
+            ds.entry("numberOfTokens", group.totalTokens());
+            if (hasPattern) {
+                // Find size of corresponding subcorpus group
+                PropertyValue docPropValues = group.identity();
+                subcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
+                DStream.subcorpusSize(ds, subcorpusSize);
             }
             ds.endMap().endItem();
         }

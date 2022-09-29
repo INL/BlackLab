@@ -52,6 +52,23 @@ public enum AnnotationSensitivities {
         }
     }
 
+    public String stringValueForResponse() {
+        switch (this) {
+        case DEFAULT:
+            return "DEFAULT";
+        case ONLY_SENSITIVE:
+            return "ONLY_SENSITIVE";
+        case ONLY_INSENSITIVE:
+            return "ONLY_INSENSITIVE";
+        case SENSITIVE_AND_INSENSITIVE:
+            return "SENSITIVE_AND_INSENSITIVE";
+        case CASE_AND_DIACRITICS_SEPARATE:
+            return "CASE_AND_DIACRITICS_SEPARATE";
+        default:
+            throw new IllegalArgumentException("Unknown AnnotationSensitivities: " + this);
+        }
+    }
+
     @Override
     public String toString() {
         // toString() is informative, not authoritative, but let's return

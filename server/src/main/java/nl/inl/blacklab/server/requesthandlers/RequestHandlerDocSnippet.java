@@ -18,7 +18,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
@@ -76,7 +76,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         }
         boolean origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
         Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
-        DataStreamUtil.hitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
+        DStream.hitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
                 WebserviceOperations.getAnnotationsToWrite(blIndex, params));
         return HTTP_OK;
     }

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib;
+package nl.inl.blacklab.server.lib.requests;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +19,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
@@ -26,6 +27,19 @@ import nl.inl.blacklab.server.util.BlsUtils;
  */
 public class ResultDocContents {
     static final Logger logger = LogManager.getLogger(ResultDocContents.class);
+
+    /**
+     * Get the requested (partial) contents of a document
+     *
+     * TODO: get rid of separate docPid parameter, it shouldn't matter if it was part of the URL or not
+     *
+     * @param params search parameters
+     * @param docPid docpid (separate because it's part of URL...)
+     * @return
+     */
+    public static ResultDocContents get(SearchCreator params, String docPid) throws InvalidQuery {
+        return new ResultDocContents(params, docPid);
+    }
 
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +

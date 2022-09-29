@@ -55,7 +55,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
                     ds.entry("description", description);
                     ds.entry("status", status);
 
-                    DataStreamUtil.indexProgress(ds, index, indexMetadata, status);
+                    DStream.indexProgress(ds, index, indexMetadata, status);
                     ds.entry("timeModified", indexMetadata.timeModified());
                     ds.entry("tokenCount", indexMetadata.tokenCount());
 
@@ -70,7 +70,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
         }
         ds.endMap().endEntry();
 
-        DataStreamUtil.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        DStream.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
 
         ds.entry("helpPageUrl", servlet.getServletContext().getContextPath() + "/help");
         if (debugMode) {

@@ -9,10 +9,6 @@ import java.util.concurrent.ExecutionException;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.BooleanQuery.Builder;
-import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -35,19 +31,16 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.ResultDocInfo;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 import nl.inl.util.BlockTimer;
 
 /**
  * Request handler for grouped hit results.
  */
 public class RequestHandlerHitsGrouped extends RequestHandler {
-
-    public static final boolean INCLUDE_RELATIVE_FREQ = true;
 
     public RequestHandlerHitsGrouped(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -80,23 +73,18 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 : requestedWindowSize;
         WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
-        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
+        DStream.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
         ResultsStats hitsStats = groups.hitsStats();
         ResultsStats docsStats = groups.docsStats();
         if (docsStats == null)
             docsStats = params.docsCount().execute();
 
         // The list of groups found
-        DocProperty metadataGroupProperties = null;
-        DocResults subcorpus = null;
-        CorpusSize subcorpusSize = null;
-        if (INCLUDE_RELATIVE_FREQ) {
-            metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-            subcorpus = params.subcorpus().execute();
-            subcorpusSize = subcorpus.subcorpusSize();
-        }
+        DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
+        DocResults subcorpus = params.subcorpus().execute();
+        CorpusSize subcorpusSize = subcorpus.subcorpusSize();
 
-        DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+        DStream.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
         ds.endMap().endEntry();
 
         /* Gather group values per property:
@@ -116,10 +104,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 PropertyValue id = group.identity();
                 List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : List.of(id);
 
-                if (INCLUDE_RELATIVE_FREQ && metadataGroupProperties != null) {
+                if (metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
-                    subcorpusSize = findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
+                    subcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
 //                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
                 }
 
@@ -143,11 +131,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 }
                 ds.endList().endEntry();
 
-                if (INCLUDE_RELATIVE_FREQ) {
-                    ds.entry("numberOfDocs", numberOfDocsInGroup);
-                    if (metadataGroupProperties != null) {
-                        DataStreamUtil.subcorpusSize(ds, subcorpusSize);
-                    }
+                ds.entry("numberOfDocs", numberOfDocsInGroup);
+                if (metadataGroupProperties != null) {
+                    DStream.subcorpusSize(ds, subcorpusSize);
                 }
 
                 if (params.includeGroupContents()) {
@@ -156,7 +142,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
                     Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(blIndex(), hitsInGroup,
                             luceneDocs);
-                    DataStreamUtil.hits(ds, params, hitsInGroup, concordanceContext, docIdToPid);
+                    DStream.hits(ds, params, hitsInGroup, concordanceContext, docIdToPid);
                 }
 
                 ds.endMap().endItem();
@@ -168,28 +154,11 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             Collection<MetadataField> meatadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
             Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(blIndex(), luceneDocs,
                     meatadataToWrite);
-            DataStreamUtil.documentInfos(ds, docInfos);
+            DStream.documentInfos(ds, docInfos);
         }
         ds.endMap();
 
         return HTTP_OK;
     }
 
-    static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
-        if (!property.canConstructQuery(searchParam.blIndex(), value))
-            return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
-        // Construct a query that matches this propery value
-        Query query = property.query(searchParam.blIndex(), value); // analyzer....!
-        if (query == null) {
-            query = metadataFilterQuery;
-        } else {
-            // Combine with subcorpus query
-            Builder builder = new BooleanQuery.Builder();
-            builder.add(metadataFilterQuery, Occur.MUST);
-            builder.add(query, Occur.MUST);
-            query = builder.build();
-        }
-        // Determine number of tokens in this subcorpus
-        return searchParam.blIndex().queryDocuments(query).subcorpusSize(true);
-    }
 }

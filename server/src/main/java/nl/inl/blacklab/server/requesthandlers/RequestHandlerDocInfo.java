@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.ResultDocInfo;
+import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Get information about a document.
@@ -29,7 +29,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
-        ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex(), docPid, metadataToWrite);
+        ResultDocInfo docInfo = ResultDocInfo.get(blIndex(), docPid, null, metadataToWrite);
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
@@ -40,13 +40,13 @@ public class RequestHandlerDocInfo extends RequestHandler {
         {
             ds.startEntry("docInfo");
             {
-                DataStreamUtil.documentInfo(ds, docInfo);
+                DStream.documentInfo(ds, docInfo);
             }
             ds.endEntry();
 
 
-            DataStreamUtil.metadataGroupInfo(ds, metadataFieldGroups);
-            DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
+            DStream.metadataGroupInfo(ds, metadataFieldGroups);
+            DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
         }
         ds.endMap();
         return HTTP_OK;

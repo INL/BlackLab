@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib;
+package nl.inl.blacklab.server.lib.requests;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -17,6 +17,11 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocInfo {
+
+    public static ResultDocInfo get(BlackLabIndex index, String docPid, Document document,
+            Collection<MetadataField> metadataToWrite) {
+        return new ResultDocInfo(index, docPid, document, metadataToWrite);
+    }
 
     private final BlackLabIndex index;
 

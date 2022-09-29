@@ -31,10 +31,10 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.lib.ResultDocInfo;
+import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * List documents, search for documents matching criteria.
@@ -176,18 +176,18 @@ public class RequestHandlerDocs extends RequestHandler {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        DataStreamUtil.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
+        DStream.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
-            DataStreamUtil.numberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
+            DStream.numberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
         else
-            DataStreamUtil.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
+            DStream.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
         if (includeTokenCount)
             ds.entry("tokensInMatchingDocuments", totalTokens);
 
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex);
-        DataStreamUtil.metadataFieldInfo(ds, docFields, metaDisplayNames);
+        DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
 
         ds.endMap().endEntry();
 
@@ -197,7 +197,7 @@ public class RequestHandlerDocs extends RequestHandler {
             // Find pid
             Document document = blIndex().luceneDoc(result.docId());
             String pid = WebserviceOperations.getDocumentPid(blIndex, result.identity().value(), document);
-            ResultDocInfo docInfo = WebserviceOperations.getDocInfo(blIndex, document, metadataFieldsToList);
+            ResultDocInfo docInfo = ResultDocInfo.get(blIndex, null, document, metadataFieldsToList);
 
             ds.startItem("doc").startMap();
 
@@ -209,7 +209,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            DataStreamUtil.documentInfo(ds, docInfo);
+            DStream.documentInfo(ds, docInfo);
             ds.endEntry();
 
             // Snippets
@@ -251,7 +251,7 @@ public class RequestHandlerDocs extends RequestHandler {
             ds.startEntry("facets");
 
             Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
-            DataStreamUtil.facets(ds, WebserviceOperations.getFacetInfo(counts));
+            DStream.facets(ds, WebserviceOperations.getFacetInfo(counts));
             ds.endEntry();
         }
         ds.endMap();

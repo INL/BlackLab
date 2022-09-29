@@ -15,7 +15,10 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
+import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
@@ -36,18 +39,19 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.ResultDocInfo;
+import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
+import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceOperations;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
  */
-public class DataStreamUtil {
+public class DStream {
 
-    private DataStreamUtil() {}
+    private DStream() {}
 
     /**
      * Add info about the current logged-in user (if any) to the response.
@@ -496,4 +500,62 @@ public class DataStreamUtil {
         ds.endMap();
     }
 
+    public static void annotatedField(DataStream ds, String indexName,
+            AnnotatedField fieldDesc, BlackLabIndex index, Collection<String> showValuesFor,
+            Map<String, ResultAnnotationInfo> annotInfos) {
+        ds.startMap();
+        if (indexName != null)
+            ds.entry("indexName", indexName);
+        Annotations annotations = fieldDesc.annotations();
+        ds
+                .entry("fieldName", fieldDesc.name())
+                .entry("isAnnotatedField", true)
+                .entry("displayName", fieldDesc.displayName())
+                .entry("description", fieldDesc.description())
+                .entry("hasContentStore", fieldDesc.hasContentStore())
+                .entry("hasXmlTags", fieldDesc.hasXmlTags());
+        ds.entry("mainAnnotation", annotations.main().name());
+        ds.startEntry("displayOrder").startList();
+        annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
+        ds.endList().endEntry();
+
+        ds.startEntry("annotations").startMap();
+        for (Map.Entry<String, ResultAnnotationInfo> e: annotInfos.entrySet()) {
+            ds.startAttrEntry("annotation", "name", e.getKey()).startMap();
+            ResultAnnotationInfo ai = e.getValue();
+            Annotation annotation = ai.getAnnotation();
+            AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
+            String offsetsAlternative = offsetsSensitivity == null ? "" :
+                    offsetsSensitivity.sensitivity().luceneFieldSuffix();
+            ds
+                    .entry("displayName", annotation.displayName())
+                    .entry("description", annotation.description())
+                    .entry("uiType", annotation.uiType())
+                    .entry("hasForwardIndex", annotation.hasForwardIndex())
+                    .entry("sensitivity", annotation.sensitivitySetting().stringValueForResponse())
+                    .entry("offsetsAlternative", offsetsAlternative)
+                    .entry("isInternal", annotation.isInternal());
+            if (ai.isShowValues()) {
+                ds.startEntry("values").startList();
+                for (String term: ai.getTerms()) {
+                    ds.item("value", term);
+                }
+                ds.endList().endEntry();
+                ds.entry("valueListComplete", ai.isValueListComplete());
+            }
+            if (!annotation.subannotationNames().isEmpty()) {
+                ds.startEntry("subannotations").startList();
+                for (String name: annotation.subannotationNames()) {
+                    ds.item("subannotation", name);
+                }
+                ds.endList().endEntry();
+            }
+            if (annotation.isSubannotation()) {
+                ds.entry("parentAnnotation", annotation.parentAnnotation().name());
+            }
+            ds.endMap().endAttrEntry();
+        }
+        ds.endMap().endEntry();
+        ds.endMap();
+    }
 }
