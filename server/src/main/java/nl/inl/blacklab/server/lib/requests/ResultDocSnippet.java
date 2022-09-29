@@ -15,7 +15,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.SearchCreatorImpl;
-import nl.inl.blacklab.server.requesthandlers.RequestHandlerDocSnippet;
+import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocSnippet {
@@ -25,15 +25,15 @@ public class ResultDocSnippet {
 
     private Hits hits;
 
-    private final boolean isHit;
+    private boolean isHit;
 
     private final ContextSize wordsAroundHit;
 
     private final boolean origContent;
 
-    private final List<Annotation> annotsToWrite
+    private final List<Annotation> annotsToWrite;
 
-    public ResultDocSnippet(SearchCreatorImpl params) {
+    public ResultDocSnippet(SearchCreatorImpl params, SearchManager searchMan) {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();
@@ -48,15 +48,15 @@ public class ResultDocSnippet {
 
         int start, end;
         isHit = false;
-        Optional<Integer> hitStart = RequestHandlerDocSnippet.this.params.getHitStart();
+        Optional<Integer> hitStart = params.getHitStart();
         if (hitStart.isPresent()) {
             start = hitStart.get();
-            end = RequestHandlerDocSnippet.this.params.getHitEnd();
-            wordsAroundHit = ContextSize.get(RequestHandlerDocSnippet.this.params.getWordsAroundHit());
+            end = params.getHitEnd();
+            wordsAroundHit = ContextSize.get(params.getWordsAroundHit());
             isHit = true;
         } else {
-            start = RequestHandlerDocSnippet.this.params.getWordStart();
-            end = RequestHandlerDocSnippet.this.params.getWordEnd();
+            start = params.getWordStart();
+            end = params.getWordEnd();
             wordsAroundHit = ContextSize.hitOnly();
         }
 

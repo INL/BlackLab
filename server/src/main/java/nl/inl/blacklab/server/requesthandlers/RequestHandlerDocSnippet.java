@@ -37,7 +37,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
         params.setDocPid(docPid);
 
-        ResultDocSnippet result = new ResultDocSnippet(params);
+        ResultDocSnippet result = new ResultDocSnippet(params, searchMan);
         dstreamHitOrFragmentInfo(ds, result);
         return HTTP_OK;
     }

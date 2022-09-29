@@ -46,14 +46,16 @@ public class RequestHandlerServerInfo extends RequestHandler {
             String displayName = indexMetadata.custom().get("displayName", "");
             String description = indexMetadata.custom().get("description", "");
             IndexStatus status;
-            long filesProcessed, docsDone, tokensProcessed;
+            long filesProcessed = 0, docsDone = 0, tokensProcessed = 0;
             try {
                 synchronized (index) {
                     status = index.getStatus();
                     IndexListener listener = index.getIndexerListener();
-                    filesProcessed = listener.getFilesProcessed();
-                    docsDone = listener.getDocsDone();
-                    tokensProcessed = listener.getTokensProcessed();
+                    if (listener != null) {
+                        filesProcessed = listener.getFilesProcessed();
+                        docsDone = listener.getDocsDone();
+                        tokensProcessed = listener.getTokensProcessed();
+                    }
                 }
 
                 ds.startAttrEntry("index", "name", id);

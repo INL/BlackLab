@@ -58,9 +58,14 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("contentViewable", indexMetadata.contentViewable())
                     .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            long files = indexerListener.getFilesProcessed();
-            long docs = indexerListener.getDocsDone();
-            long tokens = indexerListener.getTokensProcessed();
+            long files = 0;
+            long docs = 0;
+            long tokens = 0;
+            if (indexerListener != null) {
+                files = indexerListener.getFilesProcessed();
+                docs = indexerListener.getDocsDone();
+                tokens = indexerListener.getTokensProcessed();
+            }
             DStream.indexProgress(ds, files, docs, tokens, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());
             ds.entry("documentCount", indexMetadata.documentCount());
