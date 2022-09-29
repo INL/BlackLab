@@ -144,7 +144,7 @@ This file will have an extension of `.blcs.valueindex`.
 - For each document:
   * For each field with a content store:
     - For each block:
-      * byte offset AFTER this block in the blocks file, relative to base offset (int)\
+      * byte offset AFTER this block in the blocks file, relative to base offset \[gotten from valueindex file] (int)\
         (determine block size by subtracting this offset from the previous int in the file, except for the first block, where the offset after the block is equal to the length)
 
 The character offset of block `i` is obviously `i * CHARS_PER_BLOCK`, so the character at offset `j` is stored in the block with index `Math.floor(j / CHARS_PER_BLOCK)`, at offset `j % CHARS_PER_BLOCK`)

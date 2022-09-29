@@ -339,8 +339,10 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
                     // Determine what blocks we'll need
                     final int firstBlockNeeded = 0;
-                    final int lastBlockNeeded = valueLengthChar / blockSizeChars;
-                    final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
+                    final int lastBlockNeeded = valueLengthChar / blockSizeChars; // implicitly does a floor()
+                    // add one block for spillover discarded by the floor().
+                    // NOTE: don't add a spillover block if the document fits exactly in the block size.
+                    final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + ((valueLengthChar % blockSizeChars) == 0 ? 0 : 1);
 
                     // Determine where our first block starts, and position blockindex file
                     // to start reading subsequent after-block positions
@@ -602,6 +604,20 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 }
                 return results;
             }
+
+//            private void printBlockInfo(int docId, String field) {
+//                try {
+//                    // Find the document
+//                    docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);
+//                    int valueIndexOffset = docIndexFile.readInt();
+//                    byte numberOfContentStoreFields = docIndexFile.readByte();
+//
+//
+//
+//                } catch (IOException e) {
+//                    //
+//                }
+//            }
         };
     }
 }
