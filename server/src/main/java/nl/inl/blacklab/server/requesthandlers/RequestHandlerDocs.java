@@ -88,7 +88,7 @@ public class RequestHandlerDocs extends RequestHandler {
         try {
             groups = docGroupFuture.get();
         } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
+            throw WebserviceOperations.translateSearchException(e);
         }
 
         PropertyValue viewGroupVal = null;
@@ -140,7 +140,7 @@ public class RequestHandlerDocs extends RequestHandler {
             window = searchWindow.get();
             totalDocResults = total.get();
         } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
+            throw WebserviceOperations.translateSearchException(e);
         }
 
         // If "waitfortotal=yes" was passed, block until all results have been fetched

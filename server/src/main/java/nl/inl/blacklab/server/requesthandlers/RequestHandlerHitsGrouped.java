@@ -64,7 +64,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
             // Search is done; construct the results object
             groups = search.get();
         } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
+            throw WebserviceOperations.translateSearchException(e);
         }
 
         ds.startMap();

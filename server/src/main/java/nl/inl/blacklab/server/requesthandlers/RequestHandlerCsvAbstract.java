@@ -92,7 +92,7 @@ public abstract class RequestHandlerCsvAbstract extends RequestHandler {
      * @param groups (optional) if grouped
      * @param subcorpusSize (optional) if available
      */
-    protected void addSummaryCsvHits(CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
+    protected static void addSummaryCsvHits(SearchCreator params, CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
         addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
         writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
         writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());

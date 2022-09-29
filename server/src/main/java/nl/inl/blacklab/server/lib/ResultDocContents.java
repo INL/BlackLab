@@ -110,15 +110,15 @@ public class ResultDocContents {
             }
         }
 
-        BlackLabIndex blIndex = params.blIndex();
-        int docId = BlsUtils.getDocIdFromPid(blIndex, docPid);
-        if (!blIndex.docExists(docId))
+        BlackLabIndex index = params.blIndex();
+        int docId = BlsUtils.getDocIdFromPid(index, docPid);
+        if (!index.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-        Document document = blIndex.luceneDoc(docId);
+        Document document = index.luceneDoc(docId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.",
                     "INTERR_FETCHING_DOCUMENT_CONTENTS");
-        if (!blIndex.mayView(document))
+        if (!index.mayView(document))
             throw new NotAuthorized(
                     "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://inl.github.io/BlackLab/how-to-configure-indexing.html.");
 
@@ -132,11 +132,11 @@ public class ResultDocContents {
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
         if (hits == null) {
-            hitsInDoc = Hits.empty(QueryInfo.create(blIndex));
+            hitsInDoc = Hits.empty(QueryInfo.create(index));
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }
-        content = DocUtil.highlightContent(params.blIndex(), docId, hitsInDoc, startAtWord, endAtWord);
+        content = DocUtil.highlightContent(index, docId, hitsInDoc, startAtWord, endAtWord);
 
         Matcher m = XML_DECL.matcher(content);
         boolean hasXmlDeclaration = m.find();
@@ -162,8 +162,8 @@ public class ResultDocContents {
             }
             // here we may need to include namespace declarations
             // retrieve the first bit of the document, try to find namespaces
-            String root = DocUtil.contentsByCharPos(params.blIndex(), docId, document,
-                    params.blIndex().mainAnnotatedField(), 0, 1024);
+            String root = DocUtil.contentsByCharPos(index, docId, document,
+                    index.mainAnnotatedField(), 0, 1024);
             m = NAMED_NAMESPACE.matcher(root);
             namespaces = new HashSet<>();
             while (m.find()) {

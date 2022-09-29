@@ -114,8 +114,8 @@ public class BlackLabServerParams implements WebserviceParams {
         defaultValues.put("listvalues", "");
         defaultValues.put("listmetadatavalues", "");
         defaultValues.put("subprops", "");
-        defaultValues.put("csvsummary", "no");
-        defaultValues.put("csvsepline", "no");
+        defaultValues.put("csvsummary", "yes");
+        defaultValues.put("csvsepline", "yes");
         defaultValues.put("includegroupcontents", "no");
         defaultValues.put("omitemptycaptures", "no");
     }
@@ -412,12 +412,12 @@ public class BlackLabServerParams implements WebserviceParams {
 
     @Override
     public boolean getCsvIncludeSummary() {
-        return parse(getString("csvsummary"), false);
+        return parse(getString("csvsummary"), true);
     }
 
     @Override
     public boolean getCsvDeclareSeparator() {
-        return parse(getString("csvsepline"), false);
+        return parse(getString("csvsepline"), true);
     }
 
     @Override

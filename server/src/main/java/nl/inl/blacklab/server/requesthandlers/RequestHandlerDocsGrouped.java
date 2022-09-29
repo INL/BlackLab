@@ -21,6 +21,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperations;
+
 /**
  * Request handler for grouped doc results.
  */
@@ -45,7 +47,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         try {
             groups = groupSearch.get();
         } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
+            throw WebserviceOperations.translateSearchException(e);
         }
 
         // Search is done; construct the results object

@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -18,8 +17,8 @@ import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -30,14 +29,13 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamPlain;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperations;
 
@@ -45,107 +43,13 @@ import nl.inl.blacklab.server.lib.WebserviceOperations;
  * Request handler for hit results.
  */
 public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
-    private static class Result {
-        public final Hits hits;
-        public final HitGroups groups;
-        public final DocResults subcorpusResults;
-        public final boolean isViewGroup;
-
-        public Result(Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
-            super();
-            this.hits = hits;
-            this.groups = groups;
-            this.subcorpusResults = subcorpusResults;
-            this.isViewGroup = isViewGroup;
-        }
-    }
 
     public RequestHandlerHitsCsv(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    /**
-     * Get the hits (and the groups from which they were extracted - if applicable)
-     * or the groups for this request. Exceptions cleanly mapping to http error
-     * responses are thrown if any part of the request cannot be fulfilled. Sorting
-     * is already applied to the hits.
-     *
-     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
-     *         within a group, Groups if looking at grouped hits.
-     */
-    // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    private Result getHits() throws BlsException, InvalidQuery {
-        // Might be null
-        String groupBy = params.getGroupProps().orElse(null);
-        String viewGroup = params.getViewGroup().orElse(null);
-        String sortBy = params.getSortProps().orElse(null);
-
-        SearchCacheEntry<?> cacheEntry;
-        Hits hits;
-        HitGroups groups = null;
-        DocResults subcorpus = params.subcorpus().execute();
-
-        try {
-            if (!StringUtils.isEmpty(groupBy)) {
-                hits = params.hitsSample().execute();
-                groups = params.hitsGroupedWithStoredHits().execute();
-
-                if (viewGroup != null) {
-                    PropertyValue groupId = PropertyValue.deserialize(blIndex(), blIndex().mainAnnotatedField(), viewGroup);
-                    if (groupId == null)
-                        throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
-                    HitGroup group = groups.get(groupId);
-                    if (group == null)
-                        throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
-
-                    hits = group.storedResults();
-
-                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-                    if (sortBy != null) {
-                        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
-                        if (sortProp == null)
-                            throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-                        hits = hits.sort(sortProp);
-                    }
-                }
-            } else {
-                // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
-                cacheEntry = params.hitsSample().executeAsync();
-                hits = (Hits) cacheEntry.get();
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
-
-        // apply window settings
-        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
-        // The max for CSV exports is also different from the default pagesize maximum.
-        if (hits != null) {
-            long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
-            if (!hits.hitsStats().processedAtLeast(first))
-                first = 0;
-
-
-            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
-            if (params.optNumberOfResultsToShow().isPresent()) {
-                long requested = params.optNumberOfResultsToShow().get();
-                if (number >= 0 || requested >= 0) { // clamp
-                    number = Math.min(requested, number);
-                }
-            }
-
-            if (number >= 0)
-                hits = hits.window(first, number);
-        }
-
-        return new Result(hits, groups, subcorpus, viewGroup != null);
-    }
-
-    private void writeGroups(Hits inputHitsForGroups, HitGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
+    private static void hitsCsvWriteGroups(SearchCreator params, Hits inputHitsForGroups, HitGroups groups, DocResults subcorpusResults, DataStreamPlain ds) throws BlsException {
         DocProperty metadataGroupProperties = null;
         if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
             metadataGroupProperties = groups.groupCriteria().docPropsOnly();
@@ -162,9 +66,9 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
                 row.add("subcorpusSize.tokens");
             }
 
-            CSVPrinter printer = createHeader(row);
-            if (this.includeSearchParameters()) {
-                addSummaryCsvHits(printer, row.size(), inputHitsForGroups, groups, subcorpusResults.subcorpusSize());
+            CSVPrinter printer = hitsCsvCreateHeader(row, params.getCsvDeclareSeparator());
+            if (params.getCsvIncludeSummary()) {
+                addSummaryCsvHits(params, printer, row.size(), inputHitsForGroups, groups, subcorpusResults.subcorpusSize());
             }
 
             // write the groups
@@ -194,23 +98,13 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
         }
     }
 
-    private CSVPrinter createHeader(List<String> row) throws IOException {
+    private static CSVPrinter hitsCsvCreateHeader(List<String> row, boolean declareSeparator) throws IOException {
         // Create the header, then explicitly declare the separator, as excel normally uses a locale-dependent CSV-separator...
         CSVFormat format = CSVFormat.EXCEL.withHeader(row.toArray(new String[0]));
-        return format.print(new StringBuilder(declareSeparator() ? "sep=,\r\n" : ""));
+        return format.print(new StringBuilder(declareSeparator ? "sep=,\r\n" : ""));
     }
 
-    @SuppressWarnings("static-method")
-    private boolean includeSearchParameters() {
-        return true; //return searchParam.getBoolean("csvsummary");
-    }
-
-    @SuppressWarnings("static-method")
-    private boolean declareSeparator() {
-        return true; //return searchParam.getBoolean("csvsepline");
-    }
-
-    private static void writeHit(
+    private static void hitsCsvWriteHit(
         Kwic kwic,
         Document doc,
         Annotation mainTokenProperty,
@@ -244,14 +138,16 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             row.add(csvEscape(doc.getValues(field.name())));
     }
 
-    private void writeHits(
+    private static void hitsCsvWriteHits(
+        SearchCreator params,
         Hits hits,
         HitGroups groups,
         List<Annotation> annotationsToWrite,
         DocResults subcorpusResults,
         DataStreamPlain ds
     ) throws BlsException {
-        final Annotation mainTokenProperty = blIndex().mainAnnotatedField().mainAnnotation();
+        BlackLabIndex index = params.blIndex();
+        final Annotation mainTokenProperty = index.mainAnnotatedField().mainAnnotation();
         try {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
@@ -264,16 +160,16 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             // normal hit response does
             // Since it results in a MASSIVE amount of repeated data.
             List<MetadataField> metadataFieldsToWrite = !params.getListMetadataValuesFor().isEmpty() ?
-                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(blIndex(), params)) :
+                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(index, params)) :
                     Collections.emptyList();
             for (MetadataField f : metadataFieldsToWrite) {
                  row.add(f.name());
             }
 
-            CSVPrinter printer = createHeader(row);
-            if (includeSearchParameters()) {
+            CSVPrinter printer = hitsCsvCreateHeader(row, params.getCsvDeclareSeparator());
+            if (params.getCsvIncludeSummary()) {
                 hits.hitsStats().countedTotal(); // block for a bit
-                addSummaryCsvHits(printer, row.size(), hits, groups, subcorpusResults.subcorpusSize());
+                addSummaryCsvHits(params, printer, row.size(), hits, groups, subcorpusResults.subcorpusSize());
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
@@ -281,10 +177,11 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
             for (Hit hit : hits) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
-                    doc = blIndex().luceneDoc(hit.doc());
+                    doc = index.luceneDoc(hit.doc());
                     luceneDocs.put(hit.doc(), doc);
                 }
-                writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, WebserviceOperations.getDocumentPid(blIndex(), hit.doc(), doc), metadataFieldsToWrite, row);
+                hitsCsvWriteHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, WebserviceOperations.getDocumentPid(
+                        index, hit.doc(), doc), metadataFieldsToWrite, row);
                 printer.printRecord(row);
             }
             printer.flush();
@@ -296,12 +193,14 @@ public class RequestHandlerHitsCsv extends RequestHandlerCsvAbstract {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        Result result = getHits();
-        if (result.groups != null && !result.isViewGroup)
-            writeGroups(result.hits, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
-        else
-            writeHits(result.hits, result.groups, WebserviceOperations.getAnnotationsToWrite(blIndex(), params), result.subcorpusResults,
+        WebserviceOperations.ResultHitsCsv result = WebserviceOperations.getHitsCsv(params, searchMan);
+        if (result.groups != null && !result.isViewGroup) {
+            hitsCsvWriteGroups(result.hits, result.groups, result.subcorpusResults, (DataStreamPlain) ds);
+        } else {
+            hitsCsvWriteHits(params, result.hits, result.groups, WebserviceOperations.getAnnotationsToWrite(blIndex(), params),
+                    result.subcorpusResults,
                     (DataStreamPlain) ds);
+        }
 
         return HTTP_OK;
     }

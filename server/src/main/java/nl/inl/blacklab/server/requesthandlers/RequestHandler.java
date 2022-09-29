@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
@@ -22,10 +21,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -403,22 +400,6 @@ public abstract class RequestHandler {
 
     public User getUser() {
         return user;
-    }
-
-    protected static BlsException translateSearchException(Exception e) {
-        if (e instanceof InterruptedException) {
-            throw new InterruptedSearch(e);
-        } else {
-            try {
-                throw e.getCause();
-            } catch (BlackLabException e1) {
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
-            } catch (BlsException e1) {
-                return e1;
-            } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
-            }
-        }
     }
 
     @SuppressWarnings("unused")

@@ -149,7 +149,7 @@ public class RequestHandlerHits extends RequestHandler {
                 }
             } catch (InterruptedException | ExecutionException | InvalidQuery e) {
                 logger.debug("Searching threw an exception", e);
-                throw RequestHandler.translateSearchException(e);
+                throw WebserviceOperations.translateSearchException(e);
             }
         }
 
@@ -316,7 +316,7 @@ public class RequestHandlerHits extends RequestHandler {
                 try {
                     window = cacheEntryWindow.get(); // blocks until requested hits window is available
                 } catch (InterruptedException | ExecutionException e) {
-                    throw RequestHandler.translateSearchException(e);
+                    throw WebserviceOperations.translateSearchException(e);
                 }
             } else {
                 // We're viewing a single group in a grouping result. Just get the hits window directly.

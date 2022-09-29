@@ -15,14 +15,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -39,9 +45,15 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
@@ -373,5 +385,115 @@ public class WebserviceOperations {
             });
         }
         return terms;
+    }
+
+    public static BlsException translateSearchException(Exception e) {
+        if (e instanceof InterruptedException) {
+            throw new InterruptedSearch(e);
+        } else {
+            try {
+                throw e.getCause();
+            } catch (BlackLabException e1) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
+            } catch (BlsException e1) {
+                return e1;
+            } catch (Throwable e1) {
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
+            }
+        }
+    }
+
+    /**
+     * Get the hits (and the groups from which they were extracted - if applicable)
+     * or the groups for this request. Exceptions cleanly mapping to http error
+     * responses are thrown if any part of the request cannot be fulfilled. Sorting
+     * is already applied to the hits.
+     *
+     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
+     *         within a group, Groups if looking at grouped hits.
+     */
+    // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
+    public static ResultHitsCsv getHitsCsv(SearchCreator params, SearchManager searchMan) throws BlsException, InvalidQuery {
+        // Might be null
+        String groupBy = params.getGroupProps().orElse(null);
+        String viewGroup = params.getViewGroup().orElse(null);
+        String sortBy = params.getSortProps().orElse(null);
+
+        SearchCacheEntry<?> cacheEntry;
+        Hits hits;
+        HitGroups groups = null;
+        DocResults subcorpus = params.subcorpus().execute();
+
+        try {
+            if (!StringUtils.isEmpty(groupBy)) {
+                hits = params.hitsSample().execute();
+                groups = params.hitsGroupedWithStoredHits().execute();
+
+                if (viewGroup != null) {
+                    PropertyValue groupId = PropertyValue.deserialize(params.blIndex(), params.blIndex().mainAnnotatedField(), viewGroup);
+                    if (groupId == null)
+                        throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
+                    HitGroup group = groups.get(groupId);
+                    if (group == null)
+                        throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+
+                    hits = group.storedResults();
+
+                    // NOTE: sortBy is automatically applied to regular results, but not to results within groups
+                    // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
+                    // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
+                    // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+                    if (sortBy != null) {
+                        HitProperty sortProp = HitProperty.deserialize(hits, sortBy);
+                        if (sortProp == null)
+                            throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
+                        hits = hits.sort(sortProp);
+                    }
+                }
+            } else {
+                // Use a regular search for hits, so that not all hits are actually retrieved yet, we'll have to construct a pagination view on top of the hits manually
+                cacheEntry = params.hitsSample().executeAsync();
+                hits = (Hits) cacheEntry.get();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw translateSearchException(e);
+        }
+
+        // apply window settings
+        // Different from the regular results, if no window settings are provided, we export the maximum amount automatically
+        // The max for CSV exports is also different from the default pagesize maximum.
+        if (hits != null) {
+            long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
+            if (!hits.hitsStats().processedAtLeast(first))
+                first = 0;
+
+            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            if (params.optNumberOfResultsToShow().isPresent()) {
+                long requested = params.optNumberOfResultsToShow().get();
+                if (number >= 0 || requested >= 0) { // clamp
+                    number = Math.min(requested, number);
+                }
+            }
+
+            if (number >= 0)
+                hits = hits.window(first, number);
+        }
+
+        return new ResultHitsCsv(hits, groups, subcorpus, viewGroup != null);
+    }
+
+    public static class ResultHitsCsv {
+        public final Hits hits;
+        public final HitGroups groups;
+        public final DocResults subcorpusResults;
+        public final boolean isViewGroup;
+
+        public ResultHitsCsv(Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
+            super();
+            this.hits = hits;
+            this.groups = groups;
+            this.subcorpusResults = subcorpusResults;
+            this.isViewGroup = isViewGroup;
+        }
     }
 }
