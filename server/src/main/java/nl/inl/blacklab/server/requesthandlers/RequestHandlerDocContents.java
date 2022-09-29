@@ -37,7 +37,8 @@ public class RequestHandlerDocContents extends RequestHandler {
         // Find the document pid
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        ResultDocContents resultDocContents = ResultDocContents.get(params, docPid);
+        params.setDocPid(docPid);
+        ResultDocContents resultDocContents = ResultDocContents.get(params);
         dstreamDocContents((DataStreamXml)ds, resultDocContents);
         return HTTP_OK;
     }

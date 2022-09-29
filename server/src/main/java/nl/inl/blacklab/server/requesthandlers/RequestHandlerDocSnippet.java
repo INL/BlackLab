@@ -1,13 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collection;
-import java.util.Optional;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.document.Document;
-
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
@@ -17,16 +13,12 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
-import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.lib.requests.ResultDocSnippet;
 
 /**
  * Get a snippet of a document's contents.
@@ -40,51 +32,13 @@ public class RequestHandlerDocSnippet extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
-        String docId = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        if (docId.length() == 0)
+        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
+        if (docPid.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+        params.setDocPid(docPid);
 
-        BlackLabIndex index = blIndex();
-        int luceneDocId = BlsUtils.getDocIdFromPid(index, docId);
-        if (luceneDocId < 0)
-            throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = index.luceneDoc(luceneDocId);
-        if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
-
-        ContextSize wordsAroundHit;
-        int start, end;
-        boolean isHit = false;
-        Optional<Integer> hitStart = params.getHitStart();
-        if (hitStart.isPresent()) {
-            start = hitStart.get();
-            end = params.getHitEnd();
-            wordsAroundHit = ContextSize.get(params.getWordsAroundHit());
-            isHit = true;
-        } else {
-            start = params.getWordStart();
-            end = params.getWordEnd();
-            wordsAroundHit = ContextSize.hitOnly();
-        }
-
-        if (start < 0 || end < 0 || wordsAroundHit.left() < 0 || wordsAroundHit.right() < 0 || start > end) {
-            throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
-        }
-
-        // Clamp snippet to max size
-        int snippetStart = Math.max(0, start - wordsAroundHit.left());
-        int snippetEnd = end + wordsAroundHit.right();
-        int maxContextSize = searchMan.config().getParameters().getContextSize().getMaxInt();
-        if (snippetEnd - snippetStart > maxContextSize) {
-            int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
-            snippetStart = Math.max(0, start - clampedWindow);
-            snippetEnd = end + clampedWindow;
-//			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
-        }
-        boolean origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
-        Hits hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
-        dstreamHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
-                WebserviceOperations.getAnnotationsToWrite(params));
+        ResultDocSnippet result = new ResultDocSnippet(params);
+        dstreamHitOrFragmentInfo(ds, result);
         return HTTP_OK;
     }
 
@@ -108,8 +62,16 @@ public class RequestHandlerDocSnippet extends RequestHandler {
      * @param docPid if not null, include doc pid, hit start and end info
      * @param annotationsTolist what annotations to include
      */
-    private static void dstreamHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
-            boolean useOrigContent, boolean isFragment, String docPid, Collection<Annotation> annotationsTolist) {
+    private static void dstreamHitOrFragmentInfo(DataStream ds, ResultDocSnippet result) {
+
+        Hits hits = result.getHits();
+        Hit hit = hits.get(0);
+        ContextSize wordsAroundHit = result.getWordsAroundHit();
+        boolean useOrigContent = result.isOrigContent();
+        boolean isFragment = !result.isHit();
+        String docPid = null; // (not sure why this is always null..?) result.getParams().getDocPid();
+        List<Annotation> annotationsTolist = result.getAnnotsToWrite();
+
         // TODO: can we merge this with hit()...?
         ds.startMap();
         if (docPid != null) {

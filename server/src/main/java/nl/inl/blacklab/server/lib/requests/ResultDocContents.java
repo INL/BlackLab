@@ -31,14 +31,11 @@ public class ResultDocContents {
     /**
      * Get the requested (partial) contents of a document
      *
-     * TODO: get rid of separate docPid parameter, it shouldn't matter if it was part of the URL or not
-     *
      * @param params search parameters
-     * @param docPid docpid (separate because it's part of URL...)
      * @return
      */
-    public static ResultDocContents get(SearchCreator params, String docPid) throws InvalidQuery {
-        return new ResultDocContents(params, docPid);
+    public static ResultDocContents get(SearchCreator params) throws InvalidQuery {
+        return new ResultDocContents(params);
     }
 
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
@@ -81,9 +78,9 @@ public class ResultDocContents {
 
     private Set<String> anonNamespaces;
 
-    public ResultDocContents(SearchCreator params, String docPid) throws BlsException, InvalidQuery {
+    public ResultDocContents(SearchCreator params) throws BlsException, InvalidQuery {
         this.params = params;
-        this.docPid = docPid;
+        this.docPid = params.getDocPid();
         getDocContents();
     }
 
@@ -138,7 +135,6 @@ public class ResultDocContents {
 
         Hits hits = null;
         if (params.hasPattern()) {
-            params.setFilterByDocumentPid(docPid);
             hits = params.hitsSample().execute();
         }
 
