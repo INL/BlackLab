@@ -4,6 +4,8 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 
 public class BLConfigIndexing {
+
+    private long userIndexMaxTokenCount = 100_000_000;
     boolean downloadAllowed = false;
     
     String downloadCacheDir = null;
@@ -43,6 +45,7 @@ public class BLConfigIndexing {
             }
         };
     }
+    /** Max tokens for an index, default 100M **/
 
     public boolean isDownloadAllowed() {
         return downloadAllowed;
@@ -117,4 +120,11 @@ public class BLConfigIndexing {
         this.maxNumberOfIndicesPerUser = maxNumberOfIndicesPerUser;
     }
 
+    public void setUserIndexMaxTokenCount(int maxTokenCount) {
+        this.userIndexMaxTokenCount = maxTokenCount;
+    }
+
+    public long getUserIndexMaxTokenCount() {
+        return this.userIndexMaxTokenCount;
+    }
 }

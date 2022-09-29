@@ -12,6 +12,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.search.BlackLab;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
@@ -88,8 +89,9 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         if (!index.userMayAddData(user))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
-        if (indexMetadata.tokenCount() > MAX_TOKEN_COUNT) {
-            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT
+        long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
+        if (indexMetadata.tokenCount() > maxTokenCount) {
+            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
                     + " tokens. Cannot add any more data to it.");
         }
 
