@@ -19,6 +19,7 @@ import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
@@ -82,7 +83,8 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
         subcorpusSize = subcorpus.subcorpusSize();
 
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        DStream.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
+        Index.IndexStatus indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+        DStream.summaryCommonFields(ds, params, indexStatus, timings, groups, ourWindow);
         if (hitsStats == null)
             DStream.numberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
         else

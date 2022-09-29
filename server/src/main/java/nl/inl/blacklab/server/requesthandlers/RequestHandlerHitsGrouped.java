@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.requests.ResultHitGroup;
@@ -29,20 +29,21 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultHitsGrouped hitsGrouped = ResultHitsGrouped.get(params, searchMan);
-        dstreamHitsGroupedResponse(ds, params, indexMan, hitsGrouped);
+        ResultHitsGrouped hitsGrouped = ResultHitsGrouped.get(params, searchMan, indexMan);
+        dstreamHitsGroupedResponse(ds, hitsGrouped);
         return HTTP_OK;
     }
 
-    private static void dstreamHitsGroupedResponse(DataStream ds, SearchCreator params, IndexManager indexMan,
-            ResultHitsGrouped hitsGrouped) {
+    private static void dstreamHitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
+        Index.IndexStatus indexStatus = hitsGrouped.getIndexStatus();
+        SearchCreator params = hitsGrouped.getParams();
 
         ds.startMap();
 
         // Summary
         ds.startEntry("summary").startMap();
         {
-            DStream.summaryCommonFields(ds, params, indexMan, hitsGrouped.getTimings(),
+            DStream.summaryCommonFields(ds, params, indexStatus, hitsGrouped.getTimings(),
                     hitsGrouped.getGroups(), hitsGrouped.getWindow());
             DStream.numberOfResultsSummaryTotalHits(ds, hitsGrouped.getHitsStats(), hitsGrouped.getDocsStats(),
                     true, false, hitsGrouped.getSubcorpusSize());

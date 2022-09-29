@@ -99,8 +99,10 @@ public class ResultHitsCsv {
         }
 
         List<Annotation> annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
-        return new ResultHitsCsv(hits, groups, subcorpus, viewGroup != null, annotationsToWrite);
+        return new ResultHitsCsv(params, hits, groups, subcorpus, viewGroup != null, annotationsToWrite);
     }
+
+    private SearchCreator params;
 
     private final Hits hits;
 
@@ -112,9 +114,10 @@ public class ResultHitsCsv {
 
     private final List<Annotation> annotationsToWrite;
 
-    public ResultHitsCsv(Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
+    public ResultHitsCsv(SearchCreator params, Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
             List<Annotation> annotationsToWrite) {
         super();
+        this.params = params;
         this.hits = hits;
         this.groups = groups;
         this.subcorpusResults = subcorpusResults;
@@ -140,5 +143,9 @@ public class ResultHitsCsv {
 
     public List<Annotation> getAnnotationsToWrite() {
         return annotationsToWrite;
+    }
+
+    public SearchCreator getParams() {
+        return params;
     }
 }

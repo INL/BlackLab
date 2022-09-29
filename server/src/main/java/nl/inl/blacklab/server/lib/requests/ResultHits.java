@@ -52,6 +52,8 @@ import nl.inl.blacklab.searches.SearchHitGroupsFromHits;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
@@ -94,9 +96,12 @@ public class ResultHits {
 
     private Map<String, String> metaDisplayNames;
 
+    private Index.IndexStatus indexStatus;
+
     @SuppressWarnings("unchecked")
-    public ResultHits(SearchCreator params) {
+    public ResultHits(SearchCreator params, IndexManager indexMan) {
         this.params = params;
+        indexStatus = indexMan == null ? null : indexMan.getIndex(params.getIndexName()).getStatus();
 
         // Do we want to view a single group after grouping?
         String groupBy = params.getGroupProps().orElse("");
@@ -403,4 +408,13 @@ public class ResultHits {
     public Map<String, String> getMetaDisplayNames() {
         return metaDisplayNames;
     }
+
+    public Index.IndexStatus getIndexStatus() {
+        return indexStatus;
+    }
+
+    public SearchCreator getParams() {
+        return params;
+    }
+
 }

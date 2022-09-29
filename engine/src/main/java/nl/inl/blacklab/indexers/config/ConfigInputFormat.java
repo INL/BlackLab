@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -509,6 +510,10 @@ public class ConfigInputFormat {
 
     public void setMetadataDefaultUnknownValue(String unknownValue) {
         this.metadataDefaultUnknownValue = unknownValue;
+    }
+
+    public String getConfigFileType() {
+        return FilenameUtils.getExtension(getReadFromFile().getName()).toLowerCase();
     }
 
 }

@@ -416,13 +416,13 @@ public class WebserviceOperations {
     }
 
     public static TermFrequencyList calculateCollocations(SearchCreator params) {
-        ResultHits resultHits = new ResultHits(params);
+        ResultHits resultHits = new ResultHits(params, null);
         Hits hits = resultHits.getHits();
         return getCollocations(params, hits);
     }
 
-    public static ResultHits getResultHits(SearchCreator params) {
-        ResultHits resultHits = new ResultHits(params);
+    public static ResultHits getResultHits(SearchCreator params, IndexManager indexMan) {
+        ResultHits resultHits = new ResultHits(params, indexMan);
         resultHits.finishSearch();
         return resultHits;
     }
@@ -475,4 +475,5 @@ public class WebserviceOperations {
         List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
         index.setShareWithUsers(shareWithUsers);
     }
+
 }

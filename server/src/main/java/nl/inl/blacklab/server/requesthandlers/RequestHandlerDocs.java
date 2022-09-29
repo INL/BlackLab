@@ -30,6 +30,7 @@ import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchTimings;
@@ -176,7 +177,8 @@ public class RequestHandlerDocs extends RequestHandler {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        DStream.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
+        Index.IndexStatus indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+        DStream.summaryCommonFields(ds, params, indexStatus, timings, null, window.windowStats());
         boolean countFailed = totalTime < 0;
         if (hitsStats == null)
             DStream.numberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);

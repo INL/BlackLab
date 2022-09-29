@@ -31,7 +31,6 @@ import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
@@ -178,7 +177,7 @@ public class DStream {
     public static void summaryCommonFields(
             DataStream ds,
             SearchCreator searchParam,
-            IndexManager indexMan,
+            Index.IndexStatus indexStatus,
             SearchTimings timings,
             ResultGroups<?> groups,
             WindowStats window
@@ -193,9 +192,8 @@ public class DStream {
         ds.endMap();
         ds.endEntry();
 
-        Index.IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
-        if (status != Index.IndexStatus.AVAILABLE) {
-            ds.entry("indexStatus", status.toString());
+        if (indexStatus != Index.IndexStatus.AVAILABLE) {
+            ds.entry("indexStatus", indexStatus.toString());
         }
 
         // Information about hit sampling

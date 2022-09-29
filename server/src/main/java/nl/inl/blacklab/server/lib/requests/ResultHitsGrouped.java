@@ -23,6 +23,8 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.config.DefaultMax;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
@@ -30,6 +32,8 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.BlockTimer;
 
 public class ResultHitsGrouped {
+
+    private final SearchCreator params;
 
     private final HitGroups groups;
 
@@ -49,11 +53,17 @@ public class ResultHitsGrouped {
 
     private Map<String, ResultDocInfo> docInfos;
 
-    public static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
-        return new ResultHitsGrouped(params, searchMan);
+    private final Index.IndexStatus indexStatus;
+
+    public static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan, IndexManager indexMan)
+            throws InvalidQuery {
+        return new ResultHitsGrouped(params, searchMan, indexMan);
     }
 
-    public ResultHitsGrouped(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+    public ResultHitsGrouped(SearchCreator params, SearchManager searchMan, IndexManager indexMan) throws InvalidQuery {
+        this.params = params;
+        indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+
         SearchCacheEntry<HitGroups> search;
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
@@ -148,5 +158,13 @@ public class ResultHitsGrouped {
 
     public Map<String, ResultDocInfo> getDocInfos() {
         return docInfos;
+    }
+
+    public Index.IndexStatus getIndexStatus() {
+        return indexStatus;
+    }
+
+    public SearchCreator getParams() {
+        return params;
     }
 }

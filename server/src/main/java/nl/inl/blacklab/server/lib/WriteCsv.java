@@ -49,10 +49,11 @@ public class WriteCsv {
 
     private final static ArrayList<String> writeRowTemp = new ArrayList<>();
 
-    public static String hitsGroups(SearchCreator params, ResultHitsCsv resultHitsCsv) throws BlsException {
+    public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv) throws BlsException {
         HitGroups groups = resultHitsCsv.getGroups();
         Hits inputHitsForGroups = resultHitsCsv.getHits();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
+        SearchCreator params = resultHitsCsv.getParams();
 
         DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
 
@@ -66,7 +67,6 @@ public class WriteCsv {
                 row.add("subcorpusSize.documents");
                 row.add("subcorpusSize.tokens");
             }
-
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
                 summaryCsvHits(params, printer, row.size(), inputHitsForGroups, groups, subcorpusResults.subcorpusSize());
@@ -99,7 +99,8 @@ public class WriteCsv {
         }
     }
 
-    public static String hits(SearchCreator params, ResultHitsCsv resultHitsCsv) throws BlsException {
+    public static String hitsResponse(ResultHitsCsv resultHitsCsv) throws BlsException {
+        SearchCreator params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
         Hits hits = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();

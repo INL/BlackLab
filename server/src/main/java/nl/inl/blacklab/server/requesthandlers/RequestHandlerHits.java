@@ -2,9 +2,6 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -18,7 +15,6 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
@@ -29,8 +25,6 @@ import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
  * Request handler for hit results.
  */
 public class RequestHandlerHits extends RequestHandler {
-
-    private static final Logger logger = LogManager.getLogger(RequestHandlerHits.class);
 
     public RequestHandlerHits(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
             String urlResource, String urlPathPart) {
@@ -45,8 +39,8 @@ public class RequestHandlerHits extends RequestHandler {
             dstreamCollocationsResponse(ds, tfl);
         } else {
             // Hits request
-            ResultHits resultHits = WebserviceOperations.getResultHits(params);
-            dstreamHitsResponse(ds, params, indexMan, resultHits);
+            ResultHits resultHits = WebserviceOperations.getResultHits(params, indexMan);
+            dstreamHitsResponse(ds, resultHits);
         }
         return HTTP_OK;
     }
@@ -59,20 +53,23 @@ public class RequestHandlerHits extends RequestHandler {
         ds.endMap().endEntry().endMap();
     }
 
-    private static void dstreamHitsResponse(DataStream ds, SearchCreator params, IndexManager indexMan,
-            ResultHits resultHits) throws InvalidQuery {
-        // Search is done; construct the results object
+    private static void dstreamHitsResponse(DataStream ds, ResultHits resultHits)
+            throws InvalidQuery {
+        SearchCreator params = resultHits.getParams();
         Hits hits = resultHits.getHits();
         BlackLabIndex index = hits.index();
         Hits window = resultHits.getWindow();
+
         ds.startMap();
+
         // The summary
         ds.startEntry("summary").startMap();
         {
             // Search time should be time user (originally) had to wait for the response to this request.
             // Count time is the time it took (or is taking) to iterate through all the results to count the total.
             SearchTimings timings = resultHits.getSearchTimings();
-            DStream.summaryCommonFields(ds, params, indexMan, timings, null, window.windowStats());
+            DStream.summaryCommonFields(ds, params, resultHits.getIndexStatus(), timings,
+                    null, window.windowStats());
             DStream.numberOfResultsSummaryTotalHits(ds, resultHits.getHitsStats(), resultHits.getDocsStats(),
                     params.getWaitForTotal(), timings.getCountTime() < 0, null);
             if (params.getIncludeTokenCount())
@@ -100,9 +97,11 @@ public class RequestHandlerHits extends RequestHandler {
         }
         ds.endMap().endEntry();
 
+        // Hits and docInfos
         DStream.listOfHits(ds, params, window, resultHits.getConcordanceContext(), resultHits.getDocIdToPid());
         DStream.documentInfos(ds, resultHits.getDocInfos());
 
+        // Facets (if requested)
         if (resultHits.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
