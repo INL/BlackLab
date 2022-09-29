@@ -35,9 +35,6 @@ import nl.inl.blacklab.server.util.FileUploadHandler;
  * Add document(s) to a user index.
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
-    // TODO make configurable?
-    public static final int MAX_TOKEN_COUNT = 100_000_000;
-
     String indexError = null;
 
     public RequestHandlerAddToIndex(BlackLabServer servlet,
