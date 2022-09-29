@@ -262,9 +262,8 @@ public class WebserviceOperations {
     public static TermFrequencyList getCollocations(SearchCreator params, Hits originalHits) {
         ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        TermFrequencyList tfl = originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
+        return originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
                 sensitivity);
-        return tfl;
     }
 
     // specific to add format
@@ -468,7 +467,7 @@ public class WebserviceOperations {
         return index.getShareWithUsers();
     }
 
-    public static int setUsersToShareWith(User user, IndexManager indexMan, String indexName, String[] users) {
+    public static void setUsersToShareWith(User user, IndexManager indexMan, String indexName, String[] users) {
         Index index = indexMan.getIndex(indexName);
         if (!index.isUserIndex() || (!index.userMayRead(user)))
             throw new NotAuthorized("You can only share your own private indices with others.");

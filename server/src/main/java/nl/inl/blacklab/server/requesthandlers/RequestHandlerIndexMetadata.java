@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -46,6 +47,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
         synchronized (index) {
             BlackLabIndex blIndex = index.blIndex();
             IndexMetadata indexMetadata = blIndex.metadata();
+            IndexListener indexerListener = index.getIndexerListener();
 
             // Assemble response
             IndexStatus status = indexMan.getIndex(indexName).getStatus();
@@ -57,7 +59,10 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     .entry("contentViewable", indexMetadata.contentViewable())
                     .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            DStream.indexProgress(ds, index, indexMetadata, status);
+            long files = indexerListener.getFilesProcessed();
+            long docs = indexerListener.getDocsDone();
+            long tokens = indexerListener.getTokensProcessed();
+            DStream.indexProgress(ds, files, docs, tokens, indexMetadata, status);
             ds.entry("tokenCount", indexMetadata.tokenCount());
             ds.entry("documentCount", indexMetadata.documentCount());
 
@@ -94,12 +99,12 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             ds.endMap().endEntry();
 
             ds.startEntry("metadataFields").startMap();
-            // Metadata fields
-            //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
             for (MetadataField f: fields) {
                 ds.startAttrEntry("metadataField", "name", f.name());
-                Map<String, Integer> fieldValuesInOrder = WebserviceOperations.getFieldValuesInOrder(f);
-                DStream.metadataField(ds, null, f, true, fieldValuesInOrder);
+                {
+                    Map<String, Integer> fieldValuesInOrder = WebserviceOperations.getFieldValuesInOrder(f);
+                    DStream.metadataField(ds, null, f, true, fieldValuesInOrder);
+                }
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
@@ -110,8 +115,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             for (AnnotatedField f: indexMetadata.annotatedFields()) {
                 AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
                 if (groups != null) {
-                    // LinkedHashSet - preserve order!
-                    @SuppressWarnings("FuseStreamOperations") Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
+                    @SuppressWarnings("FuseStreamOperations") // LinkedHashSet - preserve order!
+                    Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
                     for (AnnotationGroup group : groups) {
                         for (String annotationName: group) {
                             Annotation annotation = f.annotation(annotationName);
@@ -141,9 +146,6 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 }
             }
             ds.endMap().endEntry();
-
-            // Remove any empty settings
-            //response.removeEmptyMapValues();
 
             ds.endMap();
 

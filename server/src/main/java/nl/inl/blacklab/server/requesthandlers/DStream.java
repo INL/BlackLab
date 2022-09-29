@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
@@ -34,12 +33,12 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
-import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
+import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -365,17 +364,14 @@ public class DStream {
         ds.endMap();
     }
 
-    static void indexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, Index.IndexStatus status)
+    static void indexProgress(DataStream ds, long files, long docs, long tokens, IndexMetadata indexMetadata, Index.IndexStatus status)
             throws BlsException {
         if (status.equals(Index.IndexStatus.INDEXING)) {
-            IndexListener indexProgress = index.getIndexerListener();
-            synchronized (indexProgress) {
-                ds.startEntry("indexProgress").startMap()
-                        .entry("filesProcessed", indexProgress.getFilesProcessed())
-                        .entry("docsDone", indexProgress.getDocsDone())
-                        .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                        .endMap().endEntry();
-            }
+            ds.startEntry("indexProgress").startMap()
+                    .entry("filesProcessed", files)
+                    .entry("docsDone", docs)
+                    .entry("tokensProcessed", tokens)
+                    .endMap().endEntry();
         }
 
         String formatIdentifier = indexMetadata.documentFormat();

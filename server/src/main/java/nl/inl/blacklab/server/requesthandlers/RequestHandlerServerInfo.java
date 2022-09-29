@@ -4,6 +4,7 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -40,32 +41,39 @@ public class RequestHandlerServerInfo extends RequestHandler {
         ds.startEntry("indices").startMap();
 
         for (Index index : indices) {
+            String id = index.getId();
+            IndexMetadata indexMetadata = index.getIndexMetadata();
+            String displayName = indexMetadata.custom().get("displayName", "");
+            String description = indexMetadata.custom().get("description", "");
+            IndexStatus status;
+            long filesProcessed, docsDone, tokensProcessed;
             try {
-
                 synchronized (index) {
-                    IndexMetadata indexMetadata = index.getIndexMetadata();
-                    String displayName = indexMetadata.custom().get("displayName", "");
-                    String description = indexMetadata.custom().get("description", "");
-                    IndexStatus status = index.getStatus();
-
-                    ds.startAttrEntry("index", "name", index.getId());
-                    ds.startMap();
-
-                    ds.entry("displayName", displayName);
-                    ds.entry("description", description);
-                    ds.entry("status", status);
-
-                    DStream.indexProgress(ds, index, indexMetadata, status);
-                    ds.entry("timeModified", indexMetadata.timeModified());
-                    ds.entry("tokenCount", indexMetadata.tokenCount());
-
-                    ds.endMap();
-                    ds.endAttrEntry();
+                    status = index.getStatus();
+                    IndexListener listener = index.getIndexerListener();
+                    filesProcessed = listener.getFilesProcessed();
+                    docsDone = listener.getDocsDone();
+                    tokensProcessed = listener.getTokensProcessed();
                 }
+
+                ds.startAttrEntry("index", "name", id);
+                {
+                    ds.startMap();
+                    {
+                        ds.entry("displayName", displayName);
+                        ds.entry("description", description);
+                        ds.entry("status", status);
+                        DStream.indexProgress(ds, filesProcessed, docsDone, tokensProcessed, indexMetadata, status);
+                        ds.entry("timeModified", indexMetadata.timeModified());
+                        ds.entry("tokenCount", indexMetadata.tokenCount());
+                    }
+                    ds.endMap();
+                }
+                ds.endAttrEntry();
 
             } catch (BlsIndexOpenException e) {
                 // Cannot open this index; log and skip it.
-                logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
+                logger.warn("Could not open index " + id + ": " + e.getMessage());
             }
         }
         ds.endMap().endEntry();
