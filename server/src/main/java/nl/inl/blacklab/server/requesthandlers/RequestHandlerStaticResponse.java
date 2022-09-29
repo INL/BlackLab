@@ -85,26 +85,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return this;
     }
 
-    public RequestHandlerStaticResponse internalError(String code) {
-        logger.debug("INTERNAL ERROR " + code + " (no message)");
-        internalErrorCode = code;
-        httpCode = HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-        return this;
-    }
-
-    public RequestHandlerStaticResponse success(String msg) {
-        return status("SUCCESS", msg, HTTP_OK);
-    }
-
-    public RequestHandlerStaticResponse accepted(DataStream ds) {
-        return status("SUCCESS", "Documents uploaded succesfully; indexing started.", HttpServletResponse.SC_ACCEPTED);
-    }
-
-    public RequestHandlerStaticResponse searchTimedOut(DataStream ds) {
-        return error("SEARCH_TIMED_OUT", "Search took too long, cancelled.",
-                HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-    }
-
     public RequestHandlerStaticResponse unauthorized(String reason) {
         return error("NOT_AUTHORIZED", "Unauthorized operation. " + reason, HttpServletResponse.SC_UNAUTHORIZED);
     }
@@ -113,10 +93,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         reason = reason == null ? "" : " " + reason;
         return error("ILLEGAL_REQUEST", "Illegal " + method + " request." + reason,
                 HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-    }
-
-    public RequestHandlerStaticResponse forbidden(DataStream ds) {
-        return error("FORBIDDEN_REQUEST", "Forbidden operation.", HttpServletResponse.SC_FORBIDDEN);
     }
 
     public RequestHandlerStaticResponse forbidden(String reason) {
@@ -134,11 +110,6 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     public RequestHandlerStaticResponse unavailable(String indexName, String status) {
         return error("INDEX_UNAVAILABLE", "The index '" + indexName + "' is not available right now. Status: " + status,
                 HttpServletResponse.SC_CONFLICT);
-    }
-
-    public RequestHandlerStaticResponse indexNotFound(String indexName) {
-        return error("CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
-                HttpServletResponse.SC_NOT_FOUND);
     }
 
     public RequestHandlerStaticResponse illegalIndexName(String shortName) {

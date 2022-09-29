@@ -51,7 +51,6 @@ public abstract class RequestHandler {
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        //availableHandlers.put("cache-info", RequestHandlerCacheInfo.class);
         availableHandlers.put("debug", RequestHandlerDebug.class);
         availableHandlers.put("docs", RequestHandlerDocs.class);
         availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
@@ -103,8 +102,7 @@ public abstract class RequestHandler {
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         String[] parts = servletPath.split("/", 3);
         String indexName = parts.length >= 1 ? parts[0] : "";
-        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName
-        );
+        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName);
         if (indexName.startsWith(":")) {
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access your private index.");

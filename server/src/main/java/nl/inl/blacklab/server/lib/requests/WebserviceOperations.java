@@ -5,6 +5,7 @@ import java.text.Collator;
 import java.text.ParseException;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,7 +53,10 @@ import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -455,5 +459,21 @@ public class WebserviceOperations {
             tfl = tfl.subList(first, last);
         }
         return tfl;
+    }
+
+    public static List<String> getUsersToShareWith(User user, IndexManager indexMan, String indexName) {
+        Index index = indexMan.getIndex(indexName);
+        if (!index.userMayRead(user))
+            throw new NotAuthorized("You are not authorized to access this index.");
+        return index.getShareWithUsers();
+    }
+
+    public static int setUsersToShareWith(User user, IndexManager indexMan, String indexName, String[] users) {
+        Index index = indexMan.getIndex(indexName);
+        if (!index.isUserIndex() || (!index.userMayRead(user)))
+            throw new NotAuthorized("You can only share your own private indices with others.");
+        // Update the list of users to share with
+        List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
+        index.setShareWithUsers(shareWithUsers);
     }
 }
