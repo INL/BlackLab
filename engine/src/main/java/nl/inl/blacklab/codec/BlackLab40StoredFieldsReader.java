@@ -37,7 +37,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private static final int DOCINDEX_RECORD_SIZE = Integer.BYTES + Byte.BYTES;
 
     /** Size in bytes of a record in the valueindex file */
-    private static final int VALUEINDEX_RECORD_SIZE = Byte.BYTES + Integer.BYTES + 2 * Long.BYTES;
+    private static final int VALUEINDEX_RECORD_SIZE = Byte.BYTES + Integer.BYTES + Byte.BYTES + 2 * Long.BYTES;
 
     /** Size in bytes of a record in the blockindex file */
     private static final int BLOCKINDEX_RECORD_SIZE = Integer.BYTES;
