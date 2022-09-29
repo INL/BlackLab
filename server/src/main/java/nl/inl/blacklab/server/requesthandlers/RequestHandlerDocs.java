@@ -125,8 +125,8 @@ public class RequestHandlerDocs extends RequestHandler {
         docResults = group.storedResults();
         totalTime = docGroupFuture.timer().time();
         return doResponse(ds, true,
-                WebserviceOperations.getAnnotationsToWrite(blIndex(), params),
-                WebserviceOperations.getMetadataToWrite(blIndex(), params), true);
+                WebserviceOperations.getAnnotationsToWrite(params),
+                WebserviceOperations.getMetadataToWrite(params), true);
     }
 
     private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
@@ -152,8 +152,8 @@ public class RequestHandlerDocs extends RequestHandler {
         totalTime = total.threwException() ? 0 : total.timer().time();
 
         return doResponse(ds, false,
-                WebserviceOperations.getAnnotationsToWrite(blIndex(), params),
-                WebserviceOperations.getMetadataToWrite(blIndex(), params), waitForTotal);
+                WebserviceOperations.getAnnotationsToWrite(params),
+                WebserviceOperations.getMetadataToWrite(params), waitForTotal);
     }
 
     private int doResponse(DataStream ds, boolean isViewGroup, Collection<Annotation> annotationsTolist, Collection<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {

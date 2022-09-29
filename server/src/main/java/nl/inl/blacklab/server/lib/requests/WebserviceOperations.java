@@ -54,7 +54,6 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
 
@@ -74,7 +73,8 @@ public class WebserviceOperations {
      *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      */
-    public static Collection<MetadataField> getMetadataToWrite(BlackLabIndex index, SearchCreator params) {
+    public static Collection<MetadataField> getMetadataToWrite(SearchCreator params) {
+        BlackLabIndex index = params.blIndex();
         MetadataFields fields = index.metadataFields();
         Collection<String> requestedFields = params.getListMetadataValuesFor();
         Set<MetadataField> ret = new HashSet<>();
@@ -183,7 +183,8 @@ public class WebserviceOperations {
      *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
-    public static List<Annotation> getAnnotationsToWrite(BlackLabIndex index, WebserviceParams params) {
+    public static List<Annotation> getAnnotationsToWrite(SearchCreator params) {
+        BlackLabIndex index = params.blIndex();
         AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
 
@@ -408,5 +409,17 @@ public class WebserviceOperations {
         }
         // Determine number of tokens in this subcorpus
         return searchParam.blIndex().queryDocuments(query).subcorpusSize(true);
+    }
+
+    public static TermFrequencyList calculateCollocations(SearchCreator params) {
+        ResultHits resultHits = new ResultHits(params);
+        Hits hits = resultHits.getHits();
+        return getCollocations(params, hits);
+    }
+
+    public static ResultHits getResultHits(SearchCreator params) {
+        ResultHits resultHits = new ResultHits(params);
+        resultHits.finishSearch();
+        return resultHits;
     }
 }

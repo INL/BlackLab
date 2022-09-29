@@ -10,11 +10,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.TermFrequency;
-import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -22,13 +19,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
-import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsStatic;
@@ -61,7 +56,7 @@ public class DStream {
      * @param userId user id (if logged in)
      * @param canCreateIndex is the user allowed to create another index?
      */
-    protected static void userInfo(DataStream ds, boolean loggedIn, String userId, boolean canCreateIndex) {
+    public static void userInfo(DataStream ds, boolean loggedIn, String userId, boolean canCreateIndex) {
         ds.startEntry("user").startMap();
         ds.entry("loggedIn", loggedIn);
         if (loggedIn)
@@ -81,22 +76,22 @@ public class DStream {
      * @param docFields document field info to write
      * @param metaDisplayNames display name info to write
      */
-    protected static void metadataFieldInfo(DataStream ds, Map<String, String> docFields, Map<String, String> metaDisplayNames) {
+    public static void metadataFieldInfo(DataStream ds, Map<String, String> docFields, Map<String, String> metaDisplayNames) {
         ds.startEntry("docFields");
-        docFields(ds, docFields);
-        ds.endEntry();
-
-        ds.startEntry("metadataFieldDisplayNames");
-        metadataFieldDisplayNames(ds, metaDisplayNames);
-        ds.endEntry();
-    }
-
-    public static void parameters(DataStream ds, WebserviceParams searchParameters) {
         ds.startMap();
-        for (Map.Entry<String, String> e : searchParameters.getParameters().entrySet()) {
+        for (Map.Entry<String, String> e: docFields.entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
         ds.endMap();
+        ds.endEntry();
+
+        ds.startEntry("metadataFieldDisplayNames");
+        ds.startMap();
+        for (Map.Entry<String, String> e: metaDisplayNames.entrySet()) {
+            ds.entry(e.getKey(), e.getValue());
+        }
+        ds.endMap();
+        ds.endEntry();
     }
 
     /**
@@ -105,7 +100,7 @@ public class DStream {
      * @param ds where to stream information
      * @param docInfos infos to write
      */
-    protected static void documentInfos(DataStream ds, Map<String, ResultDocInfo> docInfos) {
+    public static void documentInfos(DataStream ds, Map<String, ResultDocInfo> docInfos) {
         ds.startEntry("docInfos").startMap();
         for (Map.Entry<String, ResultDocInfo> e: docInfos.entrySet()) {
             ds.startAttrEntry("docInfo", "pid", e.getKey());
@@ -140,14 +135,6 @@ public class DStream {
         ds.endMap();
     }
 
-    protected static void metadataFieldDisplayNames(DataStream ds, Map<String, String> metaDisplayNames) {
-        ds.startMap();
-        for (Map.Entry<String, String> e: metaDisplayNames.entrySet()) {
-            ds.entry(e.getKey(), e.getValue());
-        }
-        ds.endMap();
-    }
-
     public static void metadataGroupInfo(DataStream ds, Map<String, List<String>> metadataFieldGroups) {
         ds.startEntry("metadataFieldGroups").startList();
         for (Map.Entry<String, List<String>> e: metadataFieldGroups.entrySet()) {
@@ -163,7 +150,7 @@ public class DStream {
         ds.endList().endEntry();
     }
 
-    protected static void facets(DataStream ds, Map<String, List<Pair<String, Long>>> facetInfo) {
+    public static void facets(DataStream ds, Map<String, List<Pair<String, Long>>> facetInfo) {
         ds.startMap();
         for (Map.Entry<String, List<Pair<String,  Long>>> e: facetInfo.entrySet()) {
             String facetBy = e.getKey();
@@ -180,14 +167,6 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void docFields(DataStream ds, Map<String, String> docFields) {
-        ds.startMap();
-        for (Map.Entry<String, String> e: docFields.entrySet()) {
-            ds.entry(e.getKey(), e.getValue());
-        }
-        ds.endMap();
-    }
-
     /**
      * Output most of the fields of the search summary.
      *
@@ -197,7 +176,7 @@ public class DStream {
      * @param groups information about groups, if we were grouping
      * @param window our viewing window
      */
-    protected static void summaryCommonFields(
+    public static void summaryCommonFields(
             DataStream ds,
             SearchCreator searchParam,
             IndexManager indexMan,
@@ -208,7 +187,11 @@ public class DStream {
 
         // Our search parameters
         ds.startEntry("searchParam");
-        parameters(ds, searchParam);
+        ds.startMap();
+        for (Map.Entry<String, String> e : ((WebserviceParams) searchParam).getParameters().entrySet()) {
+            ds.entry(e.getKey(), e.getValue());
+        }
+        ds.endMap();
         ds.endEntry();
 
         Index.IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
@@ -246,7 +229,7 @@ public class DStream {
         }
     }
 
-    protected static void numberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats,
+    public static void numberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats,
             ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
 
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
@@ -273,7 +256,7 @@ public class DStream {
         }
     }
 
-    protected static void subcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
+    public static void subcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
         ds.startEntry("subcorpusSize").startMap()
             .entry("documents", subcorpusSize.getDocuments());
         if (subcorpusSize.hasTokenCount())
@@ -281,7 +264,7 @@ public class DStream {
         ds.endMap().endEntry();
     }
 
-    protected static void numberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
+    public static void numberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ds.entry("stillCounting", false);
         if (isViewDocGroup) {
@@ -304,20 +287,12 @@ public class DStream {
         }
     }
 
-    static void collocations(DataStream ds, TermFrequencyList tfl) {
-        ds.startMap().startEntry("tokenFrequencies").startMap();
-        for (TermFrequency tf : tfl) {
-            ds.attrEntry("token", "text", tf.term, tf.frequency);
-        }
-        ds.endMap().endEntry().endMap();
-    }
-
-    public static void hits(DataStream ds, SearchCreator params, Hits hits, ConcordanceContext concordanceContext, Map<Integer, String> docIdToPid) throws BlsException {
+    public static void listOfHits(DataStream ds, SearchCreator params, Hits hits, ConcordanceContext concordanceContext, Map<Integer, String> docIdToPid) throws BlsException {
         BlackLabIndex index = hits.index();
 
         Collection<Annotation> annotationsToList = null;
         if (!concordanceContext.isConcordances())
-            annotationsToList = WebserviceOperations.getAnnotationsToWrite(index, params);
+            annotationsToList = WebserviceOperations.getAnnotationsToWrite(params);
 
         ds.startEntry("hits").startList();
         for (Hit hit : hits) {
@@ -390,58 +365,6 @@ public class DStream {
         ds.endMap();
     }
 
-    /**
-     * Get a DataObject representation of a hit (or just a document fragment with no
-     * hit in it)
-     *
-     * @param ds output stream
-     * @param hits the hits object the hit occurs in
-     * @param hit the hit (or fragment)
-     * @param wordsAroundHit number of words around the hit we want
-     * @param useOrigContent if true, uses the content store; if false, the forward
-     *            index
-     * @param isFragment if false, separates hit into left/match/right; otherwise,
-     *            just returns whole fragment
-     * @param docPid if not null, include doc pid, hit start and end info
-     * @param annotationsTolist what annotations to include
-     */
-    public static void hitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
-            boolean useOrigContent, boolean isFragment, String docPid, Collection<Annotation> annotationsTolist) {
-        // TODO: can we merge this with hit()...?
-        ds.startMap();
-        if (docPid != null) {
-            // Add basic hit info
-            ds.entry("docPid", docPid);
-            ds.entry("start", hit.start());
-            ds.entry("end", hit.end());
-        }
-
-        Hits singleHit = hits.window(hit);
-        if (useOrigContent) {
-            // We're using original content.
-            Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
-            Concordance c = concordances.get(hit);
-            if (!isFragment) {
-                ds.startEntry("left").xmlFragment(c.left()).endEntry()
-                        .startEntry("match").xmlFragment(c.match()).endEntry()
-                        .startEntry("right").xmlFragment(c.right()).endEntry();
-            } else {
-                ds.xmlFragment(c.match());
-            }
-        } else {
-            Kwics kwics = singleHit.kwics(wordsAroundHit);
-            Kwic c = kwics.get(hit);
-            if (!isFragment) {
-                ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
-            } else {
-                ds.startEntry("snippet").contextList(c.annotations(), annotationsTolist, c.tokens()).endEntry();
-            }
-        }
-        ds.endMap();
-    }
-
     static void indexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, Index.IndexStatus status)
             throws BlsException {
         if (status.equals(Index.IndexStatus.INDEXING)) {
@@ -500,8 +423,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void annotatedField(DataStream ds, String indexName,
-            AnnotatedField fieldDesc, BlackLabIndex index, Collection<String> showValuesFor,
+    public static void annotatedField(DataStream ds, String indexName, AnnotatedField fieldDesc,
             Map<String, ResultAnnotationInfo> annotInfos) {
         ds.startMap();
         if (indexName != null)
@@ -558,4 +480,5 @@ public class DStream {
         ds.endMap().endEntry();
         ds.endMap();
     }
+
 }

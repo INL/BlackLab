@@ -28,7 +28,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
+        Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
         ResultDocInfo docInfo = ResultDocInfo.get(blIndex(), docPid, null, metadataToWrite);
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());

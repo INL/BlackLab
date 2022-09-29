@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -7,9 +8,15 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -37,11 +44,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         if (docId.length() == 0)
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
-        BlackLabIndex blIndex = blIndex();
-        int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
+        BlackLabIndex index = blIndex();
+        int luceneDocId = BlsUtils.getDocIdFromPid(index, docId);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = blIndex.luceneDoc(luceneDocId);
+        Document document = index.luceneDoc(luceneDocId);
         if (document == null)
             throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
@@ -75,15 +82,67 @@ public class RequestHandlerDocSnippet extends RequestHandler {
 //			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
         }
         boolean origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
-        Hits hits = Hits.singleton(QueryInfo.create(blIndex), luceneDocId, start, end);
-        DStream.hitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
-                WebserviceOperations.getAnnotationsToWrite(blIndex, params));
+        Hits hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
+        dstreamHitOrFragmentInfo(ds, hits, hits.get(0), wordsAroundHit, origContent, !isHit, null,
+                WebserviceOperations.getAnnotationsToWrite(params));
         return HTTP_OK;
     }
 
     @Override
     protected boolean isDocsOperation() {
         return true;
+    }
+
+    /**
+     * Get a DataObject representation of a hit (or just a document fragment with no
+     * hit in it)
+     *
+     * @param ds output stream
+     * @param hits the hits object the hit occurs in
+     * @param hit the hit (or fragment)
+     * @param wordsAroundHit number of words around the hit we want
+     * @param useOrigContent if true, uses the content store; if false, the forward
+     *            index
+     * @param isFragment if false, separates hit into left/match/right; otherwise,
+     *            just returns whole fragment
+     * @param docPid if not null, include doc pid, hit start and end info
+     * @param annotationsTolist what annotations to include
+     */
+    private static void dstreamHitOrFragmentInfo(DataStream ds, Hits hits, Hit hit, ContextSize wordsAroundHit,
+            boolean useOrigContent, boolean isFragment, String docPid, Collection<Annotation> annotationsTolist) {
+        // TODO: can we merge this with hit()...?
+        ds.startMap();
+        if (docPid != null) {
+            // Add basic hit info
+            ds.entry("docPid", docPid);
+            ds.entry("start", hit.start());
+            ds.entry("end", hit.end());
+        }
+
+        Hits singleHit = hits.window(hit);
+        if (useOrigContent) {
+            // We're using original content.
+            Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
+            Concordance c = concordances.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                        .startEntry("match").xmlFragment(c.match()).endEntry()
+                        .startEntry("right").xmlFragment(c.right()).endEntry();
+            } else {
+                ds.xmlFragment(c.match());
+            }
+        } else {
+            Kwics kwics = singleHit.kwics(wordsAroundHit);
+            Kwic c = kwics.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
+            } else {
+                ds.startEntry("snippet").contextList(c.annotations(), annotationsTolist, c.tokens()).endEntry();
+            }
+        }
+        ds.endMap();
     }
 
 }

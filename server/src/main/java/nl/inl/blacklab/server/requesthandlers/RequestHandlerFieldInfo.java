@@ -50,7 +50,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             if (!fieldDesc.isDummyFieldToStoreLinkedDocuments()) {
                 Map<String, ResultAnnotationInfo> annotInfos = WebserviceOperations.getAnnotInfos(params,
                         fieldDesc.annotations());
-                DStream.annotatedField(ds, indexName, fieldDesc, blIndex, showValuesFor, annotInfos);
+                DStream.annotatedField(ds, indexName, fieldDesc, annotInfos);
             } else {
                 // skip this, not really an annotated field, just exists to store linked (metadata) document.
             }

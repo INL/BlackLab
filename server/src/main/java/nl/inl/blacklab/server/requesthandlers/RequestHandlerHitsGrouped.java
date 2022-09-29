@@ -1,41 +1,21 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.document.Document;
+import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.WindowStats;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
-import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
-import nl.inl.util.BlockTimer;
+import nl.inl.blacklab.server.lib.requests.ResultHitGroup;
+import nl.inl.blacklab.server.lib.requests.ResultHitsGrouped;
 
 /**
  * Request handler for grouped hit results.
@@ -49,116 +29,67 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        HitGroups groups;
-        SearchCacheEntry<HitGroups> search;
-        try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
-            // Get the window we're interested in
-            search = params.hitsGroupedStats().executeAsync();
-            // Search is done; construct the results object
-            groups = search.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw WebserviceOperations.translateSearchException(e);
-        }
+        ResultHitsGrouped hitsGrouped = ResultHitsGrouped.get(params, searchMan);
+        dstreamHitsGroupedResponse(ds, params, indexMan, hitsGrouped);
+        return HTTP_OK;
+    }
+
+    private static void dstreamHitsGroupedResponse(DataStream ds, SearchCreator params, IndexManager indexMan,
+            ResultHitsGrouped hitsGrouped) {
 
         ds.startMap();
+
+        // Summary
         ds.startEntry("summary").startMap();
-        WindowSettings windowSettings = params.windowSettings();
-        final long first = Math.max(windowSettings.first(), 0);
-        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
-        final long requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
-                        : windowSettings.size();
-        long totalResults = groups.size();
-        final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
-                : requestedWindowSize;
-        WindowStats ourWindow = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize, actualWindowSize);
-        SearchTimings timings = new SearchTimings(search.timer().time(), 0);
-        DStream.summaryCommonFields(ds, params, indexMan, timings, groups, ourWindow);
-        ResultsStats hitsStats = groups.hitsStats();
-        ResultsStats docsStats = groups.docsStats();
-        if (docsStats == null)
-            docsStats = params.docsCount().execute();
-
-        // The list of groups found
-        DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-        DocResults subcorpus = params.subcorpus().execute();
-        CorpusSize subcorpusSize = subcorpus.subcorpusSize();
-
-        DStream.numberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
+        {
+            DStream.summaryCommonFields(ds, params, indexMan, hitsGrouped.getTimings(),
+                    hitsGrouped.getGroups(), hitsGrouped.getWindow());
+            DStream.numberOfResultsSummaryTotalHits(ds, hitsGrouped.getHitsStats(), hitsGrouped.getDocsStats(),
+                    true, false, hitsGrouped.getSubcorpusSize());
+        }
         ds.endMap().endEntry();
 
-        /* Gather group values per property:
-         * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
-         * contain the sub properties and values in the same order.
-         */
-        boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
-
         ds.startEntry("hitGroups").startList();
-        long last = Math.min(first + requestedWindowSize, groups.size());
 
-        Map<Integer, Document> luceneDocs = new HashMap<>();
-        try (BlockTimer ignored = BlockTimer.create("Serializing groups to JSON")) {
-            for (long i = first; i < last; ++i) {
-                HitGroup group = groups.get(i);
-                PropertyValue id = group.identity();
-                List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : List.of(id);
-
-                if (metadataGroupProperties != null) {
-                    // Find size of corresponding subcorpus group
-                    PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
-                    subcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties, docPropValues);
-//                    logger.debug("## tokens in subcorpus group: " + subcorpusSize.getTokens());
-                }
-
-                long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
-
-                ds.startItem("hitgroup").startMap();
+        List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
+        for (ResultHitGroup groupInfo: groupInfos) {
+            ds.startItem("hitgroup").startMap();
+            {
                 ds
-                .entry("identity", id.serialize())
-                .entry("identityDisplay", id.toString())
-                .entry("size", group.size());
+                        .entry("identity", groupInfo.getIdentity())
+                        .entry("identityDisplay", groupInfo.getIdentityDisplay())
+                        .entry("size", groupInfo.getSize());
 
                 ds.startEntry("properties").startList();
-                for (int j = 0; j < prop.size(); ++j) {
-                    final HitProperty hp = prop.get(j);
-                    final PropertyValue pv = valuesForGroup.get(j);
-
+                for (Pair<String, String> p: groupInfo.getProperties()) {
                     ds.startItem("property").startMap();
-                    ds.entry("name", hp.serialize());
-                    ds.entry("value", pv.toString());
+                    {
+                        ds.entry("name", p.getKey());
+                        ds.entry("value", p.getValue());
+                    }
                     ds.endMap().endItem();
                 }
                 ds.endList().endEntry();
 
-                ds.entry("numberOfDocs", numberOfDocsInGroup);
-                if (metadataGroupProperties != null) {
-                    DStream.subcorpusSize(ds, subcorpusSize);
+                ds.entry("numberOfDocs", groupInfo.getNumberOfDocsInGroup());
+                if (hitsGrouped.getMetadataGroupProperties() != null) {
+                    DStream.subcorpusSize(ds, groupInfo.getSubcorpusSize());
                 }
 
                 if (params.includeGroupContents()) {
-                    Hits hitsInGroup = group.storedResults();
-                    ContextSettings contextSettings = params.contextSettings();
-                    ConcordanceContext concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(), contextSettings.size());
-                    Map<Integer, String> docIdToPid = WebserviceOperations.collectDocsAndPids(blIndex(), hitsInGroup,
-                            luceneDocs);
-                    DStream.hits(ds, params, hitsInGroup, concordanceContext, docIdToPid);
+                    Hits hitsInGroup = groupInfo.getGroup().storedResults();
+                    DStream.listOfHits(ds, params, hitsInGroup, groupInfo.getConcordanceContext(),
+                            groupInfo.getDocIdToPid());
                 }
-
-                ds.endMap().endItem();
             }
+            ds.endMap().endItem();
         }
         ds.endList().endEntry();
 
         if (params.includeGroupContents()) {
-            Collection<MetadataField> meatadataToWrite = WebserviceOperations.getMetadataToWrite(blIndex(), params);
-            Map<String, ResultDocInfo> docInfos = WebserviceOperations.getDocInfos(blIndex(), luceneDocs,
-                    meatadataToWrite);
-            DStream.documentInfos(ds, docInfos);
+            DStream.documentInfos(ds, hitsGrouped.getDocInfos());
         }
         ds.endMap();
-
-        return HTTP_OK;
     }
 
 }

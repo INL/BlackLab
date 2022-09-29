@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib.requests;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -7,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -96,7 +98,8 @@ public class ResultHitsCsv {
                 hits = hits.window(first, number);
         }
 
-        return new ResultHitsCsv(hits, groups, subcorpus, viewGroup != null);
+        List<Annotation> annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
+        return new ResultHitsCsv(hits, groups, subcorpus, viewGroup != null, annotationsToWrite);
     }
 
     private final Hits hits;
@@ -107,12 +110,16 @@ public class ResultHitsCsv {
 
     private final boolean isViewGroup;
 
-    public ResultHitsCsv(Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
+    private final List<Annotation> annotationsToWrite;
+
+    public ResultHitsCsv(Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
+            List<Annotation> annotationsToWrite) {
         super();
         this.hits = hits;
         this.groups = groups;
         this.subcorpusResults = subcorpusResults;
         this.isViewGroup = isViewGroup;
+        this.annotationsToWrite = annotationsToWrite;
     }
 
     public Hits getHits() {
@@ -129,5 +136,9 @@ public class ResultHitsCsv {
 
     public boolean isViewGroup() {
         return isViewGroup;
+    }
+
+    public List<Annotation> getAnnotationsToWrite() {
+        return annotationsToWrite;
     }
 }

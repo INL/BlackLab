@@ -40,11 +40,6 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
         return false; // because status might change (or you might reindex)
     }
 
-    String optSpecialFieldName(MetadataFields metadataFields, String type) {
-        MetadataField specialField = metadataFields.special(type);
-        return specialField == null ? "" : specialField.name();
-    }
-
     @Override
     public int handle(DataStream ds) throws BlsException {
         Index index = indexMan.getIndex(indexName);
@@ -92,8 +87,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 Collection<String> showValuesFor = params.getListValuesFor();
                 Map<String, ResultAnnotationInfo> annotInfos =
                         WebserviceOperations.getAnnotInfos(params, field.annotations());
-                DStream.annotatedField(ds, null, field, blIndex,
-                        showValuesFor, annotInfos);
+                DStream.annotatedField(ds, null, field, annotInfos);
 
                 ds.endAttrEntry();
             }

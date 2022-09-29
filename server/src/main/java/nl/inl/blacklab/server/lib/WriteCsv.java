@@ -54,8 +54,7 @@ public class WriteCsv {
         Hits inputHitsForGroups = resultHitsCsv.getHits();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
 
-        DocProperty metadataGroupProperties = null;
-        metadataGroupProperties = groups.groupCriteria().docPropsOnly();
+        DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
 
         try {
             // Write the header
@@ -100,8 +99,7 @@ public class WriteCsv {
         }
     }
 
-    public static String hits(SearchCreator params, ResultHitsCsv resultHitsCsv,
-            List<Annotation> annotationsToWrite) throws BlsException {
+    public static String hits(SearchCreator params, ResultHitsCsv resultHitsCsv) throws BlsException {
         BlackLabIndex index = params.blIndex();
         Hits hits = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();
@@ -112,14 +110,14 @@ public class WriteCsv {
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
 
             ArrayList<String> row = new ArrayList<>(Arrays.asList("docPid", "left_context", "context", "right_context"));
-            for (Annotation a : annotationsToWrite) {
+            for (Annotation a: resultHitsCsv.getAnnotationsToWrite()) {
                 row.add(a.name());
             }
             // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the
             // normal hit response does
             // Since it results in a MASSIVE amount of repeated data.
             List<MetadataField> metadataFieldsToWrite = !params.getListMetadataValuesFor().isEmpty() ?
-                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(index, params)) :
+                    new ArrayList<>(WebserviceOperations.getMetadataToWrite(params)) :
                     Collections.emptyList();
             for (MetadataField f : metadataFieldsToWrite) {
                  row.add(f.name());
@@ -139,8 +137,9 @@ public class WriteCsv {
                     doc = index.luceneDoc(hit.doc());
                     luceneDocs.put(hit.doc(), doc);
                 }
-                writeHit(kwics.get(hit), doc, mainTokenProperty, annotationsToWrite, WebserviceOperations.getDocumentPid(
-                        index, hit.doc(), doc), metadataFieldsToWrite, row);
+                String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
+                writeHit(kwics.get(hit), doc, mainTokenProperty,
+                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, row);
                 printer.printRecord(row);
             }
             printer.flush();
@@ -385,7 +384,7 @@ public class WriteCsv {
             if (tokenLengthField != null)
                 row.add("lengthInTokens");
 
-            Collection<String> metadataFieldIds = WebserviceOperations.getMetadataToWrite(index, params).stream()
+            Collection<String> metadataFieldIds = WebserviceOperations.getMetadataToWrite(params).stream()
                     .map(Field::name)
                     .collect(Collectors.toList());
             metadataFieldIds.remove("docPid"); // never show these values even if they exist as actual fields, they're internal/calculated

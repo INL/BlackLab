@@ -1,8 +1,11 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -29,7 +32,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
         if (result.getGroups() != null && !result.isViewGroup()) {
             csv = WriteCsv.hitsGroups(params, result);
         } else {
-            csv = WriteCsv.hits(params, result, WebserviceOperations.getAnnotationsToWrite(blIndex(), params));
+            csv = WriteCsv.hits(params, result);
         }
         ds.plain(csv);
         return HTTP_OK;
