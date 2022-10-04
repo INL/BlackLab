@@ -19,6 +19,7 @@ import org.apache.commons.io.IOUtils;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -34,9 +35,6 @@ import nl.inl.blacklab.server.util.FileUploadHandler;
  * Add document(s) to a user index.
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
-    // TODO make configurable?
-    public static final int MAX_TOKEN_COUNT = 100_000_000;
-
     String indexError = null;
 
     public RequestHandlerAddToIndex(BlackLabServer servlet,
@@ -88,9 +86,10 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         if (!index.userMayAddData(user))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
-        if (indexMetadata.tokenCount() > MAX_TOKEN_COUNT) {
-            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + MAX_TOKEN_COUNT
-                    + " tokens. Cannot add any more data to it.");
+        long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
+        if (indexMetadata.tokenCount() > maxTokenCount) {
+            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
+                    + " tokens allowed in a user index. Cannot add any more data to it.");
         }
 
         Indexer indexer = index.getIndexer();
