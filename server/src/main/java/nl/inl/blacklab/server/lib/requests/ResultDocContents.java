@@ -34,7 +34,7 @@ public class ResultDocContents {
      * @param params search parameters
      * @return
      */
-    public static ResultDocContents get(SearchCreator params) throws InvalidQuery {
+    static ResultDocContents get(SearchCreator params) throws InvalidQuery {
         return new ResultDocContents(params);
     }
 

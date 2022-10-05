@@ -26,7 +26,7 @@ public class ResultDocsCsv {
      *         specific group.
      */
     // TODO share with regular RequestHandlerHits
-    public static ResultDocsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException, InvalidQuery {
+    static ResultDocsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException, InvalidQuery {
         // Might be null
         String groupBy = params.getGroupProps().orElse(null);
         String viewGroup = params.getViewGroup().orElse(null);

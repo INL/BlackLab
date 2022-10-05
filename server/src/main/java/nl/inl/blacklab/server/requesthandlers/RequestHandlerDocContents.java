@@ -8,8 +8,9 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamXml;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.requests.ResultDocContents;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.requests.ResultDocContents;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Show (part of) the original contents of a document.
@@ -38,7 +39,9 @@ public class RequestHandlerDocContents extends RequestHandler {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         params.setDocPid(docPid);
-        ResultDocContents resultDocContents = ResultDocContents.get(params);
+
+        ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
+
         dstreamDocContents((DataStreamXml)ds, resultDocContents);
         return HTTP_OK;
     }

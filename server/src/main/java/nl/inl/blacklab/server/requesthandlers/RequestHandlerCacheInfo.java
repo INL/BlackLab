@@ -23,18 +23,19 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) {
-        String strDebugInfo = request.getParameter("debug");
-        boolean debugInfo = strDebugInfo != null && strDebugInfo.matches("true|yes|1");
-        ds.startMap()
-                .startEntry("cacheStatus");
-        SearchCache blackLabCache = searchMan.getBlackLabCache();
-        ds.value(blackLabCache.getStatus());
-        ds.endEntry()
-            .startEntry("cacheContents");
-        ds.value(blackLabCache.getContents(debugInfo));
-        ds.endEntry()
-                .endMap();
+        boolean includeDebugInfo = params.isIncludeDebugInfo();
+        dstreamCacheInfo(ds, searchMan.getBlackLabCache(), includeDebugInfo);
         return HTTP_OK;
     }
 
+    private void dstreamCacheInfo(DataStream ds, SearchCache blackLabCache, boolean includeDebugInfo) {
+        ds.startMap()
+                .startEntry("cacheStatus");
+        ds.value(blackLabCache.getStatus());
+        ds.endEntry()
+            .startEntry("cacheContents");
+        ds.value(blackLabCache.getContents(includeDebugInfo));
+        ds.endEntry()
+                .endMap();
+    }
 }

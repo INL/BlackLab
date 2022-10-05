@@ -55,7 +55,7 @@ public class ResultHitsGrouped {
 
     private final Index.IndexStatus indexStatus;
 
-    public static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan, IndexManager indexMan)
+    static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan, IndexManager indexMan)
             throws InvalidQuery {
         return new ResultHitsGrouped(params, searchMan, indexMan);
     }

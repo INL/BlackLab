@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib.requests;
 
+import java.io.File;
 import java.io.InputStream;
 import java.text.Collator;
 import java.text.ParseException;
@@ -18,6 +19,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause;
@@ -26,6 +29,9 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.index.IndexListenerReportConsole;
+import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -54,10 +60,12 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
+import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.SearchCreatorImpl;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
@@ -432,7 +440,7 @@ public class WebserviceOperations {
 
         BlackLabIndex blIndex = params.blIndex();
         AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String annotName = params.getAnnotation();
+        String annotName = params.getAnnotationName();
         Annotation annotation = cfd.annotation(annotName);
         MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
@@ -476,4 +484,99 @@ public class WebserviceOperations {
         index.setShareWithUsers(shareWithUsers);
     }
 
+    public static ResultAutocomplete autocomplete(SearchCreator params) {
+        return ResultAutocomplete.get(params);
+    }
+
+    public static ResultDocContents docContents(SearchCreator params) throws InvalidQuery {
+        return ResultDocContents.get(params);
+    }
+
+    public static ResultDocInfo docInfo(BlackLabIndex blIndex, String docPid, Document document, Collection<MetadataField> metadataToWrite) {
+        return ResultDocInfo.get(blIndex, docPid, document, metadataToWrite);
+    }
+
+    public static ResultDocsCsv docsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
+        return ResultDocsCsv.get(params, searchMan);
+    }
+
+    public static ResultHitsCsv hitsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
+        return ResultHitsCsv.get(params, searchMan);
+    }
+
+    public static ResultHitsGrouped hitsGrouped(SearchCreatorImpl params, SearchManager searchMan, IndexManager indexMan)
+            throws InvalidQuery {
+        return ResultHitsGrouped.get(params, searchMan, indexMan);
+    }
+
+    public static String addToIndex(String indexName, IndexManager indexMan, User user, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
+        Index index = indexMan.getIndex(indexName);
+        IndexMetadata indexMetadata = index.getIndexMetadata();
+
+        if (!index.userMayAddData(user))
+            throw new NotAuthorized("You can only add new data to your own private indices.");
+
+        long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
+        if (indexMetadata.tokenCount() > maxTokenCount) {
+            throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
+                    + " tokens allowed in a user index. Cannot add any more data to it.");
+        }
+
+        Indexer indexer = index.getIndexer();
+        final String[] indexErr = { null }; // array because we set it from closure
+        indexer.setListener(new IndexListenerReportConsole() {
+            @Override
+            public boolean errorOccurred(Throwable e, String path, File f) {
+                super.errorOccurred(e, path, f);
+                indexErr[0] = e.getMessage() + " in " + path;
+                return false; // Don't continue indexing
+            }
+        });
+        String indexError = indexErr[0];
+
+        indexer.setLinkedFileResolver(fileName -> linkedFiles.get(FilenameUtils.getName(fileName).toLowerCase()));
+
+        try {
+            for (FileItem file : dataFiles) {
+                indexer.index(file.getName(), file.get());
+            }
+        } finally {
+            if (indexError == null) {
+                if (indexer.listener().getFilesProcessed() == 0)
+                    indexError = "No files were found during indexing.";
+                else if (indexer.listener().getDocsDone() == 0)
+                    indexError = "No documents were found during indexing, are the files in the correct format?";
+                else if (indexer.listener().getTokensProcessed() == 0)
+                    indexError = "No tokens were found during indexing, are the files in the correct format?";
+            }
+
+            // It's important we roll back on errors, or incorrect index metadata might be written.
+            // See Indexer#hasRollback
+            if (indexError != null)
+                indexer.rollback();
+
+            indexer.close();
+        }
+
+        return indexError;
+    }
+
+    public static void deleteUserFormat(SearchManager searchMan, IndexManager indexMan, User user, String formatIdentifier) {
+        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+        if (formatMan == null)
+            throw new BadRequest("CANNOT_DELETE_INDEX ",
+                    "Could not delete format. The server is not configured with support for user content.");
+
+        if (formatIdentifier == null || formatIdentifier.isEmpty()) {
+            throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
+        }
+
+        for (Index i : indexMan.getAvailablePrivateIndices(user.getUserId())) {
+            if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
+                throw new BadRequest("CANNOT_DELETE_INDEX ",
+                        "Could not delete format. The format is still being used by a corpus.");
+        }
+
+        formatMan.deleteUserFormat(user, formatIdentifier);
+    }
 }

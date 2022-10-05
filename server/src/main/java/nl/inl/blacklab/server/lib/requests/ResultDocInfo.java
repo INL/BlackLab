@@ -18,7 +18,7 @@ import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocInfo {
 
-    public static ResultDocInfo get(BlackLabIndex index, String docPid, Document document,
+    static ResultDocInfo get(BlackLabIndex index, String docPid, Document document,
             Collection<MetadataField> metadataToWrite) {
         return new ResultDocInfo(index, docPid, document, metadataToWrite);
     }

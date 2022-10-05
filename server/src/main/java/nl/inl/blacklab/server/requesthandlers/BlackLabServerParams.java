@@ -76,7 +76,9 @@ public class BlackLabServerParams implements WebserviceParams {
             "property", // now called "annotation",
 
             "includegroupcontents", // include hits with the group response? (false)
-            "omitemptycaptures"  // omit capture groups of length 0? (false)
+            "omitemptycaptures",  // omit capture groups of length 0? (false)
+
+            "debug" // include debug info (cache)
 
     );
 
@@ -118,6 +120,7 @@ public class BlackLabServerParams implements WebserviceParams {
         defaultValues.put("csvsepline", "yes");
         defaultValues.put("includegroupcontents", "no");
         defaultValues.put("omitemptycaptures", "no");
+        defaultValues.put("debug", "no");
     }
 
     /**
@@ -462,11 +465,16 @@ public class BlackLabServerParams implements WebserviceParams {
     }
 
     @Override
-    public String getAnnotation() {
+    public String getAnnotationName() {
         String annotName = getString("annotation");
         if (annotName.length() == 0)
             annotName = getString("property"); // old parameter name, deprecated
         return annotName;
+    }
+
+    public String getFieldName() {
+        // this is not passed as a parameter but part of URL; is injected via SearchCreatorImpl
+        return null;
     }
 
     @Override
@@ -475,5 +483,10 @@ public class BlackLabServerParams implements WebserviceParams {
         Set<String> terms = strTerms != null ?
                 new HashSet<>(Arrays.asList(strTerms.trim().split("\\s*,\\s*"))) : null;
         return terms;
+    }
+
+    @Override
+    public boolean isIncludeDebugInfo() {
+        return parse(getString("debug"), false);
     }
 }

@@ -113,7 +113,11 @@ public interface WebserviceParams {
 
     boolean isCalculateCollocations();
 
-    String getAnnotation();
+    String getAnnotationName();
+
+    String getFieldName();
 
     Set<String> getTerms();
+
+    boolean isIncludeDebugInfo();
 }

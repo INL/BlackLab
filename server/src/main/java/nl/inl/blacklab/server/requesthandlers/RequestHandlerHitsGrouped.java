@@ -16,6 +16,7 @@ import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.requests.ResultHitGroup;
 import nl.inl.blacklab.server.lib.requests.ResultHitsGrouped;
+import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
 
 /**
  * Request handler for grouped hit results.
@@ -29,7 +30,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultHitsGrouped hitsGrouped = ResultHitsGrouped.get(params, searchMan, indexMan);
+        ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params, searchMan, indexMan);
         dstreamHitsGroupedResponse(ds, hitsGrouped);
         return HTTP_OK;
     }

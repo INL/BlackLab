@@ -29,13 +29,21 @@ public class RequestHandlerDocInfo extends RequestHandler {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
-        ResultDocInfo docInfo = ResultDocInfo.get(blIndex(), docPid, null, metadataToWrite);
+
+        ResultDocInfo docInfo = WebserviceOperations.docInfo(blIndex(), docPid, null, metadataToWrite);
+
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex().metadata());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
 
         // Document info
         debug(logger, "REQ doc info: " + indexName + "-" + docPid);
+        dstreamDocInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames);
+        return HTTP_OK;
+    }
+
+    private static void dstreamDocInfoResponse(DataStream ds, ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
+            Map<String, String> docFields, Map<String, String> metaDisplayNames) {
         ds.startMap().entry("docPid", docInfo.getPid());
         {
             ds.startEntry("docInfo");
@@ -44,12 +52,11 @@ public class RequestHandlerDocInfo extends RequestHandler {
             }
             ds.endEntry();
 
-
+            // (this probably shouldn't be here)
             DStream.metadataGroupInfo(ds, metadataFieldGroups);
             DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
         }
         ds.endMap();
-        return HTTP_OK;
     }
 
     @Override

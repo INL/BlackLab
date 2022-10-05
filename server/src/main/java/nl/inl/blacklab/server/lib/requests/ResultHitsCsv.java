@@ -31,7 +31,7 @@ public class ResultHitsCsv {
      *         within a group, Groups if looking at grouped hits.
      */
     // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    public static ResultHitsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException,
+    static ResultHitsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException,
             InvalidQuery {
         // Might be null
         String groupBy = params.getGroupProps().orElse(null);

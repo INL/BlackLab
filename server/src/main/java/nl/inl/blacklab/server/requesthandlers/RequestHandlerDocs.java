@@ -92,8 +92,7 @@ public class RequestHandlerDocs extends RequestHandler {
             throw WebserviceOperations.translateSearchException(e);
         }
 
-        PropertyValue viewGroupVal = null;
-        viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
+        PropertyValue viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
         if (viewGroupVal == null)
             return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
                     "Parameter 'viewgroup' has an illegal value: " + viewGroup);
@@ -199,7 +198,7 @@ public class RequestHandlerDocs extends RequestHandler {
             // Find pid
             Document document = blIndex().luceneDoc(result.docId());
             String pid = WebserviceOperations.getDocumentPid(blIndex, result.identity().value(), document);
-            ResultDocInfo docInfo = ResultDocInfo.get(blIndex, null, document, metadataFieldsToList);
+            ResultDocInfo docInfo = WebserviceOperations.docInfo(blIndex, null, document, metadataFieldsToList);
 
             ds.startItem("doc").startMap();
 

@@ -36,12 +36,16 @@ public class RequestHandlerSharing extends RequestHandler {
 
         // Regular request: return the list of users this corpus is shared with
         List<String> shareWithUsers = WebserviceOperations.getUsersToShareWith(user, indexMan, indexName);
+        dstreamUsersResponse(ds, shareWithUsers);
+        return HTTP_OK;
+    }
+
+    private void dstreamUsersResponse(DataStream ds, List<String> shareWithUsers) {
         ds.startMap().startEntry("users[]").startList();
         for (String userId : shareWithUsers) {
             ds.item("user", userId);
         }
         ds.endList().endEntry().endMap();
-        return HTTP_OK;
     }
 
 }

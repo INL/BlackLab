@@ -93,7 +93,11 @@ public class SearchCreatorImpl implements SearchCreator {
 
     private List<DocProperty> facetProps;
 
-    private String filterByDocPid;
+    private String overrideDocPid;
+
+    private String overrideAnnotationName;
+
+    private String fieldName;
 
     private SearchCreatorImpl(SearchManager searchManager, boolean isDocsOperation, boolean isDebugMode,
             WebserviceParams params) {
@@ -154,13 +158,13 @@ public class SearchCreatorImpl implements SearchCreator {
     }
 
     public void setDocPid(String pid) {
-        filterByDocPid = pid;
+        overrideDocPid = pid;
     }
 
     @Override
     public String getDocPid() {
-        if (filterByDocPid != null)
-            return filterByDocPid;
+        if (overrideDocPid != null)
+            return overrideDocPid;
         return params.getDocPid();
     }
 
@@ -750,12 +754,32 @@ public class SearchCreatorImpl implements SearchCreator {
     }
 
     @Override
-    public String getAnnotation() {
-        return params.getAnnotation();
+    public String getAnnotationName() {
+        if (overrideAnnotationName != null)
+            return overrideAnnotationName;
+        return params.getAnnotationName();
+    }
+
+    public void setAnnotationName(String annotationName) {
+        overrideAnnotationName = annotationName;
+    }
+
+    @Override
+    public String getFieldName() {
+        return fieldName;
+    }
+
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
     }
 
     @Override
     public Set<String> getTerms() {
         return params.getTerms();
+    }
+
+    @Override
+    public boolean isIncludeDebugInfo() {
+        return params.isIncludeDebugInfo();
     }
 }
