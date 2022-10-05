@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
+import nl.inl.blacklab.server.lib.results.ResultDocInfo;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about a document.

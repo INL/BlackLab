@@ -8,7 +8,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get and change sharing options for a user corpus.

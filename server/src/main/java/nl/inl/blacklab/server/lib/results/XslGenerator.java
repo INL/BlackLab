@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collections;

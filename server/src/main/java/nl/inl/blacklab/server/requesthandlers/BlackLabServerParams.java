@@ -187,6 +187,10 @@ public class BlackLabServerParams implements WebserviceParams {
         return defVal;
     }
 
+
+
+    private final Map<String, String> map = new TreeMap<>();
+
     public BlackLabServerParams(String indexName, HttpServletRequest request) {
         put("indexname", indexName);
         for (String name: NAMES) {
@@ -196,8 +200,6 @@ public class BlackLabServerParams implements WebserviceParams {
             put(name, value);
         }
     }
-
-    private final Map<String, String> map = new TreeMap<>();
 
     boolean containsKey(String key) {
         return map.containsKey(key);

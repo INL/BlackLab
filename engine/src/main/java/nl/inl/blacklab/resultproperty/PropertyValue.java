@@ -98,15 +98,34 @@ public abstract class PropertyValue implements Comparable<Object> {
     public boolean isCompound() {
         return false;
     }
-    
+
+    /**
+     * If this is PropertyValueMultiple, get the list of PropertyValues.
+     *
+     * @return list of values or null if it is not PropertyValueMultiple
+     * @deprecated use valuesList() which always returns a list, never null
+     */
+    @Deprecated
     public List<PropertyValue> values() {
         return null;
+    }
+
+    /**
+     * Return the list of values.
+     *
+     * If this is PropertValueMultiple, the list will contain multiple items,
+     * otherwise just 1.
+     *
+     * @return list of values
+     */
+    public List<PropertyValue> valuesList() {
+        return isCompound() ? values() : List.of(this);
     }
 
     public List<String> propValues() {
         List<String> l = new ArrayList<>();
         if (isCompound()) {
-            for (PropertyValue v : values())
+            for (PropertyValue v: valuesList())
                 l.addAll(v.propValues());
         } else {
             l.add(toString());

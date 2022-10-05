@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -12,8 +10,9 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
+import nl.inl.blacklab.server.lib.results.ResultMetadataField;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about a field in the index.
@@ -43,14 +42,13 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
-            Map<String, ResultAnnotationInfo> annotInfos = WebserviceOperations.getAnnotInfos(params,
-                    fieldDesc.annotations());
-            DStream.annotatedField(ds, indexName, fieldDesc, annotInfos);
+            ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
+            DStream.annotatedField(ds, resultAnnotatedField);
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            Map<String, Integer> fieldValues = WebserviceOperations.getFieldValuesInOrder(fieldDesc);
-            DStream.metadataField(ds, indexName, fieldDesc, true, fieldValues);
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, indexName);
+            DStream.metadataField(ds, metadataField);
         }
 
         // Remove any empty settings

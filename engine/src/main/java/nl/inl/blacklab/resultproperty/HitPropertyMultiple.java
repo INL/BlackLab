@@ -282,7 +282,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     @Override
     public PropertyValue docPropValues(PropertyValue value) {
         List<PropertyValue> result = new ArrayList<>();
-        List<PropertyValue> values = value.values();
+        List<PropertyValue> values = value.valuesList();
         int i = 0;
         for (HitProperty prop: properties) {
             PropertyValue v = prop.docPropValues(values.get(i));

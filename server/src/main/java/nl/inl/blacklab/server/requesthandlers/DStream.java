@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.Span;
@@ -15,7 +14,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -35,9 +33,17 @@ import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
-import nl.inl.blacklab.server.lib.requests.ResultDocInfo;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
+import nl.inl.blacklab.server.lib.results.ResultAnnotationInfo;
+import nl.inl.blacklab.server.lib.results.ResultDocInfo;
+import nl.inl.blacklab.server.lib.results.ResultIndexProgress;
+import nl.inl.blacklab.server.lib.results.ResultListOfHits;
+import nl.inl.blacklab.server.lib.results.ResultMetadataField;
+import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
+import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
+import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
+import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -50,16 +56,14 @@ public class DStream {
      * Add info about the current logged-in user (if any) to the response.
      *
      * @param ds output stream
-     * @param loggedIn is user logged in?
-     * @param userId user id (if logged in)
-     * @param canCreateIndex is the user allowed to create another index?
+     * @param userInfo user info to show
      */
-    public static void userInfo(DataStream ds, boolean loggedIn, String userId, boolean canCreateIndex) {
+    public static void userInfo(DataStream ds, ResultUserInfo userInfo) {
         ds.startEntry("user").startMap();
-        ds.entry("loggedIn", loggedIn);
-        if (loggedIn)
-            ds.entry("id", userId);
-        ds.entry("canCreateIndex", canCreateIndex);
+        ds.entry("loggedIn", userInfo.isLoggedIn());
+        if (userInfo.isLoggedIn())
+            ds.entry("id", userInfo.getUserId());
+        ds.entry("canCreateIndex", userInfo.canCreateIndex());
         ds.endMap().endEntry();
     }
 
@@ -169,19 +173,15 @@ public class DStream {
      * Output most of the fields of the search summary.
      *
      * @param ds where to output XML/JSON
-     * @param searchParam original search parameters
-     * @param timings various timings related to this request
-     * @param groups information about groups, if we were grouping
-     * @param window our viewing window
+     * @param summaryFields info for the fields to write
      */
-    public static void summaryCommonFields(
-            DataStream ds,
-            SearchCreator searchParam,
-            Index.IndexStatus indexStatus,
-            SearchTimings timings,
-            ResultGroups<?> groups,
-            WindowStats window
-            ) throws BlsException {
+    public static void summaryCommonFields(DataStream ds, ResultSummaryCommonFields summaryFields) throws BlsException {
+
+        SearchCreator searchParam = summaryFields.getSearchParam();
+        Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
+        SearchTimings timings = summaryFields.getTimings();
+        ResultGroups<?> groups = summaryFields.getGroups();
+        WindowStats window = summaryFields.getWindow();
 
         // Our search parameters
         ds.startEntry("searchParam");
@@ -226,8 +226,12 @@ public class DStream {
         }
     }
 
-    public static void numberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats,
-            ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+    public static void summaryNumHits(DataStream ds, ResultSummaryNumHits result) {
+        ResultsStats hitsStats = result.getHitsStats();
+        ResultsStats docsStats = result.getDocsStats();
+        boolean countFailed = result.isCountFailed();
+        boolean waitForTotal = result.isWaitForTotal();
+        CorpusSize subcorpusSize = result.getSubcorpusSize();
 
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         // We have a hits object we can query for this information
@@ -253,18 +257,11 @@ public class DStream {
         }
     }
 
-    public static void subcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
-        ds.startEntry("subcorpusSize").startMap()
-            .entry("documents", subcorpusSize.getDocuments());
-        if (subcorpusSize.hasTokenCount())
-            ds.entry("tokens", subcorpusSize.getTokens());
-        ds.endMap().endEntry();
-    }
-
-    public static void numberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
+    public static void summaryNumDocs(DataStream ds, ResultSummaryNumDocs result) {
+        DocResults docResults = result.getDocResults();
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ds.entry("stillCounting", false);
-        if (isViewDocGroup) {
+        if (result.isViewDocGroup()) {
             // Viewing single group of documents, possibly based on a hits search.
             // group.getResults().getOriginalHits() returns null in this case,
             // so we have to iterate over the DocResults and sum up the hits ourselves.
@@ -275,17 +272,29 @@ public class DStream {
         }
         long numberOfDocsRetrieved = docResults.size();
         long numberOfDocsCounted = numberOfDocsRetrieved;
-        if (countFailed)
+        if (result.isCountFailed())
             numberOfDocsCounted = -1;
         ds  .entry("numberOfDocs", numberOfDocsCounted)
             .entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
+        CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (subcorpusSize != null) {
             subcorpusSize(ds, subcorpusSize);
         }
     }
 
-    public static void listOfHits(DataStream ds, SearchCreator params, Hits hits, ConcordanceContext concordanceContext, Map<Integer, String> docIdToPid) throws BlsException {
-        BlackLabIndex index = hits.index();
+    public static void subcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
+        ds.startEntry("subcorpusSize").startMap()
+                .entry("documents", subcorpusSize.getDocuments());
+        if (subcorpusSize.hasTokenCount())
+            ds.entry("tokens", subcorpusSize.getTokens());
+        ds.endMap().endEntry();
+    }
+
+    public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
+        SearchCreator params = result.getParams();
+        ConcordanceContext concordanceContext = result.getConcordanceContext();
+        Hits hits = result.getHits();
+        Map<Integer, String> docIdToPid = result.getDocIdToPid();
 
         Collection<Annotation> annotationsToList = null;
         if (!concordanceContext.isConcordances())
@@ -362,22 +371,27 @@ public class DStream {
         ds.endMap();
     }
 
-    static void indexProgress(DataStream ds, long files, long docs, long tokens, IndexMetadata indexMetadata, Index.IndexStatus status)
+    static void indexProgress(DataStream ds, ResultIndexProgress progress)
             throws BlsException {
-        if (status.equals(Index.IndexStatus.INDEXING)) {
+        if (progress.getIndexStatus().equals(Index.IndexStatus.INDEXING)) {
             ds.startEntry("indexProgress").startMap()
-                    .entry("filesProcessed", files)
-                    .entry("docsDone", docs)
-                    .entry("tokensProcessed", tokens)
+                    .entry("filesProcessed", progress.getFiles())
+                    .entry("docsDone", progress.getDocs())
+                    .entry("tokensProcessed", progress.getTokens())
                     .endMap().endEntry();
         }
 
-        String formatIdentifier = indexMetadata.documentFormat();
+        String formatIdentifier = progress.getDocumentFormat();
         if (formatIdentifier != null && formatIdentifier.length() > 0)
             ds.entry("documentFormat", formatIdentifier);
     }
 
-    public static void metadataField(DataStream ds, String indexName, MetadataField fd, boolean listValues, Map<String, Integer> fieldValuesInOrder) {
+    public static void metadataField(DataStream ds, ResultMetadataField metadataField) {
+        String indexName = metadataField.getIndexName();
+        MetadataField fd = metadataField.getFieldDesc();
+        boolean listValues = metadataField.isListValues();
+        Map<String, Integer> fieldValuesInOrder = metadataField.getFieldValues();
+
         ds.startMap();
         // (we report false for ValueListComplete.UNKNOWN - this usually means there's no values either way)
         boolean valueListComplete = fd.isValueListComplete().equals(ValueListComplete.YES);
@@ -417,8 +431,11 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void annotatedField(DataStream ds, String indexName, AnnotatedField fieldDesc,
-            Map<String, ResultAnnotationInfo> annotInfos) {
+    public static void annotatedField(DataStream ds, ResultAnnotatedField annotatedField) {
+        String indexName = annotatedField.getIndexName();
+        AnnotatedField fieldDesc = annotatedField.getFieldDesc();
+        Map<String, ResultAnnotationInfo> annotInfos = annotatedField.getAnnotInfos();
+
         ds.startMap();
         if (indexName != null)
             ds.entry("indexName", indexName);
@@ -474,5 +491,4 @@ public class DStream {
         ds.endMap().endEntry();
         ds.endMap();
     }
-
 }

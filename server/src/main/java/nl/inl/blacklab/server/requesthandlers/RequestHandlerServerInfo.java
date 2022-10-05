@@ -4,7 +4,6 @@ import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -12,8 +11,10 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ResultIndexProgress;
+import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about this BlackLab server.
@@ -33,6 +34,8 @@ public class RequestHandlerServerInfo extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
+        ResultUserInfo userInfo = WebserviceOperations.userInfo(user.isLoggedIn(), user.getUserId(),
+                indexMan.canCreateIndex(user));
 
         ds.startMap()
                 .entry("blacklabBuildTime", BlackLab.buildTime())
@@ -41,31 +44,24 @@ public class RequestHandlerServerInfo extends RequestHandler {
         ds.startEntry("indices").startMap();
 
         for (Index index : indices) {
-            String id = index.getId();
-            IndexMetadata indexMetadata = index.getIndexMetadata();
-            String displayName = indexMetadata.custom().get("displayName", "");
-            String description = indexMetadata.custom().get("description", "");
-            IndexStatus status;
-            long filesProcessed = 0, docsDone = 0, tokensProcessed = 0;
             try {
+                IndexMetadata indexMetadata = index.getIndexMetadata();
+                String displayName = indexMetadata.custom().get("displayName", "");
+                String description = indexMetadata.custom().get("description", "");
+                ResultIndexProgress progress;
                 synchronized (index) {
-                    status = index.getStatus();
-                    IndexListener listener = index.getIndexerListener();
-                    if (listener != null) {
-                        filesProcessed = listener.getFilesProcessed();
-                        docsDone = listener.getDocsDone();
-                        tokensProcessed = listener.getTokensProcessed();
-                    }
+                    progress = WebserviceOperations.resultIndexProgress(indexMetadata, index.getIndexerListener(),
+                            index.getStatus());
                 }
 
-                ds.startAttrEntry("index", "name", id);
+                ds.startAttrEntry("index", "name", index.getId());
                 {
                     ds.startMap();
                     {
                         ds.entry("displayName", displayName);
                         ds.entry("description", description);
-                        ds.entry("status", status);
-                        DStream.indexProgress(ds, filesProcessed, docsDone, tokensProcessed, indexMetadata, status);
+                        ds.entry("status", index.getStatus());
+                        DStream.indexProgress(ds, progress);
                         ds.entry("timeModified", indexMetadata.timeModified());
                         ds.entry("tokenCount", indexMetadata.tokenCount());
                     }
@@ -75,12 +71,12 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
             } catch (BlsIndexOpenException e) {
                 // Cannot open this index; log and skip it.
-                logger.warn("Could not open index " + id + ": " + e.getMessage());
+                logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }
         }
         ds.endMap().endEntry();
 
-        DStream.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        DStream.userInfo(ds, userInfo);
 
         if (debugMode) {
             ds.startEntry("cacheStatus");

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -94,7 +94,7 @@ public class ResultDocsCsv {
     public final DocResults subcorpusResults;
     public final boolean isViewGroup;
 
-    public ResultDocsCsv(DocResults docs, DocGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
+    ResultDocsCsv(DocResults docs, DocGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
         super();
         this.docs = docs;
         this.groups = groups;

@@ -337,6 +337,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         return null;
     }
 
+    @Override
+    public List<HitProperty> propsList() {
+        return isCompound() ? props() : List.of(this);
+    }
+
     /**
      * Return only the DocProperty portion (if any) of this HitProperty, if any.
      * 

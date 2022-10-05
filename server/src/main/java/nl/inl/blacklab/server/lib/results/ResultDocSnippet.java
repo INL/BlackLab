@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +33,7 @@ public class ResultDocSnippet {
 
     private final List<Annotation> annotsToWrite;
 
-    public ResultDocSnippet(SearchCreatorImpl params, SearchManager searchMan) {
+    ResultDocSnippet(SearchCreatorImpl params, SearchManager searchMan) {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();

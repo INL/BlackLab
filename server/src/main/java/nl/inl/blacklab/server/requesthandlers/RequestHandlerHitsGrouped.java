@@ -11,12 +11,14 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultHitGroup;
-import nl.inl.blacklab.server.lib.requests.ResultHitsGrouped;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultHitGroup;
+import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
+import nl.inl.blacklab.server.lib.results.ResultListOfHits;
+import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
+import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Request handler for grouped hit results.
@@ -36,18 +38,17 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     }
 
     private static void dstreamHitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
-        Index.IndexStatus indexStatus = hitsGrouped.getIndexStatus();
         SearchCreator params = hitsGrouped.getParams();
+        ResultSummaryCommonFields summaryFields = hitsGrouped.getSummaryFields();
+        ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
 
         ds.startMap();
 
         // Summary
         ds.startEntry("summary").startMap();
         {
-            DStream.summaryCommonFields(ds, params, indexStatus, hitsGrouped.getTimings(),
-                    hitsGrouped.getGroups(), hitsGrouped.getWindow());
-            DStream.numberOfResultsSummaryTotalHits(ds, hitsGrouped.getHitsStats(), hitsGrouped.getDocsStats(),
-                    true, false, hitsGrouped.getSubcorpusSize());
+            DStream.summaryCommonFields(ds, summaryFields);
+            DStream.summaryNumHits(ds, result);
         }
         ds.endMap().endEntry();
 
@@ -80,8 +81,10 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
                 if (params.includeGroupContents()) {
                     Hits hitsInGroup = groupInfo.getGroup().storedResults();
-                    DStream.listOfHits(ds, params, hitsInGroup, groupInfo.getConcordanceContext(),
+                    ResultListOfHits listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup,
+                            groupInfo.getConcordanceContext(),
                             groupInfo.getDocIdToPid());
+                    DStream.listOfHits(ds, listOfHits);
                 }
             }
             ds.endMap().endItem();

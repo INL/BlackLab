@@ -9,8 +9,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WriteCsv;
-import nl.inl.blacklab.server.lib.requests.ResultDocsCsv;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultDocsCsv;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Handle /docs requests that produce CSV.

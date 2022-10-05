@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -22,9 +22,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -99,7 +97,7 @@ public class ResultHits {
     private Index.IndexStatus indexStatus;
 
     @SuppressWarnings("unchecked")
-    public ResultHits(SearchCreator params, IndexManager indexMan) {
+    ResultHits(SearchCreator params, IndexManager indexMan) {
         this.params = params;
         indexStatus = indexMan == null ? null : indexMan.getIndex(params.getIndexName()).getStatus();
 
@@ -187,12 +185,8 @@ public class ResultHits {
 
         // Decode the grouping properties, and the values for those properties in the requested group.
         // So we can enhance the BooleanQuery and TextPattern with these  criteria
-        List<PropertyValue> vals = viewGroupVal instanceof PropertyValueMultiple ?
-                viewGroupVal.values() :
-                List.of(viewGroupVal);
-        List<HitProperty> props = groupByProp instanceof HitPropertyMultiple ?
-                groupByProp.props() :
-                List.of(groupByProp);
+        List<PropertyValue> vals = viewGroupVal.valuesList();
+        List<HitProperty> props = groupByProp.propsList();
 
         int i = 0;
         for (HitProperty p: props) {

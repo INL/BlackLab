@@ -18,7 +18,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultDocSnippet;
+import nl.inl.blacklab.server.lib.results.ResultDocSnippet;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get a snippet of a document's contents.
@@ -37,7 +38,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
         params.setDocPid(docPid);
 
-        ResultDocSnippet result = new ResultDocSnippet(params, searchMan);
+        ResultDocSnippet result = WebserviceOperations.docSnippet(params, searchMan);
         dstreamHitOrFragmentInfo(ds, result);
         return HTTP_OK;
     }

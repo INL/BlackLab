@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -17,7 +17,7 @@ public class ResultAnnotationInfo {
 
     private boolean valueListComplete = true;
 
-    public ResultAnnotationInfo(BlackLabIndex index, Annotation annotation, Collection<String> listValuesFor) {
+    ResultAnnotationInfo(BlackLabIndex index, Annotation annotation, Collection<String> listValuesFor) {
         this.annotation = annotation;
         showValues = annotationMatches(annotation.name(), listValuesFor);
         if (showValues && !index.isEmpty()) {

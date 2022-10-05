@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -78,7 +78,7 @@ public class ResultDocContents {
 
     private Set<String> anonNamespaces;
 
-    public ResultDocContents(SearchCreator params) throws BlsException, InvalidQuery {
+    ResultDocContents(SearchCreator params) throws BlsException, InvalidQuery {
         this.params = params;
         this.docPid = params.getDocPid();
         getDocContents();

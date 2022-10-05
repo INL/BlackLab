@@ -39,8 +39,8 @@ import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.lib.requests.ResultHitsCsv;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultHitsCsv;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Utility methods for writing CSV responses.

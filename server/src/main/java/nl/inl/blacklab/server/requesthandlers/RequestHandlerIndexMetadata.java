@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,8 +21,10 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultAnnotationInfo;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
+import nl.inl.blacklab.server.lib.results.ResultIndexProgress;
+import nl.inl.blacklab.server.lib.results.ResultMetadataField;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about the structure of an index.
@@ -47,106 +48,102 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
             BlackLabIndex blIndex = index.blIndex();
             IndexMetadata indexMetadata = blIndex.metadata();
             IndexListener indexerListener = index.getIndexerListener();
+            IndexStatus status = indexMan.getIndex(indexName).getStatus();
+            ResultIndexProgress progress = WebserviceOperations.resultIndexProgress(indexMetadata,
+                    indexerListener, status);
 
             // Assemble response
-            IndexStatus status = indexMan.getIndex(indexName).getStatus();
-            ds.startMap()
-                    .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
-                    .entry("description", indexMetadata.custom().get("description", ""))
-                    .entry("status", status)
-                    .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
+            ds.startMap();
+            {
+                ds.entry("indexName", indexName)
+                        .entry("displayName", indexMetadata.custom().get("displayName", ""))
+                        .entry("description", indexMetadata.custom().get("description", ""))
+                        .entry("status", status)
+                        .entry("contentViewable", indexMetadata.contentViewable())
+                        .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
 
-            long files = 0;
-            long docs = 0;
-            long tokens = 0;
-            if (indexerListener != null) {
-                files = indexerListener.getFilesProcessed();
-                docs = indexerListener.getDocsDone();
-                tokens = indexerListener.getTokensProcessed();
-            }
-            DStream.indexProgress(ds, files, docs, tokens, indexMetadata, status);
-            ds.entry("tokenCount", indexMetadata.tokenCount());
-            ds.entry("documentCount", indexMetadata.documentCount());
+                DStream.indexProgress(ds, progress);
+                ds.entry("tokenCount", indexMetadata.tokenCount());
+                ds.entry("documentCount", indexMetadata.documentCount());
 
-            ds.startEntry("versionInfo").startMap()
-                    .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
-                    .entry("blackLabVersion", indexMetadata.indexBlackLabVersion())
-                    .entry("indexFormat", indexMetadata.indexFormat())
-                    .entry("timeCreated", indexMetadata.timeCreated())
-                    .entry("timeModified", indexMetadata.timeModified())
-                    .endMap().endEntry();
+                ds.startEntry("versionInfo").startMap()
+                        .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
+                        .entry("blackLabVersion", indexMetadata.indexBlackLabVersion())
+                        .entry("indexFormat", indexMetadata.indexFormat())
+                        .entry("timeCreated", indexMetadata.timeCreated())
+                        .entry("timeModified", indexMetadata.timeModified())
+                        .endMap().endEntry();
 
-            MetadataFields fields = indexMetadata.metadataFields();
-            ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", fields.pidField() == null ? "" : fields.pidField())
-                    .entry("titleField", indexMetadata.custom().get("titleField", ""))
-                    .entry("authorField", indexMetadata.custom().get("authorField", ""))
-                    .entry("dateField", indexMetadata.custom().get("dateField", ""))
-                    .endMap().endEntry();
+                MetadataFields fields = indexMetadata.metadataFields();
+                ds.startEntry("fieldInfo").startMap()
+                        .entry("pidField", fields.pidField() == null ? "" : fields.pidField())
+                        .entry("titleField", indexMetadata.custom().get("titleField", ""))
+                        .entry("authorField", indexMetadata.custom().get("authorField", ""))
+                        .entry("dateField", indexMetadata.custom().get("dateField", ""))
+                        .endMap().endEntry();
 
-            ds.startEntry("annotatedFields").startMap();
-            for (AnnotatedField field: indexMetadata.annotatedFields()) {
-                ds.startAttrEntry("annotatedField", "name", field.name());
-                {
-                    Map<String, ResultAnnotationInfo> annotInfos =
-                            WebserviceOperations.getAnnotInfos(params, field.annotations());
-                    DStream.annotatedField(ds, null, field, annotInfos);
-                }
-                ds.endAttrEntry();
-            }
-            ds.endMap().endEntry();
-
-            ds.startEntry("metadataFields").startMap();
-            for (MetadataField f: fields) {
-                ds.startAttrEntry("metadataField", "name", f.name());
-                {
-                    Map<String, Integer> fieldValuesInOrder = WebserviceOperations.getFieldValuesInOrder(f);
-                    DStream.metadataField(ds, null, f, true, fieldValuesInOrder);
-                }
-                ds.endAttrEntry();
-            }
-            ds.endMap().endEntry();
-
-            DStream.metadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
-
-            ds.startEntry("annotationGroups").startMap();
-            for (AnnotatedField f: indexMetadata.annotatedFields()) {
-                AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
-                if (groups != null) {
-                    @SuppressWarnings("FuseStreamOperations") // LinkedHashSet - preserve order!
-                    Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
-                    for (AnnotationGroup group : groups) {
-                        for (String annotationName: group) {
-                            Annotation annotation = f.annotation(annotationName);
-                            annotationsNotInGroups.remove(annotation);
-                        }
+                ds.startEntry("annotatedFields").startMap();
+                for (AnnotatedField field: indexMetadata.annotatedFields()) {
+                    ds.startAttrEntry("annotatedField", "name", field.name());
+                    {
+                        ResultAnnotatedField annotatedField = WebserviceOperations.annotatedField(params, field,
+                                false);
+                        DStream.annotatedField(ds, annotatedField);
                     }
-                    ds.startAttrEntry("annotatedField", "name", f.name()).startList();
-                    boolean addedRemainingAnnots = false;
-                    for (AnnotationGroup group : groups) {
-                        ds.startItem("annotationGroup").startMap();
-                        ds.entry("name", group.groupName());
-                        ds.startEntry("annotations").startList();
-                        for (String annotation: group) {
-                            ds.item("annotation", annotation);
-                        }
-                        if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
-                            addedRemainingAnnots = true;
-                            for (Annotation annotation: annotationsNotInGroups) {
-                                if (!annotation.isInternal())
-                                    ds.item("annotation", annotation.name());
+                    ds.endAttrEntry();
+                }
+                ds.endMap().endEntry();
+
+                ds.startEntry("metadataFields").startMap();
+                for (MetadataField f: fields) {
+                    ds.startAttrEntry("metadataField", "name", f.name());
+                    {
+                        ResultMetadataField metadataField = WebserviceOperations.metadataField(f, null);
+                        DStream.metadataField(ds, metadataField);
+                    }
+                    ds.endAttrEntry();
+                }
+                ds.endMap().endEntry();
+
+                DStream.metadataGroupInfo(ds, WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex));
+
+                ds.startEntry("annotationGroups").startMap();
+                for (AnnotatedField f: indexMetadata.annotatedFields()) {
+                    AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
+                    if (groups != null) {
+                        @SuppressWarnings("FuseStreamOperations") // LinkedHashSet - preserve order!
+                        Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(
+                                f.annotations().stream().collect(Collectors.toList()));
+                        for (AnnotationGroup group: groups) {
+                            for (String annotationName: group) {
+                                Annotation annotation = f.annotation(annotationName);
+                                annotationsNotInGroups.remove(annotation);
                             }
                         }
-                        ds.endList().endEntry();
-                        ds.endMap().endItem();
+                        ds.startAttrEntry("annotatedField", "name", f.name()).startList();
+                        boolean addedRemainingAnnots = false;
+                        for (AnnotationGroup group: groups) {
+                            ds.startItem("annotationGroup").startMap();
+                            ds.entry("name", group.groupName());
+                            ds.startEntry("annotations").startList();
+                            for (String annotation: group) {
+                                ds.item("annotation", annotation);
+                            }
+                            if (!addedRemainingAnnots && group.addRemainingAnnotations()) {
+                                addedRemainingAnnots = true;
+                                for (Annotation annotation: annotationsNotInGroups) {
+                                    if (!annotation.isInternal())
+                                        ds.item("annotation", annotation.name());
+                                }
+                            }
+                            ds.endList().endEntry();
+                            ds.endMap().endItem();
+                        }
+                        ds.endList().endAttrEntry();
                     }
-                    ds.endList().endAttrEntry();
                 }
+                ds.endMap().endEntry();
             }
-            ds.endMap().endEntry();
-
             ds.endMap();
 
             return HTTP_OK;

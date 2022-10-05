@@ -16,7 +16,6 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -349,20 +348,13 @@ public class SearchCreatorImpl implements SearchCreator {
             if (!facets.isPresent()) {
                 facetProps = null;
             } else {
-                DocProperty propMultipleFacets = DocProperty.deserialize(blIndex(), facets.get());
-                if (propMultipleFacets == null)
+                DocProperty propFacets = DocProperty.deserialize(blIndex(), facets.get());
+                if (propFacets == null)
                     facetProps = null;
                 else {
                     facetProps = new ArrayList<>();
-                    if (propMultipleFacets instanceof DocPropertyMultiple) {
-                        // Multiple facets requested
-                        for (DocProperty prop: (DocPropertyMultiple) propMultipleFacets) {
-                            facetProps.add(prop);
-                        }
-                    } else {
-                        // Just a single facet requested
-                        facetProps.add(propMultipleFacets);
-                    }
+                    for (DocProperty prop: propFacets.propsList())
+                        facetProps.add(prop);
                 }
             }
         }

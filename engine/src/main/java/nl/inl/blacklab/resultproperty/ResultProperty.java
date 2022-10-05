@@ -64,7 +64,7 @@ public interface ResultProperty<T> extends Serializable {
     default List<String> propNames() {
         List<String> names = new ArrayList<>();
         if (isCompound()) {
-            props().forEach(prop -> names.addAll(prop.propNames()));
+            propsList().forEach(prop -> names.addAll(prop.propNames()));
         } else {
             names.add(serializeReverse() + name());
         }
@@ -81,10 +81,28 @@ public interface ResultProperty<T> extends Serializable {
         return false;
     }
 
+    /**
+     * If this is ResultPropertyMultiple, get the list of properties.
+     *
+     * @return list of properties or null if it is not ResultPropertyMultiple
+     * @deprecated use propsList() which always returns a list, never null
+     */
+    @Deprecated
     default List<? extends ResultProperty<T>> props() {
         return null;
     }
 
-    String serializeReverse();
+    /**
+     * Return the list of properties.
+     *
+     * If this is ResultPropertyMultiple, the list will contain multiple items,
+     * otherwise just 1.
+     *
+     * @return list of properties
+     */
+    default List<? extends ResultProperty<T>> propsList() {
+        return isCompound() ? props() : List.of(this);
+    }
 
+    String serializeReverse();
 }

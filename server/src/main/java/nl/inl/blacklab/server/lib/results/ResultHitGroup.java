@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +39,8 @@ public class ResultHitGroup {
 
     private Map<Integer, String> docIdToPid = null;
 
-    public ResultHitGroup(SearchCreator params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
-            DocResults subcorpus, boolean isMultiValueGroup,
+    ResultHitGroup(SearchCreator params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
+            DocResults subcorpus,
             List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
         this.group = group;
         PropertyValue id = group.identity();
@@ -58,7 +58,7 @@ public class ResultHitGroup {
         numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
         properties = new ArrayList<>();
-        List<PropertyValue> valuesForGroup = isMultiValueGroup ? id.values() : List.of(id);
+        List<PropertyValue> valuesForGroup = id.valuesList();
         for (int j = 0; j < prop.size(); ++j) {
             final HitProperty hp = prop.get(j);
             final PropertyValue pv = valuesForGroup.get(j);

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -37,7 +37,7 @@ public class ResultDocInfo {
 
     private boolean mayView;
 
-    public ResultDocInfo(BlackLabIndex index, String docPid, Document document,
+    ResultDocInfo(BlackLabIndex index, String docPid, Document document,
             Collection<MetadataField> metadataToWrite) throws BlsException {
         this.index = index;
         this.metadataToWrite = metadataToWrite;

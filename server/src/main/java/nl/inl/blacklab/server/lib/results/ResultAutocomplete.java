@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
@@ -13,20 +13,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.SearchCreator;
 
 public class ResultAutocomplete {
-    private String luceneField;
-
-    private String term;
-
-    private boolean sensitiveMatching;
-
-    private IndexReader reader;
-
-    public ResultAutocomplete(String luceneField, String term, boolean sensitiveMatching, IndexReader reader) {
-        this.luceneField = luceneField;
-        this.term = term;
-        this.sensitiveMatching = sensitiveMatching;
-        this.reader = reader;
-    }
 
     static ResultAutocomplete get(SearchCreator params) {
         String fieldName = params.getFieldName();
@@ -82,6 +68,21 @@ public class ResultAutocomplete {
         }
         ResultAutocomplete result = new ResultAutocomplete(luceneField, term, sensitiveMatching, index.reader());
         return result;
+    }
+
+    private String luceneField;
+
+    private String term;
+
+    private boolean sensitiveMatching;
+
+    private IndexReader reader;
+
+    ResultAutocomplete(String luceneField, String term, boolean sensitiveMatching, IndexReader reader) {
+        this.luceneField = luceneField;
+        this.term = term;
+        this.sensitiveMatching = sensitiveMatching;
+        this.reader = reader;
     }
 
     public String getLuceneField() {

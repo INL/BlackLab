@@ -9,8 +9,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultAutocomplete;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultAutocomplete;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.util.LuceneUtil;
 
 /**

@@ -9,8 +9,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WriteCsv;
-import nl.inl.blacklab.server.lib.requests.ResultHitsCsv;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultHitsCsv;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Request handler for hit results.

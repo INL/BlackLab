@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,7 +12,6 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -55,12 +54,16 @@ public class ResultHitsGrouped {
 
     private final Index.IndexStatus indexStatus;
 
+    private final ResultSummaryCommonFields summaryFields;
+
+    private final ResultSummaryNumHits summaryNumHits;
+
     static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan, IndexManager indexMan)
             throws InvalidQuery {
         return new ResultHitsGrouped(params, searchMan, indexMan);
     }
 
-    public ResultHitsGrouped(SearchCreator params, SearchManager searchMan, IndexManager indexMan) throws InvalidQuery {
+    ResultHitsGrouped(SearchCreator params, SearchManager searchMan, IndexManager indexMan) throws InvalidQuery {
         this.params = params;
         indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
 
@@ -101,8 +104,7 @@ public class ResultHitsGrouped {
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
          * contain the sub properties and values in the same order.
          */
-        boolean isMultiValueGroup = groups.groupCriteria() instanceof HitPropertyMultiple;
-        List<HitProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
+        List<HitProperty> prop = groups.groupCriteria().propsList();
 
         long last = Math.min(first + requestedWindowSize, groups.size());
 
@@ -112,7 +114,7 @@ public class ResultHitsGrouped {
             for (long i = first; i < last; ++i) {
                 HitGroup group = groups.get(i);
                 groupInfos.add(new ResultHitGroup(params, groups, group, metadataGroupProperties,
-                        subcorpus, isMultiValueGroup, prop, luceneDocs));
+                        subcorpus, prop, luceneDocs));
             }
         }
 
@@ -122,6 +124,12 @@ public class ResultHitsGrouped {
             Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
             docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataToWrite);
         }
+
+        summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
+                getTimings(), getGroups(), getWindow());
+        summaryNumHits = WebserviceOperations.numResultsSummaryHits(
+                getHitsStats(), getDocsStats(), true, false, getSubcorpusSize());
+
     }
 
     public HitGroups getGroups() {
@@ -166,5 +174,13 @@ public class ResultHitsGrouped {
 
     public SearchCreator getParams() {
         return params;
+    }
+
+    public ResultSummaryCommonFields getSummaryFields() {
+        return summaryFields;
+    }
+
+    public ResultSummaryNumHits getSummaryNumHits() {
+        return summaryNumHits;
     }
 }

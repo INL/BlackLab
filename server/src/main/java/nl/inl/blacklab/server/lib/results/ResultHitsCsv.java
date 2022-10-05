@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -114,7 +114,7 @@ public class ResultHitsCsv {
 
     private final List<Annotation> annotationsToWrite;
 
-    public ResultHitsCsv(SearchCreator params, Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
+    ResultHitsCsv(SearchCreator params, Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
             List<Annotation> annotationsToWrite) {
         super();
         this.params = params;

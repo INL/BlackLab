@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.io.File;
 import java.io.InputStream;
@@ -30,6 +30,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -43,7 +44,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -53,8 +53,12 @@ import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -64,8 +68,10 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchCreatorImpl;
+import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
@@ -395,16 +401,6 @@ public class WebserviceOperations {
         }
     }
 
-    public static Map<String, ResultAnnotationInfo> getAnnotInfos(SearchCreator params, Annotations annotations) {
-        Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
-        BlackLabIndex index = params.blIndex();
-        for (Annotation annotation: annotations) {
-            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, params.getListValuesFor());
-            annotInfos.put(annotation.name(), ai);
-        }
-        return annotInfos;
-    }
-
     public static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
@@ -578,5 +574,73 @@ public class WebserviceOperations {
         }
 
         formatMan.deleteUserFormat(user, formatIdentifier);
+    }
+
+    public static ResultAnnotatedField annotatedField(SearchCreator params, AnnotatedField fieldDesc, boolean includeIndexName) {
+        Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
+        BlackLabIndex index = params.blIndex();
+        for (Annotation annotation: fieldDesc.annotations()) {
+            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, params.getListValuesFor());
+            annotInfos.put(annotation.name(), ai);
+        }
+        return new ResultAnnotatedField(includeIndexName ? params.getIndexName() : null, fieldDesc, annotInfos);
+    }
+
+    public static ResultIndexProgress resultIndexProgress(IndexMetadata indexMetadata, IndexListener indexerListener,
+            Index.IndexStatus status) {
+        long files = 0;
+        long docs = 0;
+        long tokens = 0;
+        if (indexerListener != null) {
+            files = indexerListener.getFilesProcessed();
+            docs = indexerListener.getDocsDone();
+            tokens = indexerListener.getTokensProcessed();
+        }
+        ResultIndexProgress progress = new ResultIndexProgress(files, docs, tokens, indexMetadata.documentFormat(),
+                status);
+        return progress;
+    }
+
+    public static ResultDocSnippet docSnippet(SearchCreatorImpl params, SearchManager searchMan) {
+        return new ResultDocSnippet(params, searchMan);
+    }
+
+    public static ResultListOfHits listOfHits(SearchCreator params, Hits window, ConcordanceContext concordanceContext,
+            Map<Integer, String> docIdToPid) {
+        return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
+    }
+
+    public static ResultMetadataField metadataField(MetadataField fieldDesc, String indexName) {
+        Map<String, Integer> fieldValues = getFieldValuesInOrder(fieldDesc);
+        return new ResultMetadataField(indexName, fieldDesc, true, fieldValues);
+    }
+
+    public static ResultSummaryNumDocs numResultsSummaryDocs(boolean isViewGroup, DocResults docResults,
+            boolean countFailed, CorpusSize subcorpusSize) {
+        return new ResultSummaryNumDocs(isViewGroup, docResults, countFailed, subcorpusSize);
+    }
+
+    public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, countFailed, subcorpusSize);
+    }
+
+    public static ResultSummaryCommonFields summaryCommonFields(SearchCreator params, Index.IndexStatus indexStatus,
+            SearchTimings timings, ResultGroups<?> groups, WindowStats window) {
+        ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(params,
+                indexStatus, timings, groups, window);
+        return summaryFields;
+    }
+
+    public static ResultUserInfo userInfo(boolean loggedIn, String userId, boolean canCreateIndex) {
+        return new ResultUserInfo(loggedIn, userId, canCreateIndex);
+    }
+
+    public static ResultDocsResponse viewGroupDocsResponse(SearchCreatorImpl params, SearchManager searchMan,
+            IndexManager indexMan) {
+        return ResultDocsResponse.viewGroupDocsResponse(params, searchMan, indexMan);
+    }
+
+    public static ResultDocsResponse regularDocsResponse(SearchCreatorImpl params, IndexManager indexMan) {
+        return ResultDocsResponse.regularDocsResponse(params, indexMan);
     }
 }

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib.requests;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.Map;
@@ -11,7 +11,7 @@ public class ResultMetadataGroupInfo {
 
     private Collection<MetadataField> metadataFieldsNotInGroups;
 
-    public ResultMetadataGroupInfo(Map<String, ? extends MetadataFieldGroup> metaGroups,
+    ResultMetadataGroupInfo(Map<String, ? extends MetadataFieldGroup> metaGroups,
             Collection<MetadataField> metadataFieldsNotInGroups) {
         this.metaGroups = metaGroups;
         this.metadataFieldsNotInGroups = metadataFieldsNotInGroups;

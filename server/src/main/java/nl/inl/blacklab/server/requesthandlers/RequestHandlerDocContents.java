@@ -9,8 +9,8 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamXml;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.ResultDocContents;
-import nl.inl.blacklab.server.lib.requests.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.ResultDocContents;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Show (part of) the original contents of a document.

@@ -17,9 +17,10 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.requests.XslGenerator;
+import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.XslGenerator;
 
 /**
  * Get information about supported input formats.
@@ -61,7 +62,12 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         }
 
         // List all available input formats
-        dstreamListFormatsResponse(ds, user, indexMan);
+        if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
+            // Make sure users's formats are loaded
+            indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
+        }
+        ResultUserInfo userInfo = WebserviceOperations.userInfo(user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        dstreamListFormatsResponse(ds, userInfo);
         return HTTP_OK;
     }
 
@@ -90,12 +96,10 @@ public class RequestHandlerListInputFormats extends RequestHandler {
         return HTTP_OK;
     }
 
-    private static void dstreamListFormatsResponse(DataStream ds, User user, IndexManager indexMan) {
-        if (user.isLoggedIn() && indexMan.getUserFormatManager() != null)
-            indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
+    private static void dstreamListFormatsResponse(DataStream ds, ResultUserInfo userInfo) {
 
         ds.startMap();
-        DStream.userInfo(ds, user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
+        DStream.userInfo(ds, userInfo);
 
         // List supported input formats
         // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
@@ -104,7 +108,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             try {
                 String userId = DocIndexerFactoryUserFormats.getUserIdOrFormatName(format.getId(), false);
                 // Other user's formats are not explicitly enumerated (but should still be considered public)
-                if (!userId.equals(user.getUserId()))
+                if (!userId.equals(userInfo.getUserId()))
                     continue;
             } catch (IllegalUserFormatIdentifier e) {
                 // Alright, it's evidently not a user format, that means it's public. List it.
