@@ -1,5 +1,13 @@
 # Change Log
 
+## Improvements in 3.0.1
+
+### Changed
+
+- Remove Solr dependencies (via SlowCompositeReaderWrapper). Those made the WAR huge and 
+  caused problems with some application servers (because Jetty was being pulled in).
+
+
 ## Improvements in 3.0.0
 
 ### Changed
