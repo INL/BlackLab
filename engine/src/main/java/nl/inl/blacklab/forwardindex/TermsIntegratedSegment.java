@@ -94,6 +94,8 @@ public class TermsIntegratedSegment implements AutoCloseable {
         /** Ord (ordinal) of the segment */
         private final int ord;
 
+        private final long id2posBaseOffset;
+
         /** 
          * File with the iteration order.
          * All term IDS are local to this segment.
@@ -103,11 +105,13 @@ public class TermsIntegratedSegment implements AutoCloseable {
          *     int[n] termID2SensitivePos      ( offset [2*n*int] )
          *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
          */
-        private final IndexInput termOrderFile;
+        private final IndexInput termPos2IDFile;
+        // same as termOrderFile, but seeked to the inverted buffer.
+        private final IndexInput termID2PosFile;
         /** File containing offsets to the strings */
-        private final IndexInput termIndexFile;
+        private final IndexInput termStringOffsetFile;
         /** File containing the strings */
-        private final IndexInput termsFile;
+        private final IndexInput termStringFile;
         
         private TermInSegment next = new TermInSegment();
         private TermInSegment peek = new TermInSegment();
@@ -116,8 +120,13 @@ public class TermsIntegratedSegment implements AutoCloseable {
         private int i = 0;
         /** Total number of terms in the segment */
         private final int n;
-        
-        
+
+
+        // dus je wil dat dezelfde sort position meerdere keren langskomt
+        // dus eerst heb je I, maar die kunt je niet gebruiken, want die komt maar 1 keer langs
+        // dus moet je via een omweg:
+        // via i haal je ID op, en via ID haal je de echte (iets lagere) position op
+
         /**
          * @param segment only used for initialization, because we need to pass many parameters otherwise.
          * @param order iterate over terms in the segment in case-sensitive or case-insensitive order? (ascending)
@@ -128,36 +137,46 @@ public class TermsIntegratedSegment implements AutoCloseable {
             try {
                 this.field = segment.field;
                 this.ord = segment.ord;
-                
+
                 // clone these file accessors, as they are not threadsafe
                 // while this code was written these file handles were only ever used in one thread, 
                 // but doing this ensures we don't break things in the future.
-                this.termOrderFile = segment._termOrderFile.clone();
-                this.termIndexFile = segment._termIndexFile.clone();
-                this.termsFile = segment._termsFile.clone();
+                this.termPos2IDFile = segment._termOrderFile.clone();
+                this.termID2PosFile = this.termPos2IDFile.clone();
+
+
+                this.termStringOffsetFile = segment._termIndexFile.clone();
+                this.termStringFile = segment._termsFile.clone();
                 
                 this.i = 0;
                 this.n = field.getNumberOfTerms();
 
                 // initialize first term so peek() will work.
-                this.termOrderFile.seek(((long)n)*Integer.BYTES*(order == MatchSensitivity.SENSITIVE ? 3 : 1) + field.getTermOrderOffset());
-                this.termIndexFile.seek(field.getTermIndexOffset());
+                this.termPos2IDFile.seek(((long)n)*Integer.BYTES*(order.equals(MatchSensitivity.SENSITIVE) ? 3 : 1) + field.getTermOrderOffset());
+                this.id2posBaseOffset = ((long)n)*Integer.BYTES*(order.equals(MatchSensitivity.SENSITIVE) ? 2 : 0) + field.getTermOrderOffset();
+                this.termStringOffsetFile.seek(field.getTermIndexOffset());
                 loadPeek();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+
+        private int getPositionFromLocalTermID(int localTermID) throws IOException {
+            this.termID2PosFile.seek(this.id2posBaseOffset + localTermID*Integer.BYTES);
+            return this.termID2PosFile.readInt();
+        }
+
  
         private void loadPeek() {
             try {
                 if (i < n) {
-                    peek.sortPosition = i;
-                    peek.id = termOrderFile.readInt();
-    
-                    termIndexFile.seek(field.getTermIndexOffset() + peek.id*Long.BYTES);
-                    long offsetInTermStringFile = termIndexFile.readLong(); 
-                    termsFile.seek(offsetInTermStringFile);
-                    peek.term = termsFile.readString();
+                    peek.id = termPos2IDFile.readInt();
+                    peek.sortPosition = this.getPositionFromLocalTermID(peek.id);
+
+                    termStringOffsetFile.seek(field.getTermIndexOffset() + (long) peek.id *Long.BYTES);
+                    long offsetInTermStringFile = termStringOffsetFile.readLong();
+                    termStringFile.seek(offsetInTermStringFile);
+                    peek.term = termStringFile.readString();
                 }
             } catch (IOException e) {
                 throw new RuntimeException(e);
