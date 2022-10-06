@@ -312,4 +312,9 @@ class TermsWriter implements Terms {
     public int[] segmentIdsToGlobalIds(int ord, int[] segmentResults) {
         throw new UnsupportedOperationException("Not available during indexing");
     }
+
+    @Override
+    public int segmentIdToGlobalId(int ord, int segmentTermId) {
+        throw new UnsupportedOperationException("Not available during indexing");
+    }
 }

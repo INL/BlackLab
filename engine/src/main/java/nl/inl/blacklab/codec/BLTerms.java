@@ -7,7 +7,6 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
 
-import nl.inl.blacklab.forwardindex.TermsIntegrated;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -25,7 +24,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
     private final Terms terms;
 
     /** The global terms object, which we use to implement get() and termsEqual() */
-    private TermsIntegrated termsIntegrated;
+    private nl.inl.blacklab.forwardindex.Terms termsIntegrated;
 
     /** Our segment number */
     private int ord;
@@ -119,7 +118,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
         return termsIntegrated.termsEqual(globalTermIds, sensitivity);
     }
 
-    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+    public void setTermsIntegrated(nl.inl.blacklab.forwardindex.Terms termsIntegrated, int ord) {
         this.termsIntegrated = termsIntegrated;
         this.ord = ord;
     }

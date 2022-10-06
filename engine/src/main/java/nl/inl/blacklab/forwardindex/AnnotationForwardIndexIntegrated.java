@@ -23,6 +23,8 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex {
 
+    private static final boolean USE_ALTERNATIVE_TERMS_INTEGRATED = true;
+
     /**
      * Open an integrated forward index.
      *
@@ -67,7 +69,8 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
         // Ensure quick lookup of the segment we need
         leafReaderLookup = new LeafReaderLookup(indexReader);
 
-        terms = new TermsIntegrated(collators, indexReader, luceneField);
+        terms = USE_ALTERNATIVE_TERMS_INTEGRATED ? new TermsIntegrated2(collators, indexReader, luceneField) :
+                new TermsIntegrated(collators, indexReader, luceneField);
     }
 
     @Override

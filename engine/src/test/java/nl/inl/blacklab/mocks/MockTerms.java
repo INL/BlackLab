@@ -61,4 +61,8 @@ public class MockTerms implements Terms {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public int segmentIdToGlobalId(int ord, int segmentTermId) {
+        throw new UnsupportedOperationException();
+    }
 }

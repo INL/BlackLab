@@ -38,6 +38,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         this.indexReader = indexReader;
         this.luceneField = luceneField;
 
+        System.err.println(System.currentTimeMillis() + "   read terms " + luceneField);
         try {
             List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
             for (LeafReaderContext lrc : indexReader.leaves()) {

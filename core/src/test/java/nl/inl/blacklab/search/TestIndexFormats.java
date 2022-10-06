@@ -111,7 +111,7 @@ public class TestIndexFormats {
             int expected = collator.compare(ta, tb);
             int actual = terms.compareSortPosition(a, b, sensitive);
             Assert.assertEquals(
-                    ta + "(" + a + ") <=> " + tb + "(" + b + ")",
+                    ta + "(" + a + ") <=> " + tb + "(" + b + ") (" + sensitive + ")",
                     expected,
                     actual
             );

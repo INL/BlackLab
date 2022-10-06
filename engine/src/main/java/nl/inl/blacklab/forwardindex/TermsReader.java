@@ -63,4 +63,8 @@ public class TermsReader extends TermsReaderAbstract {
         return snippet; // no need to do anything, term ids are always global
     }
 
+    @Override
+    public int segmentIdToGlobalId(int ord, int segmentTermId) {
+        return segmentTermId;
+    }
 }
