@@ -43,7 +43,9 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
             this.term = term;
             this.globalTermId = globalTermId;
             segmentPosSensitive = new int[numberOfSegments];
+            Arrays.fill(segmentPosSensitive, -1);
             segmentPosInsensitive = new int[numberOfSegments];
+            Arrays.fill(segmentPosInsensitive, -1);
         }
 
         @Override
