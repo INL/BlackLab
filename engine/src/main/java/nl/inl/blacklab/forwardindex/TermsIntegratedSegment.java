@@ -98,10 +98,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
          * File with the iteration order.
          * All term IDS are local to this segment.
          * for reference, the file contains the following mappings:
-         *     int[n] insensitivePos2TermID    ( offset [0*n*int] )
-         *     int[n] termID2InsensitivePos    ( offset [1*n*int] )
-         *     int[n] sensitivePos2TermID      ( offset [2*n*int] )
-         *     int[n] termID2sensitivePos      ( offset [3*n*int] )
+         *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
+         *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
+         *     int[n] termID2SensitivePos      ( offset [2*n*int] )
+         *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
          */
         private final IndexInput termOrderFile;
         /** File containing offsets to the strings */

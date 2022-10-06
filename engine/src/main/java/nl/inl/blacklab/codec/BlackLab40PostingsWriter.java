@@ -357,7 +357,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             fiFields.get(luceneField).setNumberOfTerms(numTerms);
                             fiFields.get(luceneField).setTermOrderOffset(termsOrderFile.getFilePointer());
                             // write out, specific order.
-                            // write out, specific order.
                             for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
                             for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
                             for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
