@@ -1,7 +1,9 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.Collection;
 import java.util.Map;
 
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchCreator;
@@ -18,6 +20,13 @@ public class ResultListOfHits {
         this.hits = hits;
         this.concordanceContext = concordanceContext;
         this.docIdToPid = docIdToPid;
+    }
+
+    public Collection<Annotation> getAnnotationsToWrite() {
+        Collection<Annotation> annotationsToList = null;
+        if (!concordanceContext.isConcordances())
+            annotationsToList = WebserviceOperations.getAnnotationsToWrite(params);
+        return annotationsToList;
     }
 
     public SearchCreator getParams() {

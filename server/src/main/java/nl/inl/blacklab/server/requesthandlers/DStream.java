@@ -43,7 +43,6 @@ import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
 import nl.inl.blacklab.server.lib.results.ResultUserInfo;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -60,10 +59,12 @@ public class DStream {
      */
     public static void userInfo(DataStream ds, ResultUserInfo userInfo) {
         ds.startEntry("user").startMap();
-        ds.entry("loggedIn", userInfo.isLoggedIn());
-        if (userInfo.isLoggedIn())
-            ds.entry("id", userInfo.getUserId());
-        ds.entry("canCreateIndex", userInfo.canCreateIndex());
+        {
+            ds.entry("loggedIn", userInfo.isLoggedIn());
+            if (userInfo.isLoggedIn())
+                ds.entry("id", userInfo.getUserId());
+            ds.entry("canCreateIndex", userInfo.canCreateIndex());
+        }
         ds.endMap().endEntry();
     }
 
@@ -79,21 +80,17 @@ public class DStream {
      * @param metaDisplayNames display name info to write
      */
     public static void metadataFieldInfo(DataStream ds, Map<String, String> docFields, Map<String, String> metaDisplayNames) {
-        ds.startEntry("docFields");
-        ds.startMap();
+        ds.startEntry("docFields").startMap();
         for (Map.Entry<String, String> e: docFields.entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
-        ds.endMap();
-        ds.endEntry();
+        ds.endMap().endEntry();
 
-        ds.startEntry("metadataFieldDisplayNames");
-        ds.startMap();
+        ds.startEntry("metadataFieldDisplayNames").startMap();
         for (Map.Entry<String, String> e: metaDisplayNames.entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
-        ds.endMap();
-        ds.endEntry();
+        ds.endMap().endEntry();
     }
 
     /**
@@ -106,7 +103,9 @@ public class DStream {
         ds.startEntry("docInfos").startMap();
         for (Map.Entry<String, ResultDocInfo> e: docInfos.entrySet()) {
             ds.startAttrEntry("docInfo", "pid", e.getKey());
-            documentInfo(ds, e.getValue());
+            {
+                documentInfo(ds, e.getValue());
+            }
             ds.endAttrEntry();
         }
         ds.endMap().endEntry();
@@ -141,12 +140,14 @@ public class DStream {
         ds.startEntry("metadataFieldGroups").startList();
         for (Map.Entry<String, List<String>> e: metadataFieldGroups.entrySet()) {
             ds.startItem("metadataFieldGroup").startMap();
-            ds.entry("name", e.getKey());
-            ds.startEntry("fields").startList();
-            for (String field: e.getValue()) {
-                ds.item("field", field);
+            {
+                ds.entry("name", e.getKey());
+                ds.startEntry("fields").startList();
+                for (String field: e.getValue()) {
+                    ds.item("field", field);
+                }
+                ds.endList().endEntry();
             }
-            ds.endList().endEntry();
             ds.endMap().endItem();
         }
         ds.endList().endEntry();
@@ -292,28 +293,24 @@ public class DStream {
 
     public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
         SearchCreator params = result.getParams();
-        ConcordanceContext concordanceContext = result.getConcordanceContext();
         Hits hits = result.getHits();
-        Map<Integer, String> docIdToPid = result.getDocIdToPid();
-
-        Collection<Annotation> annotationsToList = null;
-        if (!concordanceContext.isConcordances())
-            annotationsToList = WebserviceOperations.getAnnotationsToWrite(params);
 
         ds.startEntry("hits").startList();
         for (Hit hit : hits) {
             ds.startItem("hit");
+            {
+                String docPid = result.getDocIdToPid().get(hit.doc());
+                Map<String, Span> capturedGroups = null;
+                if (hits.hasCapturedGroups()) {
+                    capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
+                    if (capturedGroups == null)
+                        RequestHandler.logger.warn(
+                                "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
+                }
 
-            String docPid = docIdToPid.get(hit.doc());
-            Map<String, Span> capturedGroups = null;
-            if (hits.hasCapturedGroups()) {
-                capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
-                if (capturedGroups == null)
-                    RequestHandler.logger.warn("MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
+                hit(ds, params, result.getConcordanceContext(), result.getAnnotationsToWrite(), hit, docPid,
+                        capturedGroups);
             }
-
-            hit(ds, params, concordanceContext, annotationsToList, hit, docPid, capturedGroups);
-
             ds.endItem();
         }
         ds.endList().endEntry();

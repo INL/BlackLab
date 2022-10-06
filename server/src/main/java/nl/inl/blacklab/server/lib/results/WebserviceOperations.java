@@ -643,4 +643,5 @@ public class WebserviceOperations {
     public static ResultDocsResponse regularDocsResponse(SearchCreatorImpl params, IndexManager indexMan) {
         return ResultDocsResponse.regularDocsResponse(params, indexMan);
     }
+
 }
