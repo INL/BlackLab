@@ -62,6 +62,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
         return new TermInSegmentIterator(this, sensitivity);
     }
 
+    public TermInSegmentIterator2 iterator() {
+        return new TermInSegmentIterator2(this);
+    }
+
     @Override
     public void close() {
         try {
@@ -81,6 +85,14 @@ public class TermsIntegratedSegment implements AutoCloseable {
         /** The local term id. */
         public int id;
         public int sortPosition;
+    }
+
+    public static class TermInSegment2 {
+        public String term;
+        /** The local term id. */
+        public int id;
+        public int sortPositionSensitive;
+        public int sortPositionInsensitive;
     }
 
     @NotThreadSafe
@@ -183,6 +195,13 @@ public class TermsIntegratedSegment implements AutoCloseable {
             }
         }
 
+        // what do we need
+        // iterate local id
+        // then get sort positions (sens+insens)
+        // then get string
+        // we don't need the others?
+
+
         @Override
         public boolean hasNext() {
             return i < n;
@@ -204,6 +223,103 @@ public class TermsIntegratedSegment implements AutoCloseable {
             ++i;
             loadPeek();
             return this.next;
+        }
+
+        /** Get the ord (ordinal) of the segment this iterator was constructed on. */
+        public int ord() {
+            return this.ord;
+        }
+
+        /** returns the total number of terms in this segment */
+        public int size() {
+            return this.n;
+        }
+    }
+
+    @NotThreadSafe
+    public static class TermInSegmentIterator2 implements Iterator<TermInSegment2> {
+        /**
+         * Metadata about this field(=annotation) in this segment(=section of the index).
+         * such as how many terms in the field in this segment,
+         * file offsets where to find the data in the segment's files, etc.
+         */
+        private final Field field;
+        /** Ord (ordinal) of the segment */
+        private final int ord;
+
+        /**
+         * File with the iteration order.
+         * All term IDS are local to this segment.
+         * for reference, the file contains the following mappings:
+         *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
+         *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
+         *     int[n] termID2SensitivePos      ( offset [2*n*int] )
+         *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
+         */
+        private final IndexInput termID2SensitivePosFile;
+        private final IndexInput termID2InsensitivePosFile;
+        /** File containing the strings */
+        private final IndexInput termStringFile;
+
+        /** index of the term CURRENTLY loaded in peek/how many times has next() been called. */
+        private int i = 0;
+        /** Total number of terms in the segment */
+        private final int n;
+        private final TermInSegment2 t = new TermInSegment2();
+
+        /**
+         * @param segment only used for initialization, because we need to pass many parameters otherwise.
+         */
+        public TermInSegmentIterator2(TermsIntegratedSegment segment) {
+            // first navigate to where the sensitive iteration order is stored in the _termOrderFile.
+            try {
+                this.field = segment.field;
+                this.ord = segment.ord;
+
+                // clone these file accessors, as they are not threadsafe
+                // while this code was written these file handles were only ever used in one thread,
+                // but doing this ensures we don't break things in the future.
+                this.termID2SensitivePosFile = segment._termOrderFile.clone();
+                this.termID2InsensitivePosFile = segment._termOrderFile.clone();
+                this.termStringFile = segment._termsFile.clone();
+
+                this.i = 0;
+                this.n = field.getNumberOfTerms();
+
+                this.termID2SensitivePosFile.seek(((long)n)*Integer.BYTES*2+field.getTermOrderOffset());
+                this.termID2InsensitivePosFile.seek(field.getTermOrderOffset());
+
+                // to the right position for the strings
+                IndexInput stringoffsets = segment._termIndexFile.clone();
+                stringoffsets.seek(field.getTermIndexOffset());
+                long firstStringOffset = stringoffsets.readLong();
+
+                this.termStringFile.seek(firstStringOffset);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return i < n;
+        }
+
+        @Override
+        public TermInSegment2 next() {
+            try {
+                if (i >= n)
+                    return null;
+
+                this.t.term = termStringFile.readString();
+                this.t.sortPositionInsensitive = this.termID2InsensitivePosFile.readInt();
+                this.t.sortPositionSensitive = this.termID2SensitivePosFile.readInt();
+                this.t.id = i++;
+
+                return this.t;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         /** Get the ord (ordinal) of the segment this iterator was constructed on. */

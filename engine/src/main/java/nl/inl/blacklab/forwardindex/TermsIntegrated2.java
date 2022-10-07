@@ -127,23 +127,31 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
         try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")) {
             // Get all the terms by enumerating the terms enum for each segment.
 //            System.err.println(System.currentTimeMillis() + "    read terms " + luceneField);
-            TermInIndex[] terms = readTermsFromIndex();
+            TermInIndex[] terms;
+            try (BlockTimer __ = timer.child("Reading from disk")) {
+                terms = readTermsFromIndex();
+            }
 
-            // Determine the sort orders for the terms
-//            System.err.println(System.currentTimeMillis() + "    determine sort 1");
-            int[] sortedSensitive = determineSort(terms, true);
-//            System.err.println(System.currentTimeMillis() + "    determine sort 2");
-            int[] sortedInsensitive = determineSort(terms, false);
+            String[] termStrings;
+            int[] termId2SensitivePosition;
+            int[] termId2InsensitivePosition;
+            try (BlockTimer __ = timer.child("sorting")) {
+                // Determine the sort orders for the terms
+    //            System.err.println(System.currentTimeMillis() + "    determine sort 1");
+                int[] sortedSensitive = determineSort(terms, true);
+    //            System.err.println(System.currentTimeMillis() + "    determine sort 2");
+                int[] sortedInsensitive = determineSort(terms, false);
 
-            // Process the values we've determined so far the same way as with the external forward index.
-//            System.err.println(System.currentTimeMillis() + "    invert 1");
-            int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
-//            System.err.println(System.currentTimeMillis() + "    invert 2");
-            int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
-            // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-//            System.err.println(System.currentTimeMillis() + "    to array");
-            String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
-//            System.err.println(System.currentTimeMillis() + "    finish");
+                // Process the values we've determined so far the same way as with the external forward index.
+    //            System.err.println(System.currentTimeMillis() + "    invert 1");
+                termId2SensitivePosition = invert(terms, sortedSensitive, true);
+    //            System.err.println(System.currentTimeMillis() + "    invert 2");
+                termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
+                // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+    //            System.err.println(System.currentTimeMillis() + "    to array");
+                termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+    //            System.err.println(System.currentTimeMillis() + "    finish");
+            }
 
             finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
 
@@ -176,28 +184,20 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
         if (segmentTerms != null) { // can happen if segment only contains index metadata doc
             segmentTerms.setTermsIntegrated(this, lrc.ord);
         }
-        readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.SENSITIVE);
-        readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.INSENSITIVE);
-        s.close();
-    }
 
-    private void readTermsSensitivity(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc,
-            TermsIntegratedSegment s, MatchSensitivity sensitivity) {
-        TermsIntegratedSegment.TermInSegmentIterator it = s.iterator(sensitivity);
-        int [] segmentToGlobal = new int[it.size()];
+        TermsIntegratedSegment.TermInSegmentIterator2 it = s.iterator();
+        int [] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(it.ord(), __ -> new int[it.size()]);
         while (it.hasNext()) {
-            TermsIntegratedSegment.TermInSegment t = it.next();
-            TermInIndex tii = globalTermIds.computeIfAbsent(t.term,
-                    __ -> termInIndex(t.term, globalTermIds.size()));
-
+            TermsIntegratedSegment.TermInSegment2 t = it.next();
+            TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> termInIndex(t.term, globalTermIds.size()));
             // Remember the mapping from segment id to global id
             segmentToGlobal[t.id] = tii.globalTermId;
-
             // Remember the sort position of this term in this segment, to save time comparing later
-            int[] posArr = sensitivity == MatchSensitivity.SENSITIVE ? tii.segmentPosSensitive : tii.segmentPosInsensitive;
-            posArr[lrc.ord] = t.sortPosition;
+            tii.segmentPosSensitive[it.ord()] = t.sortPositionSensitive;
+            tii.segmentPosInsensitive[it.ord()] = t.sortPositionInsensitive;
         }
-        segmentToGlobalTermIds.put(lrc.ord, segmentToGlobal);
+
+        s.close();
     }
 
     private int[] determineSort(TermInIndex[] terms, boolean sensitive) {
