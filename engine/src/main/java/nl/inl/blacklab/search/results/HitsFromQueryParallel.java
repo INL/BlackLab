@@ -200,7 +200,7 @@ public class HitsFromQueryParallel extends HitsMutable {
                 p.get();
         } catch (InterruptedException e) {
             // We were interrupted while waiting for workers to finish.
-            // If we were the thread that created the workers, cancel them. (we may have been interrupted during Thread.sleep)
+            // If we were the thread that created the workers, cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
             // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new Runnables/Futures of them.
             if (pendingResults != null) {
                 for (Future<?> p : pendingResults) 

@@ -29,7 +29,7 @@ public class TestSearchBehavior {
     }
     
     private final String SPANSREADER_CRASHED = "TEST_SPANSREADER_CRASHED";
-    private boolean spansReaderWasInterrupted = false;
+    private volatile boolean spansReaderWasInterrupted = false; // written from other thread
     
     SpansReader signalOnInterrupt = new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
         public synchronized void run() {
@@ -70,7 +70,7 @@ public class TestSearchBehavior {
         
         if (shouldThrow) {
             // HitsFromQueryParallel correctly re-threw on the exception thrown in its SpansReader.
-            assertEquals(t.getMessage(), SPANSREADER_CRASHED);
+            assertEquals(SPANSREADER_CRASHED, t.getMessage());
         } else {
             // the spansreader was correctly interrupted by HitsFromQueryParallel.
             assertTrue("SpansReader received interrupt() after parent HitsFromQueryParallel was interrupted", spansReaderWasInterrupted);
