@@ -193,7 +193,7 @@ public class DStream {
         ds.endMap();
         ds.endEntry();
 
-        if (indexStatus != Index.IndexStatus.AVAILABLE) {
+        if (indexStatus != null && indexStatus != Index.IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", indexStatus.toString());
         }
 
