@@ -3,21 +3,19 @@ package nl.inl.blacklab.forwardindex;
 import java.io.IOException;
 import java.text.CollationKey;
 import java.text.Collator;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
-import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegment;
-import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegmentIterator;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
@@ -25,6 +23,87 @@ import nl.inl.util.BlockTimer;
  * This version is integrated into the Lucene index.
  */
 public class TermsIntegrated extends TermsReaderAbstract {
+
+    private final Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
+    private final Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
+
+    /** Information about a term in the index, and the sort positions in each segment
+     *  it occurs in. We'll use this to speed up comparisons where possible (comparing
+     *  sort positions in one of the segments is much faster than calculating CollationKeys).
+     */
+    public class TermInIndex implements Comparable<TermInIndex> {
+        /** Term string */
+        String term;
+
+        /** This term's global id */
+        int globalTermId;
+
+        /** Sort position within each segment, case-sensitive */
+        int[] segmentPosSensitive;
+
+        /** Sort position within each segment, case-insensitive */
+        int[] segmentPosInsensitive;
+
+        public TermInIndex(String term, int globalTermId, int numberOfSegments) {
+            this.term = term;
+            this.globalTermId = globalTermId;
+            segmentPosSensitive = new int[numberOfSegments];
+            Arrays.fill(segmentPosSensitive, -1);
+            segmentPosInsensitive = new int[numberOfSegments];
+            Arrays.fill(segmentPosInsensitive, -1);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof TermInIndex))
+                return false;
+            TermInIndex that = (TermInIndex) o;
+            return globalTermId == that.globalTermId;
+        }
+
+        @Override
+        public int hashCode() {
+            return Integer.hashCode(globalTermId);
+        }
+
+        @Override
+        public int compareTo(TermInIndex other) {
+            int[] pa, pb;
+
+            if (compareSensitive) {
+                pa = segmentPosSensitive;
+                pb = other.segmentPosSensitive;
+            } else {
+                pa = segmentPosInsensitive;
+                pb = other.segmentPosInsensitive;
+            }
+            // See if there's a segment these two terms both occur in.
+            // If so, we already know how these terms compare.
+            for (int i = 0; i < pa.length; i++) {
+                int a = pa[i], b = pb[i];
+                if (a >= 0 && b >= 0) {
+                    // Both terms occur in this segment.
+                    // Their relative ordering in that segment applies here as well.
+                    return Integer.compare(a, b);
+                }
+            }
+            // There are no segments that these terms both occur in.
+            Collator collator = compareSensitive ? TermsIntegrated.this.collator : collatorInsensitive;
+            Map<String, CollationKey> cache = compareSensitive ? collationCacheSensitive : collationCacheInsensitive;
+
+            CollationKey a = cache.computeIfAbsent(term, __ -> collator.getCollationKey(term));
+            CollationKey b = cache.computeIfAbsent(term, __ -> collator.getCollationKey(other.term));
+
+            return a.compareTo(b);
+        }
+
+        public int globalId() {
+            return globalTermId;
+        }
+    }
+
     private final IndexReader indexReader;
 
     private final String luceneField;
@@ -35,145 +114,112 @@ public class TermsIntegrated extends TermsReaderAbstract {
      */
     private final Map<Integer, int[]> segmentToGlobalTermIds = new HashMap<>();
 
+    /** Are we sorting TermInIndex sensitively or insensitively right now? */
+    private boolean compareSensitive = true;
+
     public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
         super(collators);
         this.indexReader = indexReader;
         this.luceneField = luceneField;
 
-        System.err.println(System.currentTimeMillis() + "   read terms " + luceneField);
-        try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")){
-            List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
-            for (LeafReaderContext lrc : indexReader.leaves()) {
-                BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
-                TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
-                termsPerSegment.add(s);
-                BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
-                if (segmentTerms != null) { // can happen if segment only contains index metadata doc
-                    segmentTerms.setTermsIntegrated(this, lrc.ord);
-                }
+        try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")) {
+            TermInIndex[] terms;
+            try (BlockTimer __ = timer.child("Reading from disk")) {
+                terms = readTermsFromIndex();
             }
-            readFromAndMerge(termsPerSegment);
-            termsPerSegment.forEach(TermsIntegratedSegment::close);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load terms", e);
+
+            String[] termStrings;
+            int[] termId2SensitivePosition;
+            int[] termId2InsensitivePosition;
+            try (BlockTimer __ = timer.child("sorting")) {
+                // Determine the sort orders for the terms
+                int[] sortedSensitive = determineSort(terms, true);
+                int[] sortedInsensitive = determineSort(terms, false);
+
+                // Process the values we've determined so far the same way as with the external forward index.
+                termId2SensitivePosition = invert(terms, sortedSensitive, true);
+                termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
+                // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+                termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+            }
+
+            finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
         }
     }
 
+
+    private TermInIndex[] readTermsFromIndex() {
+        // A list of globally unique terms that occur in our index.
+        Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>(); // global term ids, in the correct order
+        try {
+            List<LeafReaderContext> leaves = indexReader.leaves();
+            for (LeafReaderContext l: leaves) {
+                readTermsFromSegment(globalTermIds, l);
+            }
+            return globalTermIds.values().toArray(TermInIndex[]::new);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) throws IOException {
+        BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
+        TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
+        BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
+        if (segmentTerms != null) { // can happen if segment only contains index metadata doc
+            segmentTerms.setTermsIntegrated(this, lrc.ord);
+        }
+
+        Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
+        int [] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
+        while (it.hasNext()) {
+            TermsIntegratedSegment.TermInSegment t = it.next();
+            TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> termInIndex(t.term, globalTermIds.size()));
+            // Remember the mapping from segment id to global id
+            segmentToGlobal[t.id] = tii.globalTermId;
+            // Remember the sort position of this term in this segment, to save time comparing later
+            tii.segmentPosSensitive[s.ord()] = t.sortPositionSensitive;
+            tii.segmentPosInsensitive[s.ord()] = t.sortPositionInsensitive;
+        }
+
+        s.close();
+    }
+
+    private int[] determineSort(TermInIndex[] terms, boolean sensitive) {
+        compareSensitive = sensitive;
+        int[] sorted = new int[terms.length];
+        for (int i = 0; i < terms.length; i++) {
+            sorted[i] = i;
+        }
+        IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+        return sorted;
+    }
 
     /**
-     * Get a sorted list of all the segments, as represented by their iterators:
-     * <pre>
-     * 
-     * Imagine we have 3 segments, with two terms each:
-     * 
-     * segment ordinal -->  | 1    2   3 
-     *                      | ----------
-     * term at index    [0] | a    b   a 
-     *                  [1] | a    c   d
-     * 
-     * We add all these segments to the queue,  
-     * the queue will sort these segments in ascending order. 
-     * Note the swapping of places of ordinal 2 and 3, 
-     * as the first term in segment 3 is 'a', which comes before the first term of segment 2 ('b').
-     * 
-     * index in the priorityQueue: | [0]     [1]     [2]
-     * segment ordinal             |  1       3       2
-     *                             |  -----------------
-     * contents                [0] |  a       a       b
-     *                         [1] |  a       d       c
-     * 
-     * 
-     * queue.poll() will pop the segment at index [0].
-     * queue.add() will re-sort the segments based on their first (unread) term.
-     * 
-     * So we can now walk all terms across all segments in a globally ascending order by continuously calling poll() and insert().
-     * 
-     * </pre>
-     * @param segments
-     * @param coll
-     * @param sensitivity
-     * @return
+     * Invert the given array so the values become the indexes and vice versa.
+     *
+     * @param array array to invert
+     * @return inverted array
      */
-    private static PriorityQueue<TermInSegmentIterator> getQueue(List<TermsIntegratedSegment> segments, Collator coll, MatchSensitivity sensitivity, Map<String, CollationKey> cache) {
-        // Collator coll = collators.get(sensitivity);
-        PriorityQueue<TermInSegmentIterator> q = new PriorityQueue<>((itA,itB) -> {
-            if (itA.ord() == itB.ord() && itA.peek().id == itB.peek().id) return 0;
-
-            String a = itA.peek().term;
-            String b = itB.peek().term;
-            return a.equals(b) ? 0 : cache.computeIfAbsent(a, coll::getCollationKey).compareTo(cache.computeIfAbsent(b, coll::getCollationKey));
-        });
-        for (TermsIntegratedSegment s : segments) q.add(s.iterator(sensitivity));
-        return q;
-    }
-
-    private void readFromAndMerge(List<TermsIntegratedSegment> segments) throws IOException {
-        // what do we need to perform
-        // generate the following fields:
-        // x segmentToGlobalTermIds
-        // x (global) terms (global list, any order as long as the sort arrays are correct)
-        // x (global) termId2SensitivePosition
-        // x (global) termId2InsensitivePosition
-
-        // todo use Collators instead of collator+collatorInsensitive?
-        PriorityQueue<TermInSegmentIterator> q = getQueue(segments, collator, MatchSensitivity.SENSITIVE, new HashMap<>());
-        
-        // Store which terms we've already seen, along with the global ID we assigned them.
-        Map<String, Integer> term2GlobalID = new LinkedHashMap<>();
-        
-
-        while (!q.isEmpty()) {
-            // get the next term in the next segment, don't forget to re-add the segment to the queue if it has more terms.
-            TermInSegmentIterator i = q.poll();
-            TermInSegment t = i.next();
-            if (i.hasNext()) q.add(i);
-
-            int segmentID = i.ord();
-            int localID = t.id;
-            int globalID = term2GlobalID.computeIfAbsent(t.term, __ -> term2GlobalID.size());
-            segmentToGlobalTermIds.computeIfAbsent(segmentID, __ -> new int[i.size()])[localID] = globalID;
+    private int[] invert(TermInIndex[] terms, int[] array, boolean sensitive) {
+        compareSensitive = sensitive;
+        int[] result = new int[array.length];
+        int prevSortPosition = -1;
+        int prevTermId = -1;
+        for (int i = 0; i < array.length; i++) {
+            int termId = array[i];
+            int sortPosition = i;
+            if (prevTermId >= 0 && terms[prevTermId].compareTo(terms[termId]) == 0) {
+                // Keep the same sort position because the terms are the same
+                sortPosition = prevSortPosition;
+            } else {
+                // Remember the sort position in case the next term is identical
+                prevSortPosition = sortPosition;
+            }
+            result[termId] = sortPosition;
+            prevTermId = termId;
         }
-
-
-        // let's create the insensitive order
-        Map<String, CollationKey> cacheInsensitive = new HashMap<>();
-        q = getQueue(segments, collatorInsensitive, MatchSensitivity.INSENSITIVE, cacheInsensitive);
-
-        int[] termId2InsensitivePosition = new int[term2GlobalID.size()];
-
-        String prevTerm = null;
-        int insensitivePosition = -1;
-        while (!q.isEmpty()) {
-            TermInSegmentIterator i = q.poll();
-            TermInSegment t = i.next();
-            if (i.hasNext()) q.add(i);
-
-            String term = t.term;
-            int globalID = term2GlobalID.get(term);
-            
-            // if terms are considered equal in a case-insensitive comparison, 
-            // they should be assigned the same position.
-            boolean equalsPreviousTerm = prevTerm != null && cacheInsensitive.computeIfAbsent(prevTerm, collatorInsensitive::getCollationKey).equals(cacheInsensitive.computeIfAbsent(term, collatorInsensitive::getCollationKey));
-            termId2InsensitivePosition[globalID] = equalsPreviousTerm ? insensitivePosition : ++insensitivePosition;
-            prevTerm = term;
-        }
-
-        // since we've added terms to the global list in sensitive order, 
-        // the term's global id is now equal to the term's sensitive sort position
-        // (todo this fact might enable optimizations)
-        String[] terms = new String[term2GlobalID.size()];
-        for (Map.Entry<String, Integer> e : term2GlobalID.entrySet()) {
-            terms[e.getValue()] = e.getKey();
-        }
-
-        int[] termID2SensitivePosition = new int[terms.length];
-        for (int i = 0; i < termID2SensitivePosition.length; ++i) termID2SensitivePosition[i] = i;
-
-        finishInitialization(
-            terms,
-            termID2SensitivePosition,
-            termId2InsensitivePosition
-        );
+        return result;
     }
 
     @Override
@@ -189,5 +235,9 @@ public class TermsIntegrated extends TermsReaderAbstract {
     public int segmentIdToGlobalId(int ord, int id) {
         int[] mapping = segmentToGlobalTermIds.get(ord);
         return id < 0 ? id : mapping[id];
+    }
+
+    public TermInIndex termInIndex(String term, int globalTermId) {
+        return new TermInIndex(term, globalTermId, indexReader.leaves().size());
     }
 }
