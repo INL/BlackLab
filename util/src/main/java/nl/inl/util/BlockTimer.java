@@ -1,7 +1,6 @@
 package nl.inl.util;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,15 +12,17 @@ public class BlockTimer implements AutoCloseable {
     
     private static final long RUNNING = -1;
     
-    private long start;
-    private long end;
+    private volatile long start;
+    private volatile long end;
     private final TimerGroup group;
     private Thread ownThread;
     
     private BlockTimer(TimerGroup group) {
         this.group = group;
     }
-    public Long runtime() { return (this.end - this.start); }
+    public Long runtime() {
+        return (this.end - this.start);
+    }
 
     public BlockTimer child(String message) {
         return this.group.child(message);
@@ -53,7 +54,24 @@ public class BlockTimer implements AutoCloseable {
     private boolean isClosed() {
         return this.end != RUNNING;
     }
-    
+
+    /**
+     * TimerGroup represents the results of all instances of a timer with the same message
+     * e.g.
+     * <pre>
+     * try (BlockTimer top = Timer.create("top")) {
+     *     for (int i  = 0; i < 10; ++i) {
+     *         try (BlockTimer loop = top.child("loop") {
+     *             somethingDifficult();
+     *         }
+     *     }
+     * }
+     * </pre>
+     *
+     * All 10 instances of child "loop" will register their results to the same TimerGroup.
+     * When the topmost TimerGroup finishes, the results are printed.
+     * Children may be added/created from any thread. The "self" time reported is always in regard to the thread the root timer was created in.
+     * */
     private static class TimerGroup {
         private final boolean log;
         private final String message;
@@ -61,10 +79,10 @@ public class BlockTimer implements AutoCloseable {
         private long running = 0;
         private long runtime = 0;
         private final TimerGroup parent;
-        private final Thread ownThread;
-        private int childTimeInOwnThread = 0;
+        private final Thread rootThread;
+        private long timeInRootThread = 0;
         
-        private final List<BlockTimer> instances = new ArrayList<>();
+        private final Stack<BlockTimer> instances = new Stack<>();
         private final ConcurrentHashMap<String, TimerGroup> children = new ConcurrentHashMap<>();
 
         
@@ -72,11 +90,11 @@ public class BlockTimer implements AutoCloseable {
             this.log = log;
             this.message = message;
             this.parent = parent;
-            this.ownThread = Thread.currentThread();
+            this.rootThread = parent != null ? parent.rootThread : Thread.currentThread();
         }
         
         private synchronized BlockTimer get() {
-            BlockTimer t = instances.isEmpty() ? new BlockTimer(this) : instances.remove(instances.size() - 1);
+            BlockTimer t = instances.isEmpty() ? new BlockTimer(this) : instances.pop();
             ++this.running;
             t.start();
             return t;
@@ -84,13 +102,13 @@ public class BlockTimer implements AutoCloseable {
         
         private synchronized void put(BlockTimer timer, Thread timerThread) {
             if (!timer.isClosed()) throw new IllegalStateException("Cannot return running timer");
-            this.instances.add(timer);
+            this.instances.push(timer);
             ++this.invocations;
             --this.running;
             this.runtime += timer.runtime();
             if (this.running < 0) throw new IllegalStateException("Negative running timers!");
-            if (timerThread == ownThread)
-                childTimeInOwnThread += timer.runtime();
+            if (timerThread == rootThread)
+                timeInRootThread += timer.runtime();
             checkDone();
         }
         
@@ -105,21 +123,28 @@ public class BlockTimer implements AutoCloseable {
             }
         }
 
+        private long totalDescendantTimeInRootThread() {
+            return this.children.reduceValuesToLong(1000, t -> t.timeInRootThread, 0, Long::sum);
+        }
+
         private String print(int lead, int messageLength) {
 
             final String[] labels = {"total", "av.", "self", "av. self"};
+
+            long timeInRootThreadWithoutChildren = this.timeInRootThread - this.totalDescendantTimeInRootThread();
+
             final Long[] values = {
                 runtime / 1_000_000,
                 (runtime / invocations) / 1_000_000,
-                (runtime - childTimeInOwnThread) / 1_000_000,
-                ((runtime - childTimeInOwnThread) / invocations) / 1_000_000
+                timeInRootThreadWithoutChildren / 1_000_000,
+                (timeInRootThreadWithoutChildren / invocations) / 1_000_000
             };
-            
             
             final String fmt = "% 6dms %s ";
             StringBuilder msg = new StringBuilder();
 
-            msg.append("\n"+StringUtils.repeat(' ', lead*4) + StringUtils.rightPad(message, messageLength));
+            msg.append("\n").append(StringUtils.repeat(' ', lead * 4))
+                    .append(StringUtils.rightPad(message, messageLength));
             for (int i = 0; i < labels.length; ++i) msg.append(String.format(fmt, values[i], labels[i]));
             msg.append(String.format("% 6dx ", invocations));
             
