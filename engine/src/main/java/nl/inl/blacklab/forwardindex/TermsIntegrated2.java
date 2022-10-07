@@ -1,6 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
+import java.text.CollationKey;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -12,15 +13,21 @@ import java.util.Map;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
  *
  * This version is integrated into the Lucene index.
  */
 public class TermsIntegrated2 extends TermsReaderAbstract {
+
+    private final Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
+    private final Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
@@ -66,6 +73,7 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
         @Override
         public int compareTo(TermInIndex other) {
             int[] pa, pb;
+
             if (compareSensitive) {
                 pa = segmentPosSensitive;
                 pb = other.segmentPosSensitive;
@@ -85,7 +93,12 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
             }
             // There are no segments that these terms both occur in.
             Collator collator = compareSensitive ? TermsIntegrated2.this.collator : collatorInsensitive;
-            return collator.compare(term, other.term);
+            Map<String, CollationKey> cache = compareSensitive ? collationCacheSensitive : collationCacheInsensitive;
+
+            CollationKey a = cache.computeIfAbsent(term, __ -> collator.getCollationKey(term));
+            CollationKey b = cache.computeIfAbsent(term, __ -> collator.getCollationKey(other.term));
+
+            return a.compareTo(b);
         }
 
         public int globalId() {
@@ -111,27 +124,36 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
         this.indexReader = indexReader;
         this.luceneField = luceneField;
 
-        // Get all the terms by enumerating the terms enum for each segment.
-        System.err.println(System.currentTimeMillis() + "    read terms " + luceneField);
-        TermInIndex[] terms = readTermsFromIndex();
+        try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")) {
+            // Get all the terms by enumerating the terms enum for each segment.
+//            System.err.println(System.currentTimeMillis() + "    read terms " + luceneField);
+            TermInIndex[] terms = readTermsFromIndex();
 
-        // Determine the sort orders for the terms
-        System.err.println(System.currentTimeMillis() + "    determine sort 1");
-        Integer[] sortedSensitive = determineSort(terms, true);
-        System.err.println(System.currentTimeMillis() + "    determine sort 2");
-        Integer[] sortedInsensitive = determineSort(terms, false);
+            // Determine the sort orders for the terms
+//            System.err.println(System.currentTimeMillis() + "    determine sort 1");
+            int[] sortedSensitive = determineSort(terms, true);
+//            System.err.println(System.currentTimeMillis() + "    determine sort 2");
+            int[] sortedInsensitive = determineSort(terms, false);
 
-        // Process the values we've determined so far the same way as with the external forward index.
-        System.err.println(System.currentTimeMillis() + "    invert 1");
-        int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
-        System.err.println(System.currentTimeMillis() + "    invert 2");
-        int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
-        // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-        System.err.println(System.currentTimeMillis() + "    to array");
-        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
-        System.err.println(System.currentTimeMillis() + "    finish");
-        finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+            // Process the values we've determined so far the same way as with the external forward index.
+//            System.err.println(System.currentTimeMillis() + "    invert 1");
+            int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
+//            System.err.println(System.currentTimeMillis() + "    invert 2");
+            int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
+            // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+//            System.err.println(System.currentTimeMillis() + "    to array");
+            String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+//            System.err.println(System.currentTimeMillis() + "    finish");
+
+            finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+
+        }
     }
+
+    // globalTermID -> int[] sensitive per segment
+    // globalTermID -> int[] insensitive per segment
+    // globalTermID -> string
+
 
     private TermInIndex[] readTermsFromIndex() {
         // A list of globally unique terms that occur in our index.
@@ -148,28 +170,15 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
     }
 
     private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) throws IOException {
-
-        try {
-            BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
-            TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
-            BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
-            if (segmentTerms != null) { // can happen if segment only contains index metadata doc
-                segmentTerms.setTermsIntegrated(this, lrc.ord);
-            }
-            readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.SENSITIVE);
-            readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.INSENSITIVE);
-            s.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load terms", e);
-        }
-
-
-        /*
-        BLTerms segmentTerms = (BLTerms) l.reader().terms(luceneField);
+        BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
+        TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
+        BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
         if (segmentTerms != null) { // can happen if segment only contains index metadata doc
-            segmentTerms.setTermsIntegrated(this, l.ord);
-            segmentToGlobalTermIds.put(l.ord, segmentTerms.getSegmentToGlobalMapping(this, globalTermIds));
-        }*/
+            segmentTerms.setTermsIntegrated(this, lrc.ord);
+        }
+        readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.SENSITIVE);
+        readTermsSensitivity(globalTermIds, lrc, s, MatchSensitivity.INSENSITIVE);
+        s.close();
     }
 
     private void readTermsSensitivity(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc,
@@ -191,13 +200,13 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
         segmentToGlobalTermIds.put(lrc.ord, segmentToGlobal);
     }
 
-    private Integer[] determineSort(TermInIndex[] terms, boolean sensitive) {
+    private int[] determineSort(TermInIndex[] terms, boolean sensitive) {
         compareSensitive = sensitive;
-        Integer[] sorted = new Integer[terms.length];
+        int[] sorted = new int[terms.length];
         for (int i = 0; i < terms.length; i++) {
             sorted[i] = i;
         }
-        Arrays.sort(sorted, Comparator.comparing(index -> terms[index]));
+        IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
         return sorted;
     }
 
@@ -207,7 +216,7 @@ public class TermsIntegrated2 extends TermsReaderAbstract {
      * @param array array to invert
      * @return inverted array
      */
-    private int[] invert(TermInIndex[] terms, Integer[] array, boolean sensitive) {
+    private int[] invert(TermInIndex[] terms, int[] array, boolean sensitive) {
         compareSensitive = sensitive;
         int[] result = new int[array.length];
         int prevSortPosition = -1;

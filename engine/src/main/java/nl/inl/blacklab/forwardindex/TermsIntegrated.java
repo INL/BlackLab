@@ -1,6 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
+import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegment;
 import nl.inl.blacklab.forwardindex.TermsIntegratedSegment.TermInSegmentIterator;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -39,7 +41,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         this.luceneField = luceneField;
 
         System.err.println(System.currentTimeMillis() + "   read terms " + luceneField);
-        try {
+        try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")){
             List<TermsIntegratedSegment> termsPerSegment = new ArrayList<>();
             for (LeafReaderContext lrc : indexReader.leaves()) {
                 BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
@@ -92,12 +94,14 @@ public class TermsIntegrated extends TermsReaderAbstract {
      * @param sensitivity
      * @return
      */
-    private static PriorityQueue<TermInSegmentIterator> getQueue(List<TermsIntegratedSegment> segments, Collator coll, MatchSensitivity sensitivity) {
+    private static PriorityQueue<TermInSegmentIterator> getQueue(List<TermsIntegratedSegment> segments, Collator coll, MatchSensitivity sensitivity, Map<String, CollationKey> cache) {
         // Collator coll = collators.get(sensitivity);
         PriorityQueue<TermInSegmentIterator> q = new PriorityQueue<>((itA,itB) -> {
+            if (itA.ord() == itB.ord() && itA.peek().id == itB.peek().id) return 0;
+
             String a = itA.peek().term;
             String b = itB.peek().term;
-            return a.equals(b) ? 0 : coll.compare(a, b);
+            return a.equals(b) ? 0 : cache.computeIfAbsent(a, coll::getCollationKey).compareTo(cache.computeIfAbsent(b, coll::getCollationKey));
         });
         for (TermsIntegratedSegment s : segments) q.add(s.iterator(sensitivity));
         return q;
@@ -112,7 +116,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         // x (global) termId2InsensitivePosition
 
         // todo use Collators instead of collator+collatorInsensitive?
-        PriorityQueue<TermInSegmentIterator> q = getQueue(segments, collator, MatchSensitivity.SENSITIVE);
+        PriorityQueue<TermInSegmentIterator> q = getQueue(segments, collator, MatchSensitivity.SENSITIVE, new HashMap<>());
         
         // Store which terms we've already seen, along with the global ID we assigned them.
         Map<String, Integer> term2GlobalID = new LinkedHashMap<>();
@@ -132,7 +136,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
 
         // let's create the insensitive order
-        q = getQueue(segments, collatorInsensitive, MatchSensitivity.INSENSITIVE);
+        Map<String, CollationKey> cacheInsensitive = new HashMap<>();
+        q = getQueue(segments, collatorInsensitive, MatchSensitivity.INSENSITIVE, cacheInsensitive);
 
         int[] termId2InsensitivePosition = new int[term2GlobalID.size()];
 
@@ -148,7 +153,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             
             // if terms are considered equal in a case-insensitive comparison, 
             // they should be assigned the same position.
-            boolean equalsPreviousTerm = prevTerm != null && collatorInsensitive.equals(prevTerm, term);
+            boolean equalsPreviousTerm = prevTerm != null && cacheInsensitive.computeIfAbsent(prevTerm, collatorInsensitive::getCollationKey).equals(cacheInsensitive.computeIfAbsent(term, collatorInsensitive::getCollationKey));
             termId2InsensitivePosition[globalID] = equalsPreviousTerm ? insensitivePosition : ++insensitivePosition;
             prevTerm = term;
         }
@@ -163,11 +168,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
         int[] termID2SensitivePosition = new int[terms.length];
         for (int i = 0; i < termID2SensitivePosition.length; ++i) termID2SensitivePosition[i] = i;
-        
-        // check the sensitive order
-        List<String> terms2 = new ArrayList<>();
-        for (String t : terms) terms2.add(t);
-        terms2.sort(collator);
 
         finishInitialization(
             terms,

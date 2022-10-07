@@ -162,7 +162,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
         }
 
         private int getPositionFromLocalTermID(int localTermID) throws IOException {
-            this.termID2PosFile.seek(this.id2posBaseOffset + localTermID*Integer.BYTES);
+            this.termID2PosFile.seek(this.id2posBaseOffset + (long)localTermID*Integer.BYTES);
             return this.termID2PosFile.readInt();
         }
 
