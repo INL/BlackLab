@@ -68,7 +68,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                     "INTERR_WHILE_INDEXING1");
         }
 
-        String indexError = WebserviceOperations.addToIndex(indexName, indexMan, user, dataFiles, linkedFiles);
+        String indexError = WebserviceOperations.addToIndex(params, dataFiles, linkedFiles);
         if (indexError != null)
             throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
         return Response.success(ds, "Data added succesfully.");

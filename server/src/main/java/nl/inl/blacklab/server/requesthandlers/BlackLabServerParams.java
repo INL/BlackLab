@@ -17,7 +17,9 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
+import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.search.SearchManager;
 
 /** BLS API-specific implementation of WebserviceParams. */
 public class BlackLabServerParams implements WebserviceParams {
@@ -187,11 +189,15 @@ public class BlackLabServerParams implements WebserviceParams {
         return defVal;
     }
 
-
-
     private final Map<String, String> map = new TreeMap<>();
 
-    public BlackLabServerParams(String indexName, HttpServletRequest request) {
+    private final SearchManager searchMan;
+
+    private final User user;
+
+    public BlackLabServerParams(String indexName, HttpServletRequest request, SearchManager searchMan, User user) {
+        this.searchMan = searchMan;
+        this.user = user;
         put("indexname", indexName);
         for (String name: NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
@@ -247,6 +253,16 @@ public class BlackLabServerParams implements WebserviceParams {
     @Override
     public String getPattGapData() {
         return getString("pattgapdata");
+    }
+
+    @Override
+    public SearchManager getSearchManager() {
+        return searchMan;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 
     @Override

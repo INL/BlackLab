@@ -15,10 +15,10 @@ import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.blacklab.server.search.SearchManager;
 
 /**
  * Extends the WebserviceParams class with methods that instantiate searches
@@ -26,10 +26,6 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public interface SearchCreator extends WebserviceParams {
     BlackLabIndex blIndex();
-
-    SearchManager getSearchManager();
-
-    User getUser();
 
     boolean hasPattern() throws BlsException;
 
@@ -93,4 +89,5 @@ public interface SearchCreator extends WebserviceParams {
     SearchDocGroups docsGrouped() throws BlsException;
 
     SearchFacets facets() throws BlsException;
+
 }

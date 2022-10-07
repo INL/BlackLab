@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.SearchCreator;
-import nl.inl.blacklab.server.search.SearchManager;
 
 public class ResultHitsCsv {
 
@@ -38,7 +37,7 @@ public class ResultHitsCsv {
      * responses are thrown if any part of the request cannot be fulfilled. Sorting
      * is already applied to the hits.
      */
-    ResultHitsCsv(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+    ResultHitsCsv(SearchCreator params) throws InvalidQuery {
         super();
         this.params = params;
 
@@ -97,7 +96,7 @@ public class ResultHitsCsv {
             if (!hits.hitsStats().processedAtLeast(first))
                 first = 0;
 
-            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();
             if (params.optNumberOfResultsToShow().isPresent()) {
                 long requested = params.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp

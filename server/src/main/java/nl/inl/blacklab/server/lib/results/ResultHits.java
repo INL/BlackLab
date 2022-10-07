@@ -97,9 +97,13 @@ public class ResultHits {
     private Index.IndexStatus indexStatus;
 
     @SuppressWarnings("unchecked")
-    ResultHits(SearchCreator params, IndexManager indexMan) {
+    ResultHits(SearchCreator params, boolean includeIndexStatus) {
         this.params = params;
-        indexStatus = indexMan == null ? null : indexMan.getIndex(params.getIndexName()).getStatus();
+        indexStatus = null;
+        if (includeIndexStatus) {
+            IndexManager indexMan = params.getIndexManager();
+            indexMan.getIndex(params.getIndexName()).getStatus();
+        }
 
         // Do we want to view a single group after grouping?
         String groupBy = params.getGroupProps().orElse("");

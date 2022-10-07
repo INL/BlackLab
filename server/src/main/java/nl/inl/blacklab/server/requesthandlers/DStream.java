@@ -36,7 +36,7 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
 import nl.inl.blacklab.server.lib.results.ResultAnnotationInfo;
 import nl.inl.blacklab.server.lib.results.ResultDocInfo;
-import nl.inl.blacklab.server.lib.results.ResultIndexProgress;
+import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
 import nl.inl.blacklab.server.lib.results.ResultListOfHits;
 import nl.inl.blacklab.server.lib.results.ResultMetadataField;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
@@ -368,7 +368,7 @@ public class DStream {
         ds.endMap();
     }
 
-    static void indexProgress(DataStream ds, ResultIndexProgress progress)
+    static void indexProgress(DataStream ds, ResultIndexStatus progress)
             throws BlsException {
         if (progress.getIndexStatus().equals(Index.IndexStatus.INDEXING)) {
             ds.startEntry("indexProgress").startMap()

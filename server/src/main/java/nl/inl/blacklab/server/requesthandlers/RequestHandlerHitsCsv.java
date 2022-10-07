@@ -24,7 +24,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultHitsCsv result = WebserviceOperations.hitsCsv(params, searchMan);
+        ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
         String csv;
         if (result.getGroups() != null && !result.isViewGroup()) {
             csv = WriteCsv.hitsGroupsResponse(result);

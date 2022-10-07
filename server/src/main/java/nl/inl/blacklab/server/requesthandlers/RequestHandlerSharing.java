@@ -30,12 +30,12 @@ public class RequestHandlerSharing extends RequestHandler {
             String[] users = request.getParameterValues("users[]");
             if (users == null)
                 users = new String[0];
-            WebserviceOperations.setUsersToShareWith(user, indexMan, indexName, users);
+            WebserviceOperations.setUsersToShareWith(params, users);
             return Response.success(ds, "Index shared with specified user(s).");
         }
 
         // Regular request: return the list of users this corpus is shared with
-        List<String> shareWithUsers = WebserviceOperations.getUsersToShareWith(user, indexMan, indexName);
+        List<String> shareWithUsers = WebserviceOperations.getUsersToShareWith(params);
         dstreamUsersResponse(ds, shareWithUsers);
         return HTTP_OK;
     }

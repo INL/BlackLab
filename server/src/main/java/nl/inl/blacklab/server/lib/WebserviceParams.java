@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.search.SearchManager;
 
 /** API-independent interface to BlackLab operation parameters */
 public interface WebserviceParams {
@@ -24,6 +26,12 @@ public interface WebserviceParams {
     String getPattLanguage();
 
     String getPattGapData();
+
+    SearchManager getSearchManager();
+
+    default IndexManager getIndexManager() { return getSearchManager().getIndexManager(); }
+
+    User getUser();
 
     String getDocPid();
 
@@ -120,4 +128,5 @@ public interface WebserviceParams {
     Set<String> getTerms();
 
     boolean isIncludeDebugInfo();
+
 }

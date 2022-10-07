@@ -27,7 +27,6 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.BlockTimer;
 
 public class ResultHitsGrouped {
@@ -58,9 +57,9 @@ public class ResultHitsGrouped {
 
     private final ResultSummaryNumHits summaryNumHits;
 
-    ResultHitsGrouped(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+    ResultHitsGrouped(SearchCreator params) throws InvalidQuery {
         this.params = params;
-        IndexManager indexMan = searchMan.getIndexManager();
+        IndexManager indexMan = params.getIndexManager();
         indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
 
         SearchCacheEntry<HitGroups> search;
@@ -75,7 +74,7 @@ public class ResultHitsGrouped {
 
         WindowSettings windowSettings = params.windowSettings();
         final long first = Math.max(windowSettings.first(), 0);
-        DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
+        DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
         final long requestedWindowSize = windowSettings.size() < 0
                 || windowSettings.size() > pageSize.getMax() ? pageSize.getDefaultValue()
                 : windowSettings.size();

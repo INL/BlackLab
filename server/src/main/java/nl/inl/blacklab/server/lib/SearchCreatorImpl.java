@@ -70,15 +70,12 @@ public class SearchCreatorImpl implements SearchCreator {
      * @param params parameters sent to webservice
      * @return the unique key
      */
-    public static SearchCreatorImpl get(SearchManager searchMan, boolean isDocs, boolean isDebugMode,
-            WebserviceParams params, User user) {
-        return new SearchCreatorImpl(searchMan, isDocs, isDebugMode, params, user);
+    public static SearchCreatorImpl get(boolean isDocs, boolean isDebugMode,
+            WebserviceParams params) {
+        return new SearchCreatorImpl(isDocs, isDebugMode, params);
     }
 
     private WebserviceParams params;
-
-    /** The search manager, for querying default value for missing parameters */
-    private final SearchManager searchManager;
 
     private boolean debugMode;
 
@@ -98,21 +95,17 @@ public class SearchCreatorImpl implements SearchCreator {
 
     private String fieldName;
 
-    private User user;
-
-    private SearchCreatorImpl(SearchManager searchManager, boolean isDocsOperation, boolean isDebugMode,
-            WebserviceParams params, User user) {
-        this.searchManager = searchManager;
+    private SearchCreatorImpl(boolean isDocsOperation, boolean isDebugMode,
+            WebserviceParams params) {
         this.isDocsOperation = isDocsOperation;
         this.debugMode = isDebugMode;
         this.params = params;
-        this.user = user;
     }
 
     @Override
     public BlackLabIndex blIndex() {
         try {
-            return searchManager.getIndexManager().getIndex(getIndexName()).blIndex();
+            return getSearchManager().getIndexManager().getIndex(getIndexName()).blIndex();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -120,16 +113,16 @@ public class SearchCreatorImpl implements SearchCreator {
 
     @Override
     public SearchManager getSearchManager() {
-        return searchManager;
+        return params.getSearchManager();
     }
 
     @Override
     public User getUser() {
-        return user;
+        return params.getUser();
     }
 
     private BLSConfigParameters configParam() {
-        return searchManager.config().getParameters();
+        return getSearchManager().config().getParameters();
     }
 
     @Override

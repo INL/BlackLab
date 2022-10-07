@@ -380,8 +380,8 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        WebserviceParams blsParams = new BlackLabServerParams(indexName, request);
-        params = SearchCreatorImpl.get(searchMan, isDocs, isDebugMode, blsParams, user);
+        WebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
+        params = SearchCreatorImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;

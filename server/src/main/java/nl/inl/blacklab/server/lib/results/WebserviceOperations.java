@@ -69,6 +69,7 @@ import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchCreatorImpl;
 import nl.inl.blacklab.server.lib.SearchTimings;
@@ -282,13 +283,13 @@ public class WebserviceOperations {
     }
 
     // specific to add format
-    public static void addUserFileFormat(SearchManager searchMan, User user, String fileName,
-            InputStream fileInputStream) {
+    public static void addUserFileFormat(SearchCreator params, String fileName, InputStream fileInputStream) {
+        SearchManager searchMan = params.getSearchManager();
         DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
-        formatMan.createUserFormat(user, fileName, fileInputStream);
+        formatMan.createUserFormat(params.getUser(), fileName, fileInputStream);
     }
 
     /**
@@ -349,8 +350,7 @@ public class WebserviceOperations {
         return fieldValueSortCollator;
     }
 
-    public static Set<String> getTerms(BlackLabIndex index, Annotation annotation,
-            boolean[] valueListComplete) {
+    public static Set<String> getTerms(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
         boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
         final Set<String> terms = new TreeSet<>();
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
@@ -402,7 +402,8 @@ public class WebserviceOperations {
         }
     }
 
-    public static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery, DocProperty property, PropertyValue value) {
+    public static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery,
+            DocProperty property, PropertyValue value) {
         if (!property.canConstructQuery(searchParam.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
@@ -421,18 +422,18 @@ public class WebserviceOperations {
     }
 
     public static TermFrequencyList calculateCollocations(SearchCreator params) {
-        ResultHits resultHits = new ResultHits(params, null);
+        ResultHits resultHits = new ResultHits(params, false);
         Hits hits = resultHits.getHits();
         return getCollocations(params, hits);
     }
 
-    public static ResultHits getResultHits(SearchCreator params, IndexManager indexMan) {
-        ResultHits resultHits = new ResultHits(params, indexMan);
+    public static ResultHits getResultHits(SearchCreator params) {
+        ResultHits resultHits = new ResultHits(params, true);
         resultHits.finishSearch();
         return resultHits;
     }
 
-    public static TermFrequencyList getTermFrequencies(SearchCreator params, SearchManager searchMan) {
+    public static TermFrequencyList getTermFrequencies(SearchCreator params) {
         //TODO: use background job?
 
         BlackLabIndex blIndex = params.blIndex();
@@ -453,7 +454,7 @@ public class WebserviceOperations {
             if (first < 0 || first >= tfl.size())
                 first = 0;
             long number = params.getNumberOfResultsToShow();
-            DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
+            DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
             if (number < 0 || number > pageSize.getMax())
                 number = pageSize.getDefaultValue();
             long last = first + number;
@@ -465,14 +466,20 @@ public class WebserviceOperations {
         return tfl;
     }
 
-    public static List<String> getUsersToShareWith(User user, IndexManager indexMan, String indexName) {
+    public static List<String> getUsersToShareWith(SearchCreator params) {
+        IndexManager indexMan = params.getIndexManager();
+        String indexName = params.getIndexName();
+        User user = params.getUser();
         Index index = indexMan.getIndex(indexName);
         if (!index.userMayRead(user))
             throw new NotAuthorized("You are not authorized to access this index.");
         return index.getShareWithUsers();
     }
 
-    public static void setUsersToShareWith(User user, IndexManager indexMan, String indexName, String[] users) {
+    public static void setUsersToShareWith(SearchCreator params, String[] users) {
+        User user = params.getUser();
+        IndexManager indexMan = params.getIndexManager();
+        String indexName = params.getIndexName();
         Index index = indexMan.getIndex(indexName);
         if (!index.isUserIndex() || (!index.userMayRead(user)))
             throw new NotAuthorized("You can only share your own private indices with others.");
@@ -493,25 +500,24 @@ public class WebserviceOperations {
         return new ResultDocInfo(blIndex, docPid, document, metadataToWrite);
     }
 
-    public static ResultDocsCsv docsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
-        return new ResultDocsCsv(params, searchMan);
+    public static ResultDocsCsv docsCsv(SearchCreator params) throws InvalidQuery {
+        return new ResultDocsCsv(params);
     }
 
-    public static ResultHitsCsv hitsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
-        return new ResultHitsCsv(params, searchMan);
+    public static ResultHitsCsv hitsCsv(SearchCreator params) throws InvalidQuery {
+        return new ResultHitsCsv(params);
     }
 
-    public static ResultHitsGrouped hitsGrouped(SearchCreatorImpl params, SearchManager searchMan)
+    public static ResultHitsGrouped hitsGrouped(SearchCreator params)
             throws InvalidQuery {
-        IndexManager indexMan = searchMan.getIndexManager();
-        return new ResultHitsGrouped(params, searchMan);
+        return new ResultHitsGrouped(params);
     }
 
-    public static String addToIndex(String indexName, IndexManager indexMan, User user, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
-        Index index = indexMan.getIndex(indexName);
+    public static String addToIndex(SearchCreator params, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
+        Index index = params.getIndexManager().getIndex(params.getIndexName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
-        if (!index.userMayAddData(user))
+        if (!index.userMayAddData(params.getUser()))
             throw new NotAuthorized("You can only add new data to your own private indices.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
@@ -559,9 +565,9 @@ public class WebserviceOperations {
         return indexError;
     }
 
-    public static void deleteUserFormat(SearchManager searchMan, User user, String formatIdentifier) {
-        IndexManager indexMan = searchMan.getIndexManager();
-        DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
+    public static void deleteUserFormat(SearchCreator params, String formatIdentifier) {
+        IndexManager indexMan = params.getIndexManager();
+        DocIndexerFactoryUserFormats formatMan = indexMan.getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_DELETE_INDEX ",
                     "Could not delete format. The server is not configured with support for user content.");
@@ -570,13 +576,13 @@ public class WebserviceOperations {
             throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
         }
 
-        for (Index i : indexMan.getAvailablePrivateIndices(user.getUserId())) {
+        for (Index i : indexMan.getAvailablePrivateIndices(params.getUser().getUserId())) {
             if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
                 throw new BadRequest("CANNOT_DELETE_INDEX ",
                         "Could not delete format. The format is still being used by a corpus.");
         }
 
-        formatMan.deleteUserFormat(user, formatIdentifier);
+        formatMan.deleteUserFormat(params.getUser(), formatIdentifier);
     }
 
     public static ResultAnnotatedField annotatedField(SearchCreator params, AnnotatedField fieldDesc, boolean includeIndexName) {
@@ -589,22 +595,27 @@ public class WebserviceOperations {
         return new ResultAnnotatedField(includeIndexName ? params.getIndexName() : null, fieldDesc, annotInfos);
     }
 
-    public static ResultIndexProgress resultIndexProgress(IndexMetadata indexMetadata, IndexListener indexerListener,
-            Index.IndexStatus status) {
-        long files = 0;
-        long docs = 0;
-        long tokens = 0;
-        if (indexerListener != null) {
-            files = indexerListener.getFilesProcessed();
-            docs = indexerListener.getDocsDone();
-            tokens = indexerListener.getTokensProcessed();
-        }
-        ResultIndexProgress progress = new ResultIndexProgress(files, docs, tokens, indexMetadata.documentFormat(),
-                status);
-        return progress;
+    public static ResultIndexStatus resultIndexStatus(SearchCreator params) {
+        Index index = params.getIndexManager().getIndex(params.getIndexName());
+        return resultIndexStatus(index);
     }
 
-    public static ResultDocSnippet docSnippet(SearchCreatorImpl params, SearchManager searchMan) {
+    public static ResultIndexStatus resultIndexStatus(Index index) {
+        synchronized (index) {
+            IndexListener indexerListener = index.getIndexerListener();
+            long files = 0;
+            long docs = 0;
+            long tokens = 0;
+            if (indexerListener != null) {
+                files = indexerListener.getFilesProcessed();
+                docs = indexerListener.getDocsDone();
+                tokens = indexerListener.getTokensProcessed();
+            }
+            return new ResultIndexStatus(index, files, docs, tokens);
+        }
+    }
+
+    public static ResultDocSnippet docSnippet(SearchCreator params, SearchManager searchMan) {
         return new ResultDocSnippet(params, searchMan);
     }
 
@@ -629,22 +640,42 @@ public class WebserviceOperations {
 
     public static ResultSummaryCommonFields summaryCommonFields(SearchCreator params, Index.IndexStatus indexStatus,
             SearchTimings timings, ResultGroups<?> groups, WindowStats window) {
-        ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(params,
-                indexStatus, timings, groups, window);
-        return summaryFields;
+        return new ResultSummaryCommonFields(params, indexStatus, timings, groups, window);
     }
 
     public static ResultUserInfo userInfo(boolean loggedIn, String userId, boolean canCreateIndex) {
         return new ResultUserInfo(loggedIn, userId, canCreateIndex);
     }
 
-    public static ResultDocsResponse viewGroupDocsResponse(SearchCreatorImpl params, SearchManager searchMan,
+    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params, SearchManager searchMan,
             IndexManager indexMan) {
         return ResultDocsResponse.viewGroupDocsResponse(params, searchMan);
     }
 
-    public static ResultDocsResponse regularDocsResponse(SearchCreatorImpl params, IndexManager indexMan) {
+    public static ResultDocsResponse regularDocsResponse(SearchCreator params, IndexManager indexMan) {
         return ResultDocsResponse.regularDocsResponse(params, indexMan);
     }
 
+    public static ResultIndexMetadata indexMetadata(SearchCreator params) {
+        ResultIndexStatus progress = resultIndexStatus(params);
+        IndexMetadata metadata = progress.getMetadata();
+
+        List<ResultAnnotatedField> afs = new ArrayList<>();
+        for (AnnotatedField field: metadata.annotatedFields()) {
+            afs.add(annotatedField(params, field, false));
+        }
+        List<ResultMetadataField> mfs = new ArrayList<>();
+        for (MetadataField f: metadata.metadataFields()) {
+            mfs.add(metadataField(f, null));
+        }
+
+        Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(
+                params.blIndex());
+
+        return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
+    }
+
+    public static ResultServerInfo serverInfo(SearchCreatorImpl params, boolean debugMode) {
+        return new ResultServerInfo(params, debugMode);
+    }
 }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Collection;
-
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.search.BlackLab;
@@ -9,11 +7,10 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ResultIndexProgress;
-import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
+import nl.inl.blacklab.server.lib.results.ResultServerInfo;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -33,59 +30,49 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
-        ResultUserInfo userInfo = WebserviceOperations.userInfo(user.isLoggedIn(), user.getUserId(),
-                indexMan.canCreateIndex(user));
+        ResultServerInfo result = WebserviceOperations.serverInfo(params, debugMode);
+        dstreamServerInfo(ds, result);
+        return HTTP_OK;
+    }
 
+    private void dstreamServerInfo(DataStream ds, ResultServerInfo result) {
         ds.startMap()
                 .entry("blacklabBuildTime", BlackLab.buildTime())
                 .entry("blacklabVersion", BlackLab.version());
 
         ds.startEntry("indices").startMap();
-
-        for (Index index : indices) {
-            try {
-                IndexMetadata indexMetadata = index.getIndexMetadata();
-                String displayName = indexMetadata.custom().get("displayName", "");
-                String description = indexMetadata.custom().get("description", "");
-                ResultIndexProgress progress;
-                synchronized (index) {
-                    progress = WebserviceOperations.resultIndexProgress(indexMetadata, index.getIndexerListener(),
-                            index.getStatus());
-                }
-
-                ds.startAttrEntry("index", "name", index.getId());
-                {
-                    ds.startMap();
-                    {
-                        ds.entry("displayName", displayName);
-                        ds.entry("description", description);
-                        ds.entry("status", index.getStatus());
-                        DStream.indexProgress(ds, progress);
-                        ds.entry("timeModified", indexMetadata.timeModified());
-                        ds.entry("tokenCount", indexMetadata.tokenCount());
-                    }
-                    ds.endMap();
-                }
-                ds.endAttrEntry();
-
-            } catch (BlsIndexOpenException e) {
-                // Cannot open this index; log and skip it.
-                logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
-            }
+        for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
+            dstreamIndexInfo(ds, indexStatus);
         }
         ds.endMap().endEntry();
 
-        DStream.userInfo(ds, userInfo);
+        DStream.userInfo(ds, result.getUserInfo());
 
-        if (debugMode) {
+        if (result.isDebugMode()) {
             ds.startEntry("cacheStatus");
-            ds.value(searchMan.getBlackLabCache().getStatus());
+            ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
             ds.endEntry();
         }
         ds.endMap();
+    }
 
-        return HTTP_OK;
+    private void dstreamIndexInfo(DataStream ds, ResultIndexStatus progress) {
+        Index index = progress.getIndex();
+        IndexMetadata indexMetadata = progress.getMetadata();
+        ds.startAttrEntry("index", "name", index.getId());
+        {
+            ds.startMap();
+            {
+                ds.entry("displayName", indexMetadata.custom().get("displayName", ""));
+                ds.entry("description", indexMetadata.custom().get("description", ""));
+                ds.entry("status", index.getStatus());
+                DStream.indexProgress(ds, progress);
+                ds.entry("timeModified", indexMetadata.timeModified());
+                ds.entry("tokenCount", indexMetadata.tokenCount());
+            }
+            ds.endMap();
+        }
+        ds.endAttrEntry();
     }
 
 }

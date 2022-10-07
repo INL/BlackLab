@@ -42,7 +42,7 @@ public class RequestHandlerAddFormat extends RequestHandler {
         try {
             String fileName = file.getName();
             InputStream fileInputStream = file.getInputStream();
-            WebserviceOperations.addUserFileFormat(searchMan, user, fileName, fileInputStream);
+            WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
             return Response.success(ds, "Format added.");
         } catch (IOException e) {
             throw new BadRequest("", e.getMessage());

@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.SearchCreator;
-import nl.inl.blacklab.server.search.SearchManager;
 
 public class ResultDocsCsv {
 
@@ -27,7 +26,7 @@ public class ResultDocsCsv {
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
      */
-    ResultDocsCsv(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+    ResultDocsCsv(SearchCreator params) throws InvalidQuery {
         super();
 
         // TODO share with regular RequestHandlerHits
@@ -79,7 +78,7 @@ public class ResultDocsCsv {
             if (!docs.resultsStats().processedAtLeast(first))
                 first = 0;
 
-            long number = searchMan.config().getSearch().getMaxHitsToRetrieve();
+            long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();
             if (params.optNumberOfResultsToShow().isPresent()) {
                 long requested = params.optNumberOfResultsToShow().get();
                 if (number >= 0 || requested >= 0) { // clamp

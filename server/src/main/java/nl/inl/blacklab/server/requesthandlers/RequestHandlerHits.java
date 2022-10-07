@@ -42,7 +42,7 @@ public class RequestHandlerHits extends RequestHandler {
             dstreamCollocationsResponse(ds, tfl);
         } else {
             // Hits request
-            ResultHits resultHits = WebserviceOperations.getResultHits(params, indexMan);
+            ResultHits resultHits = WebserviceOperations.getResultHits(params);
             dstreamHitsResponse(ds, resultHits);
         }
         return HTTP_OK;

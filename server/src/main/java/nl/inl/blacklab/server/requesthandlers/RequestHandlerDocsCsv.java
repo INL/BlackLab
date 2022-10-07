@@ -24,7 +24,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultDocsCsv result = WebserviceOperations.docsCsv(params, searchMan);
+        ResultDocsCsv result = WebserviceOperations.docsCsv(params);
         String csv;
         if (result.getGroups() == null || result.isViewGroup()) {
             csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),

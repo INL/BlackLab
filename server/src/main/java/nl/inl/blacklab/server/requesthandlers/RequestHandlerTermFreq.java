@@ -22,7 +22,7 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params, searchMan);
+        TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params);
         dstreamTermFreqResponse(ds, tfl);
         return HTTP_OK;
     }
