@@ -22,7 +22,7 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         debug(logger, "REQ add format: " + indexName);
-        WebserviceOperations.deleteUserFormat(searchMan, indexMan, user, urlResource);
+        WebserviceOperations.deleteUserFormat(searchMan, user, urlResource);
         return Response.success(ds, "Format deleted.");
     }
 

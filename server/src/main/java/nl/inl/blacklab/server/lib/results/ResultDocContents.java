@@ -28,16 +28,6 @@ import nl.inl.blacklab.server.util.BlsUtils;
 public class ResultDocContents {
     static final Logger logger = LogManager.getLogger(ResultDocContents.class);
 
-    /**
-     * Get the requested (partial) contents of a document
-     *
-     * @param params search parameters
-     * @return
-     */
-    static ResultDocContents get(SearchCreator params) throws InvalidQuery {
-        return new ResultDocContents(params);
-    }
-
     public static final Pattern XML_DECL = Pattern.compile("^\\s*<\\?xml\\s+version\\s*=\\s*([\"'])\\d\\.\\d\\1" +
             "(?:\\s+encoding\\s*=\\s*([\"'])[A-Za-z][A-Za-z0-9._-]*\\2)?" +
             "(?:\\s+standalone\\s*=\\s*([\"'])(?:yes|no)\\3)?\\s*\\?>\\s*");

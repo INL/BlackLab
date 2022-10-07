@@ -26,10 +26,13 @@ public class RequestHandlerDocsCsv extends RequestHandler {
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         ResultDocsCsv result = WebserviceOperations.docsCsv(params, searchMan);
         String csv;
-        if (result.groups == null || result.isViewGroup)
-            csv = WriteCsv.docs(params, result.docs, result.groups, result.subcorpusResults);
-        else
-            csv = WriteCsv.docGroups(params, result.docs, result.groups, result.subcorpusResults);
+        if (result.getGroups() == null || result.isViewGroup()) {
+            csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
+                    result.getSubcorpusResults());
+        } else {
+            csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
+                    result.getSubcorpusResults());
+        }
         ds.plain(csv);
 
         return HTTP_OK;

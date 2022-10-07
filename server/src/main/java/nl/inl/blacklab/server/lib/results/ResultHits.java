@@ -351,7 +351,7 @@ public class ResultHits {
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
         docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
 
-        docFields = WebserviceOperations.getDocFields(index.metadata());
+        docFields = WebserviceOperations.getDocFields(index);
         metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
     }
 

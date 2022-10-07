@@ -18,6 +18,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.search.SearchManager;
 
 /**
  * Extends the WebserviceParams class with methods that instantiate searches
@@ -25,6 +26,10 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
  */
 public interface SearchCreator extends WebserviceParams {
     BlackLabIndex blIndex();
+
+    SearchManager getSearchManager();
+
+    User getUser();
 
     boolean hasPattern() throws BlsException;
 

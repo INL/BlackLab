@@ -15,33 +15,44 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.search.SearchManager;
 
 public class ResultHitsCsv {
+
+    private final SearchCreator params;
+
+    private Hits hits;
+
+    private HitGroups groups;
+
+    private final DocResults subcorpusResults;
+
+    private final boolean isViewGroup;
+
+    private final List<Annotation> annotationsToWrite;
 
     /**
      * Get the hits (and the groups from which they were extracted - if applicable)
      * or the groups for this request. Exceptions cleanly mapping to http error
      * responses are thrown if any part of the request cannot be fulfilled. Sorting
      * is already applied to the hits.
-     *
-     * @return Hits if looking at ungrouped hits, Hits+Groups if looking at hits
-     *         within a group, Groups if looking at grouped hits.
      */
-    // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
-    static ResultHitsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException,
-            InvalidQuery {
+    ResultHitsCsv(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+        super();
+        this.params = params;
+
+        // TODO share with regular RequestHandlerHits, allow configuring windows, totals, etc ?
+
         // Might be null
         String groupBy = params.getGroupProps().orElse(null);
         String viewGroup = params.getViewGroup().orElse(null);
+        isViewGroup = viewGroup != null;
         String sortBy = params.getSortProps().orElse(null);
 
         SearchCacheEntry<?> cacheEntry;
-        Hits hits;
-        HitGroups groups = null;
-        DocResults subcorpus = params.subcorpus().execute();
+        groups = null;
+        subcorpusResults = params.subcorpus().execute();
 
         try {
             if (!StringUtils.isEmpty(groupBy)) {
@@ -98,31 +109,7 @@ public class ResultHitsCsv {
                 hits = hits.window(first, number);
         }
 
-        List<Annotation> annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
-        return new ResultHitsCsv(params, hits, groups, subcorpus, viewGroup != null, annotationsToWrite);
-    }
-
-    private SearchCreator params;
-
-    private final Hits hits;
-
-    private final HitGroups groups;
-
-    private final DocResults subcorpusResults;
-
-    private final boolean isViewGroup;
-
-    private final List<Annotation> annotationsToWrite;
-
-    ResultHitsCsv(SearchCreator params, Hits hits, HitGroups groups, DocResults subcorpusResults, boolean isViewGroup,
-            List<Annotation> annotationsToWrite) {
-        super();
-        this.params = params;
-        this.hits = hits;
-        this.groups = groups;
-        this.subcorpusResults = subcorpusResults;
-        this.isViewGroup = isViewGroup;
-        this.annotationsToWrite = annotationsToWrite;
+        annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
     }
 
     public Hits getHits() {

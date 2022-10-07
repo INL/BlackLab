@@ -153,7 +153,8 @@ public class WebserviceOperations {
         return new ResultMetadataGroupInfo(metaGroups, rest);
     }
 
-    public static Map<String, String> getDocFields(IndexMetadata indexMetadata) {
+    public static Map<String, String> getDocFields(BlackLabIndex index) {
+        IndexMetadata indexMetadata = index.metadata();
         Map<String, String> docFields = new LinkedHashMap<>();
         MetadataField pidField = indexMetadata.metadataFields().pidField();
         if (pidField != null)
@@ -226,7 +227,7 @@ public class WebserviceOperations {
             Integer docId = e.getKey();
             Document luceneDoc = e.getValue();
             String pid = getDocumentPid(index, docId, luceneDoc);
-            ResultDocInfo docInfo = ResultDocInfo.get(index, null, luceneDoc, metadataFieldsToList);
+            ResultDocInfo docInfo = new ResultDocInfo(index, null, luceneDoc, metadataFieldsToList);
             docInfos.put(pid, docInfo);
         }
         return docInfos;
@@ -481,28 +482,29 @@ public class WebserviceOperations {
     }
 
     public static ResultAutocomplete autocomplete(SearchCreator params) {
-        return ResultAutocomplete.get(params);
+        return new ResultAutocomplete(params);
     }
 
     public static ResultDocContents docContents(SearchCreator params) throws InvalidQuery {
-        return ResultDocContents.get(params);
+        return new ResultDocContents(params);
     }
 
     public static ResultDocInfo docInfo(BlackLabIndex blIndex, String docPid, Document document, Collection<MetadataField> metadataToWrite) {
-        return ResultDocInfo.get(blIndex, docPid, document, metadataToWrite);
+        return new ResultDocInfo(blIndex, docPid, document, metadataToWrite);
     }
 
     public static ResultDocsCsv docsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
-        return ResultDocsCsv.get(params, searchMan);
+        return new ResultDocsCsv(params, searchMan);
     }
 
     public static ResultHitsCsv hitsCsv(SearchCreatorImpl params, SearchManager searchMan) throws InvalidQuery {
-        return ResultHitsCsv.get(params, searchMan);
+        return new ResultHitsCsv(params, searchMan);
     }
 
-    public static ResultHitsGrouped hitsGrouped(SearchCreatorImpl params, SearchManager searchMan, IndexManager indexMan)
+    public static ResultHitsGrouped hitsGrouped(SearchCreatorImpl params, SearchManager searchMan)
             throws InvalidQuery {
-        return ResultHitsGrouped.get(params, searchMan, indexMan);
+        IndexManager indexMan = searchMan.getIndexManager();
+        return new ResultHitsGrouped(params, searchMan);
     }
 
     public static String addToIndex(String indexName, IndexManager indexMan, User user, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
@@ -557,7 +559,8 @@ public class WebserviceOperations {
         return indexError;
     }
 
-    public static void deleteUserFormat(SearchManager searchMan, IndexManager indexMan, User user, String formatIdentifier) {
+    public static void deleteUserFormat(SearchManager searchMan, User user, String formatIdentifier) {
+        IndexManager indexMan = searchMan.getIndexManager();
         DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_DELETE_INDEX ",
@@ -637,7 +640,7 @@ public class WebserviceOperations {
 
     public static ResultDocsResponse viewGroupDocsResponse(SearchCreatorImpl params, SearchManager searchMan,
             IndexManager indexMan) {
-        return ResultDocsResponse.viewGroupDocsResponse(params, searchMan, indexMan);
+        return ResultDocsResponse.viewGroupDocsResponse(params, searchMan);
     }
 
     public static ResultDocsResponse regularDocsResponse(SearchCreatorImpl params, IndexManager indexMan) {

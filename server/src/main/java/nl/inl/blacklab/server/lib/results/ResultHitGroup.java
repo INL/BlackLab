@@ -40,8 +40,7 @@ public class ResultHitGroup {
     private Map<Integer, String> docIdToPid = null;
 
     ResultHitGroup(SearchCreator params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
-            DocResults subcorpus,
-            List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
+            DocResults subcorpus, List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
         this.group = group;
         PropertyValue id = group.identity();
         identity = id.serialize();

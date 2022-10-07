@@ -58,13 +58,9 @@ public class ResultHitsGrouped {
 
     private final ResultSummaryNumHits summaryNumHits;
 
-    static ResultHitsGrouped get(SearchCreator params, SearchManager searchMan, IndexManager indexMan)
-            throws InvalidQuery {
-        return new ResultHitsGrouped(params, searchMan, indexMan);
-    }
-
-    ResultHitsGrouped(SearchCreator params, SearchManager searchMan, IndexManager indexMan) throws InvalidQuery {
+    ResultHitsGrouped(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
         this.params = params;
+        IndexManager indexMan = searchMan.getIndexManager();
         indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
 
         SearchCacheEntry<HitGroups> search;

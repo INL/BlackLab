@@ -71,8 +71,8 @@ public class SearchCreatorImpl implements SearchCreator {
      * @return the unique key
      */
     public static SearchCreatorImpl get(SearchManager searchMan, boolean isDocs, boolean isDebugMode,
-            WebserviceParams params) {
-        return new SearchCreatorImpl(searchMan, isDocs, isDebugMode, params);
+            WebserviceParams params, User user) {
+        return new SearchCreatorImpl(searchMan, isDocs, isDebugMode, params, user);
     }
 
     private WebserviceParams params;
@@ -98,12 +98,15 @@ public class SearchCreatorImpl implements SearchCreator {
 
     private String fieldName;
 
+    private User user;
+
     private SearchCreatorImpl(SearchManager searchManager, boolean isDocsOperation, boolean isDebugMode,
-            WebserviceParams params) {
+            WebserviceParams params, User user) {
         this.searchManager = searchManager;
         this.isDocsOperation = isDocsOperation;
         this.debugMode = isDebugMode;
         this.params = params;
+        this.user = user;
     }
 
     @Override
@@ -113,6 +116,16 @@ public class SearchCreatorImpl implements SearchCreator {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public SearchManager getSearchManager() {
+        return searchManager;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 
     private BLSConfigParameters configParam() {

@@ -50,7 +50,8 @@ public class ResultDocsResponse {
     }
 
     static ResultDocsResponse viewGroupDocsResponse(SearchCreator params,
-            SearchManager searchMan, IndexManager indexMan) {
+            SearchManager searchMan) {
+        IndexManager indexMan = searchMan.getIndexManager();
         String viewGroup = params.getViewGroup().get();
 
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
@@ -98,9 +99,7 @@ public class ResultDocsResponse {
         long totalTime = docGroupFuture.timer().time();
 
         return docsResponse(params, totalDocResults, docResults, window, search, null, indexMan,
-                true, WebserviceOperations.getAnnotationsToWrite(params),
-                WebserviceOperations.getMetadataToWrite(params), true,
-                totalTime);
+                true, true, totalTime);
     }
 
     static ResultDocsResponse regularDocsResponse(SearchCreator params, IndexManager indexMan) {
@@ -133,9 +132,7 @@ public class ResultDocsResponse {
         long totalTime = total.threwException() ? 0 : total.timer().time();
 
         return docsResponse(params, totalDocResults, docResults, window, search, originalHitsSearch, indexMan,
-                false, WebserviceOperations.getAnnotationsToWrite(params),
-                WebserviceOperations.getMetadataToWrite(params), waitForTotal,
-                totalTime);
+                false, waitForTotal, totalTime);
     }
 
     private static ResultDocsResponse docsResponse(
@@ -147,12 +144,13 @@ public class ResultDocsResponse {
             SearchCacheEntry<ResultsStats> originalHitsSearch,
             IndexManager indexMan,
             boolean isViewGroup,
-            Collection<Annotation> annotationsTolist,
-            Collection<MetadataField> metadataFieldsToList,
             boolean waitForTotal,
             long totalTime) {
 
-        BlackLabIndex index = params.blIndex();
+        Collection<Annotation> annotationsTolist = WebserviceOperations.getAnnotationsToWrite(params);
+        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
+
+                BlackLabIndex index = params.blIndex();
         boolean includeTokenCount = params.getIncludeTokenCount();
         long totalTokens = -1;
         if (includeTokenCount) {
@@ -179,11 +177,9 @@ public class ResultDocsResponse {
         }
 
         // Search is done; construct the results object
-
-        ResultDocsResponse result = new ResultDocsResponse(annotationsTolist, metadataFieldsToList, index,
+        return new ResultDocsResponse(annotationsTolist, metadataFieldsToList, index,
                 includeTokenCount,
                 totalTokens, summaryFields, numResultDocs, numResultHits, window, params);
-        return result;
     }
 
     public Collection<Annotation> getAnnotationsTolist() {

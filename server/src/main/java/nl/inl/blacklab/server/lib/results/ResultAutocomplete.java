@@ -14,7 +14,15 @@ import nl.inl.blacklab.server.lib.SearchCreator;
 
 public class ResultAutocomplete {
 
-    static ResultAutocomplete get(SearchCreator params) {
+    private String luceneField;
+
+    private String term;
+
+    private boolean sensitiveMatching;
+
+    private IndexReader reader;
+
+    ResultAutocomplete(SearchCreator params) {
         String fieldName = params.getFieldName();
         String annotationName = params.getAnnotationName();
 
@@ -26,7 +34,7 @@ public class ResultAutocomplete {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
 
-        String term = params.getAutocompleteTerm();
+        term = params.getAutocompleteTerm();
         if (term == null || term.isEmpty())
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
@@ -44,8 +52,7 @@ public class ResultAutocomplete {
          * Take care to pass the sensitivity we're using
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
-        boolean sensitiveMatching = true;
-        String luceneField;
+        sensitiveMatching = true;
         if (!StringUtils.isEmpty(annotationName)) {
             // Annotation on annotated field
             if (!indexMetadata.annotatedFields().exists(fieldName))
@@ -66,23 +73,7 @@ public class ResultAutocomplete {
         } else {
             luceneField = fieldName;
         }
-        ResultAutocomplete result = new ResultAutocomplete(luceneField, term, sensitiveMatching, index.reader());
-        return result;
-    }
-
-    private String luceneField;
-
-    private String term;
-
-    private boolean sensitiveMatching;
-
-    private IndexReader reader;
-
-    ResultAutocomplete(String luceneField, String term, boolean sensitiveMatching, IndexReader reader) {
-        this.luceneField = luceneField;
-        this.term = term;
-        this.sensitiveMatching = sensitiveMatching;
-        this.reader = reader;
+        reader = index.reader();
     }
 
     public String getLuceneField() {

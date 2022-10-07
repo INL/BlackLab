@@ -7,13 +7,15 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.search.SearchManager;
 
 public class ResultDocsCsv {
 
-
+    private DocResults docs;
+    private DocGroups groups;
+    private final DocResults subcorpusResults;
+    private final boolean isViewGroup;
 
     /**
      * Get the docs (and the groups from which they were extracted - if applicable)
@@ -25,16 +27,19 @@ public class ResultDocsCsv {
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
      */
-    // TODO share with regular RequestHandlerHits
-    static ResultDocsCsv get(SearchCreator params, SearchManager searchMan) throws BlsException, InvalidQuery {
+    ResultDocsCsv(SearchCreator params, SearchManager searchMan) throws InvalidQuery {
+        super();
+
+        // TODO share with regular RequestHandlerHits
+
         // Might be null
         String groupBy = params.getGroupProps().orElse(null);
         String viewGroup = params.getViewGroup().orElse(null);
+        isViewGroup = viewGroup != null;
         String sortBy = params.getSortProps().orElse(null);
 
-        DocResults docs;
-        DocGroups groups = null;
-        DocResults subcorpusResults = params.subcorpus().execute();
+        groups = null;
+        subcorpusResults = params.subcorpus().execute();
 
         if (groupBy != null) {
             groups = params.docsGrouped().execute();
@@ -85,20 +90,21 @@ public class ResultDocsCsv {
             if (number >= 0)
                 docs = docs.window(first, number);
         }
-
-        return new ResultDocsCsv(docs, groups, subcorpusResults, viewGroup != null);
     }
 
-    public final DocResults docs;
-    public final DocGroups groups;
-    public final DocResults subcorpusResults;
-    public final boolean isViewGroup;
+    public DocResults getDocs() {
+        return docs;
+    }
 
-    ResultDocsCsv(DocResults docs, DocGroups groups, DocResults subcorpusResults, boolean isViewGroup) {
-        super();
-        this.docs = docs;
-        this.groups = groups;
-        this.subcorpusResults = subcorpusResults;
-        this.isViewGroup = isViewGroup;
+    public DocGroups getGroups() {
+        return groups;
+    }
+
+    public DocResults getSubcorpusResults() {
+        return subcorpusResults;
+    }
+
+    public boolean isViewGroup() {
+        return isViewGroup;
     }
 }

@@ -94,7 +94,7 @@ public class RequestHandlerDocs extends RequestHandler {
                 if (includeTokenCount)
                     ds.entry("tokensInMatchingDocuments", totalTokens);
 
-                Map<String, String> docFields = WebserviceOperations.getDocFields(index.metadata());
+                Map<String, String> docFields = WebserviceOperations.getDocFields(index);
                 Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
                 DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
             }

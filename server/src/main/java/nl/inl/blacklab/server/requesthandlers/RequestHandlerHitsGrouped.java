@@ -32,7 +32,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params, searchMan, indexMan);
+        ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params, searchMan);
         dstreamHitsGroupedResponse(ds, hitsGrouped);
         return HTTP_OK;
     }
