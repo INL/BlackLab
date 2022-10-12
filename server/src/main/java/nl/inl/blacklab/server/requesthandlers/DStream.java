@@ -32,16 +32,15 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
 import nl.inl.blacklab.server.lib.results.ResultAnnotationInfo;
 import nl.inl.blacklab.server.lib.results.ResultDocInfo;
 import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
 import nl.inl.blacklab.server.lib.results.ResultListOfHits;
 import nl.inl.blacklab.server.lib.results.ResultMetadataField;
+import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
-import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
 import nl.inl.blacklab.server.lib.results.ResultUserInfo;
 
 /**
@@ -187,7 +186,7 @@ public class DStream {
         // Our search parameters
         ds.startEntry("searchParam");
         ds.startMap();
-        for (Map.Entry<String, String> e : ((WebserviceParams) searchParam).getParameters().entrySet()) {
+        for (Map.Entry<String, String> e: searchParam.getParameters().entrySet()) {
             ds.entry(e.getKey(), e.getValue());
         }
         ds.endMap();
@@ -400,12 +399,12 @@ public class DStream {
                 .entry("isAnnotatedField", false)
                 .entry("displayName", fd.displayName())
                 .entry("description", fd.description())
-                .entry("uiType", fd.uiType());
+                .entry("uiType", fd.custom().get("uiType"));
         ds
                 .entry("type", fd.type().toString())
                 .entry("analyzer", fd.analyzerName())
-                .entry("unknownCondition", fd.unknownCondition().toString())
-                .entry("unknownValue", fd.unknownValue());
+                .entry("unknownCondition", fd.custom().get("unknownCondition").toString())
+                .entry("unknownValue", fd.custom().get("unknownValue"));
         if (listValues) {
             final Map<String, String> displayValues = fd.custom().get("displayValues",
                     Collections.emptyMap());
