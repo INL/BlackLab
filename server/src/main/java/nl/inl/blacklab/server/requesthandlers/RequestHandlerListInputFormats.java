@@ -1,26 +1,16 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.io.IOUtils;
-
 import nl.inl.blacklab.index.DocIndexerFactory.Format;
-import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.results.ResultInputFormat;
+import nl.inl.blacklab.server.lib.results.ResultListInputFormats;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
-import nl.inl.blacklab.server.lib.results.XslGenerator;
 
 /**
  * Get information about supported input formats.
@@ -58,80 +48,59 @@ public class RequestHandlerListInputFormats extends RequestHandler {
     public int handle(DataStream ds) throws BlsException {
         if (urlResource != null && urlResource.length() > 0) {
             // Specific input format: either format information or XSLT request
-            return handleFormatRequest(ds, urlResource, isXsltRequest);
+            ResultInputFormat result = WebserviceOperations.inputFormat(urlResource);
+            if (!isXsltRequest) {
+                dstreamFormatResponse(ds, result);
+            } else {
+                dstreamFormatXsltResponse(ds, result);
+            }
+        } else {
+            // Show list of supported input formats (for current user)
+            ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
+            dstreamListFormatsResponse(ds, result);
         }
-
-        // List all available input formats
-        if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
-            // Make sure users's formats are loaded
-            indexMan.getUserFormatManager().loadUserFormats(user.getUserId());
-        }
-        ResultUserInfo userInfo = WebserviceOperations.userInfo(user.isLoggedIn(), user.getUserId(), indexMan.canCreateIndex(user));
-        dstreamListFormatsResponse(ds, userInfo);
         return HTTP_OK;
     }
 
-    private static int handleFormatRequest(DataStream ds, String formatName, boolean isXsltRequest) {
-        Format format = DocumentFormats.getFormat(formatName);
-        if (format == null)
-            throw new NotFound("NOT_FOUND", "The format '" + formatName + "' does not exist.");
-        if (!format.isConfigurationBased())
-            throw new NotFound("NOT_FOUND", "The format '" + formatName
-                    + "' is not configuration-based, and therefore cannot be displayed.");
-
-        ConfigInputFormat config = format.getConfig();
-        if (isXsltRequest) {
-            String xslt = XslGenerator.generateXsltFromConfig(config);
-            ds.plain(xslt);
-            return HTTP_OK;
-        }
-
-        String fileContents;
-        try (BufferedReader reader = config.getFormatFile()) {
-            fileContents = IOUtils.toString(reader);
-        } catch (IOException e1) {
-            throw new RuntimeException(e1);
-        }
-        dstreamGetFormatResponse(ds, formatName, config, fileContents);
-        return HTTP_OK;
+    private static void dstreamFormatResponse(DataStream ds, ResultInputFormat result) {
+        ds.startMap()
+                .entry("formatName", result.getConfig().getName())
+                .entry("configFileType", result.getConfig().getConfigFileType())
+                .entry("configFile", result.getFileContents())
+                .endMap();
     }
 
-    private static void dstreamListFormatsResponse(DataStream ds, ResultUserInfo userInfo) {
+    private static void dstreamFormatXsltResponse(DataStream ds, ResultInputFormat result) {
+        ds.plain(result.getXslt());
+    }
+
+    private static void dstreamListFormatsResponse(DataStream ds, ResultListInputFormats result) {
 
         ds.startMap();
-        DStream.userInfo(ds, userInfo);
+        {
+            DStream.userInfo(ds, result.getUserInfo());
 
-        // List supported input formats
-        // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
-        ds.startEntry("supportedInputFormats").startMap();
-        for (Format format : DocumentFormats.getFormats()) {
-            try {
-                String userId = DocIndexerFactoryUserFormats.getUserIdOrFormatName(format.getId(), false);
-                // Other user's formats are not explicitly enumerated (but should still be considered public)
-                if (!userId.equals(userInfo.getUserId()))
-                    continue;
-            } catch (IllegalUserFormatIdentifier e) {
-                // Alright, it's evidently not a user format, that means it's public. List it.
+            // List supported input formats
+            // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
+            ds.startEntry("supportedInputFormats").startMap();
+            for (Format format: result.getFormats()) {
+                ds.startAttrEntry("format", "name", format.getId());
+                {
+                    ds.startMap();
+                    {
+                        ds.entry("displayName", format.getDisplayName())
+                                .entry("description", format.getDescription())
+                                .entry("helpUrl", format.getHelpUrl())
+                                .entry("configurationBased", format.isConfigurationBased())
+                                .entry("isVisible", format.isVisible());
+                    }
+                    ds.endMap();
+                }
+                ds.endAttrEntry();
             }
-
-            ds.startAttrEntry("format", "name", format.getId()).startMap()
-                    .entry("displayName", format.getDisplayName())
-                    .entry("description", format.getDescription())
-                    .entry("helpUrl", format.getHelpUrl())
-                    .entry("configurationBased", format.isConfigurationBased())
-                    .entry("isVisible", format.isVisible())
-                    .endMap().endAttrEntry();
+            ds.endMap().endEntry();
         }
-        ds.endMap().endEntry();
         ds.endMap();
-    }
-
-    private static void dstreamGetFormatResponse(DataStream ds, String formatName, ConfigInputFormat config, String fileContents) {
-        ds.startMap()
-                .entry("formatName", formatName)
-                .entry("configFileType", config.getConfigFileType())
-                .entry("configFile", fileContents)
-                .endMap();
     }
 
 }

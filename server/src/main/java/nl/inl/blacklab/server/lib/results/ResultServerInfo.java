@@ -9,9 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.SearchCreator;
-import nl.inl.blacklab.server.lib.User;
 
 public class ResultServerInfo {
 
@@ -29,12 +27,9 @@ public class ResultServerInfo {
         this.params = params;
         this.debugMode = debugMode;
 
-        User user = params.getUser();
-        IndexManager indexMan = params.getIndexManager();
-        userInfo = WebserviceOperations.userInfo(user.isLoggedIn(), user.getUserId(),
-                indexMan.canCreateIndex(user));
+        userInfo = WebserviceOperations.userInfo(params);
         indexStatuses = new ArrayList<>();
-        Collection<Index> indices = indexMan.getAllAvailableIndices(user.getUserId());
+        Collection<Index> indices = params.getIndexManager().getAllAvailableIndices(params.getUser().getUserId());
         for (Index index: indices) {
             try {
                 indexStatuses.add(WebserviceOperations.resultIndexStatus(index));

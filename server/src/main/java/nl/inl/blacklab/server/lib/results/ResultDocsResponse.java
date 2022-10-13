@@ -15,10 +15,8 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.search.SearchManager;
 
 public class ResultDocsResponse {
     private Collection<Annotation> annotationsTolist;
@@ -49,9 +47,7 @@ public class ResultDocsResponse {
         this.params = params;
     }
 
-    static ResultDocsResponse viewGroupDocsResponse(SearchCreator params,
-            SearchManager searchMan) {
-        IndexManager indexMan = searchMan.getIndexManager();
+    static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) {
         String viewGroup = params.getViewGroup().get();
 
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
@@ -90,19 +86,19 @@ public class ResultDocsResponse {
         if (first < 0)
             first = 0;
         long number = params.getNumberOfResultsToShow();
-        if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
-            number = searchMan.config().getParameters().getPageSize().getDefaultValue();
+        if (number < 0 || number > params.getSearchManager().config().getParameters().getPageSize().getMax())
+            number = params.getSearchManager().config().getParameters().getPageSize().getDefaultValue();
         DocResults totalDocResults = docsSorted;
         DocResults window = docsSorted.window(first, number);
 
         DocResults docResults = group.storedResults();
         long totalTime = docGroupFuture.timer().time();
 
-        return docsResponse(params, totalDocResults, docResults, window, search, null, indexMan,
+        return docsResponse(params, totalDocResults, docResults, window, search, null,
                 true, true, totalTime);
     }
 
-    static ResultDocsResponse regularDocsResponse(SearchCreator params, IndexManager indexMan) {
+    static ResultDocsResponse regularDocsResponse(SearchCreator params) {
         // Make sure we have the hits search, so we can later determine totals.
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
         if (params.hasPattern()) {
@@ -131,7 +127,7 @@ public class ResultDocsResponse {
         DocResults docResults = totalDocResults;
         long totalTime = total.threwException() ? 0 : total.timer().time();
 
-        return docsResponse(params, totalDocResults, docResults, window, search, originalHitsSearch, indexMan,
+        return docsResponse(params, totalDocResults, docResults, window, search, originalHitsSearch,
                 false, waitForTotal, totalTime);
     }
 
@@ -142,7 +138,6 @@ public class ResultDocsResponse {
             DocResults window,
             SearchCacheEntry<?> search,
             SearchCacheEntry<ResultsStats> originalHitsSearch,
-            IndexManager indexMan,
             boolean isViewGroup,
             boolean waitForTotal,
             long totalTime) {
@@ -162,7 +157,7 @@ public class ResultDocsResponse {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        Index.IndexStatus indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getIndexName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
                 null, window.windowStats());
         boolean countFailed = totalTime < 0;

@@ -60,10 +60,10 @@ public class RequestHandlerDocs extends RequestHandler {
         ResultDocsResponse result;
         if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
             // View a single group in a grouped docs resultset
-            result = WebserviceOperations.viewGroupDocsResponse(params, searchMan, indexMan);
+            result = WebserviceOperations.viewGroupDocsResponse(params);
         } else {
             // Regular set of docs (no grouping first)
-            result = WebserviceOperations.regularDocsResponse(params, indexMan);
+            result = WebserviceOperations.regularDocsResponse(params);
         }
         dstreamDocsResponse(ds, result);
         return HTTP_OK;

@@ -643,17 +643,21 @@ public class WebserviceOperations {
         return new ResultSummaryCommonFields(params, indexStatus, timings, groups, window);
     }
 
+    public static ResultUserInfo userInfo(SearchCreator params) {
+        User user = params.getUser();
+        return new ResultUserInfo(user.isLoggedIn(), user.getUserId(), params.getIndexManager().canCreateIndex(user));
+    }
+
     public static ResultUserInfo userInfo(boolean loggedIn, String userId, boolean canCreateIndex) {
         return new ResultUserInfo(loggedIn, userId, canCreateIndex);
     }
 
-    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params, SearchManager searchMan,
-            IndexManager indexMan) {
-        return ResultDocsResponse.viewGroupDocsResponse(params, searchMan);
+    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) {
+        return ResultDocsResponse.viewGroupDocsResponse(params);
     }
 
-    public static ResultDocsResponse regularDocsResponse(SearchCreator params, IndexManager indexMan) {
-        return ResultDocsResponse.regularDocsResponse(params, indexMan);
+    public static ResultDocsResponse regularDocsResponse(SearchCreator params) {
+        return ResultDocsResponse.regularDocsResponse(params);
     }
 
     public static ResultIndexMetadata indexMetadata(SearchCreator params) {
@@ -681,5 +685,13 @@ public class WebserviceOperations {
 
     public static ResultDocsGrouped docsGrouped(SearchCreatorImpl params) throws InvalidQuery {
         return new ResultDocsGrouped(params);
+    }
+
+    public static ResultListInputFormats listInputFormats(SearchCreatorImpl params) {
+        return new ResultListInputFormats(params);
+    }
+
+    public static ResultInputFormat inputFormat(String formatName) {
+        return new ResultInputFormat(formatName);
     }
 }
