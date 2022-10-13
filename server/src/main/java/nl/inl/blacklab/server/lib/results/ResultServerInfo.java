@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultServerInfo {
 
@@ -17,13 +17,13 @@ public class ResultServerInfo {
 
     private final boolean debugMode;
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private final ResultUserInfo userInfo;
 
     private final List<ResultIndexStatus> indexStatuses;
 
-    ResultServerInfo(SearchCreator params, boolean debugMode) {
+    ResultServerInfo(WebserviceParams params, boolean debugMode) {
         this.params = params;
         this.debugMode = debugMode;
 
@@ -40,7 +40,7 @@ public class ResultServerInfo {
         }
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

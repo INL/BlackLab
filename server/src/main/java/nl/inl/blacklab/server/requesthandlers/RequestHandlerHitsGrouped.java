@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ResultHitGroup;
 import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
@@ -38,7 +38,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
     }
 
     private static void dstreamHitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
-        SearchCreator params = hitsGrouped.getParams();
+        WebserviceParams params = hitsGrouped.getParams();
         ResultSummaryCommonFields summaryFields = hitsGrouped.getSummaryFields();
         ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
 

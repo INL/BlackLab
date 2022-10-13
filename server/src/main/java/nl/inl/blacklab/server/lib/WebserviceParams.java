@@ -1,132 +1,95 @@
 package nl.inl.blacklab.server.lib;
 
-import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
-import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.search.SearchManager;
+import org.apache.lucene.search.Query;
 
-/** API-independent interface to BlackLab operation parameters */
-public interface WebserviceParams {
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.searches.SearchDocGroups;
+import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchFacets;
+import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.blacklab.searches.SearchHits;
+import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.jobs.ContextSettings;
+import nl.inl.blacklab.server.jobs.HitSortSettings;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 
-    /**
-     * Get a view of the parameters.
-     *
-     * @return the view
-     */
-    Map<String, String> getParameters();
+/**
+ * Extends the PlainWebserviceParams interface with methods that instantiate searches
+ * based on the parameter values.
+ *
+ * Should probably be refactored so there's a separate class for each operation, with
+ * just the parameters relevant to that operation.
+ */
+public interface WebserviceParams extends PlainWebserviceParams {
+    BlackLabIndex blIndex();
 
-    String getIndexName();
+    boolean hasPattern() throws BlsException;
 
-    String getPattern();
+    Optional<TextPattern> pattern() throws BlsException;
 
-    String getPattLanguage();
-
-    String getPattGapData();
-
-    SearchManager getSearchManager();
-
-    default IndexManager getIndexManager() { return getSearchManager().getIndexManager(); }
-
-    User getUser();
+    boolean hasFilter() throws BlsException;
 
     String getDocPid();
 
-    String getDocumentFilterQuery();
-
-    String getDocumentFilterLanguage();
-
-    String getHitFilterCriterium();
-
-    String getHitFilterValue();
-
-    Optional<Double> getSampleFraction();
-
-    Optional<Integer> getSampleNumber();
-
-    Optional<Long> getSampleSeed();
-
-    boolean getUseCache();
-
-    int getForwardIndexMatchFactor();
-
-    long getMaxRetrieve();
-
-    long getMaxCount();
-
-    long getFirstResultToShow();
-
-    Optional<Long> optNumberOfResultsToShow();
-
-    long getNumberOfResultsToShow();
-
-    int getWordsAroundHit();
-
-    ConcordanceType getConcordanceType();
-
-    boolean getIncludeGroupContents();
-
-    boolean getOmitEmptyCaptures();
-
-    Optional<String> getFacetProps();
-
-    Optional<String> getGroupProps();
-
-    Optional<String> getSortProps();
-
-    Optional<String> getViewGroup();
+    Query filterQuery() throws BlsException;
 
     /**
-     * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
-     *
-     * @return which annotations to list
+     * @return hits - filtered then sorted then sampled then windowed
      */
-    Collection<String> getListValuesFor();
+    SearchHits hitsWindow() throws BlsException;
+
+    WindowSettings windowSettings();
+
+    boolean includeGroupContents();
+
+    boolean omitEmptyCapture();
+
+    HitSortSettings hitsSortSettings();
+
+    SampleParameters sampleSettings();
+
+    boolean hasFacets();
+
+    SearchSettings searchSettings();
+
+    ContextSettings contextSettings();
+
+    boolean useCache();
 
     /**
-     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
-     *
-     * @return which metadata fields to list
+     * @return hits - filtered then sorted then sampled
      */
-    Collection<String> getListMetadataValuesFor();
+    SearchHits hitsSample() throws BlsException;
 
-    Collection<String> getListSubpropsFor();
+    SearchDocs docsWindow() throws BlsException;
 
-    boolean getWaitForTotal();
+    SearchDocs docsSorted() throws BlsException;
 
-    boolean getIncludeTokenCount();
+    SearchCount docsCount() throws BlsException;
 
-    boolean getCsvIncludeSummary();
+    SearchDocs docs() throws BlsException;
 
-    boolean getCsvDeclareSeparator();
+    /**
+     * Return our subcorpus.
+     * The subcorpus is defined as all documents satisfying the metadata query.
+     * If no metadata query is given, the subcorpus is all documents in the corpus.
+     *
+     * @return subcorpus
+     */
+    SearchDocs subcorpus() throws BlsException;
 
-    boolean getExplain();
+    SearchHitGroups hitsGroupedStats() throws BlsException;
 
-    boolean getSensitive();
+    SearchHitGroups hitsGroupedWithStoredHits() throws BlsException;
 
-    int getWordStart();
+    SearchDocGroups docsGrouped() throws BlsException;
 
-    int getWordEnd();
-
-    Optional<Integer> getHitStart();
-
-    int getHitEnd();
-
-    String getAutocompleteTerm();
-
-    boolean isCalculateCollocations();
-
-    String getAnnotationName();
-
-    String getFieldName();
-
-    Set<String> getTerms();
-
-    boolean isIncludeDebugInfo();
+    SearchFacets facets() throws BlsException;
 
 }

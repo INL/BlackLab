@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultDocsResponse {
@@ -35,7 +35,7 @@ public class ResultDocsResponse {
     private final ResultSummaryNumDocs numResultDocs;
     private final ResultSummaryNumHits numResultHits;
     private final DocResults window;
-    private final SearchCreator params;
+    private final WebserviceParams params;
     private final Map<String, String> docFields;
     private final Map<String, String> metaDisplayNames;
     private Map<String, List<Pair<String, Long>>> facetInfo;
@@ -45,7 +45,7 @@ public class ResultDocsResponse {
             BlackLabIndex blIndex, boolean includeTokenCount, long totalTokens,
             ResultSummaryCommonFields summaryFields,
             ResultSummaryNumDocs numResultDocs, ResultSummaryNumHits numResultHits, DocResults window,
-            SearchCreator params) throws InvalidQuery {
+            WebserviceParams params) throws InvalidQuery {
         this.annotationsToList = annotationsToList;
         this.metadataFieldsToList = metadataFieldsToList;
         this.index = blIndex;
@@ -71,7 +71,7 @@ public class ResultDocsResponse {
         }
     }
 
-    static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) throws InvalidQuery {
+    static ResultDocsResponse viewGroupDocsResponse(WebserviceParams params) throws InvalidQuery {
         String viewGroup = params.getViewGroup().get();
 
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
@@ -122,7 +122,7 @@ public class ResultDocsResponse {
                 true, true, totalTime);
     }
 
-    static ResultDocsResponse regularDocsResponse(SearchCreator params) throws InvalidQuery {
+    static ResultDocsResponse regularDocsResponse(WebserviceParams params) throws InvalidQuery {
         // Make sure we have the hits search, so we can later determine totals.
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
         if (params.hasPattern()) {
@@ -156,7 +156,7 @@ public class ResultDocsResponse {
     }
 
     private static ResultDocsResponse docsResponse(
-            SearchCreator params,
+            WebserviceParams params,
             DocResults totalDocResults,
             DocResults docResults,
             DocResults window,
@@ -237,7 +237,7 @@ public class ResultDocsResponse {
         return window;
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

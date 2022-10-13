@@ -70,8 +70,8 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
-import nl.inl.blacklab.server.lib.SearchCreator;
-import nl.inl.blacklab.server.lib.SearchCreatorImpl;
+import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -93,7 +93,7 @@ public class WebserviceOperations {
      *
      * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
      */
-    public static Collection<MetadataField> getMetadataToWrite(SearchCreator params) {
+    public static Collection<MetadataField> getMetadataToWrite(WebserviceParams params) {
         BlackLabIndex index = params.blIndex();
         MetadataFields fields = index.metadataFields();
         Collection<String> requestedFields = params.getListMetadataValuesFor();
@@ -116,19 +116,37 @@ public class WebserviceOperations {
         return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
     }
 
+    /**
+     * Get metadata field groups.
+     *
+     * This includes adding any uncategorized fields to the "default" group.
+     *
+     * (part of custom properties; should eventually be removed from the API)
+     *
+     * @param index index
+     * @return metadata field groups
+     */
     public static Map<String, List<String>> getMetadataFieldGroupsWithRest(BlackLabIndex index) {
-        ResultMetadataGroupInfo metadataGroupInfo = WebserviceOperations.getMetadataGroupInfo(index);
+        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
+        Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
+                .collect(Collectors.toSet());
+        for (MetadataFieldGroup metaGroup1: metaGroups.values()) {
+            for (String fieldName: metaGroup1) {
+                MetadataField field1 = index.metadata().metadataFields().get(fieldName);
+                metadataFieldsNotInGroups.remove(field1);
+            }
+        }
 
         Map<String, List<String>> metadataFieldGroups = new LinkedHashMap<>();
         boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metadataGroupInfo.getMetaGroups().values()) {
+        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
             List<String> metadataFieldGroup = new ArrayList<>();
             for (String field: metaGroup) {
                 metadataFieldGroup.add(field);
             }
             if (!addedRemaining && metaGroup.addRemainingFields()) {
                 addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(metadataGroupInfo.getMetadataFieldsNotInGroups());
+                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
                 rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
                 for (MetadataField field: rest) {
                     metadataFieldGroup.add(field.name());
@@ -139,21 +157,15 @@ public class WebserviceOperations {
         return metadataFieldGroups;
     }
 
-    private static ResultMetadataGroupInfo getMetadataGroupInfo(BlackLabIndex index) {
-        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
-        Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
-                .collect(Collectors.toSet());
-        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
-            for (String fieldName: metaGroup) {
-                MetadataField field = index.metadata().metadataFields().get(fieldName);
-                metadataFieldsNotInGroups.remove(field);
-            }
-        }
-        List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-        rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
-        return new ResultMetadataGroupInfo(metaGroups, rest);
-    }
-
+    /**
+     * Get the special metadata fields.
+     *
+     * (special metadata fields except pidField are part of custom properties;
+     *  this method should eventually be removed from the API)
+     *
+     * @param index index
+     * @return doc fields
+     */
     public static Map<String, String> getDocFields(BlackLabIndex index) {
         IndexMetadata indexMetadata = index.metadata();
         Map<String, String> docFields = new LinkedHashMap<>();
@@ -168,6 +180,14 @@ public class WebserviceOperations {
         return docFields;
     }
 
+    /**
+     * Get display names for metadata fields.
+     *
+     * (part of custom properties; should eventually be removed from the API)
+     *
+     * @param index index
+     * @return display names
+     */
     public static Map<String, String> getMetaDisplayNames(BlackLabIndex index) {
         Map<String, String> metaDisplayNames = new LinkedHashMap<>();
         for (MetadataField f: index.metadata().metadataFields()) {
@@ -180,7 +200,7 @@ public class WebserviceOperations {
     }
 
     /**
-     * Get the pid for the specified document
+     * Get the pid for the specified document.
      *
      * @param index where we got this document from
      * @param luceneDocId Lucene document id
@@ -204,7 +224,7 @@ public class WebserviceOperations {
      *
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
-    public static List<Annotation> getAnnotationsToWrite(SearchCreator params) {
+    public static List<Annotation> getAnnotationsToWrite(WebserviceParams params) {
         BlackLabIndex index = params.blIndex();
         AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
@@ -221,6 +241,14 @@ public class WebserviceOperations {
         return ret;
     }
 
+    /**
+     * Get metadata for a list of documents.
+     *
+     * @param index index
+     * @param luceneDocs documents to get metadata from
+     * @param metadataFieldsToList fields to get
+     * @return metadata for the documents
+     */
     public static Map<String, ResultDocInfo> getDocInfos(BlackLabIndex index, Map<Integer, Document> luceneDocs,
             Collection<MetadataField> metadataFieldsToList) {
         Map<String, ResultDocInfo> docInfos = new LinkedHashMap<>();
@@ -234,6 +262,15 @@ public class WebserviceOperations {
         return docInfos;
     }
 
+    /**
+     * Get relevant facets info for display.
+     *
+     * Returns lists of value+count for every property faceted on.
+     * Grouped by descending size.
+     *
+     * @param counts faceting results
+     * @return faceting info for display
+     */
     public static Map<String, List<Pair<String, Long>>> getFacetInfo(Map<DocProperty, DocGroups> counts) {
         Map<String, List<Pair<String,  Long>>> facetInfo = new LinkedHashMap<>();
         for (Map.Entry<DocProperty, DocGroups> e : counts.entrySet()) {
@@ -261,6 +298,13 @@ public class WebserviceOperations {
         return facetInfo;
     }
 
+    /**
+     * Get a map of doc id to document pid for the documents in a list of hits.
+     *
+     * @param index index
+     * @param hits hits we want the doc pids for
+     * @param luceneDocs map of doc id to Lucene document, to look up the pids
+     */
     public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, Hits hits,
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
@@ -274,22 +318,34 @@ public class WebserviceOperations {
         return docIdToPid;
     }
 
-    // specific to hits
-    public static TermFrequencyList getCollocations(SearchCreator params, Hits originalHits) {
+    /**
+     * Calculate collocations from hits.
+     *
+     * @param params operation parameters
+     * @param hits hits
+     * @return collocations
+     */
+    public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
         ContextSize contextSize = ContextSize.get(params.getWordsAroundHit());
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return originalHits.collocations(originalHits.field().mainAnnotation(), contextSize,
+        return hits.collocations(hits.field().mainAnnotation(), contextSize,
                 sensitivity);
     }
 
-    // specific to add format
-    public static void addUserFileFormat(SearchCreator params, String fileName, InputStream fileInputStream) {
+    /**
+     * Add a user file format.
+     *
+     * @param params operation parameters
+     * @param fileName name of the uploaded file
+     * @param fileContents contents of the uploaded file
+     */
+    public static void addUserFileFormat(WebserviceParams params, String fileName, InputStream fileContents) {
         SearchManager searchMan = params.getSearchManager();
         DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
-        formatMan.createUserFormat(params.getUser(), fileName, fileInputStream);
+        formatMan.createUserFormat(params.getUser(), fileName, fileContents);
     }
 
     /**
@@ -350,7 +406,18 @@ public class WebserviceOperations {
         return fieldValueSortCollator;
     }
 
-    public static Set<String> getTerms(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
+    /**
+     * Get the list of values for an annotation.
+     *
+     * No more than {@link #MAX_FIELD_VALUES_TO_RETURN} will be returned.
+     * valueListComplete[0] will indicate if all values were returned or not
+     *
+     * @param index index
+     * @param annotation annotation to get values for
+     * @param valueListComplete (out) [0] indicates whether the value list is complete or not
+     * @return values for this annotation
+     */
+    public static Set<String> getAnnotationValues(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
         boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
         final Set<String> terms = new TreeSet<>();
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
@@ -386,6 +453,14 @@ public class WebserviceOperations {
         return terms;
     }
 
+    /**
+     * Translate a thrown exception into a BlsException.
+     *
+     * BlsException will eventually be caught and returned as an error response.
+     *
+     * @param e exception thrown
+     * @return translated exception
+     */
     public static BlsException translateSearchException(Exception e) {
         if (e instanceof InterruptedException) {
             throw new InterruptedSearch(e);
@@ -402,12 +477,22 @@ public class WebserviceOperations {
         }
     }
 
-    public static CorpusSize findSubcorpusSize(SearchCreator searchParam, Query metadataFilterQuery,
+    /**
+     * Find the size of documents matching a filter query and/or property+value.
+     *
+     *
+     * @param params operation parameters
+     * @param metadataFilterQuery filter query
+     * @param property document property to find subcorpus size for
+     * @param value value the document property must have to be included
+     * @return
+     */
+    public static CorpusSize findSubcorpusSize(WebserviceParams params, Query metadataFilterQuery,
             DocProperty property, PropertyValue value) {
-        if (!property.canConstructQuery(searchParam.blIndex(), value))
+        if (!property.canConstructQuery(params.blIndex(), value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
-        Query query = property.query(searchParam.blIndex(), value); // analyzer....!
+        Query query = property.query(params.blIndex(), value); // analyzer....!
         if (query == null) {
             query = metadataFilterQuery;
         } else {
@@ -418,22 +503,22 @@ public class WebserviceOperations {
             query = builder.build();
         }
         // Determine number of tokens in this subcorpus
-        return searchParam.blIndex().queryDocuments(query).subcorpusSize(true);
+        return params.blIndex().queryDocuments(query).subcorpusSize(true);
     }
 
-    public static TermFrequencyList calculateCollocations(SearchCreator params) {
+    public static TermFrequencyList calculateCollocations(WebserviceParams params) {
         ResultHits resultHits = new ResultHits(params, false);
         Hits hits = resultHits.getHits();
         return getCollocations(params, hits);
     }
 
-    public static ResultHits getResultHits(SearchCreator params) {
+    public static ResultHits getResultHits(WebserviceParams params) {
         ResultHits resultHits = new ResultHits(params, true);
         resultHits.finishSearch();
         return resultHits;
     }
 
-    public static TermFrequencyList getTermFrequencies(SearchCreator params) {
+    public static TermFrequencyList getTermFrequencies(WebserviceParams params) {
         //TODO: use background job?
 
         BlackLabIndex blIndex = params.blIndex();
@@ -466,7 +551,7 @@ public class WebserviceOperations {
         return tfl;
     }
 
-    public static List<String> getUsersToShareWith(SearchCreator params) {
+    public static List<String> getUsersToShareWith(WebserviceParams params) {
         IndexManager indexMan = params.getIndexManager();
         String indexName = params.getIndexName();
         User user = params.getUser();
@@ -476,7 +561,7 @@ public class WebserviceOperations {
         return index.getShareWithUsers();
     }
 
-    public static void setUsersToShareWith(SearchCreator params, String[] users) {
+    public static void setUsersToShareWith(WebserviceParams params, String[] users) {
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();
         String indexName = params.getIndexName();
@@ -488,11 +573,11 @@ public class WebserviceOperations {
         index.setShareWithUsers(shareWithUsers);
     }
 
-    public static ResultAutocomplete autocomplete(SearchCreator params) {
+    public static ResultAutocomplete autocomplete(WebserviceParams params) {
         return new ResultAutocomplete(params);
     }
 
-    public static ResultDocContents docContents(SearchCreator params) throws InvalidQuery {
+    public static ResultDocContents docContents(WebserviceParams params) throws InvalidQuery {
         return new ResultDocContents(params);
     }
 
@@ -500,20 +585,20 @@ public class WebserviceOperations {
         return new ResultDocInfo(blIndex, docPid, document, metadataToWrite);
     }
 
-    public static ResultDocsCsv docsCsv(SearchCreator params) throws InvalidQuery {
+    public static ResultDocsCsv docsCsv(WebserviceParams params) throws InvalidQuery {
         return new ResultDocsCsv(params);
     }
 
-    public static ResultHitsCsv hitsCsv(SearchCreator params) throws InvalidQuery {
+    public static ResultHitsCsv hitsCsv(WebserviceParams params) throws InvalidQuery {
         return new ResultHitsCsv(params);
     }
 
-    public static ResultHitsGrouped hitsGrouped(SearchCreator params)
+    public static ResultHitsGrouped hitsGrouped(WebserviceParams params)
             throws InvalidQuery {
         return new ResultHitsGrouped(params);
     }
 
-    public static String addToIndex(SearchCreator params, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
+    public static String addToIndex(WebserviceParams params, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
         Index index = params.getIndexManager().getIndex(params.getIndexName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
@@ -565,7 +650,7 @@ public class WebserviceOperations {
         return indexError;
     }
 
-    public static void deleteUserFormat(SearchCreator params, String formatIdentifier) {
+    public static void deleteUserFormat(WebserviceParams params, String formatIdentifier) {
         IndexManager indexMan = params.getIndexManager();
         DocIndexerFactoryUserFormats formatMan = indexMan.getUserFormatManager();
         if (formatMan == null)
@@ -585,7 +670,7 @@ public class WebserviceOperations {
         formatMan.deleteUserFormat(params.getUser(), formatIdentifier);
     }
 
-    public static ResultAnnotatedField annotatedField(SearchCreator params, AnnotatedField fieldDesc, boolean includeIndexName) {
+    public static ResultAnnotatedField annotatedField(WebserviceParams params, AnnotatedField fieldDesc, boolean includeIndexName) {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         BlackLabIndex index = params.blIndex();
         for (Annotation annotation: fieldDesc.annotations()) {
@@ -595,7 +680,7 @@ public class WebserviceOperations {
         return new ResultAnnotatedField(includeIndexName ? params.getIndexName() : null, fieldDesc, annotInfos);
     }
 
-    public static ResultIndexStatus resultIndexStatus(SearchCreator params) {
+    public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
         Index index = params.getIndexManager().getIndex(params.getIndexName());
         return resultIndexStatus(index);
     }
@@ -615,11 +700,11 @@ public class WebserviceOperations {
         }
     }
 
-    public static ResultDocSnippet docSnippet(SearchCreator params, SearchManager searchMan) {
+    public static ResultDocSnippet docSnippet(WebserviceParams params, SearchManager searchMan) {
         return new ResultDocSnippet(params, searchMan);
     }
 
-    public static ResultListOfHits listOfHits(SearchCreator params, Hits window, ConcordanceContext concordanceContext,
+    public static ResultListOfHits listOfHits(WebserviceParams params, Hits window, ConcordanceContext concordanceContext,
             Map<Integer, String> docIdToPid) {
         return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
     }
@@ -639,25 +724,25 @@ public class WebserviceOperations {
         return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, countFailed, subcorpusSize);
     }
 
-    public static ResultSummaryCommonFields summaryCommonFields(SearchCreator params, Index.IndexStatus indexStatus,
+    public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
             SearchTimings timings, ResultGroups<?> groups, WindowStats window) {
         return new ResultSummaryCommonFields(params, indexStatus, timings, groups, window);
     }
 
-    public static ResultUserInfo userInfo(SearchCreator params) {
+    public static ResultUserInfo userInfo(WebserviceParams params) {
         User user = params.getUser();
         return new ResultUserInfo(user.isLoggedIn(), user.getUserId(), params.getIndexManager().canCreateIndex(user));
     }
 
-    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) throws InvalidQuery {
+    public static ResultDocsResponse viewGroupDocsResponse(WebserviceParams params) throws InvalidQuery {
         return ResultDocsResponse.viewGroupDocsResponse(params);
     }
 
-    public static ResultDocsResponse regularDocsResponse(SearchCreator params) throws InvalidQuery {
+    public static ResultDocsResponse regularDocsResponse(WebserviceParams params) throws InvalidQuery {
         return ResultDocsResponse.regularDocsResponse(params);
     }
 
-    public static ResultIndexMetadata indexMetadata(SearchCreator params) {
+    public static ResultIndexMetadata indexMetadata(WebserviceParams params) {
         ResultIndexStatus progress = resultIndexStatus(params);
         IndexMetadata metadata = progress.getMetadata();
 
@@ -676,15 +761,15 @@ public class WebserviceOperations {
         return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
     }
 
-    public static ResultServerInfo serverInfo(SearchCreatorImpl params, boolean debugMode) {
+    public static ResultServerInfo serverInfo(WebserviceParamsImpl params, boolean debugMode) {
         return new ResultServerInfo(params, debugMode);
     }
 
-    public static ResultDocsGrouped docsGrouped(SearchCreatorImpl params) throws InvalidQuery {
+    public static ResultDocsGrouped docsGrouped(WebserviceParamsImpl params) throws InvalidQuery {
         return new ResultDocsGrouped(params);
     }
 
-    public static ResultListInputFormats listInputFormats(SearchCreatorImpl params) {
+    public static ResultListInputFormats listInputFormats(WebserviceParamsImpl params) {
         return new ResultListInputFormats(params);
     }
 

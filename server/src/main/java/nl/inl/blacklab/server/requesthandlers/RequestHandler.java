@@ -27,9 +27,9 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
-import nl.inl.blacklab.server.lib.SearchCreatorImpl;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.PlainWebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
@@ -334,7 +334,7 @@ public abstract class RequestHandler {
     protected HttpServletRequest request;
 
     /** Interprets parameters to create searches. */
-    protected SearchCreatorImpl params;
+    protected WebserviceParamsImpl params;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
@@ -380,8 +380,8 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        WebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
-        params = SearchCreatorImpl.get(isDocs, isDebugMode, blsParams);
+        PlainWebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
+        params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;

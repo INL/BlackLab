@@ -15,11 +15,11 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultHitsCsv {
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private Hits hits;
 
@@ -37,7 +37,7 @@ public class ResultHitsCsv {
      * responses are thrown if any part of the request cannot be fulfilled. Sorting
      * is already applied to the hits.
      */
-    ResultHitsCsv(SearchCreator params) throws InvalidQuery {
+    ResultHitsCsv(WebserviceParams params) throws InvalidQuery {
         super();
         this.params = params;
 
@@ -131,7 +131,7 @@ public class ResultHitsCsv {
         return annotationsToWrite;
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 }

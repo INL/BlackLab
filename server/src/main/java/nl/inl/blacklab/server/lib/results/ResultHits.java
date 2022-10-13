@@ -55,14 +55,14 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultHits {
     private static final Logger logger = LogManager.getLogger(ResultHits.class);
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private final Hits hits;
 
@@ -103,7 +103,7 @@ public class ResultHits {
     private ResultListOfHits listOfHits;
 
     @SuppressWarnings("unchecked")
-    ResultHits(SearchCreator params, boolean includeIndexStatus) {
+    ResultHits(WebserviceParams params, boolean includeIndexStatus) {
         this.params = params;
         indexStatus = null;
         if (includeIndexStatus) {
@@ -168,7 +168,7 @@ public class ResultHits {
      * @param hitsGrouped  grouped hits
      * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
      */
-    private static SearchHits getQueryForHitsInSpecificGroupOnly(SearchCreator params, PropertyValue viewGroupVal,
+    private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
             HitGroups hitsGrouped) throws
             BlsException, InvalidQuery {
         // see if we can enhance this query
@@ -243,7 +243,7 @@ public class ResultHits {
         return hits;
     }
 
-    private static Pair<SearchCacheEntry<?>, Hits> getHitsFromGroup(SearchCreator params, String viewGroup)
+    private static Pair<SearchCacheEntry<?>, Hits> getHitsFromGroup(WebserviceParams params, String viewGroup)
             throws InterruptedException, ExecutionException, InvalidQuery, BlsException {
         BlackLabIndex index = params.blIndex();
         PropertyValue viewGroupVal = PropertyValue.deserialize(index, index.mainAnnotatedField(), viewGroup);
@@ -427,7 +427,7 @@ public class ResultHits {
         return indexStatus;
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

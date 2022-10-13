@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultDocsCsv {
 
@@ -26,7 +26,7 @@ public class ResultDocsCsv {
      *         results within a group, Groups if looking at groups but not within a
      *         specific group.
      */
-    ResultDocsCsv(SearchCreator params) throws InvalidQuery {
+    ResultDocsCsv(WebserviceParams params) throws InvalidQuery {
         super();
 
         // TODO share with regular RequestHandlerHits

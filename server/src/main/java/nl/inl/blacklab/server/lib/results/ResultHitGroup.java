@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultHitGroup {
 
@@ -41,7 +41,7 @@ public class ResultHitGroup {
 
     private ResultListOfHits listOfHits = null;
 
-    ResultHitGroup(SearchCreator params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
+    ResultHitGroup(WebserviceParams params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
             DocResults subcorpus, List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
         this.group = group;
         PropertyValue id = group.identity();

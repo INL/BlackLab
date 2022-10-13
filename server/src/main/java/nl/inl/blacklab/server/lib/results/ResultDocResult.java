@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultDocResult {
     private final String pid;
@@ -29,7 +29,7 @@ public class ResultDocResult {
     private final long numberOfHits;
 
     public ResultDocResult(Collection<MetadataField> metadataFieldsToList,
-            SearchCreator params, Collection<Annotation> annotationsToList, DocResult dr) {
+            WebserviceParams params, Collection<Annotation> annotationsToList, DocResult dr) {
         this.annotationsToList = annotationsToList;
         // Find pid
         BlackLabIndex index = params.blIndex();

@@ -25,13 +25,13 @@ import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.WindowSettings;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.util.BlockTimer;
 
 public class ResultHitsGrouped {
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private final HitGroups groups;
 
@@ -57,7 +57,7 @@ public class ResultHitsGrouped {
 
     private final ResultSummaryNumHits summaryNumHits;
 
-    ResultHitsGrouped(SearchCreator params) throws InvalidQuery {
+    ResultHitsGrouped(WebserviceParams params) throws InvalidQuery {
         this.params = params;
         IndexManager indexMan = params.getIndexManager();
         indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
@@ -167,7 +167,7 @@ public class ResultHitsGrouped {
         return indexStatus;
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
@@ -48,7 +48,7 @@ public class ResultDocContents {
     public static final Pattern NAMESPACE_PREFIX = Pattern.compile(
             "<([a-z]+):[^ ]+ |<([a-z]+):[^>]+>| ([a-z]+):[^=]+=\"");
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private final String docPid;
 
@@ -68,7 +68,7 @@ public class ResultDocContents {
 
     private Set<String> anonNamespaces;
 
-    ResultDocContents(SearchCreator params) throws BlsException, InvalidQuery {
+    ResultDocContents(WebserviceParams params) throws BlsException, InvalidQuery {
         this.params = params;
         this.docPid = params.getDocPid();
         getDocContents();

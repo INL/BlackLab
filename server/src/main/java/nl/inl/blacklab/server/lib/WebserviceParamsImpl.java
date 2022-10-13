@@ -53,8 +53,8 @@ import nl.inl.blacklab.server.util.GapFiller;
 /**
  * Wraps the WebserviceParams and interprets them to create searches.
  */
-public class SearchCreatorImpl implements SearchCreator {
-    private static final Logger logger = LogManager.getLogger(SearchCreatorImpl.class);
+public class WebserviceParamsImpl implements WebserviceParams {
+    private static final Logger logger = LogManager.getLogger(WebserviceParamsImpl.class);
 
     /**
      * Get the search-related parameters from the request object.
@@ -70,12 +70,12 @@ public class SearchCreatorImpl implements SearchCreator {
      * @param params parameters sent to webservice
      * @return the unique key
      */
-    public static SearchCreatorImpl get(boolean isDocs, boolean isDebugMode,
-            WebserviceParams params) {
-        return new SearchCreatorImpl(isDocs, isDebugMode, params);
+    public static WebserviceParamsImpl get(boolean isDocs, boolean isDebugMode,
+            PlainWebserviceParams params) {
+        return new WebserviceParamsImpl(isDocs, isDebugMode, params);
     }
 
-    private WebserviceParams params;
+    private PlainWebserviceParams params;
 
     private boolean debugMode;
 
@@ -95,8 +95,8 @@ public class SearchCreatorImpl implements SearchCreator {
 
     private String fieldName;
 
-    private SearchCreatorImpl(boolean isDocsOperation, boolean isDebugMode,
-            WebserviceParams params) {
+    private WebserviceParamsImpl(boolean isDocsOperation, boolean isDebugMode,
+            PlainWebserviceParams params) {
         this.isDocsOperation = isDocsOperation;
         this.debugMode = isDebugMode;
         this.params = params;

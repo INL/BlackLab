@@ -56,7 +56,7 @@ public class WriteCsv {
         HitGroups groups = resultHitsCsv.getGroups();
         Hits inputHitsForGroups = resultHitsCsv.getHits();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
-        SearchCreator params = resultHitsCsv.getParams();
+        WebserviceParams params = resultHitsCsv.getParams();
 
         DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
 
@@ -103,7 +103,7 @@ public class WriteCsv {
     }
 
     public static String hitsResponse(ResultHitsCsv resultHitsCsv) throws BlsException {
-        SearchCreator params = resultHitsCsv.getParams();
+        WebserviceParams params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
         Hits hits = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();
@@ -269,7 +269,7 @@ public class WriteCsv {
     private static <T> void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,
-            SearchCreator searchParam,
+            WebserviceParams searchParam,
             ResultGroups<T> groups,
             CorpusSize subcorpusSize
     ) {
@@ -305,7 +305,7 @@ public class WriteCsv {
      * @param groups (optional) if grouped
      * @param subcorpusSize (optional) if available
      */
-    private static void summaryCsvHits(SearchCreator params, CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
+    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, Hits hits, ResultGroups<Hit> groups, CorpusSize subcorpusSize) {
         addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize);
         writeRow(printer, numColumns, "summary.numberOfHits", hits.size());
         writeRow(printer, numColumns, "summary.numberOfDocs", hits.docsStats().countedSoFar());
@@ -318,7 +318,7 @@ public class WriteCsv {
      * @param groups (optional) if grouped
      */
     public static void summaryCsvDocs(
-            SearchCreator params,
+            WebserviceParams params,
             CSVPrinter printer,
             int numColumns,
             DocResults docResults,
@@ -330,7 +330,7 @@ public class WriteCsv {
         writeRow(printer, numColumns, "summary.numberOfHits", docResults.stream().mapToLong(Group::size).sum());
     }
 
-    public static String docGroups(SearchCreator params, DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults) throws BlsException {
+    public static String docGroups(WebserviceParams params, DocResults inputDocsForGroups, DocGroups groups, DocResults subcorpusResults) throws BlsException {
         try {
             // Write the header
             List<String> row = new ArrayList<>(groups.groupCriteria().propNames());
@@ -374,7 +374,7 @@ public class WriteCsv {
         }
     }
 
-    public static String docs(SearchCreator params, DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize) throws BlsException {
+    public static String docs(WebserviceParams params, DocResults docs, DocGroups fromGroups, DocResults globalSubcorpusSize) throws BlsException {
         try {
             BlackLabIndex index = params.blIndex();
             IndexMetadata indexMetadata = index.metadata();

@@ -18,11 +18,11 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.PlainWebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
 
 /** BLS API-specific implementation of WebserviceParams. */
-public class BlackLabServerParams implements WebserviceParams {
+public class BlackLabServerParams implements PlainWebserviceParams {
 
     /**
      * Parameters involved in search

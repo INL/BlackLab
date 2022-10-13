@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultAutocomplete {
 
@@ -22,7 +22,7 @@ public class ResultAutocomplete {
 
     private IndexReader reader;
 
-    ResultAutocomplete(SearchCreator params) {
+    ResultAutocomplete(WebserviceParams params) {
         String fieldName = params.getFieldName();
         String annotationName = params.getAnnotationName();
 

@@ -14,7 +14,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ResultHits;
 import nl.inl.blacklab.server.lib.results.ResultListOfHits;
@@ -56,7 +56,7 @@ public class RequestHandlerHits extends RequestHandler {
 
     private static void dstreamHitsResponse(DataStream ds, ResultHits resultHits)
             throws InvalidQuery {
-        SearchCreator params = resultHits.getParams();
+        WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.

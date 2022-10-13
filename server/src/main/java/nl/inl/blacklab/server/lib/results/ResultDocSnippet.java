@@ -14,13 +14,13 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocSnippet {
 
-    private final SearchCreator params;
+    private final WebserviceParams params;
 
     private Hits hits;
 
@@ -32,7 +32,7 @@ public class ResultDocSnippet {
 
     private final List<Annotation> annotsToWrite;
 
-    ResultDocSnippet(SearchCreator params, SearchManager searchMan) {
+    ResultDocSnippet(WebserviceParams params, SearchManager searchMan) {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();
@@ -79,7 +79,7 @@ public class ResultDocSnippet {
         annotsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

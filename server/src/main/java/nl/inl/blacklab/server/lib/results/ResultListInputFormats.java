@@ -8,7 +8,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
 import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
 
 public class ResultListInputFormats {
@@ -17,7 +17,7 @@ public class ResultListInputFormats {
 
     private final List<Format> formats;
 
-    ResultListInputFormats(SearchCreator params) {
+    ResultListInputFormats(WebserviceParams params) {
         userInfo = WebserviceOperations.userInfo(params);
 
         // List all available input formats

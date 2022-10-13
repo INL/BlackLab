@@ -6,15 +6,15 @@ import java.util.Map;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultListOfHits {
-    private SearchCreator params;
+    private WebserviceParams params;
     private Hits hits;
     private ConcordanceContext concordanceContext;
     private Map<Integer, String> docIdToPid;
 
-    ResultListOfHits(SearchCreator params, Hits hits, ConcordanceContext concordanceContext,
+    ResultListOfHits(WebserviceParams params, Hits hits, ConcordanceContext concordanceContext,
             Map<Integer, String> docIdToPid) {
         this.params = params;
         this.hits = hits;
@@ -29,7 +29,7 @@ public class ResultListOfHits {
         return annotationsToList;
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

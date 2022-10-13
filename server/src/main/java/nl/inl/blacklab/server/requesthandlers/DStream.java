@@ -30,7 +30,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
 import nl.inl.blacklab.server.lib.results.ResultAnnotationInfo;
@@ -177,7 +177,7 @@ public class DStream {
      */
     public static void summaryCommonFields(DataStream ds, ResultSummaryCommonFields summaryFields) throws BlsException {
 
-        SearchCreator searchParam = summaryFields.getSearchParam();
+        WebserviceParams searchParam = summaryFields.getSearchParam();
         Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         SearchTimings timings = summaryFields.getTimings();
         ResultGroups<?> groups = summaryFields.getGroups();
@@ -291,7 +291,7 @@ public class DStream {
     }
 
     public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
-        SearchCreator params = result.getParams();
+        WebserviceParams params = result.getParams();
         Hits hits = result.getHits();
 
         ds.startEntry("hits").startList();
@@ -315,7 +315,7 @@ public class DStream {
         ds.endList().endEntry();
     }
 
-    private static void hit(DataStream ds, SearchCreator params, ConcordanceContext concordanceContext,
+    private static void hit(DataStream ds, WebserviceParams params, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, Span> capturedGroups) {
         ds.startMap();
         if (docPid != null) {

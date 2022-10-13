@@ -14,12 +14,12 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.SearchCreator;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultDocsGrouped {
 
-    private SearchCreator params;
+    private WebserviceParams params;
 
     private DocGroups groups;
 
@@ -33,7 +33,7 @@ public class ResultDocsGrouped {
 
     private final List<CorpusSize> corpusSizes;
 
-    ResultDocsGrouped(SearchCreator params) throws InvalidQuery {
+    ResultDocsGrouped(WebserviceParams params) throws InvalidQuery {
         this.params = params;
 
         // Make sure we have the hits search, so we can later determine totals.
@@ -101,7 +101,7 @@ public class ResultDocsGrouped {
         }
     }
 
-    public SearchCreator getParams() {
+    public WebserviceParams getParams() {
         return params;
     }
 

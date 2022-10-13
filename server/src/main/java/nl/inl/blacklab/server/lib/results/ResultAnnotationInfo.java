@@ -23,7 +23,7 @@ public class ResultAnnotationInfo {
         if (showValues && !index.isEmpty()) {
             boolean[] valueListCompleteArray = {
                     true }; // array because we have to access them from the closures
-            terms = WebserviceOperations.getTerms(index, annotation, valueListCompleteArray);
+            terms = WebserviceOperations.getAnnotationValues(index, annotation, valueListCompleteArray);
             valueListComplete = valueListCompleteArray[0];
         }
     }
