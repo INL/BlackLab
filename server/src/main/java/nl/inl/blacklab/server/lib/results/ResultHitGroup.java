@@ -39,6 +39,8 @@ public class ResultHitGroup {
 
     private Map<Integer, String> docIdToPid = null;
 
+    private ResultListOfHits listOfHits = null;
+
     ResultHitGroup(SearchCreator params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
             DocResults subcorpus, List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
         this.group = group;
@@ -72,6 +74,11 @@ public class ResultHitGroup {
             docIdToPid = WebserviceOperations.collectDocsAndPids(params.blIndex(), hitsInGroup, luceneDocs);
         }
 
+        if (params.includeGroupContents()) {
+            Hits hitsInGroup = getGroup().storedResults();
+            listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
+                    getDocIdToPid());
+        }
     }
 
     public String getIdentity() {
@@ -108,5 +115,9 @@ public class ResultHitGroup {
 
     public HitGroup getGroup() {
         return group;
+    }
+
+    public ResultListOfHits getListOfHits() {
+        return listOfHits;
     }
 }

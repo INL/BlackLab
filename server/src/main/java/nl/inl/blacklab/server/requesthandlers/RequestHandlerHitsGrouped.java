@@ -56,6 +56,15 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
         for (ResultHitGroup groupInfo: groupInfos) {
+
+            ResultListOfHits listOfHits = null;
+            if (params.includeGroupContents()) {
+                Hits hitsInGroup = groupInfo.getGroup().storedResults();
+                listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup,
+                        groupInfo.getConcordanceContext(),
+                        groupInfo.getDocIdToPid());
+            }
+
             ds.startItem("hitgroup").startMap();
             {
                 ds
@@ -79,12 +88,8 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                     DStream.subcorpusSize(ds, groupInfo.getSubcorpusSize());
                 }
 
-                if (params.includeGroupContents()) {
-                    Hits hitsInGroup = groupInfo.getGroup().storedResults();
-                    ResultListOfHits listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup,
-                            groupInfo.getConcordanceContext(),
-                            groupInfo.getDocIdToPid());
-                    DStream.listOfHits(ds, listOfHits);
+                if (groupInfo.getListOfHits() != null) {
+                    DStream.listOfHits(ds, groupInfo.getListOfHits());
                 }
             }
             ds.endMap().endItem();
