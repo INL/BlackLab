@@ -634,7 +634,8 @@ public class WebserviceOperations {
         return new ResultSummaryNumDocs(isViewGroup, docResults, countFailed, subcorpusSize);
     }
 
-    public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
+    public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats,
+            boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
         return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, countFailed, subcorpusSize);
     }
 
@@ -648,15 +649,11 @@ public class WebserviceOperations {
         return new ResultUserInfo(user.isLoggedIn(), user.getUserId(), params.getIndexManager().canCreateIndex(user));
     }
 
-    public static ResultUserInfo userInfo(boolean loggedIn, String userId, boolean canCreateIndex) {
-        return new ResultUserInfo(loggedIn, userId, canCreateIndex);
-    }
-
-    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) {
+    public static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) throws InvalidQuery {
         return ResultDocsResponse.viewGroupDocsResponse(params);
     }
 
-    public static ResultDocsResponse regularDocsResponse(SearchCreator params) {
+    public static ResultDocsResponse regularDocsResponse(SearchCreator params) throws InvalidQuery {
         return ResultDocsResponse.regularDocsResponse(params);
     }
 

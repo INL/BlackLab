@@ -44,6 +44,9 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Utility methods for writing CSV responses.
+ *
+ * Unlike the DataStream stuff, we can likely re-use this class for other implementations
+ * of the webservice, so calls to WebserviceOperations haven't been factored out here.
  */
 public class WriteCsv {
 

@@ -29,8 +29,8 @@ public class RequestHandlerDocInfo extends RequestHandler {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
-
         ResultDocInfo docInfo = WebserviceOperations.docInfo(blIndex(), docPid, null, metadataToWrite);
+
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());

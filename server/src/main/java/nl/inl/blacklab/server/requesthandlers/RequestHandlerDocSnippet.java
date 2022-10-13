@@ -49,19 +49,10 @@ public class RequestHandlerDocSnippet extends RequestHandler {
     }
 
     /**
-     * Get a DataObject representation of a hit (or just a document fragment with no
-     * hit in it)
+     * Output a hit (or just a document fragment with no hit in it)
      *
      * @param ds output stream
-     * @param hits the hits object the hit occurs in
-     * @param hit the hit (or fragment)
-     * @param wordsAroundHit number of words around the hit we want
-     * @param useOrigContent if true, uses the content store; if false, the forward
-     *            index
-     * @param isFragment if false, separates hit into left/match/right; otherwise,
-     *            just returns whole fragment
-     * @param docPid if not null, include doc pid, hit start and end info
-     * @param annotationsTolist what annotations to include
+     * @param result hit to output
      */
     private static void dstreamHitOrFragmentInfo(DataStream ds, ResultDocSnippet result) {
 
@@ -71,11 +62,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
         boolean useOrigContent = result.isOrigContent();
         boolean isFragment = !result.isHit();
         String docPid = null; // (not sure why this is always null..?) result.getParams().getDocPid();
-        List<Annotation> annotationsTolist = result.getAnnotsToWrite();
+        List<Annotation> annotationsToList = result.getAnnotsToWrite();
 
         // TODO: can we merge this with hit()...?
         ds.startMap();
-        if (docPid != null) {
+        if (docPid != null) {  // always false, see above? weird!
             // Add basic hit info
             ds.entry("docPid", docPid);
             ds.entry("start", hit.start());
@@ -98,11 +89,11 @@ public class RequestHandlerDocSnippet extends RequestHandler {
             Kwics kwics = singleHit.kwics(wordsAroundHit);
             Kwic c = kwics.get(hit);
             if (!isFragment) {
-                ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
-                        .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
-                        .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
+                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
             } else {
-                ds.startEntry("snippet").contextList(c.annotations(), annotationsTolist, c.tokens()).endEntry();
+                ds.startEntry("snippet").contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
             }
         }
         ds.endMap();

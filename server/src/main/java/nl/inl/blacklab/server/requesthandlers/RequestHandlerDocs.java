@@ -1,40 +1,19 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Collection;
-import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ResultDocInfo;
+import nl.inl.blacklab.server.lib.results.ResultDocResult;
 import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
-import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
-import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
-import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -46,13 +25,6 @@ public class RequestHandlerDocs extends RequestHandler {
             String urlResource, String urlPathPart) {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
-
-    SearchCacheEntry<?> search = null;
-    SearchCacheEntry<ResultsStats> originalHitsSearch;
-    DocResults totalDocResults;
-    DocResults window;
-    private DocResults docResults;
-    private long totalTime;
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
@@ -70,110 +42,94 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     private static void dstreamDocsResponse(DataStream ds, ResultDocsResponse result) throws InvalidQuery {
-        ResultSummaryCommonFields summaryFields = result.getSummaryFields();
-        ResultSummaryNumDocs numResultDocs = result.getNumResultDocs();
-        ResultSummaryNumHits numResultHits = result.getNumResultHits();
-        boolean includeTokenCount = result.isIncludeTokenCount();
-        long totalTokens = result.getTotalTokens();
-        BlackLabIndex index = result.getIndex();
-        Collection<MetadataField> metadataFieldsToList = result.getMetadataFieldsToList();
-        SearchCreator params = result.getParams();
-
         ds.startMap();
         {
-
             // The summary
             ds.startEntry("summary").startMap();
             {
-                DStream.summaryCommonFields(ds, summaryFields);
-                if (numResultDocs != null) {
-                    DStream.summaryNumDocs(ds, numResultDocs);
+                DStream.summaryCommonFields(ds, result.getSummaryFields());
+                if (result.getNumResultDocs() != null) {
+                    DStream.summaryNumDocs(ds, result.getNumResultDocs());
                 } else {
-                    DStream.summaryNumHits(ds, numResultHits);
+                    DStream.summaryNumHits(ds, result.getNumResultHits());
                 }
-                if (includeTokenCount)
-                    ds.entry("tokensInMatchingDocuments", totalTokens);
+                if (result.isIncludeTokenCount())
+                    ds.entry("tokensInMatchingDocuments", result.getTotalTokens());
 
-                Map<String, String> docFields = WebserviceOperations.getDocFields(index);
-                Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
-                DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
+                DStream.metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
             }
             ds.endMap().endEntry();
 
             // The hits and document info
             ds.startEntry("docs").startList();
-            for (DocResult dr: result.getWindow()) {
-                // Find pid
-                Document document = params.blIndex().luceneDoc(dr.docId());
-                String pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
-                ResultDocInfo docInfo = WebserviceOperations.docInfo(index, null, document, metadataFieldsToList);
-
-                ds.startItem("doc").startMap();
-                {
-                    // Combine all
-                    ds.entry("docPid", pid);
-                    long numHits = dr.size();
-                    if (numHits > 0)
-                        ds.entry("numberOfHits", numHits);
-
-                    // Doc info (metadata, etc.)
-                    ds.startEntry("docInfo");
-                    {
-                        DStream.documentInfo(ds, docInfo);
-                    }
-                    ds.endEntry();
-
-                    // Snippets
-                    Hits hits2 = dr.storedResults().window(0, 5); // TODO: make num. snippets configurable
-                    if (hits2.hitsStats().processedAtLeast(1)) {
-                        ds.startEntry("snippets").startList();
-                        ContextSettings contextSettings = params.contextSettings();
-                        Concordances concordances = null;
-                        Kwics kwics = null;
-                        if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-                            concordances = hits2.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-                        else
-                            kwics = hits2.kwics(index.defaultContextSize());
-                        Collection<Annotation> annotationsTolist = result.getAnnotationsTolist();
-                        for (Hit hit: hits2) {
-                            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-                            ds.startItem("snippet").startMap();
-                            if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
-                                // Add concordance from original XML
-                                Concordance c = concordances.get(hit);
-                                ds.startEntry("left").xmlFragment(c.left()).endEntry()
-                                        .startEntry("match").xmlFragment(c.match()).endEntry()
-                                        .startEntry("right").xmlFragment(c.right()).endEntry();
-                            } else {
-                                // Add KWIC info
-                                Kwic c = kwics.get(hit);
-                                ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left())
-                                        .endEntry()
-                                        .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match())
-                                        .endEntry()
-                                        .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right())
-                                        .endEntry();
-                            }
-                            ds.endMap().endItem();
-                        } // for hits2
-                        ds.endList().endEntry();
-                    } // if snippets
-                    
-                }
-                ds.endMap().endItem();
+            for (ResultDocResult docResult: result.getDocResults()) {
+                dstreamDocResult(ds, docResult);
             }
             ds.endList().endEntry();
-            if (params.hasFacets()) {
+            if (result.getFacetInfo() != null) {
                 // Now, group the docs according to the requested facets.
                 ds.startEntry("facets");
                 {
-                    Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
-                    DStream.facets(ds, WebserviceOperations.getFacetInfo(counts));
+                    DStream.facets(ds, result.getFacetInfo());
                 }
                 ds.endEntry();
             }
         }
         ds.endMap();
+    }
+
+    private static void dstreamDocResult(DataStream ds, ResultDocResult result) {
+        ds.startItem("doc").startMap();
+        {
+            // Combine all
+            ds.entry("docPid", result.getPid());
+            if (result.numberOfHits() > 0)
+                ds.entry("numberOfHits", result.numberOfHits());
+
+            // Doc info (metadata, etc.)
+            ds.startEntry("docInfo");
+            {
+                DStream.documentInfo(ds, result.getDocInfo());
+            }
+            ds.endEntry();
+
+            // Snippets
+            Collection<Annotation> annotationsToList = result.getAnnotationsToList();
+            if (result.numberOfHitsToShow() > 0) {
+                ds.startEntry("snippets").startList();
+                if (!result.hasConcordances()) {
+                    // KWICs
+                    for (Kwic k: result.getKwicsToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add KWIC info
+                            ds.startEntry("left").contextList(k.annotations(), annotationsToList, k.left())
+                                    .endEntry();
+                            ds.startEntry("match").contextList(k.annotations(), annotationsToList, k.match())
+                                    .endEntry();
+                            ds.startEntry("right").contextList(k.annotations(), annotationsToList, k.right())
+                                    .endEntry();
+                        }
+                        ds.endMap().endItem();
+                    }
+                } else {
+                    // Concordances from original content
+                    for (Concordance c: result.getConcordancesToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add concordance from original XML
+                            ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                                    .startEntry("match").xmlFragment(c.match()).endEntry()
+                                    .startEntry("right").xmlFragment(c.right()).endEntry();
+                        }
+                        ds.endMap().endItem();
+                    }
+                }
+                ds.endList().endEntry();
+            } // if snippets
+
+        }
+        ds.endMap().endItem();
     }
 
     @Override

@@ -41,7 +41,6 @@ public class RequestHandlerDocContents extends RequestHandler {
         params.setDocPid(docPid);
 
         ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
-
         dstreamDocContents((DataStreamXml)ds, resultDocContents);
         return HTTP_OK;
     }

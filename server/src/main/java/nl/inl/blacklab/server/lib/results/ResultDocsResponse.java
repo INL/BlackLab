@@ -1,8 +1,14 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -10,6 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
+import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
@@ -19,23 +26,27 @@ import nl.inl.blacklab.server.lib.SearchCreator;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultDocsResponse {
-    private Collection<Annotation> annotationsTolist;
-    private Collection<MetadataField> metadataFieldsToList;
-    private BlackLabIndex index;
-    private boolean includeTokenCount;
-    private long totalTokens;
-    private ResultSummaryCommonFields summaryFields;
-    private ResultSummaryNumDocs numResultDocs;
-    private ResultSummaryNumHits numResultHits;
+    private final Collection<Annotation> annotationsToList;
+    private final Collection<MetadataField> metadataFieldsToList;
+    private final BlackLabIndex index;
+    private final boolean includeTokenCount;
+    private final long totalTokens;
+    private final ResultSummaryCommonFields summaryFields;
+    private final ResultSummaryNumDocs numResultDocs;
+    private final ResultSummaryNumHits numResultHits;
     private final DocResults window;
     private final SearchCreator params;
+    private final Map<String, String> docFields;
+    private final Map<String, String> metaDisplayNames;
+    private Map<String, List<Pair<String, Long>>> facetInfo;
+    List<ResultDocResult> docResults;
 
-    ResultDocsResponse(Collection<Annotation> annotationsTolist, Collection<MetadataField> metadataFieldsToList,
+    ResultDocsResponse(Collection<Annotation> annotationsToList, Collection<MetadataField> metadataFieldsToList,
             BlackLabIndex blIndex, boolean includeTokenCount, long totalTokens,
             ResultSummaryCommonFields summaryFields,
             ResultSummaryNumDocs numResultDocs, ResultSummaryNumHits numResultHits, DocResults window,
-            SearchCreator params) {
-        this.annotationsTolist = annotationsTolist;
+            SearchCreator params) throws InvalidQuery {
+        this.annotationsToList = annotationsToList;
         this.metadataFieldsToList = metadataFieldsToList;
         this.index = blIndex;
         this.includeTokenCount = includeTokenCount;
@@ -45,9 +56,22 @@ public class ResultDocsResponse {
         this.numResultHits = numResultHits;
         this.window = window;
         this.params = params;
+
+        docFields = WebserviceOperations.getDocFields(index);
+        metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
+
+        facetInfo = null;
+        if (params.hasFacets()) {
+            Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
+            facetInfo = WebserviceOperations.getFacetInfo(counts);
+        }
+        docResults = new ArrayList<>();
+        for (DocResult dr: window) {
+            docResults.add(new ResultDocResult(metadataFieldsToList, params, getAnnotationsToList(), dr));
+        }
     }
 
-    static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) {
+    static ResultDocsResponse viewGroupDocsResponse(SearchCreator params) throws InvalidQuery {
         String viewGroup = params.getViewGroup().get();
 
         // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
@@ -98,7 +122,7 @@ public class ResultDocsResponse {
                 true, true, totalTime);
     }
 
-    static ResultDocsResponse regularDocsResponse(SearchCreator params) {
+    static ResultDocsResponse regularDocsResponse(SearchCreator params) throws InvalidQuery {
         // Make sure we have the hits search, so we can later determine totals.
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
         if (params.hasPattern()) {
@@ -140,9 +164,9 @@ public class ResultDocsResponse {
             SearchCacheEntry<ResultsStats> originalHitsSearch,
             boolean isViewGroup,
             boolean waitForTotal,
-            long totalTime) {
+            long totalTime) throws InvalidQuery {
 
-        Collection<Annotation> annotationsTolist = WebserviceOperations.getAnnotationsToWrite(params);
+        Collection<Annotation> annotationsToList = WebserviceOperations.getAnnotationsToWrite(params);
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
 
                 BlackLabIndex index = params.blIndex();
@@ -172,13 +196,13 @@ public class ResultDocsResponse {
         }
 
         // Search is done; construct the results object
-        return new ResultDocsResponse(annotationsTolist, metadataFieldsToList, index,
+        return new ResultDocsResponse(annotationsToList, metadataFieldsToList, index,
                 includeTokenCount,
                 totalTokens, summaryFields, numResultDocs, numResultHits, window, params);
     }
 
-    public Collection<Annotation> getAnnotationsTolist() {
-        return annotationsTolist;
+    public Collection<Annotation> getAnnotationsToList() {
+        return annotationsToList;
     }
 
     public Collection<MetadataField> getMetadataFieldsToList() {
@@ -215,5 +239,21 @@ public class ResultDocsResponse {
 
     public SearchCreator getParams() {
         return params;
+    }
+
+    public Map<String, String> getDocFields() {
+        return docFields;
+    }
+
+    public Map<String, String> getMetaDisplayNames() {
+        return metaDisplayNames;
+    }
+
+    public Map<String, List<Pair<String, Long>>> getFacetInfo() {
+        return facetInfo;
+    }
+
+    public List<ResultDocResult> getDocResults() {
+        return docResults;
     }
 }

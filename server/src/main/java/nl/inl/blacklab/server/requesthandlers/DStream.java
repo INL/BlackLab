@@ -403,7 +403,7 @@ public class DStream {
         ds
                 .entry("type", fd.type().toString())
                 .entry("analyzer", fd.analyzerName())
-                .entry("unknownCondition", fd.custom().get("unknownCondition").toString())
+                .entry("unknownCondition", fd.custom().get("unknownCondition").toString().toUpperCase())
                 .entry("unknownValue", fd.custom().get("unknownValue"));
         if (listValues) {
             final Map<String, String> displayValues = fd.custom().get("displayValues",

@@ -94,7 +94,13 @@ public class ResultHits {
 
     private Map<String, String> metaDisplayNames;
 
-    private Index.IndexStatus indexStatus;
+    private final Index.IndexStatus indexStatus;
+
+    private ResultSummaryNumHits summaryNumHits;
+
+    private ResultSummaryCommonFields summaryCommonFields;
+
+    private ResultListOfHits listOfHits;
 
     @SuppressWarnings("unchecked")
     ResultHits(SearchCreator params, boolean includeIndexStatus) {
@@ -303,7 +309,7 @@ public class ResultHits {
         return facetInfo;
     }
 
-    public SearchTimings getSearchTimings() {
+    private SearchTimings getSearchTimings() {
         long searchTime = getSearchTime();
         long countTime = getCountTime();
         logger.info("Total search time is:{} ms", searchTime);
@@ -357,6 +363,16 @@ public class ResultHits {
 
         docFields = WebserviceOperations.getDocFields(index);
         metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
+
+        SearchTimings searchTimings = getSearchTimings();
+        summaryNumHits = WebserviceOperations.numResultsSummaryHits(
+                getHitsStats(), getDocsStats(),
+                params.getWaitForTotal(), searchTimings.getCountTime() < 0, null);
+        summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
+                getIndexStatus(), searchTimings, null, window.windowStats());
+        listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
+                getDocIdToPid());
+
     }
 
     public long getSearchTime() {
@@ -415,4 +431,19 @@ public class ResultHits {
         return params;
     }
 
+    public ResultSummaryNumHits getSummaryNumHits() {
+        return summaryNumHits;
+    }
+
+    public ResultSummaryCommonFields getSummaryCommonFields() {
+        return summaryCommonFields;
+    }
+
+    public ResultListOfHits getListOfHits() {
+        return listOfHits;
+    }
+
+    public BlackLabIndex getIndex() {
+        return params.blIndex();
+    }
 }

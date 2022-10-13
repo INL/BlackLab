@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -16,12 +15,11 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.SearchCreator;
-import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ResultHits;
 import nl.inl.blacklab.server.lib.results.ResultListOfHits;
-import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
+import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -59,26 +57,20 @@ public class RequestHandlerHits extends RequestHandler {
     private static void dstreamHitsResponse(DataStream ds, ResultHits resultHits)
             throws InvalidQuery {
         SearchCreator params = resultHits.getParams();
-        Hits hits = resultHits.getHits();
-        BlackLabIndex index = hits.index();
-        Hits window = resultHits.getWindow();
+        BlackLabIndex index = params.blIndex();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
-        SearchTimings timings = resultHits.getSearchTimings();
-        ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params,
-                resultHits.getIndexStatus(), timings, null, window.windowStats());
-        ResultListOfHits listOfHits = WebserviceOperations.listOfHits(params, window, resultHits.getConcordanceContext(),
-                resultHits.getDocIdToPid());
+        ResultSummaryNumHits result = resultHits.getSummaryNumHits();
+        ResultSummaryCommonFields summaryFields = resultHits.getSummaryCommonFields();
+        ResultListOfHits listOfHits = resultHits.getListOfHits();
 
         ds.startMap();
+
 
         // The summary
         ds.startEntry("summary").startMap();
         {
             DStream.summaryCommonFields(ds, summaryFields);
-            ResultSummaryNumHits result = WebserviceOperations.numResultsSummaryHits(
-                    resultHits.getHitsStats(), resultHits.getDocsStats(),
-                    params.getWaitForTotal(), timings.getCountTime() < 0, null);
             DStream.summaryNumHits(ds, result);
             if (params.getIncludeTokenCount())
                 ds.entry("tokensInMatchingDocuments", resultHits.getTotalTokens());
