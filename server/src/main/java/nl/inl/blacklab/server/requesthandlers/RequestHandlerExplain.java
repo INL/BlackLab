@@ -40,13 +40,7 @@ public class RequestHandlerExplain extends RequestHandler {
             TextPattern tp = params.pattern().get();
             BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
             QueryExplanation explanation = blIndex.explain(q);
-
-            // Assemble response
-            ds.startMap()
-                    .entry("textPattern", patt)
-                    .entry("originalQuery", explanation.originalQuery())
-                    .entry("rewrittenQuery", explanation.rewrittenQuery());
-            ds.endMap();
+            dstreamExplainResponse(ds, patt, explanation);
         } catch (TooManyClauses e) {
             return Response.badRequest(ds, "QUERY_TOO_BROAD",
                     "Query too broad, too many matching terms. Please be more specific.");
@@ -56,6 +50,14 @@ public class RequestHandlerExplain extends RequestHandler {
         }
 
         return HTTP_OK;
+    }
+
+    private void dstreamExplainResponse(DataStream ds, String patt, QueryExplanation explanation) {
+        ds.startMap()
+                .entry("textPattern", patt)
+                .entry("originalQuery", explanation.originalQuery())
+                .entry("rewrittenQuery", explanation.rewrittenQuery());
+        ds.endMap();
     }
 
 }

@@ -678,4 +678,8 @@ public class WebserviceOperations {
     public static ResultServerInfo serverInfo(SearchCreatorImpl params, boolean debugMode) {
         return new ResultServerInfo(params, debugMode);
     }
+
+    public static ResultDocsGrouped docsGrouped(SearchCreatorImpl params) throws InvalidQuery {
+        return new ResultDocsGrouped(params);
+    }
 }

@@ -27,9 +27,11 @@ public class RequestHandlerDocsCsv extends RequestHandler {
         ResultDocsCsv result = WebserviceOperations.docsCsv(params);
         String csv;
         if (result.getGroups() == null || result.isViewGroup()) {
+            // No grouping applied, or viewing a single group
             csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
                     result.getSubcorpusResults());
         } else {
+            // Grouped results
             csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
                     result.getSubcorpusResults());
         }

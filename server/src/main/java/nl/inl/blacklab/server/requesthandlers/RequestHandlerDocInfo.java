@@ -31,7 +31,6 @@ public class RequestHandlerDocInfo extends RequestHandler {
         Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
 
         ResultDocInfo docInfo = WebserviceOperations.docInfo(blIndex(), docPid, null, metadataToWrite);
-
         Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
         Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex());
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
