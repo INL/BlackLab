@@ -176,10 +176,13 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
     }
 
     @Override
-    protected void mapToc(boolean writeable) throws IOException {
+    protected void mapToc(boolean writeable, boolean growBuffer) throws IOException {
         tocRaf = new RandomAccessFile(tocFile, writeable ? "rw" : "r");
         long fl = tocFile.length();
-        if (writeable) {
+        if (!writeable && growBuffer) {
+            throw new UnsupportedOperationException("Can not grow toc buffer in read mode");
+        }
+        if (growBuffer || fl == 0) {
             fl += writeMapReserve;
         } // leave 1M room at the end
         tocFileChannel = tocRaf.getChannel();
@@ -188,7 +191,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
 
     private void writeToc() {
         try {
-            mapToc(true);
+            mapToc(true, false);
             tocFileBuffer.putInt(toc.size());
             try {
                 for (TocEntry e : toc.values()) {
@@ -196,7 +199,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                         // Close and re-open with extra writing room
                         int p = tocFileBuffer.position();
                         closeMappedToc();
-                        mapToc(true);
+                        mapToc(true, true);
                         ((Buffer)tocFileBuffer).position(p);
                     }
                     e.serialize(tocFileBuffer);
