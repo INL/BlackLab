@@ -8,6 +8,7 @@ import java.util.List;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.lucene.index.Term;
 import org.eclipse.collections.impl.block.function.checked.ThrowingFunction;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -50,7 +51,8 @@ public class TestSearchBehavior {
         void initialize() {};
     };
 
-    @Test 
+    @Test
+    @Ignore
     public void testParallelSearchInterrupt() {
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
         HitsFromQueryParallel h = new HitsFromQueryParallel(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
