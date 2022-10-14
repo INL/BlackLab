@@ -2,11 +2,10 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Used for CLARIN login (Shibboleth), which passes userid in an attribute
@@ -25,8 +24,8 @@ public class AuthClarinEppn extends AuthRequestAttribute {
     }
 
     @Override
-    protected String getUserId(HttpServlet servlet, HttpServletRequest request) {
-        String userId = super.getUserId(servlet, request);
+    protected String getUserId(UserRequest request) {
+        String userId = super.getUserId(request);
         if (userId != null) {
             String[] parts = userId.split(";", 2);
             if (parts.length == 2 && parts[0].equals(parts[1])) {
@@ -37,5 +36,4 @@ public class AuthClarinEppn extends AuthRequestAttribute {
         }
         return userId;
     }
-
 }

@@ -42,6 +42,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.BlackLabServerParams;
+import nl.inl.blacklab.server.requesthandlers.UserRequestServlet;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.requesthandlers.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
@@ -231,14 +232,15 @@ public class BlackLabServer extends HttpServlet {
         // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
         // TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
         DataFormat outputType = ServletUtil.getOutputType(request);
-        RequestHandler requestHandler = RequestHandler.create(this, request, debugMode, outputType, this.requestInstrumentationProvider);
+        UserRequestServlet userRequest = new UserRequestServlet(this, request, responseObject);
+        RequestHandler requestHandler = RequestHandler.create(userRequest, debugMode, outputType, this.requestInstrumentationProvider);
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
             outputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(), DataFormat.XML);
 
         // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
-        searchManager.getAuthSystem().persistUser(this, request, responseObject, requestHandler.getUser());
+        searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
 
         // Is this a JSONP request?
         String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");

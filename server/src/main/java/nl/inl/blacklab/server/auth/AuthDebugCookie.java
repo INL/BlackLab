@@ -2,15 +2,11 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
 
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Set a cookie to simulate a logged-in user.
@@ -34,25 +30,12 @@ public class AuthDebugCookie implements AuthMethod {
     }
 
     @Override
-    public User determineCurrentUser(HttpServlet servlet,
-            HttpServletRequest request) {
-
-        // Is there a cookie yet?
-        String userId = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            // Controleer of we een sessie-cookie hebben
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("autosearch-debug-user")) {
-                    userId = cookie.getValue();
-                    break;
-                }
-            }
-        }
+    public User determineCurrentUser(UserRequest request) {
+        String userId = request.getPersistedUserId();
 
         if (userId == null) {
             // No cookie yet. Generate userId based on sessionId. Cookie will be saved in persistUser().
-            userId = request.getSession().getId();
+            userId = request.getSessionId();
             if (userId.length() > 6) {
                 userId = userId.substring(0, 6);
             }
@@ -61,7 +44,7 @@ public class AuthDebugCookie implements AuthMethod {
         }
 
         // Return the appropriate User object
-        String sessionId = request.getSession().getId();
+        String sessionId = request.getSessionId();
         if (userId.isEmpty()) {
             return User.anonymous(sessionId);
         }
@@ -69,12 +52,8 @@ public class AuthDebugCookie implements AuthMethod {
     }
 
     @Override
-    public void persistUser(HttpServlet servlet,
-            HttpServletRequest request, HttpServletResponse response, User user) {
-        Cookie cookie = new Cookie("autosearch-debug-user", user.getUserId());
-        cookie.setPath("/");
-        cookie.setMaxAge(TEN_YEARS);
-        response.addCookie(cookie);
+    public void persistUser(UserRequest request, User user) {
+        request.persistUser(user, TEN_YEARS);
     }
 
 }

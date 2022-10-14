@@ -27,9 +27,9 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
-import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.PlainWebserviceParams;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
@@ -76,20 +76,22 @@ public abstract class RequestHandler {
     /**
      * Handle a request by dispatching it to the corresponding subclass.
      *
-     * @param servlet the servlet object
-     * @param request the request object
+     * @param request the servlet, request and response objects
      * @param debugMode debug mode request? Allows extra parameters to be used
      * @param outputType output type requested (XML, JSON or CSV)
      * @return the response data
      */
-    public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode,
+    public static RequestHandler create(UserRequestServlet userRequest, boolean debugMode,
             DataFormat outputType, RequestInstrumentationProvider instrumentationProvider) {
+
+        HttpServletRequest request = userRequest.getRequest();
+        BlackLabServer servlet = userRequest.getServlet();
 
         // See if a user is logged in
         String requestId = instrumentationProvider.getRequestID(request).orElse("");
         ThreadContext.put("requestId", requestId);
         SearchManager searchManager = servlet.getSearchManager();
-        User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
+        User user = searchManager.getAuthSystem().determineCurrentUser(new UserRequestServlet(servlet, request, null));
         String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
         if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
             String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");

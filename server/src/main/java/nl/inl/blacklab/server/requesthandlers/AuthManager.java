@@ -4,19 +4,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.search.UserRequest;
 
 public class AuthManager {
 
@@ -57,28 +53,12 @@ public class AuthManager {
         }
     }
 
-    public User determineCurrentUser(BlackLabServer servlet, HttpServletRequest request) {
-        // If no auth system is configured, all users are anonymous
-        if (authObj == null) {
-            return User.anonymous(request.getSession().getId());
-        }
-
-        // Is client on debug IP and is there a userid parameter?
-        if (servlet.getSearchManager().config().getAuthentication().isOverrideIp(request.getRemoteAddr())
-                && request.getParameter("userid") != null) {
-            return User.loggedIn(request.getParameter("userid"), request.getSession().getId());
-        }
-
-        // Let auth system determine the current user.
-        try {
-            return authObj.determineCurrentUser(servlet, request);
-        } catch (Exception e) {
-            throw new RuntimeException("Error determining current user", e);
-        }
+    public User determineCurrentUser(UserRequest request) {
+        return request.determineCurrentUser(authObj);
     }
 
-    public void persistUser(HttpServlet servlet, HttpServletRequest request, HttpServletResponse response, User user) {
+    public void persistUser(UserRequest request, User user) {
         // i.e. set cookie
-        authObj.persistUser(servlet, request, response, user);
+        authObj.persistUser(request, user);
     }
 }

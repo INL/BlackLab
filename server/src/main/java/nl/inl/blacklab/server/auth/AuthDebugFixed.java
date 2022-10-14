@@ -3,15 +3,12 @@ package nl.inl.blacklab.server.auth;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Authentication system used for debugging.
@@ -41,13 +38,12 @@ public class AuthDebugFixed implements AuthMethod {
         this.userId = u != null ? u.toString() : "DEBUG-USER";
     }
 
-    public User determineCurrentUser(HttpServlet servlet,
-            HttpServletRequest request) {
+    public User determineCurrentUser(UserRequest request) {
 
-        String sessionId = request.getSession().getId();
+        String sessionId = request.getSessionId();
 
         // Is client on debug IP or on the local network?
-        SearchManager searchMan = ((BlackLabServer) servlet).getSearchManager();
+        SearchManager searchMan = request.getSearchManager();
         String ip = request.getRemoteAddr();
         
         boolean isLocalNetwork = PATT_LOCALSUBNET.matcher(ip).find();

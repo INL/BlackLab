@@ -5,14 +5,12 @@ import java.util.Base64;
 import java.util.Base64.Decoder;
 import java.util.Map;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Use basic HTTP authentication.
@@ -32,8 +30,7 @@ public class AuthHttpBasic implements AuthMethod {
     }
 
     @Override
-    public User determineCurrentUser(HttpServlet servlet,
-            HttpServletRequest request) {
+    public User determineCurrentUser(UserRequest request) {
 
         String userId = null;
         String authHeader = request.getHeader("authorization");
@@ -44,7 +41,7 @@ public class AuthHttpBasic implements AuthMethod {
         }
 
         // Return the appropriate User object
-        String sessionId = request.getSession().getId();
+        String sessionId = request.getSessionId();
         if (userId == null || userId.length() == 0) {
             return User.anonymous(sessionId);
         }

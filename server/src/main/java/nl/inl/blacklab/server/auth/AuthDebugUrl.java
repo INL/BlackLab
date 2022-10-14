@@ -2,13 +2,11 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Authentication system used for debugging.
@@ -26,11 +24,10 @@ public class AuthDebugUrl implements AuthMethod {
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
-    public User determineCurrentUser(HttpServlet servlet,
-            HttpServletRequest request) {
+    public User determineCurrentUser(UserRequest request) {
         // URL parameter is already dealt with in AuthManager. If we end up here,
         // there was no userid parameter, so just return an anonymous user.
-        return User.anonymous(request.getSession().getId());
+        return User.anonymous(request.getSessionId());
     }
 
 }

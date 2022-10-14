@@ -2,15 +2,12 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Authentication system using servlet request attributes for logged-in user id.
@@ -37,9 +34,8 @@ public class AuthRequestAttribute implements AuthMethod {
         this.attributeName = attributeName;
     }
 
-    public User determineCurrentUser(HttpServlet servlet,
-            HttpServletRequest request) {
-        String sessionId = request.getSession().getId();
+    public User determineCurrentUser(UserRequest request) {
+        String sessionId = request.getSessionId();
         if (attributeName == null) {
             // (not configured correctly)
             logger.warn(
@@ -48,7 +44,7 @@ public class AuthRequestAttribute implements AuthMethod {
         }
 
         // See if there's a logged-in user or not
-        String userId = getUserId(servlet, request);
+        String userId = getUserId(request);
 
         // Return the appropriate User object
         if (userId == null || userId.length() == 0) {
@@ -57,12 +53,12 @@ public class AuthRequestAttribute implements AuthMethod {
         return User.loggedIn(userId, sessionId);
     }
 
-    protected String getUserId(HttpServlet servlet, HttpServletRequest request) {
+    protected String getUserId(UserRequest request) {
 
         String userId = null;
 
         // Overridden in URL?
-        SearchManager searchMan = ((BlackLabServer) servlet).getSearchManager();
+        SearchManager searchMan = request.getSearchManager();
         if (searchMan.config().getAuthentication().isOverrideIp(request.getRemoteAddr()) && request.getParameter("userid") != null) {
             userId = request.getParameter("userid");
         }
