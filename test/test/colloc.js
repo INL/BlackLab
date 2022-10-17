@@ -41,4 +41,4 @@ expectCollocUnchanged('single word the', '"the"');
 // Phrase
 // FIXME: with integrated index format, we get an extra term "" (empty) with frequency 2. Investigate.
 //    (issue #333)
-//expectCollocUnchanged('phrase', '"a" []');
+expectCollocUnchanged('phrase', '"a" []');
