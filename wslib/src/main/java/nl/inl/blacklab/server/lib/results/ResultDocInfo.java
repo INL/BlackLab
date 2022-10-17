@@ -48,8 +48,8 @@ public class ResultDocInfo {
             int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
             if (luceneDocId < 0)
                 throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-            document = index.luceneDoc(luceneDocId);
-            if (document == null)
+            this.document = index.luceneDoc(luceneDocId);
+            if (this.document == null)
                 throw new InternalServerError("Couldn't fetch document with pid '" + docPid + "'.",
                         "INTERR_FETCHING_DOCUMENT_INFO");
         } else {
