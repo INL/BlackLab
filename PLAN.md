@@ -47,7 +47,7 @@ This is how the global forward index is currently used, and what it would take t
 - [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS. Consider pooling encoder/decoder as well if useful.
 - [ ] check the maximum token id in each document. If less than 256, use a single byte per token, two bytes if less than 16384, etc. Store this number of bytes per token as a parameter for the tokens codec.
 - [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
-- [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
+- [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index. (briefly looked at this but this doesn't appear to be feasible?)
 
 ### Content store
 
@@ -84,7 +84,7 @@ Because this is a completely new index format, we are free to change its layout 
 
 ## Integrate with Solr (standalone)
 
-- [ ] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
+- [x] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
 - [ ] Study how Mtas integrates with Solr
 - [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
 - [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
@@ -116,5 +116,3 @@ Tasks:
 - [ ] Make other search operations work in distributed mode
 - [ ] Create a Docker setup for distributed Solr+BlackLab
 - [ ] Make it possible to run the tests on the distributed Solr version
-
-
