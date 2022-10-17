@@ -58,6 +58,6 @@ themeConfig:
   
   # Enable this when site is in the repo?
   docsDir: site/docs
-  docsBranch: vuepress-site
+  docsBranch: dev
   editLinks: true # defaults to false, set to true to enable
   editLinkText: 'Help us improve this page!'

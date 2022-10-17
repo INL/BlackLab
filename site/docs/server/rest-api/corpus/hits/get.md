@@ -78,6 +78,8 @@ These are the basic criteria:
 | `identity`                 | (for sorting results of a grouping request) Sort by group identity.                                                                                                  |
 | `size`                     | (for sorting results of a grouping request) Sort by group size, descending by default.                                                                               |
 
+Any sort criterium can be reversed by prefixing it with a dash, e.g. `-field:year` to sort by the `year` field, descending. If multiple properties are combined with commas, each may be individually reversed or not, e.g. `-prop1,prop2,-prop3` to only reverse `prop1` and `prop3`. It is also possible to reverse all properties together: `-(prop1,prop2,prop3)`.
+
 In addition to the basic criteria, it is also possible to sort/group on context words, such as the words matched by your query, or the words before or after the matched words:
 
 | Criterium                                    | Meaning                                                                                                                                                                                                                                                                                                                 |
