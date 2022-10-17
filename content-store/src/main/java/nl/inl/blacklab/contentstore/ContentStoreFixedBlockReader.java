@@ -61,7 +61,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
     }
 
     @Override
-    protected synchronized void mapToc(boolean writable) throws IOException {
+    protected synchronized void mapToc(boolean writable, boolean growBuffer) throws IOException {
         if (writable)
             throw new UnsupportedOperationException("writable == true, but not in index mode");
         tocRaf = new RandomAccessFile(tocFile, "r");
