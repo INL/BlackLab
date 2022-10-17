@@ -14,7 +14,7 @@ import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.requesthandlers.AuthManager;
+import nl.inl.blacklab.server.auth.AuthManager;
 
 /**
  * Manages the lifetime of a number of objects needed for the web service.

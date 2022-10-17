@@ -5,10 +5,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.requesthandlers.Response;
-
 public class InternalServerError extends BlsException {
-    static final Logger logger = LogManager.getLogger(Response.class);
+    static final Logger logger = LogManager.getLogger(InternalServerError.class);
 
     private final String internalErrorCode;
 

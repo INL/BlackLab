@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,10 +71,10 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
-import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
 
@@ -598,7 +599,26 @@ public class WebserviceOperations {
         return new ResultHitsGrouped(params);
     }
 
-    public static String addToIndex(WebserviceParams params, List<FileItem> dataFiles, Map<String, File> linkedFiles) {
+    public static class UploadedFile {
+        private String name;
+
+        private byte[] data;
+
+        public UploadedFile(String name, byte[] data) {
+            this.name = name;
+            this.data = data;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public byte[] getData() {
+            return data;
+        }
+    }
+
+    public static String addToIndex(WebserviceParams params, Iterator<UploadedFile> dataFiles, Map<String, File> linkedFiles) {
         Index index = params.getIndexManager().getIndex(params.getIndexName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 

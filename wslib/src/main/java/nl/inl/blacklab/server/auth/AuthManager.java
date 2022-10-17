@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.auth;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.lib.User;

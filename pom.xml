@@ -27,6 +27,7 @@
         <module>tools</module>
         <module>mocks</module>
         <module>convert-and-tag</module>
+        <module>wslib</module>
 
         <!-- Java lib and webservice -->
         <module>core</module>

@@ -1,11 +1,11 @@
 package nl.inl.blacklab.server.exceptions;
 
-import nl.inl.blacklab.server.requesthandlers.Response;
-
 public class IllegalIndexName extends BadRequest {
 
+    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, dots, underscores and dashes allowed, and must start with a letter)";
+
     public IllegalIndexName(String indexName) {
-        super("ILLEGAL_INDEX_NAME", "\"" + shortName(indexName) + "\" " + Response.ILLEGAL_NAME_ERROR);
+        super("ILLEGAL_INDEX_NAME", "\"" + shortName(indexName) + "\" " + ILLEGAL_NAME_ERROR);
     }
 
     private static String shortName(String indexName) {

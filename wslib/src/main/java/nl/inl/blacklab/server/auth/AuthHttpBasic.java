@@ -9,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.search.UserRequest;
 
 /**
@@ -19,7 +18,7 @@ import nl.inl.blacklab.server.search.UserRequest;
  */
 public class AuthHttpBasic implements AuthMethod {
 
-    static final Logger logger = LogManager.getLogger(RequestHandler.class);
+    static final Logger logger = LogManager.getLogger(AuthHttpBasic.class);
 
     final Decoder base64Decoder = Base64.getDecoder();
 
