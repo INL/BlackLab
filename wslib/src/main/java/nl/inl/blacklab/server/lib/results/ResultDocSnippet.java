@@ -26,7 +26,7 @@ public class ResultDocSnippet {
 
     private boolean isHit;
 
-    private final ContextSize wordsAroundHit;
+    private ContextSize wordsAroundHit;
 
     private final boolean origContent;
 
@@ -63,19 +63,15 @@ public class ResultDocSnippet {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
 
-        // Clamp snippet to max size
-        int snippetStart = Math.max(0, start - wordsAroundHit.left());
-        int snippetEnd = end + wordsAroundHit.right();
+        // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
         int maxContextSize = searchMan.config().getParameters().getContextSize().getMaxInt();
-        if (snippetEnd - snippetStart > maxContextSize) {
-            int clampedWindow = Math.max(0, (maxContextSize - (end - start)) / 2);
-            snippetStart = Math.max(0, start - clampedWindow);
-            snippetEnd = end + clampedWindow;
-//			throw new BadRequest("SNIPPET_TOO_LARGE", "Snippet too large. Maximum size for a snippet is " + searchMan.config().maxSnippetSize() + " words.");
-        }
+        if (end - start > maxContextSize)
+            end = start + maxContextSize;
+        if (end - start + wordsAroundHit.left() + wordsAroundHit.right() > maxContextSize)
+            wordsAroundHit = ContextSize.get(maxContextSize - (end - start) / 2);
+        
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
         hits = Hits.singleton(QueryInfo.create(index), luceneDocId, start, end);
-
         annotsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
     }
 
