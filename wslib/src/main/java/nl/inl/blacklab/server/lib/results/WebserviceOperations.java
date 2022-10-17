@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.document.Document;
@@ -646,8 +645,9 @@ public class WebserviceOperations {
         indexer.setLinkedFileResolver(fileName -> linkedFiles.get(FilenameUtils.getName(fileName).toLowerCase()));
 
         try {
-            for (FileItem file : dataFiles) {
-                indexer.index(file.getName(), file.get());
+            while (dataFiles.hasNext()) {
+                UploadedFile df = dataFiles.next();
+                indexer.index(df.getName(), df.getData());
             }
         } finally {
             if (indexError == null) {

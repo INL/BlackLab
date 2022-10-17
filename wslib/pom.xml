@@ -50,11 +50,5 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- TODO get rid of this (FileItem) -->
-        <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.4</version>
-        </dependency>
     </dependencies>
 </project>

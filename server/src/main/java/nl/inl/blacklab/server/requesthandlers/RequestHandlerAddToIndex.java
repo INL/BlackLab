@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -68,7 +69,23 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                     "INTERR_WHILE_INDEXING1");
         }
 
-        String indexError = WebserviceOperations.addToIndex(params, dataFiles, linkedFiles);
+        // Convert dataFiles to a generic data structure
+        final Iterator<WebserviceOperations.UploadedFile> dataFilesIt = new Iterator<>() {
+            Iterator<FileItem> it = dataFiles.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+
+            @Override
+            public WebserviceOperations.UploadedFile next() {
+                FileItem df = it.next();
+                return new WebserviceOperations.UploadedFile(df.getName(), df.get());
+            }
+        };
+
+        String indexError = WebserviceOperations.addToIndex(params, dataFilesIt, linkedFiles);
         if (indexError != null)
             throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
         return Response.success(ds, "Data added succesfully.");
