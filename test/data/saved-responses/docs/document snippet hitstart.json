@@ -1,0 +1,56 @@
+{
+  "left": {
+    "punct": [
+      " ",
+      " "
+    ],
+    "lemma": [
+      "",
+      "hello"
+    ],
+    "pos": [
+      "",
+      ""
+    ],
+    "word": [
+      "_1",
+      "hello"
+    ]
+  },
+  "match": {
+    "punct": [
+      " ",
+      " "
+    ],
+    "lemma": [
+      "i",
+      "want"
+    ],
+    "pos": [
+      "",
+      ""
+    ],
+    "word": [
+      "i",
+      "want"
+    ]
+  },
+  "right": {
+    "punct": [
+      " ",
+      " "
+    ],
+    "lemma": [
+      "to",
+      "apply"
+    ],
+    "pos": [
+      "",
+      ""
+    ],
+    "word": [
+      "to",
+      "apply"
+    ]
+  }
+}

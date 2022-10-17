@@ -1,0 +1,26 @@
+{
+  "docPid": "PBsve430",
+  "docInfo": {
+    "fromInputFile": [
+      "/test-data/input/PBsve430.xml"
+    ],
+    "pid": [
+      "PBsve430"
+    ],
+    "title": [
+      "service encounter about visa application for family members"
+    ],
+    "lengthInTokens": 334,
+    "mayView": true
+  },
+  "metadataFieldGroups": [],
+  "docFields": {
+    "pidField": "pid",
+    "titleField": "title"
+  },
+  "metadataFieldDisplayNames": {
+    "fromInputFile": "From input file",
+    "pid": "Pid",
+    "title": "Title"
+  }
+}

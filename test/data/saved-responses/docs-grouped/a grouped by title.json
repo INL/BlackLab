@@ -1,0 +1,82 @@
+{
+  "summary": {
+    "searchParam": {
+      "group": "field:title",
+      "indexname": "test",
+      "number": "30",
+      "patt": "\"a\"",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "numberOfGroups": 3,
+    "largestGroupSize": 1,
+    "windowFirstResult": 0,
+    "requestedWindowSize": 30,
+    "actualWindowSize": 3,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 17,
+    "numberOfHitsRetrieved": 17,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    }
+  },
+  "docGroups": [
+    {
+      "identity": "str:interview about conference experience and impressions of city",
+      "identityDisplay": "interview about conference experience and impressions of city",
+      "size": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "interview about conference experience and impressions of city"
+        }
+      ],
+      "numberOfTokens": 267,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 268
+      }
+    },
+    {
+      "identity": "str:service encounter about getting an address printed out",
+      "identityDisplay": "service encounter about getting an address printed out",
+      "size": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about getting an address printed out"
+        }
+      ],
+      "numberOfTokens": 163,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 164
+      }
+    },
+    {
+      "identity": "str:service encounter about visa application for family members",
+      "identityDisplay": "service encounter about visa application for family members",
+      "size": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about visa application for family members"
+        }
+      ],
+      "numberOfTokens": 333,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 334
+      }
+    }
+  ]
+}

@@ -186,7 +186,7 @@
         "interview about conference experience and impressions of city"
       ],
       "lengthInTokens": 268,
-      "mayView": false
+      "mayView": true
     }
   }
 }

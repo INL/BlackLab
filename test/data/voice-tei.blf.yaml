@@ -65,9 +65,15 @@ annotatedFields:
     - path: .//u   # Utterance
 
 corpusConfig:
+
   specialFields:
+    # persistent id field to use to retrieve documents
     pidField: pid
+    # document title field (not used by blacklab, but clients can use this)
     titleField: title
+
+  # Allow us to retrieve document content
+  contentViewable: true
 
 # FoLiA's native metadata
 metadata:

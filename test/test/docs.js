@@ -4,7 +4,7 @@ const expect = chai.expect;
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged } = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged } = require("./compare-responses");
 
 
 /**
@@ -62,3 +62,23 @@ expectDocsUnchanged('filter only', { filter: 'pid:PBsve435' });
 
 // Combined docs search
 expectDocsUnchanged('pattern and filter', '"the"', 'pid:PBsve435');
+
+// Doc metadata, contents
+expectUrlUnchanged('docs', 'document metadata',
+        '/test/docs/PBsve430');
+expectUrlUnchanged('docs', 'document contents',
+        '/test/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+
+// Doc snippet
+expectUrlUnchanged('docs', 'document snippet wordstart',
+        '/test/docs/PBsve430/snippet?wordstart=5&wordend=15');
+expectUrlUnchanged('docs', 'document snippet hitstart',
+        '/test/docs/PBsve430/snippet?hitstart=3&hitend=5&wordsaroundhit=2');
+
+// Doc facets
+expectUrlUnchanged('docs', 'document facets',
+        '/test/docs/?number=0&facets=field:title');
+
+// Docs CSV
+expectUrlUnchanged('docs', 'CSV results',
+        '/test/docs/', 'text/csv');

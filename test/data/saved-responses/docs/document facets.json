@@ -1,0 +1,45 @@
+{
+  "summary": {
+    "searchParam": {
+      "facets": "field:title",
+      "indexname": "test",
+      "number": "0"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "windowFirstResult": 0,
+    "requestedWindowSize": 0,
+    "actualWindowSize": 0,
+    "windowHasPrevious": false,
+    "windowHasNext": true,
+    "stillCounting": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    }
+  },
+  "docs": [],
+  "facets": {
+    "title": [
+      {
+        "value": "interview about conference experience and impressions of city",
+        "size": 1
+      },
+      {
+        "value": "service encounter about getting an address printed out",
+        "size": 1
+      },
+      {
+        "value": "service encounter about visa application for family members",
+        "size": 1
+      }
+    ]
+  }
+}

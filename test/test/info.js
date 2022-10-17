@@ -3,7 +3,7 @@ const chaiHttp = require("chai-http");
 const expect = chai.expect;
 chai.use(chaiHttp);
 
-const { expectUnchanged } = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged} = require("./compare-responses");
 const constants = require('./constants');
 const SERVER_URL = constants.SERVER_URL;
 
@@ -24,18 +24,22 @@ describe('Server info page', () => {
     });
 });
 
-describe('Corpus info page', () => {
-    it('should contain accurate data about test corpus', done => {
-        chai
-            .request(SERVER_URL)
-            .get('/test')
-            .set('Accept', 'application/json')
-            .end((err, res) => {
-                if (err)
-                    done(err);
-                expect(res).to.have.status(200);
-                expectUnchanged('info', 'Corpus info page', res.body);
-                done();
-            });
-    });
-});
+// Server info
+expectUrlUnchanged('info', 'server', '/');
+expectUrlUnchanged('info', 'input formats', '/input-formats');
+
+// Corpus info
+expectUrlUnchanged('info', 'corpus', '/test/');
+expectUrlUnchanged('info', 'corpus status', '/test/status');
+
+// Field info with list of values
+expectUrlUnchanged('info', 'annotated field info with values',
+        '/test/fields/contents?listvalues=lemma');
+expectUrlUnchanged('info', 'metadata field info with values',
+        '/test/fields/title');
+
+// Autocomplete
+expectUrlUnchanged('info', 'autocomplete metadata field',
+        '/test/autocomplete/title?term=a');
+expectUrlUnchanged('info', 'autocomplete annotated field',
+        '/test/autocomplete/contents/lemma?term=b');

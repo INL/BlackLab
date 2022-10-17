@@ -5,7 +5,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged } = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged} = require("./compare-responses");
 
 /**
  * Test that a hits search returns the same response as before.
@@ -72,3 +72,11 @@ expectHitsUnchanged('view single group', {
     group: 'field:title',
     viewgroup: 'str:service encounter about visa application for family members',
 });
+
+// Matching doc facets
+expectUrlUnchanged('hits', 'document facets',
+        '/test/hits/?patt=%22the%22&number=0&facets=field:pid');
+
+// Hits CSV
+expectUrlUnchanged('hits', 'CSV results',
+        '/test/hits/?patt=%22the%22', 'text/csv');

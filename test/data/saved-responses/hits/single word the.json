@@ -1032,7 +1032,7 @@
         "service encounter about visa application for family members"
       ],
       "lengthInTokens": 334,
-      "mayView": false
+      "mayView": true
     },
     "PRint602": {
       "fromInputFile": [
@@ -1045,7 +1045,7 @@
         "interview about conference experience and impressions of city"
       ],
       "lengthInTokens": 268,
-      "mayView": false
+      "mayView": true
     },
     "PBsve435": {
       "fromInputFile": [
@@ -1058,7 +1058,7 @@
         "service encounter about getting an address printed out"
       ],
       "lengthInTokens": 164,
-      "mayView": false
+      "mayView": true
     }
   }
 }

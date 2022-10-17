@@ -2387,7 +2387,7 @@
         "service encounter about visa application for family members"
       ],
       "lengthInTokens": 334,
-      "mayView": false
+      "mayView": true
     }
   }
 }

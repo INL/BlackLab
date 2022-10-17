@@ -47,7 +47,7 @@
           "service encounter about getting an address printed out"
         ],
         "lengthInTokens": 164,
-        "mayView": false
+        "mayView": true
       },
       "snippets": [
         {

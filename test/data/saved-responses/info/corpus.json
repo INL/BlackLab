@@ -3,7 +3,7 @@
   "displayName": "test",
   "description": "",
   "status": "available",
-  "contentViewable": false,
+  "contentViewable": true,
   "textDirection": "ltr",
   "documentFormat": "voice-tei",
   "tokenCount": 766,

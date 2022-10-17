@@ -1,0 +1,19 @@
+{
+  "indexName": "test",
+  "fieldName": "title",
+  "isAnnotatedField": false,
+  "displayName": "Title",
+  "description": "",
+  "uiType": "",
+  "type": "TOKENIZED",
+  "analyzer": "DEFAULT",
+  "unknownCondition": "NEVER",
+  "unknownValue": "unknown",
+  "displayValues": {},
+  "fieldValues": {
+    "interview about conference experience and impressions of city": 1,
+    "service encounter about getting an address printed out": 1,
+    "service encounter about visa application for family members": 1
+  },
+  "valueListComplete": true
+}

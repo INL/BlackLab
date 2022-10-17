@@ -42,7 +42,10 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         summary: {
             searchTime: true,
             countTime: true
-        }
+        },
+
+        // Top-level timeModified key on index status page (e.g. /test/status/)
+        timeModified: true
     };
     if (removeParametersFromResponse) {
         keysToMakeConstant.summary.searchParam = true;
@@ -139,8 +142,27 @@ function expectUnchanged(category, testName, actualResponse, removeParametersFro
     }
 }
 
+function expectUrlUnchanged(category, testName, url, expectedType = 'application/json') {
+    describe(`${category}: ${testName}`, () => {
+        it('response should match previous', done => {
+            chai
+                    .request(constants.SERVER_URL)
+                    .get(url)
+                    .set('Accept', expectedType)
+                    .end((err, res) => {
+                        if (err)
+                            done(err);
+
+                        expect(res, 'response').to.have.status(200);
+                        expectUnchanged(category, testName, res.body);
+                        done();
+                    });
+        });
+    });
+}
+
 module.exports = {
-    sanitizeBlsResponse,
     sanitizeResponse,
     expectUnchanged,
+    expectUrlUnchanged,
 };

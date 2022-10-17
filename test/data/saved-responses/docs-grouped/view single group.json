@@ -1,24 +1,24 @@
 {
   "summary": {
     "searchParam": {
+      "group": "field:title",
       "indexname": "test",
-      "patt": "\"she\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
+      "number": "30",
+      "patt": "\"a\"",
+      "sort": "size,identity",
+      "viewgroup": "str:interview about conference experience and impressions of city",
       "wordsaroundhit": "1"
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",
     "windowFirstResult": 0,
-    "requestedWindowSize": 50,
+    "requestedWindowSize": 30,
     "actualWindowSize": 1,
     "windowHasPrevious": false,
     "windowHasNext": false,
     "stillCounting": false,
-    "numberOfHits": 5,
-    "numberOfHitsRetrieved": 5,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
+    "numberOfHits": 8,
+    "numberOfHitsRetrieved": 8,
     "numberOfDocs": 1,
     "numberOfDocsRetrieved": 1,
     "docFields": {
@@ -33,19 +33,19 @@
   },
   "docs": [
     {
-      "docPid": "PBsve430",
-      "numberOfHits": 5,
+      "docPid": "PRint602",
+      "numberOfHits": 8,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PBsve430.xml"
+          "/test-data/input/PRint602.xml"
         ],
         "pid": [
-          "PBsve430"
+          "PRint602"
         ],
         "title": [
-          "service encounter about visa application for family members"
+          "interview about conference experience and impressions of city"
         ],
-        "lengthInTokens": 334,
+        "lengthInTokens": 268,
         "mayView": true
       },
       "snippets": [
@@ -59,131 +59,11 @@
               " "
             ],
             "lemma": [
-              "family",
-              "visum",
-              "but",
-              "they",
-              ""
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "family",
-              "visa",
-              "but",
-              "they",
-              "the-"
-            ]
-          },
-          "match": {
-            "punct": [
-              " "
-            ],
-            "lemma": [
-              "she"
-            ],
-            "pos": [
-              ""
-            ],
-            "word": [
-              "she"
-            ]
-          },
-          "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "tell",
-              "i",
-              "that",
-              "i",
-              "need"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "told",
-              "me",
-              "that",
-              "i",
-              "need"
-            ]
-          }
-        },
-        {
-          "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "rent",
-              "erm",
-              "",
-              "okay",
-              "but"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "rent",
-              "erm",
-              "hh",
-              "okay",
-              "but"
-            ]
-          },
-          "match": {
-            "punct": [
-              " "
-            ],
-            "lemma": [
-              "she"
-            ],
-            "pos": [
-              ""
-            ],
-            "word": [
-              "she"
-            ]
-          },
-          "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
+              "mhm",
+              "and",
+              "we",
               "be",
-              "say",
-              "that",
-              "er",
-              "i"
+              "do"
             ],
             "pos": [
               "",
@@ -193,43 +73,11 @@
               ""
             ],
             "word": [
-              "was",
-              "saying",
-              "that",
-              "er",
-              "i"
-            ]
-          }
-        },
-        {
-          "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "okay",
-              "so",
-              "but",
-              "if",
-              ""
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "okay",
-              "so",
-              "but",
-              "if",
-              "_0"
+              "mhm",
+              "and",
+              "we",
+              "are",
+              "doing"
             ]
           },
           "match": {
@@ -237,13 +85,13 @@
               " "
             ],
             "lemma": [
-              "she"
+              "a"
             ],
             "pos": [
               ""
             ],
             "word": [
-              "she"
+              "a"
             ]
           },
           "right": {
@@ -255,11 +103,11 @@
               " "
             ],
             "lemma": [
-              "ask",
-              "something",
-              "new",
-              "then",
-              "i"
+              "project",
+              "on",
+              "",
+              "communication",
+              "and"
             ],
             "pos": [
               "",
@@ -269,11 +117,11 @@
               ""
             ],
             "word": [
-              "ask",
-              "something",
-              "new",
-              "then",
-              "i"
+              "project",
+              "on",
+              "p_intercultural",
+              "communication",
+              "and"
             ]
           }
         },
@@ -287,10 +135,54 @@
               " "
             ],
             "lemma": [
-              "okay",
+              "something",
+              "or",
+              "be",
+              "you",
+              "just"
+            ],
+            "pos": [
               "",
-              "no",
-              "problem",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "something",
+              "or",
+              "are",
+              "you",
+              "just"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "a"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "a"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "listener",
+              "to",
+              "this",
+              "",
               "erm"
             ],
             "pos": [
@@ -301,131 +193,239 @@
               ""
             ],
             "word": [
-              "okay",
-              "@@",
-              "no",
-              "problem",
-              "erm"
-            ]
-          },
-          "match": {
-            "punct": [
-              " "
-            ],
-            "lemma": [
-              "she"
-            ],
-            "pos": [
-              ""
-            ],
-            "word": [
-              "she"
-            ]
-          },
-          "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "she",
-              "tell",
-              "i",
-              "that",
-              ""
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "she",
-              "told",
-              "me",
-              "that",
-              "_0"
-            ]
-          }
-        },
-        {
-          "left": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "",
-              "no",
-              "problem",
-              "erm",
-              "she"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "@@",
-              "no",
-              "problem",
-              "erm",
-              "she"
-            ]
-          },
-          "match": {
-            "punct": [
-              " "
-            ],
-            "lemma": [
-              "she"
-            ],
-            "pos": [
-              ""
-            ],
-            "word": [
-              "she"
-            ]
-          },
-          "right": {
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "lemma": [
-              "tell",
-              "i",
-              "that",
-              "",
-              "i"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "word": [
-              "told",
-              "me",
-              "that",
+              "listener",
+              "to",
+              "this",
               "_0",
-              "i"
+              "erm"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "erm",
+              "er",
+              "er",
+              "i",
+              "be"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "erm",
+              "er",
+              "er",
+              "i",
+              "'m"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "a"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "a"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "",
+              "a",
+              "session",
+              "chair",
+              "okay"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "sess-",
+              "a",
+              "session",
+              "chair",
+              "okay"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "er",
+              "i",
+              "be",
+              "a",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "er",
+              "i",
+              "'m",
+              "a",
+              "sess-"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "a"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "a"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "session",
+              "chair",
+              "okay",
+              "you",
+              "be"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "session",
+              "chair",
+              "okay",
+              "you",
+              "are"
+            ]
+          }
+        },
+        {
+          "left": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "session",
+              "chair",
+              "okay",
+              "you",
+              "be"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "session",
+              "chair",
+              "okay",
+              "you",
+              "are"
+            ]
+          },
+          "match": {
+            "punct": [
+              " "
+            ],
+            "lemma": [
+              "a"
+            ],
+            "pos": [
+              ""
+            ],
+            "word": [
+              "a"
+            ]
+          },
+          "right": {
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "lemma": [
+              "session",
+              "chair",
+              "yah",
+              "yah",
+              "yah"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "word": [
+              "session",
+              "chair",
+              "yah",
+              "yah",
+              "yah"
             ]
           }
         }
