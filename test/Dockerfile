@@ -7,11 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install node modules
-# NOTE: if node_modules is on a volume, this might causes
-#   issues when e.g. changing node/npm versions (package will seem
-#   to be installed already, but it's not the correct version and will not work,
-#   so you have to enter the container, remove the node_modules dir and install again)
-RUN npm install
+RUN npm ci
 
 # Copy project files
 COPY . .
