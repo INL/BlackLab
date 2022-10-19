@@ -354,9 +354,11 @@ public class IndexTool {
                         + "  IndexTool delete <indexdir> <filterQuery>\n"
                         + "\n"
                         + "Options:\n"
-                        + "  --maxdocs <n>          Stop after indexing <n> documents\n"
-                        + "  --linked-file-dir <d>  Look in directory <d> for linked (e.g. metadata) files\n"
-                        + "  --nothreads            Disable multithreaded indexing (enabled by default)\n"
+                        + "  --maxdocs <n>                  Stop after indexing <n> documents\n"
+                        + "  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files\n"
+                        + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
+                        + "  --threads <n>                  Number of threads to use\n"
+                        + "  --integrate-external-files <b> Enable integrating external files into lucene index (disabled by default)\n"
                         + "\n"
                         + "Available input format configurations:");
         for (Format format : DocumentFormats.getFormats()) {
