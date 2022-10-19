@@ -19,7 +19,6 @@ import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.testutil.TestIndex;
 
-@RunWith(Parameterized.class)
 public class TestSearchBehavior {
     public TestIndex testIndex = TestIndex.get(IndexType.INTEGRATED);
 
