@@ -45,6 +45,10 @@ public class AddIsPrimaryValueToPayloadFilter extends TokenFilter {
 
     @Override
     final public boolean incrementToken() throws IOException {
+        // clear previous payload.
+        // If the token has a payload of its own, it will be set during input.incrementToken()
+        // If we don't do this, and the input tokenStream doesn't contain payloads, we will continuously receive/reuse the previous payload we set
+        payloadAtt.setPayload(null);
         if (input.incrementToken()) {
             // Is this a primary value (the first at this position) or a secondary one (any subsequent value
             // at the same position)?
