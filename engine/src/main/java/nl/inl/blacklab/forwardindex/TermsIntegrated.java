@@ -16,7 +16,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
-import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -121,30 +120,20 @@ public class TermsIntegrated extends TermsReaderAbstract {
         super(collators);
         this.indexReader = indexReader;
         this.luceneField = luceneField;
+        TermInIndex[] terms = readTermsFromIndex();
 
-        try (BlockTimer timer = BlockTimer.create("Term loading+merging (" + luceneField + ")")) {
-            TermInIndex[] terms;
-            try (BlockTimer __ = timer.child("Reading from disk")) {
-                terms = readTermsFromIndex();
-            }
+        // Determine the sort orders for the terms
+        int[] sortedSensitive = determineSort(terms, true);
+        int[] sortedInsensitive = determineSort(terms, false);
 
-            String[] termStrings;
-            int[] termId2SensitivePosition;
-            int[] termId2InsensitivePosition;
-            try (BlockTimer __ = timer.child("sorting")) {
-                // Determine the sort orders for the terms
-                int[] sortedSensitive = determineSort(terms, true);
-                int[] sortedInsensitive = determineSort(terms, false);
+        // Process the values we've determined so far the same way as with the external forward index.
+        int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
+        int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
+        
+        // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
 
-                // Process the values we've determined so far the same way as with the external forward index.
-                termId2SensitivePosition = invert(terms, sortedSensitive, true);
-                termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
-                // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-                termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
-            }
-
-            finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
-        }
+        finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
     }
 
 

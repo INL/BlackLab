@@ -11,7 +11,6 @@ import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Ideally short-lived and only used during setup of the forward index and terms instances.

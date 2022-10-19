@@ -347,11 +347,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             int[] insensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
                             int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
                             int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
-                            
-                            List<String> debugSensitiveSorting = new ArrayList<>(termsList);
-                            debugSensitiveSorting.sort(collators.get(MatchSensitivity.SENSITIVE));
-                            List<String> debugInensitiveSorting = new ArrayList<>(termsList);
-                            debugInensitiveSorting.sort(collators.get(MatchSensitivity.INSENSITIVE));
 
                             int numTerms = termsList.size();
                             fiFields.get(luceneField).setNumberOfTerms(numTerms);
