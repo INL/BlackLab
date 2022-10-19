@@ -1,14 +1,16 @@
 package nl.inl.blacklab.search.results;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.lucene.index.Term;
-import org.eclipse.collections.impl.block.function.checked.ThrowingFunction;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -21,61 +23,83 @@ import nl.inl.blacklab.testutil.TestIndex;
 public class TestSearchBehavior {
     public TestIndex testIndex = TestIndex.get(IndexType.INTEGRATED);
 
-    @Parameterized.Parameter
-    public boolean shouldThrow;
-
-    @Parameterized.Parameters(name = "interrupt the search {0}")
-    public static List<Object> data() {
-        return List.of(true, false);
-    }
-    
-    private final String SPANSREADER_CRASHED = "TEST_SPANSREADER_CRASHED";
-    private volatile boolean spansReaderWasInterrupted = false; // written from other thread
-    
-    SpansReader signalOnInterrupt = new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
-        public synchronized void run() {
-            try {
-                Thread.sleep(100_000);
-            } catch (InterruptedException e) {
-                spansReaderWasInterrupted = true;
-                throw new RuntimeException();
-            }
-        };
-        void initialize() {};
-    };
-
-    SpansReader signalImmediately = new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
-        public synchronized void run() {
-            throw new RuntimeException(SPANSREADER_CRASHED);
-        };
-        void initialize() {};
-    };
-
     @Test
-    @Ignore
     public void testParallelSearchInterrupt() {
+        // if we interrupt too early the SpansReader will not run at all, so we wait until it has begun, before sending the interrupt.
+        CountDownLatch waitForSpansReaderToStart = new CountDownLatch(1);
+        // the source of the interrupt continues before the target thread receives it sometimes, so this is a way to block until it's been received.
+        CountDownLatch waitForSpansReaderToBeInterrupted = new CountDownLatch(1);
+
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
         HitsFromQueryParallel h = new HitsFromQueryParallel(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
 
-        // insert a SpansReader that will a) immediately throw an exception, b) wait for Interrupt() and then throw an exception
+        // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
-        h.spansReaders.add(shouldThrow ? signalImmediately : signalOnInterrupt);
-        if (!shouldThrow) Thread.currentThread().interrupt();
+        h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
+            public synchronized void run() {
+                try {
+                    // signal main thread we have started, so it can send the interrupt()
+                    waitForSpansReaderToStart.countDown();
+                    Thread.sleep(100_000); // wait for the interrupt() to arrive
+                } catch (InterruptedException e) {
+                    waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
+                }
+            };
 
-        Throwable t = null;
+            void initialize() {};
+        });
+
+        // Set up the interrupt.
+        Thread hitsFromQueryParallelThread = Thread.currentThread();
+        ForkJoinPool.commonPool().submit(() -> {
+            try {
+                waitForSpansReaderToStart.await();
+                hitsFromQueryParallelThread.interrupt();
+            } catch (InterruptedException e) {
+                // never happens unless thread is interrupted during await(),
+                // which only happens when test is aborted/shut down prematurely.
+            }
+        });
+
+        // start the to-be-interrupted work.
+        try { h.ensureResultsRead(-1); }
+        catch (Exception e) {
+            // probably InterruptedException, but we don't care about that here.
+        }
+
+        try {
+            // wait for the worker thread to be interrupted (it may take a few ms).
+            assertTrue(
+                    "SpansReader received Interrupt() within 1 second of interrupting parent SearchFromQueryParallel.",
+                    waitForSpansReaderToBeInterrupted.await(1_000, TimeUnit.MILLISECONDS));
+        } catch (InterruptedException e) {
+            // await was interrupted, test suite probably shutting down.
+        }
+    }
+
+    /** Test that an exception thrown from the SpansReader in a worker thread is correctly propagated to the main HitsFromQueryParallel thread */
+    @Test
+    public void testParallelSearchException() {
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
+        HitsFromQueryParallel h = new HitsFromQueryParallel(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
+
+        // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
+        RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
+        h.spansReaders.clear();
+        h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null, null) {
+            public synchronized void run() { throw exceptionToThrow; };
+            void initialize() {};
+        });
+
+        Throwable thrownException = null;
         try {
             h.ensureResultsRead(-1);
         } catch (Exception e) {
-            t = e;
-            while (t.getCause() != null) t = t.getCause();
+            // get to the root cause, which should be the exception we threw in the SpansReader.
+            thrownException = e;
+            while (thrownException.getCause() != null) thrownException = thrownException.getCause();
         }
-        
-        if (shouldThrow) {
-            // HitsFromQueryParallel correctly re-threw on the exception thrown in its SpansReader.
-            assertEquals(SPANSREADER_CRASHED, t.getMessage());
-        } else {
-            // the spansreader was correctly interrupted by HitsFromQueryParallel.
-            assertTrue("SpansReader received interrupt() after parent HitsFromQueryParallel was interrupted", spansReaderWasInterrupted);
-        }
+
+        assertEquals(thrownException, exceptionToThrow);
     }
 }
