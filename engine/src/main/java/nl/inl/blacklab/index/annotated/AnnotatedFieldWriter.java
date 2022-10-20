@@ -131,9 +131,7 @@ public class AnnotatedFieldWriter {
         //  that doesn't contain a word but may contain trailing punctuation)
         String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         int lengthTokensValue = numberOfTokens();
-        doc.addIntPointField(lengthTokensFieldName, lengthTokensValue);
-        doc.addStoredField(lengthTokensFieldName, lengthTokensValue);//store value
-        doc.addNumericDocValuesField(lengthTokensFieldName, lengthTokensValue); // docvalues for fast retrieval
+        doc.addStoredNumericField(lengthTokensFieldName, lengthTokensValue, true);
     }
 
     /**

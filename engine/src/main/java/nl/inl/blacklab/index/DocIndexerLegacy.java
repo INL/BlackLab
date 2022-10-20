@@ -395,7 +395,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
-                currentLuceneDoc.addField(fieldName, fieldValue, getDocWriter().metadataFieldType(false));
+                currentLuceneDoc.addTextualMetadataField(fieldName, fieldValue, getDocWriter().metadataFieldType(false));
             }
         }
     }

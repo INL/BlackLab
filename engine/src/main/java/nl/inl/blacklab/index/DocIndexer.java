@@ -11,7 +11,6 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 
 public interface DocIndexer extends AutoCloseable {
-    int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
     @Override
     void close();

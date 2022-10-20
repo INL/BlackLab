@@ -1,7 +1,6 @@
 package nl.inl.blacklab.index;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.util.BytesRef;
 
 /**
  * Generic interface for a BlackLab document being indexed.
@@ -12,19 +11,17 @@ import org.apache.lucene.util.BytesRef;
  */
 public interface BLInputDocument {
 
+    int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
+
     void addField(String name, String value, BLFieldType fieldType);
-
-    void addField(String name, TokenStream tokenStream, BLFieldType fieldType);
-
-    void addSortedSetDocValuesField(String name, BytesRef value);
-
-    void addIntPointField(String name, int n);
 
     void addStoredField(String name, String value);
 
-    void addStoredField(String name, int n);
+    void addAnnotationField(String name, TokenStream tokenStream, BLFieldType fieldType);
 
-    void addNumericDocValuesField(String name, int n);
+    void addStoredNumericField(String name, int value, boolean addDocValue);
+
+    void addTextualMetadataField(String name, String value, BLFieldType type);
 
     String get(String name);
 

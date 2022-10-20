@@ -187,7 +187,7 @@ public class AnnotationWriter {
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
             String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
                     annotationName, sensitivityName);
-            doc.addField(luceneFieldName, tokenStream, fieldType);
+            doc.addAnnotationField(luceneFieldName, tokenStream, fieldType);
         }
     }
 

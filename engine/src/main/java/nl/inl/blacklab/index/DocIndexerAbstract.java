@@ -1,6 +1,5 @@
 package nl.inl.blacklab.index;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,7 +9,6 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.contentstore.TextContent;
@@ -158,8 +156,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         } else {
             ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
             int contentId = contentStore.store(document);
-            currentLuceneDoc.addIntPointField(contentIdFieldName, contentId);
-            currentLuceneDoc.addStoredField(contentIdFieldName, contentId);
+            currentLuceneDoc.addStoredNumericField(contentIdFieldName, contentId, false);
         }
     }
 
@@ -265,24 +262,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         FieldType type = desc.type();
         if (type != FieldType.NUMERIC) {
             for (String value: values) {
-                currentLuceneDoc.addField(name, value, luceneTypeFromIndexMetadataType(type));
-                // If a value is too long (more than 32K), just truncate it a bit.
-                // This should be very rare and would generally only affect sorting/grouping, if anything.
-                if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
-                    // While it's really too large
-                    byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
-                    while (utf8.length > MAX_DOCVALUES_LENGTH) {
-                        // assume all characters take two bytes, truncate and try again
-                        int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
-                        int truncateAt = value.length() - 2 * overshoot;
-                        if (truncateAt < 1)
-                            truncateAt = 1;
-                        value = value.substring(0, truncateAt);
-                        utf8 = value.getBytes(StandardCharsets.UTF_8);
-                    }
-                }
-                currentLuceneDoc.addSortedSetDocValuesField(name,
-                        new BytesRef(value)); // docvalues for efficient sorting/grouping
+                currentLuceneDoc.addTextualMetadataField(name, value, luceneTypeFromIndexMetadataType(type));
             }
         }
         if (type == FieldType.NUMERIC) {
@@ -303,11 +283,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                     // descriptive text like "around 1900". OK to ignore.
                     n = 0;
                 }
-                currentLuceneDoc.addIntPointField(numFieldName, n);
-                currentLuceneDoc.addStoredField(numFieldName, n);
-                if (firstValue)
-                    currentLuceneDoc.addNumericDocValuesField(numFieldName, n); // docvalues for efficient sorting/grouping
-                else {
+                currentLuceneDoc.addStoredNumericField(numFieldName, n, firstValue);
+                if (!firstValue) {
                     warn(documentName + " contains multiple values for single-valued numeric field " + numFieldName
                             + "(values: " + StringUtils.join(values, "; ") + ")");
                 }
