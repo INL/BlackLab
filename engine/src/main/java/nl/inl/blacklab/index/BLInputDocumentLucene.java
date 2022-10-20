@@ -73,4 +73,9 @@ public class BLInputDocumentLucene implements BLInputDocument {
         // docvalues for efficient sorting/grouping
         document.add(new SortedSetDocValuesField(name, new BytesRef(value)));
     }
+
+    @Override
+    public BLDocumentFactory documentFactory() {
+        return BLDocumentFactoryLucene.INSTANCE;
+    }
 }

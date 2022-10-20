@@ -13,8 +13,6 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
 import org.mozilla.universalchardet.UniversalDetector;
 
@@ -282,26 +280,8 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private void initMetadataFieldTypes() {
-        FieldType tokenized = new FieldType();
-        tokenized.setStored(true);
-        //metadataFieldTypeTokenized.setIndexed(true);
-        tokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        tokenized.setTokenized(true);
-        tokenized.setOmitNorms(true); // <-- depending on setting?
-        tokenized.setStoreTermVectors(true);
-        tokenized.setStoreTermVectorPositions(true);
-        tokenized.setStoreTermVectorOffsets(true);
-        tokenized.freeze();
-        metadataFieldTypeTokenized = new BLFieldTypeLucene(tokenized);
-
-        FieldType untokenized = new FieldType(tokenized);
-        untokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-        //untokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
-        untokenized.setStoreTermVectors(false);
-        untokenized.setStoreTermVectorPositions(false);
-        untokenized.setStoreTermVectorOffsets(false);
-        untokenized.freeze();
-        metadataFieldTypeUntokenized = new BLFieldTypeLucene(untokenized);
+        metadataFieldTypeTokenized = indexWriter.documentFactory().fieldTypeMetadata(true);
+        metadataFieldTypeUntokenized = indexWriter.documentFactory().fieldTypeMetadata(false);
     }
 
     private String formatError(String formatIdentifier) {

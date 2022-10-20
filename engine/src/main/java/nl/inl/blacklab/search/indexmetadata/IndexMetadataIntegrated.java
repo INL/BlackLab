@@ -15,8 +15,6 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.document.FieldType;
-import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
@@ -30,8 +28,6 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.index.BLFieldType;
-import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -109,21 +105,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
-        private static final BLFieldType markerFieldType;
-
-        static {
-            FieldType marker = new org.apache.lucene.document.FieldType();
-            marker.setIndexOptions(IndexOptions.DOCS);
-            marker.setTokenized(false);
-            marker.setOmitNorms(true);
-            marker.setStored(false);
-            marker.setStoreTermVectors(false);
-            marker.setStoreTermVectorPositions(false);
-            marker.setStoreTermVectorOffsets(false);
-            marker.freeze();
-            markerFieldType = new BLFieldTypeLucene(marker);
-        }
-
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
             return reader.document(docId).get(METADATA_FIELD_NAME);
         }
@@ -158,7 +139,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // and a marker field to we can find it again
                 BLInputDocument indexmetadataDoc = indexWriter.documentFactory().create();
                 indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
-                indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, markerFieldType);
+                indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.documentFactory().fieldTypeIndexMetadataMarker());
                 indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
             } catch (IOException e) {

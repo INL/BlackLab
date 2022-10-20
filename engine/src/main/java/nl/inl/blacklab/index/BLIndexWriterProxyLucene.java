@@ -18,7 +18,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     @Override
     public void addDocument(BLInputDocument document) throws IOException {
-        indexWriter.addDocument(luceneDoc((BLInputDocumentLucene) document));
+        indexWriter.addDocument(luceneDoc(document));
     }
 
     private Document luceneDoc(BLInputDocument document) {

@@ -13,7 +13,6 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.BLAnnotFieldTypes;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
@@ -151,7 +150,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
             }
 
             String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-            BLFieldType fieldType = BLAnnotFieldTypes.get(false, false, true);
+            BLFieldType fieldType = writer.indexWriter().documentFactory().fieldTypeAnnotationSensitivity(false, false, true);
             currentDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
             ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
