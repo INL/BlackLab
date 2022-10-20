@@ -19,7 +19,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.input.TeeInputStream;
-import org.apache.lucene.document.Document;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -27,6 +26,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
@@ -96,7 +96,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     @Override
     public void addMetadata() {
 
-        Document luceneDoc = docIndexer.getCurrentLuceneDoc();
+        BLInputDocument luceneDoc = docIndexer.getCurrentLuceneDoc();
         String fromInputFile = luceneDoc.get("fromInputFile");
 
         docIndexer.addMetadataField("Corpus_title", "CGN");

@@ -6,18 +6,20 @@ import java.util.Map;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 
+import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**
  * Provides Lucene FieldTypes for annotated fields.
  */
 public class BLAnnotFieldTypes {
-    private static Map<String, FieldType> fieldTypeCache = new HashMap<>();
+    private static Map<String, BLFieldType> fieldTypeCache = new HashMap<>();
 
     /**
      * Get the appropriate FieldType given the options for an annotation sensitivity.
      */
-    public static synchronized FieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
+    public static synchronized BLFieldType get(boolean offsets, boolean forwardIndex, boolean contentStore) {
         String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-");
         return fieldTypeCache.computeIfAbsent(key, (__) -> {
             IndexOptions indexOptions = offsets ?
@@ -42,7 +44,7 @@ public class BLAnnotFieldTypes {
                 BlackLabIndexIntegrated.setForwardIndexField(type);
             }
             type.freeze();
-            return type;
+            return new BLFieldTypeLucene(type);
         });
     }
 }

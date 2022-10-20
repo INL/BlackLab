@@ -26,6 +26,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
+import nl.inl.blacklab.index.BLIndexWriterProxyLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorExternal;
@@ -154,7 +155,8 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
             // We have to delete the document from the CS and FI separately.
 
             // Open a fresh reader to execute the query
-            try (IndexReader freshReader = DirectoryReader.open(indexWriter, false,
+            IndexWriter luceneIndexWriter = ((BLIndexWriterProxyLucene)indexWriter).getWriter();
+            try (IndexReader freshReader = DirectoryReader.open(luceneIndexWriter, false,
                     false)) {
                 // Execute the query, iterate over the docs and delete from FI and CS.
                 IndexSearcher s = new IndexSearcher(freshReader);

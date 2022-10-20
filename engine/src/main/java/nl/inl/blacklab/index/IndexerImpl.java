@@ -13,7 +13,6 @@ import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.Term;
@@ -167,10 +166,10 @@ class IndexerImpl implements DocWriter, Indexer {
     private Map<String, String> indexerParam;
 
     /** How to index metadata fields (tokenized) */
-    private FieldType metadataFieldTypeTokenized;
+    private BLFieldType metadataFieldTypeTokenized;
 
     /** How to index metadata fields (untokenized) */
-    private FieldType metadataFieldTypeUntokenized;
+    private BLFieldType metadataFieldTypeUntokenized;
 
     /** Where to look for files linked from the input files */
     private final List<File> linkedFileDirs = new ArrayList<>();
@@ -283,24 +282,26 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private void initMetadataFieldTypes() {
-        metadataFieldTypeTokenized = new FieldType();
-        metadataFieldTypeTokenized.setStored(true);
+        FieldType tokenized = new FieldType();
+        tokenized.setStored(true);
         //metadataFieldTypeTokenized.setIndexed(true);
-        metadataFieldTypeTokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
-        metadataFieldTypeTokenized.setTokenized(true);
-        metadataFieldTypeTokenized.setOmitNorms(true); // <-- depending on setting?
-        metadataFieldTypeTokenized.setStoreTermVectors(true);
-        metadataFieldTypeTokenized.setStoreTermVectorPositions(true);
-        metadataFieldTypeTokenized.setStoreTermVectorOffsets(true);
-        metadataFieldTypeTokenized.freeze();
+        tokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS);
+        tokenized.setTokenized(true);
+        tokenized.setOmitNorms(true); // <-- depending on setting?
+        tokenized.setStoreTermVectors(true);
+        tokenized.setStoreTermVectorPositions(true);
+        tokenized.setStoreTermVectorOffsets(true);
+        tokenized.freeze();
+        metadataFieldTypeTokenized = new BLFieldTypeLucene(tokenized);
 
-        metadataFieldTypeUntokenized = new FieldType(metadataFieldTypeTokenized);
-        metadataFieldTypeUntokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
-        //metadataFieldTypeUntokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
-        metadataFieldTypeUntokenized.setStoreTermVectors(false);
-        metadataFieldTypeUntokenized.setStoreTermVectorPositions(false);
-        metadataFieldTypeUntokenized.setStoreTermVectorOffsets(false);
-        metadataFieldTypeUntokenized.freeze();
+        FieldType untokenized = new FieldType(tokenized);
+        untokenized.setIndexOptions(IndexOptions.DOCS_AND_FREQS);
+        //untokenized.setTokenized(false);  // <-- this should be done with KeywordAnalyzer, otherwise untokenized fields aren't lowercased
+        untokenized.setStoreTermVectors(false);
+        untokenized.setStoreTermVectorPositions(false);
+        untokenized.setStoreTermVectorOffsets(false);
+        untokenized.freeze();
+        metadataFieldTypeUntokenized = new BLFieldTypeLucene(untokenized);
     }
 
     private String formatError(String formatIdentifier) {
@@ -316,7 +317,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public FieldType metadataFieldType(boolean tokenized) {
+    public BLFieldType metadataFieldType(boolean tokenized) {
         return tokenized ? metadataFieldTypeTokenized : metadataFieldTypeUntokenized;
     }
 
@@ -414,19 +415,19 @@ class IndexerImpl implements DocWriter, Indexer {
      * @param document the document to add
      */
     @Override
-    public void add(Document document) throws IOException {
+    public void add(BLInputDocument document) throws IOException {
         indexWriter.addDocument(document);
         listener().luceneDocumentAdded();
     }
 
     @Override
-    public void update(Term term, Document document) throws IOException {
+    public void update(Term term, BLInputDocument document) throws IOException {
         indexWriter.updateDocument(term, document);
         listener().luceneDocumentAdded();
     }
 
     @Override
-    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, Document currentLuceneDoc) {
+    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentLuceneDoc) {
         ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
         if (fi instanceof ForwardIndexExternal) {
             // External forward index: add to it (with the integrated forward index, this is handled in the codec)
@@ -439,7 +440,7 @@ class IndexerImpl implements DocWriter, Indexer {
                     posIncr.put(annotation, annotationWriter.positionIncrements());
                 }
             }
-            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, currentLuceneDoc);
+            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, ((BLInputDocumentLucene)currentLuceneDoc).getDocument());
         }
     }
 
@@ -513,7 +514,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public synchronized int docsToDoLeft() {
         if (maxNumberOfDocsToIndex < 0)
             return maxNumberOfDocsToIndex;
-        int docsDone = indexWriter.writer().getDocStats().numDocs;
+        int docsDone = indexWriter.writer().getNumberOfDocs();
         return Math.max(0, maxNumberOfDocsToIndex - docsDone);
     }
 

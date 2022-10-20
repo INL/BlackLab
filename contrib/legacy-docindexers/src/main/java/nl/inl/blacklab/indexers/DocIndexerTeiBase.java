@@ -2,9 +2,9 @@ package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
 
-import org.apache.lucene.document.Document;
 import org.xml.sax.Attributes;
 
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
@@ -243,7 +243,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
      * with authorLevel1 and/or authorLevel2 separately.
      */
     void combineAuthorAndTitleFields() {
-        Document myLuceneDoc = getCurrentLuceneDoc();
+        BLInputDocument myLuceneDoc = getCurrentLuceneDoc();
         String author = myLuceneDoc.get("authorLevel1");
         String authorLevel2 = myLuceneDoc.get("authorLevel2");
         if (author != null || authorLevel2 != null) {

@@ -10,12 +10,6 @@ import java.util.Map.Entry;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.SortedSetDocValuesField;
-import org.apache.lucene.document.StoredField;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
@@ -53,7 +47,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      * The Lucene Document we're currently constructing (corresponds to the document
      * we're indexing)
      */
-    protected Document currentLuceneDoc;
+    protected BLInputDocument currentLuceneDoc;
 
     /**
      * Document metadata. Added at the end to deal with unknown values, multiple occurrences
@@ -73,7 +67,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     private int numberOfTokensDone = 0;
 
     @Override
-    public Document getCurrentLuceneDoc() {
+    public BLInputDocument getCurrentLuceneDoc() {
         return currentLuceneDoc;
     }
 
@@ -111,7 +105,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         this.documentName = documentName == null ? "?" : documentName;
     }
 
-    protected org.apache.lucene.document.FieldType luceneTypeFromIndexMetadataType(FieldType type) {
+    protected BLFieldType luceneTypeFromIndexMetadataType(FieldType type) {
         switch (type) {
         case NUMERIC:
             throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
@@ -151,7 +145,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         return metadataFieldValues.get(name);
     }
 
-    public static void storeInContentStore(DocWriter writer, Document currentLuceneDoc, TextContent document, String contentIdFieldName, String contentStoreName) {
+    public static void storeInContentStore(DocWriter writer, BLInputDocument currentLuceneDoc, TextContent document, String contentIdFieldName, String contentStoreName) {
         if (writer.indexWriter() instanceof BlackLabIndexIntegrated) {
             AnnotatedFieldsImpl annotatedFields = writer.indexWriter().metadata().annotatedFields();
             if (annotatedFields.exists(contentStoreName)) {
@@ -159,13 +153,13 @@ public abstract class DocIndexerAbstract implements DocIndexer {
             }
 
             String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-            org.apache.lucene.document.FieldType fieldType = BLAnnotFieldTypes.get(false, false, true);
-            currentLuceneDoc.add(new Field(luceneFieldName, document.toString(), fieldType));
+            BLFieldType fieldType = BLAnnotFieldTypes.get(false, false, true);
+            currentLuceneDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
             ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
             int contentId = contentStore.store(document);
-            currentLuceneDoc.add(new IntPoint(contentIdFieldName, contentId));
-            currentLuceneDoc.add(new StoredField(contentIdFieldName, contentId));
+            currentLuceneDoc.addIntPointField(contentIdFieldName, contentId);
+            currentLuceneDoc.addStoredField(contentIdFieldName, contentId);
         }
     }
 
@@ -271,7 +265,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         FieldType type = desc.type();
         if (type != FieldType.NUMERIC) {
             for (String value: values) {
-                currentLuceneDoc.add(new Field(name, value, luceneTypeFromIndexMetadataType(type)));
+                currentLuceneDoc.addField(name, value, luceneTypeFromIndexMetadataType(type));
                 // If a value is too long (more than 32K), just truncate it a bit.
                 // This should be very rare and would generally only affect sorting/grouping, if anything.
                 if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
@@ -287,8 +281,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         utf8 = value.getBytes(StandardCharsets.UTF_8);
                     }
                 }
-                currentLuceneDoc.add(new SortedSetDocValuesField(name,
-                        new BytesRef(value))); // docvalues for efficient sorting/grouping
+                currentLuceneDoc.addSortedSetDocValuesField(name,
+                        new BytesRef(value)); // docvalues for efficient sorting/grouping
             }
         }
         if (type == FieldType.NUMERIC) {
@@ -309,12 +303,10 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                     // descriptive text like "around 1900". OK to ignore.
                     n = 0;
                 }
-                IntPoint nf = new IntPoint(numFieldName, n);
-                currentLuceneDoc.add(nf);
-                currentLuceneDoc.add(new StoredField(numFieldName, n));
+                currentLuceneDoc.addIntPointField(numFieldName, n);
+                currentLuceneDoc.addStoredField(numFieldName, n);
                 if (firstValue)
-                    currentLuceneDoc.add(
-                            new NumericDocValuesField(numFieldName, n)); // docvalues for efficient sorting/grouping
+                    currentLuceneDoc.addNumericDocValuesField(numFieldName, n); // docvalues for efficient sorting/grouping
                 else {
                     warn(documentName + " contains multiple values for single-valued numeric field " + numFieldName
                             + "(values: " + StringUtils.join(values, "; ") + ")");

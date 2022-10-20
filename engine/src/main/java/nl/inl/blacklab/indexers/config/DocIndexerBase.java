@@ -20,7 +20,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.contentstore.TextContent;
@@ -331,7 +330,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         traceln("START DOCUMENT");
         if (!indexingIntoExistingLuceneDoc) {
-            currentLuceneDoc = new Document();
+            currentLuceneDoc = getDocWriter().indexWriter().documentFactory().create();
             addMetadataField("fromInputFile", documentName);
         }
         if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)

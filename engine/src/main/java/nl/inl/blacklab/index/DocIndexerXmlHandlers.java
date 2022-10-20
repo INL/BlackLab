@@ -14,7 +14,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -70,7 +69,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 Attributes attributes) {
             startCaptureContent(contentsField.name());
 
-            currentLuceneDoc = new Document();
+            currentLuceneDoc = getDocWriter().indexWriter().documentFactory().create();
             // Store attribute values from the tag as metadata fields
             for (int i = 0; i < attributes.getLength(); i++) {
                 addMetadataField(attributes.getLocalName(i), attributes.getValue(i));

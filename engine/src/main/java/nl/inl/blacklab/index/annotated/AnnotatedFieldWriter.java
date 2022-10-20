@@ -8,12 +8,9 @@ import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.document.NumericDocValuesField;
-import org.apache.lucene.document.StoredField;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
@@ -121,7 +118,7 @@ public class AnnotatedFieldWriter {
         end.add(endChar);
     }
 
-    public void addToLuceneDoc(Document doc) {
+    public void addToLuceneDoc(BLInputDocument doc) {
         for (AnnotationWriter p : annotations.values()) {
             p.addToLuceneDoc(doc, fieldName, start, end);
         }
@@ -134,9 +131,9 @@ public class AnnotatedFieldWriter {
         //  that doesn't contain a word but may contain trailing punctuation)
         String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         int lengthTokensValue = numberOfTokens();
-        doc.add(new IntPoint(lengthTokensFieldName, lengthTokensValue));
-        doc.add(new StoredField(lengthTokensFieldName, lengthTokensValue));//store value
-        doc.add(new NumericDocValuesField(lengthTokensFieldName, lengthTokensValue)); // docvalues for fast retrieval
+        doc.addIntPointField(lengthTokensFieldName, lengthTokensValue);
+        doc.addStoredField(lengthTokensFieldName, lengthTokensValue);//store value
+        doc.addNumericDocValuesField(lengthTokensFieldName, lengthTokensValue); // docvalues for fast retrieval
     }
 
     /**

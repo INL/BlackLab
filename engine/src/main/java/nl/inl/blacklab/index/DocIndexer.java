@@ -7,8 +7,6 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 
@@ -18,7 +16,7 @@ public interface DocIndexer extends AutoCloseable {
     @Override
     void close();
 
-    Document getCurrentLuceneDoc();
+    BLInputDocument getCurrentLuceneDoc();
 
     /**
      * Returns our DocWriter object

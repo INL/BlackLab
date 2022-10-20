@@ -15,8 +15,7 @@ import javax.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -31,6 +30,9 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -107,18 +109,19 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
-        private static final org.apache.lucene.document.FieldType markerFieldType;
+        private static final BLFieldType markerFieldType;
 
         static {
-            markerFieldType = new org.apache.lucene.document.FieldType();
-            markerFieldType.setIndexOptions(IndexOptions.DOCS);
-            markerFieldType.setTokenized(false);
-            markerFieldType.setOmitNorms(true);
-            markerFieldType.setStored(false);
-            markerFieldType.setStoreTermVectors(false);
-            markerFieldType.setStoreTermVectorPositions(false);
-            markerFieldType.setStoreTermVectorOffsets(false);
-            markerFieldType.freeze();
+            FieldType marker = new org.apache.lucene.document.FieldType();
+            marker.setIndexOptions(IndexOptions.DOCS);
+            marker.setTokenized(false);
+            marker.setOmitNorms(true);
+            marker.setStored(false);
+            marker.setStoreTermVectors(false);
+            marker.setStoreTermVectorPositions(false);
+            marker.setStoreTermVectorOffsets(false);
+            marker.freeze();
+            markerFieldType = new BLFieldTypeLucene(marker);
         }
 
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
@@ -153,9 +156,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again
-                Document indexmetadataDoc = new Document();
-                indexmetadataDoc.add(new StoredField(METADATA_FIELD_NAME, metadataJson));
-                indexmetadataDoc.add(new org.apache.lucene.document.Field(METADATA_MARKER, METADATA_MARKER, markerFieldType));
+                BLInputDocument indexmetadataDoc = indexWriter.documentFactory().create();
+                indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
+                indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, markerFieldType);
                 indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
 
             } catch (IOException e) {

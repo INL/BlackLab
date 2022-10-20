@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
@@ -157,7 +156,7 @@ public interface Indexer {
      * @param term how to find the document to update
      * @param document the updated document
      */
-    void update(Term term, Document document) throws IOException;
+    void update(Term term, BLInputDocument document) throws IOException;
 
     /**
      * Index a document or archive from an InputStream.

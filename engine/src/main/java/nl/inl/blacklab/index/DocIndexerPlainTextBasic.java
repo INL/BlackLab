@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -116,7 +114,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         boolean firstWord = true;
 
         // Start a new Lucene document
-        currentLuceneDoc = new Document();
+        currentLuceneDoc = getDocWriter().indexWriter().documentFactory().create();
         addMetadataField("fromInputFile", documentName);
         addMetadataFieldsFromParameters();
         getDocWriter().listener().documentStarted(documentName);

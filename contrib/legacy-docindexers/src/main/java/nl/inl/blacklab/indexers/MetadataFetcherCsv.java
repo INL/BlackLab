@@ -12,8 +12,8 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.input.BOMInputStream;
-import org.apache.lucene.document.Document;
 
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.MetadataFetcher;
 
@@ -59,7 +59,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 
         String fromInputFile;
         Map<String, String> map;
-        Document luceneDoc = docIndexer.getCurrentLuceneDoc();
+        BLInputDocument luceneDoc = docIndexer.getCurrentLuceneDoc();
         fromInputFile = luceneDoc.get("fromInputFile");
 
         for (CSVRecord row : metadata) {

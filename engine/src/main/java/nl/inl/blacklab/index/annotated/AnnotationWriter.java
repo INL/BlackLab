@@ -8,13 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
+import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -168,7 +167,7 @@ public class AnnotationWriter {
         return ts;
     }
 
-    FieldType getFieldType(String sensitivityName) {
+    BLFieldType getFieldType(String sensitivityName) {
         boolean isMainAnnotation = fieldWriter.mainAnnotation() == this;
         boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
@@ -181,14 +180,14 @@ public class AnnotationWriter {
         return BLAnnotFieldTypes.get(offsets, hasForwardIndex && isMainSensitivity, contentStore);
     }
 
-    public void addToLuceneDoc(Document doc, String annotatedFieldName, IntArrayList startChars,
+    public void addToLuceneDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
-            FieldType fieldType = getFieldType(sensitivityName);
+            BLFieldType fieldType = getFieldType(sensitivityName);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
             String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
                     annotationName, sensitivityName);
-            doc.add(new Field(luceneFieldName, tokenStream, fieldType));
+            doc.addField(luceneFieldName, tokenStream, fieldType);
         }
     }
 
