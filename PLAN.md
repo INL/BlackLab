@@ -16,11 +16,34 @@ Probably prioritize [issues](https://github.com/INL/BlackLab/issues) that:
  
 Very complex issues and enhancements that may be of limited use should be tackled later.
 
+## Incorporate all information into the Lucene index
+
+### Metadata
+
+- [ ] metadata may change during indexing after all? no more undeclared metadata field warning? OTOH, changing metadata as documents are added to the index would be tricky in distributed env... You should probably check for metadata document updates semi-regularly, and keep more critical information in field attributes.
+
+### Forward index
+
+- [ ] Rename "tokens encoding" to "tokens codec" to be more in line with `ContentStoreBlockCodec` (and Lucene terminology in general). See e.g. `TokensEncoding`, `SegmentForwardIndex`, `integrated.md`, etc.
+- [ ] We don't always need 4 bytes per token id to store the tokens. If all of the token ids in a document are less than 256, we only need a single byte. If less than 16384, two bytes, etc. Store the number of bytes per token as a parameter for the tokens codec, and use this number of bytes to store the term ids.
+- [ ] Check how `IndexInput.clone()` is used. This method is NOT threadsafe, so we must do this in a synchronized method!
+- [ ] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Consider pooling encoder/decoder as well if useful.
+
+LATER?
+- [ ] (PROBABLY VERY DIFFICULT AND MAY NOT BE WORTH THE EFFORT) can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
+
+### Content store
+
+LATER? 
+- [ ] ContentStoreSegmentReader getValueSubstrings more efficient impl? This is possible, but maybe not the highest priority.
+- [ ] implement custom merge? The problem is that we need to split the `MergeState` we get into two separate ones, one with content store fields (which we must merge) and one with regular stored fields (which must be merged by the delegate), but we cannot instantiate `MergeState`. Probably doable through a hack (placing class in Lucene's package or using reflection), but let's hold off until we're sure this is necessary.
+
+
 ## How to phase out the global FI API
 
 We would like to eventually eliminate the global forward index API. This means forward index related tasks (sort/group/filter on context, produce KWICs, NFA matching) should operate per index segment, followed by a merge step.
 
-The merge step would use string comparisons instead of term sort order comparisons, so we don't need to keep track of global term sort orders, which is expensive and difficult to do when dynamically adding/removing documents. Such a merge would work in a similar way as with distributed search. 
+The merge step would use string comparisons instead of term sort order comparisons, so we don't need to keep track of global term sort orders, which is expensive and difficult to do when dynamically adding/removing documents. Such a merge would work in a similar way as with distributed search.
 
 Other advantages of this appraoch: makes operations more parallellizable, minimizes resource contention, makes disk reads less disjointed, and stays closer to Lucene's design.
 
@@ -31,29 +54,6 @@ This is how the global forward index is currently used, and what it would take t
 - HitGroupsTokenFrequencies / CalcTokenFrequencies. Should be converted to work per segment. A bit of work but very doable.
 - ForwardIndexAccessor: forward index matching (NFAs). Should be relatively easy because forward index matching happens from Spans classes that are already per-segment.
 - IndexMetadataIntegrated: counting the total number of tokens. Doesn't use tokens or terms file, and is easy to do per segment.
-
-
-## Incorporate all information into the Lucene index
-
-### Metadata
-
-- [ ] metadata may change during indexing after all? no more undeclared metadata field warning? OTOH, changing metadata as documents are added to the index would be tricky in distributed env... You should probably check for metadata document updates semi-regularly, and keep more critical information in field attributes.
-
-### Forward index
-
-- [ ] Speed up index startup for integrated index. Currently slow because it determines global term ids and sort positions by sorting all the terms. Unfortunately, there is no place in the Lucene index for global information, so this is a challenge. Maybe we can store the sort positions per segment and determine global sort positions by merging the per-segment lists efficiently (because we only need to compare strings if we don't know the correct order from one of the segment sort positions lists)<br/>
-  Essentially, we build the global terms list by going through each leafreader one by one (as we do now), but we also keep a sorted list of what segments each term occurs in and their sortposition there (should automatically be sorted because we go through leafreaders in-order). Then when we are comparing two terms, we look through the list of segmentnumbers to see if they occur in the same segment. If they do, the segment sort order gives us the global sort order as well.<br/>
- (Ideally, we wouldn't need the global term ids and sort positions at all, but would do everything per segment and merge the per-segment results using term strings.)
-- [ ] capture tokens encoding (maybe also rename to "tokens codec"?) in a class as well, like CS. Consider pooling encoder/decoder as well if useful.
-- [ ] check the maximum token id in each document. If less than 256, use a single byte per token, two bytes if less than 16384, etc. Store this number of bytes per token as a parameter for the tokens codec.
-- [ ] IndexInput.clone() is NOT threadsafe, so we must do this in a synchronized method!
-- [ ] can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index. (briefly looked at this but this doesn't appear to be feasible?)
-
-### Content store
-
-LATER? 
-- [ ] ContentStoreSegmentReader getValueSubstrings more efficient impl? This is possible, but maybe not the highest priority.
-- [ ] implement custom merge? The problem is that we need to split the `MergeState` we get into two separate ones, one with content store fields (which we must merge) and one with regular stored fields (which must be merged by the delegate), but we cannot instantiate `MergeState`. Probably doable through a hack (placing class in Lucene's package or using reflection), but let's hold off until we're sure this is necessary.
 
 
 ## Refactoring opportunities
