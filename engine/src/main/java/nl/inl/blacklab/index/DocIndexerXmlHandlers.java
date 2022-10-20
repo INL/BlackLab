@@ -69,7 +69,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 Attributes attributes) {
             startCaptureContent(contentsField.name());
 
-            currentDoc = getDocWriter().indexWriter().documentFactory().create();
+            currentDoc = createNewDocument();
             // Store attribute values from the tag as metadata fields
             for (int i = 0; i < attributes.getLength(); i++) {
                 addMetadataField(attributes.getLocalName(i), attributes.getValue(i));

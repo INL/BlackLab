@@ -332,4 +332,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         return numberOfTokensDone;
     }
 
+    protected BLInputDocument createNewDocument() {
+        return getDocWriter().indexWriter().documentFactory().create();
+    }
 }

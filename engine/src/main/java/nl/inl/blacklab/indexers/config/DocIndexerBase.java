@@ -330,7 +330,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         traceln("START DOCUMENT");
         if (!indexingIntoExistingDoc) {
-            currentDoc = getDocWriter().indexWriter().documentFactory().create();
+            currentDoc = createNewDocument();
             addMetadataField("fromInputFile", documentName);
         }
         if (getDocWriter() != null && !indexingIntoExistingDoc)

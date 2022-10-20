@@ -114,7 +114,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         boolean firstWord = true;
 
         // Start a new Lucene document
-        currentDoc = getDocWriter().indexWriter().documentFactory().create();
+        currentDoc = createNewDocument();
         addMetadataField("fromInputFile", documentName);
         addMetadataFieldsFromParameters();
         getDocWriter().listener().documentStarted(documentName);
