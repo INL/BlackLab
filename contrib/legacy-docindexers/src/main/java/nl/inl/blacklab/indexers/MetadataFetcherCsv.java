@@ -59,7 +59,7 @@ public class MetadataFetcherCsv extends MetadataFetcher {
 
         String fromInputFile;
         Map<String, String> map;
-        BLInputDocument luceneDoc = docIndexer.getCurrentLuceneDoc();
+        BLInputDocument luceneDoc = docIndexer.getCurrentDoc();
         fromInputFile = luceneDoc.get("fromInputFile");
 
         for (CSVRecord row : metadata) {

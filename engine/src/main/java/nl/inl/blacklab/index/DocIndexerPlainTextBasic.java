@@ -114,7 +114,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         boolean firstWord = true;
 
         // Start a new Lucene document
-        currentLuceneDoc = getDocWriter().indexWriter().documentFactory().create();
+        currentDoc = getDocWriter().indexWriter().documentFactory().create();
         addMetadataField("fromInputFile", documentName);
         addMetadataFieldsFromParameters();
         getDocWriter().listener().documentStarted(documentName);
@@ -194,7 +194,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             // Store the different properties of the annotated contents field that
             // were gathered in lists while parsing.
-            contentsField.addToLuceneDoc(currentLuceneDoc);
+            contentsField.addToDoc(currentDoc);
 
             // Add field with all its annotations to the forward index
             addToForwardIndex(contentsField);
@@ -212,7 +212,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             try {
                 // Add Lucene doc to indexer
-                getDocWriter().add(currentLuceneDoc);
+                getDocWriter().add(currentDoc);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -225,7 +225,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             // Reset contents field for next document
             contentsField.clear();
-            currentLuceneDoc = null;
+            currentDoc = null;
 
             // Stop if required
             if (!getDocWriter().continueIndexing())

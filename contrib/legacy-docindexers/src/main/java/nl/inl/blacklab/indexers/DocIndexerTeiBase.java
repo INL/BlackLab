@@ -243,7 +243,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
      * with authorLevel1 and/or authorLevel2 separately.
      */
     void combineAuthorAndTitleFields() {
-        BLInputDocument myLuceneDoc = getCurrentLuceneDoc();
+        BLInputDocument myLuceneDoc = getCurrentDoc();
         String author = myLuceneDoc.get("authorLevel1");
         String authorLevel2 = myLuceneDoc.get("authorLevel2");
         if (author != null || authorLevel2 != null) {

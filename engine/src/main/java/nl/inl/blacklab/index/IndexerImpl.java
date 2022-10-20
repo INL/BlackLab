@@ -417,17 +417,17 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void add(BLInputDocument document) throws IOException {
         indexWriter.addDocument(document);
-        listener().luceneDocumentAdded();
+        listener().documentAddedToIndex();
     }
 
     @Override
     public void update(Term term, BLInputDocument document) throws IOException {
         indexWriter.updateDocument(term, document);
-        listener().luceneDocumentAdded();
+        listener().documentAddedToIndex();
     }
 
     @Override
-    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentLuceneDoc) {
+    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentDoc) {
         ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
         if (fi instanceof ForwardIndexExternal) {
             // External forward index: add to it (with the integrated forward index, this is handled in the codec)
@@ -440,7 +440,7 @@ class IndexerImpl implements DocWriter, Indexer {
                     posIncr.put(annotation, annotationWriter.positionIncrements());
                 }
             }
-            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, ((BLInputDocumentLucene)currentLuceneDoc).getDocument());
+            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, ((BLInputDocumentLucene) currentDoc).getDocument());
         }
     }
 

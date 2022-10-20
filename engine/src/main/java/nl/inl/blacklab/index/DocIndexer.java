@@ -15,7 +15,7 @@ public interface DocIndexer extends AutoCloseable {
     @Override
     void close();
 
-    BLInputDocument getCurrentLuceneDoc();
+    BLInputDocument getCurrentDoc();
 
     /**
      * Returns our DocWriter object

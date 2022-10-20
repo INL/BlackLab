@@ -96,7 +96,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
     @Override
     public void addMetadata() {
 
-        BLInputDocument luceneDoc = docIndexer.getCurrentLuceneDoc();
+        BLInputDocument luceneDoc = docIndexer.getCurrentDoc();
         String fromInputFile = luceneDoc.get("fromInputFile");
 
         docIndexer.addMetadataField("Corpus_title", "CGN");

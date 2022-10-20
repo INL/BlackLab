@@ -118,9 +118,9 @@ public class AnnotatedFieldWriter {
         end.add(endChar);
     }
 
-    public void addToLuceneDoc(BLInputDocument doc) {
+    public void addToDoc(BLInputDocument doc) {
         for (AnnotationWriter p : annotations.values()) {
-            p.addToLuceneDoc(doc, fieldName, start, end);
+            p.addToDoc(doc, fieldName, start, end);
         }
 
         // Add number of tokens in annotated field as a stored field,

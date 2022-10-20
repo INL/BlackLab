@@ -45,7 +45,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      * The Lucene Document we're currently constructing (corresponds to the document
      * we're indexing)
      */
-    protected BLInputDocument currentLuceneDoc;
+    protected BLInputDocument currentDoc;
 
     /**
      * Document metadata. Added at the end to deal with unknown values, multiple occurrences
@@ -65,8 +65,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     private int numberOfTokensDone = 0;
 
     @Override
-    public BLInputDocument getCurrentLuceneDoc() {
-        return currentLuceneDoc;
+    public BLInputDocument getCurrentDoc() {
+        return currentDoc;
     }
 
     /**
@@ -143,7 +143,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         return metadataFieldValues.get(name);
     }
 
-    public static void storeInContentStore(DocWriter writer, BLInputDocument currentLuceneDoc, TextContent document, String contentIdFieldName, String contentStoreName) {
+    public static void storeInContentStore(DocWriter writer, BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName) {
         if (writer.indexWriter() instanceof BlackLabIndexIntegrated) {
             AnnotatedFieldsImpl annotatedFields = writer.indexWriter().metadata().annotatedFields();
             if (annotatedFields.exists(contentStoreName)) {
@@ -152,11 +152,11 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
             String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
             BLFieldType fieldType = BLAnnotFieldTypes.get(false, false, true);
-            currentLuceneDoc.addField(luceneFieldName, document.toString(), fieldType);
+            currentDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
             ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
             int contentId = contentStore.store(document);
-            currentLuceneDoc.addStoredNumericField(contentIdFieldName, contentId, false);
+            currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
         }
     }
 
@@ -262,7 +262,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         FieldType type = desc.type();
         if (type != FieldType.NUMERIC) {
             for (String value: values) {
-                currentLuceneDoc.addTextualMetadataField(name, value, luceneTypeFromIndexMetadataType(type));
+                currentDoc.addTextualMetadataField(name, value, luceneTypeFromIndexMetadataType(type));
             }
         }
         if (type == FieldType.NUMERIC) {
@@ -283,7 +283,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                     // descriptive text like "around 1900". OK to ignore.
                     n = 0;
                 }
-                currentLuceneDoc.addStoredNumericField(numFieldName, n, firstValue);
+                currentDoc.addStoredNumericField(numFieldName, n, firstValue);
                 if (!firstValue) {
                     warn(documentName + " contains multiple values for single-valued numeric field " + numFieldName
                             + "(values: " + StringUtils.join(values, "; ") + ")");
@@ -299,7 +299,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      * @param field field to add to the forward index
      */
     protected void addToForwardIndex(AnnotatedFieldWriter field) {
-        getDocWriter().addToForwardIndex(field, currentLuceneDoc);
+        getDocWriter().addToForwardIndex(field, currentDoc);
     }
 
     protected abstract int getCharacterPosition();

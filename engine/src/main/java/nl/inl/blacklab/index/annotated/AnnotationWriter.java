@@ -180,7 +180,7 @@ public class AnnotationWriter {
         return BLAnnotFieldTypes.get(offsets, hasForwardIndex && isMainSensitivity, contentStore);
     }
 
-    public void addToLuceneDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
+    public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
             BLFieldType fieldType = getFieldType(sensitivityName);

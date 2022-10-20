@@ -141,8 +141,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public BLInputDocument getCurrentLuceneDoc() {
-        return outputIndexer.getCurrentLuceneDoc();
+    public BLInputDocument getCurrentDoc() {
+        return outputIndexer.getCurrentDoc();
     }
 
     @Override

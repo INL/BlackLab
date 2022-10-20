@@ -97,7 +97,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
     public void addMetadata() {
 
         String fromInputFile;
-        BLInputDocument luceneDoc = docIndexer.getCurrentLuceneDoc();
+        BLInputDocument luceneDoc = docIndexer.getCurrentDoc();
         fromInputFile = luceneDoc.get("fromInputFile");
 
         docIndexer.addMetadataField("Corpus_title", "SoNaR");

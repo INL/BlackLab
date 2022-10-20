@@ -100,7 +100,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * If true, we're indexing into an existing Lucene document. Don't overwrite it
      * with a new one.
      */
-    private boolean indexingIntoExistingLuceneDoc = false;
+    private boolean indexingIntoExistingDoc = false;
 
     /** Currently opened inline tags we still need to add length payload to */
     private final List<OpenTagInfo> openInlineTags = new ArrayList<>();
@@ -247,8 +247,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 Indexer.DEFAULT_INPUT_ENCODING)) {
             if (docIndexer instanceof DocIndexerBase) {
                 DocIndexerBase ldi = (DocIndexerBase) docIndexer;
-                ldi.indexingIntoExistingLuceneDoc = true;
-                ldi.currentLuceneDoc = currentLuceneDoc;
+                ldi.indexingIntoExistingDoc = true;
+                ldi.currentDoc = currentDoc;
                 ldi.metadataFieldValues = metadataFieldValues;
                 if (storeWithName != null) {
                     // If specified, store in this content store and under this name instead of the default
@@ -329,11 +329,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     protected void startDocument() {
 
         traceln("START DOCUMENT");
-        if (!indexingIntoExistingLuceneDoc) {
-            currentLuceneDoc = getDocWriter().indexWriter().documentFactory().create();
+        if (!indexingIntoExistingDoc) {
+            currentDoc = getDocWriter().indexWriter().documentFactory().create();
             addMetadataField("fromInputFile", documentName);
         }
-        if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
+        if (getDocWriter() != null && !indexingIntoExistingDoc)
             getDocWriter().listener().documentStarted(documentName);
     }
 
@@ -373,7 +373,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             }
             // Store the different annotations of the annotated field that
             // were gathered in lists while parsing.
-            field.addToLuceneDoc(currentLuceneDoc);
+            field.addToDoc(currentDoc);
 
             // Add the field with all its annotations to the forward index
             addToForwardIndex(field);
@@ -384,12 +384,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             storeDocument();
         }
 
-        if (!indexingIntoExistingLuceneDoc)
+        if (!indexingIntoExistingDoc)
             addMetadataToDocument();
         try {
             // Add Lucene doc to indexer, if not existing already
-            if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
-                getDocWriter().add(currentLuceneDoc);
+            if (getDocWriter() != null && !indexingIntoExistingDoc)
+                getDocWriter().add(currentDoc);
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
@@ -405,10 +405,10 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             reportCharsProcessed();
             reportTokensProcessed();
         }
-        if (getDocWriter() != null && !indexingIntoExistingLuceneDoc)
+        if (getDocWriter() != null && !indexingIntoExistingDoc)
             documentDone(documentName);
 
-        currentLuceneDoc = null;
+        currentDoc = null;
 
         // Stop if required
         if (getDocWriter() != null) {
@@ -457,7 +457,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         } else {
             contentIdFieldName = contentStoreName + "Cid";
         }
-        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
+        storeInContentStore(getDocWriter(), currentDoc, document, contentIdFieldName, contentStoreName);
     }
 
     /**

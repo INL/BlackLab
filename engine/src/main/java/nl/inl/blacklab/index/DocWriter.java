@@ -85,8 +85,8 @@ public interface DocWriter {
      * Add a field with its annotations to the forward index
      * 
      * @param field field to add
-     * @param currentLuceneDoc Lucene doc, for storing the fiid
+     * @param currentDoc Lucene doc, for storing the fiid
      */
-    void addToForwardIndex(AnnotatedFieldWriter field, BLInputDocument currentLuceneDoc);
+    void addToForwardIndex(AnnotatedFieldWriter field, BLInputDocument currentDoc);
 
 }

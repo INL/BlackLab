@@ -395,7 +395,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
-                currentLuceneDoc.addTextualMetadataField(fieldName, fieldValue, getDocWriter().metadataFieldType(false));
+                currentDoc.addTextualMetadataField(fieldName, fieldValue, getDocWriter().metadataFieldType(false));
             }
         }
     }
@@ -404,6 +404,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         TextContent document = new TextContent(content);
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
-        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
+        storeInContentStore(getDocWriter(), currentDoc, document, contentIdFieldName, contentStoreName);
     }
 }
