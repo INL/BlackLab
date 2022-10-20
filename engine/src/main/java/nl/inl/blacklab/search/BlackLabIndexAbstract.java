@@ -40,7 +40,7 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.index.BLDocumentFactory;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -85,7 +85,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     private boolean runningFromSolr = false; // TODO: pass this in through the constructor
 
     /** Creates BLInputDocument instances of the correct type (Lucene or Solr) */
-    private BLDocumentFactory blDocumentFactory;
+    private BLIndexObjectFactory blIndexObjectFactory;
 
     /** The collator to use for sorting. Defaults to English collator. */
     private Collator collator = BlackLab.defaultCollator();
@@ -175,7 +175,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
      */
     BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        blDocumentFactory = BLDocumentFactory.get(runningFromSolr);
+        blIndexObjectFactory = BLIndexObjectFactory.get(runningFromSolr);
         this.blackLab = blackLab;
         this.indexLocation = indexDir;
         searchSettings = SearchSettings.defaults();
@@ -219,7 +219,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
      */
     BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
-        blDocumentFactory = BLDocumentFactory.get(runningFromSolr);
+        blIndexObjectFactory = BLIndexObjectFactory.get(runningFromSolr);
         this.blackLab = blackLab;
         this.indexLocation = indexDir;
         searchSettings = SearchSettings.defaults();
@@ -248,8 +248,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         }
     }
 
-    public BLDocumentFactory documentFactory() {
-        return blDocumentFactory;
+    public BLIndexObjectFactory indexObjectFactory() {
+        return blIndexObjectFactory;
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -426,7 +426,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
             IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);
-            indexWriter = blDocumentFactory.indexWriterProxy(luceneIndexWriter);
+            indexWriter = blIndexObjectFactory.indexWriterProxy(luceneIndexWriter);
             if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
             return DirectoryReader.open(luceneIndexWriter, false, false);
@@ -473,7 +473,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
             if (traceIndexOpening())
                 logger.debug("  IndexReader too...");
             reader = DirectoryReader.open(luceneIndexWriter, false, false);
-            indexWriter = blDocumentFactory.indexWriterProxy(luceneIndexWriter);
+            indexWriter = blIndexObjectFactory.indexWriterProxy(luceneIndexWriter);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,

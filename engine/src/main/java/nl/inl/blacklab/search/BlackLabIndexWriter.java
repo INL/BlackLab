@@ -5,14 +5,14 @@ import java.io.IOException;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.index.BLDocumentFactory;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
 
-    BLDocumentFactory documentFactory();
+    BLIndexObjectFactory indexObjectFactory();
 
     static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
         String defaultFormatIdentifier = indexWriter.metadata().documentFormat();

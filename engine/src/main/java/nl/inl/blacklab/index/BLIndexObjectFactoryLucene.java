@@ -4,8 +4,13 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexWriter;
 
-class BLDocumentFactoryLucene implements BLDocumentFactory {
-    public static BLDocumentFactoryLucene INSTANCE = new BLDocumentFactoryLucene();
+/**
+ * Factory for objects related to indexing directly to Lucene.
+ *
+ * Specifically, returns instances of BLInputDocumentLucene and BLFieldTypeLucene.
+ */
+class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
+    public static BLIndexObjectFactoryLucene INSTANCE = new BLIndexObjectFactoryLucene();
 
     private static BLFieldTypeLucene indexMetadataMarkerFieldType;
 
@@ -22,7 +27,7 @@ class BLDocumentFactoryLucene implements BLDocumentFactory {
         indexMetadataMarkerFieldType = new BLFieldTypeLucene(marker);
     }
 
-    private BLDocumentFactoryLucene() {}
+    private BLIndexObjectFactoryLucene() {}
 
     public BLInputDocument create() {
         return new BLInputDocumentLucene();

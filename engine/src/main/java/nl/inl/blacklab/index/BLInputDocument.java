@@ -25,6 +25,6 @@ public interface BLInputDocument {
 
     String get(String name);
 
-    BLDocumentFactory documentFactory();
+    BLIndexObjectFactory indexObjectFactory();
 
 }

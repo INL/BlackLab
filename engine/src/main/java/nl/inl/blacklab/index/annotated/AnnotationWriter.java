@@ -12,7 +12,7 @@ import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.index.BLDocumentFactory;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -168,7 +168,7 @@ public class AnnotationWriter {
         return ts;
     }
 
-    BLFieldType getFieldType(BLDocumentFactory documentFactory, String sensitivityName) {
+    BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName) {
         boolean isMainAnnotation = fieldWriter.mainAnnotation() == this;
         boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
@@ -178,13 +178,13 @@ public class AnnotationWriter {
 
         // Main sensitivity of main annotation may get content store
         boolean contentStore = false; // Content store has its own field, e.g. contents#cs
-        return documentFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, contentStore);
+        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, contentStore);
     }
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
             IntArrayList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
-            BLFieldType fieldType = getFieldType(doc.documentFactory(), sensitivityName);
+            BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
             String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
                     annotationName, sensitivityName);

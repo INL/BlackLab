@@ -280,8 +280,8 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     private void initMetadataFieldTypes() {
-        metadataFieldTypeTokenized = indexWriter.documentFactory().fieldTypeMetadata(true);
-        metadataFieldTypeUntokenized = indexWriter.documentFactory().fieldTypeMetadata(false);
+        metadataFieldTypeTokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(true);
+        metadataFieldTypeUntokenized = indexWriter.indexObjectFactory().fieldTypeMetadata(false);
     }
 
     private String formatError(String formatIdentifier) {

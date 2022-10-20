@@ -12,6 +12,9 @@ import org.apache.lucene.document.StoredField;
 import org.apache.lucene.index.IndexableFieldType;
 import org.apache.lucene.util.BytesRef;
 
+/**
+ * Class for a BlackLab document being indexed directly into Lucene.
+ */
 public class BLInputDocumentLucene implements BLInputDocument {
 
     private final Document document;
@@ -75,7 +78,7 @@ public class BLInputDocumentLucene implements BLInputDocument {
     }
 
     @Override
-    public BLDocumentFactory documentFactory() {
-        return BLDocumentFactoryLucene.INSTANCE;
+    public BLIndexObjectFactory indexObjectFactory() {
+        return BLIndexObjectFactoryLucene.INSTANCE;
     }
 }

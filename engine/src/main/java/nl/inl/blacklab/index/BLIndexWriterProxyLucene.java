@@ -8,6 +8,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
+/**
+ * Simple proxy for Lucene IndexWriter.
+ */
 public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     private final IndexWriter indexWriter;

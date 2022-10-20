@@ -150,7 +150,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
             }
 
             String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-            BLFieldType fieldType = writer.indexWriter().documentFactory().fieldTypeAnnotationSensitivity(false, false, true);
+            BLFieldType fieldType = writer.indexWriter().indexObjectFactory().fieldTypeAnnotationSensitivity(false, false, true);
             currentDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
             ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
@@ -332,6 +332,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     protected BLInputDocument createNewDocument() {
-        return getDocWriter().indexWriter().documentFactory().create();
+        return getDocWriter().indexWriter().indexObjectFactory().create();
     }
 }

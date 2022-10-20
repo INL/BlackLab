@@ -9,6 +9,7 @@ import org.apache.lucene.index.IndexableFieldType;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
+/** Represents Lucene field types. */
 public class BLFieldTypeLucene implements BLFieldType {
 
     /** How to index metadata fields (tokenized) */
@@ -20,10 +21,6 @@ public class BLFieldTypeLucene implements BLFieldType {
     private static Map<String, BLFieldType> fieldTypeCache = new HashMap<>();
 
     static {
-        createMetadataFieldTypes();
-    }
-
-    private static void createMetadataFieldTypes() {
         FieldType tokenized = new FieldType();
         tokenized.setStored(true);
         //tokenized.setIndexed(true);
@@ -81,8 +78,6 @@ public class BLFieldTypeLucene implements BLFieldType {
             return new BLFieldTypeLucene(type);
         });
     }
-
-
 
     private final IndexableFieldType type;
 
