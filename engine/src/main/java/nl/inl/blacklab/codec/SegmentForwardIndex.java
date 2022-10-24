@@ -65,6 +65,11 @@ class SegmentForwardIndex implements AutoCloseable {
         }
     }
 
+    /** 
+     * Get a new ForwardIndexSegmentReader on this segment. 
+     * Though the reader is not Threadsafe, a new instance is returned every time, 
+     * So this function can be used from multiple threads. 
+     */
     ForwardIndexSegmentReader reader() {
         return new Reader();
     }

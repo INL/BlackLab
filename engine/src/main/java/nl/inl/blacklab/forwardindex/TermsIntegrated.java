@@ -89,11 +89,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
                 }
             }
             // There are no segments that these terms both occur in.
-            Collator collator = compareSensitive ? TermsIntegrated.this.collator : collatorInsensitive;
+            Collator coll = compareSensitive ? collator : collatorInsensitive;
             Map<String, CollationKey> cache = compareSensitive ? collationCacheSensitive : collationCacheInsensitive;
 
-            CollationKey a = cache.computeIfAbsent(term, __ -> collator.getCollationKey(term));
-            CollationKey b = cache.computeIfAbsent(term, __ -> collator.getCollationKey(other.term));
+            CollationKey a = cache.computeIfAbsent(term, __ -> coll.getCollationKey(term));
+            CollationKey b = cache.computeIfAbsent(other.term, __ -> coll.getCollationKey(other.term));
 
             return a.compareTo(b);
         }
