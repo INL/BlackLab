@@ -27,7 +27,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
-        return new HitsFromQueryParallel(queryInfo, query, searchSettings);
+        return new HitsFromQuery(queryInfo, query, searchSettings);
     }
 
     /**

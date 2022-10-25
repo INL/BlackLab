@@ -4,16 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.lucene.index.Term;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
@@ -30,7 +26,7 @@ public class TestSearchBehavior {
         CountDownLatch waitForSpansReaderToBeInterrupted = new CountDownLatch(1);
 
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
-        HitsFromQueryParallel h = new HitsFromQueryParallel(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = new HitsFromQuery(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
@@ -80,7 +76,7 @@ public class TestSearchBehavior {
     @Test
     public void testParallelSearchException() {
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
-        HitsFromQueryParallel h = new HitsFromQueryParallel(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = new HitsFromQuery(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
