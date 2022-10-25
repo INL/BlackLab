@@ -68,3 +68,11 @@ metadata:
     valuePath: "@pid"
   - name: title
     valuePath: "@title"
+
+corpusConfig:
+  metadataFieldGroups:
+    - name: Title group
+      fields:
+          - title
+    - name: Other fields group
+      addRemainingFields: true
