@@ -152,12 +152,14 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) throws IOException {
+        BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
+        if (segmentTerms == null) {
+            // can happen if segment only contains index metadata doc
+            return;
+        }
+        segmentTerms.setTermsIntegrated(this, lrc.ord);
         BlackLab40PostingsReader r = BlackLab40PostingsReader.get(lrc);
         TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
-        BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
-        if (segmentTerms != null) { // can happen if segment only contains index metadata doc
-            segmentTerms.setTermsIntegrated(this, lrc.ord);
-        }
 
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
         int [] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
