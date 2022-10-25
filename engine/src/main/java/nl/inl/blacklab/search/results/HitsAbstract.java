@@ -34,7 +34,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      *
      * This prevents locking again and again for a single hit when iterating.
      *
-     * See {@link HitsFromQuery} and {@link HitsFiltered}.
+     * See {@link HitsFromQueryParallel} and {@link HitsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
 
