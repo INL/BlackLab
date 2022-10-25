@@ -224,7 +224,7 @@ public class FileProcessor implements AutoCloseable {
     private ErrorHandler errorHandler = new SimpleErrorHandler(false);
 
     /**
-     * Executor used for processing files, uses {@link MainThreadExecutorService} if
+     * Executor used for processing files, uses {@link CurrentThreadExecutorService} if
      * FileProcess was constructor with useThreads = false
      */
     private ExecutorService executor = null;
@@ -294,7 +294,7 @@ public class FileProcessor implements AutoCloseable {
             // just in between checking state and submitting)
             ((ThreadPoolExecutor) executor).setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
         } else {
-            executor = new MainThreadExecutorService((r, e) -> {
+            executor = new CurrentThreadExecutorService((r, e) -> {
                 /* swallow RejectedExecutionExceptions, same as above. */ });
         }
     }

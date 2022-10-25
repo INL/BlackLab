@@ -25,6 +25,7 @@ import nl.inl.util.ThreadAborter;
  * 
  * HitsFromQueryParallel generally constructs one SpansReader instance per segment ({@link LeafReaderContext}) of the index.
  * The SpansReader will then produce results for the segment, periodically merging them back to the global resultset passed in.
+ * The global result set is contained within HitsFromQueryParallel, and when finished, exposed as Hits.
  */
 class SpansReader implements Runnable {
 

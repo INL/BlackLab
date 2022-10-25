@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -25,6 +26,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.util.CurrentThreadExecutorService;
 
 public class HitsFromQueryParallel extends HitsMutable {
 
@@ -164,27 +166,28 @@ public class HitsFromQueryParallel extends HitsMutable {
         boolean hasLock = false;
         List<Future<?>> pendingResults = null;
         try {
-            while (!ensureHitsReadLock.tryLock()) {
+            while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
                 /*
-                * Another thread is already working on hits, we don't want to straight up block until it's done
-                * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
+                * Another thread is already working on hits, we don't want to straight up block until it's done,
+                * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
                 if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
                     return;
                 }
-                Thread.sleep(HIT_POLLING_TIME_MS);
             }
             hasLock = true;
             
-            // This is the blocking portion, retrieve all hits from the other threads.
-            final ExecutorService executorService = queryInfo().index().blackLab().searchExecutorService();
+            // This is the blocking portion, start worker threads, then wait for them to finish.
+            final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
+            final ExecutorService executorService = numThreads >= 2
+                    ? queryInfo().index().blackLab().searchExecutorService()
+                    : new CurrentThreadExecutorService();
 
             final AtomicLong i = new AtomicLong();
-            final int numThreads = Math.max(queryInfo().index().blackLab().maxThreadsPerSearch(), 1);
             pendingResults = spansReaders
                 .stream()
-                .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use.
+                .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use (one list in case of single thread).
                 .values()
                 .stream()
                 .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
