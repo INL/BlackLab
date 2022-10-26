@@ -1,7 +1,9 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import org.apache.logging.log4j.LogManager;
@@ -319,5 +321,33 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         return matchingGroupId;
+    }
+
+    private void printSensitivityInformation(MatchSensitivity sens) {
+        int[] groupMapping = sens.equals(MatchSensitivity.SENSITIVE) ? this.sensitivePosition2GroupId : this.insensitivePosition2GroupId;
+        System.out.println("----- " + sens.toString() + " -----");
+        for (int i = 0; i < groupMapping.length; ++i) {
+            int groupID = this.sensitivePosition2GroupId[i];
+            int groupSize = this.groupId2TermIds[groupID];
+            int[] groupContents = new int[groupSize];
+            System.arraycopy(this.groupId2TermIds, groupID + 1, groupContents, 0, groupSize);
+
+            String[] terms = new String[groupSize];
+            for (int j = 0; j < groupContents.length; ++j) terms[j] = this.get(groupContents[j]);
+            System.out.println(i + "\t" + Arrays.toString(terms));
+        }
+    }
+
+    public void printDebugInformation() {
+        System.out.println("---- debug information for Terms -----");
+        System.out.println("----- Per ID -----");
+        for (int i = 0; i < this.numberOfTerms; ++i) {
+            String term = this.get(i);
+            int sensitive = this.termId2SensitivePosition[i];
+            int insensitive = this.termId2InsensitivePosition[i];
+            System.out.println(i + "\t" + term + "\t" + sensitive + "\t" + insensitive);
+        }
+        this.printSensitivityInformation(MatchSensitivity.SENSITIVE);
+        this.printSensitivityInformation(MatchSensitivity.INSENSITIVE);
     }
 }

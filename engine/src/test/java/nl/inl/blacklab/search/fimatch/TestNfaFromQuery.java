@@ -50,7 +50,7 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
+        public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
                 MatchSensitivity sensitivity) {
             if (annotNumber != 0)
                 throw new IllegalArgumentException("Unknown annotation " + annotNumber);
@@ -74,7 +74,7 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader() {
 
                 @Override
-                public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+                public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
                     throw new UnsupportedOperationException();
                     //return MockForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
                 }
@@ -98,26 +98,31 @@ public class TestNfaFromQuery {
                 }
 
                 @Override
-                public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
-                    if (docId != 0)
-                        throw new IllegalArgumentException("Unknown document " + docId);
+                public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+                    if (segmentDocId != 0)
+                        throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return new ForwardIndexDocumentIntArray(termIds);
                 }
 
                 @Override
-                public int getDocLength(int docId) {
-                    if (docId != 0)
-                        throw new IllegalArgumentException("Unknown document " + docId);
+                public int getDocLength(int segmentDocId) {
+                    if (segmentDocId != 0)
+                        throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return termIds.length;
                 }
 
                 @Override
-                public int[] getChunk(int annotIndex, int docId, int start, int end) {
+                public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
                     if (annotIndex != 0)
                         throw new IllegalArgumentException("Unknown annotation " + annotIndex);
-                    if (docId != 0)
-                        throw new IllegalArgumentException("Unknown document " + docId);
+                    if (segmentDocId != 0)
+                        throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return Arrays.copyOfRange(termIds, start, end);
+                }
+
+                @Override
+                public int[] getChunkSegmentTermIds(int annotIndex, int segmentDocId, int start, int end) {
+                    throw new UnsupportedOperationException();
                 }
 
             };
@@ -143,10 +148,15 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getToken(int annotIndex, int pos) {
+        public int getTokenSegmentTermId(int annotIndex, int pos) {
             if (!validPos(pos))
                 return -1;
             return input[pos];
+        }
+
+        @Override
+        public int getTokenGlobalTermId(int annotIndex, int pos) {
+            return getTokenSegmentTermId(annotIndex, pos);
         }
 
         @Override
@@ -155,12 +165,12 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public String getTermString(int annotIndex, int termId) {
+        public String getTermString(int annotIndex, int segmentTermId) {
             throw new UnsupportedOperationException();
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
             throw new UnsupportedOperationException();
         }
     }

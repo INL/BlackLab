@@ -20,9 +20,9 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
 
     private final String compareToTermString;
 
-    private int compareToTermId = -1;
+    private int compareToGlobalTermId = -1;
 
-    private MutableIntSet compareToTermIds;
+    private MutableIntSet compareToGlobalTermIds;
 
     private final MatchSensitivity sensitivity;
 
@@ -89,21 +89,21 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
         int tokenPosition = span.start();
         if (annotIndex < 0)
             return ConstraintValue.get(tokenPosition);
-        int leftTermId = fiDoc.getToken(annotIndex, tokenPosition);
-        if (compareToTermId >= 0)
-            return ConstraintValue.get(leftTermId == compareToTermId); // just a single term to compare to
-        return ConstraintValue.get(compareToTermIds.contains(leftTermId)); // multiple terms, use set.contains()
+        int leftTermGlobalId = fiDoc.getTokenGlobalTermId(annotIndex, tokenPosition);
+        if (compareToGlobalTermId >= 0)
+            return ConstraintValue.get(leftTermGlobalId == compareToGlobalTermId); // just a single term to compare to
+        return ConstraintValue.get(compareToGlobalTermIds.contains(leftTermGlobalId)); // multiple terms, use set.contains()
     }
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         if (annotationName != null) {
             annotIndex = fiAccessor.getAnnotationNumber(annotationName);
-            compareToTermIds = new IntHashSet();
-            compareToTermId = -1;
-            fiAccessor.getTermNumbers(compareToTermIds, annotIndex, compareToTermString, sensitivity);
-            if (compareToTermIds.size() == 1) {
-                compareToTermId = compareToTermIds.intIterator().next();
+            compareToGlobalTermIds = new IntHashSet();
+            compareToGlobalTermId = -1;
+            fiAccessor.getGlobalTermNumbers(compareToGlobalTermIds, annotIndex, compareToTermString, sensitivity);
+            if (compareToGlobalTermIds.size() == 1) {
+                compareToGlobalTermId = compareToGlobalTermIds.intIterator().next();
             }
         }
     }

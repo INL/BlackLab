@@ -1,16 +1,12 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
 
-import nl.inl.blacklab.forwardindex.TermsIntegrated;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -28,7 +24,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
     private final Terms terms;
 
     /** The global terms object, which we use to implement get() and termsEqual() */
-    private TermsIntegrated termsIntegrated;
+    private nl.inl.blacklab.forwardindex.Terms termsIntegrated;
 
     /** Our segment number */
     private int ord;
@@ -111,41 +107,6 @@ public class BLTerms extends Terms implements TermsSegmentReader {
         return terms.getStats();
     }
 
-    /**
-     * Read and store the terms in this segment and return term mapping.
-     *
-     * If a new term is found, it is added to the global term map. If the term
-     * occurred before, the existing term id is used.
-     *
-     * @param globalTermIds map of term string to global term id
-     * @return list mapping term ids in this segment to global term id
-     * @throws IOException
-     */
-    public List<Integer> getSegmentToGlobalMapping(Map<String, Integer> globalTermIds) throws IOException {
-        TermsEnum ti = iterator();
-        List<Integer> thisSegmentToGlobal = new ArrayList<>();
-        while (true) {
-            BytesRef termBytes = ti.next();
-            if (termBytes == null)
-                break;
-            String term = termBytes.utf8ToString();
-            term = term.intern(); // save memory by avoiding duplicates
-
-            // Determine global term id
-            int globalTermId;
-            if (!globalTermIds.containsKey(term)) {
-                globalTermId = globalTermIds.size();
-                globalTermIds.put(term, globalTermId);
-            } else {
-                globalTermId = globalTermIds.get(term);
-            }
-
-            // Keep track of mapping from this segment's term id to global term id
-            thisSegmentToGlobal.add(globalTermId);
-        }
-        return thisSegmentToGlobal;
-    }
-
     @Override
     public String get(int id) {
         return termsIntegrated.get(termsIntegrated.segmentIdToGlobalId(ord, id));
@@ -157,7 +118,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
         return termsIntegrated.termsEqual(globalTermIds, sensitivity);
     }
 
-    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+    public void setTermsIntegrated(nl.inl.blacklab.forwardindex.Terms termsIntegrated, int ord) {
         this.termsIntegrated = termsIntegrated;
         this.ord = ord;
     }

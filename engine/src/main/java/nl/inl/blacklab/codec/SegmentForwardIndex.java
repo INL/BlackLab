@@ -7,11 +7,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
@@ -25,65 +25,12 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Tokens index file record consists of offset in tokens file, doc length in tokens, and tokens encoding scheme. */
     private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES;
 
-    /** Information about Lucene fields that represent BlackLab annotations */
-    private static class Fields {
-        Map<String, Field> fieldsByName = new LinkedHashMap<>();
-
-        public Fields(IndexInput input) throws IOException {
-            long size = input.length();
-            while (input.getFilePointer() < size) {
-                String fieldName = input.readString();
-                long termIndexOffset = input.readLong();
-                long tokensIndexOffset = input.readLong();
-                Field field = new Field(fieldName, termIndexOffset, tokensIndexOffset);
-                fieldsByName.put(fieldName, field);
-            }
-        }
-
-        public Field get(String name) {
-            return fieldsByName.get(name);
-        }
-    }
-
-    /** Information about a Lucene field that represents a BlackLab annotation */
-    private static class Field {
-
-        private final String fieldName;
-
-        private final long termIndexOffset;
-
-        private final long tokensIndexOffset;
-
-        public Field(String fieldName, long termIndexOffset, long tokensIndexOffset) {
-            this.fieldName = fieldName;
-            this.termIndexOffset = termIndexOffset;
-            this.tokensIndexOffset = tokensIndexOffset;
-        }
-
-        public String getFieldName() {
-            return fieldName;
-        }
-
-        public long getTermIndexOffset() {
-            return termIndexOffset;
-        }
-
-        public long getTokensIndexOffset() {
-            return tokensIndexOffset;
-        }
-    }
-
     /** Our fields producer */
     private final BlackLab40PostingsReader fieldsProducer;
 
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
-    private final Fields fields;
+    private final Map<String, Field> fieldsByName = new LinkedHashMap<>();
 
-    /** Contains offsets into termsFile where the string for each term can be found */
-    private IndexInput _termIndexFile;
-
-    /** Contains term strings for all fields */
-    private IndexInput _termsFile;
 
     /** Contains indexes into the tokens file for all field and documents */
     private IndexInput _tokensIndexFile;
@@ -91,17 +38,20 @@ class SegmentForwardIndex implements AutoCloseable {
     /** Contains the tokens for all fields and documents */
     private IndexInput _tokensFile;
 
-    public SegmentForwardIndex(BlackLab40PostingsReader fieldsProducer, SegmentReadState state) throws IOException {
-        this.fieldsProducer = fieldsProducer;
 
-        try (IndexInput fieldsFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.FIELDS_EXT)) {
-            fields = new Fields(fieldsFile);
+    public SegmentForwardIndex(BlackLab40PostingsReader postingsReader) throws IOException {
+        this.fieldsProducer = postingsReader;
+
+        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
+            long size = fieldsFile.length();
+            while (fieldsFile.getFilePointer() < size) {
+                Field f = new Field(fieldsFile);
+                this.fieldsByName.put(f.getFieldName(), f);
+            }
         }
 
-        _termIndexFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TERMINDEX_EXT);
-        _termsFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TERMS_EXT);
-        _tokensIndexFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-        _tokensFile = fieldsProducer.openIndexFile(state, BlackLab40PostingsFormat.TOKENS_EXT);
+        _tokensIndexFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+        _tokensFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.TOKENS_EXT);
     }
 
     @Override
@@ -109,14 +59,17 @@ class SegmentForwardIndex implements AutoCloseable {
         try {
             _tokensFile.close();
             _tokensIndexFile.close();
-            _termsFile.close();
-            _termIndexFile.close();
-            _termIndexFile = _termsFile = _tokensIndexFile = _tokensFile = null;
+            _tokensIndexFile = _tokensFile = null;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    /** 
+     * Get a new ForwardIndexSegmentReader on this segment. 
+     * Though the reader is not Threadsafe, a new instance is returned every time, 
+     * So this function can be used from multiple threads. 
+     */
     ForwardIndexSegmentReader reader() {
         return new Reader();
     }
@@ -224,7 +177,7 @@ class SegmentForwardIndex implements AutoCloseable {
         private void getDocOffsetAndLength(String luceneField, int docId)  {
             try {
                 tokensIndex(); // ensure input available
-                long fieldTokensIndexOffset = fields.get(luceneField).getTokensIndexOffset();
+                long fieldTokensIndexOffset = fieldsByName.get(luceneField).getTokensIndexOffset();
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
@@ -250,14 +203,11 @@ class SegmentForwardIndex implements AutoCloseable {
 
         @Override
         public TermsSegmentReader terms(String luceneField) {
-            BLTerms terms;
             try {
-                terms = fieldsProducer.terms(luceneField);
+                return fieldsProducer.terms(luceneField);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-
-            return terms;
         }
     }
 }

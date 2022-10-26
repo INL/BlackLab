@@ -55,25 +55,31 @@ public class ForwardIndexAccessorExternal extends ForwardIndexAccessorAbstract {
         }
 
         @Override
-        public ForwardIndexDocument advanceForwardIndexDoc(int docId) {
-            return new ForwardIndexDocumentImpl(this, docId);
+        public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+            return new ForwardIndexDocumentImpl(this, segmentDocId);
         }
 
         @Override
-        public int getDocLength(int docId) {
+        public int getDocLength(int segmentDocId) {
             // NOTE: we subtract one because we always have an "extra closing token" at the end that doesn't
             //       represent a word, just any closing punctuation after the last word.
-            return fis.get(0).docLength(docId + readerContext.docBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            return fis.get(0).docLength(segmentDocId + readerContext.docBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
         }
 
         final int[] starts = { 0 };
         final int[] ends = { 0 };
 
         @Override
-        public int[] getChunk(int annotIndex, int docId, int start, int end) {
+        public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
             starts[0] = start;
             ends[0] = end;
-            return fis.get(annotIndex).retrievePartsInt(docId + readerContext.docBase, starts, ends).get(0);
+            return fis.get(annotIndex).retrievePartsInt(segmentDocId + readerContext.docBase, starts, ends).get(0);
+        }
+
+        @Override
+        public int[] getChunkSegmentTermIds(int annotIndex, int segmentDocId, int start, int end) {
+            // in external, there are only global term ids!
+            return getChunkGlobalTermIds(annotIndex, segmentDocId, start, end);
         }
 
         @Override
@@ -87,7 +93,7 @@ public class ForwardIndexAccessorExternal extends ForwardIndexAccessorAbstract {
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
             return ForwardIndexAccessorExternal.this.termsEqual(annotIndex, segmentTermIds, sensitivity);
         }
     }

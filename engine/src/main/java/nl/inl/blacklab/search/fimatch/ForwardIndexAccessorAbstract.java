@@ -76,17 +76,17 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     }
 
     @Override
-    public void getTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
+    public void getGlobalTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
             MatchSensitivity sensitivity) {
         terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
     }
 
-    protected String getTermString(int annotIndex, int termId) {
-        return terms.get(annotIndex).get(termId);
+    protected String getTermString(int annotIndex, int globalTermId) {
+        return terms.get(annotIndex).get(globalTermId);
     }
 
-    protected boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-        return terms.get(annotIndex).termsEqual(termId, sensitivity);
+    protected boolean termsEqual(int annotIndex, int[] globalTermIds, MatchSensitivity sensitivity) {
+        return terms.get(annotIndex).termsEqual(globalTermIds, sensitivity);
     }
 
     protected int numberOfAnnotations() {

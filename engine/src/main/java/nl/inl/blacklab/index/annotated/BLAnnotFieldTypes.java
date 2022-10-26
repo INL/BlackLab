@@ -35,7 +35,7 @@ public class BLAnnotFieldTypes {
             if (contentStore) {
                 // store field in content store (for random access)
                 // (we set this regardless of our index format, but that's okay, it doesn't hurt anything if not used)
-                BlackLabIndexIntegrated.setContentStoreFIeld(type);
+                BlackLabIndexIntegrated.setContentStoreField(type);
             }
             if (forwardIndex) {
                 // store field in content store (for random access)

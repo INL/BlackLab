@@ -69,8 +69,8 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         int tokenPosition = span.start();
         if (annotationIndex < 0)
             return ConstraintValue.get(tokenPosition);
-        int termId = fiDoc.getToken(annotationIndex, tokenPosition);
-        String term = fiDoc.getTermString(annotationIndex, termId);
+        int segmentTermId = fiDoc.getTokenSegmentTermId(annotationIndex, tokenPosition);
+        String term = fiDoc.getTermString(annotationIndex, segmentTermId);
         return ConstraintValue.get(term);
     }
 

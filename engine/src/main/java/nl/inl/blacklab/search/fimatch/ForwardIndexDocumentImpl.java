@@ -21,7 +21,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     private final ForwardIndexAccessorLeafReader fiAccessor;
 
     /** Document id (within the segment) of the document we're looking at */
-    private final int docId;
+    private final int segmentDocId;
 
     /** Number of tokens in document.
      *  NOTE: This does NOT include the extra closing token at the end.
@@ -37,12 +37,12 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
      * Construct a token reader for one or more annotations from one forward index document.
      *
      * @param fiAccessor forward index accessor for this segment
-     * @param docId document if within this segment
+     * @param segmentDocId document if within this segment
      */
-    public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int docId) {
+    public ForwardIndexDocumentImpl(ForwardIndexAccessorLeafReader fiAccessor, int segmentDocId) {
         this.fiAccessor = fiAccessor;
-        this.docId = docId;
-        this.docLengthTokens = fiAccessor.getDocLength(docId);
+        this.segmentDocId = segmentDocId;
+        this.docLengthTokens = fiAccessor.getDocLength(segmentDocId);
 
         // Create empty lists of chunks for each annotation
         for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
@@ -51,7 +51,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     }
 
     @Override
-    public int getToken(int annotIndex, int pos) {
+    public int getTokenSegmentTermId(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
             return Terms.NO_TERM;
 
@@ -71,7 +71,35 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
         // Now, see if we have the chunk we want, and fetch it if not
         int[] chunk = chunks.get(whichChunk);
         if (chunk == null) {
-            chunk = fetchChunk(annotIndex, whichChunk);
+            chunk = fetchChunkSegmentTermIds(annotIndex, whichChunk);
+            chunks.set(whichChunk, chunk);
+        }
+
+        return chunk[posWithinChunk];
+    }
+
+    @Override
+    public int getTokenGlobalTermId(int annotIndex, int pos) {
+        if (pos < 0 || pos >= docLengthTokens)
+            return Terms.NO_TERM;
+
+        // Get the list of chunks for the annotation we're interested in,
+        // and the forward index object to get more.
+        List<int[]> chunks = allAnnotChunks.get(annotIndex);
+
+        // Where can our token be found?
+        int whichChunk = pos / CHUNK_SIZE;
+        int posWithinChunk = pos % CHUNK_SIZE;
+
+        // Make sure we have the chunk we need:
+        // First, make sure the list is long enough.
+        // (we fill with nulls to avoid fetching chunks we don't need)
+        while (chunks.size() <= whichChunk)
+            chunks.add(null);
+        // Now, see if we have the chunk we want, and fetch it if not
+        int[] chunk = chunks.get(whichChunk);
+        if (chunk == null) {
+            chunk = fetchChunkGlobalTermIds(annotIndex, whichChunk);
             chunks.set(whichChunk, chunk);
         }
 
@@ -81,28 +109,48 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
 
     /**
      * Fetch a chunk from the forward index for the specified annotation.
-     * 
+     *
+     * NOTE: returns global term ids!
+     *
      * @param annotIndex which annotation we want a forward index chunk for
      * @param number the chunk number to fetch
      * @return the chunk
      */
-    private int[] fetchChunk(int annotIndex, int number) {
+    private int[] fetchChunkGlobalTermIds(int annotIndex, int number) {
         int start = number * CHUNK_SIZE;
         int end = start + CHUNK_SIZE;
         if (end > docLengthTokens) {
             end = docLengthTokens;
         }
-        return fiAccessor.getChunk(annotIndex, docId, start, end);
+        return fiAccessor.getChunkGlobalTermIds(annotIndex, segmentDocId, start, end);
+    }
+
+    /**
+     * Fetch a chunk from the forward index for the specified annotation.
+     *
+     * NOTE: returns segment-local term ids!
+     *
+     * @param annotIndex which annotation we want a forward index chunk for
+     * @param number the chunk number to fetch
+     * @return the chunk
+     */
+    private int[] fetchChunkSegmentTermIds(int annotIndex, int number) {
+        int start = number * CHUNK_SIZE;
+        int end = start + CHUNK_SIZE;
+        if (end > docLengthTokens) {
+            end = docLengthTokens;
+        }
+        return fiAccessor.getChunkSegmentTermIds(annotIndex, segmentDocId, start, end);
     }
 
     @Override
-    public String getTermString(int annotIndex, int termId) {
-        return fiAccessor.getTermString(annotIndex, termId);
+    public String getTermString(int annotIndex, int segmentTermId) {
+        return fiAccessor.getTermString(annotIndex, segmentTermId);
     }
 
     @Override
-    public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
-        return fiAccessor.termsEqual(annotIndex, termId, sensitivity);
+    public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
+        return fiAccessor.segmentTermsEqual(annotIndex, segmentTermId, sensitivity);
     }
 
     @Override

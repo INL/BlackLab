@@ -178,7 +178,7 @@ public class AnnotationWriter {
 
         // Main sensitivity of main annotation may get content store
         boolean contentStore = false; // Content store has its own field, e.g. contents#cs
-        return BLAnnotFieldTypes.get(offsets, hasForwardIndex, contentStore);
+        return BLAnnotFieldTypes.get(offsets, hasForwardIndex && isMainSensitivity, contentStore);
     }
 
     public void addToLuceneDoc(Document doc, String annotatedFieldName, IntArrayList startChars,

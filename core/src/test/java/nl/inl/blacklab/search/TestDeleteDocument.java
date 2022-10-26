@@ -23,9 +23,7 @@ public class TestDeleteDocument {
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<BlackLabIndex.IndexType> typeToUse() {
-        // FIXME: re-enable tests with IndexType.INTEGRATED when the issue with term ids has been solved
-        //        (should be the case in branch speedup-terms-integrated, which will be merged soon)
-        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES /*, BlackLabIndex.IndexType.INTEGRATED*/);
+        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES, BlackLabIndex.IndexType.INTEGRATED);
     }
 
     @Parameterized.Parameter

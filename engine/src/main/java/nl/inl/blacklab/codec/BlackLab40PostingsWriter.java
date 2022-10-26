@@ -1,6 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +19,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
@@ -36,9 +38,12 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -141,6 +146,63 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
     }
 
+    /** 
+     * Information about a Lucene field that represents a BlackLab annotation in the forward index.
+     * A Field's information is only valid for the segment (leafreadercontext) of the index it was read from.
+     * Contains offsets into files comprising the terms strings and forward index information.
+     * Such as where in the term strings file the strings for this field begin.
+     * See integrated.md
+    */
+    public static class Field {
+        private final String fieldName;
+        protected int numberOfTerms;
+        protected long termOrderOffset;
+        protected long termIndexOffset;
+        protected long tokensIndexOffset;
+
+        protected Field(String fieldName) {  this.fieldName = fieldName; }
+        
+        /** Read our values from the file */
+        public Field(IndexInput file) throws IOException {
+            this.fieldName = file.readString();
+            this.numberOfTerms = file.readInt();
+            this.termOrderOffset = file.readLong();
+            this.termIndexOffset = file.readLong();
+            this.tokensIndexOffset = file.readLong();
+        }
+
+        public Field(String fieldName, int numberOfTerms, long termIndexOffset, long termOrderOffset, long tokensIndexOffset) {
+            this.fieldName = fieldName;
+            this.numberOfTerms = numberOfTerms;
+            this.termOrderOffset = termOrderOffset;
+            this.termIndexOffset = termIndexOffset;
+            this.tokensIndexOffset = tokensIndexOffset;
+        }
+
+        public String getFieldName() { return fieldName; }
+        public int getNumberOfTerms() { return numberOfTerms; }
+        public long getTermIndexOffset() { return termIndexOffset; }
+        public long getTermOrderOffset() { return termOrderOffset; }
+        public long getTokensIndexOffset() { return tokensIndexOffset; }
+
+        public void write(IndexOutput file) throws IOException {
+            file.writeString(getFieldName());
+            file.writeInt(getNumberOfTerms());
+            file.writeLong(getTermOrderOffset());
+            file.writeLong(getTermIndexOffset());
+            file.writeLong(getTokensIndexOffset());
+        }
+    }
+
+    private static class FieldMutable extends Field {
+        public FieldMutable(String fieldName) { super(fieldName); }
+
+        public void setNumberOfTerms(int number) { this.numberOfTerms = number; }
+        public void setTermIndexOffset(long offset) { this.termIndexOffset = offset; }
+        public void setTermOrderOffset(long offset) { this.termOrderOffset = offset; }
+        public void setTokensIndexOffset(long offset) { this.tokensIndexOffset = offset; }
+    }
+
     /**
      * Write our additions to the default postings (i.e. the forward index)
      *
@@ -158,16 +220,16 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
 
+        Map<String, FieldMutable> fiFields = new HashMap<>();
+
         try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
                 IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
 
-            // Keep track of starting offset in termindex and tokensindex files per field
-            Map<String, Long> field2TermIndexOffsets = new HashMap<>();
-            Map<String, Long> field2TokensIndexOffsets = new HashMap<>();
-
             // Write our postings extension information
             try (IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
-                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT)) {
+                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
+                    IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMORDER_EXT)
+            ) {
 
                 // We'll keep track of doc lengths so we can preallocate our forward index structure.
                 Map<Integer, Integer> docLengths = new HashMap<>();
@@ -180,13 +242,15 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                 //  (we're trying to reconstruct the document), so we will do that below.
                 //   we use temporary files because this might take a huge amount of memory)
                 // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
-                Map<String, SortedMap<Integer, Map<Integer, Long>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
+                Map<String/*field*/, SortedMap<Integer/*lucene doc id*/, Map<Integer/*termID*/, Long/*filePointer*/>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
                 try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
                     // Process fields
                     for (String luceneField: fields) { // for each field
                         // If this field should get a forward index...
                         if (BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
+                            FieldMutable offsets = fiFields.computeIfAbsent(luceneField, FieldMutable::new);
+                            
                             // We're creating a forward index for this field.
                             // That also means that the payloads will include an "is-primary-value" indicator,
                             // so we know which value to store in the forward index (the primary value, i.e.
@@ -195,7 +259,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             // for details.
 
                             // Record starting offset of field in termindex file (written to fields file later)
-                            field2TermIndexOffsets.put(luceneField, termIndexFile.getFilePointer());
+                            offsets.setTermIndexOffset(termIndexFile.getFilePointer());
 
                             // Keep track of where to find term positions for each document
                             // (for reversing index)
@@ -209,15 +273,21 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                             PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
                             Terms terms = fields.terms(luceneField);
                             TermsEnum termsEnum = terms.iterator();
+
+
                             int termId = 0;
+                            List<String> termsList = new ArrayList<>();
+
                             while (true) {
                                 BytesRef term = termsEnum.next();
                                 if (term == null)
                                     break;
 
                                 // Write the term to the terms file
+                                String termString = term.utf8ToString();
                                 termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
-                                termsFile.writeString(term.utf8ToString());          // term string
+                                termsFile.writeString(termString);
+                                termsList.add(termString);
 
                                 // For each document containing this term...
                                 postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
@@ -270,6 +340,22 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
                                 termId++;
                             }
+
+                            // begin writing term IDs and sort orders
+                            Collators collators = Collators.defaultCollator();
+                            int[] sensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
+                            int[] insensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
+                            int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
+                            int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
+
+                            int numTerms = termsList.size();
+                            fiFields.get(luceneField).setNumberOfTerms(numTerms);
+                            fiFields.get(luceneField).setTermOrderOffset(termsOrderFile.getFilePointer());
+                            // write out, specific order.
+                            for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
+                            for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
+                            for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
                         }
                     }
                 }
@@ -281,15 +367,15 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
                     // For each field...
                     for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
-                        String field = fieldEntry.getKey();
-                        SortedMap<Integer, Map<Integer, Long>> docPosOffsets = fieldEntry.getValue();
+                        String luceneField = fieldEntry.getKey();
+                        SortedMap<Integer/*docID*/, Map<Integer/*termID*/, Long/*file offset*/>> docPosOffsets = fieldEntry.getValue();
 
                         // Record starting offset of field in tokensindex file (written to fields file later)
-                        field2TokensIndexOffsets.put(field, outTokensIndexFile.getFilePointer());
+                        fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
 
                         // For each document...
                         for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
-                            Map<Integer, Long> termPosOffsets = docPosOffsets.get(docId);
+                            Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.get(docId);
                             if (termPosOffsets == null)
                                 termPosOffsets = Collections.emptyMap();
                             int docLength = docLengths.getOrDefault(docId, 0);
@@ -306,7 +392,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                                 //       retrieval slower though.
                                 Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
                                 // For each term...
-                                for (Map.Entry<Integer, Long> e: termPosOffsets.entrySet()) {
+                                for (Map.Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
                                     int termId = e.getKey();
                                     inTermVectorFile.seek(e.getValue());
                                     int nOccurrences = inTermVectorFile.readInt();
@@ -329,14 +415,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
             // Write fields file, now that we know all the relevant offsets
             try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
-                for (String field: fields) { // for each field
-                    // If it's (part of) an annotated field...
-                    if (field2TermIndexOffsets.containsKey(field)) {
-                        // Record field name and offset into term index and tokens index files
-                        fieldsFile.writeString(field);
-                        fieldsFile.writeLong(field2TermIndexOffsets.get(field));
-                        fieldsFile.writeLong(field2TokensIndexOffsets.get(field));
-                    }
+                // for each field that has a forward index...
+                for (Field field : fiFields.values()) {
+                    // write the information to field fields file, see integrated.md
+                    field.write(fieldsFile);
                 }
             }
         } catch (IOException e) {
@@ -355,7 +437,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @param outTokensIndexFile token index file
      * @param outTokensFile      tokens file
      * @param tokensInDoc        tokens to write
-     * @throws IOException
+     * @throws IOException       When failing to write
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
         TokensEncoding tokensEncoding = allTheSame(tokensInDoc) ?
@@ -443,5 +525,41 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     public void close() throws IOException {
         delegateFieldsConsumer.close();
     }
+    /**
+     * Given a list of terms, return the indices to sort them.
+     * E.G: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
+     */
+    private static int[] getTermSortOrder(List<String> terms, Collator coll) {
+        int[] ret = new int[terms.size()];
+        for (int i = 0; i < ret.length; ++i) ret[i] = i;
+        IntArrays.quickSort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
+        return ret;
+    }
 
+    
+    /**
+     * Invert the given array so the values become the indexes and vice versa.
+     *
+     * @param array array to invert
+     * @return inverted array
+     */
+    private static int[] invert(List<String> terms, int[] array, Collator collator) {
+        int[] result = new int[array.length];
+        int prevSortPosition = -1;
+        int prevTermId = -1;
+        for (int i = 0; i < array.length; i++) {
+            int termId = array[i];
+            int sortPosition = i;
+            if (prevTermId >= 0 && collator.equals(terms.get(prevTermId), terms.get(termId))) {
+                // Keep the same sort position because the terms are the same
+                sortPosition = prevSortPosition;
+            } else {
+                // Remember the sort position in case the next term is identical
+                prevSortPosition = sortPosition;
+            }
+            result[termId] = sortPosition;
+            prevTermId = termId;
+        }
+        return result;
+    }
 }

@@ -40,10 +40,10 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
-    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
 
     /** Lucene field attribute. Does the field have a content store */
-    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+    static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
 
     /**
      * Does the specified Lucene field have a forward index stored with it?
@@ -110,7 +110,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * Set this field type to be a content store field
      * @param type field type
      */
-    public static void setContentStoreFIeld(FieldType type) {
+    public static void setContentStoreField(FieldType type) {
         type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
     }
 

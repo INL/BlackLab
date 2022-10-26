@@ -77,21 +77,23 @@ public class MatchFilterSameTokens extends MatchFilter {
 
     @Override
     public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-        int[] termId = new int[2];
+        int[] segmentTermIds = new int[2];
         for (int i = 0; i < 2; i++) {
             Span span = capturedGroups[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
             int tokenPosition = span.start();
-            if (annotIndex < 0)
-                termId[i] = tokenPosition;
-            else
-                termId[i] = fiDoc.getToken(annotIndex, tokenPosition);
+            if (annotIndex < 0) {
+                // strange... (if not annotation given, compare positions..!? shouldn't happen, but...)
+                segmentTermIds[i] = tokenPosition;
+            } else {
+                segmentTermIds[i] = fiDoc.getTokenSegmentTermId(annotIndex, tokenPosition);
+            }
         }
         if (sensitivity == MatchSensitivity.SENSITIVE)
-            return ConstraintValue.get(termId[0] == termId[1]);
+            return ConstraintValue.get(segmentTermIds[0] == segmentTermIds[1]);
         // (Somewhat) insensitive; let Terms determine if term ids have the same sort position or not
-        return ConstraintValue.get(fiDoc.termsEqual(annotIndex, termId, sensitivity));
+        return ConstraintValue.get(fiDoc.segmentTermsEqual(annotIndex, segmentTermIds, sensitivity));
     }
 
     @Override

@@ -17,7 +17,7 @@ public class TestNfa {
     static final class MockFiAccessor implements ForwardIndexAccessor {
 
         @Override
-        public void getTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
+        public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
                 MatchSensitivity sensitivity) {
             if (annotNumber != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
@@ -49,7 +49,7 @@ public class TestNfa {
         }
 
         @Override
-        public int getToken(int annotIndex, int pos) {
+        public int getTokenSegmentTermId(int annotIndex, int pos) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
             if (!validPos(pos))
@@ -58,23 +58,28 @@ public class TestNfa {
         }
 
         @Override
+        public int getTokenGlobalTermId(int annotIndex, int pos) {
+            return getTokenSegmentTermId(annotIndex, pos);
+        }
+
+        @Override
         public boolean validPos(int pos) {
             return pos >= 0 && pos < input.length();
         }
 
         @Override
-        public String getTermString(int annotIndex, int termId) {
+        public String getTermString(int annotIndex, int segmentTermId) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
-            return Character.toString((char) termId);
+            return Character.toString((char) segmentTermId);
         }
 
         @Override
-        public boolean termsEqual(int annotIndex, int[] termId, MatchSensitivity sensitivity) {
+        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
             if (annotIndex != 0)
                 throw new BlackLabRuntimeException("only 0 is valid annotation");
-            for (int i = 1; i < termId.length; i++) {
-                if (termId[i] != termId[0])
+            for (int i = 1; i < segmentTermId.length; i++) {
+                if (segmentTermId[i] != segmentTermId[0])
                     return false;
             }
             return true;

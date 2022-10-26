@@ -28,10 +28,19 @@ Forward index files currently have a codec name of `BlackLab40Postings` and a ve
 
 - For each field annotation:
   * Lucene field name (str), e.g. "contents%lemma"
+  * number of terms in this field (int)
+  * offset of field in termorder file (long)
   * offset of field in termindex file (long)
   * offset of field in tokensindex file (long)
 
 This file will have an extension of `.blfi.fields`.
+
+### termorder - indexbuffers for a sorted view on the terms
+
+- int[number of terms n]: termID2InsensitivePos - sort positions of the terms (i.e. what position would the term have after sorting the list of terms insensitively)
+- int[number of terms n]: insensitivePos2TermID - what term would be at this position if the list was sorted?
+- int[number of terms n]: termID2SensitivePos - sort positions of the terms (i.e. what position would the term have after sorting the list of terms sensitively) 
+- int[number of terms n]: sensitivePos2TermID - what term would be at this position if the list was sorted? 
 
 ### termindex - where to find term strings
 
