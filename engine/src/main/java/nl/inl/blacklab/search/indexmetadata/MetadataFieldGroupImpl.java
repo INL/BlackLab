@@ -67,7 +67,7 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
 
     public static MetadataFieldGroupImpl fromCustom(Map<String, Object> customStruct) {
         String name = (String)customStruct.getOrDefault("name", "UNKNOWN");
-        List<String> fieldNames = (List<String>)customStruct.getOrDefault("fieldNames",
+        List<String> fieldNames = (List<String>)customStruct.getOrDefault("fieldNamesInGroup",
                 Collections.emptyList());
         boolean addRemainingFields = (Boolean)customStruct.getOrDefault("addRemainingFields", false);
         return new MetadataFieldGroupImpl(name, fieldNames, addRemainingFields);

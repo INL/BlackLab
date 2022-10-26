@@ -76,3 +76,14 @@ corpusConfig:
           - title
     - name: Other fields group
       addRemainingFields: true
+
+  annotationGroups:
+      contents:
+        - name: Basic
+          annotations:
+            - word
+            - lemma
+        - name: Advanced
+          annotations:
+            - pos
+          addRemainingAnnotations: true

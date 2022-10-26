@@ -1,12 +1,12 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -163,14 +163,12 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     @Override
     public Map<String, ? extends MetadataFieldGroup> groups() {
-
-        //@@@@@@@@@@@@@@@@@
         List<Map<String, Object>> metadataFieldGroups = (List<Map<String, Object>>)topLevelCustom
-                .get("metadataFieldGroups", Collections.emptyMap());
-        Map<String, ? extends MetadataFieldGroup> result = metadataFieldGroups.stream()
+                .get("metadataFieldGroups", new ArrayList<Map<String, Object>>());
+        Map<String, MetadataFieldGroupImpl> result = metadataFieldGroups.stream()
                 .map( MetadataFieldGroupImpl::fromCustom)
-                .collect(Collectors.toMap());
-        //return Collections.unmodifiableMap(metadataFieldGroups);
+                .collect(Collectors.toMap(MetadataFieldGroupImpl::name, Function.identity()));
+        return result;
     }
 
     @Override

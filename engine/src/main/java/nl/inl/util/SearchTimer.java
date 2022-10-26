@@ -48,7 +48,7 @@ public class SearchTimer {
      */
     public void start() {
         if (timerRunning)
-            logger.debug("@@@@@ Timer.start: timer already running!");
+            logger.debug("### Timer.start: timer already running!");
         startTime = System.currentTimeMillis();
         timerRunning = true;
     }
@@ -61,7 +61,7 @@ public class SearchTimer {
             processingTime += System.currentTimeMillis() - startTime;
             timerRunning = false;
         } else {
-            logger.debug("@@@@@ Timer.stop: timer wasn't running!");
+            logger.debug("### Timer.stop: timer wasn't running!");
         }
     }
 
@@ -70,7 +70,7 @@ public class SearchTimer {
      */
     public void add(long ms) {
         if (timerRunning)
-            logger.debug("@@@@@ Timer.add: timer should not be running!");
+            logger.debug("### Timer.add: timer should not be running!");
         processingTime += ms;
     }
 }
