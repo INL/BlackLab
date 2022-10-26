@@ -4,11 +4,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.User;
 
 /**
- * Get debug info about the servlet and index. Only available in debug mode
- * (BlackLabServer.DEBUG_MODE == true)
+ * Get debug info about the servlet and index. Only available in debug mode.
  */
 public class RequestHandlerDebug extends RequestHandler {
     public RequestHandlerDebug(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
@@ -23,12 +24,16 @@ public class RequestHandlerDebug extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) {
+        boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
+        BlackLabServerParams params = new BlackLabServerParams(indexName, request, searchMan, user);
+        WebserviceParams searchParameters = WebserviceParamsImpl.get(false,
+                isDebugMode, params);
         ds.startMap()
                 .entry("indexName", indexName)
                 .entry("resource", urlResource)
                 .entry("rest", urlPathInfo)
                 .entry("queryString", request.getQueryString())
-                .entry("searchParam", servlet.getSearchParameters(false, request, indexName).toString())
+                .entry("searchParam", searchParameters.toString())
                 .endMap();
         return HTTP_OK;
     }

@@ -212,12 +212,12 @@ public class HitGroupsTokenFrequencies {
 
             // Unpack the requestedGroupingProperty into its constituents and sort those into the appropriate categories: hit and doc properties.
             {
-                List<HitProperty> props = requestedGroupingProperty.props() != null ? requestedGroupingProperty.props() : List.of(requestedGroupingProperty);
+                List<HitProperty> props = requestedGroupingProperty.propsList();
                 for (HitProperty p : props) {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
-                        if (asDocPropIfApplicable.props() != null) {
-                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen (when this code was originally written)");
+                        if (asDocPropIfApplicable.isCompound()) {
+                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen");
                         }
                         final int positionInUnpackedList = docProperties.size();
                         docProperties.add(asDocPropIfApplicable);

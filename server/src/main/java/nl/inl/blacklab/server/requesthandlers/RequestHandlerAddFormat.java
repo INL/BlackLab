@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -11,9 +12,8 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.DocIndexerFactoryUserFormats;
-import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.util.FileUploadHandler;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Add or update an input format configuration.
@@ -39,14 +39,10 @@ public class RequestHandlerAddFormat extends RequestHandler {
             throw new BadRequest("CANNOT_CREATE_INDEX",
                     "Adding a format requires the request to contain a single file in the 'data' field.");
 
-        String fileName = file.getName();
         try {
-            DocIndexerFactoryUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
-            if (formatMan == null)
-                throw new BadRequest("CANNOT_CREATE_INDEX ",
-                        "Could not create/overwrite format. The server is not configured with support for user content.");
-
-            formatMan.createUserFormat(user, fileName, file.getInputStream());
+            String fileName = file.getName();
+            InputStream fileInputStream = file.getInputStream();
+            WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
             return Response.success(ds, "Format added.");
         } catch (IOException e) {
             throw new BadRequest("", e.getMessage());

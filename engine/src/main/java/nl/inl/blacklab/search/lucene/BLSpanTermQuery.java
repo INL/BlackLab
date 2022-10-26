@@ -228,11 +228,7 @@ public class BLSpanTermQuery extends BLSpanQuery {
             hasForwardIndex = queryInfo.index().annotatedField(fieldName).annotation(annotationName).hasForwardIndex();
             hasForwardIndexDetermined = true;
         }
-        if (!hasForwardIndex)
-            return false;
-
-        // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        return !query.getTerm().text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
+        return hasForwardIndex;
     }
 
     @Override

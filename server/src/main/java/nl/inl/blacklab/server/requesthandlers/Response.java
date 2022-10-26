@@ -7,7 +7,11 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 
+/**
+ * Different BLS responses with response code and message.
+ */
 public class Response {
     static final Logger logger = LogManager.getLogger(Response.class);
 
@@ -123,9 +127,7 @@ public class Response {
     }
 
     public static int illegalIndexName(DataStream ds, String shortName) {
-        return badRequest(ds, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + Response.ILLEGAL_NAME_ERROR);
+        return badRequest(ds, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + IllegalIndexName.ILLEGAL_NAME_ERROR);
     }
-
-    public static final String ILLEGAL_NAME_ERROR = "is not a valid index name (only letters, digits, dots, underscores and dashes allowed, and must start with a letter)";
 
 }

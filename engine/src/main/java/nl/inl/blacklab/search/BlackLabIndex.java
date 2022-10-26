@@ -43,6 +43,8 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 public interface BlackLabIndex extends AutoCloseable {
 
+    String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
+
     /**
      * Should TokenStream payloads contain information about primary/secondary token values?
      *
@@ -502,4 +504,18 @@ public interface BlackLabIndex extends AutoCloseable {
     Query getAllRealDocsQuery();
 
     ForwardIndexAccessor forwardIndexAccessor(String searchField);
+
+    /**
+     * a document may be viewed when a contentViewable metadata field with a value
+     * true is registered with either the document or with the index metadata.
+     *
+     * @param indexMetadata our index metadata
+     * @param document document we want to view
+     * @return true iff the content from documents in the index may be viewed
+     */
+    default boolean mayView(Document document) {
+        if (metadata().metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
+            return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
+        return metadata().contentViewable();
+    }
 }

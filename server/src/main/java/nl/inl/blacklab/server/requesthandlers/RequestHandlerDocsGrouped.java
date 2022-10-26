@@ -1,25 +1,24 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import javax.servlet.http.HttpServletRequest;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.DocPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ResultDocsGrouped;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+
 /**
  * Request handler for grouped doc results.
  */
@@ -31,76 +30,39 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
+        ResultDocsGrouped result = WebserviceOperations.docsGrouped(params);
+        dstreamDocsGroupedResponse(ds, result);
+        return HTTP_OK;
+    }
 
-        // Make sure we have the hits search, so we can later determine totals.
-        SearchCacheEntry<ResultsStats> originalHitsSearch = null;
-        if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
-        }
-        // Get the window we're interested in
-        DocResults docResults = searchParam.docs().execute();
-        SearchCacheEntry<DocGroups> groupSearch = searchParam.docsGrouped().executeAsync();
-        DocGroups groups;
-        try {
-            groups = groupSearch.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
-
-        // Search is done; construct the results object
-
-        long first = searchParam.getLong("first");
-        if (first < 0)
-            first = 0;
-        long number = searchParam.getLong("number");
-        if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
-            number = searchMan.config().getParameters().getPageSize().getDefaultValue();
-        long numberOfGroupsInWindow = 0;
-        numberOfGroupsInWindow = number;
-        if (first + number > groups.size())
-            numberOfGroupsInWindow = groups.size() - first;
+    private void dstreamDocsGroupedResponse(DataStream ds, ResultDocsGrouped result) {
+        DocGroups groups = result.getGroups();
+        WindowStats ourWindow = result.getOurWindow();
 
         ds.startMap();
 
         // The summary
         ds.startEntry("summary").startMap();
-        WindowStats ourWindow = new WindowStats(first + number < groups.size(), first, number, numberOfGroupsInWindow);
-        ResultsStats hitsStats, docsStats;
-        hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
-        docsStats = searchParam.docsCount().executeAsync().peek();
 
-        // The list of groups found
-        DocProperty metadataGroupProperties = null;
-        DocResults subcorpus = null;
-        CorpusSize subcorpusSize = null;
-        boolean hasPattern = searchParam.hasPattern();
-        if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-            metadataGroupProperties = groups.groupCriteria();
-            subcorpus = searchParam.subcorpus().execute();
-            subcorpusSize = subcorpus.subcorpusSize();
+        DStream.summaryCommonFields(ds, result.getSummaryFields());
+
+        if (result.getNumResultDocs() != null) {
+            DStream.summaryNumDocs(ds, result.getNumResultDocs());
+        } else {
+            DStream.summaryNumHits(ds, result.getNumResultHits());
         }
-
-        SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        datastreamSummaryCommonFields(ds, searchParam, timings, groups, ourWindow);
-        if (hitsStats == null)
-            datastreamNumberOfResultsSummaryDocResults(ds, false, docResults, false, subcorpusSize);
-        else
-            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, true, false, subcorpusSize);
 
         ds.endMap().endEntry();
 
+        ds.startEntry("docGroups").startList();
+        Iterator<CorpusSize> it = result.getCorpusSizes().iterator();
         /* Gather group values per property:
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
          * contain the sub properties and values in the same order.
          */
-        boolean isMultiValueGroup = groups.groupCriteria() instanceof DocPropertyMultiple;
-        List<DocProperty> prop = isMultiValueGroup ? groups.groupCriteria().props() : List.of(groups.groupCriteria());
-
-        ds.startEntry("docGroups").startList();
-        long last = Math.min(first + number, groups.size());
-        for (long i = first; i < last; ++i) {
+        List<DocProperty> prop = groups.groupCriteria().propsList();
+        for (long i = ourWindow.first(); i <= ourWindow.last(); ++i) {
             DocGroup group = groups.get(i);
-            List<PropertyValue> valuesForGroup = isMultiValueGroup ? group.identity().values() : List.of(group.identity());
 
             ds.startItem("docgroup").startMap()
                     .entry("identity", group.identity().serialize())
@@ -109,33 +71,24 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
             // Write the raw values for this group
             ds.startEntry("properties").startList();
+            List<PropertyValue> valuesForGroup = group.identity().valuesList();
             for (int j = 0; j < prop.size(); ++j) {
-                final DocProperty hp = prop.get(j);
-                final PropertyValue pv = valuesForGroup.get(j);
-
                 ds.startItem("property").startMap();
-                ds.entry("name", hp.serialize());
-                ds.entry("value", pv.toString());
+                ds.entry("name", prop.get(j).serialize());
+                ds.entry("value", valuesForGroup.get(j).toString());
                 ds.endMap().endItem();
             }
             ds.endList().endEntry();
 
-            if (RequestHandlerHitsGrouped.INCLUDE_RELATIVE_FREQ) {
-                ds.entry("numberOfTokens", group.totalTokens());
-                if (hasPattern) {
-                    // Find size of corresponding subcorpus group
-                    PropertyValue docPropValues = group.identity();
-                    subcorpusSize = RequestHandlerHitsGrouped.findSubcorpusSize(searchParam, subcorpus.query(), metadataGroupProperties, docPropValues);
-                    datastreamSubcorpusSize(ds, subcorpusSize);
-                }
+            ds.entry("numberOfTokens", group.totalTokens());
+            if (result.getParams().hasPattern()) {
+                DStream.subcorpusSize(ds, it.next());
             }
             ds.endMap().endItem();
         }
         ds.endList().endEntry();
 
         ds.endMap();
-
-        return HTTP_OK;
     }
 
     @Override

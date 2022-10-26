@@ -66,7 +66,7 @@ public interface SearchCache {
      * Get the cache status.
      * @return a map containing various properties relevant to the cache
      */
-    default Map<String, Object> getCacheStatus() {
+    default Map<String, Object> getStatus() {
         return null;
     }
 
@@ -74,7 +74,7 @@ public interface SearchCache {
      * Get the cache contents.
      * @return list of maps with information about cache entries
      */
-    default List<Map<String, Object>> getCacheContent(boolean includeDebugInfo) {
+    default List<Map<String, Object>> getContents(boolean includeDebugInfo) {
         return null;
     }
 }

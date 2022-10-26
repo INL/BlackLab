@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
 
 /**
  * Explain how a query will be rewritten.
@@ -35,18 +35,12 @@ public class RequestHandlerExplain extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         BlackLabIndex blIndex = blIndex();
-        String patt = searchParam.getString("patt");
+        String patt = params.getPattern();
         try {
-            TextPattern tp = searchParam.getPattern();
+            TextPattern tp = params.pattern().get();
             BLSpanQuery q = tp.toQuery(QueryInfo.create(blIndex));
             QueryExplanation explanation = blIndex.explain(q);
-
-            // Assemble response
-            ds.startMap()
-                    .entry("textPattern", patt)
-                    .entry("originalQuery", explanation.originalQuery())
-                    .entry("rewrittenQuery", explanation.rewrittenQuery());
-            ds.endMap();
+            dstreamExplainResponse(ds, patt, explanation);
         } catch (TooManyClauses e) {
             return Response.badRequest(ds, "QUERY_TOO_BROAD",
                     "Query too broad, too many matching terms. Please be more specific.");
@@ -56,6 +50,14 @@ public class RequestHandlerExplain extends RequestHandler {
         }
 
         return HTTP_OK;
+    }
+
+    private void dstreamExplainResponse(DataStream ds, String patt, QueryExplanation explanation) {
+        ds.startMap()
+                .entry("textPattern", patt)
+                .entry("originalQuery", explanation.originalQuery())
+                .entry("rewrittenQuery", explanation.rewrittenQuery());
+        ds.endMap();
     }
 
 }

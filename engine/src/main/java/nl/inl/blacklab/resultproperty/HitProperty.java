@@ -39,6 +39,9 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * @return the HitProperty object, or null if it could not be deserialized
      */
     public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized) {
+        if (serialized == null || serialized.isEmpty())
+            return null;
+
         if (PropertySerializeUtil.isMultiple(serialized)) {
             boolean reverse = false;
             if (serialized.startsWith("-(") && serialized.endsWith(")")) {
@@ -332,6 +335,11 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     @Override
     public List<HitProperty> props() {
         return null;
+    }
+
+    @Override
+    public List<HitProperty> propsList() {
+        return isCompound() ? props() : List.of(this);
     }
 
     /**

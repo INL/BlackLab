@@ -23,7 +23,6 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
 
@@ -182,8 +181,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
 
     @Override
     public boolean canMakeNfa() {
-        // Subproperties aren't stored in forward index, so we can't match them using NFAs
-        return !term.text().contains(AnnotatedFieldNameUtil.SUBANNOTATION_SEPARATOR);
+        return true;
     }
 
     @Override

@@ -6,21 +6,19 @@ import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.IndexListener;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroup;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.Index.IndexStatus;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.ResultIndexMetadata;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
+import nl.inl.blacklab.server.lib.results.ResultMetadataField;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about the structure of an index.
@@ -37,83 +35,73 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
         return false; // because status might change (or you might reindex)
     }
 
-    String optSpecialFieldName(MetadataFields metadataFields, String type) {
-        MetadataField specialField = metadataFields.special(type);
-        return specialField == null ? "" : specialField.name();
-    }
-
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Index index = indexMan.getIndex(indexName);
-        synchronized (index) {
-            BlackLabIndex blIndex = index.blIndex();
-            IndexMetadata indexMetadata = blIndex.metadata();
+        ResultIndexMetadata result = WebserviceOperations.indexMetadata(params);
+        dstreamIndexMetadataResponse(ds, result);
+        return HTTP_OK;
+    }
 
-            // Assemble response
-            IndexStatus status = indexMan.getIndex(indexName).getStatus();
-            ds.startMap()
-                    .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
-                    .entry("description", indexMetadata.custom().get("description", ""))
-                    .entry("status", status)
-                    .entry("contentViewable", indexMetadata.contentViewable())
-                    .entry("textDirection", indexMetadata.custom().get("textDirection", "ltr"));
+    private void dstreamIndexMetadataResponse(DataStream ds, ResultIndexMetadata result) {
+        IndexMetadata metadata = result.getMetadata();
+        ds.startMap();
+        {
+            ds.entry("indexName", indexName)
+                    .entry("displayName", metadata.custom().get("displayName", ""))
+                    .entry("description", metadata.custom().get("description", ""))
+                    .entry("status", result.getProgress().getIndexStatus())
+                    .entry("contentViewable", metadata.contentViewable())
+                    .entry("textDirection", metadata.custom().get("textDirection", "ltr"));
 
-            addIndexProgress(ds, index, indexMetadata, status);
-            ds.entry("tokenCount", indexMetadata.tokenCount());
-            ds.entry("documentCount", indexMetadata.documentCount());
+            DStream.indexProgress(ds, result.getProgress());
+            ds.entry("tokenCount", metadata.tokenCount());
+            ds.entry("documentCount", metadata.documentCount());
 
             ds.startEntry("versionInfo").startMap()
-                    .entry("blackLabBuildTime", indexMetadata.indexBlackLabBuildTime())
-                    .entry("blackLabVersion", indexMetadata.indexBlackLabVersion())
-                    .entry("indexFormat", indexMetadata.indexFormat())
-                    .entry("timeCreated", indexMetadata.timeCreated())
-                    .entry("timeModified", indexMetadata.timeModified())
+                    .entry("blackLabBuildTime", metadata.indexBlackLabBuildTime())
+                    .entry("blackLabVersion", metadata.indexBlackLabVersion())
+                    .entry("indexFormat", metadata.indexFormat())
+                    .entry("timeCreated", metadata.timeCreated())
+                    .entry("timeModified", metadata.timeModified())
                     .endMap().endEntry();
 
-            MetadataFields fields = indexMetadata.metadataFields();
             ds.startEntry("fieldInfo").startMap()
-                    .entry("pidField", fields.pidField() == null ? "" : fields.pidField())
-                    .entry("titleField", indexMetadata.custom().get("titleField", ""))
-                    .entry("authorField", indexMetadata.custom().get("authorField", ""))
-                    .entry("dateField", indexMetadata.custom().get("dateField", ""))
+                    .entry("pidField", metadata.metadataFields().pidField() == null ? "" : metadata.metadataFields().pidField())
+                    .entry("titleField", metadata.custom().get("titleField", ""))
+                    .entry("authorField", metadata.custom().get("authorField", ""))
+                    .entry("dateField", metadata.custom().get("dateField", ""))
                     .endMap().endEntry();
 
             ds.startEntry("annotatedFields").startMap();
-            // Annotated fields
-            for (AnnotatedField field: indexMetadata.annotatedFields()) {
-                if (field.isDummyFieldToStoreLinkedDocuments())
-                    continue; // skip this, not really an annotated field, just exists to store linked (metadata) document.
-                ds.startAttrEntry("annotatedField", "name", field.name());
-
-                Set<String> setShowValuesFor = searchParam.listValuesFor();
-                Set<String> setShowSubpropsFor = searchParam.listSubpropsFor();
-                RequestHandlerFieldInfo.describeAnnotatedField(ds, null, field, blIndex, setShowValuesFor,
-                        setShowSubpropsFor);
-
+            for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
+                ds.startAttrEntry("annotatedField", "name", annotatedField.getFieldDesc().name());
+                {
+                    DStream.annotatedField(ds, annotatedField);
+                }
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
 
             ds.startEntry("metadataFields").startMap();
-            // Metadata fields
-            //DataObjectMapAttribute doMetaFields = new DataObjectMapAttribute("metadataField", "name");
-            for (MetadataField f: fields) {
-                ds.startAttrEntry("metadataField", "name", f.name());
-                RequestHandlerFieldInfo.describeMetadataField(ds, null, f, true);
+            for (ResultMetadataField metadataField: result.getMetadataFields()) {
+                ds.startAttrEntry("metadataField", "name", metadataField.getFieldDesc().name());
+                {
+                    DStream.metadataField(ds, metadataField);
+                }
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
 
-            dataStreamMetadataGroupInfo(ds,blIndex);
+            DStream.metadataGroupInfo(ds, result.getMetadataFieldGroups());
 
             ds.startEntry("annotationGroups").startMap();
-            for (AnnotatedField f: indexMetadata.annotatedFields()) {
-                AnnotationGroups groups = indexMetadata.annotatedFields().annotationGroups(f.name());
+            for (AnnotatedField f: metadata.annotatedFields()) {
+                AnnotationGroups groups = metadata.annotatedFields().annotationGroups(f.name());
                 if (groups != null) {
-                    // LinkedHashSet - preserve order!
-                    @SuppressWarnings("FuseStreamOperations") Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(f.annotations().stream().collect(Collectors.toList()));
-                    for (AnnotationGroup group : groups) {
+                    @SuppressWarnings("FuseStreamOperations") // LinkedHashSet - preserve order!
+                    Set<Annotation> annotationsNotInGroups = new LinkedHashSet<>(
+                            f.annotations().stream().collect(Collectors.toList()));
+                    for (AnnotationGroup group: groups) {
                         for (String annotationName: group) {
                             Annotation annotation = f.annotation(annotationName);
                             annotationsNotInGroups.remove(annotation);
@@ -121,7 +109,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                     }
                     ds.startAttrEntry("annotatedField", "name", f.name()).startList();
                     boolean addedRemainingAnnots = false;
-                    for (AnnotationGroup group : groups) {
+                    for (AnnotationGroup group: groups) {
                         ds.startItem("annotationGroup").startMap();
                         ds.entry("name", group.groupName());
                         ds.startEntry("annotations").startList();
@@ -142,32 +130,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
                 }
             }
             ds.endMap().endEntry();
-
-            // Remove any empty settings
-            //response.removeEmptyMapValues();
-
-            ds.endMap();
-
-            return HTTP_OK;
         }
-    }
-
-    static void addIndexProgress(DataStream ds, Index index, IndexMetadata indexMetadata, IndexStatus status)
-            throws BlsException {
-        if (status.equals(IndexStatus.INDEXING)) {
-            IndexListener indexProgress = index.getIndexerListener();
-            synchronized (indexProgress) {
-                ds.startEntry("indexProgress").startMap()
-                        .entry("filesProcessed", indexProgress.getFilesProcessed())
-                        .entry("docsDone", indexProgress.getDocsDone())
-                        .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                        .endMap().endEntry();
-            }
-        }
-
-        String formatIdentifier = indexMetadata.documentFormat();
-        if (formatIdentifier != null && formatIdentifier.length() > 0)
-            ds.entry("documentFormat", formatIdentifier);
+        ds.endMap();
     }
 
 }

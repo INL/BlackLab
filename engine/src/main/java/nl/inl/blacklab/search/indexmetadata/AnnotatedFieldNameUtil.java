@@ -33,13 +33,6 @@ public final class AnnotatedFieldNameUtil {
      * in a field "pos_number". This is the separator used for this prefix.
      */
     public static final String SUBANNOTATION_FIELD_PREFIX_SEPARATOR = "_";
-    
-    /**
-     * For annotations combined in a single Lucene field (the old way of indexing
-     * subannotations), this was the separator between the name prefix of an indexed 
-     * value and the actual value of the annotation
-     */
-    public static final String SUBANNOTATION_SEPARATOR = "\u001F";
 
     /**
      * Valid XML element names. Field and annotation names should generally conform to

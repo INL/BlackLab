@@ -2,15 +2,15 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
-import nl.inl.blacklab.index.IndexListener;
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.Index.IndexStatus;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about the status of an index.
@@ -29,44 +29,26 @@ public class RequestHandlerIndexStatus extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        Index index = indexMan.getIndex(indexName);
-        synchronized (index) {
-            IndexStatus status = index.getStatus();
-            IndexMetadata indexMetadata;
-            try {
-                indexMetadata = index.getIndexMetadata();
-            } catch (IndexVersionMismatch e) {
-                throw BlsException.indexVersionMismatch(e);
-            }
-
-            // Assemble response
-            ds.startMap()
-                    .entry("indexName", indexName)
-                    .entry("displayName", indexMetadata.custom().get("displayName", ""))
-                    .entry("description", indexMetadata.custom().get("description", ""))
-                    .entry("status", status);
-
-            String formatIdentifier = indexMetadata.documentFormat();
-            if (formatIdentifier != null && formatIdentifier.length() > 0)
-                ds.entry("documentFormat", formatIdentifier);
-            ds.entry("timeModified", indexMetadata.timeModified());
-            ds.entry("tokenCount", indexMetadata.tokenCount());
-
-            if (status.equals(IndexStatus.INDEXING)) {
-                IndexListener indexProgress = index.getIndexerListener();
-                synchronized (indexProgress) {
-                    ds.startEntry("indexProgress").startMap()
-                            .entry("filesProcessed", indexProgress.getFilesProcessed())
-                            .entry("docsDone", indexProgress.getDocsDone())
-                            .entry("tokensProcessed", indexProgress.getTokensProcessed())
-                            .endMap().endEntry();
-                }
-            }
-
-            ds.endMap();
-        }
-
+        ResultIndexStatus progress = WebserviceOperations.resultIndexStatus(params);
+        dstreamIndexStatusResponse(ds, progress);
         return HTTP_OK;
+    }
+
+    private void dstreamIndexStatusResponse(DataStream ds, ResultIndexStatus progress) {
+        IndexMetadata metadata = progress.getMetadata();
+        ds.startMap();
+        {
+            ds.entry("indexName", indexName);
+            ds.entry("displayName", metadata.custom().get("displayName", ""));
+            ds.entry("description", metadata.custom().get("description", ""));
+            ds.entry("status", progress.getIndexStatus());
+            if (!StringUtils.isEmpty(metadata.documentFormat()))
+                ds.entry("documentFormat", metadata.documentFormat());
+            ds.entry("timeModified", metadata.timeModified());
+            ds.entry("tokenCount", metadata.tokenCount());
+            DStream.indexProgress(ds, progress);
+        }
+        ds.endMap();
     }
 
 }

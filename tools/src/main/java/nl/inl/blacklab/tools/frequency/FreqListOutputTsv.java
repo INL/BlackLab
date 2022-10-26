@@ -20,7 +20,6 @@ import org.apache.commons.csv.QuoteMode;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -77,16 +76,8 @@ class FreqListOutputTsv implements FreqListOutput {
                 for (HitGroup group : result) {
                     List<String> record = new ArrayList<>();
                     PropertyValue identity = group.identity();
-                    if (identity instanceof PropertyValueMultiple) {
-                        // Grouped by multiple properties. Serialize each value separately
-                        PropertyValueMultiple values = (PropertyValueMultiple) identity;
-                        for (PropertyValue value : values.values()) {
-                            record.add(value.toString());
-                        }
-                    } else {
-                        // Grouped by single property. Serialize it.
-                        record.add(identity.toString());
-                    }
+                    for (PropertyValue value : identity.valuesList())
+                        record.add(value.toString());
                     record.add(Long.toString(group.size()));
                     printer.printRecord(record);
                 }

@@ -1,18 +1,18 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.document.Document;
-
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.jobs.User;
-import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.blacklab.server.lib.results.ResultDocInfo;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Get information about a document.
@@ -26,35 +26,36 @@ public class RequestHandlerDocInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-
         int i = urlPathInfo.indexOf('/');
-        String docId = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        if (docId.length() == 0)
-            throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
+        Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
+        ResultDocInfo docInfo = WebserviceOperations.docInfo(blIndex(), docPid, null, metadataToWrite);
 
-        BlackLabIndex blIndex = blIndex();
-        int luceneDocId = BlsUtils.getDocIdFromPid(blIndex, docId);
-        if (luceneDocId < 0)
-            throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docId + "' not found.");
-        Document document = blIndex.luceneDoc(luceneDocId);
-        if (document == null)
-            throw new InternalServerError("Couldn't fetch document with pid '" + docId + "'.", "INTERR_FETCHING_DOCUMENT_INFO");
+        Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(blIndex());
+        Map<String, String> docFields = WebserviceOperations.getDocFields(blIndex());
+        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex());
 
         // Document info
-        debug(logger, "REQ doc info: " + indexName + "-" + docId);
-
-        ds.startMap()
-                .entry("docPid", docId);
-
-        ds.startEntry("docInfo");
-        dataStreamDocumentInfo(ds, blIndex, document, getMetadataToWrite());
-        ds.endEntry();
-        dataStreamMetadataGroupInfo(ds, blIndex);
-
-        datastreamMetadataFieldInfo(ds, blIndex);
-
-        ds.endMap();
+        debug(logger, "REQ doc info: " + indexName + "-" + docPid);
+        dstreamDocInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames);
         return HTTP_OK;
+    }
+
+    private static void dstreamDocInfoResponse(DataStream ds, ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
+            Map<String, String> docFields, Map<String, String> metaDisplayNames) {
+        ds.startMap().entry("docPid", docInfo.getPid());
+        {
+            ds.startEntry("docInfo");
+            {
+                DStream.documentInfo(ds, docInfo);
+            }
+            ds.endEntry();
+
+            // (this probably shouldn't be here)
+            DStream.metadataGroupInfo(ds, metadataFieldGroups);
+            DStream.metadataFieldInfo(ds, docFields, metaDisplayNames);
+        }
+        ds.endMap();
     }
 
     @Override

@@ -1,37 +1,20 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
+import java.util.Collection;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.ResultDocResult;
+import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * List documents, search for documents matching criteria.
@@ -43,211 +26,110 @@ public class RequestHandlerDocs extends RequestHandler {
         super(servlet, request, user, indexName, urlResource, urlPathPart);
     }
 
-    SearchCacheEntry<?> search = null;
-    SearchCacheEntry<ResultsStats> originalHitsSearch;
-    DocResults totalDocResults;
-    DocResults window;
-    private DocResults docResults;
-    private long totalTime;
-
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
         // Do we want to view a single group after grouping?
-        String groupBy = searchParam.getString("group");
-        if (groupBy == null)
-            groupBy = "";
-        String viewGroup = searchParam.getString("viewgroup");
-        if (viewGroup == null)
-            viewGroup = "";
-        int response = 0;
-
-        // Make sure we have the hits search, so we can later determine totals.
-        originalHitsSearch = null;
-        if (searchParam.hasPattern()) {
-            originalHitsSearch = searchParam.hitsSample().hitCount().executeAsync();
-        }
-
-        if (groupBy.length() > 0 && viewGroup.length() > 0) {
-
+        ResultDocsResponse result;
+        if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
             // View a single group in a grouped docs resultset
-            response = doViewGroup(ds, viewGroup);
-
+            result = WebserviceOperations.viewGroupDocsResponse(params);
         } else {
             // Regular set of docs (no grouping first)
-            response = doRegularDocs(ds);
+            result = WebserviceOperations.regularDocsResponse(params);
         }
-        return response;
+        dstreamDocsResponse(ds, result);
+        return HTTP_OK;
     }
 
-    private int doViewGroup(DataStream ds, String viewGroup) throws BlsException, InvalidQuery {
-        // TODO: clean up, do using JobHitsGroupedViewGroup or something (also cache sorted group!)
-
-        SearchCacheEntry<DocGroups> docGroupFuture;
-        // Yes. Group, then show hits from the specified group
-        search = docGroupFuture = searchParam.docsGrouped().executeAsync();
-        DocGroups groups;
-        try {
-            groups = docGroupFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
-
-        PropertyValue viewGroupVal = null;
-        viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
-        if (viewGroupVal == null)
-            return Response.badRequest(ds, "ERROR_IN_GROUP_VALUE",
-                    "Parameter 'viewgroup' has an illegal value: " + viewGroup);
-
-        DocGroup group = groups.get(viewGroupVal);
-        if (group == null)
-            return Response.badRequest(ds, "GROUP_NOT_FOUND", "Group not found: " + viewGroup);
-
-        // NOTE: sortBy is automatically applied to regular results, but not to results within groups
-        // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
-        // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-        // There is probably no reason why we can't just sort/use the sort of the input results, but we need
-        // some more testing to see if everything is correct if we change this
-        String sortBy = searchParam.getString("sort");
-        DocProperty sortProp = sortBy != null && sortBy.length() > 0 ? DocProperty.deserialize(blIndex(), sortBy) : null;
-        DocResults docsSorted = group.storedResults();
-        if (sortProp != null)
-            docsSorted = docsSorted.sort(sortProp);
-
-        long first = searchParam.getLong("first");
-        if (first < 0)
-            first = 0;
-        long number = searchParam.getLong("number");
-        if (number < 0 || number > searchMan.config().getParameters().getPageSize().getMax())
-            number = searchMan.config().getParameters().getPageSize().getDefaultValue();
-        totalDocResults = docsSorted;
-        window = docsSorted.window(first, number);
-
-        originalHitsSearch = null; // don't use this to report totals, because we've filtered since then
-        docResults = group.storedResults();
-        totalTime = docGroupFuture.timer().time();
-        return doResponse(ds, true, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), true);
-    }
-
-    private int doRegularDocs(DataStream ds) throws BlsException, InvalidQuery {
-        SearchCacheEntry<DocResults> searchWindow = searchParam.docsWindow().executeAsync();
-        search = searchWindow;
-
-        // Also determine the total number of hits
-        SearchCacheEntry<DocResults> total = searchParam.docs().executeAsync();
-
-        try {
-            window = searchWindow.get();
-            totalDocResults = total.get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw RequestHandler.translateSearchException(e);
-        }
-
-        // If "waitfortotal=yes" was passed, block until all results have been fetched
-        boolean waitForTotal = searchParam.getBoolean("waitfortotal");
-        if (waitForTotal)
-            totalDocResults.size();
-
-        docResults = totalDocResults;
-        totalTime = total.threwException() ? 0 : total.timer().time();
-
-        return doResponse(ds, false, new HashSet<>(this.getAnnotationsToWrite()), this.getMetadataToWrite(), waitForTotal);
-    }
-
-    private int doResponse(DataStream ds, boolean isViewGroup, Set<Annotation> annotationsTolist, Set<MetadataField> metadataFieldsToList, boolean waitForTotal) throws BlsException, InvalidQuery {
-        BlackLabIndex blIndex = blIndex();
-
-        boolean includeTokenCount = searchParam.getBoolean("includetokencount");
-        long totalTokens = -1;
-        if (includeTokenCount) {
-            // Determine total number of tokens in result set
-            totalTokens = totalDocResults.subcorpusSize().getTokens();
-        }
-
-        // Search is done; construct the results object
-
+    private static void dstreamDocsResponse(DataStream ds, ResultDocsResponse result) throws InvalidQuery {
         ds.startMap();
+        {
+            // The summary
+            ds.startEntry("summary").startMap();
+            {
+                DStream.summaryCommonFields(ds, result.getSummaryFields());
+                if (result.getNumResultDocs() != null) {
+                    DStream.summaryNumDocs(ds, result.getNumResultDocs());
+                } else {
+                    DStream.summaryNumHits(ds, result.getNumResultHits());
+                }
+                if (result.isIncludeTokenCount())
+                    ds.entry("tokensInMatchingDocuments", result.getTotalTokens());
 
-        // The summary
-        ds.startEntry("summary").startMap();
-        ResultsStats hitsStats, docsStats;
-        hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
-        docsStats = searchParam.docsCount().executeAsync().peek();
-        SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        datastreamSummaryCommonFields(ds, searchParam, timings, null, window.windowStats());
-        boolean countFailed = totalTime < 0;
-        if (hitsStats == null)
-            datastreamNumberOfResultsSummaryDocResults(ds, isViewGroup, docResults, countFailed, null);
-        else
-            datastreamNumberOfResultsSummaryTotalHits(ds, hitsStats, docsStats, waitForTotal, countFailed, null);
-        if (includeTokenCount)
-            ds.entry("tokensInMatchingDocuments", totalTokens);
+                DStream.metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
+            }
+            ds.endMap().endEntry();
 
-        datastreamMetadataFieldInfo(ds, blIndex);
+            // The hits and document info
+            ds.startEntry("docs").startList();
+            for (ResultDocResult docResult: result.getDocResults()) {
+                dstreamDocResult(ds, docResult);
+            }
+            ds.endList().endEntry();
+            if (result.getFacetInfo() != null) {
+                // Now, group the docs according to the requested facets.
+                ds.startEntry("facets");
+                {
+                    DStream.facets(ds, result.getFacetInfo());
+                }
+                ds.endEntry();
+            }
+        }
+        ds.endMap();
+    }
 
-        ds.endMap().endEntry();
-
-        // The hits and document info
-        ds.startEntry("docs").startList();
-        for (DocResult result : window) {
-            ds.startItem("doc").startMap();
-
-            // Find pid
-            Document document = blIndex().luceneDoc(result.docId());
-            String pid = getDocumentPid(blIndex, result.identity().value(), document);
-
+    private static void dstreamDocResult(DataStream ds, ResultDocResult result) {
+        ds.startItem("doc").startMap();
+        {
             // Combine all
-            ds.entry("docPid", pid);
-            long numHits = result.size();
-            if (numHits > 0)
-                ds.entry("numberOfHits", numHits);
+            ds.entry("docPid", result.getPid());
+            if (result.numberOfHits() > 0)
+                ds.entry("numberOfHits", result.numberOfHits());
 
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
-            dataStreamDocumentInfo(ds, blIndex, document, metadataFieldsToList);
+            {
+                DStream.documentInfo(ds, result.getDocInfo());
+            }
             ds.endEntry();
 
             // Snippets
-            Hits hits2 = result.storedResults().window(0, 5); // TODO: make num. snippets configurable
-            if (hits2.hitsStats().processedAtLeast(1)) {
+            Collection<Annotation> annotationsToList = result.getAnnotationsToList();
+            if (result.numberOfHitsToShow() > 0) {
                 ds.startEntry("snippets").startList();
-                ContextSettings contextSettings = searchParam.getContextSettings();
-                Concordances concordances = null;
-                Kwics kwics = null;
-                if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-                    concordances = hits2.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
-                else
-                    kwics = hits2.kwics(blIndex.defaultContextSize());
-                for (Hit hit : hits2) {
-                    // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-                    ds.startItem("snippet").startMap();
-                    if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
-                        // Add concordance from original XML
-                        Concordance c = concordances.get(hit);
-                        ds.startEntry("left").xmlFragment(c.left()).endEntry()
-                                .startEntry("match").xmlFragment(c.match()).endEntry()
-                                .startEntry("right").xmlFragment(c.right()).endEntry();
-                    } else {
-                        // Add KWIC info
-                        Kwic c = kwics.get(hit);
-                        ds.startEntry("left").contextList(c.annotations(), annotationsTolist, c.left()).endEntry()
-                                .startEntry("match").contextList(c.annotations(), annotationsTolist, c.match()).endEntry()
-                                .startEntry("right").contextList(c.annotations(), annotationsTolist, c.right()).endEntry();
+                if (!result.hasConcordances()) {
+                    // KWICs
+                    for (Kwic k: result.getKwicsToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add KWIC info
+                            ds.startEntry("left").contextList(k.annotations(), annotationsToList, k.left())
+                                    .endEntry();
+                            ds.startEntry("match").contextList(k.annotations(), annotationsToList, k.match())
+                                    .endEntry();
+                            ds.startEntry("right").contextList(k.annotations(), annotationsToList, k.right())
+                                    .endEntry();
+                        }
+                        ds.endMap().endItem();
                     }
-                    ds.endMap().endItem();
+                } else {
+                    // Concordances from original content
+                    for (Concordance c: result.getConcordancesToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add concordance from original XML
+                            ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                                    .startEntry("match").xmlFragment(c.match()).endEntry()
+                                    .startEntry("right").xmlFragment(c.right()).endEntry();
+                        }
+                        ds.endMap().endItem();
+                    }
                 }
                 ds.endList().endEntry();
-            }
-            ds.endMap().endItem();
+            } // if snippets
+
         }
-        ds.endList().endEntry();
-        if (searchParam.hasFacets()) {
-            // Now, group the docs according to the requested facets.
-            ds.startEntry("facets");
-            dataStreamFacets(ds, searchParam.facets());
-            ds.endEntry();
-        }
-        ds.endMap();
-        return HTTP_OK;
+        ds.endMap().endItem();
     }
 
     @Override

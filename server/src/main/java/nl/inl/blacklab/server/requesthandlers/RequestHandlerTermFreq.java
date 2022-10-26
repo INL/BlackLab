@@ -1,25 +1,14 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.lucene.search.Query;
-
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.BlackLabServer;
-import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -33,39 +22,12 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        //TODO: use background job?
+        TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params);
+        dstreamTermFreqResponse(ds, tfl);
+        return HTTP_OK;
+    }
 
-        BlackLabIndex blIndex = blIndex();
-        AnnotatedField cfd = blIndex.mainAnnotatedField();
-        String annotName = searchParam.getString("annotation");
-        if (annotName.length() == 0)
-            annotName = searchParam.getString("property"); // old parameter name, deprecated
-        Annotation annotation = cfd.annotation(annotName);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(searchParam.getBoolean("sensitive"));
-        AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
-
-        // May be null!
-        Query q = searchParam.hasFilter() ? searchParam.getFilterQuery() : null;
-        // May also null/empty to retrieve all terms!
-        Set<String> terms = searchParam.getString("terms") != null ? new HashSet<>(Arrays.asList(searchParam.getString("terms").trim().split("\\s*,\\s*"))) : null;
-         
-        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
-
-        if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            long first = searchParam.getLong("first");
-            if (first < 0 || first >= tfl.size())
-                first = 0;
-            long number = searchParam.getLong("number");
-            DefaultMax pageSize = searchMan.config().getParameters().getPageSize();
-            if (number < 0 || number > pageSize.getMax())
-                number = pageSize.getDefaultValue();
-            long last = first + number;
-            if (last > tfl.size())
-                last = tfl.size();
-
-            tfl = tfl.subList(first, last);
-        }
-
+    private static void dstreamTermFreqResponse(DataStream ds, TermFrequencyList tfl) {
         // Assemble all the parts
         ds.startMap();
         ds.startEntry("termFreq").startMap();
@@ -75,8 +37,6 @@ public class RequestHandlerTermFreq extends RequestHandler {
         }
         ds.endMap().endEntry();
         ds.endMap();
-
-        return HTTP_OK;
     }
 
 }

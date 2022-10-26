@@ -1,16 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -20,54 +13,25 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
-import nl.inl.blacklab.resultproperty.DocGroupProperty;
-import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Concordance;
-import nl.inl.blacklab.search.Kwic;
-import nl.inl.blacklab.search.Span;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
-import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Facets;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsStatic;
-import nl.inl.blacklab.search.results.SampleParameters;
-import nl.inl.blacklab.search.results.WindowStats;
-import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
-import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.User;
+import nl.inl.blacklab.server.lib.IndexUtil;
+import nl.inl.blacklab.server.lib.PlainWebserviceParams;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -76,8 +40,6 @@ import nl.inl.blacklab.server.util.ServletUtil;
  */
 public abstract class RequestHandler {
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
-
-    private static final String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
@@ -89,7 +51,6 @@ public abstract class RequestHandler {
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        //availableHandlers.put("cache-info", RequestHandlerCacheInfo.class);
         availableHandlers.put("debug", RequestHandlerDebug.class);
         availableHandlers.put("docs", RequestHandlerDocs.class);
         availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
@@ -115,20 +76,22 @@ public abstract class RequestHandler {
     /**
      * Handle a request by dispatching it to the corresponding subclass.
      *
-     * @param servlet the servlet object
-     * @param request the request object
+     * @param request the servlet, request and response objects
      * @param debugMode debug mode request? Allows extra parameters to be used
      * @param outputType output type requested (XML, JSON or CSV)
      * @return the response data
      */
-    public static RequestHandler create(BlackLabServer servlet, HttpServletRequest request, boolean debugMode,
+    public static RequestHandler create(UserRequestServlet userRequest, boolean debugMode,
             DataFormat outputType, RequestInstrumentationProvider instrumentationProvider) {
+
+        HttpServletRequest request = userRequest.getRequest();
+        BlackLabServer servlet = userRequest.getServlet();
 
         // See if a user is logged in
         String requestId = instrumentationProvider.getRequestID(request).orElse("");
         ThreadContext.put("requestId", requestId);
         SearchManager searchManager = servlet.getSearchManager();
-        User user = searchManager.getAuthSystem().determineCurrentUser(servlet, request);
+        User user = searchManager.getAuthSystem().determineCurrentUser(new UserRequestServlet(servlet, request, null));
         String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
         if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
             String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
@@ -141,8 +104,7 @@ public abstract class RequestHandler {
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         String[] parts = servletPath.split("/", 3);
         String indexName = parts.length >= 1 ? parts[0] : "";
-        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName
-        );
+        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName);
         if (indexName.startsWith(":")) {
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access your private index.");
@@ -163,7 +125,7 @@ public abstract class RequestHandler {
         // If we're modifying a private index, it must be our own.
         Index privateIndex = null;
         //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
-        if (indexName.contains(":")) {
+        if (IndexUtil.isUserIndex(indexName)) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access a private index.");
@@ -212,7 +174,7 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj
-                                .unauthorized("You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to do this.");
+                                .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
@@ -254,12 +216,9 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj.unauthorized(
-                                "You (" + BlackLabServer.getOriginatingAddress(request) + ") are not authorized to see this information.");
+                                "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
-                } else if (indexName.equals("help")) {
-                    requestHandler = new RequestHandlerBlsHelp(servlet, request, user, indexName, urlResource,
                             urlPathInfo);
                 } else if (indexName.equals("input-formats")) {
                     requestHandler = new RequestHandlerListInputFormats(servlet, request, user, indexName, urlResource,
@@ -348,8 +307,6 @@ public abstract class RequestHandler {
             requestHandler.setDebug();
 
         requestHandler.setInstrumentationProvider(instrumentationProvider);
-        requestHandler.setRequestId(requestId);
-
         return requestHandler;
     }
 
@@ -370,40 +327,40 @@ public abstract class RequestHandler {
         return true;
     }
 
-    boolean debugMode;
+    protected boolean debugMode;
 
     /** The servlet object */
-    BlackLabServer servlet;
+    protected BlackLabServer servlet;
 
     /** The HTTP request object */
-    HttpServletRequest request;
+    protected HttpServletRequest request;
 
-    /** Search parameters from request */
-    SearchParameters searchParam;
+    /** Interprets parameters to create searches. */
+    protected WebserviceParamsImpl params;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
      * "/opensonar/doc/1/content"
      */
-    String indexName;
+    protected String indexName;
 
     /**
      * The type of REST resource we're accessing, e.g. "doc" for
      * "/opensonar/doc/1/content"
      */
-    String urlResource;
+    protected String urlResource;
 
     /**
      * The part of the URL path after the resource name, e.g. "1/content" for
      * "/opensonar/doc/1/content"
      */
-    String urlPathInfo;
+    protected String urlPathInfo;
 
     /** The search manager, which executes and caches our searches */
-    SearchManager searchMan;
+    protected SearchManager searchMan;
 
     /** User id (if logged in) and/or session id */
-    User user;
+    protected User user;
 
     protected IndexManager indexMan;
 
@@ -419,12 +376,14 @@ public abstract class RequestHandler {
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
-            logger.info(ServletUtil.shortenIpv6(BlackLabServer.getOriginatingAddress(request)) + " " + user.uniqueIdShort() + " "
+            logger.info(WebserviceUtil.shortenIpv6(ServletUtil.getOriginatingAddress(request)) + " " + user.uniqueIdShort() + " "
                     + request.getMethod() + " " + pathAndQueryString);
         }
 
         boolean isDocs = isDocsOperation();
-        searchParam = servlet.getSearchParameters(isDocs, request, indexName);
+        boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
+        PlainWebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
+        params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;
@@ -432,44 +391,12 @@ public abstract class RequestHandler {
 
     }
 
-    /**
-     * Add info about the current logged-in user (if any) to the response.
-     *
-     * @param ds output stream
-     * @param loggedIn is user logged in?
-     * @param userId user id (if logged in)
-     * @param canCreateIndex is the user allowed to create another index?
-     */
-    static void datastreamUserInfo(DataStream ds, boolean loggedIn, String userId, boolean canCreateIndex) {
-        ds.startEntry("user").startMap();
-        ds.entry("loggedIn", loggedIn);
-        if (loggedIn)
-            ds.entry("id", userId);
-        ds.entry("canCreateIndex", loggedIn && canCreateIndex);
-        ds.endMap().endEntry();
+    protected BlackLabIndex blIndex() throws BlsException {
+        return indexMan.getIndex(indexName).blIndex();
     }
 
-    /**
-     * Add info about metadata fields to hits and docs results.
-     *
-     * Note that this information can be retrieved using different requests,
-     * and it is redundant to send it with every query response. We may want
-     * to deprecate this in the future.
-     *
-     * @param ds output stream
-     * @param index our index
-     */
-    static void datastreamMetadataFieldInfo(DataStream ds, BlackLabIndex index) {
-        ds.startEntry("docFields");
-        RequestHandler.dataStreamDocFields(ds, index.metadata());
-        ds.endEntry();
-
-        ds.startEntry("metadataFieldDisplayNames");
-        RequestHandler.dataStreamMetadataFieldDisplayNames(ds, index.metadata());
-        ds.endEntry();
-    }
-
-    protected void setRequestId(String requestId) {
+    public User getUser() {
+        return user;
     }
 
     @SuppressWarnings("unused")
@@ -544,466 +471,4 @@ public abstract class RequestHandler {
      */
     public abstract int handle(DataStream ds) throws BlsException, InvalidQuery;
 
-    /**
-     * Stream document information (metadata, contents authorization)
-     *
-     * @param ds where to stream information
-     * @param index our index
-     * @param luceneDocs Lucene documents to stream
-     * @param metadataFieldsToList fields to include in the document info
-     */
-    static void datastreamDocInfos(DataStream ds, BlackLabIndex index, Map<Integer, Document> luceneDocs, Set<MetadataField> metadataFieldsToList) {
-        ds.startEntry("docInfos").startMap();
-        for (Entry<Integer, Document> e: luceneDocs.entrySet()) {
-            Integer docId = e.getKey();
-            Document luceneDoc = e.getValue();
-            String pid = getDocumentPid(index, docId, luceneDoc);
-            ds.startAttrEntry("docInfo", "pid", pid);
-            dataStreamDocumentInfo(ds, index, luceneDoc, metadataFieldsToList);
-            ds.endAttrEntry();
-        }
-        ds.endMap().endEntry();
-    }
-
-    /**
-     * Stream document information (metadata, contents authorization)
-     *
-     * @param ds where to stream information
-     * @param index our index
-     * @param document Lucene document
-     * @param metadataFieldsToList fields to include in the document info
-     */
-    static void dataStreamDocumentInfo(DataStream ds, BlackLabIndex index, Document document, Set<MetadataField> metadataFieldsToList) {
-        ds.startMap();
-        {
-            for (MetadataField f: metadataFieldsToList) {
-                if (f.name().equals("lengthInTokens") || f.name().equals("mayView")) {
-                    continue;
-                }
-                String[] values = document.getValues(f.name());
-                if (values.length == 0) {
-                    continue;
-                }
-
-                ds.startEntry(f.name()).startList();
-                {
-                    for (String v: values) {
-                        ds.item("value", v);
-                    }
-                }
-                ds.endList().endEntry();
-            }
-
-            String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
-
-            if (tokenLengthField != null)
-                ds.entry("lengthInTokens",
-                        Integer.parseInt(document.get(tokenLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
-            ds.entry("mayView", mayView(index.metadata(), document));
-        }
-        ds.endMap();
-    }
-
-    protected static void dataStreamMetadataFieldDisplayNames(DataStream ds, IndexMetadata indexMetadata) {
-        ds.startMap();
-        for (MetadataField f: indexMetadata.metadataFields()) {
-            String displayName = f.displayName();
-            if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
-                ds.entry(f.name(),displayName);
-            }
-        }
-        ds.endMap();
-    }
-
-    protected static void dataStreamMetadataGroupInfo(DataStream ds, BlackLabIndex index) {
-        Map<String, ? extends MetadataFieldGroup> metaGroups = index.metadata().metadataFields().groups();
-        // TODO: This synchronization was necessary when testing many simultaneous
-        //   requests with Artillery. It should no longer be possible for metadata field
-        //   groups to change after the IndexMetadata object has been constructed though,
-        //   so it's been disabled. Verify this is using Artillery.
-        //synchronized (metaGroups) { // concurrent requests
-        Set<MetadataField> metadataFieldsNotInGroups = index.metadata().metadataFields().stream()
-                .collect(Collectors.toSet());
-        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
-            for (String fieldName: metaGroup) {
-                MetadataField field = index.metadata().metadataFields().get(fieldName);
-                metadataFieldsNotInGroups.remove(field);
-            }
-        }
-
-        ds.startEntry("metadataFieldGroups").startList();
-        boolean addedRemaining = false;
-        for (MetadataFieldGroup metaGroup : metaGroups.values()) {
-            ds.startItem("metadataFieldGroup").startMap();
-            ds.entry("name", metaGroup.name());
-            ds.startEntry("fields").startList();
-            for (String field: metaGroup) {
-                ds.item("field", field);
-            }
-            if (!addedRemaining && metaGroup.addRemainingFields()) {
-                addedRemaining = true;
-                List<MetadataField> rest = new ArrayList<>(metadataFieldsNotInGroups);
-                rest.sort(Comparator.comparing(a -> a.name().toLowerCase()));
-                for (MetadataField field: rest) {
-                    ds.item("field", field.name());
-                }
-            }
-            ds.endList().endEntry();
-            ds.endMap().endItem();
-        }
-        ds.endList().endEntry();
-        //}
-    }
-
-    /**
-     * Returns the annotations to write out.
-     *
-     * By default, all annotations are returned.
-     * Annotations are returned in requested order, or in their definition/display order.
-     *
-     * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
-     */
-    public List<Annotation> getAnnotationsToWrite() throws BlsException {
-        AnnotatedFields fields = this.blIndex().annotatedFields();
-        Set<String> requestedAnnotations = searchParam.listValuesFor();
-
-        List<Annotation> ret = new ArrayList<>();
-        for (AnnotatedField f : fields) {
-            for (Annotation a : f.annotations()) {
-                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
-                    ret.add(a);
-                }
-            }
-        }
-
-        return ret;
-    }
-
-    /**
-     * Returns a list of metadata fields to write out.
-     *
-     * By default, all metadata fields are returned.
-     * Special fields (pidField, titleField, etc...) are always returned.
-     *
-     * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
-     */
-    public Set<MetadataField> getMetadataToWrite() throws BlsException {
-        MetadataFields fields = this.blIndex().metadataFields();
-        Set<String> requestedFields = searchParam.listMetadataValuesFor();
-
-        Set<MetadataField> ret = new HashSet<>();
-        ret.add(optCustomField(blIndex().metadata(), "authorField"));
-        ret.add(optCustomField(blIndex().metadata(), "dateField"));
-        ret.add(optCustomField(blIndex().metadata(), "titleField"));
-        ret.add(fields.pidField());
-        for (MetadataField field  : fields) {
-            if (requestedFields.isEmpty() || requestedFields.contains(field.name())) {
-                ret.add(field);
-            }
-        }
-        ret.remove(null); // for missing special fields.
-        return ret;
-    }
-
-    private MetadataField optCustomField(IndexMetadata metadata, String propName) {
-        String fieldName = metadata.custom().get(propName, "");
-        return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
-    }
-
-    /**
-     * a document may be viewed when a contentViewable metadata field with a value
-     * true is registered with either the document or with the index metadata.
-     *
-     * @param indexMetadata our index metadata
-     * @param document document we want to view
-     * @return true iff the content from documents in the index may be viewed
-     */
-    protected static boolean mayView(IndexMetadata indexMetadata, Document document) {
-        if (indexMetadata.metadataFields().exists(METADATA_FIELD_CONTENT_VIEWABLE))
-            return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
-        return indexMetadata.contentViewable();
-    }
-
-    protected void dataStreamFacets(DataStream ds, SearchFacets facetDesc) throws InvalidQuery {
-
-        Facets facets = facetDesc.execute();
-        Map<DocProperty, DocGroups> counts = facets.countsPerFacet();
-
-        ds.startMap();
-        for (Entry<DocProperty, DocGroups> e : counts.entrySet()) {
-            DocProperty facetBy = e.getKey();
-            DocGroups facetCounts = e.getValue();
-            facetCounts = facetCounts.sort(DocGroupProperty.size());
-            ds.startAttrEntry("facet", "name", facetBy.name())
-                    .startList();
-            int n = 0, maxFacetValues = 10;
-            int totalSize = 0;
-            for (DocGroup count : facetCounts) {
-                ds.startItem("item").startMap()
-                        .entry("value", count.identity().toString())
-                        .entry("size", count.size())
-                        .endMap().endItem();
-                totalSize += count.size();
-                n++;
-                if (n >= maxFacetValues)
-                    break;
-            }
-            if (totalSize < facetCounts.sumOfGroupSizes()) {
-                ds.startItem("item")
-                        .startMap()
-                        .entry("value", "[REST]")
-                        .entry("size", facetCounts.sumOfGroupSizes() - totalSize)
-                        .endMap()
-                        .endItem();
-            }
-            ds.endList()
-                    .endAttrEntry();
-        }
-        ds.endMap();
-    }
-
-    public static void dataStreamDocFields(DataStream ds, IndexMetadata indexMetadata) {
-        ds.startMap();
-        MetadataField pidField = indexMetadata.metadataFields().pidField();
-        if (pidField != null)
-            ds.entry("pidField", pidField.name());
-        for (String propName: List.of("titleField", "authorField", "dateField")) {
-            String fieldName = indexMetadata.custom().get(propName, "");
-            if (!fieldName.isEmpty())
-                ds.entry(propName, fieldName);
-        }
-        ds.endMap();
-    }
-
-    protected BlackLabIndex blIndex() throws BlsException {
-        return indexMan.getIndex(indexName).blIndex();
-    }
-
-    /**
-     * Get the pid for the specified document
-     *
-     * @param index where we got this document from
-     * @param luceneDocId Lucene document id
-     * @param document the document object
-     * @return the pid string (or Lucene doc id in string form if index has no pid
-     *         field)
-     */
-    public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
-        MetadataField pidField = index.metadataFields().pidField();
-        String pid = pidField == null ? null : document.get(pidField.name());
-        if (pid == null)
-            return Integer.toString(luceneDocId);
-        return pid;
-    }
-
-    /**
-     * Output most of the fields of the search summary.
-     *
-     * @param ds where to output XML/JSON
-     * @param searchParam original search parameters
-     * @param timings various timings related to this request
-     * @param groups information about groups, if we were grouping
-     * @param window our viewing window
-     */
-    protected <T> void datastreamSummaryCommonFields(
-            DataStream ds,
-            SearchParameters searchParam,
-            SearchTimings timings,
-            ResultGroups<T> groups,
-            WindowStats window
-            ) throws BlsException {
-
-        // Our search parameters
-        ds.startEntry("searchParam");
-        searchParam.dataStream(ds);
-        ds.endEntry();
-
-        IndexStatus status = indexMan.getIndex(searchParam.getIndexName()).getStatus();
-        if (status != IndexStatus.AVAILABLE) {
-            ds.entry("indexStatus", status.toString());
-        }
-
-        // Information about hit sampling
-        SampleParameters sample = searchParam.getSampleSettings();
-        if (sample != null) {
-            ds.entry("sampleSeed", sample.seed());
-            if (sample.isPercentage())
-                ds.entry("samplePercentage", Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
-            else
-                ds.entry("sampleSize", sample.numberOfHitsSet());
-        }
-
-        // Information about search progress
-        ds.entry("searchTime", timings.getProcessingTime());
-        ds.entry("countTime", timings.getCountTime());
-
-        // Information about grouping operation
-        if (groups != null) {
-            ds.entry("numberOfGroups", groups.size())
-                    .entry("largestGroupSize", groups.largestGroupSize());
-        }
-
-        // Information about our viewing window
-        if (window != null) {
-            ds.entry("windowFirstResult", window.first())
-                    .entry("requestedWindowSize", window.requestedWindowSize())
-                    .entry("actualWindowSize", window.windowSize())
-                    .entry("windowHasPrevious", window.hasPrevious())
-                    .entry("windowHasNext", window.hasNext());
-        }
-    }
-
-    protected void datastreamNumberOfResultsSummaryTotalHits(DataStream ds, ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal, boolean countFailed, CorpusSize subcorpusSize) {
-        // Information about the number of hits/docs, and whether there were too many to retrieve/count
-        // We have a hits object we can query for this information
-
-        if (hitsStats == null)
-            hitsStats = ResultsStatsStatic.INVALID;
-        long hitsCounted = countFailed ? -1 : (waitForTotal ? hitsStats.countedTotal() : hitsStats.countedSoFar());
-        long hitsProcessed = waitForTotal ? hitsStats.processedTotal() : hitsStats.processedSoFar();
-        if (docsStats == null)
-            docsStats = ResultsStatsStatic.INVALID;
-        long docsCounted = countFailed ? -1 : (waitForTotal ? docsStats.countedTotal() : docsStats.countedSoFar());
-        long docsProcessed = waitForTotal ? docsStats.processedTotal() : docsStats.processedSoFar();
-
-        ds.entry("stillCounting", !hitsStats.done());
-        ds.entry("numberOfHits", hitsCounted)
-                .entry("numberOfHitsRetrieved", hitsProcessed)
-                .entry("stoppedCountingHits", hitsStats.maxStats().hitsCountedExceededMaximum())
-                .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
-        ds.entry("numberOfDocs", docsCounted)
-                .entry("numberOfDocsRetrieved", docsProcessed);
-        if (subcorpusSize != null) {
-            datastreamSubcorpusSize(ds, subcorpusSize);
-        }
-    }
-
-    static void datastreamSubcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
-        ds.startEntry("subcorpusSize").startMap()
-            .entry("documents", subcorpusSize.getDocuments());
-        if (subcorpusSize.hasTokenCount())
-            ds.entry("tokens", subcorpusSize.getTokens());
-        ds.endMap().endEntry();
-    }
-
-    protected void datastreamNumberOfResultsSummaryDocResults(DataStream ds, boolean isViewDocGroup, DocResults docResults, boolean countFailed, CorpusSize subcorpusSize) {
-        // Information about the number of hits/docs, and whether there were too many to retrieve/count
-        ds.entry("stillCounting", false);
-        if (isViewDocGroup) {
-            // Viewing single group of documents, possibly based on a hits search.
-            // group.getResults().getOriginalHits() returns null in this case,
-            // so we have to iterate over the DocResults and sum up the hits ourselves.
-            long numberOfHits = 0;
-            for (DocResult dr : docResults) {
-                numberOfHits += dr.size();
-            }
-            ds.entry("numberOfHits", numberOfHits)
-                    .entry("numberOfHitsRetrieved", numberOfHits);
-
-            long numberOfDocsCounted = docResults.size();
-            if (countFailed)
-                numberOfDocsCounted = -1;
-            ds.entry("numberOfDocs", numberOfDocsCounted)
-                    .entry("numberOfDocsRetrieved", docResults.size());
-        } else {
-            // Documents-only search (no hits). Get the info from the DocResults.
-            ds.entry("numberOfDocs", docResults.size())
-                    .entry("numberOfDocsRetrieved", docResults.size());
-        }
-        if (subcorpusSize != null) {
-            datastreamSubcorpusSize(ds, subcorpusSize);
-        }
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    protected static BlsException translateSearchException(Exception e) {
-        if (e instanceof InterruptedException) {
-            throw new InterruptedSearch(e);
-        } else {
-            try {
-                throw e.getCause();
-            } catch (BlackLabException e1) {
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage());
-            } catch (BlsException e1) {
-                return e1;
-            } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
-            }
-        }
-    }
-
-    public void datastreamHits(DataStream ds, Hits hits, ConcordanceContext concordanceContext, Map<Integer, Document> luceneDocs) throws BlsException {
-        BlackLabIndex index = hits.index();
-
-        ds.startEntry("hits").startList();
-        Set<Annotation> annotationsToList = new HashSet<>(getAnnotationsToWrite());
-        for (Hit hit : hits) {
-            ds.startItem("hit").startMap();
-
-            // Collect Lucene docs (for writing docInfos later) and find pid
-            Document document = luceneDocs.get(hit.doc());
-            if (document == null) {
-                document = index.luceneDoc(hit.doc());
-                luceneDocs.put(hit.doc(), document);
-            }
-            String pid = getDocumentPid(index, hit.doc(), document);
-
-            // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
-
-            // Add basic hit info
-            ds.entry("docPid", pid);
-            ds.entry("start", hit.start());
-            ds.entry("end", hit.end());
-
-            if (hits.hasCapturedGroups()) {
-                Map<String, Span> capturedGroups = hits.capturedGroups().getMap(hit, searchParam.omitEmptyCapture());
-                if (capturedGroups != null) {
-                    ds.startEntry("captureGroups").startList();
-
-                    for (Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
-                        if (capturedGroup.getValue() != null) {
-                            ds.startItem("group").startMap();
-                            ds.entry("name", capturedGroup.getKey());
-                            ds.entry("start", capturedGroup.getValue().start());
-                            ds.entry("end", capturedGroup.getValue().end());
-                            ds.endMap().endItem();
-                        }
-                    }
-
-                    ds.endList().endEntry();
-                } else {
-                    logger.warn("MISSING CAPTURE GROUP: " + pid + ", query: " + searchParam.getString("patt"));
-                }
-            }
-
-            ContextSize contextSize = searchParam.getContextSettings().size();
-            boolean includeContext = contextSize.left() > 0 || contextSize.right() > 0;
-            if (concordanceContext.isConcordances()) {
-                // Add concordance from original XML
-                Concordance c = concordanceContext.getConcordance(hit);
-                if (includeContext) {
-                    ds.startEntry("left").xmlFragment(c.left()).endEntry()
-                            .startEntry("match").xmlFragment(c.match()).endEntry()
-                            .startEntry("right").xmlFragment(c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").xmlFragment(c.match()).endEntry();
-                }
-            } else {
-                // Add KWIC info
-                Kwic c = concordanceContext.getKwic(hit);
-                if (includeContext) {
-                    ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
-                            .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
-                            .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
-                } else {
-                    ds.startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry();
-                }
-            }
-            ds.endMap().endItem();
-        }
-        ds.endList().endEntry();
-    }
 }

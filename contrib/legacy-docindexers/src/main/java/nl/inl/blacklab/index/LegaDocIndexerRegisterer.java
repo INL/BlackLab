@@ -6,7 +6,6 @@ import nl.inl.blacklab.indexers.DocIndexerPageXml;
 import nl.inl.blacklab.indexers.DocIndexerTei;
 import nl.inl.blacklab.indexers.DocIndexerTeiPosInFunctionAttr;
 import nl.inl.blacklab.indexers.DocIndexerTeiText;
-import nl.inl.blacklab.indexers.DocIndexerWhiteLab2;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 
 public class LegaDocIndexerRegisterer {
@@ -19,7 +18,6 @@ public class LegaDocIndexerRegisterer {
         // be on the classpath)
         factory.addFormat("alto", DocIndexerAlto.class);
         factory.addFormat("di-folia", DocIndexerFolia.class);
-        factory.addFormat("whitelab2", DocIndexerWhiteLab2.class);
         factory.addFormat("pagexml", DocIndexerPageXml.class);
         factory.addFormat("sketchxml", DocIndexerXmlSketch.class);
 
