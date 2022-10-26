@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -75,5 +76,14 @@ public class CustomPropsMap implements CustomProps {
     @Override
     public Map<String, Object> asMap() {
         return Collections.unmodifiableMap(customFields);
+    }
+
+    <T> T computeIfAbsent(String key, Function<String, T> mappingFunction) {
+        T value = (T)get(key);
+        if (value == null) {
+            value = mappingFunction.apply(key);
+            put(key, value);
+        }
+        return value;
     }
 }

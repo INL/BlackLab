@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,21 +116,26 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     }
 
     private Map<String, AnnotationGroups> annotationGroupsPerField() {
-        Map<String, AnnotationGroups> map = (Map<String, AnnotationGroups>) topLevelCustom.get("annotationGroups");
-        if (map == null) {
-            ensureNotFrozen();
-            map = new LinkedHashMap<>();
-            topLevelCustom.put("annotationGroups", map);
+        Map<String, List<Map<String, Object>>> serialized = (Map<String, List<Map<String, Object>>>)topLevelCustom.get("annotationGroups");
+        Map<String, AnnotationGroups> map = new HashMap<>();
+        if (serialized != null) {
+            for (Map.Entry<String, List<Map<String, Object>>> e: serialized.entrySet()) {
+                String fieldName = e.getKey();
+                AnnotationGroups groups = AnnotationGroups.fromCustom(fieldName, e.getValue());
+                map.put(fieldName, groups);
+            }
         }
         return map;
     }
 
     public void clearAnnotationGroups() {
-        annotationGroupsPerField().clear();
+        topLevelCustom.put("annotationGroups", new LinkedHashMap<>());
     }
 
     public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
-        annotationGroupsPerField().put(fieldName, annotationGroups);
+        Map<String, List<Map<String, Object>>> groups = topLevelCustom.computeIfAbsent("annotationGroups",
+                __ -> new LinkedHashMap<>());
+        groups.put(fieldName, annotationGroups.toCustom());
     }
     
     @Override
@@ -141,36 +146,23 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
         setTopLevelCustom(metadata.custom());
 
+        /*
         CustomProps custom = metadata.custom();
         if (custom.containsKey("annotationGroups")) {
             clearAnnotationGroups();
             Map<String, List<Map<String, Object>>> groupingsPerField = custom.get("annotationGroups", Collections.emptyMap());
             for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
                 String fieldName = entry.getKey();
-                List<Map<String, Object>> groups = entry.getValue();
-                List<AnnotationGroup> annotationGroups = extractAnnotationGroups(fieldName, groups);
-                putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotationGroups));
+                AnnotationGroups annotationGroups = AnnotationGroups.fromCustom(fieldName, entry.getValue());
+                putAnnotationGroups(fieldName, annotationGroups);
             }
         }
+        */
 
         for (Map.Entry<String, AnnotatedFieldImpl> e: annotatedFields.entrySet()) {
             e.getValue().fixAfterDeserialization(index, e.getKey());
         }
         setMainAnnotatedField(annotatedFields.get(mainAnnotatedFieldName));
-
-    }
-
-    private static List<AnnotationGroup> extractAnnotationGroups(String fieldName,
-            List<Map<String, Object>> groups) {
-        List<AnnotationGroup> annotationGroups = new ArrayList<>();
-        for (Map<String, Object> group: groups) {
-            String groupName = (String)group.getOrDefault("name", "UNKNOWN");
-            List<String> annotations = (List<String>)group.getOrDefault( "annotations", Collections.emptyList());
-            boolean addRemainingAnnotations = (boolean)group.getOrDefault("addRemainingAnnotations", false);
-            annotationGroups.add(new AnnotationGroup(fieldName, groupName, annotations,
-                    addRemainingAnnotations));
-        }
-        return annotationGroups;
     }
 
     void setTopLevelCustom(CustomPropsMap custom) {
