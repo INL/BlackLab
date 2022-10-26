@@ -374,7 +374,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     g.isAddRemainingFields());
             groups.put(group.name(), group);
         }
-        custom.put("metadataFieldGroups", groups);
         metadataFields.setMetadataGroups(groups);
 
         // Annotation groups

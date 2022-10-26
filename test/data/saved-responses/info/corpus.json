@@ -142,6 +142,36 @@
       "valueListComplete": true
     }
   },
-  "metadataFieldGroups": [],
-  "annotationGroups": {}
+  "metadataFieldGroups": [
+    {
+      "name": "Other fields group",
+      "fields": [
+        "fromInputFile",
+        "pid"
+      ]
+    },
+    {
+      "name": "Title group",
+      "fields": [
+        "title"
+      ]
+    }
+  ],
+  "annotationGroups": {
+    "contents": [
+      {
+        "name": "Basic",
+        "annotations": [
+          "word",
+          "lemma"
+        ]
+      },
+      {
+        "name": "Advanced",
+        "annotations": [
+          "pos"
+        ]
+      }
+    ]
+  }
 }

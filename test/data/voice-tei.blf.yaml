@@ -75,6 +75,25 @@ corpusConfig:
   # Allow us to retrieve document content
   contentViewable: true
 
+  metadataFieldGroups:
+    - name: Title group
+      fields:
+        - title
+    - name: Other fields group
+      addRemainingFields: true
+
+  annotationGroups:
+    contents:
+      - name: Basic
+        annotations:
+          - word
+          - lemma
+      - name: Advanced
+        annotations:
+          - pos
+        addRemainingAnnotations: true
+
+
 # FoLiA's native metadata
 metadata:
   containerPath: .

@@ -3,7 +3,9 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -52,6 +54,21 @@ public class AnnotationGroup implements Iterable<String> {
 
     public Stream<String> stream() {
         return annotations.stream();
+    }
+
+    public Map<String, Object> toCustom() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("groupName", groupName);
+        result.put("annotations", annotations);
+        result.put("addRemainingAnnotations", addRemainingAnnotations);
+        return result;
+    }
+
+    public static AnnotationGroup fromCustom(String fieldName, Map<String, Object> serialized) {
+        String groupName = (String)serialized.getOrDefault("groupName", "UNKNOWN");
+        List<String> annotations = (List<String>)serialized.getOrDefault("annotations", Collections.emptyList());
+        boolean addRemainingAnnotations = (Boolean)serialized.getOrDefault("addRemainingAnnotations", false);
+        return new AnnotationGroup(fieldName, groupName, annotations, addRemainingAnnotations);
     }
 
 }

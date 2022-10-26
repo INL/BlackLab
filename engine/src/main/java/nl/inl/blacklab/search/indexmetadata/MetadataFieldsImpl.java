@@ -1,12 +1,13 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -162,9 +163,12 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     @Override
     public Map<String, ? extends MetadataFieldGroup> groups() {
-        Map<String, MetadataFieldGroup> metadataFieldGroups = topLevelCustom.get("metadataFieldGroups",
-                Collections.emptyMap());
-        return Collections.unmodifiableMap(metadataFieldGroups);
+        List<Map<String, Object>> metadataFieldGroups = (List<Map<String, Object>>)topLevelCustom
+                .get("metadataFieldGroups", new ArrayList<Map<String, Object>>());
+        Map<String, MetadataFieldGroupImpl> result = metadataFieldGroups.stream()
+                .map( MetadataFieldGroupImpl::fromCustom)
+                .collect(Collectors.toMap(MetadataFieldGroupImpl::name, Function.identity()));
+        return result;
     }
 
     @Override
@@ -237,7 +241,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
         if (!groups().equals(metadataGroups)) {
             ensureNotFrozen();
-            topLevelCustom.put("metadataFieldGroups", metadataGroups);
+            List<Map<String, Object>> metaGroupsCustom = metadataGroups.entrySet().stream()
+                    .map( e -> e.getValue().toCustom())
+                    .collect(Collectors.toList());
+            topLevelCustom.put("metadataFieldGroups", metaGroupsCustom);
         }
     }
 
