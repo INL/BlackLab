@@ -374,7 +374,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     g.isAddRemainingFields());
             groups.put(group.name(), group);
         }
-        custom.put("metadataFieldGroups", groups); // @@@custom
         metadataFields.setMetadataGroups(groups);
 
         // Annotation groups
@@ -407,7 +406,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         versionInfo.populateWithDefaults();
         metadataFields.clearSpecialFields();
         custom.put("annotationGroups", new LinkedHashMap<>());
-        custom.put("metadataFieldGroups", new LinkedHashMap<>()); // @@@custom
+        custom.put("metadataFieldGroups", new LinkedHashMap<>());
     }
 
     @Override

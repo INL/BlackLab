@@ -1,8 +1,11 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -52,5 +55,21 @@ public class MetadataFieldGroupImpl implements MetadataFieldGroup {
     @Override
     public Stream<String> stream() {
         return fieldNamesInGroup.stream();
+    }
+
+    public Map<String, Object> toCustom() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("name", name);
+        result.put("fieldNamesInGroup", fieldNamesInGroup);
+        result.put("addRemainingFields", addRemainingFields);
+        return result;
+    }
+
+    public static MetadataFieldGroupImpl fromCustom(Map<String, Object> customStruct) {
+        String name = (String)customStruct.getOrDefault("name", "UNKNOWN");
+        List<String> fieldNames = (List<String>)customStruct.getOrDefault("fieldNames",
+                Collections.emptyList());
+        boolean addRemainingFields = (Boolean)customStruct.getOrDefault("addRemainingFields", false);
+        return new MetadataFieldGroupImpl(name, fieldNames, addRemainingFields);
     }
 }

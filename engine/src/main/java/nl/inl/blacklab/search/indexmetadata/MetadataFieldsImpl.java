@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -162,9 +163,14 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     @Override
     public Map<String, ? extends MetadataFieldGroup> groups() {
-        Map<String, MetadataFieldGroup> metadataFieldGroups = topLevelCustom.get("metadataFieldGroups",
-                Collections.emptyMap());
-        return Collections.unmodifiableMap(metadataFieldGroups);
+
+        //@@@@@@@@@@@@@@@@@
+        List<Map<String, Object>> metadataFieldGroups = (List<Map<String, Object>>)topLevelCustom
+                .get("metadataFieldGroups", Collections.emptyMap());
+        Map<String, ? extends MetadataFieldGroup> result = metadataFieldGroups.stream()
+                .map( MetadataFieldGroupImpl::fromCustom)
+                .collect(Collectors.toMap());
+        //return Collections.unmodifiableMap(metadataFieldGroups);
     }
 
     @Override
@@ -237,7 +243,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
         if (!groups().equals(metadataGroups)) {
             ensureNotFrozen();
-            topLevelCustom.put("metadataFieldGroups", metadataGroups); // @@@custom
+            List<Map<String, Object>> metaGroupsCustom = metadataGroups.entrySet().stream()
+                    .map( e -> e.getValue().toCustom())
+                    .collect(Collectors.toList());
+            topLevelCustom.put("metadataFieldGroups", metaGroupsCustom);
         }
     }
 

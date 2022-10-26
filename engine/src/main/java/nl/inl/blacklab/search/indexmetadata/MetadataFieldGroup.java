@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**

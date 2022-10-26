@@ -51,39 +51,28 @@ public final class AnnotatedFieldNameUtil {
      * String used to separate the base field name (say, contents) and the field
      * annotation (pos, lemma, etc.)
      */
-    static final String ANNOT_SEP;
+    static final String ANNOT_SEP = "%";
 
     /**
      * String used to separate the field/annotation name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
-    static final String SENSITIVITY_SEP;
+    static final String SENSITIVITY_SEP = "@";
 
     /**
      * String used to separate the field/annotation name (say, contents_lemma) and the
      * alternative (e.g. "s" for case-sensitive)
      */
-    static final String BOOKKEEPING_SEP;
+    static final String BOOKKEEPING_SEP = "#";
 
     /** Length of SENSITIVITY_SEP */
-    static final int SENSITIVITY_SEP_LEN;
+    static final int SENSITIVITY_SEP_LEN = SENSITIVITY_SEP.length();
 
     /** Length of ANNOT_SEP */
-    static final int ANNOT_SEP_LEN;
+    static final int ANNOT_SEP_LEN = ANNOT_SEP.length();
 
     /** Length of BOOKKEEPING_SEP */
-    static final int BOOKKEEPING_SEP_LEN;
-
-    static {
-        // Lucene doesn't have any restrictions on characters in field names;
-        // use the short, symbolic ones.
-        ANNOT_SEP = "%";
-        SENSITIVITY_SEP = "@";
-        BOOKKEEPING_SEP = "#";
-        SENSITIVITY_SEP_LEN = SENSITIVITY_SEP.length();
-        ANNOT_SEP_LEN = ANNOT_SEP.length();
-        BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
-    }
+    static final int BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
 
     /**
      * What are the names of the bookkeeping subfields (i.e. content id, forward
