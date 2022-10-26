@@ -13,24 +13,24 @@ import net.jcip.annotations.NotThreadSafe;
  * thread. Note: unlike regular ExecutorService, this class is NOT thread-safe.
  */
 @NotThreadSafe
-public class MainThreadExecutorService extends AbstractExecutorService {
+public class CurrentThreadExecutorService extends AbstractExecutorService {
 
     @FunctionalInterface
     public interface RejectedExecutionHandler {
-        void rejectedExecution(Runnable r, MainThreadExecutorService e);
+        void rejectedExecution(Runnable r, CurrentThreadExecutorService e);
     }
 
     private final RejectedExecutionHandler handler;
 
     private boolean shutdown;
 
-    MainThreadExecutorService() {
+    public CurrentThreadExecutorService() {
         this((r, e) -> {
             throw new RejectedExecutionException("Task " + r.toString() + " rejected from " + e.toString());
         });
     }
 
-    MainThreadExecutorService(RejectedExecutionHandler h) {
+    public CurrentThreadExecutorService(RejectedExecutionHandler h) {
         if (h == null)
             throw new IllegalArgumentException("No RejectedExecutionHandler specified");
         this.handler = h;
