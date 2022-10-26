@@ -23,8 +23,8 @@ import nl.inl.blacklab.codec.BlackLab40PostingsReader;
  */
 public class TermsIntegrated extends TermsReaderAbstract {
 
-    private final Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
-    private final Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
+    private Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
+    private Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
@@ -103,7 +103,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
     }
 
-    private final IndexReader indexReader;
+    private IndexReader indexReader;
 
     private final String luceneField;
 
@@ -134,6 +134,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
         String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
 
         finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+
+        // clear temporary variables
+        this.collationCacheInsensitive = null;
+        this.collationCacheSensitive = null;
+        this.indexReader = null;
     }
 
 
