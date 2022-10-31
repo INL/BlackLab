@@ -23,7 +23,7 @@ import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 @ThreadSafe
 class SegmentForwardIndex implements AutoCloseable {
 
-    /** Tokens index file record consists of offset in tokens file, doc length in tokens, and tokens encoding scheme. */
+    /** Tokens index file record consists of offset in tokens file, doc length in tokens, and tokens codec scheme. */
     private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES;
 
     /** Our fields producer */
@@ -95,7 +95,7 @@ class SegmentForwardIndex implements AutoCloseable {
         private int docLength;
 
         // Used by retrievePart(s)
-        private TokensEncoding tokensEncoding;
+        private TokensCodec tokensCodec;
 
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
@@ -152,7 +152,7 @@ class SegmentForwardIndex implements AutoCloseable {
             // Read the snippet from the tokens file
             try {
                 int[] snippet = new int[end - start];
-                switch (tokensEncoding) {
+                switch (tokensCodec) {
                 case INT_PER_TOKEN:
                     // Simplest encoding, just one 4-byte int per token
                     _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
@@ -167,7 +167,7 @@ class SegmentForwardIndex implements AutoCloseable {
                     Arrays.fill(snippet, value);
                     break;
                 default:
-                    throw new UnsupportedOperationException("Cannot read tokens encoding: " + tokensEncoding);
+                    throw new UnsupportedOperationException("Cannot read tokens codec: " + tokensCodec);
                 }
                 return snippet;
             } catch (IOException e) {
@@ -182,7 +182,7 @@ class SegmentForwardIndex implements AutoCloseable {
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
-                tokensEncoding = TokensEncoding.fromCode(_tokensIndex.readByte());
+                tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

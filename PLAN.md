@@ -24,7 +24,7 @@ Very complex issues and enhancements that may be of limited use should be tackle
 
 ### Forward index
 
-- [ ] Rename "tokens encoding" to "tokens codec" to be more in line with `ContentStoreBlockCodec` (and Lucene terminology in general). See e.g. `TokensEncoding`, `SegmentForwardIndex`, `integrated.md`, etc.
+- [x] Rename "tokens encoding" to "tokens codec" to be more in line with `ContentStoreBlockCodec` (and Lucene terminology in general). See e.g. `TokensEncoding`, `SegmentForwardIndex`, `integrated.md`, etc.
 - [ ] We don't always need 4 bytes per token id to store the tokens. If all of the token ids in a document are less than 256, we only need a single byte. If less than 16384, two bytes, etc. Store the number of bytes per token as a parameter for the tokens codec, and use this number of bytes to store the term ids.
 - [ ] Check how `IndexInput.clone()` is used. This method is NOT threadsafe, so we must do this in a synchronized method!
 - [ ] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Consider pooling encoder/decoder as well if useful.

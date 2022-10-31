@@ -5,7 +5,7 @@ package nl.inl.blacklab.codec;
  * This allows us to add alternative encodings over time, e.g. to deal with
  * sparse annototions, use variable-length token ids, etc.
  */
-enum TokensEncoding {
+enum TokensCodec {
     /**
      * Simplest possible encoding, one 4-byte integer per token.
      */
@@ -19,7 +19,7 @@ enum TokensEncoding {
     /** How we'll write this encoding to the tokens index file. */
     byte code;
 
-    TokensEncoding(byte code) {
+    TokensCodec(byte code) {
         this.code = code;
     }
 
@@ -27,11 +27,11 @@ enum TokensEncoding {
         return code;
     }
 
-    public static TokensEncoding fromCode(byte code) {
-        for (TokensEncoding t: values()) {
+    public static TokensCodec fromCode(byte code) {
+        for (TokensCodec t: values()) {
             if (t.code == code)
                 return t;
         }
-        throw new IllegalArgumentException("Unknown tokens encoding: " + code);
+        throw new IllegalArgumentException("Unknown tokens codec: " + code);
     }
 }

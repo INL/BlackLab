@@ -449,16 +449,16 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @throws IOException       When failing to write
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
-        TokensEncoding tokensEncoding = allTheSame(tokensInDoc) ?
-                TokensEncoding.ALL_TOKENS_THE_SAME :
-                TokensEncoding.INT_PER_TOKEN;
-        // Write offset in the tokens file, doc length in tokens and tokens encoding used
+        TokensCodec tokensCodec = allTheSame(tokensInDoc) ?
+                TokensCodec.ALL_TOKENS_THE_SAME :
+                TokensCodec.INT_PER_TOKEN;
+        // Write offset in the tokens file, doc length in tokens and tokens codec used
         outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
         outTokensIndexFile.writeInt(tokensInDoc.length);
-        outTokensIndexFile.writeByte(TokensEncoding.INT_PER_TOKEN.getCode());
+        outTokensIndexFile.writeByte(TokensCodec.INT_PER_TOKEN.getCode());
 
         // Write the tokens
-        switch (tokensEncoding) {
+        switch (tokensCodec) {
         case INT_PER_TOKEN:
             // loop may be slow, writeBytes..? endianness, etc.?
             for (int token: tokensInDoc) {
