@@ -126,14 +126,14 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
         IndexInput fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
-        while (fieldsFile.getFilePointer() < fieldsFile.length()) {
+        while (fieldsFile.getFilePointer() < (fieldsFile.length() - CodecUtil.footerLength())) {
             String fieldName = fieldsFile.readString();
             int id = fields.size();
             fields.put(fieldName, id);
         }
         fieldsFile.close();
         _docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
-        docIndexFileOffset = _docIndexFile.getFilePointer(); // remember offset after header so we can calculdate doc offsets.
+        docIndexFileOffset = _docIndexFile.getFilePointer(); // remember offset after header so we can calculate doc offsets.
         _valueIndexFile = openInput(BlackLab40StoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
         _blockIndexFile = openInput(BlackLab40StoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
         _blocksFile = openInput(BlackLab40StoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);

@@ -3,6 +3,7 @@ package nl.inl.blacklab.forwardindex;
 import java.io.IOException;
 import java.util.Iterator;
 
+import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -42,7 +43,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
 
             // TODO read cache these fields somewhere so we don't read them once per annotation
             try (IndexInput fieldInput = segmentReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
-                while (fieldInput.getFilePointer() < fieldInput.length()) {
+                while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
                     BlackLab40PostingsWriter.Field f = new BlackLab40PostingsWriter.Field(fieldInput);
                     if (f.getFieldName().equals(luceneField)) {
                         this.field = f;

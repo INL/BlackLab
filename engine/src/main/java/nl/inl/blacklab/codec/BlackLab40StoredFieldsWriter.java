@@ -209,6 +209,13 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     @Override
     public void close() throws IOException {
         // Close our files
+
+        CodecUtil.writeFooter(fieldsFile);
+        CodecUtil.writeFooter(docIndexFile);
+        CodecUtil.writeFooter(valueIndexFile);
+        CodecUtil.writeFooter(blockIndexFile);
+        CodecUtil.writeFooter(blocksFile);
+
         fieldsFile.close();
         docIndexFile.close();
         valueIndexFile.close();

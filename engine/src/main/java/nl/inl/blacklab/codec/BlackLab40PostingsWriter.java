@@ -222,205 +222,214 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
         Map<String, FieldMutable> fiFields = new HashMap<>();
 
-        try (IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
-                IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT)) {
+        try (   IndexOutput outTokensIndexFile = createOutput(BlackLab40PostingsFormat.TOKENS_INDEX_EXT);
+                IndexOutput outTokensFile = createOutput(BlackLab40PostingsFormat.TOKENS_EXT);
+                IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
+                IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
+                IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMORDER_EXT)
+        ) {
 
             // Write our postings extension information
-            try (IndexOutput termIndexFile = createOutput(BlackLab40PostingsFormat.TERMINDEX_EXT);
-                    IndexOutput termsFile = createOutput(BlackLab40PostingsFormat.TERMS_EXT);
-                    IndexOutput termsOrderFile = createOutput(BlackLab40PostingsFormat.TERMORDER_EXT)
-            ) {
-
-                // We'll keep track of doc lengths so we can preallocate our forward index structure.
-                Map<Integer, Integer> docLengths = new HashMap<>();
-
-                // First we write a temporary dump of the term vector, and keep track of
-                // where we can find term occurrences per document so we can reverse this
-                // file later.
-                // (we iterate per field & term first, because that is how Lucene's reverse
-                //  index stores the information. What we need is per field, then per document
-                //  (we're trying to reconstruct the document), so we will do that below.
-                //   we use temporary files because this might take a huge amount of memory)
-                // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
-                Map<String/*field*/, SortedMap<Integer/*lucene doc id*/, Map<Integer/*termID*/, Long/*filePointer*/>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
-                try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
-
-                    // Process fields
-                    for (String luceneField: fields) { // for each field
-                        // If this field should get a forward index...
-                        if (BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
-                            FieldMutable offsets = fiFields.computeIfAbsent(luceneField, FieldMutable::new);
-                            
-                            // We're creating a forward index for this field.
-                            // That also means that the payloads will include an "is-primary-value" indicator,
-                            // so we know which value to store in the forward index (the primary value, i.e.
-                            // the first value, to be used in concordances, sort, group, etc.).
-                            // We must skip these indicators when working with other payload info. See PayloadUtils
-                            // for details.
-
-                            // Record starting offset of field in termindex file (written to fields file later)
-                            offsets.setTermIndexOffset(termIndexFile.getFilePointer());
-
-                            // Keep track of where to find term positions for each document
-                            // (for reversing index)
-                            // The map is keyed by docId and stores a list of offsets into the
-                            // temporary termvector file where the occurrences for each term can be
-                            // found.
-                            Map<Integer, Map<Integer, Long>> docId2TermVecFileOffsets =
-                                    field2docTermVecFileOffsets.computeIfAbsent(luceneField, k -> new TreeMap<>());
-
-                            // For each term in this field...
-                            PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
-                            Terms terms = fields.terms(luceneField);
-                            TermsEnum termsEnum = terms.iterator();
 
 
-                            int termId = 0;
-                            List<String> termsList = new ArrayList<>();
+            // We'll keep track of doc lengths so we can preallocate our forward index structure.
+            Map<Integer, Integer> docLengths = new HashMap<>();
 
-                            while (true) {
-                                BytesRef term = termsEnum.next();
-                                if (term == null)
-                                    break;
+            // First we write a temporary dump of the term vector, and keep track of
+            // where we can find term occurrences per document so we can reverse this
+            // file later.
+            // (we iterate per field & term first, because that is how Lucene's reverse
+            //  index stores the information. What we need is per field, then per document
+            //  (we're trying to reconstruct the document), so we will do that below.
+            //   we use temporary files because this might take a huge amount of memory)
+            // (use a LinkedHashMap to maintain the same field order when we write the tokens below)
+            Map<String/*field*/, SortedMap<Integer/*lucene doc id*/, Map<Integer/*termID*/, Long/*filePointer*/>>> field2docTermVecFileOffsets = new LinkedHashMap<>();
+            try (IndexOutput outTempTermVectorFile = createOutput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
 
-                                // Write the term to the terms file
-                                String termString = term.utf8ToString();
-                                termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
-                                termsFile.writeString(termString);
-                                termsList.add(termString);
-
-                                // For each document containing this term...
-                                postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
-                                while (true) {
-                                    Integer docId = postingsEnum.nextDoc();
-                                    if (docId.equals(DocIdSetIterator.NO_MORE_DOCS))
-                                        break;
-
-                                    // Keep track of term positions offsets in term vector file
-                                    Map<Integer, Long> vecFileOffsetsPerTermId =
-                                            docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new HashMap<>());
-                                    vecFileOffsetsPerTermId.put(termId, outTempTermVectorFile.getFilePointer());
-
-                                    // Go through each occurrence of term in this doc,
-                                    // gathering the positions where this term occurs as a "primary value"
-                                    // (the first value at this token position, which we will store in the
-                                    //  forward index). Also determine docLength.
-                                    int nOccurrences = postingsEnum.freq();
-                                    int docLength = docLengths.getOrDefault(docId, 0);
-                                    byte[] bytesPositions = new byte[nOccurrences * Integer.BYTES];
-                                    DataOutput positions = new ByteArrayDataOutput(bytesPositions);
-                                    int numOccurrencesWritten = 0;
-                                    for (int i = 0; i < nOccurrences; i++) {
-                                        int position = postingsEnum.nextPosition();
-                                        if (position >= docLength)
-                                            docLength = position + 1;
-
-                                        // Is this a primary value or a secondary one?
-                                        // Primary values are e.g. the original word from the document,
-                                        // and will be stored in the forward index to be used for concordances,
-                                        // sorting and grouping. Secondary values may be synonyms or stemmed versions
-                                        // and will not be stored in the forward index.
-                                        BytesRef payload = postingsEnum.getPayload();
-                                        if (PayloadUtils.isPrimaryValue(payload)) {
-                                            // primary value; write to buffer
-                                            positions.writeInt(position);
-                                            numOccurrencesWritten++;
-                                        }
-                                    }
-                                    docLengths.put(docId, docLength);
-
-                                    // Write the positions where this term occurs as primary value
-                                    // (will be reversed below to get the forward index)
-                                    outTempTermVectorFile.writeInt(numOccurrencesWritten);
-                                    if (numOccurrencesWritten > 0) {
-                                        outTempTermVectorFile.writeBytes(bytesPositions, 0,
-                                                numOccurrencesWritten * Integer.BYTES);
-                                    }
-                                }
-
-                                termId++;
-                            }
-
-                            // begin writing term IDs and sort orders
-                            Collators collators = Collators.defaultCollator();
-                            int[] sensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
-                            int[] insensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
-                            int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
-                            int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
-
-                            int numTerms = termsList.size();
-                            fiFields.get(luceneField).setNumberOfTerms(numTerms);
-                            fiFields.get(luceneField).setTermOrderOffset(termsOrderFile.getFilePointer());
-                            // write out, specific order.
-                            for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
-                            for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
-                            for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
-                            for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
-                        }
+                // Process fields
+                for (String luceneField: fields) { // for each field
+                    // If this field should get a forward index...
+                    if (!BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
+                        continue;
                     }
-                }
+                    FieldMutable offsets = fiFields.computeIfAbsent(luceneField, FieldMutable::new);
 
-                // Reverse the reverse index to create forward index
-                // (this time we iterate per field and per document first, then reconstruct the document by
-                //  looking at each term's occurrences. This produces our forward index)
-                try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
+                    // We're creating a forward index for this field.
+                    // That also means that the payloads will include an "is-primary-value" indicator,
+                    // so we know which value to store in the forward index (the primary value, i.e.
+                    // the first value, to be used in concordances, sort, group, etc.).
+                    // We must skip these indicators when working with other payload info. See PayloadUtils
+                    // for details.
 
-                    // For each field...
-                    for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
-                        String luceneField = fieldEntry.getKey();
-                        SortedMap<Integer/*docID*/, Map<Integer/*termID*/, Long/*file offset*/>> docPosOffsets = fieldEntry.getValue();
+                    // Record starting offset of field in termindex file (written to fields file later)
+                    offsets.setTermIndexOffset(termIndexFile.getFilePointer());
 
-                        // Record starting offset of field in tokensindex file (written to fields file later)
-                        fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
+                    // Keep track of where to find term positions for each document
+                    // (for reversing index)
+                    // The map is keyed by docId and stores a list of offsets into the
+                    // temporary termvector file where the occurrences for each term can be
+                    // found.
+                    Map<Integer, Map<Integer, Long>> docId2TermVecFileOffsets =
+                            field2docTermVecFileOffsets.computeIfAbsent(luceneField, k -> new TreeMap<>());
 
-                        // For each document...
-                        for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
-                            Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.get(docId);
-                            if (termPosOffsets == null)
-                                termPosOffsets = Collections.emptyMap();
+                    // For each term in this field...
+                    PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
+                    Terms terms = fields.terms(luceneField);
+                    TermsEnum termsEnum = terms.iterator();
+
+
+                    int termId = 0;
+                    List<String> termsList = new ArrayList<>();
+
+                    while (true) {
+                        BytesRef term = termsEnum.next();
+                        if (term == null)
+                            break;
+
+                        // Write the term to the terms file
+                        String termString = term.utf8ToString();
+                        termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
+                        termsFile.writeString(termString);
+                        termsList.add(termString);
+
+                        // For each document containing this term...
+                        postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
+                        while (true) {
+                            Integer docId = postingsEnum.nextDoc();
+                            if (docId.equals(DocIdSetIterator.NO_MORE_DOCS))
+                                break;
+
+                            // Keep track of term positions offsets in term vector file
+                            Map<Integer, Long> vecFileOffsetsPerTermId =
+                                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new HashMap<>());
+                            vecFileOffsetsPerTermId.put(termId, outTempTermVectorFile.getFilePointer());
+
+                            // Go through each occurrence of term in this doc,
+                            // gathering the positions where this term occurs as a "primary value"
+                            // (the first value at this token position, which we will store in the
+                            //  forward index). Also determine docLength.
+                            int nOccurrences = postingsEnum.freq();
                             int docLength = docLengths.getOrDefault(docId, 0);
-                            int[] tokensInDoc = new int[docLength]; // reconstruct the document here
-                            // The special document holding the index metadata will be 0, as will
-                            // a document that doesn't have any value for this annotated field.
-                            if (docLength > 0) {
-                                // NOTE: sometimes docs won't have any values for a field, but we'll
-                                //   still write all NO_TERMs in this case. This is similar to sparse
-                                //   fields (e.g. the field that stores <p> <s> etc.) which also have a
-                                //   lot of NO_TERMs.
-                                // TODO: worth it to compress these cases using a sparse representation of the
-                                //       values (e.g. with run-length encoding or something)? This does make
-                                //       retrieval slower though.
-                                Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
-                                // For each term...
-                                for (Map.Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
-                                    int termId = e.getKey();
-                                    inTermVectorFile.seek(e.getValue());
-                                    int nOccurrences = inTermVectorFile.readInt();
-                                    // For each occurrence...
-                                    for (int i = 0; i < nOccurrences; i++) {
-                                        int position = inTermVectorFile.readInt();
-                                        tokensInDoc[position] = termId;
-                                    }
+                            byte[] bytesPositions = new byte[nOccurrences * Integer.BYTES];
+                            DataOutput positions = new ByteArrayDataOutput(bytesPositions);
+                            int numOccurrencesWritten = 0;
+                            for (int i = 0; i < nOccurrences; i++) {
+                                int position = postingsEnum.nextPosition();
+                                if (position >= docLength)
+                                    docLength = position + 1;
+
+                                // Is this a primary value or a secondary one?
+                                // Primary values are e.g. the original word from the document,
+                                // and will be stored in the forward index to be used for concordances,
+                                // sorting and grouping. Secondary values may be synonyms or stemmed versions
+                                // and will not be stored in the forward index.
+                                BytesRef payload = postingsEnum.getPayload();
+                                if (PayloadUtils.isPrimaryValue(payload)) {
+                                    // primary value; write to buffer
+                                    positions.writeInt(position);
+                                    numOccurrencesWritten++;
                                 }
                             }
-                            // Write the forward index for this document (reconstructed doc)
-                            writeTokensInDoc(outTokensIndexFile, outTokensFile, tokensInDoc);
+                            docLengths.put(docId, docLength);
+
+                            // Write the positions where this term occurs as primary value
+                            // (will be reversed below to get the forward index)
+                            outTempTermVectorFile.writeInt(numOccurrencesWritten);
+                            if (numOccurrencesWritten > 0) {
+                                outTempTermVectorFile.writeBytes(bytesPositions, 0,
+                                        numOccurrencesWritten * Integer.BYTES);
+                            }
                         }
+
+                        termId++;
                     }
-                } finally {
-                    // Clean up after ourselves
-                    deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
+
+                    // begin writing term IDs and sort orders
+                    Collators collators = Collators.defaultCollator();
+                    int[] sensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.SENSITIVE));
+                    int[] insensitivePos2TermID = getTermSortOrder(termsList, collators.get(MatchSensitivity.INSENSITIVE));
+                    int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID, collators.get(MatchSensitivity.SENSITIVE));
+                    int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID, collators.get(MatchSensitivity.INSENSITIVE));
+
+                    int numTerms = termsList.size();
+                    fiFields.get(luceneField).setNumberOfTerms(numTerms);
+                    fiFields.get(luceneField).setTermOrderOffset(termsOrderFile.getFilePointer());
+                    // write out, specific order.
+                    for (int i : termID2InsensitivePos) termsOrderFile.writeInt(i);
+                    for (int i : insensitivePos2TermID) termsOrderFile.writeInt(i);
+                    for (int i : termID2SensitivePos) termsOrderFile.writeInt(i);
+                    for (int i : sensitivePos2TermID) termsOrderFile.writeInt(i);
                 }
+                CodecUtil.writeFooter(outTempTermVectorFile);
+            }
+
+            // Reverse the reverse index to create forward index
+            // (this time we iterate per field and per document first, then reconstruct the document by
+            //  looking at each term's occurrences. This produces our forward index)
+            try (IndexInput inTermVectorFile = openInput(BlackLab40PostingsFormat.TERMVEC_TMP_EXT)) {
+
+                // For each field...
+                for (Entry<String, SortedMap<Integer, Map<Integer, Long>>> fieldEntry: field2docTermVecFileOffsets.entrySet()) {
+                    String luceneField = fieldEntry.getKey();
+                    SortedMap<Integer/*docID*/, Map<Integer/*termID*/, Long/*file offset*/>> docPosOffsets = fieldEntry.getValue();
+
+                    // Record starting offset of field in tokensindex file (written to fields file later)
+                    fiFields.get(luceneField).setTokensIndexOffset(outTokensIndexFile.getFilePointer());
+
+                    // For each document...
+                    for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
+                        Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.get(docId);
+                        if (termPosOffsets == null)
+                            termPosOffsets = Collections.emptyMap();
+                        int docLength = docLengths.getOrDefault(docId, 0);
+                        int[] tokensInDoc = new int[docLength]; // reconstruct the document here
+                        // The special document holding the index metadata will be 0, as will
+                        // a document that doesn't have any value for this annotated field.
+                        if (docLength > 0) {
+                            // NOTE: sometimes docs won't have any values for a field, but we'll
+                            //   still write all NO_TERMs in this case. This is similar to sparse
+                            //   fields (e.g. the field that stores <p> <s> etc.) which also have a
+                            //   lot of NO_TERMs.
+                            // TODO: worth it to compress these cases using a sparse representation of the
+                            //       values (e.g. with run-length encoding or something)? This does make
+                            //       retrieval slower though.
+                            Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
+                            // For each term...
+                            for (Map.Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
+                                int termId = e.getKey();
+                                inTermVectorFile.seek(e.getValue());
+                                int nOccurrences = inTermVectorFile.readInt();
+                                // For each occurrence...
+                                for (int i = 0; i < nOccurrences; i++) {
+                                    int position = inTermVectorFile.readInt();
+                                    tokensInDoc[position] = termId;
+                                }
+                            }
+                        }
+                        // Write the forward index for this document (reconstructed doc)
+                        writeTokensInDoc(outTokensIndexFile, outTokensFile, tokensInDoc);
+                    }
+                }
+            } finally {
+                // Clean up after ourselves
+                deleteIndexFile(BlackLab40PostingsFormat.TERMVEC_TMP_EXT);
             }
 
             // Write fields file, now that we know all the relevant offsets
             try (IndexOutput fieldsFile = createOutput(BlackLab40PostingsFormat.FIELDS_EXT)) {
                 // for each field that has a forward index...
                 for (Field field : fiFields.values()) {
-                    // write the information to field fields file, see integrated.md
+                    // write the information to fields file, see integrated.md
                     field.write(fieldsFile);
                 }
+                CodecUtil.writeFooter(fieldsFile);
             }
+
+            CodecUtil.writeFooter(outTokensIndexFile);
+            CodecUtil.writeFooter(outTokensFile);
+            CodecUtil.writeFooter(termIndexFile);
+            CodecUtil.writeFooter(termsFile);
+            CodecUtil.writeFooter(termsOrderFile);
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
@@ -481,13 +490,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         return true;
     }
 
-    private String getSegmentFileName(String ext) {
-        return IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix,
-                BlackLab40PostingsFormat.EXT_PREFIX + ext);
-    }
-
     private IndexOutput createOutput(String ext) throws IOException {
-        IndexOutput output = state.directory.createOutput(getSegmentFileName(ext), state.context);
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
+        IndexOutput output = state.directory.createOutput(fileName, state.context);
 
         // Write standard header, with the codec name and version, segment info.
         // Also write the delegate codec name (Lucene's default codec).
@@ -500,8 +505,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
     @SuppressWarnings("SameParameterValue")
     private IndexInput openInput(String ext) throws IOException {
-        String fileName = getSegmentFileName(ext);
-        IndexInput input = state.directory.openInput(getSegmentFileName(ext), state.context);
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
+        IndexInput input = state.directory.openInput(fileName, state.context);
 
         // Read and check standard header, with codec name and version and segment info.
         // Also check the delegate codec name (should be the expected version of Lucene's codec).
@@ -518,7 +523,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
     @SuppressWarnings("SameParameterValue")
     private void deleteIndexFile(String ext) throws IOException {
-        state.directory.deleteFile(getSegmentFileName(ext));
+        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
+        state.directory.deleteFile(fileName);
     }
 
     @Override

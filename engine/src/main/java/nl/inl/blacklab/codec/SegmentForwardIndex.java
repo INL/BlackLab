@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -44,7 +45,7 @@ class SegmentForwardIndex implements AutoCloseable {
 
         try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLab40PostingsFormat.FIELDS_EXT)) {
             long size = fieldsFile.length();
-            while (fieldsFile.getFilePointer() < size) {
+            while (fieldsFile.getFilePointer() < (size - CodecUtil.footerLength())) {
                 Field f = new Field(fieldsFile);
                 this.fieldsByName.put(f.getFieldName(), f);
             }

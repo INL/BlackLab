@@ -27,7 +27,7 @@ public class BlackLab40StoredFieldsFormat extends StoredFieldsFormat {
     public static final int VERSION_CURRENT = 1;
 
     /** Every file extension will be prefixed with this to indicate it is part of the content store. */
-    public static final String EXT_PREFIX = "blcs.";
+    private static final String EXT_PREFIX = "blcs.";
 
     /** Extension for the fields file, that stores block size and Lucene fields with a CS. */
     public static final String FIELDS_EXT = EXT_PREFIX + "fields";
