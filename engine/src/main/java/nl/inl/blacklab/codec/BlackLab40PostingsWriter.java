@@ -452,7 +452,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
         int max = 0;
-        boolean allTheSame = true;
+        boolean allTheSame = tokensInDoc.length > 0; // if no tokens, then not all the same.
         int last = -1;
         for (int token: tokensInDoc) {
             max |= token;
