@@ -57,7 +57,9 @@ public class AuthManager {
     }
 
     public void persistUser(UserRequest request, User user) {
-        // i.e. set cookie
-        authObj.persistUser(request, user);
+        if (authObj != null) {
+            // i.e. set cookie
+            authObj.persistUser(request, user);
+        }
     }
 }

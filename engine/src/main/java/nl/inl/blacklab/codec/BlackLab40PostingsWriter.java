@@ -434,7 +434,6 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
 
         return tokensInDoc;
-        // Write the forward index for this document (reconstructed doc)
     }
 
     /**
@@ -452,19 +451,19 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
         int max = 0;
-        boolean allTheSame = true;
+        boolean allTheSame = tokensInDoc.length > 0; // if no tokens, then not all the same.
         int last = -1;
         for (int token: tokensInDoc) {
-            max |= token;
+            max = Math.max(max, token);
             allTheSame = allTheSame && (last == -1 || last == token);
             last = token;
-            if ((max & 0xFFFF0000) != 0 && !allTheSame) // stop if already at worst case (int per token + not all the same).
+            if (max > Short.MAX_VALUE && !allTheSame) // stop if already at worst case (int per token + not all the same).
                 break;
         }
         TokensCodec tokensCodec =
             allTheSame ? TokensCodec.ALL_TOKENS_THE_SAME :
-            (max & 0xFFFF0000) != 0 ? TokensCodec.INT_PER_TOKEN :
-            (max & 0XFF00) != 0 ? TokensCodec.SHORT_PER_TOKEN :
+            (max > Short.MAX_VALUE) ? TokensCodec.INT_PER_TOKEN :
+            (max > Byte.MAX_VALUE) ? TokensCodec.SHORT_PER_TOKEN :
             TokensCodec.BYTE_PER_TOKEN;
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
