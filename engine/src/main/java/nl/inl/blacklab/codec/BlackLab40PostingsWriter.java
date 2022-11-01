@@ -19,7 +19,6 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.NormsProducer;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexFileNames;
@@ -38,6 +37,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -378,36 +378,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
 
                     // For each document...
                     for (int docId = 0; docId < state.segmentInfo.maxDoc(); docId++) {
-                        Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.get(docId);
-                        if (termPosOffsets == null)
-                            termPosOffsets = Collections.emptyMap();
-                        int docLength = docLengths.getOrDefault(docId, 0);
-                        int[] tokensInDoc = new int[docLength]; // reconstruct the document here
-                        // The special document holding the index metadata will be 0, as will
-                        // a document that doesn't have any value for this annotated field.
-                        if (docLength > 0) {
-                            // NOTE: sometimes docs won't have any values for a field, but we'll
-                            //   still write all NO_TERMs in this case. This is similar to sparse
-                            //   fields (e.g. the field that stores <p> <s> etc.) which also have a
-                            //   lot of NO_TERMs.
-                            // TODO: worth it to compress these cases using a sparse representation of the
-                            //       values (e.g. with run-length encoding or something)? This does make
-                            //       retrieval slower though.
-                            Arrays.fill(tokensInDoc, NO_TERM); // initialize to illegal value
-                            // For each term...
-                            for (Map.Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
-                                int termId = e.getKey();
-                                inTermVectorFile.seek(e.getValue());
-                                int nOccurrences = inTermVectorFile.readInt();
-                                // For each occurrence...
-                                for (int i = 0; i < nOccurrences; i++) {
-                                    int position = inTermVectorFile.readInt();
-                                    tokensInDoc[position] = termId;
-                                }
-                            }
-                        }
-                        // Write the forward index for this document (reconstructed doc)
-                        writeTokensInDoc(outTokensIndexFile, outTokensFile, tokensInDoc);
+                        int[] termIds = getDocumentContents(docId, docLengths, inTermVectorFile, docPosOffsets);
+                        writeTokensInDoc(outTokensIndexFile, outTokensFile, termIds);
                     }
                 }
             } finally {
@@ -435,6 +407,36 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         }
     }
 
+    private int[] getDocumentContents(int docId, Map<Integer, Integer> docLengths,
+            IndexInput inTermVectorFile, SortedMap<Integer, Map<Integer, Long>> docPosOffsets)
+            throws IOException {
+
+        final Map<Integer/*term ID*/, Long/*file offset*/> termPosOffsets = docPosOffsets.getOrDefault(docId, Collections.emptyMap());
+        final int docLength = docLengths.getOrDefault(docId, 0);
+        final int[] tokensInDoc = new int[docLength]; // reconstruct the document here
+
+        // NOTE: sometimes docs won't have any values for a field, but we'll
+        //   still write all NO_TERMs in this case. This is similar to sparse
+        //   fields (e.g. the field that stores <p> <s> etc.) which also have a
+        //   lot of NO_TERMs.
+        Arrays.fill(tokensInDoc, NO_TERM);
+
+        // For each term...
+        for (Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
+            int termId = e.getKey();
+            inTermVectorFile.seek(e.getValue());
+            int nOccurrences = inTermVectorFile.readInt();
+            // For each occurrence...
+            for (int i = 0; i < nOccurrences; i++) {
+                int position = inTermVectorFile.readInt();
+                tokensInDoc[position] = termId;
+            }
+        }
+
+        return tokensInDoc;
+        // Write the forward index for this document (reconstructed doc)
+    }
+
     /**
      * Write the tokens to the tokens file.
      *
@@ -449,45 +451,52 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @throws IOException       When failing to write
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
-        TokensCodec tokensCodec = allTheSame(tokensInDoc) ?
-                TokensCodec.ALL_TOKENS_THE_SAME :
-                TokensCodec.INT_PER_TOKEN;
+        int max = 0;
+        boolean allTheSame = true;
+        int last = -1;
+        for (int token: tokensInDoc) {
+            max |= token;
+            allTheSame = allTheSame && (last == -1 || last == token);
+            last = token;
+            if ((max & 0xFFFF0000) != 0 && !allTheSame) // stop if already at worst case (int per token + not all the same).
+                break;
+        }
+        TokensCodec tokensCodec =
+            allTheSame ? TokensCodec.ALL_TOKENS_THE_SAME :
+            (max & 0xFFFF0000) != 0 ? TokensCodec.INT_PER_TOKEN :
+            (max & 0XFF00) != 0 ? TokensCodec.SHORT_PER_TOKEN :
+            TokensCodec.BYTE_PER_TOKEN;
+
         // Write offset in the tokens file, doc length in tokens and tokens codec used
         outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
         outTokensIndexFile.writeInt(tokensInDoc.length);
-        outTokensIndexFile.writeByte(TokensCodec.INT_PER_TOKEN.getCode());
+        outTokensIndexFile.writeByte(tokensCodec.code);
+
+        if (tokensInDoc.length == 0) {
+            return; // done.
+        }
 
         // Write the tokens
         switch (tokensCodec) {
         case INT_PER_TOKEN:
-            // loop may be slow, writeBytes..? endianness, etc.?
             for (int token: tokensInDoc) {
                 outTokensFile.writeInt(token);
+            }
+            break;
+        case SHORT_PER_TOKEN:
+            for (int token: tokensInDoc) {
+                outTokensFile.writeShort((short) token);
+            }
+            break;
+        case BYTE_PER_TOKEN:
+            for (int token: tokensInDoc) {
+                outTokensFile.writeByte((byte) token);
             }
             break;
         case ALL_TOKENS_THE_SAME:
             outTokensFile.writeInt(tokensInDoc[0]);
             break;
         }
-    }
-
-    /**
-     * Are all values in the array the same?
-     *
-     * NOTE: returns false for an empty array because there is no value.
-     *
-     * @param array array to check
-     * @return true if all values are the same
-     */
-    private boolean allTheSame(int[] array) {
-        if (array.length == 0)
-            return false; // no value to store, so no
-        int value = array[0];
-        for (int i = 1; i < array.length; i++) {
-            if (array[i] != value)
-                return false;
-        }
-        return true;
     }
 
     private IndexOutput createOutput(String ext) throws IOException {

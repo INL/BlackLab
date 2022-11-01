@@ -160,6 +160,20 @@ class SegmentForwardIndex implements AutoCloseable {
                         snippet[j] = _tokens.readInt();
                     }
                     break;
+                case SHORT_PER_TOKEN:
+                    // Simplest encoding, just one 4-byte int per token
+                    _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
+                    for (int j = 0; j < snippet.length; j++) {
+                        snippet[j] = _tokens.readShort();
+                    }
+                    break;
+                case BYTE_PER_TOKEN:
+                    // Simplest encoding, just one 4-byte int per token
+                    _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
+                    for (int j = 0; j < snippet.length; j++) {
+                        snippet[j] = _tokens.readByte();
+                    }
+                    break;
                 case ALL_TOKENS_THE_SAME:
                     // All tokens have the same value, so we only have one value stored
                     _tokens.seek(docTokensOffset);
