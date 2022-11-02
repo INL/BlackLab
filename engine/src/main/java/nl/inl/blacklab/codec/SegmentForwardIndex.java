@@ -7,12 +7,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
+import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PAYLOAD;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
@@ -23,8 +25,13 @@ import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 @ThreadSafe
 class SegmentForwardIndex implements AutoCloseable {
 
-    /** Tokens index file record consists of offset in tokens file, doc length in tokens, and tokens codec scheme. */
-    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES;
+    /** Tokens index file record consists of:
+     * - offset in tokens file (long),
+     * - doc length in tokens (int), 
+     * - tokens codec scheme (byte),
+     * - tokens codec payload (byte)
+     */
+    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
 
     /** Our fields producer */
     private final BlackLab40PostingsReader fieldsProducer;
@@ -97,6 +104,9 @@ class SegmentForwardIndex implements AutoCloseable {
         // Used by retrievePart(s)
         private TokensCodec tokensCodec;
 
+        // to be decoded by the appropriate tokensCodec
+        private byte tokensCodecPayload;
+
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
                 _tokensIndex = _tokensIndexFile.clone();
@@ -153,25 +163,28 @@ class SegmentForwardIndex implements AutoCloseable {
             try {
                 int[] snippet = new int[end - start];
                 switch (tokensCodec) {
-                case INT_PER_TOKEN:
-                    // Simplest encoding, just one 4-byte int per token
-                    _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
-                    for (int j = 0; j < snippet.length; j++) {
-                        snippet[j] = _tokens.readInt();
-                    }
-                    break;
-                case SHORT_PER_TOKEN:
-                    // Simplest encoding, just one 4-byte int per token
-                    _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
-                    for (int j = 0; j < snippet.length; j++) {
-                        snippet[j] = _tokens.readShort();
-                    }
-                    break;
-                case BYTE_PER_TOKEN:
-                    // Simplest encoding, just one 4-byte int per token
-                    _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
-                    for (int j = 0; j < snippet.length; j++) {
-                        snippet[j] = _tokens.readByte();
+                case VALUE_PER_TOKEN:
+                    switch(VALUE_PER_TOKEN_PAYLOAD.fromCode(tokensCodecPayload)) {
+                        case INT: 
+                            _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
+                            for (int j = 0; j < snippet.length; j++) {
+                                snippet[j] = _tokens.readInt();
+                            }
+                            break;
+                        case SHORT: 
+                            _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
+                            for (int j = 0; j < snippet.length; j++) {
+                                snippet[j] = _tokens.readShort();
+                            }
+                            break;
+                        case BYTE: 
+                            // Simplest encoding, just one 4-byte int per token
+                            _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
+                            for (int j = 0; j < snippet.length; j++) {
+                                snippet[j] = _tokens.readByte();
+                            }
+                            break;
+                        default: throw new NotImplementedException("Payload handling for tokens codec " + tokensCodec + " with payload " + tokensCodecPayload + " not implemented.");
                     }
                     break;
                 case ALL_TOKENS_THE_SAME:
@@ -197,6 +210,7 @@ class SegmentForwardIndex implements AutoCloseable {
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
                 tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
+                tokensCodecPayload = _tokensIndex.readByte();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
