@@ -263,10 +263,9 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
-        boolean isIntegratedIndex = !VersionFile.exists(indexDir);
         IndexType indexType = determineIndexType(indexDir, false, null);
         return indexType == IndexType.INTEGRATED ?
-            new BlackLabIndexIntegrated(this, indexDir, false, false, (File) null):
+            new BlackLabIndexIntegrated(this, null, indexDir, false, false, null):
             new BlackLabIndexExternal(this, indexDir, false, false, (File) null);
     }
 
@@ -282,7 +281,8 @@ public final class BlackLabEngine implements AutoCloseable {
      * @return a BlackLabIndex instance with this reader
      */
     public BlackLabIndex wrapIndexReader(IndexReader reader) throws ErrorOpeningIndex {
-        return new BlackLabIndexIntegrated(this, reader);
+        return new BlackLabIndexIntegrated(this, reader, null, false, false,
+                null);
     }
 
     /**
@@ -317,6 +317,7 @@ public final class BlackLabEngine implements AutoCloseable {
      * @param indexDir the index directory
      * @param forceCreateNew if true, create a new index even if one existed there
      * @param indexTemplateFile (optional) JSON template to use for index structure / metadata
+     *                          (only works with {@link IndexType#EXTERNAL_FILES}; pass null for integrated)
      * @param indexType (optional) type of index to create (external or integrated), or null to use the default type
      * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
@@ -325,9 +326,12 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         indexType = determineIndexType(indexDir, forceCreateNew, indexType);
-        return indexType == IndexType.INTEGRATED ?
-                new BlackLabIndexIntegrated(this, indexDir, true, forceCreateNew, indexTemplateFile) :
-                new BlackLabIndexExternal(this, indexDir, true, forceCreateNew, indexTemplateFile);
+        if (indexType == IndexType.EXTERNAL_FILES)
+            return new BlackLabIndexExternal(this, indexDir, true, forceCreateNew, indexTemplateFile);
+
+        if (indexTemplateFile != null)
+            throw new IllegalArgumentException("Cannot use index template file with integrated index!");
+        return new BlackLabIndexIntegrated(this, null, indexDir, true, forceCreateNew, null);
     }
 
     private IndexType determineIndexType(File indexDir, boolean forceCreateNew, IndexType indexType) {
@@ -374,7 +378,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         indexType = determineIndexType(indexDir, createNewIndex, indexType);
         return indexType == IndexType.INTEGRATED ?
-                new BlackLabIndexIntegrated(this, indexDir, true, createNewIndex, config) :
+                new BlackLabIndexIntegrated(this, null, indexDir, true, createNewIndex, config) :
                 new BlackLabIndexExternal(this, indexDir, true, createNewIndex, config);
     }
 
@@ -433,13 +437,13 @@ public final class BlackLabEngine implements AutoCloseable {
         BlackLabIndex blackLabIndex = indexReader2BlackLabIndex.get(reader);
         if (blackLabIndex == null && wrapIfNotFound) {
             // We don't have a BlackLabIndex instance for this IndexReader yet. This can occur if e.g.
-            // Solr is in charge of opening IndexReader. Create a new instance now and register it.
+            // Solr is in charge of opening IndexReaders. Create a new instance now and register it.
             try {
                 blackLabIndex = wrapIndexReader(reader);
+                registerIndex(reader, blackLabIndex);
             } catch (ErrorOpeningIndex e) {
                 throw new RuntimeException(e);
             }
-            registerIndex(reader, blackLabIndex);
         }
         return blackLabIndex;
     }

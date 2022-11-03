@@ -164,19 +164,23 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
      * Open an index.
      *
      * @param blackLab BlackLab engine
+     * @param reader if non-null: use this already-opened IndexReader. indexMode must be false in this case.
+     *               Used with Solr.
      * @param indexDir the index directory
      * @param indexMode if true, open in index mode; if false, open in search mode.
      * @param createNewIndex if true, delete existing index in this location if it
      *         exists.
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
+     * @param indexTemplateFile index template file to use to create index (legacy, only works with older
+     *                          "external files" index type; pass null otherwise)
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
-            ConfigInputFormat config) throws ErrorOpeningIndex {
+    BlackLabIndexAbstract(BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+            ConfigInputFormat config, File indexTemplateFile) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
-        this.indexLocation = indexDir;
+        this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr)
         searchSettings = SearchSettings.defaults();
         try {
             this.indexMode = indexMode;
@@ -189,60 +193,34 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
 
             if (!indexMode && createNewIndex)
                 throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
-            checkCanOpenIndex(indexMode, createNewIndex);
-            reader = openIndex(indexMode, createNewIndex);
+
+            if (reader != null) {
+                if (indexMode)
+                    throw new IllegalArgumentException("indexMode must be false for already-opened IndexReader!");
+
+                // We've been passed an already-opened IndexReader. Use that, don't open our own.
+                this.reader = reader;
+                shouldCloseIndex = false; // IndexReader was already open, so we shouldn't close it
+            } else {
+                // No IndexReader opened yet; do so now.
+                openIndex(createNewIndex);
+            }
 
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            indexMetadata = getIndexMetadata(createNewIndex, config);
+            if (config != null)
+                indexMetadata = getIndexMetadata(createNewIndex, config);
+            else
+                indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
-
-        } catch (IOException e) {
-            throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
-        }
-    }
-
-    /**
-     * Open an index.
-     *
-     * @param blackLab our BlackLab instance
-     * @param indexDir the index directory
-     * @param indexMode if true, open in index mode; if false, open in search mode.
-     * @param createNewIndex if true, delete existing index in this location if it
-     *         exists.
-     * @param indexTemplateFile index template file to use to create index
-     */
-    BlackLabIndexAbstract(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
-            File indexTemplateFile) throws ErrorOpeningIndex {
-        this.blackLab = blackLab;
-        this.indexLocation = indexDir;
-        searchSettings = SearchSettings.defaults();
-        this.indexMode = indexMode;
-
-        try {
-            BlackLab.applyConfigToIndex(this);
-
-            if (!indexMode && createNewIndex)
-                throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
-            reader = openIndex(indexMode, createNewIndex);
-
-            // Determine the index structure
-            if (traceIndexOpening())
-                logger.debug("  Determining index structure...");
-            indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
-            if (!indexMode)
-                indexMetadata.freeze();
-
-            finishOpeningIndex(indexDir, indexMode, createNewIndex);
-
-        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) { 
+        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {
-            throw new ErrorOpeningIndex(e);
+            throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
     }
 
@@ -251,41 +229,23 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     }
 
     /**
-     * Wrap an already-opened IndexReader.
+     * Open the IndexReader (and IndexWriter if in indexMode).
      *
-     * Used for Solr integration, where Solr manages IndexReader instances.
-     *
-     * CAUTION: this only works with the integrated index format. indexMode
-     * will always be false.
-     *
-     * @param blackLabEngine engine to use for initialization, (un)registering instance
-     * @param reader reader to wrap
-     * @return a BlackLabIndex instance with this reader
+     * @param createNewIndex if true and in indexMode, create a new index even if one existed
+     * @throws IOException if we couldn't open the index
+     * @throws IndexVersionMismatch if the index is too old or new
      */
-    BlackLabIndexAbstract(BlackLabEngine blackLabEngine, IndexReader reader) throws ErrorOpeningIndex {
-        this.blackLab = blackLabEngine;
-        this.indexLocation = null; // not available with this constructor
-        searchSettings = SearchSettings.defaults();
-        this.indexMode = false;
-
-        try {
-            BlackLab.applyConfigToIndex(this);
-
-            this.reader = reader;
-            shouldCloseIndex = false; // IndexReader was already open, so we shouldn't close it
-
-            // Determine the index structure
+    private void openIndex(boolean createNewIndex) throws IOException, IndexVersionMismatch {
+        checkCanOpenIndex(indexMode, createNewIndex);
+        if (indexMode) {
+            indexWriter = openIndexWriter(indexLocation, createNewIndex, traceIndexOpening());
             if (traceIndexOpening())
-                logger.debug("  Determining index structure...");
-            indexMetadata = getIndexMetadata(false, (ConfigInputFormat)null);
-            indexMetadata.freeze();
-
-            finishOpeningIndex(null, false, false);
-        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
-            throw new IndexVersionMismatch(e);
-        } catch (IOException e) {
-            throw new ErrorOpeningIndex(e);
+                logger.debug("  Opening corresponding IndexReader...");
+            reader = DirectoryReader.open(indexWriter, false, false);
+        } else {
+            reader = openIndexForReaading(indexLocation, traceIndexOpening());
         }
+        shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -453,39 +413,34 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         // subclass can override this
     }
 
-    protected IndexReader openIndex(boolean indexMode, boolean createNewIndex) throws IOException,
-            IndexVersionMismatch {
-        if (traceIndexOpening())
+    private static DirectoryReader openIndexForReaading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
+        if (trace)
             logger.debug("Constructing BlackLabIndex...");
-
-        shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
-        if (indexMode) {
-            if (traceIndexOpening())
-                logger.debug("  Opening IndexWriter...");
-            IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);
-            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter);
-            if (traceIndexOpening())
-                logger.debug("  Opening corresponding IndexReader...");
-            return DirectoryReader.open(luceneIndexWriter, false, false);
-        } else {
-            // Open Lucene index
-            if (traceIndexOpening())
-                logger.debug("  Following symlinks...");
-            Path indexPath = indexLocation.toPath().toRealPath();
-            while (Files.isSymbolicLink(indexPath)) {
-                // Resolve symlinks, as FSDirectory.open() can't handle them
-                indexPath = Files.readSymbolicLink(indexPath);
-            }
-            if (traceIndexOpening())
-                logger.debug("  Opening IndexReader...");
-            try {
-                return DirectoryReader.open(FSDirectory.open(indexPath));
-            } catch (IllegalArgumentException e) {
-                if (e.getMessage().contains("Codec with name"))
-                    throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
-                throw e;
-            }
+        // Open Lucene index
+        if (trace)
+            logger.debug("  Following symlinks...");
+        Path indexPath = indexLocation.toPath().toRealPath();
+        while (Files.isSymbolicLink(indexPath)) {
+            // Resolve symlinks, as FSDirectory.open() can't handle them
+            indexPath = Files.readSymbolicLink(indexPath);
         }
+        if (trace)
+            logger.debug("  Opening IndexReader...");
+        try {
+            return DirectoryReader.open(FSDirectory.open(indexPath));
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("Codec with name"))
+                throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
+            throw e;
+        }
+    }
+
+    private IndexWriter openIndexWriter(File indexLocation, boolean createNewIndex, boolean trace) throws IOException {
+        if (trace)
+            logger.debug("Constructing BlackLabIndex...");
+        if (trace)
+            logger.debug("  Opening IndexWriter...");
+        return openIndexWriter(indexLocation, createNewIndex, null);
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
