@@ -237,13 +237,17 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
      */
     private void openIndex(boolean createNewIndex) throws IOException, IndexVersionMismatch {
         checkCanOpenIndex(indexMode, createNewIndex);
+        if (traceIndexOpening())
+            logger.debug("Constructing BlackLabIndex...");
         if (indexMode) {
-            indexWriter = openIndexWriter(indexLocation, createNewIndex, traceIndexOpening());
+            if (traceIndexOpening())
+                logger.debug("  Opening IndexWriter...");
+            indexWriter = openIndexWriter(indexLocation, createNewIndex, null);
             if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
             reader = DirectoryReader.open(indexWriter, false, false);
         } else {
-            reader = openIndexForReaading(indexLocation, traceIndexOpening());
+            reader = openIndexForReading(indexLocation, traceIndexOpening());
         }
         shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
     }
@@ -413,9 +417,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         // subclass can override this
     }
 
-    private static DirectoryReader openIndexForReaading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
-        if (trace)
-            logger.debug("Constructing BlackLabIndex...");
+    private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
         // Open Lucene index
         if (trace)
             logger.debug("  Following symlinks...");
@@ -433,14 +435,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
             throw e;
         }
-    }
-
-    private IndexWriter openIndexWriter(File indexLocation, boolean createNewIndex, boolean trace) throws IOException {
-        if (trace)
-            logger.debug("Constructing BlackLabIndex...");
-        if (trace)
-            logger.debug("  Opening IndexWriter...");
-        return openIndexWriter(indexLocation, createNewIndex, null);
     }
 
     protected void finishOpeningIndex(File indexDir, boolean indexMode, boolean createNewIndex)
