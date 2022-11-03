@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
@@ -126,6 +127,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
         super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+        init();
+    }
+
+    public BlackLabIndexIntegrated(BlackLabEngine engine, IndexReader reader) throws ErrorOpeningIndex {
+        super(engine, reader);
         init();
     }
 

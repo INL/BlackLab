@@ -153,12 +153,17 @@ public final class BlackLabEngine implements AutoCloseable {
         }
     }
 
-    public static BlackLabIndex indexFromReader(IndexReader reader) {
+    public static BlackLabIndex indexFromReader(IndexReader reader, boolean wrapIfNotFound) {
         BlackLabEngine blackLabEngine;
         synchronized (indexReader2BlackLabEngine) {
             blackLabEngine = indexReader2BlackLabEngine.get(reader);
         }
-        return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(reader);
+        if (blackLabEngine == null && wrapIfNotFound) {
+            // If the IndexReader doesn't have a BlackLabIndex yet, create one in the implicit engine.
+            // (used with Solr, who manages IndexReaders for us)
+            blackLabEngine = BlackLab.implicitInstance();
+        }
+        return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(reader, wrapIfNotFound);
     }
 
     /**
@@ -263,6 +268,21 @@ public final class BlackLabEngine implements AutoCloseable {
         return indexType == IndexType.INTEGRATED ?
             new BlackLabIndexIntegrated(this, indexDir, false, false, (File) null):
             new BlackLabIndexExternal(this, indexDir, false, false, (File) null);
+    }
+
+    /**
+     * Get a BlackLabIndex instance from an already opened IndexReader.
+     *
+     * Used for Solr integration, where Solr manages IndexReader instances.
+     *
+     * CAUTION: this only works with the integrated index format. indexMode
+     * will always be false.
+     *
+     * @param reader reader to wrap
+     * @return a BlackLabIndex instance with this reader
+     */
+    public BlackLabIndex wrapIndexReader(IndexReader reader) throws ErrorOpeningIndex {
+        return new BlackLabIndexIntegrated(this, reader);
     }
 
     /**
@@ -401,8 +421,27 @@ public final class BlackLabEngine implements AutoCloseable {
         return searchExecutorService;
     }
 
-    synchronized BlackLabIndex getIndexFromReader(IndexReader reader) {
-        return indexReader2BlackLabIndex.get(reader);
+    /**
+     * Given an IndexReader, return corresponding BlackLabIndex.
+     *
+     * @param reader IndexReader to get the BlackLabIndex for
+     * @param wrapIfNotFound if true, a new BlackLabIndex instance will be created for this IndexReader if none
+     *                       existed yet. Used with Solr.
+     * @return BlackLabIndex instance for this IndexReader
+     */
+    synchronized BlackLabIndex getIndexFromReader(IndexReader reader, boolean wrapIfNotFound) {
+        BlackLabIndex blackLabIndex = indexReader2BlackLabIndex.get(reader);
+        if (blackLabIndex == null && wrapIfNotFound) {
+            // We don't have a BlackLabIndex instance for this IndexReader yet. This can occur if e.g.
+            // Solr is in charge of opening IndexReader. Create a new instance now and register it.
+            try {
+                blackLabIndex = wrapIndexReader(reader);
+            } catch (ErrorOpeningIndex e) {
+                throw new RuntimeException(e);
+            }
+            registerIndex(reader, blackLabIndex);
+        }
+        return blackLabIndex;
     }
 
     public int maxThreadsPerSearch() {

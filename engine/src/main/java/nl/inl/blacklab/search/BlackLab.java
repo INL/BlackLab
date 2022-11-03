@@ -236,8 +236,8 @@ public final class BlackLab {
      * @param reader index reader that was opened using BlackLab
      * @return BlackLab index object
      */
-    public static synchronized BlackLabIndex indexFromReader(IndexReader reader) {
-        return BlackLabEngine.indexFromReader(reader);
+    public static synchronized BlackLabIndex indexFromReader(IndexReader reader, boolean wrapIfNotFound) {
+        return BlackLabEngine.indexFromReader(reader, wrapIfNotFound);
     }
 
     /**

@@ -121,6 +121,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     private IndexReader reader;
 
     /**
+     * Are we responsible for closing the IndexReader?
+     *
+     * True if we were the ones opening it, false if we wrapped an existing one.
+     */
+    private boolean shouldCloseIndex;
+
+    /**
      * The Lucene IndexSearcher, for dealing with non-Span queries (for per-document
      * scoring)
      */
@@ -148,7 +155,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
 
     /** Was this index closed? */
     private boolean closed;
-
 
     // Constructors
     //---------------------------------------------------------------
@@ -242,6 +248,44 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
 
     public BLIndexObjectFactory indexObjectFactory() {
         return blackLab.indexObjectFactory();
+    }
+
+    /**
+     * Wrap an already-opened IndexReader.
+     *
+     * Used for Solr integration, where Solr manages IndexReader instances.
+     *
+     * CAUTION: this only works with the integrated index format. indexMode
+     * will always be false.
+     *
+     * @param blackLabEngine engine to use for initialization, (un)registering instance
+     * @param reader reader to wrap
+     * @return a BlackLabIndex instance with this reader
+     */
+    BlackLabIndexAbstract(BlackLabEngine blackLabEngine, IndexReader reader) throws ErrorOpeningIndex {
+        this.blackLab = blackLabEngine;
+        this.indexLocation = null; // not available with this constructor
+        searchSettings = SearchSettings.defaults();
+        this.indexMode = false;
+
+        try {
+            BlackLab.applyConfigToIndex(this);
+
+            this.reader = reader;
+            shouldCloseIndex = false; // IndexReader was already open, so we shouldn't close it
+
+            // Determine the index structure
+            if (traceIndexOpening())
+                logger.debug("  Determining index structure...");
+            indexMetadata = getIndexMetadata(false, (ConfigInputFormat)null);
+            indexMetadata.freeze();
+
+            finishOpeningIndex(null, false, false);
+        } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
+            throw new IndexVersionMismatch(e);
+        } catch (IOException e) {
+            throw new ErrorOpeningIndex(e);
+        }
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -414,6 +458,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
 
+        shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
         if (indexMode) {
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
@@ -557,7 +602,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         }
         try {
             blackLab.removeIndex(this);
-            reader.close();
+            if (shouldCloseIndex) {
+                reader.close();
+            }
             if (indexWriter != null) {
                 indexWriter.commit();
                 indexWriter.close();
