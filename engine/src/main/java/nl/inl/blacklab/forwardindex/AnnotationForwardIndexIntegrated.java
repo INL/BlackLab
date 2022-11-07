@@ -48,7 +48,9 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     /** Collators to use for comparisons */
     private final Collators collators;
 
-    private final Terms terms;
+    private Terms terms;
+
+    private boolean initialized = false;
 
     /** Index of segments by their doc base (the number to add to get global docId) */
     private final LeafReaderLookup leafReaderLookup;
@@ -66,22 +68,27 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
 
         // Ensure quick lookup of the segment we need
         leafReaderLookup = new LeafReaderLookup(indexReader);
-
-        terms = new TermsIntegrated(collators, indexReader, luceneField);
     }
 
     @Override
-    public void initialize() {
-        // ...
+    public synchronized void initialize() {
+        if (initialized) {
+            return;
+        }
+
+        this.terms = new TermsIntegrated(collators, indexReader, luceneField);
+        this.initialized = true;
     }
 
     @Override
     public Terms terms() {
+        initialize();
         return terms;
     }
 
     @Override
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
+        initialize();
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         List<int[]> segmentResults = fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
