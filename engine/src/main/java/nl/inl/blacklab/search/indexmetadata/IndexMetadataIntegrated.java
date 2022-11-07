@@ -137,7 +137,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again
-                BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().create();
+                BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
                 indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
                 indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
                 indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);

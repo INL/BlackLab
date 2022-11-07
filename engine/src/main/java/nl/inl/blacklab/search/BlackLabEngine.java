@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
@@ -80,6 +81,9 @@ public final class BlackLabEngine implements AutoCloseable {
     /** Was close() called on this engine? */
     private boolean wasClosed;
 
+    /** Are we running inside Solr? Used to choose BLIndexObjectFactory. */
+    private boolean runningFromSolr;
+
     /**
      * Create a new engine instance.
      *
@@ -106,6 +110,8 @@ public final class BlackLabEngine implements AutoCloseable {
         });
 
         this.maxThreadsPerSearch = maxThreadsPerSearch;
+
+        runningFromSolr = false; // TODO: detect this. how?
     }
 
     /**
@@ -389,4 +395,7 @@ public final class BlackLabEngine implements AutoCloseable {
         return maxThreadsPerSearch;
     }
 
+    public BLIndexObjectFactory indexObjectFactory() {
+        return BLIndexObjectFactory.get(runningFromSolr);
+    }
 }

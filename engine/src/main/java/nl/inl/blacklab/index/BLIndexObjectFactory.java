@@ -12,7 +12,7 @@ public interface BLIndexObjectFactory {
          return runningFromSolr ? null/*BLIndexObjectFactorySolr.INSTANCE*/ : BLIndexObjectFactoryLucene.INSTANCE;
     }
 
-    BLInputDocument create();
+    BLInputDocument createInputDocument();
 
     BLFieldType fieldTypeMetadata(boolean tokenized);
 

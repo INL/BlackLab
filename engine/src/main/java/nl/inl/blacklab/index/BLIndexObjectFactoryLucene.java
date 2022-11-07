@@ -29,7 +29,7 @@ class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
 
     private BLIndexObjectFactoryLucene() {}
 
-    public BLInputDocument create() {
+    public BLInputDocument createInputDocument() {
         return new BLInputDocumentLucene();
     }
 

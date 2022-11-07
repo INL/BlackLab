@@ -332,6 +332,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     protected BLInputDocument createNewDocument() {
-        return getDocWriter().indexWriter().indexObjectFactory().create();
+        return getDocWriter().indexWriter().indexObjectFactory().createInputDocument();
     }
 }

@@ -12,6 +12,13 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
 
+    /**
+     * Return factory object for creating input documents, getting field types, etc.
+     *
+     * This exists to support indexingg both directly to Lucene and inside Solr.
+     *
+     * @return index object factory
+     */
     BLIndexObjectFactory indexObjectFactory();
 
     static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
