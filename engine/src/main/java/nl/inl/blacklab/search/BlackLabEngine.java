@@ -78,11 +78,11 @@ public final class BlackLabEngine implements AutoCloseable {
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
 
+    /** How to create indexing objects. By default, use the "direct to Lucene" implementation. */
+    private BLIndexObjectFactory indexObjectFactory = BLIndexObjectFactory.get(false);
+
     /** Was close() called on this engine? */
     private boolean wasClosed;
-
-    /** Are we running inside Solr? Used to choose BLIndexObjectFactory. */
-    private boolean runningFromSolr;
 
     /**
      * Create a new engine instance.
@@ -110,8 +110,22 @@ public final class BlackLabEngine implements AutoCloseable {
         });
 
         this.maxThreadsPerSearch = maxThreadsPerSearch;
+    }
 
-        runningFromSolr = false; // TODO: detect this. how?
+    /**
+     * Set the index object factory to use.
+     *
+     * Use this to indicate whether we're indexing directly to Lucene (default)
+     * or via Solr. Use {@link BLIndexObjectFactory#get(boolean)} to get the appropriate
+     * implementation.
+     *
+     * CAUTION: call this once, before doing anything else with this engine, or
+     * unpredictable behaviour may result!
+     *
+     * @param factory index object factory to use
+     */
+    public void setIndexObjectFactor(BLIndexObjectFactory factory) {
+        this.indexObjectFactory = factory;
     }
 
     /**
@@ -396,6 +410,6 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     public BLIndexObjectFactory indexObjectFactory() {
-        return BLIndexObjectFactory.get(runningFromSolr);
+        return indexObjectFactory;
     }
 }
