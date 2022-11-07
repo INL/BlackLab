@@ -12,8 +12,6 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import org.apache.lucene.document.Field;
-
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -397,7 +395,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             if (e.getKey().startsWith("meta-")) {
                 String fieldName = e.getKey().substring(5);
                 String fieldValue = e.getValue();
-                currentLuceneDoc.add(new Field(fieldName, fieldValue, getDocWriter().metadataFieldType(false)));
+                currentDoc.addTextualMetadataField(fieldName, fieldValue, getDocWriter().metadataFieldType(false));
             }
         }
     }
@@ -406,6 +404,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         TextContent document = new TextContent(content);
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
-        storeInContentStore(getDocWriter(), currentLuceneDoc, document, contentIdFieldName, contentStoreName);
+        storeInContentStore(getDocWriter(), currentDoc, document, contentIdFieldName, contentStoreName);
     }
 }

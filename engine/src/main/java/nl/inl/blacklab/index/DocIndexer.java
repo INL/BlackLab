@@ -7,18 +7,15 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.List;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 
 public interface DocIndexer extends AutoCloseable {
-    int MAX_DOCVALUES_LENGTH = Short.MAX_VALUE - 100; // really - 1, but let's be extra safe
 
     @Override
     void close();
 
-    Document getCurrentLuceneDoc();
+    BLInputDocument getCurrentDoc();
 
     /**
      * Returns our DocWriter object

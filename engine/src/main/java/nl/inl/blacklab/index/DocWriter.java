@@ -6,9 +6,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
-
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -17,7 +14,7 @@ import nl.inl.blacklab.search.BlackLabIndexWriter;
  * Interface the DocIndexer gets to store documents.
  */
 public interface DocWriter {
-    
+
     /**
      * Get the general index writer object.
      * 
@@ -33,7 +30,7 @@ public interface DocWriter {
      * @param document
      *            the document to add
      */
-    void add(Document document) throws IOException;
+    void add(BLInputDocument document) throws IOException;
 
     /**
      * Should we continue indexing or stop?
@@ -54,7 +51,7 @@ public interface DocWriter {
 
     File linkedFile(String inputFile);
     
-    FieldType metadataFieldType(boolean tokenized);
+    BLFieldType metadataFieldType(boolean tokenized);
 
     /**
      * Get our index listener, or create a console reporting listener if none was set yet.
@@ -88,8 +85,8 @@ public interface DocWriter {
      * Add a field with its annotations to the forward index
      * 
      * @param field field to add
-     * @param currentLuceneDoc Lucene doc, for storing the fiid
+     * @param currentDoc Lucene doc, for storing the fiid
      */
-    void addToForwardIndex(AnnotatedFieldWriter field, Document currentLuceneDoc);
+    void addToForwardIndex(AnnotatedFieldWriter field, BLInputDocument currentDoc);
 
 }

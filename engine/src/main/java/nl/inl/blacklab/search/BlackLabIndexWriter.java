@@ -2,14 +2,24 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.index.BLIndexObjectFactory;
+import nl.inl.blacklab.index.BLIndexWriterProxy;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 public interface BlackLabIndexWriter extends BlackLabIndex {
+
+    /**
+     * Return factory object for creating input documents, getting field types, etc.
+     *
+     * This exists to support indexingg both directly to Lucene and inside Solr.
+     *
+     * @return index object factory
+     */
+    BLIndexObjectFactory indexObjectFactory();
 
     static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
         String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
@@ -36,7 +46,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
     @Override
     IndexMetadataWriter metadata();
 
-    IndexWriter writer();
+    BLIndexWriterProxy writer();
 
     /**
      * Deletes documents matching a query from the BlackLab index.
@@ -63,7 +73,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      *
      * @param document document to add
      */
-    default void addDocument(Document document) throws IOException {
+    default void addDocument(BLInputDocument document) throws IOException {
         // If we're using the integrated index format, we must make sure
         // the metadata is frozen as soon as we start adding documents.
         metadata().freezeBeforeIndexing();
@@ -77,7 +87,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @param term term query to find the previous version for deletion
      * @param document new version of the document
      */
-    default void updateDocument(Term term, Document document) throws IOException {
+    default void updateDocument(Term term, BLInputDocument document) throws IOException {
         // If we're using the integrated index format, we must make sure
         // the metadata is frozen as soon as we start adding documents.
         metadata().freezeBeforeIndexing();

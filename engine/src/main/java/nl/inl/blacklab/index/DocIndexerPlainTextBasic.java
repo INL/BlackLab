@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -116,7 +114,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         boolean firstWord = true;
 
         // Start a new Lucene document
-        currentLuceneDoc = new Document();
+        currentDoc = createNewDocument();
         addMetadataField("fromInputFile", documentName);
         addMetadataFieldsFromParameters();
         getDocWriter().listener().documentStarted(documentName);
@@ -196,7 +194,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             // Store the different properties of the annotated contents field that
             // were gathered in lists while parsing.
-            contentsField.addToLuceneDoc(currentLuceneDoc);
+            contentsField.addToDoc(currentDoc);
 
             // Add field with all its annotations to the forward index
             addToForwardIndex(contentsField);
@@ -214,7 +212,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             try {
                 // Add Lucene doc to indexer
-                getDocWriter().add(currentLuceneDoc);
+                getDocWriter().add(currentDoc);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -227,7 +225,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
 
             // Reset contents field for next document
             contentsField.clear();
-            currentLuceneDoc = null;
+            currentDoc = null;
 
             // Stop if required
             if (!getDocWriter().continueIndexing())

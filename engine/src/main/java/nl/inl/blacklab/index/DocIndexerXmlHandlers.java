@@ -14,7 +14,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.text.StringEscapeUtils;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.util.BytesRef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -70,7 +69,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 Attributes attributes) {
             startCaptureContent(contentsField.name());
 
-            currentLuceneDoc = new Document();
+            currentDoc = createNewDocument();
             // Store attribute values from the tag as metadata fields
             for (int i = 0; i < attributes.getLength(); i++) {
                 addMetadataField(attributes.getLocalName(i), attributes.getValue(i));
@@ -124,7 +123,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             // Store the different properties of the annotated contents field that
             // were gathered in
             // lists while parsing.
-            contentsField.addToLuceneDoc(currentLuceneDoc);
+            contentsField.addToDoc(currentDoc);
 
             // Add field with all its annotations to the forward index
             addToForwardIndex(contentsField);
@@ -143,7 +142,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
             try {
                 // Add Lucene doc to indexer
-                getDocWriter().add(currentLuceneDoc);
+                getDocWriter().add(currentDoc);
             } catch (Exception e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -156,7 +155,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
             // Reset contents field for next document
             contentsField.clear();
-            currentLuceneDoc = null;
+            currentDoc = null;
 
             // Stop if required
             if (!getDocWriter().continueIndexing())

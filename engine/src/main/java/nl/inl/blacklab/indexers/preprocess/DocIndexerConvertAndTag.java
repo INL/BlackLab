@@ -13,11 +13,11 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.ReaderInputStream;
-import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -141,8 +141,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public Document getCurrentLuceneDoc() {
-        return outputIndexer.getCurrentLuceneDoc();
+    public BLInputDocument getCurrentDoc() {
+        return outputIndexer.getCurrentDoc();
     }
 
     @Override

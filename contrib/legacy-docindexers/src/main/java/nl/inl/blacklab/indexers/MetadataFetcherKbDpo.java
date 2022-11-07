@@ -322,7 +322,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     @Override
     public void addMetadata() {
         String fileName;
-        fileName = docIndexer.getCurrentLuceneDoc().get("imageFileName");
+        fileName = docIndexer.getCurrentDoc().get("imageFileName");
 
         Matcher m = PATT_DPO.matcher(fileName);
         if (m.find()) {

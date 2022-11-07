@@ -173,7 +173,7 @@ public class IndexListener implements ErrorHandler {
         return totalTime;
     }
 
-    public void luceneDocumentAdded() {
+    public void documentAddedToIndex() {
         //
     }
 

@@ -40,6 +40,8 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
+import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -72,7 +74,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     //---------------------------------------------------------------
 
     protected static final Logger logger = LogManager.getLogger(BlackLabIndexAbstract.class);
-
 
     // Instance variables
     //---------------------------------------------------------------
@@ -137,7 +138,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     private boolean isEmptyIndex = false;
 
     /** The index writer. Only valid in indexMode. */
-    IndexWriter indexWriter = null;
+    BLIndexWriterProxy indexWriter = null;
 
     /** How many words of context around matches to return by default */
     private ContextSize defaultContextSize = BlackLabIndex.DEFAULT_CONTEXT_SIZE;
@@ -193,6 +194,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
+
         } catch (IOException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
@@ -230,11 +232,16 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
+
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) { 
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {
             throw new ErrorOpeningIndex(e);
         }
+    }
+
+    public BLIndexObjectFactory indexObjectFactory() {
+        return blackLab.indexObjectFactory();
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
@@ -410,10 +417,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         if (indexMode) {
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
-            indexWriter = openIndexWriter(indexLocation, createNewIndex, null);
+            IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);
+            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter);
             if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
-            return DirectoryReader.open(indexWriter, false, false);
+            return DirectoryReader.open(luceneIndexWriter, false, false);
         } else {
             // Open Lucene index
             if (traceIndexOpening())
@@ -453,10 +461,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 logger.debug("  Re-opening IndexWriter with newly created analyzers...");
             reader.close();
             indexWriter.close();
-            indexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
+            IndexWriter luceneIndexWriter = openIndexWriter(indexDir, createNewIndex, analyzer);
             if (traceIndexOpening())
                 logger.debug("  IndexReader too...");
-            reader = DirectoryReader.open(indexWriter, false, false);
+            reader = DirectoryReader.open(luceneIndexWriter, false, false);
+            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter);
         }
 
         // Register ourselves in the mapping from IndexReader to BlackLabIndex,
@@ -641,7 +650,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     }
 
     @Override
-    public IndexWriter writer() {
+    public BLIndexWriterProxy writer() {
         return indexWriter;
     }
 
