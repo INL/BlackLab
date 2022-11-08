@@ -217,6 +217,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
                 indexMetadata.freeze();
 
             finishOpeningIndex(indexDir, indexMode, createNewIndex);
+
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {
@@ -242,14 +243,19 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         if (indexMode) {
             if (traceIndexOpening())
                 logger.debug("  Opening IndexWriter...");
-            indexWriter = openIndexWriter(indexLocation, createNewIndex, null);
+            IndexWriter luceneIndexWriter = openIndexWriter(indexLocation, createNewIndex, null);
+            indexWriter = indexObjectFactory().indexWriterProxy(luceneIndexWriter);
             if (traceIndexOpening())
                 logger.debug("  Opening corresponding IndexReader...");
-            reader = DirectoryReader.open(indexWriter, false, false);
+            reader = DirectoryReader.open(luceneIndexWriter, false, false);
         } else {
             reader = openIndexForReading(indexLocation, traceIndexOpening());
         }
         shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
+    }
+
+    public BLIndexObjectFactory indexObjectFactory() {
+        return blackLab.indexObjectFactory();
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
