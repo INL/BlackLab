@@ -156,6 +156,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     /** Was this index closed? */
     private boolean closed;
 
+
     // Constructors
     //---------------------------------------------------------------
 
@@ -223,10 +224,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
         } catch (IOException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
-    }
-
-    public BLIndexObjectFactory indexObjectFactory() {
-        return blackLab.indexObjectFactory();
     }
 
     /**
