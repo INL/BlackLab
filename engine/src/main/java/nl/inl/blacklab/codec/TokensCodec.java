@@ -8,7 +8,7 @@ package nl.inl.blacklab.codec;
  * - offset in actual tokens file
  * - doc length
  * - codec (this) 
- * - codec payload (usually 0, but can be set depending on codec).
+ * - codec parameter (usually 0, but can be set depending on codec).
  */
 enum TokensCodec {
     /** Simplest possible encoding, one 4-byte integer per token. */
@@ -36,19 +36,19 @@ enum TokensCodec {
         throw new IllegalArgumentException("Unknown tokens codec: " + code);
     }
 
-    public enum VALUE_PER_TOKEN_PAYLOAD {
+    public enum VALUE_PER_TOKEN_PARAMETER {
         BYTE((byte) 0),
         SHORT((byte) 1),
         INT((byte) 2);
 
         byte code;
 
-        VALUE_PER_TOKEN_PAYLOAD(byte code) {
+        VALUE_PER_TOKEN_PARAMETER(byte code) {
             this.code = code;
         }
 
-        public static VALUE_PER_TOKEN_PAYLOAD fromCode(byte code) {
-            for (VALUE_PER_TOKEN_PAYLOAD t: values()) {
+        public static VALUE_PER_TOKEN_PARAMETER fromCode(byte code) {
+            for (VALUE_PER_TOKEN_PARAMETER t: values()) {
                 if (t.code == code)
                     return t;
             }

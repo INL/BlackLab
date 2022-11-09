@@ -38,10 +38,9 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PAYLOAD;
+import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -466,24 +465,24 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         // determine codec
         TokensCodec tokensCodec = allTheSame ? TokensCodec.ALL_TOKENS_THE_SAME : TokensCodec.VALUE_PER_TOKEN;
 
-        // determine payload for codec.
-        byte payload = 0;
+        // determine parameter byte for codec.
+        byte tokensCodecParameter = 0;
         switch (tokensCodec) {
-            case ALL_TOKENS_THE_SAME: payload = 0; break;
+            case ALL_TOKENS_THE_SAME: tokensCodecParameter = 0; break;
             case VALUE_PER_TOKEN: {
-                if (max <= Byte.MAX_VALUE) payload = VALUE_PER_TOKEN_PAYLOAD.BYTE.code;
-                else if (max <= Short.MAX_VALUE) payload = VALUE_PER_TOKEN_PAYLOAD.SHORT.code;
-                else payload = VALUE_PER_TOKEN_PAYLOAD.INT.code;
+                if (max <= Byte.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.BYTE.code;
+                else if (max <= Short.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.SHORT.code;
+                else tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.INT.code;
                 break;
             }
-            default: throw new NotImplementedException("Payload determiniation for tokens codec " + tokensCodec + " not implemented.");
+            default: throw new NotImplementedException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
         }
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
         outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
         outTokensIndexFile.writeInt(tokensInDoc.length);
         outTokensIndexFile.writeByte(tokensCodec.code);
-        outTokensIndexFile.writeByte(payload);
+        outTokensIndexFile.writeByte(tokensCodecParameter);
 
         if (tokensInDoc.length == 0) {
             return; // done.
@@ -492,7 +491,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         // Write the tokens
         switch (tokensCodec) {
         case VALUE_PER_TOKEN: 
-            switch (VALUE_PER_TOKEN_PAYLOAD.fromCode(payload)) {
+            switch (VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
                 case BYTE: 
                     for (int token: tokensInDoc) {
                         outTokensFile.writeByte((byte) token);
@@ -508,7 +507,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                         outTokensFile.writeInt((int) token);
                     }
                     break;
-                default: throw new NotImplementedException("Payload handling for tokens codec " + tokensCodec + " with payload " + payload + " not implemented.");
+                default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
             }
             break;
         

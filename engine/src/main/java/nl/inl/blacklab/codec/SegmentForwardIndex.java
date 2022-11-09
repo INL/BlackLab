@@ -14,7 +14,7 @@ import org.apache.lucene.store.IndexInput;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
-import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PAYLOAD;
+import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
@@ -29,7 +29,7 @@ class SegmentForwardIndex implements AutoCloseable {
      * - offset in tokens file (long),
      * - doc length in tokens (int), 
      * - tokens codec scheme (byte),
-     * - tokens codec payload (byte)
+     * - tokens codec parameter (byte)
      */
     private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
 
@@ -105,7 +105,7 @@ class SegmentForwardIndex implements AutoCloseable {
         private TokensCodec tokensCodec;
 
         // to be decoded by the appropriate tokensCodec
-        private byte tokensCodecPayload;
+        private byte tokensCodecParameter;
 
         private IndexInput tokensIndex() {
             if (_tokensIndex == null)
@@ -164,7 +164,7 @@ class SegmentForwardIndex implements AutoCloseable {
                 int[] snippet = new int[end - start];
                 switch (tokensCodec) {
                 case VALUE_PER_TOKEN:
-                    switch(VALUE_PER_TOKEN_PAYLOAD.fromCode(tokensCodecPayload)) {
+                    switch(VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
                         case INT: 
                             _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
                             for (int j = 0; j < snippet.length; j++) {
@@ -184,7 +184,8 @@ class SegmentForwardIndex implements AutoCloseable {
                                 snippet[j] = _tokens.readByte();
                             }
                             break;
-                        default: throw new NotImplementedException("Payload handling for tokens codec " + tokensCodec + " with payload " + tokensCodecPayload + " not implemented.");
+                        default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
+                                + " not implemented.");
                     }
                     break;
                 case ALL_TOKENS_THE_SAME:
@@ -210,7 +211,7 @@ class SegmentForwardIndex implements AutoCloseable {
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
                 tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
-                tokensCodecPayload = _tokensIndex.readByte();
+                tokensCodecParameter = _tokensIndex.readByte();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
