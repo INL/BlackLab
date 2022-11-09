@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause;
@@ -117,19 +118,10 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     /** A list of stored fields that doesn't include content store fields. */
     private Set<String> allExceptContentStoreFields;
 
-    BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexIntegrated(BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(blackLab, indexDir, indexMode, createNewIndex, config);
-        init();
-    }
+        super(blackLab, reader, indexDir, indexMode, createNewIndex, config, null);
 
-    BlackLabIndexIntegrated(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
-            File indexTemplateFile) throws ErrorOpeningIndex {
-        super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
-        init();
-    }
-
-    private void init() {
         // Determine the list of all fields in the index, but skip fields that
         // represent a content store as they contain very large values (i.e. the
         // whole input document) we don't generally want returned when requesting
@@ -150,12 +142,9 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
-        if (!createNewIndex)
-            return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
         if (indexTemplateFile != null)
-            throw new UnsupportedOperationException(
-                    "Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
-        return IndexMetadataIntegrated.create(this, null);
+            throw new IllegalArgumentException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
+        return getIndexMetadata(createNewIndex, (ConfigInputFormat)null);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

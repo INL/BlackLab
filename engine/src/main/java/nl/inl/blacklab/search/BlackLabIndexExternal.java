@@ -43,12 +43,12 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(blackLab, indexDir, indexMode, createNewIndex, config);
+        super(blackLab, null, indexDir, indexMode, createNewIndex, config, null);
     }
 
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
-        super(blackLab, indexDir, indexMode, createNewIndex, indexTemplateFile);
+        super(blackLab, null, indexDir, indexMode, createNewIndex, null, indexTemplateFile);
     }
 
     @Override

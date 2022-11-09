@@ -153,12 +153,17 @@ public final class BlackLabEngine implements AutoCloseable {
         }
     }
 
-    public static BlackLabIndex indexFromReader(IndexReader reader) {
+    public static BlackLabIndex indexFromReader(IndexReader reader, boolean wrapIfNotFound) {
         BlackLabEngine blackLabEngine;
         synchronized (indexReader2BlackLabEngine) {
             blackLabEngine = indexReader2BlackLabEngine.get(reader);
         }
-        return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(reader);
+        if (blackLabEngine == null && wrapIfNotFound) {
+            // If the IndexReader doesn't have a BlackLabIndex yet, create one in the implicit engine.
+            // (used with Solr, who manages IndexReaders for us)
+            blackLabEngine = BlackLab.implicitInstance();
+        }
+        return blackLabEngine == null ? null : blackLabEngine.getIndexFromReader(reader, wrapIfNotFound);
     }
 
     /**
@@ -258,11 +263,26 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
-        boolean isIntegratedIndex = !VersionFile.exists(indexDir);
         IndexType indexType = determineIndexType(indexDir, false, null);
         return indexType == IndexType.INTEGRATED ?
-            new BlackLabIndexIntegrated(this, indexDir, false, false, (File) null):
+            new BlackLabIndexIntegrated(this, null, indexDir, false, false, null):
             new BlackLabIndexExternal(this, indexDir, false, false, (File) null);
+    }
+
+    /**
+     * Get a BlackLabIndex instance from an already opened IndexReader.
+     *
+     * Used for Solr integration, where Solr manages IndexReader instances.
+     *
+     * CAUTION: this only works with the integrated index format. indexMode
+     * will always be false.
+     *
+     * @param reader reader to wrap
+     * @return a BlackLabIndex instance with this reader
+     */
+    public BlackLabIndex wrapIndexReader(IndexReader reader) throws ErrorOpeningIndex {
+        return new BlackLabIndexIntegrated(this, reader, null, false, false,
+                null);
     }
 
     /**
@@ -297,6 +317,7 @@ public final class BlackLabEngine implements AutoCloseable {
      * @param indexDir the index directory
      * @param forceCreateNew if true, create a new index even if one existed there
      * @param indexTemplateFile (optional) JSON template to use for index structure / metadata
+     *                          (only works with {@link IndexType#EXTERNAL_FILES}; pass null for integrated)
      * @param indexType (optional) type of index to create (external or integrated), or null to use the default type
      * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
@@ -305,9 +326,12 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         indexType = determineIndexType(indexDir, forceCreateNew, indexType);
-        return indexType == IndexType.INTEGRATED ?
-                new BlackLabIndexIntegrated(this, indexDir, true, forceCreateNew, indexTemplateFile) :
-                new BlackLabIndexExternal(this, indexDir, true, forceCreateNew, indexTemplateFile);
+        if (indexType == IndexType.EXTERNAL_FILES)
+            return new BlackLabIndexExternal(this, indexDir, true, forceCreateNew, indexTemplateFile);
+
+        if (indexTemplateFile != null)
+            throw new IllegalArgumentException("Cannot use index template file with integrated index!");
+        return new BlackLabIndexIntegrated(this, null, indexDir, true, forceCreateNew, null);
     }
 
     private IndexType determineIndexType(File indexDir, boolean forceCreateNew, IndexType indexType) {
@@ -354,7 +378,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         indexType = determineIndexType(indexDir, createNewIndex, indexType);
         return indexType == IndexType.INTEGRATED ?
-                new BlackLabIndexIntegrated(this, indexDir, true, createNewIndex, config) :
+                new BlackLabIndexIntegrated(this, null, indexDir, true, createNewIndex, config) :
                 new BlackLabIndexExternal(this, indexDir, true, createNewIndex, config);
     }
 
@@ -401,8 +425,27 @@ public final class BlackLabEngine implements AutoCloseable {
         return searchExecutorService;
     }
 
-    synchronized BlackLabIndex getIndexFromReader(IndexReader reader) {
-        return indexReader2BlackLabIndex.get(reader);
+    /**
+     * Given an IndexReader, return corresponding BlackLabIndex.
+     *
+     * @param reader IndexReader to get the BlackLabIndex for
+     * @param wrapIfNotFound if true, a new BlackLabIndex instance will be created for this IndexReader if none
+     *                       existed yet. Used with Solr.
+     * @return BlackLabIndex instance for this IndexReader
+     */
+    synchronized BlackLabIndex getIndexFromReader(IndexReader reader, boolean wrapIfNotFound) {
+        BlackLabIndex blackLabIndex = indexReader2BlackLabIndex.get(reader);
+        if (blackLabIndex == null && wrapIfNotFound) {
+            // We don't have a BlackLabIndex instance for this IndexReader yet. This can occur if e.g.
+            // Solr is in charge of opening IndexReaders. Create a new instance now and register it.
+            try {
+                blackLabIndex = wrapIndexReader(reader);
+                registerIndex(reader, blackLabIndex);
+            } catch (ErrorOpeningIndex e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return blackLabIndex;
     }
 
     public int maxThreadsPerSearch() {
