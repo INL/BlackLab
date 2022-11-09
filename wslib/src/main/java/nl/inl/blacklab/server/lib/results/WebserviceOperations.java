@@ -204,12 +204,14 @@ public class WebserviceOperations {
      *
      * @param index where we got this document from
      * @param luceneDocId Lucene document id
-     * @param document the document object
+     * @param document the document object, or null if not available
      * @return the pid string (or Lucene doc id in string form if index has no pid
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
         MetadataField pidField = index.metadataFields().pidField();
+        if (document == null)
+            document = index.luceneDoc(luceneDocId);
         String pid = pidField == null ? null : document.get(pidField.name());
         if (pid == null)
             return Integer.toString(luceneDocId);

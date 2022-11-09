@@ -2,19 +2,9 @@ package org.ivdnt.solr;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.stream.StreamResult;
-import javax.xml.transform.stream.StreamSource;
-
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.params.SolrParams;
@@ -26,11 +16,16 @@ import org.apache.solr.search.DocIterator;
 import org.apache.solr.search.DocList;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -123,36 +118,27 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             List<String> data = new ArrayList<>();
             DocIterator it = results.iterator();
             IndexReader reader = rb.req.getSearcher().getIndexReader();
-            BlackLabIndex index = BlackLab.indexFromReader(reader);
+            BlackLabIndex index = BlackLab.indexFromReader(reader, true);
             String patt = params.get("bl.patt");
             if (patt != null) {
-                TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-                QueryExecutionContext context = index.defaultExecutionContext(index.mainAnnotatedField());
-                tp.translate(context);
-                index.search().find
-            }
-            
-            try {
-                Transformer transformer = xslt.get(); //factory.newTransformer(new StreamSource(new FileInputStream(xsltFile)));
-                while (it.hasNext()) {
-                    // Get the XML from the response
-                    Document doc = searcher.doc(it.next());
-                    String xml = doc.get(inputField); // TODO: make field configurable
-                    
-                    // Transform the XML using the XSLT
-                    Source source = new StreamSource(new StringReader(xml));
-                    StringWriter html = new StringWriter();
-                    Result result = new StreamResult(html);
-                    transformer.reset();
-                    transformer.transform(source, result);
-                    
-                    // Add to our output section in the same order as the results
-                    data.add(html.toString());
+                // Perform pattern search
+                try {
+                    TextPattern tp = CorpusQueryLanguageParser.parse(patt);
+                    QueryExecutionContext context = index.defaultExecutionContext(index.mainAnnotatedField());
+                    BLSpanQuery query = tp.translate(context);
+                    Hits hits = index.search().find(query).execute();
+                    List<NamedList<Object>> hitList = new ArrayList<>();
+                    for (Hit hit: hits) {
+                        NamedList<Object> hitDesc = new NamedList<>();
+                        String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
+                        hitDesc.add("doc", docPid);
+                        hitDesc.add("start", hit.start());
+                        hitDesc.add("end", hit.end());
+                    }
+                    rb.rsp.add("blacklabResponse", hitList);
+                } catch (InvalidQuery e) {
+                    throw new IOException("Error exexcuting BlackLab query", e);
                 }
-                rb.rsp.add("apply-xslt", data);
-                
-            } catch (TransformerException e) {
-                throw new RuntimeException(e);
             }
         }
     }
