@@ -33,6 +33,9 @@
         <module>core</module>
         <module>server</module>
 
+        <!-- Solr integration (experimental) -->
+        <module>solr</module>
+
         <!-- Optional instrumentation modules -->
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
@@ -159,6 +162,16 @@
     <build>
 
         <plugins>
+
+            <!-- Java compiler -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
+                <configuration>
+                    <release>11</release>
+                </configuration>
+            </plugin>
 
             <!-- Enforces minimum Maven version -->
             <plugin>

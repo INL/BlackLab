@@ -1,0 +1,8 @@
+# Ignore these subdirs when building Docker image
+target
+.settings
+.git
+
+# Don't include Docker Compose files in the context,
+# as this will trigger a rebuild when none is needed
+*.yml
