@@ -759,9 +759,9 @@
            </arr>
           -->
 
-        <!-- ADDED JN: After all other components have run, apply XSLT to the configured XML field -->
+        <!-- ADDED JN: After all other components have run, run BlackLab Search component -->
         <arr name="last-components">
-            <str>apply-xslt</str>
+            <str>blacklab-search</str>
         </arr>
 
     </requestHandler>
@@ -1140,11 +1140,11 @@
     </searchComponent>
 
     <!-- ADDED JN add our Apply XSLT SearchComponent -->
-    <searchComponent name="apply-xslt" class="org.ivdnt.solr.ApplyXsltComponent" >
+    <searchComponent name="blacklab-search" class="org.ivdnt.blacklab.solr.BlackLabSearchComponent" >
 
-        <!-- any parameters (apply what XSLT? to what response field?) go here -->
+        <!-- any parameters (apply what XSLT? to what response field?) go here
         <str name="xsltFile">test.xslt</str>
-        <str name="inputField">test1</str>
+        <str name="inputField">test1</str> -->
 
     </searchComponent>
 
