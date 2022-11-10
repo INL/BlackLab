@@ -378,11 +378,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
     @SuppressWarnings("deprecation")
     protected AnnotationWriter addAnnotation(String propName, boolean includePayloads) {
-        return contentsField.addAnnotation(null, propName, getSensitivitySetting(propName), includePayloads);
+        return contentsField.addAnnotation(propName, getSensitivitySetting(propName), includePayloads,
+                false);
     }
 
     public AnnotationWriter addAnnotation(String propName, AnnotationSensitivities sensitivity) {
-        return contentsField.addAnnotation(null, propName, sensitivity);
+        return contentsField.addAnnotation(propName, sensitivity, false);
     }
 
     public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {

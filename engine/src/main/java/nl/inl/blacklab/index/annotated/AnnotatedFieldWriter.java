@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -64,7 +63,10 @@ public class AnnotatedFieldWriter {
     }
 
     /**
-     * Construct a AnnotatedFieldWriter object with a main annotation
+     * Construct a AnnotatedFieldWriter object with a main annotation.
+     *
+     * NOTE: right now, the main annotation will always have a forward index.
+     * Maybe make this configurable?
      *
      * @param name field name
      * @param mainAnnotationName main annotation name (e.g. "word")
@@ -93,21 +95,22 @@ public class AnnotatedFieldWriter {
         return start.size();
     }
 
-    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, AnnotationSensitivities sensitivity, boolean includePayloads) {
+    public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean includePayloads,
+            boolean createForwardIndex) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Annotation name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads,
                 needsPrimaryValuePayloads);
-        if (noForwardIndexAnnotations.contains(name) || annot != null && !annot.createForwardIndex()) {
+        if (noForwardIndexAnnotations.contains(name) || !createForwardIndex) {
             p.setHasForwardIndex(false);
         }
         annotations.put(name, p);
         return p;
     }
 
-    public AnnotationWriter addAnnotation(ConfigAnnotation annot, String name, AnnotationSensitivities sensitivity) {
-        return addAnnotation(annot, name, sensitivity, false);
+    public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean createForwardIndex) {
+        return addAnnotation(name, sensitivity, false, createForwardIndex);
     }
 
     public void addStartChar(int startChar) {

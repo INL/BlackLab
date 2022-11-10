@@ -92,7 +92,7 @@ public class ConfigMetadataField {
         cp.setAnalyzer(analyzer);
         cp.displayValues.putAll(displayValues);
         cp.displayOrder.addAll(displayOrder);
-        cp.setsortValues(sortValues);
+        cp.setSortValues(sortValues);
         return cp;
     }
 
@@ -226,7 +226,7 @@ public class ConfigMetadataField {
         displayOrder.addAll(fields);
     }
 
-    public void setsortValues(boolean sortValues) {
+    public void setSortValues(boolean sortValues) {
         this.sortValues = sortValues;
     }
 

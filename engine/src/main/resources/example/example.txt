@@ -1,0 +1,43 @@
+# Example data for DocIndexerExample.
+#
+# This is a toy DocIndexer that demonstrates advanced custom format support.
+#
+# Note that for most XML or TSV formats, you should just use a .blf.yaml
+# configuration file, but if your format doesn't fit this setup, implementing
+# your own DocIndexer will give the most flexibility.
+#
+# The example format is designed to show the building blocks of indexing,
+# not to be practical. It covers some, not all, of the possibilities. See the
+# code for pointers to what else is possible.
+#
+# There is one instruction per line. Each instruction is a uppercase word
+# followed by 0 or more parameter(s), whitespace-separated.
+# Anything after a hash symbol is ignored.
+
+# Add document
+DOC_START                     # begin a new document
+
+  # Add metadata
+  MVALUE author Pete Puck
+  MVALUE title This is a test.
+
+  # Add annotation values
+  AVAL_START contents
+    VAL word The
+    VAL lemma the
+    POS_ADD 1                 # Go to next token position
+    VAL word quick
+    VAL lemma quick
+    POS_ADD 1                 # Go to next token position
+    VAL word brown
+    VAL lemma brown
+    POS_ADD 1                 # Go to next token position
+    VAL word fox
+    VAL lemma fox
+    SPAN named-entity 0 4     # Add span according to token positions
+                              # (note that start is inclusive, end exclusive)
+    VAL word jumps
+    VAL lemma jump
+  AVAL_END
+
+DOC_END                       # end document and add to index
