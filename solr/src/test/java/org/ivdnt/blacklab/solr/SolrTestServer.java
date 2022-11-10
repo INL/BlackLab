@@ -123,16 +123,9 @@ public class SolrTestServer {
         }
 
         // Copy XSLT file used by our SearchComponent.
-        Path coreConfPath = getCoreConfigPath(coreName);
+        // (we should probably put stuff like this in a configset instead, or use the API to add it later)
+        Path coreConfPath = server.getCoreContainer().getCore(coreName).getInstancePath().resolve("conf");
         copyFile(confTemplatePath, coreConfPath, "test.xslt");
-    }
-
-    private static Path getCorePath(String coreName) {
-        return server.getCoreContainer().getCore(coreName).getInstancePath();
-    }
-
-    private static Path getCoreConfigPath(String coreName) {
-        return getCorePath(coreName).resolve("conf");
     }
 
     public static void close() {

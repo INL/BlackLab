@@ -2,9 +2,12 @@ package org.ivdnt.blacklab.solr;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.params.SolrParams;
@@ -79,6 +82,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 //      }
 //      xsltFilePath = initArgs.get("xsltFile");
 //      inputField = initArgs.get("inputField");
+
     }
 
     /**
@@ -94,6 +98,16 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public void prepare(ResponseBuilder rb) {
         rb.setNeedDocList(true);
+
+
+        // See if we can load a test file now.
+        String testFile = "conf/test.xslt";
+        try (InputStream is = core.getResourceLoader().openResource(testFile)) {
+            System.err.println(IOUtils.toString(is, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
     /**
