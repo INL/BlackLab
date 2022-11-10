@@ -1,4 +1,4 @@
-package org.ivdnt.solr;
+package org.ivdnt.blacklab.solr;
 
 import java.io.File;
 import java.io.IOException;
@@ -119,12 +119,13 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             DocIterator it = results.iterator();
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = BlackLab.indexFromReader(reader, true);
+            String field = params.get("bl.pattfield", index.mainAnnotatedField().name());
             String patt = params.get("bl.patt");
             if (patt != null) {
                 // Perform pattern search
                 try {
                     TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-                    QueryExecutionContext context = index.defaultExecutionContext(index.mainAnnotatedField());
+                    QueryExecutionContext context = index.defaultExecutionContext(index.annotatedField(field));
                     BLSpanQuery query = tp.translate(context);
                     Hits hits = index.search().find(query).execute();
                     List<NamedList<Object>> hitList = new ArrayList<>();

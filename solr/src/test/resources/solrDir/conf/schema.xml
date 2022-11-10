@@ -109,7 +109,7 @@
    -->
    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" />
 
-   <field name="test1" type="string" indexed="true" stored="true" required="false" multiValued="false" />
+   <field name="test1" type="text_general" indexed="true" stored="true" required="false" multiValued="false" />
    <field name="test2" type="string" indexed="true" stored="true" required="false" multiValued="false" />
 
     <!--

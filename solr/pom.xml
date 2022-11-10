@@ -54,6 +54,32 @@
         <finalName>${project.artifactId}-no-deps</finalName>
 
     </build>
+
+    <!-- Make sure Solr's log4j doesn't conflict with ours -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-core</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-1.2-api</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-slf4j-impl</artifactId>
+                <version>${log4j.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
 
     <dependencies>
@@ -71,6 +97,7 @@
             <artifactId>solr-core</artifactId>
             <version>${solr.version}</version>
             <scope>provided</scope><!-- probably not necessary to include this, right? -->
+
         </dependency>
 
         <!-- Compile against SolrJ (but don't include in JAR with deps) -->
@@ -88,14 +115,14 @@
             <version>10.1</version>
         </dependency>
 
-        <!-- Test deps -->
+        <!-- Test deps
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.2</version>
             <scope>test</scope>
-        </dependency>
+        </dependency> -->
 
     </dependencies>
 
