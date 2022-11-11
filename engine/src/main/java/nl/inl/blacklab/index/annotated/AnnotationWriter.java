@@ -300,20 +300,16 @@ public class AnnotationWriter {
             // Before the last position.
             // Find the index where the value should be inserted.
             int curPos = this.lastValuePosition;
+            int n = 0; // if we go through the whole loop without breaking out, value should go at position 0
             for (int i = values.size() - 1; i >= 0; i--) {
                 if (curPos <= position) {
                     // Value should be inserted after this index.
-                    int n = i + 1;
-                    insertValueAtIndex(n, value, position - curPos, payload);
+                    n = i + 1;
                     break;
                 }
                 curPos -= increments.get(i); // go to previous value position
             }
-            if (curPos == -1) {
-                // Value should be inserted at the first position.
-                int n = 0;
-                insertValueAtIndex(n, value, position - curPos, payload);
-            }
+            insertValueAtIndex(n, value, position - curPos, payload);
         }
 
         return lastValuePosition;
