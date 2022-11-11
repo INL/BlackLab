@@ -274,12 +274,11 @@ public class DocIndexerExample extends DocIndexerBase {
             if (!inWord) {
                 // Signal that we're starting a new token position.
                 beginWord();
-                inWord = true; // make sure we call endWord() later
+                inWord = true; // remember to call endWord() later
             }
             String annotationName = parameters[0];
             String value = parameters[1];
             annotation(annotationName, value, -1, List.of(currentTokenPosition));
-//            posIncr = 0; // reset so next value can be added at the same position
             break;
 
         case "ADVANCE":
@@ -295,7 +294,7 @@ public class DocIndexerExample extends DocIndexerBase {
             break;
 
         case "SPAN":
-            // Add a named span, e.g. <p>, <s>, <named-entity>, etc.
+            // Add a named span, e.g. <p/>, <s/>, <entity/>, etc.
             // at the specified token positions.
             // CAUTION: right now, we can only add spans at positions that we have already
             //   indexed values for! So add the spans either while or after indexing values,
@@ -306,6 +305,7 @@ public class DocIndexerExample extends DocIndexerBase {
             int spanStart = Integer.parseInt(parameters[1]);
             int spanEnd = Integer.parseInt(parameters[2]);   // end position (exclusive)
             tagsAnnotation().addValueAtPosition(spanType, spanStart, PayloadUtils.tagEndPositionPayload(spanEnd));
+            // Add the span's attributes, if any
             for (int i = 3; i < parameters.length; i += 2) {
                 String attName = parameters[i];
                 String attValue = parameters[i + 1];
@@ -333,7 +333,7 @@ public class DocIndexerExample extends DocIndexerBase {
         super.endWord();
 
         // Make sure that all annotations are at the same token position.
-        // (if not all annotations have a value at all positions, they could desynchronize, causing problems)
+        // (we don't want annotations to run out of synch)
         for (AnnotationWriter aw: getAnnotatedField(currentAnnotatedField).annotationWriters()) {
             while (aw.lastValuePosition() < currentTokenPosition) {
                 aw.addValue("");
@@ -342,7 +342,7 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     /**
-     * Handle command inside a DOC (document) block.
+     * Handle command inside a document block.
      *
      * @param command command to handle
      * @param parameters parameters
