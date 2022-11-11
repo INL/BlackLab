@@ -1,7 +1,7 @@
 # Example data for DocIndexerExample.
 #
-# This is a toy DocIndexer that demonstrates how to support custom formats
-# in BlackLab. See DocIndexerExample for more details.
+# DocIndexerExample is a toy DocIndexer that demonstrates how to support
+# custom formats in BlackLab. See DocIndexerExample for more details.
 
 # Add document
 DOC_START                     # begin a new document

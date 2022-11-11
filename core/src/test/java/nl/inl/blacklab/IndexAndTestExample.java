@@ -28,7 +28,7 @@ import nl.inl.util.FileUtil;
 /**
  * Simple test program to demonstrate index & search functionality.
  */
-public class Example {
+public class IndexAndTestExample {
 
     /**
      * The BlackLab index object.

@@ -23,28 +23,24 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 
 /**
- * A toy DocIndexer that demonstrates advanced custom format support.
+ * An educational DocIndexer to learn how to implement your own.
  *
- * You probably don't want to use this for real indexing, just to learn
- * how custom indexing can be done.
- *
- * Note that for most XML or TSV formats, you don't even need to write your
- * own DocIndexer; you should just write a .blf.yaml configuration file.
- * But if your input data doesn't fit this setup, implementing your own
- * DocIndexer will give you the flexibility you need.
+ * If your input data cannot easily be described using the standard
+ * .blf.yaml configuration files, you might need to implement your own
+ * DocIndexer class. This shows how to do that.
  *
  * This example is designed to explain the most basic building blocks of
  * indexing data in BlackLab, not to be practical or robust. It covers only
- * the most important features.
+ * the most important features. If something is unclear, please ask.
  *
- * Input files are a sort of "assembly language" for BlackLab indexing.
- * Files should contain one instruction per line, each instruction being
- * an uppercase word followed by 0 or more parameter(s), whitespace-separated.
- * Anything after a hash symbol is ignored.
+ * The input files that this DocIndexer can process are a sort of "assembly
+ * language" for BlackLab indexing. They contain one instruction per line,
+ * each instruction being an uppercase word followed by 0 or more parameter(s),
+ * whitespace-separated. Anything after a hash symbol is ignored.
  *
- * Also see example.txt in the resources dir.
+ * Below is a small example. For a larger excample, see example/example.txt in
+ * the resources dir.
  *
- * Example:
  * <code>
  * # Add document
  * DOC_START                     # begin a new document
