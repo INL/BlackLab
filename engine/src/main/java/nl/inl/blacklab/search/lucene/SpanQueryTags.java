@@ -57,7 +57,7 @@ public class SpanQueryTags extends BLSpanQuery {
         // Construct attribute filters
         List<BLSpanQuery> attrFilters = new ArrayList<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
-            String value = "@" + e.getKey() + "__" + e.getValue();
+            String value = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue());
             attrFilters.add(new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, value)));
         }
 

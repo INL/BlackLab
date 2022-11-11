@@ -26,7 +26,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -122,7 +121,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(),
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
-            addAnnotatedField(fieldWriter);
 
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
                     AnnotationSensitivities.ONLY_SENSITIVE, true, false);
@@ -144,13 +142,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
                 fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-                        AnnotationSensitivities.ONLY_INSENSITIVE, false, false);
+                        AnnotationSensitivities.ONLY_INSENSITIVE, false, true);
             }
-            if (getDocWriter() != null) {
-                IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
-                indexMetadata.registerAnnotatedField(fieldWriter);
-            }
-
+            addAnnotatedField(fieldWriter);
         }
     }
 

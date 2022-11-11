@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.lib.User;
@@ -104,7 +105,7 @@ public class BlackLabServerParams implements PlainWebserviceParams {
         defaultValues.put("wordstart", "-1");
         defaultValues.put("wordend", "-1");
         defaultValues.put("calc", "");
-        defaultValues.put("property", "word"); // deprecated, use "annotation" now
+        defaultValues.put("property", AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
         defaultValues.put("annotation", "");   // default empty, because we fall back to the old name, "property".
         defaultValues.put("waitfortotal", "no");
         defaultValues.put("number", "50");

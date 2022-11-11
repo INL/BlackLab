@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -88,12 +89,12 @@ public class ContextualQueryLanguageParser {
     CompleteQuery contains(BlackLabIndex index, String field, String value) {
 
         boolean isContentsSearch = false;
-        String prop = "word";
+        String prop = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean isProperty;
         if (index != null && !index.getClass().getSimpleName().startsWith("Mock")) // TODO: improve testability
             isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
-            isProperty = field.equals("word") || field.equals("lemma") || field.equals("pos"); // common case
+            isProperty = field.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME) || field.equals("lemma") || field.equals("pos"); // common case
         if (isProperty) {
             isContentsSearch = true;
             prop = field;

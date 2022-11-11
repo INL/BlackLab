@@ -3,7 +3,6 @@ package nl.inl.blacklab.index;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +21,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -238,32 +238,27 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         @Override
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) {
-            int lastStartTagPos = propTags.lastValuePosition();
             int currentPos = propMain.lastValuePosition() + 1;
-            int posIncrement = currentPos - lastStartTagPos;
-            propTags.addValue(localName, posIncrement);
-            propTags.addPayload(null);
+            propTags.addValueAtPosition(localName, currentPos, null);
             int startTagIndex = propTags.lastValueIndex();
             openTagIndexes.add(startTagIndex);
             for (int i = 0; i < attributes.getLength(); i++) {
                 // Index element attribute values
                 String name = attributes.getLocalName(i);
                 String value = attributes.getValue(i);
-                propTags.addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
-                propTags.addPayload(null);
+                propTags.addValue(AnnotatedFieldNameUtil.tagAttributeIndexValue(name.toLowerCase(), value.toLowerCase()), 0, null);
             }
         }
 
         /** Close tag: store the end tag location */
         @Override
         public void endElement(String uri, String localName, String qName) {
-            int currentPos = propMain.lastValuePosition() + 1;
-
             // Add payload to start tag annotation indicating end position
             Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
-            byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
-            propTags.setPayloadAtIndex(openTagIndex, new BytesRef(payload));
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(propMain.lastValuePosition() + 1);
+            propTags.setPayloadAtIndex(openTagIndex, payload);
         }
+
     }
 
     /**

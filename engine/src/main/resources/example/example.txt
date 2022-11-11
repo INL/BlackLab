@@ -1,43 +1,112 @@
 # Example data for DocIndexerExample.
 #
-# This is a toy DocIndexer that demonstrates advanced custom format support.
-#
-# Note that for most XML or TSV formats, you should just use a .blf.yaml
-# configuration file, but if your format doesn't fit this setup, implementing
-# your own DocIndexer will give the most flexibility.
-#
-# The example format is designed to show the building blocks of indexing,
-# not to be practical. It covers some, not all, of the possibilities. See the
-# code for pointers to what else is possible.
-#
-# There is one instruction per line. Each instruction is a uppercase word
-# followed by 0 or more parameter(s), whitespace-separated.
-# Anything after a hash symbol is ignored.
+# This is a toy DocIndexer that demonstrates how to support custom formats
+# in BlackLab. See DocIndexerExample for more details.
 
 # Add document
 DOC_START                     # begin a new document
 
   # Add metadata
-  MVALUE author Pete Puck
-  MVALUE title This is a test.
+  METADATA pid ABC123
+  METADATA author Pete Puck
+  METADATA title This is a test.
 
-  # Add annotation values
-  AVAL_START contents
+  # Annotated field: contents
+  FIELD_START contents
+
+    # Annotation values
+
     VAL word The
     VAL lemma the
-    POS_ADD 1                 # Go to next token position
+    ADVANCE 1   # Go to next token position
+
     VAL word quick
     VAL lemma quick
-    POS_ADD 1                 # Go to next token position
+    ADVANCE 1
+
     VAL word brown
     VAL lemma brown
-    POS_ADD 1                 # Go to next token position
+    ADVANCE 1
+
     VAL word fox
     VAL lemma fox
-    SPAN named-entity 0 4     # Add span according to token positions
-                              # (note that start is inclusive, end exclusive)
+    ADVANCE 1
+
     VAL word jumps
     VAL lemma jump
-  AVAL_END
+    ADVANCE 1
+
+    VAL word over
+    VAL lemma over
+    ADVANCE 1
+
+    VAL word the
+    VAL lemma the
+    ADVANCE 1
+
+    VAL word lazy
+    VAL lemma lazy
+    ADVANCE 1
+
+    VAL word dog
+    VAL lemma dog
+
+
+    # Any spans to add, with start/end token positions and any attributes
+    # (note that start is inclusive, end exclusive)
+
+    # (XML equivalent: <entity genus="Vulpes" speed="quick">The quick brown fox</entity>)
+    SPAN entity 0 4 genus Vulpes speed quick  # The quick brown fox
+
+    SPAN entity 6 9 genus Canis speed slow    # the lazy dog
+
+    # Note that spans don't need to be hierarchical, they can partially overlap as well
+    SPAN weird 2 7 meaning none   # brown fox jumps over the
+
+  FIELD_END
 
 DOC_END                       # end document and add to index
+
+
+DOC_START
+
+  # Add metadata
+  METADATA pid DEF456
+  METADATA author William Weaver
+  METADATA title This is another test.
+
+  # Annotated field: contents
+  FIELD_START contents
+
+    # Annotation values
+
+    VAL word Testing
+    VAL lemma test
+    ADVANCE 1
+
+    VAL word indexing
+    VAL lemma index
+    ADVANCE 1
+
+    VAL word is
+    VAL lemma be
+    ADVANCE 1
+
+    VAL word lots
+    VAL lemma lot
+    ADVANCE 1
+
+    VAL word of
+    VAL lemma of
+    ADVANCE 1
+
+    VAL word fun
+    VAL lemma fun
+
+
+    # (XML equivalent: <evaluation quality="fun" amount="lots">lots of fun</evaluation>)
+    SPAN evaluation 3 6 quality fun amount lots    # lots of fun
+
+  FIELD_END
+
+DOC_END

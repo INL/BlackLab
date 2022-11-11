@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +21,7 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -36,6 +36,7 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UnicodeStream;
@@ -142,6 +143,10 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
         annotatedFields.put(field.name(), field);
+        if (getDocWriter() != null) {
+            IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+            indexMetadata.registerAnnotatedField(field);
+        }
     }
 
     protected AnnotatedFieldWriter getMainAnnotatedField() {
@@ -193,12 +198,22 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return annotMain.lastValuePosition() + 1;
     }
 
-    protected AnnotationWriter propTags() {
+    protected AnnotationWriter tagsAnnotation() {
         return annotStartTag;
     }
 
-    protected AnnotationWriter propPunct() {
+    protected AnnotationWriter punctAnnotation() {
         return annotPunct;
+    }
+
+    @Deprecated
+    protected AnnotationWriter propTags() {
+        return tagsAnnotation();
+    }
+
+    @Deprecated
+    protected AnnotationWriter propPunct() {
+        return punctAnnotation();
     }
 
     protected void setPreventNextDefaultPunctuation() {
@@ -472,20 +487,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (isOpenTag) {
             trace("<" + tagName + ">");
 
-            int lastStartTagPos = propTags().lastValuePosition();
-            int currentPos = getCurrentTokenPosition();
-            int posIncrement = currentPos - lastStartTagPos;
-            propTags().addValue(tagName, posIncrement);
-            propTags().addPayload(null);
-            int startTagIndex = propTags().lastValueIndex();
-            openInlineTags.add(new OpenTagInfo(tagName, startTagIndex));
+            tagsAnnotation().addValueAtPosition(tagName, getCurrentTokenPosition(), null);
+            openInlineTags.add(new OpenTagInfo(tagName, tagsAnnotation().lastValueIndex()));
 
             for (Entry<String, String> e : attributes.entrySet()) {
                 // Index element attribute values
                 String name = e.getKey();
                 String value = e.getValue();
-                propTags().addValue("@" + name.toLowerCase() + "__" + value.toLowerCase(), 0);
-                propTags().addPayload(null);
+                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value), getCurrentTokenPosition(), null);
             }
 
         } else {
@@ -500,8 +509,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            byte[] payload = ByteBuffer.allocate(4).putInt(currentPos).array();
-            propTags().setPayloadAtIndex(openTag.index, new BytesRef(payload));
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(currentPos);
+            tagsAnnotation().setPayloadAtIndex(openTag.index, payload);
         }
     }
 
@@ -533,7 +542,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         preventNextDefaultPunctuation = false;
         // Normalize once more in case we hit more than one adjacent punctuation
-        propPunct().addValue(StringUtil.normalizeWhitespace(punct));
+        punctAnnotation().addValue(StringUtil.normalizeWhitespace(punct));
         addEndChar(getCharacterPosition());
         wordsDone++;
         if (wordsDone > 0 && wordsDone % 5000 == 0) {
@@ -565,12 +574,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         AnnotationWriter annotation = getAnnotation(name);
         if (annotation != null) {
             if (indexAtPositions == null) {
-                if (name.equals("word"))
+                if (name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
                     trace(value + " ");
                 annotation.addValue(value, increment);
             } else {
                 for (Integer position : indexAtPositions) {
-                    annotation.addValueAtPosition(value, position);
+                    annotation.addValueAtPosition(value, position, null);
                 }
             }
         } else {

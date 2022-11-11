@@ -13,6 +13,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.LogUtil;
 
@@ -22,7 +23,7 @@ import nl.inl.util.LogUtil;
 public class ExportForwardIndex {
 
     // Annotations to skip
-    private static final List<String> SKIP_ANNOTATIONS = List.of("pos", "punct", "starttag");
+    private static final List<String> SKIP_ANNOTATIONS = List.of("pos", AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
 
     private static final int MAX_DOCS = 30;
 
