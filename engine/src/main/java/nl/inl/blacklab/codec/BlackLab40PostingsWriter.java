@@ -472,6 +472,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
             case VALUE_PER_TOKEN: {
                 if (max <= Byte.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.BYTE.code;
                 else if (max <= Short.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.SHORT.code;
+                else if (max <= 0xFFFFFF) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.THREE_BYTES.code;
                 else tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.INT.code;
                 break;
             }
@@ -501,16 +502,22 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     for (int token: tokensInDoc) {
                         outTokensFile.writeShort((short) token);
                     }
-                    break; 
-                case INT: 
+                    break;
+                case THREE_BYTES:
+                    for (int token : tokensInDoc) {
+                        outTokensFile.writeByte((byte)(token >> 16));
+                        outTokensFile.writeByte((byte)(token >>  8));
+                        outTokensFile.writeByte((byte) token);
+                    }
+                    break;
+                case INT:
                     for (int token: tokensInDoc) {
                         outTokensFile.writeInt((int) token);
                     }
                     break;
-                default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
-            }
-            break;
-        
+                    default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
+                }
+                break;
         case ALL_TOKENS_THE_SAME:
             outTokensFile.writeInt(tokensInDoc[0]);
             break;
