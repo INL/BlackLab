@@ -14,6 +14,8 @@ import nl.inl.blacklab.codec.BlackLab40PostingsWriter.Field;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
+ * Presents an iterator over ONE field/annotation in ONE segment of the Index.
+ *
  * Ideally short-lived and only used during setup of the forward index and terms instances.
  * In the future, if and when we no longer have need to transform results from segment to global,
  * could be rewritten to do everything with memory mapping, and become longer lived.
