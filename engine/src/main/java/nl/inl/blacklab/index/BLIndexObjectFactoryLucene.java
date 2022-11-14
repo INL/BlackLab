@@ -39,8 +39,13 @@ class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
     }
 
     @Override
-    public BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex, boolean contentStore) {
-        return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex, contentStore);
+    public BLFieldType fieldTypeContentStore() {
+        return BLFieldTypeLucene.contentStore();
+    }
+
+    @Override
+    public BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex) {
+        return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex);
     }
 
     public BLFieldType fieldTypeIndexMetadataMarker() {

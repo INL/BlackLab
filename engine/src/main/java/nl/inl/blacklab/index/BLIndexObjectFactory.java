@@ -8,7 +8,7 @@ import org.apache.lucene.index.IndexWriter;
  * Specifically, returns instances of BLInputDocument and BLFieldType.
  */
 public interface BLIndexObjectFactory {
-    public static BLIndexObjectFactory get(boolean runningFromSolr) {
+    static BLIndexObjectFactory get(boolean runningFromSolr) {
          return runningFromSolr ? null/*BLIndexObjectFactorySolr.INSTANCE*/ : BLIndexObjectFactoryLucene.INSTANCE;
     }
 
@@ -16,7 +16,9 @@ public interface BLIndexObjectFactory {
 
     BLFieldType fieldTypeMetadata(boolean tokenized);
 
-    BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex, boolean contentStore);
+    BLFieldType fieldTypeContentStore();
+
+    BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex);
 
     BLFieldType fieldTypeIndexMetadataMarker();
 

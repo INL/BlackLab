@@ -169,7 +169,6 @@ public class AnnotationWriter {
     }
 
     BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName) {
-        boolean isMainAnnotation = fieldWriter.mainAnnotation() == this;
         boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
         // Main sensitivity of main annotation gets character offsets
@@ -177,8 +176,7 @@ public class AnnotationWriter {
         boolean offsets = includeOffsets && isMainSensitivity;
 
         // Main sensitivity of main annotation may get content store
-        boolean contentStore = false; // Content store has its own field, e.g. contents#cs
-        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, contentStore);
+        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity);
     }
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntArrayList startChars,
