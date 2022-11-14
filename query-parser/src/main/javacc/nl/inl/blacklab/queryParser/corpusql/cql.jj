@@ -79,7 +79,7 @@ TOKEN [IGNORE_CASE]:
 {
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
-|	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","0"-"9"])* >
+|	<NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |	<FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |	<NUMBER: (["0"-"9"])+ >
 |	<QUOTED_STRING: "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >

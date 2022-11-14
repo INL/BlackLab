@@ -451,7 +451,7 @@ private int jjMoveNfa_0(int startState, int curPos)
                      jjstateSet[jjnewStateCnt++] = 5;
                   break;
                case 13:
-                  if ((0x3ff000000000000L & l) == 0L)
+                  if ((0x3ff200000000000L & l) == 0L)
                      break;
                   if (kind > 9)
                      kind = 9;
