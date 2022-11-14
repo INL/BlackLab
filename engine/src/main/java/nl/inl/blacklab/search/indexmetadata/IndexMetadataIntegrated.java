@@ -67,12 +67,19 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
             Integer docId = MetadataDocument.getMetadataDocId(index.reader());
-            String json = MetadataDocument.getMetadataJson(index.reader(), docId);
-            ObjectMapper mapper = Json.getJsonObjectMapper();
-            mapper.registerModule(new JaxbAnnotationModule());
-            IndexMetadataIntegrated metadata = mapper.readValue(new StringReader(json),
-                    IndexMetadataIntegrated.class);
-            metadata.fixAfterDeserialization(index, docId);
+            IndexMetadataIntegrated metadata;
+            if (docId == null) {
+                // No metadata document found. Instantiate default.
+                metadata = new IndexMetadataIntegrated(index, null);
+            } else {
+                // Load and deserialize metadata document.
+                String json = MetadataDocument.getMetadataJson(index.reader(), docId);
+                ObjectMapper mapper = Json.getJsonObjectMapper();
+                mapper.registerModule(new JaxbAnnotationModule());
+                metadata = mapper.readValue(new StringReader(json),
+                        IndexMetadataIntegrated.class);
+                metadata.fixAfterDeserialization(index, docId);
+            }
             return metadata;
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -114,7 +121,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             final List<Integer> docIds = new ArrayList<>();
             searcher.search(METADATA_DOC_QUERY, new LuceneUtil.SimpleDocIdCollector(docIds));
             if (docIds.isEmpty())
-                throw new RuntimeException("No index metadata found!");
+                return null;
             if (docIds.size() > 1)
                 throw new RuntimeException("Multiple index metadata found!");
             return docIds.get(0);
