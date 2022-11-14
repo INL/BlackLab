@@ -519,6 +519,14 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             long numberOfTokens;
             long numberOfDocuments;
             if (query != null) {
+
+                // Rewrite query (we store the original query, not the rewritten one)
+                try {
+                    query = query.rewrite(index().reader());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
                 // Fast approach: use the DocValues for the token length field
 //                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
