@@ -39,8 +39,8 @@ enum TokensCodec {
     public enum VALUE_PER_TOKEN_PARAMETER {
         BYTE((byte) 0),
         SHORT((byte) 1),
-        THREE_BYTES((byte) 3),
-        INT((byte) 4);
+        THREE_BYTES((byte) 2),
+        INT((byte) 3);
 
         final byte code;
 
