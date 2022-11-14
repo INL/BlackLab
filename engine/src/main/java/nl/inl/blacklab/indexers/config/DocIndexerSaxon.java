@@ -242,7 +242,8 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                     for (NodeInfo forEach : saxonHelper.findNodes(f.getForEachPath(), header)) {
                         // Find the fieldName and value for this forEach match
                         String origFieldName = saxonHelper.getValue(f.getName(), forEach);
-                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
+                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
+                                disallowDashInname());
                         if (!origFieldName.equals(fieldName)) {
                             DocIndexerXPath.warnSanitized(origFieldName, fieldName);
                         }

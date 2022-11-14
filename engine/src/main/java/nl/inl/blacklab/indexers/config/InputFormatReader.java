@@ -565,9 +565,16 @@ public class InputFormatReader extends YamlJsonReader {
     }
 
     private String warnSanitizeXmlElementName(String name) {
-        String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
-        if (!sanitized.equals(name))
-            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'" + inFormat());
+        String sanitizedDashAllowed = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, false);
+        String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, true);
+        if (sanitizedDashAllowed.equals(name) && name.contains("-")) {
+            logger.warn("Name '" + name + "': dash in name is not currently allowed, but this will likely change in a " +
+                    "future config format version. Sanitized to '" + sanitized + "' " +
+                    inFormat());
+        } else if (!sanitized.equals(name)) {
+            logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'"
+                    + inFormat());
+        }
         return sanitized;
     }
 

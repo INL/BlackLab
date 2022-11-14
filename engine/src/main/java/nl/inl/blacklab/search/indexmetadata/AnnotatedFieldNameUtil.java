@@ -340,28 +340,22 @@ public final class AnnotatedFieldNameUtil {
     public static boolean isValidXmlElementName(String name) {
         return REGEX_VALID_XML_ELEMENT_NAME.matcher(name).matches();
     }
-    
+
     /**
-     * Sanitize name if necessary, replacing characters forbidden in XML element names with an underscore.
+     * Sanitize name if necessary, replacing forbidden characters with underscores.
      *
-     * @param name name to sanitize
-     * @return sanitized name
-     */
-    public static String sanitizeXmlElementName(String name) {
-        return sanitizeXmlElementName(name, "_");
-    }
-    
-    /**
-     * Sanitize name if necessary, replacing characters forbidden in XML element names.
-     * 
      * Also prepends an underscore if the name start in an invalid way (with the letters "xml" or not with letter or underscore).
      *
-     * @param name name to sanitize
-     * @param replaceChar what to replace illegal characters with (used as regex replace string)
+     * @param name           name to sanitize
+     * @param disallowDashes if true, also disallow dash in names (even though XML element names can contain those)
+     *                       (done for index compatibility; classic index format forbids these, but the new integrated
+     *                       index format does allow them)
      * @return sanitized name
      */
-    public static String sanitizeXmlElementName(String name, String replaceChar) {
-        name = name.replaceAll("[^\\p{L}\\d_.]", replaceChar); // can only contain letters, digits, underscores and periods
+    public static String sanitizeXmlElementName(String name, boolean disallowDashes) {
+        name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_"); // can only contain letters, digits, underscores and periods
+        if (disallowDashes)
+            name = name.replaceAll("-", "_");
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }

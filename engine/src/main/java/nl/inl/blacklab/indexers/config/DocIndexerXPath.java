@@ -477,7 +477,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         // Find the fieldName and value for this forEach match
                         apFieldName.resetXPath();
                         String origFieldName = apFieldName.evalXPathToString();
-                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
+                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
+                                disallowDashInname());
                         if (!origFieldName.equals(fieldName)) {
                             warnSanitized(origFieldName, fieldName);
                         }

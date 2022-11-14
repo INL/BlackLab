@@ -34,6 +34,7 @@ import nl.inl.blacklab.index.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
@@ -667,4 +668,19 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     public void setDocument(File file, Charset charset) throws FileNotFoundException {
         setDocument(new FileInputStream(file), charset);
     }
+
+    /**
+     * Are dashes forbidden in annotation names?
+     *
+     * True for classic index format, false for integrated index format.
+     * Annotation names must be valid XML element names, which is why we sanitize certain
+     * characters. But dashes are valid in XML element names. For compatibility, classic index
+     * format still forbids dashes, but the new integrated index format allows them.
+     *
+     * @return true if dashes should be sanitized from annotation names
+     */
+    protected boolean disallowDashInname() {
+        return !(getDocWriter().indexWriter() instanceof BlackLabIndexIntegrated);
+    }
+
 }

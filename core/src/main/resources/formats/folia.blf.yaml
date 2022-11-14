@@ -89,7 +89,7 @@ annotatedFields:
         displayName: number
         uiType: select
         forwardIndex: false
-      - name: getal-n
+      - name: getal_n
         displayName: number-n
         uiType: select
         forwardIndex: false

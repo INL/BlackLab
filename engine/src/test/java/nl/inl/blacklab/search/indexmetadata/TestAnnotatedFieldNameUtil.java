@@ -51,12 +51,13 @@ public class TestAnnotatedFieldNameUtil {
     
     @Test
     public void testSanitizeXmlElementName() {
-        Assert.assertEquals("word", AnnotatedFieldNameUtil.sanitizeXmlElementName("word"));
-        Assert.assertEquals("_0word", AnnotatedFieldNameUtil.sanitizeXmlElementName("0word"));
-        Assert.assertEquals("_xmlword", AnnotatedFieldNameUtil.sanitizeXmlElementName("xmlword"));
-        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun-word"));
-        Assert.assertEquals("fun.word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun.word"));
-        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun_word"));
-        Assert.assertEquals("word0", AnnotatedFieldNameUtil.sanitizeXmlElementName("word0"));
+        Assert.assertEquals("word", AnnotatedFieldNameUtil.sanitizeXmlElementName("word", false));
+        Assert.assertEquals("_0word", AnnotatedFieldNameUtil.sanitizeXmlElementName("0word", false));
+        Assert.assertEquals("_xmlword", AnnotatedFieldNameUtil.sanitizeXmlElementName("xmlword", false));
+        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun-word", true));
+        Assert.assertEquals("fun-word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun-word", false));
+        Assert.assertEquals("fun.word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun.word", false));
+        Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun_word", false));
+        Assert.assertEquals("word0", AnnotatedFieldNameUtil.sanitizeXmlElementName("word0", false));
     }
 }
