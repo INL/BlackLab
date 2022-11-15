@@ -12,7 +12,7 @@ Note that Corpus Query Language is by far the best-supported query language.
 
 ## Starting the QueryTool
 
-You can start QueryTool to search your own data set by running it from the commandline. To learn how to quickly index and search a corpus, see [Getting Started](/guide/getting-started.html).
+You can start QueryTool to search your own data set by running it from the commandline. To learn how to quickly index and search a corpus, see [Getting Started](/guide/getting-started.md).
 
 ## Paging, sorting and grouping
 

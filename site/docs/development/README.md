@@ -15,7 +15,17 @@ First you need to get the BlackLab library. The simplest way is to let Maven dow
 
 ### Getting BlackLab from Maven Central
 
-BlackLab is in the Maven Central Repository, so you should be able to simply [add it to your build tool](dependency-info.html). If you're not sure what version to use, see the [downloads](downloads.html) or [changelog](changelog.html) pages.
+BlackLab is in the Maven Central Repository, so you should be able to simply add it to your build tool, e.g.:
+
+```xml
+<dependency>
+    <groupId>nl.inl.blacklab</groupId>
+    <artifactId>blacklab-core</artifactId>
+    <version>3.0.1</version>
+</dependency>
+```
+
+If you're not sure what version to use, see the [downloads](downloads.html) or [changelog](changelog.html) pages.
 
 ### Downloading a prebuilt binary
 
@@ -46,7 +56,7 @@ BlackLab is built using [Maven](http://maven.apache.org/), a popular Java build 
 After a lot of text output, it should say "BUILD SUCCESS" and the BlackLab JAR library should be under core/target/blacklab-VERSION.jar (where VERSION is the current BlackLab version, i.e. "1.7-SNAPSHOT"; SNAPSHOT means it's not an official release, by the way). The BlackLab Server WAR will be in server/target/blacklab-server-VERSION.war.
 
 ::: tip NOTE
-If you want to use BlackLab Server and [BlackLab Frontend](/frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the `webapps` directory (e.g. `/var/lib/tomcat/webapps/`, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](blacklab-server-overview.html).
+If you want to use BlackLab Server and [BlackLab Frontend](/frontend/) (our search application), you'll need an application server like Apache Tomcat too. Also available via package manager in Linux. After installation, find the `webapps` directory (e.g. `/var/lib/tomcat/webapps/`, but may depend on distribution) and copy the WAR file to it. It should be extracted by Tomcat automatically. For full installation and configuration instructions, see [BlackLab Server overview](/server/overview.md).
 :::
 
 ## A simple BlackLab application
@@ -99,8 +109,8 @@ The above in code:
 
 See also:
 
-- [API reference](apidocs/index.html)
-- [The included example application](example-application.html)
+<!-- - [API reference](apidocs/index.html) -->
+- [The included example application](examples/example-application.md)
 
 
 

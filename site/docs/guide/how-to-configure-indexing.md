@@ -2,10 +2,10 @@
 
 An input format configuration file describes the structure of your documents so that BlackLab can index them.
 
-They can be used to index data from the commandline using the [IndexTool](indexing-with-blacklab.html#index-supported-format) 
+They can be used to index data from the commandline using the [IndexTool](/guide/indexing-with-blacklab.md#index-supported-format) 
 or using BlackLab Frontend (configured to allow users to upload and index their own corpora).
 
-BlackLab already [supports](indexing-with-blacklab.html#supported-formats) a number of common input formats out of the box. 
+BlackLab already [supports](/guide/indexing-with-blacklab.md#supported-formats) a number of common input formats out of the box. 
 Your data may differ slightly of course, so you may use the predefined formats as a starting point and customize them to fit your data. 
 
 
@@ -613,7 +613,7 @@ plugins:
     lexiconFile: /path/to/dutchtagger/lexicon.tab
 ```
 
-Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](plugins.html) page for more information on how write your own plugin.
+Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](/development/customization/plugins.md) page for more information on how write your own plugin.
 
 ## Processing values 
 

@@ -27,7 +27,7 @@ A note about retrieving versus counting. BLS has two limits for processing resul
 
 ## Examples
 
-There's code examples of using BlackLab Server from [a number of different programming languages](blacklab-server-different-languages.html).
+There's code examples of using BlackLab Server from [a number of different programming languages](from-different-languages.md).
 
 Below are examples of individual requests to BlackLab Server.
 

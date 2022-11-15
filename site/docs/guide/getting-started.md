@@ -111,8 +111,8 @@ BlackLab now includes three TEI variants: `tei-p5` (TEI-P5 using the `pos` attri
 
 See also:
 
-- [Adding a new input format](how-to-configure-indexing.html) (if your format isn't supported yet and you don't want to convert)
-- [Indexing in detail](indexing-with-blacklab.html)
+- [Adding a new input format](/guide/how-to-configure-indexing.md) (if your format isn't supported yet and you don't want to convert)
+- [Indexing in detail](/guide/indexing-with-blacklab.md)
 
 ### Testing your index
 

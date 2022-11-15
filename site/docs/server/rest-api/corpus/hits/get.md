@@ -18,7 +18,7 @@ Use these to find text patterns in the corpus and control which results are retu
 
 | Parameter        | Description                                                                                                                                                                    |
 |------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `patt`           | [Corpus Query Language](guide/corpus-query-language.md) pattern to search for                                                                                                  |
+| `patt`           | [Corpus Query Language](/guide/corpus-query-language.md) pattern to search for                                                                                                 |
 | `filter`         | [Lucene Query Language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) document filter query |
 | `wordsaroundhit` | number of words to show around each hit. Default: `5`                                                                                                                          |
 | `first`          | first result (0-based) to return. Default: `0`                                                                                                                                 |

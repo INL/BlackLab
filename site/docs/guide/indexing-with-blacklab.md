@@ -4,7 +4,7 @@
 
 IndexTool is a simple commandline application to create a corpus and add documents to it.
 
-Get the blacklab JAR and the required libraries (see [Getting started](getting-started.html#getting-blacklab)). The libraries should be in a directory called "lib" that's in the same directory as the BlackLab JAR (or elsewhere on the classpath).
+Get the blacklab JAR and the required libraries (see [Getting started](/guide/getting-started.md#getting-blacklab)). The libraries should be in a directory called "lib" that's in the same directory as the BlackLab JAR (or elsewhere on the classpath).
 
 Start the IndexTool without parameters for help information:
 
@@ -61,7 +61,7 @@ A number of less common formats are also supported:
 * `pagexml` (OCR XML format)
 * `alto` ([another OCR XML format](http://www.loc.gov/standards/alto/))
 
-To add support for your own format, you just have to [write a configuration file](how-to-configure-indexing.html). (There's a [legacy way](/development/customization/docindexer.md) too, but that involves writing Java code and you probably don't need it) Please [contact us](/guide/about.md#contact-us) if you have any questions.
+To add support for your own format, you just have to [write a configuration file](/guide/how-to-configure-indexing.md). (There's a [legacy way](/development/customization/docindexer.md) too, but that involves writing Java code and you probably don't need it) Please [contact us](/guide/about.md#contact-us) if you have any questions.
 
 If you choose the first option, specify the format name (which must match the name of the .blf.yaml or .blf.json file) as the FORMAT parameter. IndexTool will search a number of directories, including the current directory and the (parent of the) input directory for format files.
 

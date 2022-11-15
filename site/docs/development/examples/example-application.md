@@ -1,7 +1,7 @@
 # The Example Application
 
 ::: tip NOTE
-For an even simpler example, see [Getting started](getting-started.html).
+For an even simpler example, see [Getting started](/guide/getting-started.md).
 :::
 
 Included in the library is a simple application that demonstrates indexing and searching all in one. Note that you would normally have two separate applications doing these two tasks.

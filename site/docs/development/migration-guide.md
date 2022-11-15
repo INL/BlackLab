@@ -21,7 +21,7 @@ Usually you will use either a file `blacklab-server.yaml` (for BlackLab Serer), 
 
 A new, cleaner format was added in BlackLab 2.0. The old format still works, but it is a good idea to convert to the new format as the old format will eventually be removed.
 
-For more information about the config file format, see [Configuration files](configuration-files.html).
+For more information about the config file format, see [Configuration files](/server/configuration.md).
 
 ### Migrating DocIndexers
 

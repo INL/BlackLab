@@ -195,7 +195,7 @@
 
 ### Removed
 
-* Support for pre-2.0 configuration files. See https://inl.github.io/BlackLab/configuration-files.html
+* Support for pre-2.0 configuration files. See [BLS configuration file](/server/configuration.md).
 * Support for `useOldElementnames` (old BLS element names, using "properties" instead of "annotations")
 
 

@@ -7,7 +7,7 @@ BlackLab is a good choice if you want to search a large body of text annotated w
 
 With BlackLab, you can search for complex patterns of words (e.g. “find all nouns preceded by two or three adjectives”). It can accurately highlight matches (not just simple terms) in the original document or show them in a keyword-in-context (KWIC) view. It can quickly sort or group large result sets based on several criteria, including the exact words matched or words surrounding the match. It can also search inside specific XML tags, so you can search for people or places, for example.
 
-BlackLab supports [a number of input formats](indexing-with-blacklab.md#supported-formats) out of the box. Adding support for a new input format [is easy](how-to-configure-indexing.md).
+BlackLab supports [a number of input formats](/guide/indexing-with-blacklab.md#supported-formats) out of the box. Adding support for a new input format [is easy](how-to-configure-indexing.md).
 
 
 ## Who uses BlackLab?
@@ -27,7 +27,9 @@ Queries can be supplied in many different forms, depending on what you’re fami
 - [Contextual Query Language](http://www.loc.gov/standards/sru/specs/cql.html) (EXPERIMENTAL), used by many online information retrieval systems;
 - or if you prefer, you can programmatically construct queries out of objects, so you can add your own query languages, offer a GUI query builder, etc.
 
-See [Getting started](getting-started.md) to get your feet wet with BlackLab. See the [reference documentation](/development/apidocs/) for a detailed overview of the Java library, or [BlackLab Server overview](/server/) for more information about the webservice.
+See [Getting started](getting-started.md) to get your feet wet with BlackLab.
+<!-- See the [reference documentation](/development/apidocs/) for a detailed overview of the Java library, or -->
+See [BlackLab Server overview](/server/) for more information about the webservice.
 
 If you have questions, contact us (see below)!
 
