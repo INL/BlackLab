@@ -151,12 +151,8 @@ public class DocIndexerExample extends DocIndexerBase {
         addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                 AnnotationSensitivities.ONLY_SENSITIVE, true);
 
-        // Add the field to the index metadata
-        getDocWriter().indexWriter().annotatedFields().addFromConfig(field);
-
         // Create and add AnnotatedFieldWriter so we can index this field
-        AnnotatedFieldWriter fieldWriter = createAnnotatedFieldWriter(field);
-        addAnnotatedField(fieldWriter);
+        createAnnotatedFieldWriter(field);
     }
 
     private static ConfigAnnotation addAnnotationToFieldConfig(ConfigAnnotatedField config, String name,
@@ -169,7 +165,7 @@ public class DocIndexerExample extends DocIndexerBase {
         return annot;
     }
 
-    private AnnotatedFieldWriter createAnnotatedFieldWriter(ConfigAnnotatedField fieldContents) {
+    private void createAnnotatedFieldWriter(ConfigAnnotatedField fieldContents) {
         BlackLabIndexWriter indexWriter = getDocWriter().indexWriter();
         // Add the configured field to our index metadata
         indexWriter.annotatedFields().addFromConfig(fieldContents);
@@ -187,7 +183,7 @@ public class DocIndexerExample extends DocIndexerBase {
             boolean includePayloads = annot.getName() == AnnotatedFieldNameUtil.TAGS_ANNOT_NAME;
             contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads, annot.createForwardIndex());
         }
-        return contents;
+        addAnnotatedField(contents);
     }
 
     private ConfigMetadataField createMetadataField(String name, FieldType type) {
