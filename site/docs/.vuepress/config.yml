@@ -47,6 +47,9 @@ themeConfig:
         - customization/query-language
         - customization/plugins
         - customization/legacy-docindexers
+      - title: SOLR
+        children:
+        - solr/querying-an-existing-index-with-solr
       - migration-guide
       - changelog
     /:
