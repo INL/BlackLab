@@ -1,9 +1,20 @@
 package nl.inl.blacklab.analysis;
 
+import java.nio.ByteBuffer;
+
 import org.apache.lucene.util.BytesRef;
 
 /**
  * Utilities for dealing with payloads in BlackLab.
+ *
+ * Specifically:
+ * <ul>
+ * <li>a payload is stored in the "starttag" annotation to indicate the end position
+ * of a span</li>
+ * <li>while indexing, payloads are used to distinguish between "primary values" (that are
+ * recorded in the forward index) and "secondary values" (that are not). These indicators will stripped
+ * before writing to the Lucene index, however, leaving the original payload.</li>
+ * </ul>
  */
 public class PayloadUtils {
 
@@ -155,5 +166,21 @@ public class PayloadUtils {
             System.arraycopy(bytesRef.bytes, bytesRef.offset, bytes, 0, bytesRef.length);
         }
         return bytes;
+    }
+
+    /**
+     * Get the payload to store with the span start tag.
+     *
+     * Spans are stored in the "starttag" annotation, at the token position of the start tag.
+     * The payload gives the token position of the end tag.
+     *
+     * @param endPosition end position (exclusive), or the first token after the span
+     * @param isPrimaryValue if true, resulting payload will indicate if that this is a primary value. Pass false if
+     *                       this is not a primary value, or if primary value status should not be recorded in the
+     *                       payload (i.e. because there is no forward index)
+     * @return payload to store
+     */
+    public static BytesRef tagEndPositionPayload(int endPosition) {
+        return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
     }
 }

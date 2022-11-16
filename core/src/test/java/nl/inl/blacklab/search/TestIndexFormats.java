@@ -24,6 +24,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -190,7 +191,8 @@ public class TestIndexFormats {
         AnnotatedField field = index.metadata().annotatedFields().get("contents");
         Assert.assertTrue(field.hasXmlTags());
         Assert.assertTrue(field.hasContentStore());
-        Set<String> expectedAnnotations = new HashSet<>(Arrays.asList("word", "lemma", "pos", "starttag", "punct"));
+        Set<String> expectedAnnotations = new HashSet<>(Arrays.asList("word", "lemma", "pos",
+                AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());

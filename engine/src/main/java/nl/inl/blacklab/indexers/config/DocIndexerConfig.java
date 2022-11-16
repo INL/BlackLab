@@ -26,7 +26,6 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
@@ -122,33 +121,30 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(),
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
-            addAnnotatedField(fieldWriter);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
-                    AnnotationSensitivities.ONLY_SENSITIVE, true);
+            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+                    AnnotationSensitivities.ONLY_SENSITIVE, true, false);
             annotStartTag.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {
                 ConfigAnnotation annot = annotations.get(i);
                 if (!annot.isForEach())
-                    fieldWriter.addAnnotation(annot, annot.getName(), annot.getSensitivitySetting(), false);
+                    fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
+                            annot.createForwardIndex());
             }
             for (ConfigStandoffAnnotations standoff : af.getStandoffAnnotations()) {
                 for (ConfigAnnotation annot : standoff.getAnnotations().values()) {
-                    fieldWriter.addAnnotation(annot, annot.getName(), annot.getSensitivitySetting(), false);
+                    fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
+                            annot.createForwardIndex());
                 }
             }
             if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
                 // Hasn't been created yet. Create it now.
-                fieldWriter.addAnnotation(null, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-                        AnnotationSensitivities.ONLY_INSENSITIVE, false);
+                fieldWriter.addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+                        AnnotationSensitivities.ONLY_INSENSITIVE, false, true);
             }
-            if (getDocWriter() != null) {
-                IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
-                indexMetadata.registerAnnotatedField(fieldWriter);
-            }
-
+            addAnnotatedField(fieldWriter);
         }
     }
 

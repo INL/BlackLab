@@ -10,11 +10,12 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.mocks.MockAnnotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public class TestKwic {
 
-    static final List<String> PROPS = Arrays.asList("punct", "lemma", "pos", "word");
+    static final List<String> PROPS = Arrays.asList(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME, "lemma", "pos", "word");
     
     static final List<Annotation> ANNOTS = PROPS.stream().map(MockAnnotation::new).collect(Collectors.toList());
     

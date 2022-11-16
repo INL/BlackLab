@@ -83,7 +83,27 @@ public final class AnnotatedFieldNameUtil {
         // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
         // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
         // We warn users if their configuration relies on this, so we can eventually remove it.
-        return name.equals("lemma") || name.equals("word");
+        return name.equals("lemma") || name.equals(DEFAULT_MAIN_ANNOT_NAME);
+    }
+
+    /**
+     * What value do we index for attributes to tags (spans)?
+     *
+     * For example, a tag <s id="123"> ... </s> would be indexed in annotations "starttag"
+     * with two tokens at the same position: "s" and "@iid__123".
+     *
+     * FIXME: this means that currently, we cannot distinguish between attributes for
+     *   different start tags occurring at the same token position! We should change the index
+     *   format to at least include tag name with each attribute, but this will break index
+     *   compatibility. We'll probably do this as part of a larger update to how document
+     *   structure is indexed (for syntactic search features).
+     *
+     * @param name attribute name
+     * @param value attribute value
+     * @return value to index for this attribute
+     */
+    public static String tagAttributeIndexValue(String name, String value) {
+        return "@" + name.toLowerCase() + "__" + value.toLowerCase();
     }
 
     public enum BookkeepFieldType {

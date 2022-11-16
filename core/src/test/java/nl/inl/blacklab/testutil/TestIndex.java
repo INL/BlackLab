@@ -169,7 +169,7 @@ public class TestIndex {
 
     public static final int[] DOC_LENGTHS_TOKENS = { 9, 12, 6, 10 };
 
-    final static String testFormat = "testformat";
+    final static String TEST_FORMAT_NAME = "testformat";
 
     /**
      * The BlackLab index object.
@@ -201,7 +201,7 @@ public class TestIndex {
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, testFormat, null, indexType);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME, null, indexType);
             Indexer indexer = Indexer.get(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {

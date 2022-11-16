@@ -653,7 +653,7 @@ public class InputFormatReader extends YamlJsonReader {
                     f.addDisplayValues(values);
                     break;
                 case "sortValues":
-                    f.setsortValues(YamlJsonReader.bool(e));
+                    f.setSortValues(YamlJsonReader.bool(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig(

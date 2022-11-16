@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
+
 /** Annotated fields on a BlackLab index */
 public interface AnnotatedFields extends Iterable<AnnotatedField> {
 
@@ -47,4 +49,5 @@ public interface AnnotatedFields extends Iterable<AnnotatedField> {
 
     AnnotationGroups annotationGroups(String fieldName);
 
+    void addFromConfig(ConfigAnnotatedField config);
 }

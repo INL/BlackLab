@@ -76,8 +76,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     @XmlTransient
     private final Map<String, MetadataFieldImpl> implicitFields = new ConcurrentHashMap<>();
 
-    void addFromConfig(ConfigMetadataField f) {
-        put(f.getName(), MetadataFieldImpl.fromConfig(f, this));
+    @Override
+    public MetadataFieldImpl addFromConfig(ConfigMetadataField f) {
+        MetadataFieldImpl fieldDesc = MetadataFieldImpl.fromConfig(f, this);
+        put(f.getName(), fieldDesc);
+        return fieldDesc;
     }
 
     public MetadataFieldValues.Factory getMetadataFieldValuesFactory() {

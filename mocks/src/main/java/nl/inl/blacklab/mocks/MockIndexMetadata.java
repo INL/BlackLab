@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
@@ -57,6 +58,11 @@ public class MockIndexMetadata implements IndexMetadata {
 
             @Override
             public AnnotationGroups annotationGroups(String fieldName) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void addFromConfig(ConfigAnnotatedField config) {
                 throw new UnsupportedOperationException();
             }
         };

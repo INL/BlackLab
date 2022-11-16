@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Map;
 
+import nl.inl.blacklab.indexers.config.ConfigMetadataField;
+
 /**
  * Interface for MetadataFields objects while indexing.
  */
@@ -33,4 +35,5 @@ public interface MetadataFieldsWriter extends MetadataFields {
 
     void resetForIndexing();
 
+    MetadataFieldImpl addFromConfig(ConfigMetadataField metaPidConfig);
 }

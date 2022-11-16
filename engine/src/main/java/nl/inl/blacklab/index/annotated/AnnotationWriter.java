@@ -218,9 +218,10 @@ public class AnnotationWriter {
      * Add a value to the annotation.
      *
      * @param value value to add
+     * @return position of the token added
      */
-    final public void addValue(String value) {
-        addValue(value, 1);
+    final public int addValue(String value) {
+        return addValue(value, 1, null);
     }
 
     /**
@@ -228,35 +229,22 @@ public class AnnotationWriter {
      *
      * @param value the value to add
      * @param increment number of tokens distance from the last token added
+     * @return position of the token added
      */
-    public void addValue(String value, int increment) {
-        if (value.length() > MAXIMUM_VALUE_LENGTH) {
-            // Let's keep a sane maximum value length.
-            // (Lucene's is 32766, but we don't want to go that far)
-            value = value.substring(0, MAXIMUM_VALUE_LENGTH);
-        }
+    public int addValue(String value, int increment) {
+        return addValue(value, increment, null);
+    }
 
-        // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
-        value = value.intern();
-
-        // Special case: if previous value was the empty string and position increment is 0,
-        // replace the previous value. This is convenient to keep all the annotations synched
-        // up while indexing (by adding an empty string if we don't have a value for a
-        // annotation), while still being able to add a value to this position later (for example,
-        // when we encounter an XML close tag.
-        int lastIndex = values.size() - 1;
-        if (lastIndex >= 0 && values.get(lastIndex).length() == 0) {
-            // Change the last value and its position increment
-            values.set(lastIndex, value);
-            if (increment > 0)
-                increments.set(lastIndex, increments.get(lastIndex) + increment);
-            lastValuePosition += increment; // keep track of position of last token
-            return;
-        }
-
-        values.add(value);
-        increments.add(increment);
-        lastValuePosition += increment; // keep track of position of last token
+    /**
+     * Add a value to the annotation.
+     *
+     * @param value the value to add
+     * @param increment number of tokens distance from the last token added
+     * @param payload payload to store (or null if none)
+     * @return position of the token added
+     */
+    public int addValue(String value, int increment, BytesRef payload) {
+        return addValueAtPosition(value, lastValuePosition + increment, payload);
     }
 
     /**
@@ -269,9 +257,10 @@ public class AnnotationWriter {
      *
      * @param value the value to add
      * @param position the position to put it at
+     * @param payload payload (or null if none)
      * @return new position of the last token, in case it changed.
      */
-    public int addValueAtPosition(String value, int position) {
+    public int addValueAtPosition(String value, int position, BytesRef payload) {
         if (value.length() > MAXIMUM_VALUE_LENGTH) {
             // Let's keep a sane maximum value length.
             // (Lucene's is 32766, but we don't want to go that far)
@@ -282,26 +271,45 @@ public class AnnotationWriter {
         value = value.intern();
 
         if (position >= lastValuePosition) {
-            // Beyond the last position; regular addValue()
-            addValue(value, position - lastValuePosition);
+            // Beyond the last position; just add at the end.
+            int increment = position - lastValuePosition;
+
+            // Special case: if previous value was the empty string, there was no payload and position increment is 0,
+            // replace the previous value. This is convenient to keep all the annotations synched
+            // up while indexing (by adding an empty string if we don't have a value for a
+            // annotation), while still being able to add a value to this position later (for example,
+            // when we encounter an XML close tag.
+            int lastIndex = values.size() - 1;
+            if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && (!hasPayload() || payloads.get(lastIndex) == null)) {
+                // Change the last value and its position increment
+                values.set(lastIndex, value);
+                if (hasPayload())
+                    payloads.set(lastIndex, payload);
+                if (increment > 0)
+                    increments.set(lastIndex, increments.get(lastIndex) + increment);
+            } else {
+                // Just add the new value
+                values.add(value);
+                if (hasPayload())
+                    payloads.add(payload);
+                increments.add(increment);
+            }
+            lastValuePosition += increment; // keep track of position of last token
+
         } else {
             // Before the last position.
             // Find the index where the value should be inserted.
             int curPos = this.lastValuePosition;
+            int n = 0; // if we go through the whole loop without breaking out, value should go at position 0
             for (int i = values.size() - 1; i >= 0; i--) {
                 if (curPos <= position) {
                     // Value should be inserted after this index.
-                    int n = i + 1;
-                    insertValueAtPosition(value, position, n, curPos);
+                    n = i + 1;
                     break;
                 }
                 curPos -= increments.get(i); // go to previous value position
             }
-            if (curPos == -1) {
-                // Value should be inserted at the first position.
-                int n = 0;
-                insertValueAtPosition(value, position, n, curPos);
-            }
+            insertValueAtIndex(n, value, position - curPos, payload);
         }
 
         return lastValuePosition;
@@ -310,20 +318,25 @@ public class AnnotationWriter {
     /**
      * Add a value at a specific token position.
      *
-     * @param value value to add
-     * @param valuePosition token position of this value
-     * @param index index in the arrays where this value goes
-     * @param previousPosition token position of the previous value in the arrays (to calculate positionIncrement)
+     * @param index             index in the arrays where this value goes
+     * @param value             value to add
+     * @param positionIncrement position increment to store (and also adjust next position increment)
+     * @param payload           payload to add (or null if no payload)
      */
-    private void insertValueAtPosition(String value, int valuePosition, int index, int previousPosition) {
+    private void insertValueAtIndex(int index, String value, int positionIncrement, BytesRef payload) {
         values.add(index, value);
-        int positionIncrement = valuePosition - previousPosition;
         increments.addAtIndex(index, positionIncrement);
+        if (hasPayload())
+            payloads.add(index, payload);
+        // Do we need to adjust the position increment of the next value?
         if (increments.size() > index + 1 && positionIncrement > 0) {
             // Inserted value wasn't the last value, so the
             // increment for the value after this is now wrong;
             // correct it.
-            increments.set(index + 1, increments.get(index + 1) - positionIncrement);
+            int newPosIncr = increments.get(index + 1) - positionIncrement;
+            if (newPosIncr < 0)
+                throw new RuntimeException("ERROR insertValueAtPosition(value, index, posIncr): Next token got a negative posIncrement!");
+            increments.set(index + 1, newPosIncr);
         }
     }
 

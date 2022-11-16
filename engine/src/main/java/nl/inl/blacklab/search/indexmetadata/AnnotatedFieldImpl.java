@@ -208,8 +208,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             ensureNotFrozen();
             pd = new AnnotationImpl(this, name);
             putAnnotation(pd);
-            if (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
-                xmlTags = true;
         }
         return pd;
     }
@@ -217,6 +215,8 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
+        if (annotDesc.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+            xmlTags = true;
     }
 
     synchronized void detectMainAnnotation(IndexReader reader) {
@@ -229,7 +229,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
                 throw new IllegalArgumentException("Main annotation '" + mainAnnotationName + "' (from index metadata) not found!");
             mainAnnotation = annots.get(mainAnnotationName);
             mainAnnotationName = null;
-            //return;
         }
         
         if (annots.isEmpty())

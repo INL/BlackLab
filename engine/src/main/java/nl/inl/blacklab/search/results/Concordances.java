@@ -29,7 +29,7 @@ public class Concordances {
      * null, because Kwics will be used internally. This is only used when making
      * concordances from the content store (the old default).
      */
-    private final Map<Hit, Concordance> concordances;
+    private Map<Hit, Concordance> concordances = null;
     
     Kwics kwics = null;
 
@@ -40,10 +40,10 @@ public class Concordances {
             throw new IllegalArgumentException("contextSize cannot be negative");
         if (type == ConcordanceType.FORWARD_INDEX) {
             kwics = new Kwics(hits, contextSize);
+        } else {
+            // Get the concordances
+            concordances = retrieveConcordancesFromContentStore(hits, contextSize);
         }
-    
-        // Get the concordances
-        concordances = retrieveConcordancesFromContentStore(hits, contextSize);
     }
 
     /**
