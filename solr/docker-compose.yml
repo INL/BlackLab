@@ -1,0 +1,23 @@
+# Docker Compose file for BlackLab with Solr.
+
+version: '3.9'
+
+services:
+
+  solr:
+    build:
+        context: ..
+        dockerfile: solr/Dockerfile
+
+    #volumes:
+      # Bind mount the JAR so we don't have to run Maven to recreate the image. [dev only]
+      #- ./target/blacklab-solr.jar:/opt/solr/contrib/blacklab-solr/lib/blacklab-solr.jar
+      #- ./target/blacklab-solr.jar:/opt/solr/lib/blacklab-solr.jar
+
+      # Bind mount test core
+      # (the problem with this is the files have the owner uid from the host,
+      #  so Solr isn't allowed to write its core.properties there)
+      #- src/test/resources/existing-index:/var/solr/data/test
+
+    ports:
+      - "8983:8983"

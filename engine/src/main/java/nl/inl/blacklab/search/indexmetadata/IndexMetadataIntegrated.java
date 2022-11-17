@@ -289,7 +289,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // Create new index metadata from config
         File dir = index.indexDirectory();
         if (config == null)
-            populateWithDefaults(dir);
+            populateWithDefaults(index);
         else
             populateFromConfig(config, dir);
 
@@ -389,9 +389,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
-    private void populateWithDefaults(File indexDirectory) {
+    private void populateWithDefaults(BlackLabIndex index) {
         ensureNotFrozen();
-        custom.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
+        File dir = index.indexDirectory();
+        if (dir != null)
+            custom.put("displayName", IndexMetadata.indexNameFromDirectory(dir));
         custom.put("description", "");
         custom.put("textDirection", "ltr");
         versionInfo.populateWithDefaults();

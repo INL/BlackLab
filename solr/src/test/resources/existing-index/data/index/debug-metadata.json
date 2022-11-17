@@ -1,0 +1,120 @@
+{
+  "custom" : {
+    "annotationGroups" : { },
+    "description" : "",
+    "displayName" : "index.INTEGRATED",
+    "textDirection" : "ltr",
+    "titleField" : "title",
+    "unknownCondition" : "never",
+    "unknownValue" : "unknown"
+  },
+  "contentViewable" : false,
+  "documentFormat" : "voice-tei",
+  "versionInfo" : {
+    "blackLabBuildTime" : "UNKNOWN",
+    "blackLabVersion" : "UNKNOWN",
+    "indexFormat" : "4",
+    "timeCreated" : "2022-11-17 14:35:50",
+    "timeModified" : "2022-11-17 14:35:50"
+  },
+  "metadataFields" : {
+    "defaultAnalyzer" : "DEFAULT",
+    "pidField" : "pid",
+    "throwOnMissingField" : false,
+    "fields" : {
+      "fromInputFile" : {
+        "custom" : {
+          "unknownCondition" : "never",
+          "unknownValue" : "unknown"
+        },
+        "type" : "UNTOKENIZED",
+        "analyzer" : "DEFAULT",
+        "hasContentStore" : false
+      },
+      "pid" : {
+        "custom" : {
+          "description" : "",
+          "displayName" : "",
+          "displayOrder" : [ ],
+          "displayValues" : { },
+          "uiType" : "",
+          "unknownCondition" : "never",
+          "unknownValue" : "unknown"
+        },
+        "type" : "TOKENIZED",
+        "analyzer" : "DEFAULT",
+        "hasContentStore" : false
+      },
+      "title" : {
+        "custom" : {
+          "description" : "",
+          "displayName" : "",
+          "displayOrder" : [ ],
+          "displayValues" : { },
+          "uiType" : "",
+          "unknownCondition" : "never",
+          "unknownValue" : "unknown"
+        },
+        "type" : "TOKENIZED",
+        "analyzer" : "DEFAULT",
+        "hasContentStore" : false
+      }
+    }
+  },
+  "annotatedFields" : {
+    "fields" : {
+      "contents" : {
+        "custom" : {
+          "description" : "Contents of the documents.",
+          "displayName" : "Contents",
+          "displayOrder" : [ "word", "lemma" ]
+        },
+        "mainAnnotation" : "word",
+        "hasContentStore" : true,
+        "hasXmlTags" : true,
+        "annots" : {
+          "word" : {
+            "custom" : {
+              "description" : "",
+              "displayName" : "Word"
+            },
+            "isInternal" : false,
+            "sensitivities" : [ "SENSITIVE", "INSENSITIVE" ],
+            "subannotations" : [ ],
+            "hasForwardIndex" : true,
+            "offsetsSensitivity" : "SENSITIVE"
+          },
+          "lemma" : {
+            "custom" : {
+              "description" : "",
+              "displayName" : "Lemma"
+            },
+            "isInternal" : false,
+            "sensitivities" : [ "SENSITIVE", "INSENSITIVE" ],
+            "subannotations" : [ ],
+            "hasForwardIndex" : true,
+            "offsetsSensitivity" : null
+          },
+          "starttag" : {
+            "custom" : { },
+            "isInternal" : true,
+            "sensitivities" : [ "SENSITIVE" ],
+            "subannotations" : [ ],
+            "hasForwardIndex" : false,
+            "offsetsSensitivity" : null
+          },
+          "punct" : {
+            "custom" : { },
+            "isInternal" : true,
+            "sensitivities" : [ "INSENSITIVE" ],
+            "subannotations" : [ ],
+            "hasForwardIndex" : true,
+            "offsetsSensitivity" : null
+          }
+        }
+      }
+    },
+    "mainAnnotatedField" : "contents"
+  },
+  "documentFormatConfig" : "# For displaying in user interface (optional)\ndisplayName: \"TEI as used by the VOICE project\"\n\n# For describing input format in user interface (optional)\ndescription: A TEI P5 variant. The text element will be indexed as annotated contents. PoS tags should be in the type attribute.\n\nhelpUrl: http://www.tei-c.org/Guidelines/P5/\n\n# (Optional, informational)\n# content, metadata or mixed?\n# (not used by BlackLab, purely informational for the frontend application)\ntype: content\n\nnamespaces:\n  'xml': http://www.w3.org/XML/1998/namespace\n\n# What element starts a new document?\n# (the only absolute XPath; the rest is relative)\ndocumentPath: /TEI\n\n# Annotated, CQL-searchable fields.\n# We usually have just one, named \"contents\".\nannotatedFields:\n\n  contents:\n\n    # How to display the field in the interface (optional)\n    displayName: Contents\n\n    # How to describe the field in the interface (optional)\n    description: Contents of the documents.\n\n    # What element (relative to document) contains this field's contents?\n    # (if omitted, entire document is used)\n    containerPath: .//text\n\n    # What are our word tags? (relative to container)\n    wordPath: .//w     # (body geldt niet voor OpenSonar, maar ter illustratie)\n\n    # Punctuation between word tags (relative to container)\n    punctPath: .//text()[not(ancestor::w)]   # = \"all text nodes (under containerPath) not inside a <w/> element\"\n\n    # What annotation can each word have? How do we index them?\n    # (annotations are also called \"(word) properties\" in BlackLab)\n    # (valuePaths relative to word path)\n    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,\n    #       and with forEachPath you could run in to an unknown new annotation mid-way through.\n    annotations:\n    - name: word\n      displayName: Word\n      valuePath: .\n      #sensitivity: sensitive_insensitive\n    - name: lemma\n      displayName: Lemma\n      valuePath: \"@lemma\"\n      #sensitivity: sensitive_insensitive\n    #- name: pos\n    #  displayName: PoS\n    #  valuePath: \"@type\"\n\n    # XML tags within the content we'd like to index\n    # (relative to container)\n    inlineTags:\n    - path: .//u   # Utterance\n\ncorpusConfig:\n  specialFields:\n    pidField: pid\n    titleField: title\n\n# FoLiA's native metadata\nmetadata:\n  containerPath: .\n  fields:\n  - name: pid\n    valuePath: \"@xml:id\"\n  - name: title\n    valuePath: teiHeader/fileDesc/titleStmt/title\n  #- forEachPath: bibl/interpGrp/interp\n  #  namePath: ../@type                  # interpGrp/@type\n  #  valuePath: .                        # interp (text value of element, TEI P5)\n"
+}

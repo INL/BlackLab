@@ -108,7 +108,7 @@ public class SolrTestServer {
      */
     static void createCore(String coreName, Path confTemplatePath) {
         String pathToSolrConfigXml = confTemplatePath.resolve("solrconfig.xml").toAbsolutePath().toString();
-        String pathToSchemaXml = confTemplatePath.resolve("schema.xml").toAbsolutePath().toString();
+        String pathToSchemaXml = confTemplatePath.resolve("managed-schema").toAbsolutePath().toString();
 
         CoreAdminRequest.Create request = new CoreAdminRequest.Create();
         request.setCoreName(coreName);

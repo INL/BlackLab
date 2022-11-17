@@ -63,9 +63,19 @@ public class TestSearchComponent {
     }
 
     @Test
-    public void testNoBlackLabOps() throws SolrServerException, IOException {
+    public void testDisableBlackLab() throws SolrServerException, IOException {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
+        QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
+        Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
+    }
+
+    @Ignore // we're getting errors
+    @Test
+    public void testEnableBlackLabButNoOps() throws SolrServerException, IOException {
+        ModifiableSolrParams solrParams = new ModifiableSolrParams();
+        solrParams.add(CommonParams.Q, "*:*");
+        solrParams.add("bl", "true"); // activate our component
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
         Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
     }

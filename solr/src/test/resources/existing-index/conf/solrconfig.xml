@@ -72,24 +72,29 @@
 
     <!-- ADDED JN: load our own Solr Apply XSLT SearchComponent -->
     <!-- (not necessary while testing, class is already available -->)
-    <!--<lib dir="${solr.install.dir:../../../..}/target/" regex="solr-apply-xslt\.jar" />
-    <lib path="../../../../target/solr-apply-xslt.jar" />-->
+
+<!--    <lib dir="/opt/solr/contrib/blacklab-solr/lib/" regex="blacklab-.*\.jar" />-->
+
+   <!-- THESE GET LOADED AUTOMATICALLY BY SOLR
+        <lib dir="./lib" regex="blacklab-.*\.jar" />-->
+
+<!--    <lib dir="/opt/solr/server/solr/lib" regex="blacklab-.*\.jar" />-->
+
+    <!--<lib path="../../../../target/solr-apply-xslt.jar" />-->
 
     <!-- an exact 'path' can be used instead of a 'dir' to specify a
          specific jar file.  This will cause a serious error to be logged
          if it can't be loaded.
       -->
-    <!--
-       <lib path="../a-jar-that-does-not-exist.jar" />
-    -->
+    <!-- <lib path="../a-jar-that-does-not-exist.jar" /> -->
 
-    <!-- Data Directory
+     <!-- Data Directory
 
-         Used to specify an alternate directory to hold all index data
-         other than the default ./data under the Solr home.  If
-         replication is in use, this should match the replication
-         configuration.
-      -->
+          Used to specify an alternate directory to hold all index data
+          other than the default ./data under the Solr home.  If
+          replication is in use, this should match the replication
+          configuration.
+       -->
     <dataDir>${solr.data.dir:}</dataDir>
 
 
@@ -257,8 +262,8 @@
          and statistics to JMX.
 
          For more details see http://wiki.apache.org/solr/SolrJmx
-      -->
     <jmx />
+      -->
     <!-- If you want to connect to a particular server, specify the
          agentId
       -->

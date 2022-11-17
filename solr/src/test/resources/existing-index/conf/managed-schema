@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<schema name="test" version="1.6">
+    <field name="_version_" type="plong" indexed="false" stored="false"/>
+    <uniqueKey>pid</uniqueKey>
+
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+
+    <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+
+    <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+        <analyzer type="index">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+    </fieldType>
+
+    <fieldType name="metadata" class="solr.StrField"
+               indexed="true"
+               stored="true"
+               docValues="true"
+               multiValued="true"
+               omitNorms="true"
+               omitTermFreqAndPositions="false"
+    />
+
+    <fieldType name="metadata_pid" class="solr.StrField"
+               indexed="true"
+               stored="true"
+               docValues="true"
+               omitNorms="true"
+               omitPositions="true"
+    />
+
+    <fieldType name="term" class="solr.StrField"
+               indexed="true"
+               omitNorms="true"
+               stored="false"
+               termVectors="true"
+               termPositions="true"
+               termOffsets="true"
+    />
+
+    <fieldType name="numeric" class="solr.IntPointField"
+               indexed="true"
+               stored="true"
+               docValues="true"
+               omitPositions="true"
+    />
+
+    <!-- example annotations. Searching in these yields no results for some reason. -->
+    <field name="contents%starttag@s" type="term"/>
+    <field name="contents%punct@i" type="term"/>
+    <field name="contents%word@s" type="term"/>
+    <field name="contents%word@i" type="term"/>
+    <!-- <field name="contents#length_tokens" type="numeric"/> -->
+    <!-- <field name="contents#cs" type="term"/> should not exist anyway -->
+
+    <!-- example metadata -->
+    <field name="pid" type="metadata_pid"/>
+    <field name="cdromMetadata" type="metadata"/>
+    <field name="subtitle" type="metadata"/>
+    <field name="title" type="metadata"/>
+    <field name="datering" type="metadata"/>
+    <field name="author" type="metadata"/>
+    <field name="category" type="metadata"/>
+    <field name="editorLevel1" type="metadata"/>
+</schema>
