@@ -33,6 +33,7 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public final class LuceneUtil {
@@ -297,6 +298,8 @@ public final class LuceneUtil {
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
             AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
+        boolean alt = BlackLab.isFeatureEnabled("termfreq-alt");
+
         try {
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();
@@ -329,11 +332,11 @@ public final class LuceneUtil {
                             throw new IllegalArgumentException("Field " + field + " has no Terms");
                         }
 
-                        getTermFrequencies(terms.iterator(), searchTerms, freq);
+                        getTermFrequencies(terms.iterator(), searchTerms, freq, alt);
                     }
                 } else {
                     // all documents - use the fast path
-                    getTermFrequencies(reader.terms(field).iterator(), searchTerms, freq);
+                    getTermFrequencies(reader.terms(field).iterator(), searchTerms, freq, alt);
                 }
             }
 
@@ -350,18 +353,82 @@ public final class LuceneUtil {
      * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
      * @param freq map containing existing frequencies to add on to or merge in to
      */
-    private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
+    private static void getTermFrequenciesNew(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
         if (searchTerms != null && !searchTerms.isEmpty()) {
-            for (String term : searchTerms) {
-                if (it.seekExact(new BytesRef(term))) {
+            // Iterate through all terms, but count only terms from searchTerms
+            // (before we used seek methods to find each term, but that may be slower)
+            BytesRef cur = null;
+            while ((cur = it.next()) != null) {
+                String term = cur.utf8ToString();
+                if (searchTerms.contains(term)) {
                     if (freq.containsKey(term)) {
                         freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
                     } else {
                         freq.put(term, (int) it.totalTermFreq());
                     }
+                }
+            }
+        } else {
+            BytesRef cur = null;
+            while ((cur = it.next()) != null) {
+                String term = cur.utf8ToString();
+                if (freq.containsKey(term)) {
+                    freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
                 } else {
-                    if (!freq.containsKey(term)) {
-                        freq.put(term, 0);
+                    freq.put(term, (int) it.totalTermFreq());
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the frequency of all terms in the TermsEnum or the frequency list and add them to the freq map.
+     *
+     * @param it the terms in the (set of) documents or a leaf
+     * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
+     * @param freq map containing existing frequencies to add on to or merge in to
+     */
+    private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq) throws IOException {
+        getTermFrequencies(it, searchTerms, freq, false);
+    }
+
+    /**
+     * Get the frequency of all terms in the TermsEnum or the frequency list and add them to the freq map.
+     *
+     * @param it the terms in the (set of) documents or a leaf
+     * @param searchTerms list of terms whose frequencies to retrieve, or null/empty to retrieve for all terms
+     * @param freq map containing existing frequencies to add on to or merge in to
+     * @param alt use alternative way that may be faster (experimental)
+     */
+    private static void getTermFrequencies(TermsEnum it, Set<String> searchTerms, Map<String, Integer> freq, boolean alt) throws IOException {
+        if (searchTerms != null && !searchTerms.isEmpty()) {
+            if (alt) {
+                // Iterate through all terms, but count only terms from searchTerms
+                // (before we used seek methods to find each term, but that may be slower)
+                BytesRef cur = null;
+                while ((cur = it.next()) != null) {
+                    String term = cur.utf8ToString();
+                    if (searchTerms.contains(term)) {
+                        if (freq.containsKey(term)) {
+                            freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
+                        } else {
+                            freq.put(term, (int) it.totalTermFreq());
+                        }
+                    }
+                }
+            } else {
+                // Seek each of the search terms (might be slower)
+                for (String term: searchTerms) {
+                    if (it.seekExact(new BytesRef(term))) {
+                        if (freq.containsKey(term)) {
+                            freq.put(term, (int) (freq.get(term) + it.totalTermFreq()));
+                        } else {
+                            freq.put(term, (int) it.totalTermFreq());
+                        }
+                    } else {
+                        if (!freq.containsKey(term)) {
+                            freq.put(term, 0);
+                        }
                     }
                 }
             }
