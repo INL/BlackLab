@@ -33,7 +33,6 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public final class LuceneUtil {
@@ -297,9 +296,7 @@ public final class LuceneUtil {
      * @return term frequencies
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
-        boolean alt = BlackLab.isFeatureEnabled("termfreq-alt");
-
+            AnnotationSensitivity annotSensitivity, Set<String> searchTerms, boolean alt) {
         try {
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();

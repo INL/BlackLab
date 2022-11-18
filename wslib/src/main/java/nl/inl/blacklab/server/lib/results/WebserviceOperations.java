@@ -533,7 +533,8 @@ public class WebserviceOperations {
         Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
-        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
+        boolean useAlternateTermFreqMethod = params.getParameters().get("alt").equals("true");
+        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms, useAlternateTermFreqMethod);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
             long first = params.getFirstResultToShow();
