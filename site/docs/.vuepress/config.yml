@@ -40,16 +40,14 @@ themeConfig:
       - downloads
       - examples/example-application
       - query-tool
-      - apidocs/
+      #- apidocs/
       - title: Customization
         children:
         - customization/docindexer
         - customization/query-language
         - customization/plugins
         - customization/legacy-docindexers
-      - title: SOLR
-        children:
-        - solr/querying-an-existing-index-with-solr
+      - solr/
       - migration-guide
       - changelog
     /:
