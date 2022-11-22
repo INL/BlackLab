@@ -8,14 +8,14 @@ Returns frequencies per term, sorted by descending frequency.
 
 #### Parameters
 
-| Parameter    | Description                                                                                                                                                                    |
-|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `annotation` | Annotation to get term frequencies for. Default: main annotation (usually `word`)                                                                                              |
-| `sensitive`  | Whether or not to list terms case/diacritics sensitively. Default: `false`                                                                                                     |
-| `first`      | First result to return. Default: `20`                                                                                                                                          |
-| `number`     | Maximum number to return. Default: `20`                                                                                                                                        |
-| `filter`     | [Lucene Query Language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) document filter query |
-| `terms`      | comma-separated list of terms for which to get the frequencies. Default: all terms                                                                                             |
+| Parameter    | Description                                                                                                                                                                                       |
+|--------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `annotation` | Annotation to get term frequencies for. Default: main annotation (usually `word`)                                                                                                                 |
+| `sensitive`  | Whether or not to list terms case/diacritics sensitively. Default: `false`                                                                                                                        |
+| `first`      | First result to return. Default: `20`                                                                                                                                                             |
+| `number`     | Maximum number to return. Default: `20`.<br/>**NOTE:** this value is limited by the [`parameters.pageSize.max` setting](/server/configuration.md#complete-config-file) in `blacklab-server.yaml`. |
+| `filter`     | [Lucene Query Language](https://lucene.apache.org/core/8_8_1/queryparser/org/apache/lucene/queryparser/classic/package-summary.html#package.description) document filter query                    |
+| `terms`      | comma-separated list of terms for which to get the frequencies. Default: all terms                                                                                                                |
 
 
 ## Success Response
