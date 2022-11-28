@@ -62,3 +62,8 @@ themeConfig:
   docsBranch: dev
   editLinks: true # defaults to false, set to true to enable
   editLinkText: 'Help us improve this page!'
+
+plugins:
+  "@vuepress/plugin-html-redirect":
+      countdown: 0
+
