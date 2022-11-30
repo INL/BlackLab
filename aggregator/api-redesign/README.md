@@ -29,6 +29,8 @@ General:
   (if information is given in multiple places, e.g. on the server info page as well
    as on the corpus info page, use the same structure and element names (except one page
    may give additional details). Fix `blacklabBuildTime` vs. `blackLabBuildTime` etc.)
+- Make functionality more orthogonal. E.g. `subcorpusSize` can be included in grouped responses, but not in ungrouped ones.
+- If you're interested in stats like total number of results, subcorpus size, etc., it's kind of confusing to have to do `/hits?number=0&waitfortotal=true`; maybe have separate endpoints for this kind of application? (calculating stats vs. paging through hits)
 - Change confusing names.<br>
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
   `limitReached` might be easier to understand, especially if it's directly 
