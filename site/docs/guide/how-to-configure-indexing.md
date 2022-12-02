@@ -946,7 +946,7 @@ annotatedFields:
                                           # (please explicitly declare this for at least "word" and 
                                           #  "lemma"; all other annotations will default to insensitive)
       uiType: text                        # (optional) hint for use interface
-      createForwardIndex: true            # should this annotation get a forward index [true]
+      forwardIndex: true                  # should this annotation get a forward index [true]
 
     - name: lemma
       valuePath: lemma/@class
