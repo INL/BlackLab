@@ -530,6 +530,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "displayAs":
                     t.setDisplayAs(str(e));
                     break;
+                case "tokenIdPath":
+                    t.setTokenIdPath(str(e));
+                    break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
                 }
