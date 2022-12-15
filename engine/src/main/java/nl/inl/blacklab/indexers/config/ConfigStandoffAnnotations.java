@@ -18,8 +18,28 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /**
      * Unique id of the token position(s) to index these values at. A uniqueId must
      * be defined for words.
+     * If this is a span (that is, spanEndPath is not empty), this refers to the start of
+     * the span.
      */
     private String tokenRefPath;
+
+    /**
+     * How to find the end of the span. If non-empty, this is a span annotation instead of
+     * a regular one.
+     */
+    private String spanEndPath = "";
+
+    /**
+     * If this is a span, does spanEndpath refer to the last token inside the span (inclusive)
+     * or the first token outside the span (exclusive)?
+     */
+    private boolean spanEndIsInclusive = true;
+
+    /**
+     * XPath needed to find the name of the span, if this is one (i.e. spanEndPath is non-empty).
+     * E.g. for a sentence this will usually resolve to "s".
+     */
+    private String spanNamePath;
 
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
@@ -78,6 +98,30 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public void setTokenRefPath(String path) {
         this.tokenRefPath = path;
+    }
+
+    public String getSpanEndPath() {
+        return spanEndPath;
+    }
+
+    public void setSpanEndPath(String spanEndPath) {
+        this.spanEndPath = spanEndPath;
+    }
+
+    public boolean isSpanEndIsInclusive() {
+        return spanEndIsInclusive;
+    }
+
+    public void setSpanEndIsInclusive(boolean spanEndIsInclusive) {
+        this.spanEndIsInclusive = spanEndIsInclusive;
+    }
+
+    public String getSpanNamePath() {
+        return spanNamePath;
+    }
+
+    public void setSpanNamePath(String spanNamePath) {
+        this.spanNamePath = spanNamePath;
     }
 
     @Override

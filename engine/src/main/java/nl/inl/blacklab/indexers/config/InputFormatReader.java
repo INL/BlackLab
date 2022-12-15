@@ -491,7 +491,17 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "refTokenPositionIdPath": // old name, DEPRECATED
                 case "tokenRefPath":
+                case "spanStartPath":   // synonym for tokenRefPath, used in case of span annotation
                     s.setTokenRefPath(str(e));
+                    break;
+                case "spanEndPath":
+                    s.setSpanEndPath(str(e));
+                    break;
+                case "spanEndIsInclusive":
+                    s.setSpanEndIsInclusive(bool(e));
+                    break;
+                case "spanNamePath":
+                    s.setSpanNamePath(str(e));
                     break;
                 case "annotations":
                     readAnnotations(e, s);
