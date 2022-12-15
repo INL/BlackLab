@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <idno type="XXX">T_01</idno>
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>T_01</title>
+      </titleStmt>
+      <sourceDesc>
+        <recordingStmt>
+          <recording type="audio">
+            <media mimeType="audio/wav"/>
+          </recording>
+        </recordingStmt>
+      </sourceDesc>
+    </fileDesc>
+    <profileDesc>
+      <particDesc>
+        <person xml:id="XX" n="XX">
+          <idno type="AGD-ID">XX</idno>
+          <persName><forename>XX</forename><abbr>XX</abbr></persName>
+        </person>
+        <person xml:id="XY" n="XY">
+          <idno type="AGD-ID">XY</idno>
+          <persName><forename>XY</forename><abbr>XY</abbr></persName>
+        </person>
+      </particDesc>
+    </profileDesc>
+    <encodingDesc>
+      <appInfo>
+        <application ident="FOLKER" version="1.1">
+          <label>FOLK Editor</label>
+          <desc>Transcription Tool providing a TEI Export</desc>
+        </application>
+      </appInfo>
+      <transcriptionDesc ident="cGAT" version="2014">
+        <desc><!--Fill me in--></desc>
+        <label><!--Fill me in--></label>
+      </transcriptionDesc>
+    </encodingDesc>
+    <revisionDesc>
+      <change when="2021-04-23T08:22:57.000">Created by XSL transformation from a FOLKER
+        transcription</change>
+    </revisionDesc>
+  </teiHeader>
+  <text xml:lang="de">
+    <timeline unit="s">
+      <when xml:id="TLI_1525" interval="2300.116" since="TLI_0"/>
+      <when xml:id="TLI_1526" interval="2301.512" since="TLI_0"/>
+      <when xml:id="TLI_1527" interval="2313.26" since="TLI_0"/>
+      <when xml:id="TLI_1528" interval="2315.252" since="TLI_0"/>
+      <when xml:id="TLI_1529" interval="2316.684" since="TLI_0"/>
+      <when xml:id="TLI_1530" interval="2318.24" since="TLI_0"/>
+      <when xml:id="TLI_1531" interval="2320.004" since="TLI_0"/>
+      <when xml:id="TLI_1532" interval="2320.264" since="TLI_0"/>
+      <when xml:id="TLI_1533" interval="2322.236" since="TLI_0"/>
+      <when xml:id="TLI_1534" interval="2323.588" since="TLI_0"/>
+      <when xml:id="TLI_1535" interval="2325.664" since="TLI_0"/>
+    </timeline>
+    <body>
+      <annotationBlock xml:id="c1320" who="XX" start="TLI_1525" end="TLI_1526">
+        <u xml:id="u_d865e16115"><seg type="contribution" xml:id="seg_d865e16115"><anchor
+              synch="TLI_1525"/><w xml:id="w4217" norm="wer" lemma="wer" pos="PWS" phon="veːɐ"
+              >wer</w><w xml:id="w4218" norm="kann" lemma="können" pos="VMFIN" phon="kan">kann</w><w
+              xml:id="w4219" norm="die" lemma="die" pos="PDS" phon="diː">die</w><w xml:id="w4220"
+              norm="noch" lemma="noch" pos="PTKMWL" phon="nɔx">noch</w><w xml:id="w4220a" norm="mal"
+              lemma="mal" pos="ADV" phon="maːl">mal</w><w xml:id="w4221" norm="zusammenfassen"
+              lemma="zusammenfassen" pos="VVINF" phon="tsu.za.mən.fa.sən">zusammenfassen</w><anchor
+              synch="TLI_1526"/></seg></u>
+        <spanGrp type="speech-rate" subtype="time-based">
+          <span from="TLI_1525" to="TLI_1526">7.16</span>
+        </spanGrp>
+      </annotationBlock>
+      <pause xml:id="p839" rend="(11.75)" dur="PT11.75S" start="TLI_1526" end="TLI_1527"/>
+      <annotationBlock xml:id="c1322" who="XX" start="TLI_1527" end="TLI_1529">
+        <u xml:id="u_d865e16134"><seg type="contribution" xml:id="seg_d865e16134"><anchor
+              synch="TLI_1527"/><w xml:id="w4222" norm="NAME" lemma="NAME" pos="NE"
+              phon="na.diːn">XX</w><w xml:id="w4223" norm="kannst" lemma="können" pos="VMFIN"
+              phon="kanst">kannst</w><w xml:id="w4224" norm="Du" lemma="du" pos="PPER" phon="duː"
+              >du</w><w xml:id="w4225" norm="einfach" lemma="einfach" pos="PTKMA" phon="ʔaɪn.fax"
+              >einfach</w><w xml:id="w4226" norm="noch" lemma="noch" pos="PTKMWL" phon="nɔx"
+              >noch</w><w xml:id="w4226a" norm="mal" lemma="mal" pos="ADV" phon="maːl">mal</w><w
+              xml:id="w4227" norm="kurz" lemma="kurz" pos="ADJD" phon="kʊɐts">kurz</w><w
+              xml:id="w4228" norm="wiederholen" lemma="wiederholen" pos="VVINF"
+              phon="viː.dɐ.hoː.lən">wiederholen</w><w xml:id="w4229" norm="was" lemma="was"
+              pos="PWS" phon="vas">was</w><w xml:id="w4230" norm="wir" lemma="wir" pos="PPER"
+              phon="viːɐ">wir</w><w xml:id="w4231" norm="jetzt" lemma="jetzt" pos="ADV" phon="jɛtst"
+              >jetzt</w><anchor synch="TLI_1528"/><vocal xml:id="b115">
+              <desc rend="°h">short breathe in</desc>
+            </vocal><w xml:id="w4232" norm="herausgefunden" lemma="herausfinden" pos="VVPP"
+              phon="hɛr.aʊs.ɡə.fʊn.dən">herausgefunden</w><w xml:id="w4233" norm="haben"
+              lemma="haben" pos="VAINF" phon="haː.bən">haben</w><anchor synch="TLI_1529"/></seg></u>
+        <spanGrp type="speech-rate" subtype="time-based">
+          <span from="TLI_1527" to="TLI_1529">6.72</span>
+        </spanGrp>
+      </annotationBlock>
+      <pause xml:id="p840" rend="(1.56)" dur="PT1.56S" start="TLI_1529" end="TLI_1530"/>
+      <annotationBlock xml:id="c1324" who="XY" start="TLI_1530" end="TLI_1531">
+        <u xml:id="u_d865e16170"><seg type="contribution" xml:id="seg_d865e16170"><anchor
+              synch="TLI_1530"/><w xml:id="w4234" norm="ja" lemma="ja" pos="NGIRR" phon="ja"
+              >ja</w><w xml:id="w4235" norm="dass" lemma="dass" pos="KOUS" phon="das">dass</w><w
+              xml:id="w4236" norm="da" lemma="da" pos="ADV" phon="da">da</w><w xml:id="w4237"
+              norm="halt" lemma="halt" pos="PTKMA" phon="halt">halt</w><w xml:id="w4238"
+              norm="Parallelen" lemma="Parallele" pos="NN" phon="par.a.lə.lən">parallelen</w><w
+              xml:id="w4239" norm="liegen" lemma="liegen" pos="VVINF" phon="liː.ɡən"
+              >liegen</w><anchor synch="TLI_1531"/></seg></u>
+        <spanGrp type="speech-rate" subtype="time-based">
+          <span from="TLI_1530" to="TLI_1531">5.67</span>
+        </spanGrp>
+      </annotationBlock>
+      <pause xml:id="p841" rend="(0.26)" dur="PT0.26S" start="TLI_1531" end="TLI_1532"/>
+      <annotationBlock xml:id="c1326" who="XY" start="TLI_1532" end="TLI_1533">
+        <u xml:id="u_d865e16189"><seg type="contribution" xml:id="seg_d865e16189"><anchor
+              synch="TLI_1532"/><w xml:id="w4240" norm="zwischen" lemma="zwischen" pos="APPR"
+              phon="tsvɪʃ.ən">zwischen</w><w xml:id="w4241" norm="der" lemma="d" pos="ART"
+              phon="deːɐ">der</w><w xml:id="w4242" norm="Parabel" lemma="Parabel" pos="NN"
+              phon="par.aː.bəl">parabel</w><w xml:id="w4243" norm="und" lemma="und" pos="KON"
+              phon="ʔʊnt">und</w><w xml:id="w4244" norm="dem" lemma="d" pos="ART" phon="deːm"
+              >der</w><w xml:id="w4245" norm="Roman" lemma="Roman" pos="NN" phon="ro.maːn"
+              >zeitung</w><anchor synch="TLI_1533"/></seg></u>
+        <spanGrp type="speech-rate" subtype="time-based">
+          <span from="TLI_1532" to="TLI_1533">5.07</span>
+        </spanGrp>
+      </annotationBlock>
+      <annotationBlock xml:id="c1327" who="XX" start="TLI_1533" end="TLI_1534">
+        <u xml:id="u_d865e16204"><seg type="contribution" xml:id="seg_d865e16204"><anchor
+              synch="TLI_1533"/><pause xml:id="p842" rend="(.)" type="micro"/><w xml:id="w4246"
+              norm="okay" lemma="okay" pos="NGIRR" phon="ʔo.keː">okay</w><w xml:id="w4247"
+              norm="das" lemma="die" pos="PDS" phon="dɛs">des</w><w xml:id="w4248" norm="habe"
+              lemma="haben" pos="VAFIN" phon="haːp">hab</w><w xml:id="w4249" norm="ich" lemma="ich"
+              pos="PPER" phon="ʔɪç">ich</w><w xml:id="w4250" norm="grad" lemma="gerade" pos="ADV"
+              phon="ɡraːt">grad</w><w xml:id="w4251" norm="auch" lemma="auch" pos="PTKIFG"
+              phon="ʔaʊx">auch</w><w xml:id="w4252" norm="gesagt" lemma="sagen" pos="VVPP"
+              phon="ɡə.zaːkt">gesagt</w><anchor synch="TLI_1534"/></seg></u>
+        <spanGrp type="speech-rate" subtype="time-based">
+          <span from="TLI_1533" to="TLI_1534">6.66</span>
+        </spanGrp>
+      </annotationBlock>
+      <incident xml:id="n54" start="TLI_1534" end="TLI_1535">
+        <desc rend="((lachen))">lachen</desc>
+      </incident>    
+      <tei:spanGrp xmlns:tei="http://www.tei-c.org/ns/1.0" type="af">
+        <tei:span from="w4222" to="w4233" who="XX">Kannst Du X?</tei:span>
+      </tei:spanGrp>
+      <tei:spanGrp xmlns:tei="http://www.tei-c.org/ns/1.0" type="ar">
+        <tei:span target="Kannst Du X?" from="w4234" to="w4245" who="XY"
+          >Bestätigung/Zustimmung/Annahme/Ausführung</tei:span>
+      </tei:spanGrp>
+      <tei:spanGrp xmlns:tei="http://www.tei-c.org/ns/1.0" type="as" subtype="time-based">
+        <tei:span from="TLI_1525" to="TLI_1538" target="Kannst Du X?"
+          >Frage/Bitte/Aufforderung</tei:span>
+      </tei:spanGrp>
+    </body>
+  </text>
+</TEI>

@@ -1,0 +1,81 @@
+namespaces:
+  'xml': http://www.w3.org/XML/1998/namespace
+
+documentPath: /TEI
+
+annotatedFields:
+
+  contents:
+
+    containerPath: .//text
+
+    # All w, pause, incident and vocal elements should be indexed as separate tokens ("words")
+    # Note that this will treat all these elements the same (i.e. apply the valuePaths declared
+    # in the annotations on them).
+    wordPath: .//*[self::w or self::pause or self::incident or self::vocal]
+
+    # Remember xml:id attribute for each token so we can refer to them from standoff annotations
+    tokenIdPath: "@xml:id"     # (renamed from "tokenPositionIdPath")
+
+    annotations:
+
+    - name: word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    - name: norm
+      valuePath: "@norm"
+      sensitivity: sensitive_insensitive
+
+    - name: lemma
+      valuePath: "@lemma"
+      sensitivity: sensitive_insensitive
+
+    - name: phon
+      valuePath: "@phon"
+
+    - name: type
+      valuePath: "@type"
+
+    standoffAnnotations:
+    - path: "spanGrp[not(@subtype)]/span"
+
+      #tokenRefPath: "@ref"        # for annotation on single token (renamed from "refTokenPositionIdPath")
+      # For span annotation
+      spanStartPath: "@from"
+      spanEndPath: "@to"
+      spanEndIsInclusive: true
+      spanNamePath: ./parent::node()/@type  # XPath to determine spanName
+
+      annotations:
+        - name: value
+          valuePath: .
+
+    - path: "spanGrp[@subtype=\"time-based\"]/span"
+
+      spanStartPath: "@from"
+      spanEndPath: "@to"
+      spanEndIsInclusive: false
+      spanNamePath: ./parent::node()/@type  # XPath to determine spanName
+
+      annotations:
+
+        - name: target
+          valuePath: "@target"
+
+        - name: value
+          valuePath: .
+
+
+    inlineTags:
+    - path: .//annotationBlock   # user contribution
+
+      # NOTE: attributes for inlineTags are be indexed automatically,
+      #       no need to declare them
+      #annotations:
+      #  - name: speaker
+      #    valuePath: "@who"
+
+    - path: .//anchor
+      # Remember synch attribute for each anchor so we can refer to them from standoff annotations
+      tokenIdPath: "@synch"
