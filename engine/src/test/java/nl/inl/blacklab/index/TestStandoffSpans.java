@@ -15,7 +15,6 @@ public class TestStandoffSpans {
         ClassLoader classLoader = this.getClass().getClassLoader();
         File file = new File(classLoader.getResource("standoff/tei-standoff-spans.blf.yaml").getFile());
         ConfigInputFormat fmt = factoryConfig.load("tei-standoff-spans", file).orElseThrow();
-        System.err.println("BLA");
     }
 
 }

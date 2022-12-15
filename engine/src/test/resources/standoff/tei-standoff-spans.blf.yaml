@@ -38,20 +38,20 @@ annotatedFields:
       valuePath: "@type"
 
     standoffAnnotations:
-    - path: "spanGrp[not(@subtype)]/span"
+    - path: spanGrp[not(@subtype)]/span
 
       #tokenRefPath: "@ref"        # for annotation on single token (renamed from "refTokenPositionIdPath")
-      # For span annotation
+      # For span annotation: first and last token, and XPath to determine span name
       spanStartPath: "@from"
       spanEndPath: "@to"
       spanEndIsInclusive: true
-      spanNamePath: ./parent::node()/@type  # XPath to determine spanName
+      spanNamePath: ./parent::node()/@type
 
       annotations:
         - name: value
           valuePath: .
 
-    - path: "spanGrp[@subtype=\"time-based\"]/span"
+    - path: spanGrp[@subtype="time-based"]/span
 
       spanStartPath: "@from"
       spanEndPath: "@to"

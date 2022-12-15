@@ -23,6 +23,7 @@ import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 
 import com.ximpleware.AutoPilot;
@@ -284,13 +285,22 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // For end tags, we will update the payload of the start tag when we encounter it,
             // just like we do in our SAX parsers.
             List<InlineObject> tagsAndPunct = new ArrayList<>();
+            int i = 0;
             for (AutoPilot apInlineTag : apsInlineTag) {
+                ConfigInlineTag configInlineTag = annotatedField.getInlineTags().get(i);
+                String inlineTagTokenIdPath = configInlineTag.getTokenIdPath();
+                AutoPilot apTokenIdPath = null;
+                if (!StringUtils.isEmpty(inlineTagTokenIdPath)) {
+                    apTokenIdPath = acquireAutoPilot(tokenIdPath);
+                }
+
                 navpush();
                 apInlineTag.resetXPath();
                 while (apInlineTag.evalXPath() != -1) {
-                    collectInlineTag(tagsAndPunct);
+                    collectInlineTag(tagsAndPunct, apTokenIdPath);
                 }
                 navpop();
+                i++;
             }
             setAddDefaultPunctuation(true);
             if (apPunct != null) {
@@ -344,11 +354,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 int wordOffset = (int) wordFragment;
                 while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
                     // Yes. Handle it.
-                    if (nextInlineObject.type() == InlineObjectType.PUNCTUATION)
+                    if (nextInlineObject.type() == InlineObjectType.PUNCTUATION) {
                         punctuation(nextInlineObject.getText());
-                    else
+                    } else {
                         inlineTag(nextInlineObject.getText(), nextInlineObject.type() == InlineObjectType.OPEN_TAG,
                                 nextInlineObject.getAttributes());
+                        if (nextInlineObject.getTokenId() != null) {
+                            // Add this open tag's token position (position of the token after the open tag, actually)
+                            // to the tokenPositionsMap so we can refer to this position later. Useful for e.g. tei:anchor.
+                            tokenPositionsMap.put(nextInlineObject.getTokenId(), getCurrentTokenPosition());
+                        }
+                    }
                     nextInlineObject = inlineObjectsIt.hasNext() ? inlineObjectsIt.next() : null;
                 }
 
@@ -798,9 +814,17 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /**
      * Add open and close InlineObject objects for the current element to the list.
      *
-     * @param inlineObject list to add the new open/close tag objects to
+     * @param inlineObject    list to add the new open/close tag objects to
+     * @param apTokenId       autopilot for capturing tokenId, or null if we don't want to capture token id
      */
-    private void collectInlineTag(List<InlineObject> inlineObject) throws NavException {
+    private void collectInlineTag(List<InlineObject> inlineObject, AutoPilot apTokenId) throws NavException {
+
+        String tokenId = null;
+        if (apTokenId != null) {
+            apTokenId.resetXPath();
+            tokenId = apTokenId.evalXPathToString();
+        }
+
         // Get the element and content fragments
         // (element fragment = from start of start tag to end of end tag;
         //  content fragment = from end of start tag to start of end tag)
@@ -824,7 +848,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
         // Add the inline tags to the list
         InlineObject openTag = new InlineObject(elementName, startTagOffset, InlineObjectType.OPEN_TAG,
-                getAttributes());
+                getAttributes(), tokenId);
         InlineObject closeTag = new InlineObject(elementName, endTagOffset, InlineObjectType.CLOSE_TAG, null);
         openTag.setMatchingTag(closeTag);
         closeTag.setMatchingTag(openTag);
