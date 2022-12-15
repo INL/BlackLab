@@ -15,7 +15,7 @@ annotatedFields:
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later.
-    tokenPositionIdPath: "@ANNOTATION_ID"
+    tokenIdPath: "@ANNOTATION_ID"
 
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
@@ -32,7 +32,7 @@ annotatedFields:
 
     standoffAnnotations:
     - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='Lemma']/ANNOTATION/REF_ANNOTATION"
-      refTokenPositionIdPath: "@ANNOTATION_REF"
+      tokenRefPath: "@ANNOTATION_REF"
       annotations:
       - name: lemma
         displayName: Lemma
@@ -40,7 +40,7 @@ annotatedFields:
         sensitivity: sensitive_insensitive
 
     - path: "/ANNOTATION_DOCUMENT/TIER[@LINGUISTIC_TYPE_REF='PoS']/ANNOTATION/REF_ANNOTATION"
-      refTokenPositionIdPath: "@ANNOTATION_REF"
+      tokenRefPath: "@ANNOTATION_REF"
       annotations:
       - name: pos
         displayName: PoS

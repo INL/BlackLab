@@ -349,8 +349,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "wordPath":
                     af.setWordPath(str(e));
                     break;
-                case "tokenPositionIdPath":
-                    af.setTokenPositionIdPath(str(e));
+                case "tokenPositionIdPath": // old name, DEPRECATED
+                case "tokenIdPath":
+                    af.setTokenIdPath(str(e));
                     break;
                 case "punctPath":
                     af.setPunctPath(str(e));
@@ -488,8 +489,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "path":
                     s.setPath(str(e));
                     break;
-                case "refTokenPositionIdPath":
-                    s.setRefTokenPositionIdPath(str(e));
+                case "refTokenPositionIdPath": // old name, DEPRECATED
+                case "tokenRefPath":
+                    s.setTokenRefPath(str(e));
                     break;
                 case "annotations":
                     readAnnotations(e, s);

@@ -41,7 +41,7 @@ annotatedFields:
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later.
-    tokenPositionIdPath: "@xml:id"
+    tokenIdPath: "@xml:id"
 
     # What annotation can each word have? How do we index them?
     # (valuePaths relative to word path)

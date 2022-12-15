@@ -19,7 +19,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
      * Unique id of the token position(s) to index these values at. A uniqueId must
      * be defined for words.
      */
-    private String refTokenPositionIdPath;
+    private String tokenRefPath;
 
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
@@ -27,21 +27,21 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     public ConfigStandoffAnnotations() {
     }
 
-    public ConfigStandoffAnnotations(String path, String refTokenPositionIdPath) {
+    public ConfigStandoffAnnotations(String path, String tokenRefPath) {
         this.path = path;
-        this.refTokenPositionIdPath = refTokenPositionIdPath;
+        this.tokenRefPath = tokenRefPath;
     }
 
     public void validate() {
         String t = "standoff annotations";
         ConfigInputFormat.req(path, t, "path");
-        ConfigInputFormat.req(refTokenPositionIdPath, t, "refTokenPositionIdPath");
+        ConfigInputFormat.req(tokenRefPath, t, "tokenRefPath");
         for (ConfigAnnotation a : annotations.values())
             a.validate();
     }
 
     public ConfigStandoffAnnotations copy() {
-        ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, refTokenPositionIdPath);
+        ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
         for (ConfigAnnotation a : annotations.values()) {
             result.addAnnotation(a.copy());
         }
@@ -56,12 +56,28 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.path = path;
     }
 
+    /**
+     * @deprecated renamed to { @link {@link #getTokenRefPath() }
+     */
+    @Deprecated
     public String getRefTokenPositionIdPath() {
-        return refTokenPositionIdPath;
+        return getTokenRefPath();
     }
 
-    public void setRefTokenPositionIdPath(String refTokenPositionIdPath) {
-        this.refTokenPositionIdPath = refTokenPositionIdPath;
+    /**
+     * @deprecated renamed to { @link {@link #setTokenRefPath(String) }
+     */
+    @Deprecated
+    public void setRefTokenPositionIdPath(String path) {
+        setTokenRefPath(path);
+    }
+
+    public String getTokenRefPath() {
+        return tokenRefPath;
+    }
+
+    public void setTokenRefPath(String path) {
+        this.tokenRefPath = path;
     }
 
     @Override

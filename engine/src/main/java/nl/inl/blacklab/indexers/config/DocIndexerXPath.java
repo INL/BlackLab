@@ -265,10 +265,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
         AutoPilot apPunct = null;
         if (annotatedField.getPunctPath() != null)
             apPunct = acquireAutoPilot(annotatedField.getPunctPath());
-        String tokenPositionIdPath = annotatedField.getTokenPositionIdPath();
-        AutoPilot apTokenPositionId = null;
-        if (tokenPositionIdPath != null) {
-            apTokenPositionId = acquireAutoPilot(tokenPositionIdPath);
+        String tokenIdPath = annotatedField.getTokenIdPath();
+        AutoPilot apTokenId = null;
+        if (tokenIdPath != null) {
+            apTokenId = acquireAutoPilot(tokenIdPath);
         }
 
         // For each body element...
@@ -332,11 +332,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
             for (Pair<Integer, BookMark> wordPosition : wordPositions) {
                 wordPosition.getValue().setCursorPosition();
 
-                // Capture tokenPositionId for this token position?
-                if (apTokenPositionId != null) {
-                    apTokenPositionId.resetXPath();
-                    String tokenPositionId = apTokenPositionId.evalXPathToString();
-                    tokenPositionsMap.put(tokenPositionId, getCurrentTokenPosition());
+                // Capture tokenId for this token position?
+                if (apTokenId != null) {
+                    apTokenId.resetXPath();
+                    String tokenId = apTokenId.evalXPathToString();
+                    tokenPositionsMap.put(tokenId, getCurrentTokenPosition());
                 }
 
                 // Does an inline object occur before this word?
@@ -398,7 +398,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // For each instance of this standoff annotation..
             navpush();
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
-            AutoPilot apTokenPos = acquireAutoPilot(standoff.getRefTokenPositionIdPath());
+            AutoPilot apTokenPos = acquireAutoPilot(standoff.getTokenRefPath());
             while (apStandoff.evalXPath() != -1) {
 
                 // Determine what token positions to index these values at
@@ -432,8 +432,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
         if (apPunct != null)
             releaseAutoPilot(apPunct);
-        if (apTokenPositionId != null)
-            releaseAutoPilot(apTokenPositionId);
+        if (apTokenId != null)
+            releaseAutoPilot(apTokenId);
         releaseAutoPilot(bodies);
     }
 

@@ -270,7 +270,7 @@ annotatedFields:
     
     # If specified, the token position for each id will be saved,
     # so you can index standoff annotations referring to this id later.
-    tokenPositionIdPath: "@id"
+    tokenIdPath: "@id"
 
     annotations:
     - name: word  # First annotation becomes the main annotation
@@ -278,7 +278,7 @@ annotatedFields:
       sensitivity: sensitive_insensitive
     standoffAnnotations:
     - path: standoff/annotation      # Element containing what to index (relative to documentPath)
-      refTokenPositionIdPath: "@ref" # What token position(s) to index these values at
+      tokenRefPath: "@ref" # What token position(s) to index these values at
                                      # (may have multiple matches per path element; values will 
                                      # be indexed at all those positions)
       annotations:           # The actual annotations (structure identical to regular annotations)
@@ -930,7 +930,7 @@ annotatedFields:
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later. (relative to wordPath)
-    tokenPositionIdPath: "@xml:id"
+    tokenIdPath: "@xml:id"
 
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
@@ -976,12 +976,12 @@ annotatedFields:
 
     # Standoff annotations are annotations that are defined separately from the word
     # elements, elsewhere in the same document. To use standoff annotations, you must
-    # define a tokenPositionIdPath (see above). This will make sure you can refer back
+    # define a tokenIdPath (see above). This will make sure you can refer back
     # to token positions so BlackLab knows at what position to index a standoff annotation.
     standoffAnnotations:
     - path: //timesegment               # Element containing the values to index
-      refTokenPositionIdPath: wref/@id  # What token position(s) to index these values at
-                                        # (these refer back to the tokenPositionIdPath values)
+      tokenRefPath: wref/@id  # What token position(s) to index these values at
+                                        # (these refer back to the tokenIdPath values)
       annotations:                      # Annotation(s) to index there
       - name: begintime
         valuePath: ../@begintime        # relative to path

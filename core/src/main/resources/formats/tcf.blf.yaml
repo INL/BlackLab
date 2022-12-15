@@ -25,7 +25,7 @@ annotatedFields:
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later.
-    #tokenPositionIdPath: "@ID"
+    #tokenIdPath: "@ID"
 
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
