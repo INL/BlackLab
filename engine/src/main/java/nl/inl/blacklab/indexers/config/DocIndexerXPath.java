@@ -300,6 +300,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     collectInlineTag(tagsAndPunct, apTokenIdPath);
                 }
                 navpop();
+                if (apTokenIdPath != null)
+                    releaseAutoPilot(apTokenIdPath);
                 i++;
             }
             setAddDefaultPunctuation(true);
@@ -374,7 +376,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // For each configured annotation...
                 int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
                 for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
-                    processAnnotation(annotation, null);
+                    processAnnotation(annotation, null, -1, null);
                     AnnotationWriter annotWriter = getAnnotation(annotation.getName());
                     int lvp = annotWriter.lastValuePosition();
                     if (lastValuePosition < lvp) {
@@ -415,6 +417,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
             navpush();
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
             AutoPilot apTokenPos = acquireAutoPilot(standoff.getTokenRefPath());
+            AutoPilot apSpanEnd = null, apSpanName = null;
+            boolean spanEndIsInclusive = standoff.isSpanEndIsInclusive();
+            if (!StringUtils.isEmpty(standoff.getSpanEndPath())) {
+                // This is a span annotation. Also get XPaths for span end and name.
+                apSpanEnd = acquireAutoPilot(standoff.getSpanEndPath());
+                apSpanName = acquireAutoPilot(standoff.getSpanNamePath());
+            }
             while (apStandoff.evalXPath() != -1) {
 
                 // Determine what token positions to index these values at
@@ -432,10 +441,35 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
                 navpop();
 
-                for (ConfigAnnotation annotation : standoff.getAnnotations().values()) {
-                    processAnnotation(annotation, tokenPositions);
+                if (apSpanEnd != null) {
+                    int spanEndPos = tokenPositions.get(0);
+                    String spanName = "span";
+                    navpush();
+                    if (apSpanEnd.evalXPath() != -1) {
+                        apEvalToString.resetXPath();
+                        String tokenId = apEvalToString.evalXPathToString();
+                        spanEndPos = tokenPositionsMap.get(tokenId);
+                    }
+                    navpop();
+                    navpush();
+                    if (apSpanName.evalXPath() != -1) {
+                        apEvalToString.resetXPath();
+                        spanName = apEvalToString.evalXPathToString();
+                    }
+                    for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                        processAnnotation(annotation, tokenPositions, spanEndPos, spanName);
+                    }
+                } else {
+                    // Regular (non-span) standoff annotation.
+                    for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                        processAnnotation(annotation, tokenPositions, -1, null);
+                    }
                 }
             }
+            if (apSpanEnd != null)
+                releaseAutoPilot((apSpanEnd));
+            if (apSpanName != null)
+                releaseAutoPilot((apSpanName));
             releaseAutoPilot(apStandoff);
             releaseAutoPilot(apTokenPos);
             navpop();
@@ -594,12 +628,20 @@ public class DocIndexerXPath extends DocIndexerConfig {
     /**
      * Process an annotation at the current position.
      *
-     * @param annotation annotation to process
+     * If this is a span annotation (spanEndPos >= 0), and the span looks like this:
+     * <code>&lt;named-entity type="person"&gt;Santa Claus&lt;/named-entity&gt;</code>,
+     * then spanName should be "named-entity" and annotation name should be "type" (and
+     * its XPath expression should evaluate to "person", obviously).
+     *
+     * @param annotation       annotation to process.
      * @param indexAtPositions if null: index at the current position; otherwise,
-     *            index at all these positions
+     *                         index at all these positions
+     * @param spanEndPos       if >= 0, index as a span annotation with this end position (exclusive)
+     * @param spanName         if this is a span annotation, use this as the span name (e.g. "s" for sentence)
      * @throws VTDException on XPath error
      */
-    protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions) throws VTDException {
+    protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions,
+            int spanEndPos, String spanName) throws VTDException {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
             // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
@@ -829,7 +871,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // (element fragment = from start of start tag to end of end tag;
         //  content fragment = from end of start tag to start of end tag)
         long elementFragment = nav.getElementFragment();
-        int startTagOffset = (int) elementFragment;
+        int startTagOffset = (int) elementFragment; // 32 least significant bits are the start offset
         int endTagOffset;
         long contentFragment = nav.getContentFragment();
         if (contentFragment == -1) {
