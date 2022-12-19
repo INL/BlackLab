@@ -291,7 +291,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 String inlineTagTokenIdPath = configInlineTag.getTokenIdPath();
                 AutoPilot apTokenIdPath = null;
                 if (!StringUtils.isEmpty(inlineTagTokenIdPath)) {
-                    apTokenIdPath = acquireAutoPilot(tokenIdPath);
+                    apTokenIdPath = acquireAutoPilot(inlineTagTokenIdPath);
                 }
 
                 navpush();
@@ -376,7 +376,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // For each configured annotation...
                 int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
                 for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
-                    processAnnotation(annotation, null, -1, null);
+                    processAnnotation(annotation, null, -1);
                     AnnotationWriter annotWriter = getAnnotation(annotation.getName());
                     int lvp = annotWriter.lastValuePosition();
                     if (lastValuePosition < lvp) {
@@ -435,34 +435,54 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     String tokenPositionId = apEvalToString.evalXPathToString();
                     Integer integer = tokenPositionsMap.get(tokenPositionId);
                     if (integer == null)
-                        warn("Unresolved reference to token position: '" + tokenPositionId + "'");
+                        warn("Standoff annotation contains unresolved reference to token position: '" + tokenPositionId + "'");
                     else
                         tokenPositions.add(integer);
                 }
                 navpop();
 
                 if (apSpanEnd != null) {
-                    int spanEndPos = tokenPositions.get(0);
+                    int spanEndPos = tokenPositions == null || tokenPositions.isEmpty() ? -1 : tokenPositions.get(0);
                     String spanName = "span";
                     navpush();
+                    apSpanEnd.resetXPath();
                     if (apSpanEnd.evalXPath() != -1) {
                         apEvalToString.resetXPath();
                         String tokenId = apEvalToString.evalXPathToString();
-                        spanEndPos = tokenPositionsMap.get(tokenId);
+                        Integer tokenPos = tokenPositionsMap.get(tokenId);
+                        if (tokenPos == null) {
+                            warn("Standoff annotation contains unresolved reference to span end token: '" + tokenId + "'");
+                        } else {
+                            spanEndPos = tokenPositionsMap.get(tokenId);
+                        }
+                    }
+                    if (spanEndIsInclusive) {
+                        // The matched token should be included in the span, but we always store
+                        // the first token outside the span as the end. Adjust the position accordingly.
+                        spanEndPos++;
                     }
                     navpop();
                     navpush();
+                    apSpanName.resetXPath();
                     if (apSpanName.evalXPath() != -1) {
                         apEvalToString.resetXPath();
                         spanName = apEvalToString.evalXPathToString();
                     }
+                    navpop();
+                    if (spanEndPos >= 0) {
+                        // Span annotation. First index the span name at this position, then any configured
+                        // annotations as attributes.
+                        // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
+                        //  not an attribute)
+                        annotation(null, spanName, 1, tokenPositions, spanEndPos);
+                    }
                     for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                        processAnnotation(annotation, tokenPositions, spanEndPos, spanName);
+                        processAnnotation(annotation, tokenPositions, spanEndPos);
                     }
                 } else {
                     // Regular (non-span) standoff annotation.
                     for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                        processAnnotation(annotation, tokenPositions, -1, null);
+                        processAnnotation(annotation, tokenPositions, -1);
                     }
                 }
             }
@@ -637,11 +657,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @param indexAtPositions if null: index at the current position; otherwise,
      *                         index at all these positions
      * @param spanEndPos       if >= 0, index as a span annotation with this end position (exclusive)
-     * @param spanName         if this is a span annotation, use this as the span name (e.g. "s" for sentence)
      * @throws VTDException on XPath error
      */
     protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions,
-            int spanEndPos, String spanName) throws VTDException {
+            int spanEndPos) throws VTDException {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
             // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
@@ -667,14 +686,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 i++;
             }
 
-            if (spanEndPos >= 0) {
-                // Span annotation. First index the span name at this position, then any attributes.
-                annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, spanName, 1, indexAtPositions, spanEndPos, spanName);
-            }
-
             // Find matches for this annotation.
             Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions,
-                    null, spanEndPos, spanName);
+                    null, spanEndPos);
 
             // For each configured subannotation...
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
@@ -721,7 +735,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
 
                         findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions,
-                                reuseAnnotationValue ? annotValue : null, spanEndPos, spanName);
+                                reuseAnnotationValue ? annotValue : null, spanEndPos);
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
@@ -735,7 +749,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         subAnnot.isCaptureXml() == annotation.isCaptureXml();
 
                     findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions,
-                            reuseParentAnnotationValue ? annotValue : null, spanEndPos, spanName);
+                            reuseParentAnnotationValue ? annotValue : null, spanEndPos);
                 }
             }
 
@@ -749,8 +763,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected AutoPilot apDot = null;
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos,
-            String spanName)
+            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos)
                 throws XPathEvalException, NavException {
         boolean evalXml = annotation.isCaptureXml();
         List<ConfigProcessStep> processingSteps = annotation.getProcess();
@@ -809,7 +822,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     if (duplicatesOkay || !valuesSeen.contains(processedValue)) {
                         // Not a duplicate, or we don't care about duplicates. Add it.
                         annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
-                                spanEndPos, spanName);
+                                spanEndPos);
                         positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
                         if (valuesSeen != null)
                             valuesSeen.add(processedValue);
@@ -821,7 +834,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             for (String rawValue: values) {
                 String processedValue = processString(rawValue, processingSteps, null);
                 annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
-                        spanEndPos, spanName);
+                        spanEndPos);
                 break; // if multiple were matched, only index the first one
             }
         }

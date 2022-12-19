@@ -556,7 +556,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions) {
-        annotation(name, value, increment, indexAtPositions, -1, null);
+        annotation(name, value, increment, indexAtPositions, -1);
     }
 
     /**
@@ -574,10 +574,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param indexAtPositions if null: index at the current position; otherwise:
      *            index at these positions
      * @param spanEndPos if >= 0, this is a span annotation and this is the first token position after the span
-     * @param spanName span name if this is a span annotation
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions,
-            int spanEndPos, String spanName) {
+            int spanEndPos) {
         AnnotationWriter annotation = getAnnotation(spanEndPos >= 0 ? AnnotatedFieldNameUtil.TAGS_ANNOT_NAME : name);
         if (annotation != null) {
             BytesRef payload = null;
@@ -585,11 +584,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 // This is a span annotation. These are all indexed in one Lucene field (the annotation called "starttag")
                 // with the attribute name and value combined.
                 payload = PayloadUtils.tagEndPositionPayload(spanEndPos);
-                value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value);
+                if (name != null) {
+                    // Attribute (otherwise it's the span name, e.g. "named-entity", which is indexed unchanged)
+                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value);
+                }
             }
             if (indexAtPositions == null) {
                 int position = annotation.lastValuePosition() + increment;
-                if (name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
+                if (name != null && name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
                     trace(value + " ");
                 annotation.addValueAtPosition(value, position, payload);
             } else {

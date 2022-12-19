@@ -1,5 +1,6 @@
 namespaces:
-  'xml': http://www.w3.org/XML/1998/namespace
+    '': http://www.tei-c.org/ns/1.0
+    'tei': http://www.tei-c.org/ns/1.0
 
 documentPath: /TEI
 
@@ -38,7 +39,7 @@ annotatedFields:
       valuePath: "@type"
 
     standoffAnnotations:
-    - path: spanGrp[not(@subtype)]/span
+    - path: .//tei:spanGrp[not(@subtype)]/tei:span
 
       #tokenRefPath: "@ref"        # for annotation on single token (renamed from "refTokenPositionIdPath")
       # For span annotation: first and last token, and XPath to determine span name
@@ -51,7 +52,7 @@ annotatedFields:
         - name: value
           valuePath: .
 
-    - path: spanGrp[@subtype="time-based"]/span
+    - path: .//tei:spanGrp[@subtype="time-based"]/tei:span
 
       spanStartPath: "@from"
       spanEndPath: "@to"
