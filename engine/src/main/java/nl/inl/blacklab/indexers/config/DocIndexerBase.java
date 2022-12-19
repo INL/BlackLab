@@ -46,6 +46,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private static final boolean TRACE = false;
 
     /**
+     * Keep track of the last position of the main annotation at the start
+     * of a word, so we can track that each word gets a value for the main
+     * annotation (even if it's an empty string). This is necessary for character
+     * offsets for each position to be stored.
+     */
+    private int lastMainAnnotPosition;
+
+    /**
      * Position of start tags and their index in the annotation arrays, so we can add
      * payload when we find the end tags
      */
@@ -528,12 +536,21 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      */
     protected void beginWord() {
         addStartChar(getCharacterPosition());
+        lastMainAnnotPosition = annotMain.lastValuePosition();
     }
 
     /**
      * calls {@link #getCharacterPosition()}
      */
     protected void endWord() {
+
+        if (annotMain.lastValuePosition() == lastMainAnnotPosition) {
+            // No value was indexed for the main annotation. Rectify this, so character offsets will be stored
+            // correctly for this position.
+            // (this normally shouldn't happen, but just in case)
+            annotMain.addValue("");
+        }
+
         String punct;
         if (punctuation.length() == 0)
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
