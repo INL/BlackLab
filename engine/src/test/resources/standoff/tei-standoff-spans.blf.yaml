@@ -1,19 +1,19 @@
+# XPath can have issues requires namespace prefixes in documents that use namespaces
 namespaces:
-    '': http://www.tei-c.org/ns/1.0
     'tei': http://www.tei-c.org/ns/1.0
 
-documentPath: /TEI
+documentPath: /tei:TEI
 
 annotatedFields:
 
   contents:
 
-    containerPath: .//text
+    containerPath: .//tei:text
 
     # All w, pause, incident and vocal elements should be indexed as separate tokens ("words")
     # Note that this will treat all these elements the same (i.e. apply the valuePaths declared
     # in the annotations on them).
-    wordPath: .//*[self::w or self::pause or self::incident or self::vocal]
+    wordPath: .//*[self::tei:w or self::tei:pause or self::tei:incident or self::tei:vocal]
 
     # Remember xml:id attribute for each token so we can refer to them from standoff annotations
     tokenIdPath: "@xml:id"     # (renamed from "tokenPositionIdPath")
@@ -69,14 +69,15 @@ annotatedFields:
 
 
     inlineTags:
-    - path: .//annotationBlock   # user contribution
+    - path: .//tei:annotationBlock   # user contribution
 
       # NOTE: attributes for inlineTags are be indexed automatically,
       #       no need to declare them
+      #       (also, declaring custom annotations on inline tags is not supported ATM)
       #annotations:
       #  - name: speaker
       #    valuePath: "@who"
 
-    - path: .//anchor
+    - path: .//tei:anchor
       # Remember synch attribute for each anchor so we can refer to them from standoff annotations
       tokenIdPath: "@synch"
