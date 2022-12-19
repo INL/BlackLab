@@ -667,8 +667,14 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 i++;
             }
 
+            if (spanEndPos >= 0) {
+                // Span annotation. First index the span name at this position, then any attributes.
+                annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, spanName, 1, indexAtPositions, spanEndPos, spanName);
+            }
+
             // Find matches for this annotation.
-            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions, null);
+            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions,
+                    null, spanEndPos, spanName);
 
             // For each configured subannotation...
             for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
@@ -714,7 +720,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                             actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
 
-                        findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions, reuseAnnotationValue ? annotValue : null);
+                        findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions,
+                                reuseAnnotationValue ? annotValue : null, spanEndPos, spanName);
                     }
                     releaseAutoPilot(apForEach);
                     releaseAutoPilot(apName);
@@ -727,7 +734,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
                         subAnnot.isCaptureXml() == annotation.isCaptureXml();
 
-                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions, reuseParentAnnotationValue ? annotValue : null);
+                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions,
+                            reuseParentAnnotationValue ? annotValue : null, spanEndPos, spanName);
                 }
             }
 
@@ -741,7 +749,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected AutoPilot apDot = null;
     protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot)
+            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos,
+            String spanName)
                 throws XPathEvalException, NavException {
         boolean evalXml = annotation.isCaptureXml();
         List<ConfigProcessStep> processingSteps = annotation.getProcess();
@@ -776,23 +785,32 @@ public class DocIndexerXPath extends DocIndexerConfig {
             navpop();
         }
 
+        // If indexAtPositions == null, this positionIncrement will be used.
+        int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
+        if (spanEndPos >= 0) {
+            // For span annotations (which are all added to the same annotation, "starttag"),
+            // the span name has already been indexed at this position with an increment of 1,
+            // so the attribute values we're indexing here should all get position increment 0.
+            positionIncrement = 0;
+        }
+
         // Now apply process and add to index
         if (annotation.isMultipleValues()) {
             // Could there be multiple values here? (either there already are, or a processing step might create them)
             // (this is to prevent allocating a set if we don't have to)
-            boolean mightHaveDuplicates = hasProcessing || values.size() > 1;
+            boolean mightHaveDuplicates = values.size() > 1 || hasProcessing;
 
             // If duplicates are not allowed, keep track of values we've already added
             boolean duplicatesOkay = annotation.isAllowDuplicateValues() || !mightHaveDuplicates;
             Set<String> valuesSeen = duplicatesOkay ? null : new HashSet<>();
 
-            int positionIncrement = 1; // only the first value gets increment 1, the rest get 0
             for (String rawValue: values) {
                 for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
                     if (duplicatesOkay || !valuesSeen.contains(processedValue)) {
                         // Not a duplicate, or we don't care about duplicates. Add it.
-                        annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions);
-                        positionIncrement = 0;
+                        annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
+                                spanEndPos, spanName);
+                        positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
                         if (valuesSeen != null)
                             valuesSeen.add(processedValue);
                     }
@@ -802,8 +820,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
             // Single value (the collection should only contain one entry)
             for (String rawValue: values) {
                 String processedValue = processString(rawValue, processingSteps, null);
-                annotation(annotation.getName(), processedValue, 1, indexAtPositions);
-                break;
+                annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
+                        spanEndPos, spanName);
+                break; // if multiple were matched, only index the first one
             }
         }
         return values; // so subannotations can reuse it if they use the same valuePath
