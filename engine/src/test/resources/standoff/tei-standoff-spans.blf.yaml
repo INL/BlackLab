@@ -38,6 +38,10 @@ annotatedFields:
     - name: type
       valuePath: "@type"
 
+    # Index the element name so we can distinguish between w/pause/incident/vocal
+    - name: element
+      valuePath: name()
+
     standoffAnnotations:
     - path: .//tei:spanGrp[not(@subtype)]/tei:span
 
