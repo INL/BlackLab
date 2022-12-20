@@ -70,7 +70,6 @@ public class TestSearchComponent {
         Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
     }
 
-    @Ignore // we're getting errors
     @Test
     public void testEnableBlackLabButNoOps() throws SolrServerException, IOException {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();

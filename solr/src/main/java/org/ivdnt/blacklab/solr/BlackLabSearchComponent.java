@@ -133,7 +133,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             DocIterator it = results.iterator();
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = BlackLab.indexFromReader(reader, true);
-            String field = params.get("bl.pattfield", index.mainAnnotatedField().name());
+            String field = params.get("bl.pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
             String patt = params.get("bl.patt");
             if (patt != null) {
                 // Perform pattern search
