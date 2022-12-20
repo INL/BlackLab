@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Test data for standoff span annotations (spanGrp/span elements),
+     referring to token positions by both w/@xml:id and anchor/@synch -->
 <TEI xmlns="http://www.tei-c.org/ns/1.0">
   <text>
     <body>
@@ -7,8 +9,8 @@
         <w xml:id="w1" lemma="Kris">Kris</w>
         <w xml:id="w2" lemma="Kringle">Kringle</w>
         <anchor synch="T2" />
-        <spanGrp type="speech-rate" subtype="time-based">
-          <span from="T1" to="T2">123</span>
+        <spanGrp type="character" subtype="time-based">
+          <span from="T1" to="T2">Santa Claus</span>
         </spanGrp>
       </annotationBlock>
       <pause start="w2" end="w3"/>
@@ -21,16 +23,10 @@
           <desc>short breathe in</desc>
         </vocal>
         <anchor synch="T5"/>
-        <spanGrp type="speech-rate" subtype="time-based">
-          <span from="T3" to="T4">456</span>
-        </spanGrp>
       </annotationBlock>
       <incident start="T4" end="T5">
         <desc>laugh</desc>
-      </incident>    
-      <spanGrp type="character" subtype="time-based">
-        <span from="T1" to="T2">Santa Claus</span>
-      </spanGrp>
+      </incident>
       <spanGrp type="character">
         <span from="w3" to="w4">Easter Bunny</span>
       </spanGrp>

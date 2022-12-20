@@ -1,3 +1,8 @@
+# Test configuration for standoff span annotations, i.e.
+# standoff annotations that apply to spans of tokens instead of a single token.
+# Note that we refer to token positions both by w/@xml:id (regular word ids)
+# as well as anchor/@synch (attribute on an inlineTag)
+
 # XPath can have issues requires namespace prefixes in documents that use namespaces
 namespaces:
     'tei': http://www.tei-c.org/ns/1.0
@@ -76,11 +81,8 @@ annotatedFields:
     - path: .//tei:annotationBlock   # user contribution
 
       # NOTE: attributes for inlineTags are be indexed automatically,
-      #       no need to declare them
-      #       (also, declaring custom annotations on inline tags is not supported ATM)
-      #annotations:
-      #  - name: speaker
-      #    valuePath: "@who"
+      #   no need to declare them
+      #   (also, declaring custom annotations on inline tags is not supported ATM)
 
     - path: .//tei:anchor
       # Remember synch attribute for each anchor so we can refer to them from standoff annotations

@@ -26,11 +26,9 @@ public class TestStandoffSpans {
 
     public static final String TEST_FORMAT_NAME = "tei-standoff-spans";
 
-    private static DocIndexerFactoryConfig factoryConfig;
-
     @BeforeClass
     public static void setup() throws IOException {
-        factoryConfig = new DocIndexerFactoryConfig();
+        DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig();
         File file = getFile("standoff/tei-standoff-spans.blf.yaml");
         factoryConfig.load(TEST_FORMAT_NAME, file).orElseThrow();
         DocumentFormats.registerFactory(factoryConfig);
@@ -79,7 +77,7 @@ public class TestStandoffSpans {
             String fieldName = index.mainAnnotatedField().tagsAnnotation().
                     sensitivity(MatchSensitivity.SENSITIVE).luceneField();
             BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
-                    "speech-rate", null);
+                    "character", null);
             Hits results = s.find(query).execute();
             Assert.assertEquals(2, results.size());
             Assert.assertEquals(0, results.get(0).start());

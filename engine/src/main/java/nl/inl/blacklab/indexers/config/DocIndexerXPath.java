@@ -346,13 +346,19 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
                 // Capture tokenId for this token position?
                 if (apTokenId != null) {
+                    navpush();
                     apTokenId.resetXPath();
                     String tokenId = apTokenId.evalXPathToString();
                     tokenPositionsMap.put(tokenId, getCurrentTokenPosition());
+                    navpop();
                 }
 
                 // Does an inline object occur before this word?
                 long wordFragment = nav.getContentFragment();
+                if (wordFragment < 0) {
+                    // Self-closing tag; use the element fragment instead
+                    wordFragment = nav.getElementFragment();
+                }
                 int wordOffset = (int) wordFragment;
                 while (nextInlineObject != null && wordOffset >= nextInlineObject.getOffset()) {
                     // Yes. Handle it.
