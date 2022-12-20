@@ -289,6 +289,91 @@ annotatedFields:
         valuePath: "@pos"
 ```
 
+### Standoff annotations for spans
+
+The default standoff annotations as shown above apply an annotation to a single token (or several tokens, but each get the annotation value separately). What if instead you want to define a span of tokens?
+
+This is possible using `spanStartPath`, `spanEndPath` and `spanNamePath` (instead of `tokenRefPath` used above). So to index this XML:
+
+```xml
+<doc>
+    <w xml:id="w1">The</w>
+    <w xml:id="w2">quick</w>
+    <w xml:id="w3">brown</w>
+    <w xml:id="w4">fox</w>
+    <w xml:id="w5">jumps</w>
+    <w xml:id="w6">over</w>
+    ...
+    <span from="w1" to="w4" type="animal" speed="fast" />
+</doc>
+```
+
+You can use this `standoffAnnotations` configuration:
+
+```yaml
+tokenIdPath: "@xml:id"
+
+standoffAnnotations:
+- path: .//span
+  spanStartPath: "@from"
+  spanEndPath: "@to"
+  spanEndIsInclusive: true
+  spanNamePath: "@type"
+  annotations:
+    - name: speed
+      valuePath: "@speed"
+```
+
+Note the use of `spanEndIsInclusive: true` to signify that the `to` attribute refers to the last token of the span, not the first token _after_ the span (which is the default, the same as how hit positions are reported by BlackLab Server).
+
+The above would allow you to search for `<animal/> containing "fox"` or `<animal speed="fast" />` to find "The quick brown fox".
+
+### Referring to inline anchors instead of words
+
+Normally, standoff annotations refer to token ("word") ids, defined by the `tokenIdPath` setting at the annotated field level.
+
+But what if your XML includes inline anchor tags between words that you want to
+refer to? For example:
+
+```xml
+<doc>
+    <anchor id="here" />
+    <w xml:id="w1">The</w>
+    <w xml:id="w2">quick</w>
+    <w xml:id="w3">brown</w>
+    <w xml:id="w4">fox</w>
+    <anchor id="there" />
+    <w xml:id="w5">jumps</w>
+    <w xml:id="w6">over</w>
+    ...
+    <span from="here" to="there" type="animal" speed="fast" />
+</doc>
+```
+
+Use this configuration for this situation:
+
+```yaml
+# Capture the anchor ids.
+# (each anchor id will point to the token FOLLOWING the anchor!)
+inlineTags:
+  - path: ./anchor
+    tokenIdPath: "@id"
+
+standoffAnnotations:
+- path: .//span
+  spanStartPath: "@from"
+  spanEndPath: "@to"
+  spanEndIsInclusive: false
+  spanNamePath: "@type"
+  annotations:
+    - name: speed
+      valuePath: "@speed"
+```
+
+As you can see, we capture the id of the `anchor` tokens and refer to them the same way as word tokens (this does means that ids must be unique in the document!).
+
+Note the use of `spanEndIsInclusive: false` because the anchor id that `to` refers to will point to the first token _after_ the span.
+
 ### Standoff annotations without a unique token id
 
 There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described
