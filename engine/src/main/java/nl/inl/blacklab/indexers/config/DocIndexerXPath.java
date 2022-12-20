@@ -287,6 +287,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
             List<InlineObject> tagsAndPunct = new ArrayList<>();
             int i = 0;
             for (AutoPilot apInlineTag : apsInlineTag) {
+                // If we want to capture token ids for this inline tag, create the AutoPilot for this
                 ConfigInlineTag configInlineTag = annotatedField.getInlineTags().get(i);
                 String inlineTagTokenIdPath = configInlineTag.getTokenIdPath();
                 AutoPilot apTokenIdPath = null;
@@ -294,6 +295,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     apTokenIdPath = acquireAutoPilot(inlineTagTokenIdPath);
                 }
 
+                // Collect the occurrences of this inline tag
                 navpush();
                 apInlineTag.resetXPath();
                 while (apInlineTag.evalXPath() != -1) {
@@ -424,7 +426,6 @@ public class DocIndexerXPath extends DocIndexerConfig {
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
             AutoPilot apTokenPos = acquireAutoPilot(standoff.getTokenRefPath());
             AutoPilot apSpanEnd = null, apSpanName = null;
-            boolean spanEndIsInclusive = standoff.isSpanEndIsInclusive();
             if (!StringUtils.isEmpty(standoff.getSpanEndPath())) {
                 // This is a span annotation. Also get XPaths for span end and name.
                 apSpanEnd = acquireAutoPilot(standoff.getSpanEndPath());
@@ -448,6 +449,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 navpop();
 
                 if (apSpanEnd != null) {
+                    // Standoff span annotation. Find span end and name.
                     int spanEndPos = tokenPositions == null || tokenPositions.isEmpty() ? -1 : tokenPositions.get(0);
                     String spanName = "span";
                     navpush();
@@ -462,7 +464,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             spanEndPos = tokenPositionsMap.get(tokenId);
                         }
                     }
-                    if (spanEndIsInclusive) {
+                    if (standoff.isSpanEndIsInclusive()) {
                         // The matched token should be included in the span, but we always store
                         // the first token outside the span as the end. Adjust the position accordingly.
                         spanEndPos++;

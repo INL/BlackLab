@@ -534,7 +534,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * calls {@link #getCharacterPosition()}
      */
     protected void endWord() {
-
         String punct;
         if (punctuation.length() == 0)
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
