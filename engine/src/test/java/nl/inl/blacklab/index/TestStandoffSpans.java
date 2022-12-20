@@ -81,9 +81,11 @@ public class TestStandoffSpans {
             BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
                     "speech-rate", null);
             Hits results = s.find(query).execute();
-            Assert.assertEquals(5, results.size());
+            Assert.assertEquals(2, results.size());
             Assert.assertEquals(0, results.get(0).start());
-            Assert.assertEquals(6, results.get(0).end()); // FAILS, actually 7, but that's wrong
+            Assert.assertEquals(2, results.get(0).end()); // FAILS, actually 3, but that's wrong
+            Assert.assertEquals(3, results.get(1).start());
+            Assert.assertEquals(5, results.get(1).end());
         }
         FileUtils.deleteDirectory(testDir);
     }
