@@ -324,7 +324,7 @@ standoffAnnotations:
       valuePath: "@speed"
 ```
 
-Note the use of `spanEndIsInclusive: true` to signify that the `to` attribute refers to the last token of the span, not the first token _after_ the span (which is the default, the same as how hit positions are reported by BlackLab Server).
+Note the setting `spanEndIsInclusive: true` to indicate that the `to` attribute refers to the last token of the span, not the first token _after_ the span. (`true` is the default value for this setting, but it is included here for completeness)
 
 The above would allow you to search for `<animal/> containing "fox"` or `<animal speed="fast" />` to find "The quick brown fox".
 
@@ -376,8 +376,7 @@ Note the use of `spanEndIsInclusive: false` because the anchor id that `to` refe
 
 ### Standoff annotations without a unique token id
 
-There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described
-above (although you will need some way to connect the standoff annotation to the word, obviously). It is not recommended as it is likely to be significantly slower, but in some cases, it may be useful.
+There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described above (although you will need some way to connect the standoff annotation to the word, obviously). This will probably be slower, but in some cases, it may be useful.
 
 Let's say you want to index a color with every word, and your document looks like this:
 
@@ -400,14 +399,14 @@ Let's say you want to index a color with every word, and your document looks lik
 </root>
 ```
 
-A standoff annotation of this type is defined in the same section as regular non-standoff annotations. It relies on capturing one or more values to help us locate the color we want to index at each position. These captured values are then substituted in the valuePath that fetches the color value:
+A standoff annotation of this type is defined in the same section as regular (non-standoff) annotations. It relies on capturing one or more values to help us locate the color we want to index at each position. These captured values are then substituted in the valuePath that fetches the color value:
 
 ```yaml
 - name: color
   captureValuePaths:                  # value(s) we need from the current word to find the color
   - "@colorId"
   valuePath: /root/colors[@id='$1']   # how to get the value for this annotation from the document,
-                                          # using the value(s) captured.
+                                      # using the value(s) captured.
 ```
 
 ## Subannotations

@@ -30,7 +30,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String spanEndPath = "";
 
     /**
-     * If this is a span, does spanEndpath refer to the last token inside the span (inclusive)
+     * If this is a span, does spanEndPath refer to the last token inside the span (inclusive)
      * or the first token outside the span (exclusive)?
      */
     private boolean spanEndIsInclusive = true;
