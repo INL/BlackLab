@@ -75,7 +75,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // Load and deserialize metadata document.
                 String json = MetadataDocument.getMetadataJson(index.reader(), docId);
                 ObjectMapper mapper = Json.getJsonObjectMapper();
-                mapper.registerModule(new JaxbAnnotationModule());
+                JaxbAnnotationModule jaxbAnnotationModule = new JaxbAnnotationModule();
+                mapper.registerModule(jaxbAnnotationModule);
                 metadata = mapper.readValue(new StringReader(json),
                         IndexMetadataIntegrated.class);
                 metadata.fixAfterDeserialization(index, docId);

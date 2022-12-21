@@ -24,11 +24,39 @@ public class SolrTestServer {
 
     private static Path solrPath;
 
-    private static void copyFile(Path sourcePath, Path targetPath, String fileName) {
-        try {
-            Files.copy(sourcePath.resolve(fileName), targetPath.resolve(fileName));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private static void copy(Path sourcePath, Path targetPath, String fileName) {
+        copy(sourcePath, targetPath, fileName, fileName);
+    }
+
+    /**
+     * Copy a file or directory tree.
+     *
+     * @param sourcePath where to find fileName
+     * @param targetPath where to copy fileName
+     * @param fileName file or dir to copy
+     */
+    private static void copy(Path sourcePath, Path targetPath, String fileName, String targetFileName) {
+        Path srcFilePath = sourcePath.resolve(fileName);
+        Path targetFilePath = targetPath.resolve(targetFileName);
+        if (srcFilePath.toFile().isDirectory()) {
+            // Directory; recursively copy it
+            File srcDir = srcFilePath.toFile();
+            File targetDir = targetFilePath.toFile();
+            if (!targetDir.mkdir())
+                throw new RuntimeException("Cannot create dir: " + targetFilePath);
+            File[] files = srcDir.listFiles();
+            if (files != null) {
+                for (File f: files) {
+                    copy(srcFilePath, targetFilePath, f.getName());
+                }
+            }
+        } else {
+            try {
+                // Regular file; copy it
+                Files.copy(srcFilePath, targetFilePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -43,10 +71,14 @@ public class SolrTestServer {
         return dir.delete();
     }
 
-    static void createEmbeddedServer(String defaultCoreName, Path resourcePath) {
+    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath) {
         try {
             solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
-            copyFile(resourcePath, solrPath, "solr.xml");
+            copy(resourcePath, solrPath, "solr.xml");
+
+            if (existingIndexPath != null)
+                copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
+
             CoreContainer container = new CoreContainer(solrPath.toAbsolutePath(), new Properties());
             container.load();
 
@@ -124,8 +156,8 @@ public class SolrTestServer {
 
         // Copy XSLT file used by our SearchComponent.
         // (we should probably put stuff like this in a configset instead, or use the API to add it later)
-        Path coreConfPath = server.getCoreContainer().getCore(coreName).getInstancePath().resolve("conf");
-        copyFile(confTemplatePath, coreConfPath, "test.xslt");
+        //Path coreConfPath = server.getCoreContainer().getCore(coreName).getInstancePath().resolve("conf");
+        //copy(confTemplatePath, coreConfPath, "test.xslt");
     }
 
     public static void close() {

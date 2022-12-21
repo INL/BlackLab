@@ -3,10 +3,12 @@
     <field name="_version_" type="plong" indexed="false" stored="false"/>
     <uniqueKey>pid</uniqueKey>
 
+    <!-- fieldType "string" is referred to from solrconfig.xml (maybe change this) -->
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
 
     <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
 
+    <!-- fieldType "text_general" is referred to from solrconfig.xml (maybe change this) -->
     <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
         <analyzer type="index">
             <tokenizer class="solr.StandardTokenizerFactory"/>
@@ -18,21 +20,45 @@
         </analyzer>
     </fieldType>
 
-    <fieldType name="metadata" class="solr.StrField"
+    <fieldType name="metadata_tokenized" class="solr.TextField"
                indexed="true"
                stored="true"
-               docValues="true"
+               docValues="false"
                multiValued="true"
+               positionIncrementGap="100"
                omitNorms="true"
-               omitTermFreqAndPositions="false"
+               omitTermFreqAndPositions="false">
+        <analyzer type="index">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+    </fieldType>
+
+    <fieldType name="metadata_untokenized" class="solr.TextField"
+               indexed="true"
+               stored="true"
+               docValues="false"
+               multiValued="true"
+               positionIncrementGap="100"
+               omitNorms="true"
+               omitTermFreqAndPositions="true"
     />
 
-    <fieldType name="metadata_pid" class="solr.StrField"
+    <fieldType name="metadata_pid" class="solr.TextField"
                indexed="true"
                stored="true"
-               docValues="true"
+               docValues="false"
+               multiValued="false"
                omitNorms="true"
-               omitPositions="true"
+               termVectors="true"
+               termPositions="true"
+               termOffsets="true"
+               termPayloads="true"
+               omitTermFreqAndPositions="false"
     />
 
     <fieldType name="term" class="solr.StrField"
@@ -44,12 +70,12 @@
                termOffsets="true"
     />
 
-    <fieldType name="numeric" class="solr.IntPointField"
+    <!-- <fieldType name="numeric" class="solr.IntPointField"
                indexed="true"
                stored="true"
                docValues="true"
                omitPositions="true"
-    />
+    /> -->
 
     <!-- example annotations. Searching in these yields no results for some reason. -->
     <field name="contents%starttag@s" type="term"/>
@@ -60,12 +86,7 @@
     <!-- <field name="contents#cs" type="term"/> should not exist anyway -->
 
     <!-- example metadata -->
-    <field name="pid" type="metadata_pid"/>
-    <field name="cdromMetadata" type="metadata"/>
-    <field name="subtitle" type="metadata"/>
-    <field name="title" type="metadata"/>
-    <field name="datering" type="metadata"/>
-    <field name="author" type="metadata"/>
-    <field name="category" type="metadata"/>
-    <field name="editorLevel1" type="metadata"/>
+    <field name="pid" type="metadata_pid" storeOffsetsWithPositions="true"/>
+    <field name="title" type="metadata_tokenized" storeOffsetsWithPositions="true"/>
+    <field name="subtitle" type="metadata_tokenized" storeOffsetsWithPositions="true"/>
 </schema>
