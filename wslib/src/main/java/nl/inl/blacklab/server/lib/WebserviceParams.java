@@ -27,6 +27,7 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
  * just the parameters relevant to that operation.
  */
 public interface WebserviceParams extends PlainWebserviceParams {
+
     BlackLabIndex blIndex();
 
     boolean hasPattern() throws BlsException;

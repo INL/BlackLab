@@ -21,7 +21,6 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -34,10 +33,8 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
-import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSettings;
 import nl.inl.blacklab.server.jobs.DocGroupSortSettings;
@@ -47,8 +44,6 @@ import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.BlsUtils;
-import nl.inl.blacklab.server.util.GapFiller;
 
 /**
  * Wraps the WebserviceParams and interprets them to create searches.
@@ -121,10 +116,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getUser();
     }
 
-    private BLSConfigParameters configParam() {
-        return getSearchManager().config().getParameters();
-    }
-
     @Override
     public boolean hasPattern() throws BlsException {
         return pattern().isPresent();
@@ -133,26 +124,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Optional<TextPattern> pattern() throws BlsException {
         if (pattern == null) {
-            String patt = getPattern();
-            if (!StringUtils.isBlank(patt)) {
-                String pattLang = getPattLanguage();
-                String pattGapData = getPattGapData();
-                TextPattern result;
-                if (pattLang.equals("corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
-                    // CQL query with gaps, and TSV data to put in the gaps
-                    try {
-                        result = GapFiller.parseGapQuery(patt, pattGapData);
-                    } catch (InvalidQuery e) {
-                        throw new BadRequest("PATT_SYNTAX_ERROR",
-                                "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
-                    }
-                } else {
-                    BlackLabIndex index = blIndex();
-                    String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
-                    result = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang, true);
-                }
-                pattern = result;
-            }
+            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
         }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
     }
@@ -176,22 +148,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Query filterQuery() throws BlsException {
         if (filterQuery == null) {
-            BlackLabIndex index = blIndex();
-            String docPid = getDocPid();
-            String filter = getDocumentFilterQuery();
-            Query result;
-            if (docPid != null) {
-                // Only hits in 1 doc (for highlighting)
-                int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
-                if (luceneDocId < 0)
-                    throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
-                logger.debug("Filtering on single doc-id");
-                result = new SingleDocIdFilter(luceneDocId);
-            } else if (!StringUtils.isEmpty(filter)) {
-                result = BlsUtils.parseFilter(index, filter, getDocumentFilterLanguage());
-            } else
-                result = null;
-            filterQuery = result;
+            filterQuery = WebserviceParamsUtils.parseFilterQuery(blIndex(), getDocPid(), getDocumentFilterQuery(),
+                    getDocumentFilterLanguage());
         }
         return filterQuery;
     }

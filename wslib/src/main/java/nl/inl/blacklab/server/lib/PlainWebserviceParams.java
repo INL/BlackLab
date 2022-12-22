@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -34,6 +35,10 @@ public interface PlainWebserviceParams {
     String getPattGapData();
 
     SearchManager getSearchManager();
+
+    default BLSConfigParameters configParam() {
+        return getSearchManager().config().getParameters();
+    }
 
     default IndexManager getIndexManager() { return getSearchManager().getIndexManager(); }
 
