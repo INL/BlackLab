@@ -192,6 +192,11 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
     }
 
     @Override
+    public long getNumberOfResultsToShow() {
+        return optNumberOfResultsToShow().orElse(0L);
+    }
+
+    @Override
     public int getWordsAroundHit() {
         return bl("wordsaroundhit", 0);
     }

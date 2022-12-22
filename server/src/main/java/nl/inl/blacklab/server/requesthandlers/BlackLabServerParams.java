@@ -345,6 +345,14 @@ public class BlackLabServerParams implements PlainWebserviceParams {
     }
 
     @Override
+    public long getNumberOfResultsToShow() {
+        // NOTE: this is NOT the same as optNumberOfResultsToShow.orElse(0L) because
+        //       getString() sets a default value if "number" param is not set
+        //       (yes, this is smelly)
+        return parse(getString("number"), 0L);
+    }
+
+    @Override
     public int getWordsAroundHit() {
         return parse(getString("wordsaroundhit"), 0);
     }

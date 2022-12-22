@@ -72,9 +72,7 @@ public interface PlainWebserviceParams {
 
     Optional<Long> optNumberOfResultsToShow();
 
-    default long getNumberOfResultsToShow() {
-        return optNumberOfResultsToShow().orElse(0L);
-    }
+    long getNumberOfResultsToShow();
 
     int getWordsAroundHit();
 
