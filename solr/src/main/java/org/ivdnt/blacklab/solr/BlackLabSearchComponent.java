@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
@@ -28,6 +29,8 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchEmpty;
+import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
@@ -121,23 +124,28 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public synchronized void process(ResponseBuilder rb) throws IOException {
         // Should we run at all?
-        SolrParams params = rb.req.getParams();
-        boolean shouldRun = params.getBool("bl", false);
+        boolean shouldRun = rb.req.getParams().getBool("bl", false);
         if (shouldRun) {
+            IndexReader reader = rb.req.getSearcher().getIndexReader();
+            BlackLabIndex index = BlackLab.indexFromReader(reader, true);
+            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index);
+            WebserviceParams params = WebserviceParamsImpl.get(false, true,
+                    solrParams);
             DocList docList = null;
             if (rb.getResults() != null) {
                 docList = rb.getResults().docList;
             }
             DocIterator it = docList.iterator();
             Query docFilterQuery = null; // TODO: write Query class that filters on docList
-            IndexReader reader = rb.req.getSearcher().getIndexReader();
-            BlackLabIndex index = BlackLab.indexFromReader(reader, true);
-            String field = params.get("bl.pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
-            String patt = params.get("bl.patt");
-            String operation = params.get("bl.op", "hits");
+            String field = solrParams.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
+            String patt = solrParams.bl("patt", "");
+            String operation = solrParams.bl("op", "hits");
             switch (operation) {
             case "hits":
                 opHits(index, field, patt, docFilterQuery, rb);
+                break;
+            case "none":
+                // do nothing
                 break;
             default:
                 errorResponse("Unknown operation " + operation, rb);
@@ -154,7 +162,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private void opHits(BlackLabIndex index, String field, String patt, Query docFilterQuery, ResponseBuilder rb)
             throws IOException {
 
-        if (patt == null) {
+        if (StringUtils.isEmpty(patt)) {
             errorResponse("No pattern given", rb);
             return;
         }

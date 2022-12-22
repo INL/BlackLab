@@ -93,4 +93,6 @@ public interface WebserviceParams extends PlainWebserviceParams {
 
     SearchFacets facets() throws BlsException;
 
+    String getFieldName();
+
 }

@@ -339,12 +339,9 @@ public class BlackLabServerParams implements PlainWebserviceParams {
 
     @Override
     public Optional<Long> optNumberOfResultsToShow() {
-        return containsKey("number") ? Optional.of(getNumberOfResultsToShow()) : Optional.empty();
-    }
-
-    @Override
-    public long getNumberOfResultsToShow() {
-        return parse(getString("number"), 0L);
+        return containsKey("number") ?
+                Optional.of(parse(getString("number"), 0L)) :
+                Optional.empty();
     }
 
     @Override

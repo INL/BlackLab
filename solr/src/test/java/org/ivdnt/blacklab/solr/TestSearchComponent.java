@@ -78,6 +78,7 @@ public class TestSearchComponent {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add("bl", "true"); // activate our component
+        solrParams.add("bl.op", "none"); // set operation
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
         Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
     }

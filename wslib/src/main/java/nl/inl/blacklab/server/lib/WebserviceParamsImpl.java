@@ -590,11 +590,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public long getNumberOfResultsToShow() {
-        return params.getNumberOfResultsToShow();
-    }
-
-    @Override
     public int getWordsAroundHit() {
         return params.getWordsAroundHit();
     }

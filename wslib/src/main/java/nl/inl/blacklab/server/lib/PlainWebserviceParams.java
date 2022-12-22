@@ -72,7 +72,9 @@ public interface PlainWebserviceParams {
 
     Optional<Long> optNumberOfResultsToShow();
 
-    long getNumberOfResultsToShow();
+    default long getNumberOfResultsToShow() {
+        return optNumberOfResultsToShow().orElse(0L);
+    }
 
     int getWordsAroundHit();
 
@@ -133,8 +135,6 @@ public interface PlainWebserviceParams {
     boolean isCalculateCollocations();
 
     String getAnnotationName();
-
-    String getFieldName();
 
     Set<String> getTerms();
 
