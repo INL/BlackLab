@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -22,9 +23,11 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
@@ -121,38 +124,61 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         SolrParams params = rb.req.getParams();
         boolean shouldRun = params.getBool("bl", false);
         if (shouldRun) {
-            DocList results = null;
+            DocList docList = null;
             if (rb.getResults() != null) {
-                results = rb.getResults().docList;
+                docList = rb.getResults().docList;
             }
-            //SimpleOrderedMap<String> data = new SimpleOrderedMap<>();
-            List<String> data = new ArrayList<>();
-            DocIterator it = results.iterator();
+            DocIterator it = docList.iterator();
+            Query docFilterQuery = null; // TODO: write Query class that filters on docList
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = BlackLab.indexFromReader(reader, true);
             String field = params.get("bl.pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
             String patt = params.get("bl.patt");
-            if (patt != null) {
-                // Perform pattern search
-                try {
-                    TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-                    QueryExecutionContext context = index.defaultExecutionContext(index.annotatedField(field));
-                    BLSpanQuery query = tp.translate(context);
-                    Hits hits = index.search().find(query).execute();
-                    List<NamedList<Object>> hitList = new ArrayList<>();
-                    for (Hit hit: hits) {
-                        NamedList<Object> hitDesc = new NamedList<>();
-                        String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
-                        hitDesc.add("doc", docPid);
-                        hitDesc.add("start", hit.start());
-                        hitDesc.add("end", hit.end());
-                        hitList.add(hitDesc);
-                    }
-                    rb.rsp.add("blacklabResponse", hitList);
-                } catch (InvalidQuery e) {
-                    throw new IOException("Error exexcuting BlackLab query", e);
-                }
+            String operation = params.get("bl.op", "hits");
+            switch (operation) {
+            case "hits":
+                opHits(index, field, patt, docFilterQuery, rb);
+                break;
+            default:
+                errorResponse("Unknown operation " + operation, rb);
             }
+        }
+    }
+
+    private void errorResponse(String message, ResponseBuilder rb) {
+        NamedList<String> err = new NamedList<>();
+        err.add("errorMessage", message);
+        rb.rsp.add("blacklabResponse", err);
+    }
+
+    private void opHits(BlackLabIndex index, String field, String patt, Query docFilterQuery, ResponseBuilder rb)
+            throws IOException {
+
+        if (patt == null) {
+            errorResponse("No pattern given", rb);
+            return;
+        }
+        // Perform pattern search
+        try {
+            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
+            QueryExecutionContext context = index.defaultExecutionContext(index.annotatedField(field));
+            BLSpanQuery query = tp.translate(context);
+            if (docFilterQuery != null)
+                query = new SpanQueryFiltered(tp.translate(context), docFilterQuery);
+            SearchEmpty search = index.search();
+            Hits hits = search.find(query).execute();
+            List<NamedList<Object>> hitList = new ArrayList<>();
+            for (Hit hit: hits) {
+                NamedList<Object> hitDesc = new NamedList<>();
+                String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
+                hitDesc.add("doc", docPid);
+                hitDesc.add("start", hit.start());
+                hitDesc.add("end", hit.end());
+                hitList.add(hitDesc);
+            }
+            rb.rsp.add("blacklabResponse", hitList);
+        } catch (InvalidQuery e) {
+            throw new IOException("Error exexcuting BlackLab query", e);
         }
     }
 

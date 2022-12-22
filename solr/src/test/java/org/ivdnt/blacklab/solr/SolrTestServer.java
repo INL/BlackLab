@@ -117,7 +117,7 @@ public class SolrTestServer {
             // FIXME ERROR: unknown handler: /testcore/config
             // (but in JUnit we can just put the config in solrconfig.xml, so not needed right now)
             NamedList<Object> response = server.request(reqAddSearchComponent);
-            System.err.println("Add search component response\n" + response.toString());
+            //System.err.println("Add search component response\n" + response.toString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -129,7 +129,7 @@ public class SolrTestServer {
         GenericSolrRequest reqSetLogLevel = new GenericSolrRequest(SolrRequest.METHOD.POST,
                 "/admin/info/logging", params);
         NamedList<Object> response = server.request(reqSetLogLevel);
-        System.err.println("Log level response\n" + response.toString());
+        //System.err.println("Log level response\n" + response.toString());
     }
 
     /**

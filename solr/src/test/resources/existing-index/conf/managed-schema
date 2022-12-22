@@ -57,9 +57,16 @@
                termVectors="true"
                termPositions="true"
                termOffsets="true"
-               termPayloads="true"
-               omitTermFreqAndPositions="false"
-    />
+               omitTermFreqAndPositions="false">
+        <analyzer type="index">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+        <analyzer type="query">
+            <tokenizer class="solr.StandardTokenizerFactory"/>
+            <filter class="solr.LowerCaseFilterFactory"/>
+        </analyzer>
+   </fieldType>
 
     <fieldType name="term" class="solr.StrField"
                indexed="true"

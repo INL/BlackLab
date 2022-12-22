@@ -7,15 +7,13 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ResultHitGroup;
 import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
-import nl.inl.blacklab.server.lib.results.ResultListOfHits;
 import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
@@ -56,14 +54,6 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
         List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
         for (ResultHitGroup groupInfo: groupInfos) {
-
-            ResultListOfHits listOfHits = null;
-            if (params.includeGroupContents()) {
-                Hits hitsInGroup = groupInfo.getGroup().storedResults();
-                listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup,
-                        groupInfo.getConcordanceContext(),
-                        groupInfo.getDocIdToPid());
-            }
 
             ds.startItem("hitgroup").startMap();
             {

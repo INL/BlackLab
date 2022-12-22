@@ -94,7 +94,7 @@ public class TestSearchComponent {
 
         System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        System.err.println("RESPONSE: " + queryResponse.getResponse());
+        //System.err.println("RESPONSE: " + queryResponse.getResponse());
         /*for (SolrDocument document: queryResponse.getResults()) {
             System.out.println(document);
         }*/
