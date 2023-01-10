@@ -90,7 +90,7 @@ public class TestSearchComponent {
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add(CommonParams.FL, "fromInputFile,pid,title");
         solrParams.add("bl", "true"); // activate our component
-        solrParams.add("bl.pattfield", "contents"); // activate our component
+        //solrParams.add("bl.pattfield", "contents"); // activate our component
         solrParams.add("bl.patt", "\"the\""); // activate our component
 
         System.err.println(CORE_NAME);
@@ -101,6 +101,12 @@ public class TestSearchComponent {
         }*/
 
         List<NamedList<Object>> hits = (List<NamedList<Object>>)queryResponse.getResponse().get("blacklabResponse");
+
+        /*
+        NEW (NOT WORKING YET)
+        NamedList blacklab = (NamedList)queryResponse.getResponse().get("blacklab");
+        List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");*/
+
         Assert.assertEquals(21, hits.size());
     }
 }

@@ -8,6 +8,7 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultInputFormat;
 import nl.inl.blacklab.server.lib.results.ResultListInputFormats;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;

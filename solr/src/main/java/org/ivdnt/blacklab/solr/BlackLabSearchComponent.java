@@ -20,7 +20,6 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -29,9 +28,14 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchEmpty;
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResultHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.search.SearchManager;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -39,6 +43,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     /** The core we're attached to. */
     private SolrCore core;
+
+    /** Our search manager object. */
+    private SearchManager searchManager;
 
     public BlackLabSearchComponent() {
     }
@@ -78,14 +85,17 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void init(@SuppressWarnings("rawtypes") NamedList args) {
-      SolrParams initArgs = args.toSolrParams();
-      System.out.println("Parameters: " + initArgs);
+        SolrParams initArgs = args.toSolrParams();
+        System.out.println("Parameters: " + initArgs);
 //      if (initArgs.get("xsltFile") == null || initArgs.get("inputField") == null) {
 //          throw new RuntimeException("ApplyXsltComponent needs xsltFile and inputField parameters!");
 //      }
 //      xsltFilePath = initArgs.get("xsltFile");
 //      inputField = initArgs.get("inputField");
 
+        BLSConfig blsConfig = new BLSConfig();
+        blsConfig.setIsSolr(true);
+        searchManager = new SearchManager(blsConfig);
     }
 
     /**
@@ -127,8 +137,11 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         boolean shouldRun = rb.req.getParams().getBool("bl", false);
         if (shouldRun) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
-            BlackLabIndex index = BlackLab.indexFromReader(reader, true);
-            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index);
+            BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
+            if (!searchManager.getIndexManager().indexExists(index.name())) {
+                searchManager.getIndexManager().registerIndex(index);
+            }
+            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index, searchManager);
             WebserviceParams params = WebserviceParamsImpl.get(false, true,
                     solrParams);
             DocList docList = null;
@@ -137,12 +150,24 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             }
             DocIterator it = docList.iterator();
             Query docFilterQuery = null; // TODO: write Query class that filters on docList
-            String field = solrParams.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
-            String patt = solrParams.bl("patt", "");
+            //String field = params.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
+            //String patt = params.getPattern();
             String operation = solrParams.bl("op", "hits");
+            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("blacklab").startEntry("blacklab");
             switch (operation) {
             case "hits":
-                opHits(index, field, patt, docFilterQuery, rb);
+                String field = index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name();
+                opHitsOld(index, field, params.getPattern(), null, rb);
+                /*
+
+                ERROR, this will find 0 hits! WHY?
+
+                try {
+                    opHits(params, ds);
+                } catch (Exception e) {
+                    // @@@ write error response
+                    throw new IOException(e);
+                }*/
                 break;
             case "none":
                 // do nothing
@@ -150,6 +175,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             default:
                 errorResponse("Unknown operation " + operation, rb);
             }
+            ds.endEntry().endDocument();
         }
     }
 
@@ -159,7 +185,22 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         rb.rsp.add("blacklabResponse", err);
     }
 
-    private void opHits(BlackLabIndex index, String field, String patt, Query docFilterQuery, ResponseBuilder rb)
+    private void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
+        if (params.isCalculateCollocations()) {
+            throw new UnsupportedOperationException("Not yet implemented: colloc");
+            /*
+            // Collocations request
+            TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
+            dstreamCollocationsResponse(ds, tfl);
+            */
+        } else {
+            // Hits request
+            ResultHits resultHits = WebserviceOperations.getResultHits(params);
+            DStream.hitsResponse(ds, resultHits, null);
+        }
+    }
+
+    private void opHitsOld(BlackLabIndex index, String field, String patt, Query docFilterQuery, ResponseBuilder rb)
             throws IOException {
 
         if (StringUtils.isEmpty(patt)) {
@@ -175,19 +216,24 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 query = new SpanQueryFiltered(tp.translate(context), docFilterQuery);
             SearchEmpty search = index.search();
             Hits hits = search.find(query).execute();
-            List<NamedList<Object>> hitList = new ArrayList<>();
-            for (Hit hit: hits) {
-                NamedList<Object> hitDesc = new NamedList<>();
-                String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
-                hitDesc.add("doc", docPid);
-                hitDesc.add("start", hit.start());
-                hitDesc.add("end", hit.end());
-                hitList.add(hitDesc);
-            }
+            List<NamedList<Object>> hitList = outputHitListOld(index, hits);
             rb.rsp.add("blacklabResponse", hitList);
         } catch (InvalidQuery e) {
             throw new IOException("Error exexcuting BlackLab query", e);
         }
+    }
+
+    private List<NamedList<Object>> outputHitListOld(BlackLabIndex index, Hits hits) {
+        List<NamedList<Object>> hitList = new ArrayList<>();
+        for (Hit hit: hits) {
+            NamedList<Object> hitDesc = new NamedList<>();
+            String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
+            hitDesc.add("doc", docPid);
+            hitDesc.add("start", hit.start());
+            hitDesc.add("end", hit.end());
+            hitList.add(hitDesc);
+        }
+        return hitList;
     }
 
     /////////////////////////////////////////////

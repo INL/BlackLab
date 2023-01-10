@@ -101,6 +101,12 @@ public class Index {
     /** File where the list of users to share with is stored */
     private final File shareWithUsersFile;
 
+    public Index(BlackLabIndex index, SearchManager searchMan) throws FileNotFoundException {
+        this(index.name(), index.indexDirectory(), searchMan);
+
+        this.index = index;
+    }
+
     /**
      * NOTE: Index does not support creating a new index from scratch for now,
      * instead use {@link IndexManager#createIndex(User, String, String, String)}
@@ -113,10 +119,13 @@ public class Index {
     public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, FileNotFoundException {
         if (!isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
-        if (dir == null || !dir.exists() || !dir.isDirectory())
-            throw new FileNotFoundException("Cannot find index directory " + dir + ".");
-        if (!dir.canRead() || !BlackLabIndex.isIndex(dir))
-            throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
+
+        if (!searchMan.config().isSolr()) {
+            if (dir == null || !dir.exists() || !dir.isDirectory())
+                throw new FileNotFoundException("Cannot find index directory " + dir + ".");
+            if (!dir.canRead() || !BlackLabIndex.isIndex(dir))
+                throw new FileNotFoundException("Index directory " + dir + " is not an index or cannot be read.");
+        }
 
         this.id = indexId;
         this.dir = dir;

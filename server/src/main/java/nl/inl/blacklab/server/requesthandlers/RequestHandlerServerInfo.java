@@ -9,6 +9,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
 import nl.inl.blacklab.server.lib.results.ResultServerInfo;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;

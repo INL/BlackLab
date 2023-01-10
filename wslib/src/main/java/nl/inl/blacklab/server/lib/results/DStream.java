@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -6,42 +6,42 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.TermFrequency;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
-import nl.inl.blacklab.server.lib.results.ResultAnnotationInfo;
-import nl.inl.blacklab.server.lib.results.ResultDocInfo;
-import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
-import nl.inl.blacklab.server.lib.results.ResultListOfHits;
-import nl.inl.blacklab.server.lib.results.ResultMetadataField;
-import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
-import nl.inl.blacklab.server.lib.results.ResultSummaryNumDocs;
-import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
-import nl.inl.blacklab.server.lib.results.ResultUserInfo;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -290,7 +290,7 @@ public class DStream {
         ds.endMap().endEntry();
     }
 
-    public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
+    public static void listOfHits(DataStream ds, ResultListOfHits result, Logger logger) throws BlsException {
         WebserviceParams params = result.getParams();
         Hits hits = result.getHits();
 
@@ -302,8 +302,8 @@ public class DStream {
                 Map<String, Span> capturedGroups = null;
                 if (hits.hasCapturedGroups()) {
                     capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
-                    if (capturedGroups == null)
-                        RequestHandler.logger.warn(
+                    if (capturedGroups == null && logger != null)
+                        logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
@@ -367,7 +367,7 @@ public class DStream {
         ds.endMap();
     }
 
-    static void indexProgress(DataStream ds, ResultIndexStatus progress)
+    public static void indexProgress(DataStream ds, ResultIndexStatus progress)
             throws BlsException {
         if (progress.getIndexStatus().equals(Index.IndexStatus.INDEXING)) {
             ds.startEntry("indexProgress").startMap()
@@ -485,6 +485,74 @@ public class DStream {
             ds.endMap().endAttrEntry();
         }
         ds.endMap().endEntry();
+        ds.endMap();
+    }
+
+    public static void collocationsResponse(DataStream ds, TermFrequencyList tfl) {
+        ds.startMap().startEntry("tokenFrequencies").startMap();
+        for (TermFrequency tf : tfl) {
+            ds.attrEntry("token", "text", tf.term, tf.frequency);
+        }
+        ds.endMap().endEntry().endMap();
+    }
+
+    public static void hitsResponse(DataStream ds, ResultHits resultHits, Logger logger)
+            throws InvalidQuery {
+        WebserviceParams params = resultHits.getParams();
+        BlackLabIndex index = params.blIndex();
+        // Search time should be time user (originally) had to wait for the response to this request.
+        // Count time is the time it took (or is taking) to iterate through all the results to count the total.
+        ResultSummaryNumHits result = resultHits.getSummaryNumHits();
+        ResultSummaryCommonFields summaryFields = resultHits.getSummaryCommonFields();
+        ResultListOfHits listOfHits = resultHits.getListOfHits();
+
+        ds.startMap();
+
+
+        // The summary
+        ds.startEntry("summary").startMap();
+        {
+            summaryCommonFields(ds, summaryFields);
+            summaryNumHits(ds, result);
+            if (params.getIncludeTokenCount())
+                ds.entry("tokensInMatchingDocuments", resultHits.getTotalTokens());
+
+            // Write docField (pidField, titleField, etc.) and metadata display names
+            // (these arguably shouldn't be included with every hits response; can be read once from the index
+            //  metadata response)
+            metadataFieldInfo(ds, resultHits.getDocFields(), resultHits.getMetaDisplayNames());
+
+            // Include explanation of how the query was executed?
+            if (params.getExplain()) {
+                TextPattern tp = params.pattern().orElseThrow();
+                try {
+                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index));
+                    QueryExplanation explanation = index.explain(q);
+                    ds.startEntry("explanation").startMap()
+                            .entry("originalQuery", explanation.originalQuery())
+                            .entry("rewrittenQuery", explanation.rewrittenQuery())
+                            .endMap().endEntry();
+                } catch (InvalidQuery e) {
+                    throw new BadRequest("INVALID_QUERY", e.getMessage());
+                }
+            }
+        }
+        ds.endMap().endEntry();
+
+        // Hits and docInfos
+        listOfHits(ds, listOfHits, logger);
+        documentInfos(ds, resultHits.getDocInfos());
+
+        // Facets (if requested)
+        if (resultHits.hasFacets()) {
+            // Now, group the docs according to the requested facets.
+            ds.startEntry("facets");
+            {
+                facets(ds, resultHits.getFacetInfo());
+            }
+            ds.endEntry();
+        }
+
         ds.endMap();
     }
 }

@@ -31,10 +31,13 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
 
     private final BlackLabIndex index;
 
-    public WebserviceParamsSolr(ResponseBuilder rb, BlackLabIndex index) {
+    private final SearchManager searchManager;
+
+    public WebserviceParamsSolr(ResponseBuilder rb, BlackLabIndex index, SearchManager searchManager) {
         solrParams = rb.req.getParams();
         docList = rb.getResults() != null ? rb.getResults().docList : null;
         this.index = index;
+        this.searchManager = searchManager;
     }
 
     // FIXME: default values (see BlackLabServerParams)
@@ -103,7 +106,7 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
 
     @Override
     public String getPattLanguage() {
-        return bl("pattlang");
+        return bl("pattlang", "corpusql");
     }
 
     @Override
@@ -113,7 +116,7 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
 
     @Override
     public SearchManager getSearchManager() {
-        throw new UnsupportedOperationException(); // @@@ FIXME
+        return searchManager;
     }
 
     @Override
@@ -173,12 +176,12 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
 
     @Override
     public long getMaxRetrieve() {
-        return bl("maxretrieve", 0L);
+        return bl("maxretrieve", 1_000_000L);
     }
 
     @Override
     public long getMaxCount() {
-        return bl("maxcount", 0L);
+        return bl("maxcount", 1_000_000L);
     }
 
     @Override

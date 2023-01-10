@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This is faster than building a full object tree first. Intended to replace
  * the DataObject classes.
  */
-public class DataStreamJson extends DataStream {
+public class DataStreamJson extends DataStreamAbstract {
 
     /** JSONP callback function name, or null for none */
     final String jsonpCallback;
@@ -49,7 +49,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endDocument(String rootEl) {
+    public DataStream endDocument() {
         if (isJsonp) {
             print(");");
         }
@@ -72,7 +72,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endItem() {
+    public DataStreamAbstract endItem() {
         return this;
     }
 
@@ -86,7 +86,7 @@ public class DataStreamJson extends DataStream {
         return closebl("}");
     }
 
-    DataStream optSep() {
+    DataStreamAbstract optSep() {
         if (!firstEntry)
             return print(",");
         firstEntry = false;
@@ -99,7 +99,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endEntry() {
+    public DataStreamAbstract endEntry() {
         return this;
     }
 
@@ -114,7 +114,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endAttrEntry() {
+    public DataStreamAbstract endAttrEntry() {
         return this;
     }
 

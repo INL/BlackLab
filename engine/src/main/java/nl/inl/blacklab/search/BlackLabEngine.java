@@ -433,7 +433,7 @@ public final class BlackLabEngine implements AutoCloseable {
      *                       existed yet. Used with Solr.
      * @return BlackLabIndex instance for this IndexReader
      */
-    synchronized BlackLabIndex getIndexFromReader(IndexReader reader, boolean wrapIfNotFound) {
+    public synchronized BlackLabIndex getIndexFromReader(IndexReader reader, boolean wrapIfNotFound) {
         BlackLabIndex blackLabIndex = indexReader2BlackLabIndex.get(reader);
         if (blackLabIndex == null && wrapIfNotFound) {
             // We don't have a BlackLabIndex instance for this IndexReader yet. This can occur if e.g.

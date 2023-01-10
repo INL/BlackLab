@@ -36,6 +36,7 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.ConfigFileReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.datastream.DataStreamAbstract;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -255,12 +256,12 @@ public class BlackLabServer extends HttpServlet {
         // === Handle the request
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
-        DataStream ds = DataStream.create(outputType, out, prettyPrint, callbackFunction);
+        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint, callbackFunction);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
-        DataStream es = DataStream.create(outputType, errorOut, prettyPrint, callbackFunction);
+        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint, callbackFunction);
         es.outputProlog();
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
@@ -286,7 +287,7 @@ public class BlackLabServer extends HttpServlet {
                 requestHandler.cleanup(); // close logger
             }
         }
-        ds.endDocument(rootEl);
+        ds.endDocument();
 
         // === Write the response headers
 

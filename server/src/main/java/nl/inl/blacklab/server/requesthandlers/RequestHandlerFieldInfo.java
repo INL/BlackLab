@@ -10,6 +10,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
 import nl.inl.blacklab.server.lib.results.ResultMetadataField;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;

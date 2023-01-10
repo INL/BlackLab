@@ -134,7 +134,8 @@ public class IndexManager {
             }
         }
 
-        checkAnyIndexesAvailable();
+        if (!blsConfig.isSolr())
+            checkAnyIndexesAvailable();
         List<File> allDirs = new ArrayList<>(collectionsDirs);
         // Since userCollectionsDir is initialized as null, and might still be null here, check for nullity
         if (userCollectionsDir != null)
@@ -271,6 +272,14 @@ public class IndexManager {
             indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
         } catch (FileNotFoundException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
+        }
+    }
+
+    public void registerIndex(BlackLabIndex index) {
+        try {
+            indices.put(index.name(), new Index(index, this.searchMan));
+        } catch (FileNotFoundException e) {
+            throw new IllegalArgumentException(e);
         }
     }
 

@@ -234,6 +234,7 @@ public final class BlackLab {
      * corresponding BlackLab index object.
      *
      * @param reader index reader that was opened using BlackLab
+     * @param wrapIfNotFound if not found, should we create a new instance using the supplied reader?
      * @return BlackLab index object
      */
     public static synchronized BlackLabIndex indexFromReader(IndexReader reader, boolean wrapIfNotFound) {

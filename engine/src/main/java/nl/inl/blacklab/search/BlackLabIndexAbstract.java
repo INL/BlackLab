@@ -612,7 +612,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
 
     @Override
     public String name() {
-        return indexLocation.toString();
+        return indexLocation == null ?
+                "index" :  // @@@ FIXME allow setting name (via constructor or setter?)
+                indexLocation.toString();
     }
 
     @Override

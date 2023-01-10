@@ -7,12 +7,12 @@ import java.util.List;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
- * Disables all functions except for {@link DataStream#plain(String)} Not ideal,
+ * Disables all functions except for {@link DataStreamAbstract#plain(String)} Not ideal,
  * but required for certain outputs from requesthandlers. Since the main
  * requesthandler always adds some padding data, and we need to suppress this
  * for some data types.
  */
-public class DataStreamPlain extends DataStream {
+public class DataStreamPlain extends DataStreamAbstract {
 
     public DataStreamPlain(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
@@ -24,7 +24,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream endDocument(String rootEl) {
+    public DataStream endDocument() {
         return this;
     }
 
@@ -44,7 +44,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream endItem() {
+    public DataStreamAbstract endItem() {
         return this;
     }
 
@@ -64,7 +64,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream endEntry() {
+    public DataStreamAbstract endEntry() {
         return this;
     }
 
@@ -79,7 +79,7 @@ public class DataStreamPlain extends DataStream {
     }
 
     @Override
-    public DataStream endAttrEntry() {
+    public DataStreamAbstract endAttrEntry() {
         return this;
     }
 

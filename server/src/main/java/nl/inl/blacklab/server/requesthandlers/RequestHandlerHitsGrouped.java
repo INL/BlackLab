@@ -12,6 +12,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultHitGroup;
 import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
 import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
@@ -79,7 +80,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
                 }
 
                 if (groupInfo.getListOfHits() != null) {
-                    DStream.listOfHits(ds, groupInfo.getListOfHits());
+                    DStream.listOfHits(ds, groupInfo.getListOfHits(), logger);
                 }
             }
             ds.endMap().endItem();
