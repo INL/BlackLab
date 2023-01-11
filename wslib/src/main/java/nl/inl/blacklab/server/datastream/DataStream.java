@@ -146,9 +146,7 @@ public interface DataStream {
         return startEntry(key).value(value).endEntry();
     }
 
-    default DataStream entry(String key, boolean value) {
-        return startEntry(key).value(value).endEntry();
-    }
+    default DataStream entry(String key, boolean value) { return startEntry(key).value(value).endEntry(); }
 
     default DataStream attrEntry(String elementName, String attrName, String key, String value) {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();

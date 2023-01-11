@@ -159,7 +159,7 @@ public class DataStreamXml extends DataStreamAbstract {
 
     @Override
     public DataStream entry(String key, boolean value) {
-        return indent().startCompact().entry(key, value).endCompact().newline();
+        return indent().startCompact().startEntry(key).value(value).endEntry().endCompact().newline();
     }
 
     @Override
