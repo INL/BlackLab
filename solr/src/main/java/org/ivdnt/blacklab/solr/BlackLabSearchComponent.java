@@ -157,17 +157,19 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             switch (operation) {
             case "hits":
                 String field = index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name();
+
+                //*
+                // OLD, works
                 opHitsOld(index, field, params.getPattern(), null, rb);
-                /*
-
-                ERROR, this will find 0 hits! WHY?
-
+                /*/
+                // NEW, fails
                 try {
                     opHits(params, ds);
                 } catch (Exception e) {
                     // @@@ write error response
                     throw new IOException(e);
-                }*/
+                }
+                //*/
                 break;
             case "none":
                 // do nothing

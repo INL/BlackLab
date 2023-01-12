@@ -95,18 +95,16 @@ public class TestSearchComponent {
 
         System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        //System.err.println("RESPONSE: " + queryResponse.getResponse());
-        /*for (SolrDocument document: queryResponse.getResults()) {
-            System.out.println(document);
-        }*/
 
+        //*
+        // OLD, works
         List<NamedList<Object>> hits = (List<NamedList<Object>>)queryResponse.getResponse().get("blacklabResponse");
-
-        /*
-        NEW (NOT WORKING YET)
-        NamedList blacklab = (NamedList)queryResponse.getResponse().get("blacklab");
-        List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");*/
-
         Assert.assertEquals(21, hits.size());
+        /*/
+        // NEW, fails
+        NamedList blacklab = (NamedList)queryResponse.getResponse().get("blacklabResponse");
+        List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");
+        Assert.assertEquals(21, hits.size());
+        //*/
     }
 }
