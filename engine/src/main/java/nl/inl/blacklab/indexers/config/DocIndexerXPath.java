@@ -249,6 +249,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
     protected void processAnnotatedField(ConfigAnnotatedField annotatedField)
             throws VTDException {
+        // This is where we'll capture token ("word") ids and remember the position associated with each id.
+        // In the case to <tei:anchor> between tokens, these are also stored here (referring to the token position after
+        // the anchor).
+        // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
+        // Standoff span annotations are also supported.
+        // The full documentation is available here:
+        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
         Map<String, Integer> tokenPositionsMap = new HashMap<>();
 
         // Determine some useful stuff about the field we're processing
