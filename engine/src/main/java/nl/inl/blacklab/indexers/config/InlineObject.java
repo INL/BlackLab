@@ -33,7 +33,15 @@ class InlineObject implements Comparable<InlineObject> {
 
     private Map<String, String> attributes;
 
+    /** An open tag's token id, for if we want to capture e.g. tei:anchor positions to refer to later
+     *  from standoff annotations. If null, don't capture token ids. */
+    private String tokenId;
+
     public InlineObject(String text, int offset, InlineObjectType type, Map<String, String> attributes) {
+        this(text, offset, type, attributes, null);
+    }
+
+    public InlineObject(String text, int offset, InlineObjectType type, Map<String, String> attributes, String tokenId) {
         super();
         this.text = text;
         this.offset = offset;
@@ -43,6 +51,7 @@ class InlineObject implements Comparable<InlineObject> {
         this.attributes = Collections.emptyMap();
         if (attributes != null)
             this.attributes = attributes;
+        this.tokenId = tokenId;
     }
 
     public String getText() {
@@ -132,6 +141,10 @@ class InlineObject implements Comparable<InlineObject> {
         } else if (!text.equals(other.text))
             return false;
         return type == other.type;
+    }
+
+    public String getTokenId() {
+        return tokenId;
     }
 
 }

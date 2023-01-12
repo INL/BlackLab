@@ -278,9 +278,11 @@ public class AnnotationWriter {
             // replace the previous value. This is convenient to keep all the annotations synched
             // up while indexing (by adding an empty string if we don't have a value for a
             // annotation), while still being able to add a value to this position later (for example,
-            // when we encounter an XML close tag.
+            // when we encounter an XML close tag. Note that we don't do this if we store character offsets, or we
+            // lose the offsets for some positions.
             int lastIndex = values.size() - 1;
-            if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && (!hasPayload() || payloads.get(lastIndex) == null)) {
+            if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && !includeOffsets &&
+                    (!hasPayload() || payloads.get(lastIndex) == null)) {
                 // Change the last value and its position increment
                 values.set(lastIndex, value);
                 if (hasPayload())

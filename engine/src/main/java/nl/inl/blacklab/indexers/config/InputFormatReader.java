@@ -349,8 +349,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "wordPath":
                     af.setWordPath(str(e));
                     break;
-                case "tokenPositionIdPath":
-                    af.setTokenPositionIdPath(str(e));
+                case "tokenPositionIdPath": // old name, DEPRECATED
+                case "tokenIdPath":
+                    af.setTokenIdPath(str(e));
                     break;
                 case "punctPath":
                     af.setPunctPath(str(e));
@@ -488,8 +489,19 @@ public class InputFormatReader extends YamlJsonReader {
                 case "path":
                     s.setPath(str(e));
                     break;
-                case "refTokenPositionIdPath":
-                    s.setRefTokenPositionIdPath(str(e));
+                case "refTokenPositionIdPath": // old name, DEPRECATED
+                case "tokenRefPath":
+                case "spanStartPath":   // synonym for tokenRefPath, used in case of span annotation
+                    s.setTokenRefPath(str(e));
+                    break;
+                case "spanEndPath":
+                    s.setSpanEndPath(str(e));
+                    break;
+                case "spanEndIsInclusive":
+                    s.setSpanEndIsInclusive(bool(e));
+                    break;
+                case "spanNamePath":
+                    s.setSpanNamePath(str(e));
                     break;
                 case "annotations":
                     readAnnotations(e, s);
@@ -517,6 +529,9 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "displayAs":
                     t.setDisplayAs(str(e));
+                    break;
+                case "tokenIdPath":
+                    t.setTokenIdPath(str(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());

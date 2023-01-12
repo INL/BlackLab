@@ -25,7 +25,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     private String wordPath;
 
     /** Unique id that will map to this token position */
-    private String tokenPositionIdPath = null;
+    private String tokenIdPath = null;
 
     /** Punctuation between words (or null if we don't need/want to capture this) */
     private String punctPath = null;
@@ -70,7 +70,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         result.setDescription(description);
         result.setContainerPath(containerPath);
         result.setWordPath(wordPath);
-        result.setTokenPositionIdPath(tokenPositionIdPath);
+        result.setTokenIdPath(tokenIdPath);
         result.setPunctPath(punctPath);
         for (ConfigAnnotation a : annotations.values())
             result.addAnnotation(a.copy());
@@ -93,8 +93,16 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         this.wordPath = wordPath;
     }
 
-    public void setTokenPositionIdPath(String tokenPositionIdPath) {
-        this.tokenPositionIdPath = tokenPositionIdPath;
+    /**
+     * @deprecated renamed to {@link #setTokenIdPath(String)}
+     */
+    @Deprecated
+    public void setTokenPositionIdPath(String tokenIdPath) {
+        setTokenIdPath(tokenIdPath);
+    }
+
+    public void setTokenIdPath(String tokenIdPath) {
+        this.tokenIdPath = tokenIdPath;
     }
 
     public void setPunctPath(String punctPath) {
@@ -127,8 +135,16 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return wordPath;
     }
 
+    /**
+     * @deprecated renamed to {@link #getTokenIdPath()}
+     */
+    @Deprecated
     public String getTokenPositionIdPath() {
-        return tokenPositionIdPath;
+        return getTokenIdPath();
+    }
+
+    public String getTokenIdPath() {
+        return tokenIdPath;
     }
 
     public String getPunctPath() {

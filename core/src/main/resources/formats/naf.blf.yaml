@@ -25,7 +25,7 @@ annotatedFields:
 
     wordPath: .//wf
 
-    tokenPositionIdPath: "@id"
+    tokenIdPath: "@id"
 
     annotations: # basic
       # First annotation is the main annotation
@@ -42,7 +42,7 @@ annotatedFields:
 
     standoffAnnotations:
       - path: terms/term      # Element containing what to index (relative to documentPath)
-        refTokenPositionIdPath: "./span/target/@id" # What token position(s) to index these values at
+        tokenRefPath: "./span/target/@id" # What token position(s) to index these values at
           # (may have multiple matches per path element; values will
         # be indexed at all those positions)
         annotations:           # The actual annotations (structure identical to regular annotations)

@@ -16,6 +16,13 @@ public class ConfigInlineTag {
      */
     private String displayAs = "";
 
+    /**
+     * XPath to resolve and remember the start positions for,
+     * so we can refer to them from standoff annotations.
+     * (Used for tei:anchor, so end position is not used)
+     */
+    private String tokenIdPath = "";
+
     public ConfigInlineTag() {
     }
 
@@ -48,10 +55,16 @@ public class ConfigInlineTag {
         this.displayAs = displayAs;
     }
 
+    public String getTokenIdPath() {
+        return tokenIdPath;
+    }
+
+    public void setTokenIdPath(String tokenIdPath) {
+        this.tokenIdPath = tokenIdPath;
+    }
+
     @Override
     public String toString() {
         return "ConfigInlineTag [displayAs=" + displayAs + "]";
     }
-
-    
 }

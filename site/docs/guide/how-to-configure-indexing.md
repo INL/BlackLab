@@ -270,7 +270,7 @@ annotatedFields:
     
     # If specified, the token position for each id will be saved,
     # so you can index standoff annotations referring to this id later.
-    tokenPositionIdPath: "@id"
+    tokenIdPath: "@id"
 
     annotations:
     - name: word  # First annotation becomes the main annotation
@@ -278,7 +278,7 @@ annotatedFields:
       sensitivity: sensitive_insensitive
     standoffAnnotations:
     - path: standoff/annotation      # Element containing what to index (relative to documentPath)
-      refTokenPositionIdPath: "@ref" # What token position(s) to index these values at
+      tokenRefPath: "@ref" # What token position(s) to index these values at
                                      # (may have multiple matches per path element; values will 
                                      # be indexed at all those positions)
       annotations:           # The actual annotations (structure identical to regular annotations)
@@ -289,10 +289,94 @@ annotatedFields:
         valuePath: "@pos"
 ```
 
+### Standoff annotations for spans
+
+The default standoff annotations as shown above apply an annotation to a single token (or several tokens, but each get the annotation value separately). What if instead you want to define a span of tokens?
+
+This is possible using `spanStartPath`, `spanEndPath` and `spanNamePath` (instead of `tokenRefPath` used above). So to index this XML:
+
+```xml
+<doc>
+    <w xml:id="w1">The</w>
+    <w xml:id="w2">quick</w>
+    <w xml:id="w3">brown</w>
+    <w xml:id="w4">fox</w>
+    <w xml:id="w5">jumps</w>
+    <w xml:id="w6">over</w>
+    ...
+    <span from="w1" to="w4" type="animal" speed="fast" />
+</doc>
+```
+
+You can use this `standoffAnnotations` configuration:
+
+```yaml
+tokenIdPath: "@xml:id"
+
+standoffAnnotations:
+- path: .//span
+  spanStartPath: "@from"
+  spanEndPath: "@to"
+  spanEndIsInclusive: true
+  spanNamePath: "@type"
+  annotations:
+    - name: speed
+      valuePath: "@speed"
+```
+
+Note the setting `spanEndIsInclusive: true` to indicate that the `to` attribute refers to the last token of the span, not the first token _after_ the span. (`true` is the default value for this setting, but it is included here for completeness)
+
+The above would allow you to search for `<animal/> containing "fox"` or `<animal speed="fast" />` to find "The quick brown fox".
+
+### Referring to inline anchors instead of words
+
+Normally, standoff annotations refer to token ("word") ids, defined by the `tokenIdPath` setting at the annotated field level.
+
+But what if your XML includes inline anchor tags between words that you want to
+refer to? For example:
+
+```xml
+<doc>
+    <anchor id="here" />
+    <w xml:id="w1">The</w>
+    <w xml:id="w2">quick</w>
+    <w xml:id="w3">brown</w>
+    <w xml:id="w4">fox</w>
+    <anchor id="there" />
+    <w xml:id="w5">jumps</w>
+    <w xml:id="w6">over</w>
+    ...
+    <span from="here" to="there" type="animal" speed="fast" />
+</doc>
+```
+
+Use this configuration for this situation:
+
+```yaml
+# Capture the anchor ids.
+# (each anchor id will point to the token FOLLOWING the anchor!)
+inlineTags:
+  - path: ./anchor
+    tokenIdPath: "@id"
+
+standoffAnnotations:
+- path: .//span
+  spanStartPath: "@from"
+  spanEndPath: "@to"
+  spanEndIsInclusive: false
+  spanNamePath: "@type"
+  annotations:
+    - name: speed
+      valuePath: "@speed"
+```
+
+As you can see, we capture the id of the `anchor` tokens and refer to them the same way as word tokens (this does means that ids must be unique in the document!).
+
+Note the use of `spanEndIsInclusive: false` because the anchor id that `to` refers to will point to the first token _after_ the span.
+
 ### Standoff annotations without a unique token id
 
-There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described
-above (although you will need some way to connect the standoff annotation to the word, obviously). It is not recommended as it is likely to be significantly slower, but in some cases, it may be useful.
+There is an alternate way of doing standoff annotations that does not rely on a unique token id like the method described above (although you will need some way to connect the standoff annotation to the word, obviously). This will probably be slower, but in some cases, it may be useful.
 
 Let's say you want to index a color with every word, and your document looks like this:
 
@@ -315,14 +399,14 @@ Let's say you want to index a color with every word, and your document looks lik
 </root>
 ```
 
-A standoff annotation of this type is defined in the same section as regular non-standoff annotations. It relies on capturing one or more values to help us locate the color we want to index at each position. These captured values are then substituted in the valuePath that fetches the color value:
+A standoff annotation of this type is defined in the same section as regular (non-standoff) annotations. It relies on capturing one or more values to help us locate the color we want to index at each position. These captured values are then substituted in the valuePath that fetches the color value:
 
 ```yaml
 - name: color
   captureValuePaths:                  # value(s) we need from the current word to find the color
   - "@colorId"
   valuePath: /root/colors[@id='$1']   # how to get the value for this annotation from the document,
-                                          # using the value(s) captured.
+                                      # using the value(s) captured.
 ```
 
 ## Subannotations
@@ -930,7 +1014,7 @@ annotatedFields:
 
     # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later. (relative to wordPath)
-    tokenPositionIdPath: "@xml:id"
+    tokenIdPath: "@xml:id"
 
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
@@ -976,12 +1060,12 @@ annotatedFields:
 
     # Standoff annotations are annotations that are defined separately from the word
     # elements, elsewhere in the same document. To use standoff annotations, you must
-    # define a tokenPositionIdPath (see above). This will make sure you can refer back
+    # define a tokenIdPath (see above). This will make sure you can refer back
     # to token positions so BlackLab knows at what position to index a standoff annotation.
     standoffAnnotations:
     - path: //timesegment               # Element containing the values to index
-      refTokenPositionIdPath: wref/@id  # What token position(s) to index these values at
-                                        # (these refer back to the tokenPositionIdPath values)
+      tokenRefPath: wref/@id  # What token position(s) to index these values at
+                                        # (these refer back to the tokenIdPath values)
       annotations:                      # Annotation(s) to index there
       - name: begintime
         valuePath: ../@begintime        # relative to path

@@ -1,0 +1,89 @@
+# Test configuration for standoff span annotations, i.e.
+# standoff annotations that apply to spans of tokens instead of a single token.
+# Note that we refer to token positions both by w/@xml:id (regular word ids)
+# as well as anchor/@synch (attribute on an inlineTag)
+
+# XPath can have issues requires namespace prefixes in documents that use namespaces
+namespaces:
+    'tei': http://www.tei-c.org/ns/1.0
+
+documentPath: /tei:TEI
+
+annotatedFields:
+
+  contents:
+
+    containerPath: .//tei:text
+
+    # All w, pause, incident and vocal elements should be indexed as separate tokens ("words")
+    # Note that this will treat all these elements the same (i.e. apply the valuePaths declared
+    # in the annotations on them).
+    wordPath: .//*[self::tei:w or self::tei:pause or self::tei:incident or self::tei:vocal]
+
+    # Remember xml:id attribute for each token so we can refer to them from standoff annotations
+    tokenIdPath: "@xml:id"     # (renamed from "tokenPositionIdPath")
+
+    annotations:
+
+    - name: word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    - name: norm
+      valuePath: "@norm"
+      sensitivity: sensitive_insensitive
+
+    - name: lemma
+      valuePath: "@lemma"
+      sensitivity: sensitive_insensitive
+
+    - name: phon
+      valuePath: "@phon"
+
+    - name: type
+      valuePath: "@type"
+
+    # Index the element name so we can distinguish between w/pause/incident/vocal
+    - name: element
+      valuePath: name()
+
+    standoffAnnotations:
+    - path: .//tei:spanGrp[not(@subtype)]/tei:span
+
+      #tokenRefPath: "@ref"        # for annotation on single token (renamed from "refTokenPositionIdPath")
+      # For span annotation: first and last token, and XPath to determine span name
+      spanStartPath: "@from"
+      spanEndPath: "@to"
+      spanEndIsInclusive: true
+      spanNamePath: ./parent::node()/@type
+
+      annotations:
+        - name: value
+          valuePath: .
+
+    - path: .//tei:spanGrp[@subtype="time-based"]/tei:span
+
+      spanStartPath: "@from"
+      spanEndPath: "@to"
+      spanEndIsInclusive: false
+      spanNamePath: ./parent::node()/@type  # XPath to determine spanName
+
+      annotations:
+
+        - name: target
+          valuePath: "@target"
+
+        - name: value
+          valuePath: .
+
+
+    inlineTags:
+    - path: .//tei:annotationBlock   # user contribution
+
+      # NOTE: attributes for inlineTags are be indexed automatically,
+      #   no need to declare them
+      #   (also, declaring custom annotations on inline tags is not supported ATM)
+
+    - path: .//tei:anchor
+      # Remember synch attribute for each anchor so we can refer to them from standoff annotations
+      tokenIdPath: "@synch"
