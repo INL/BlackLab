@@ -11,9 +11,13 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
 
+/**
+ * Abstract implementation of PlainWebserviceParams that uses request parameters.
+ * This is used for both BLS and Solr.
+ */
 public abstract class PlainWebserviceParamsAbstract implements PlainWebserviceParams {
 
-    private static double parse(String value) {
+    private static double parseDouble(String value) {
         if (value != null) {
             try {
                 return Double.parseDouble(value);
@@ -24,7 +28,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
         return 0.0;
     }
 
-    private static int parse(String value, int defVal) {
+    private static int parseInt(String value) {
         if (value != null) {
             try {
                 return Integer.parseInt(value);
@@ -32,10 +36,10 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
                 // ok, just return default
             }
         }
-        return defVal;
+        return 0;
     }
 
-    private static long parse(String value, long defVal) {
+    private static long parseLong(String value) {
         if (value != null) {
             try {
                 return Long.parseLong(value);
@@ -43,10 +47,10 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
                 // ok, just return default
             }
         }
-        return defVal;
+        return 0;
     }
 
-    private static boolean parse(String value, boolean defVal) {
+    private static boolean parseBoolean(String value) {
         if (value != null) {
             switch (value) {
             case "true":
@@ -61,25 +65,75 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
                 return false;
             }
         }
-        return defVal;
+        return false;
     }
 
+    /**
+     * Was a value for this parameter explicitly passed?
+     *
+     * This disregards any default values configured for the parameter,
+     * and only checks if this request included a value for it.
+     *
+     * @param name parameter name
+     * @return true if this request included an explicit value for the parameter
+     */
     protected abstract boolean has(String name);
 
+    /**
+     * Get the parameter value.
+     *
+     * If this request didn't include an explicit value, use the configured default value.
+     *
+     * @param name parameter name
+     * @return value
+     */
     protected abstract String get(String name);
 
+    /**
+     * Get parameter value as a boolean.
+     *
+     * If not explicitly set, uses the configured default value, or false if none configured.
+     *
+     * @param name parameter name
+     * @return value
+     */
     protected boolean getBool(String name) {
-        return PlainWebserviceParamsAbstract.parse(get(name), false);
+        String value = get(name);
+        return parseBoolean(value);
     }
 
+    /**
+     * Get parameter value as an integer.
+     *
+     * If not explicitly set, uses the configured default value, or 0 if none configured.
+     *
+     * @param name parameter name
+     * @return value
+     */
     protected int getInt(String name) {
-        return PlainWebserviceParamsAbstract.parse(get(name), 0);
+        return PlainWebserviceParamsAbstract.parseInt(get(name));
     }
 
+    /**
+     * Get parameter value as a long.
+     *
+     * If not explicitly set, uses the configured default value, or 0 if none configured.
+     *
+     * @param name parameter name
+     * @return value
+     */
     protected long getLong(String name) {
-        return PlainWebserviceParamsAbstract.parse(get(name), 0L);
+        return PlainWebserviceParamsAbstract.parseLong(get(name));
     }
 
+    /**
+     * Get parameter value as a set of strings.
+     *
+     * If not explicitly set, uses the configured default value, or an empty set if none configured.
+     *
+     * @param name parameter name
+     * @return value
+     */
     protected Set<String> getSet(String name) {
         String par = get(name).trim();
         return StringUtils.isEmpty(par) ?
@@ -87,20 +141,52 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
                 new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
     }
 
+    /**
+     * Get parameter value if it was explicitly passed with the request.
+     *
+     * If not explicitly set, will return an empty Optional.
+     *
+     * @param name parameter name
+     * @return value if set
+     */
     protected Optional<String> opt(String name) {
         return has(name) ? Optional.of(get(name)) : Optional.empty();
     }
 
+    /**
+     * Get parameter value if it was explicitly passed with the request.
+     *
+     * If not explicitly set, will return an empty Optional.
+     *
+     * @param name parameter name
+     * @return value if set
+     */
     protected Optional<Double> optDouble(String name) {
-        return opt(name).map(s -> PlainWebserviceParamsAbstract.parse(s));
+        return opt(name).map(PlainWebserviceParamsAbstract::parseDouble);
     }
 
+    /**
+     * Get parameter value if it was explicitly passed with the request.
+     *
+     * If not explicitly set, will return an empty Optional.
+     *
+     * @param name parameter name
+     * @return value if set
+     */
     protected Optional<Integer> optInteger(String name) {
-        return opt(name).map(s -> PlainWebserviceParamsAbstract.parse(s, 0));
+        return opt(name).map(PlainWebserviceParamsAbstract::parseInt);
     }
 
+    /**
+     * Get parameter value if it was explicitly passed with the request.
+     *
+     * If not explicitly set, will return an empty Optional.
+     *
+     * @param name parameter name
+     * @return value if set
+     */
     protected Optional<Long> optLong(String name) {
-        return opt(name).map(s -> PlainWebserviceParamsAbstract.parse(s, 0L));
+        return opt(name).map(PlainWebserviceParamsAbstract::parseLong);
     }
 
     @Override

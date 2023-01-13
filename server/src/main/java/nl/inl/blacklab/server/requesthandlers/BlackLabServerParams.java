@@ -13,7 +13,10 @@ import nl.inl.blacklab.server.lib.PlainWebserviceParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
-/** BLS API-specific implementation of WebserviceParams. */
+/** BLS API-specific implementation of WebserviceParams.
+ *
+ * Extracts the webservice parameters from a HttpServletRequest.
+ */
 public class BlackLabServerParams extends PlainWebserviceParamsAbstract {
 
     private final Map<String, String> map = new TreeMap<>();

@@ -14,6 +14,11 @@ import nl.inl.blacklab.server.lib.PlainWebserviceParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
+/**
+ * Extracts the webservice parameters from the Solr request parameters.
+ * The parameters must be prefixed with "bl." to distinguish them from Solr parameters.
+ * (in the future, we may also support a JSON Solr request that doesn't need these prefixes)
+ */
 public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     private static final String BL_PAR_NAME = "bl";
@@ -22,6 +27,9 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     private final SolrParams solrParams;
 
+    /**
+     * Document matches from Solr.
+     */
     private final DocList docList;
 
     private final BlackLabIndex index;

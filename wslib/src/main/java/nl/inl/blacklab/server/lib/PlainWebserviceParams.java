@@ -12,7 +12,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 
 /** API-independent interface to BlackLab operation parameters.
  *
- * <p>In addition to parametesr, also knows about SearchManager, IndexManager and User,
+ * <p>In addition to parameters, also knows about SearchManager, IndexManager and User,
  * which are useful to pass around with the parameters.
  *
  * <p>This class only includes "plain" parameters, not any objects derived from them.

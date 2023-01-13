@@ -61,24 +61,6 @@ public interface WebserviceParams extends PlainWebserviceParams {
         return defVal;
     }
 
-    static boolean parse(String value, boolean defVal) {
-        if (value != null) {
-            switch (value) {
-            case "true":
-            case "1":
-            case "yes":
-            case "on":
-                return true;
-            case "false":
-            case "0":
-            case "no":
-            case "off":
-                return false;
-            }
-        }
-        return defVal;
-    }
-
     BlackLabIndex blIndex();
 
     boolean hasPattern() throws BlsException;
