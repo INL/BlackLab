@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.response.SolrQueryResponse;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -44,7 +45,7 @@ public class DataStreamSolr implements DataStream {
 
     @Override
     public DataStream startDocument(String rootEl) {
-        startStructure(new NamedList());
+        startStructure(new SimpleOrderedMap<>());
         return this;
     }
 
@@ -52,7 +53,8 @@ public class DataStreamSolr implements DataStream {
     public DataStream endDocument() {
         if (currentObject != null) {
             Object v = currentObject;
-            endStructure(NamedList.class);
+            ensureMap();
+            endStructure();
             NamedList<Object> nl = (NamedList<Object>)v;
             nl.forEach((name, value) -> {
                 rsp.add(name, value);
@@ -112,22 +114,12 @@ public class DataStreamSolr implements DataStream {
             throw new IllegalStateException("Current object is not a list");
     }
 
-    private void ensureNamedList() {
+    private void ensureMap() {
         if (!(currentObject instanceof NamedList))
-            throw new IllegalStateException("Current object is not a named list");
+            throw new IllegalStateException("Current object is not a map");
     }
 
-    private void ensureType(Class<?> clz) {
-        if (clz == List.class)
-            ensureList();
-        else if (clz == NamedList.class)
-            ensureNamedList();
-        else
-            throw new IllegalArgumentException("Structure type can only be List or NamedList, got " + clz.getName());
-    }
-
-    private void endStructure(Class<?> clz) {
-        ensureType(clz);
+    private void endStructure() {
         if (currentObject == null)
             throw new IllegalStateException("No structure opened");
         if (parents.isEmpty())
@@ -138,7 +130,8 @@ public class DataStreamSolr implements DataStream {
 
     @Override
     public DataStream endList() {
-        endStructure(List.class);
+        ensureList();
+        endStructure();
         return this;
     }
 
@@ -156,13 +149,14 @@ public class DataStreamSolr implements DataStream {
 
     @Override
     public DataStream startMap() {
-        startStructure(new NamedList());
+        startStructure(new SimpleOrderedMap<>());
         return this;
     }
 
     @Override
     public DataStream endMap() {
-        endStructure(NamedList.class);
+        ensureMap();
+        endStructure();
         return this;
     }
 

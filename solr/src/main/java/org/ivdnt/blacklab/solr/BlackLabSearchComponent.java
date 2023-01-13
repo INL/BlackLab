@@ -8,6 +8,7 @@ import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.StringUtils;
 import org.apache.solr.common.util.NamedList;
+import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
@@ -17,8 +18,11 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.DStream;
@@ -82,6 +86,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 //      xsltFilePath = initArgs.get("xsltFile");
 //      inputField = initArgs.get("inputField");
 
+        // TODO: read config from file? (pointed to by init parameters?)
         BLSConfig blsConfig = new BLSConfig();
         blsConfig.setIsSolr(true);
         searchManager = new SearchManager(blsConfig);
@@ -131,61 +136,50 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 searchManager.getIndexManager().registerIndex(index);
             }
             WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index, searchManager);
-            WebserviceParams params = WebserviceParamsImpl.get(false, true,
-                    solrParams);
+            WebserviceParams params = WebserviceParamsImpl.get(false, true, solrParams);
             DocList docList = null;
             if (rb.getResults() != null) {
                 docList = rb.getResults().docList;
             }
             DocIterator it = docList.iterator();
             Query docFilterQuery = null; // TODO: write Query class that filters on docList
-            //String field = params.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
-            //String patt = params.getPattern();
             String operation = solrParams.getOperation();
             if (StringUtils.isEmpty(operation))
                 operation = "hits";
-            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("").startEntry("blacklabResponse");
-            switch (operation) {
-            case "hits":
-                String field = index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name();
-
-                /*
-                // OLD, works
-                opHitsOld(index, field, params.getPattern(), null, rb);
-                /*/
-                // NEW, fails
-                try {
+            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
+            ds.startEntry("blacklabResponse");
+            try {
+                switch (operation) {
+                case "hits":
                     opHits(params, ds);
-                } catch (Exception e) {
-                    // @@@ write error response
-                    throw new IOException(e);
+                    break;
+                case "none":
+                    // do nothing
+                    break;
+                default:
+                    throw new BadRequest("", "Unknown operation " + operation);
                 }
-                //*/
-                break;
-            case "none":
-                // do nothing
-                break;
-            default:
-                errorResponse("Unknown operation " + operation, rb);
+            } catch (BlsException e) {
+                errorResponse(e.getBlsErrorCode(), e.getMessage(), rb);
+            } catch (Exception e) {
+                errorResponse("INTERNAL_ERROR", e.getMessage(), rb);
             }
             ds.endEntry().endDocument();
         }
     }
 
-    private void errorResponse(String message, ResponseBuilder rb) {
-        NamedList<String> err = new NamedList<>();
+    private void errorResponse(String code, String message, ResponseBuilder rb) {
+        NamedList<Object> err = new SimpleOrderedMap<>();
+        err.add("errorCode", code);
         err.add("errorMessage", message);
         rb.rsp.add("blacklabResponse", err);
     }
 
     private void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
         if (params.isCalculateCollocations()) {
-            throw new UnsupportedOperationException("Not yet implemented: colloc");
-            /*
             // Collocations request
             TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
-            dstreamCollocationsResponse(ds, tfl);
-            */
+            DStream.collocationsResponse(ds, tfl);
         } else {
             // Hits request
             ResultHits resultHits = WebserviceOperations.getResultHits(params);

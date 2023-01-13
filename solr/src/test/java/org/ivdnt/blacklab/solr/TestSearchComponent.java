@@ -89,22 +89,14 @@ public class TestSearchComponent {
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add(CommonParams.FL, "fromInputFile,pid,title");
         solrParams.add("bl", "true"); // activate our component
-        //solrParams.add("bl.pattfield", "contents"); // activate our component
         solrParams.add("bl.patt", "\"the\""); // activate our component
         solrParams.add("bl.number", "100"); // max. number of results to get
 
         //System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
 
-        /*
-        // OLD, works
-        List<NamedList<Object>> hits = (List<NamedList<Object>>)queryResponse.getResponse().get("blacklabResponse");
-        Assert.assertEquals(21, hits.size());
-        /*/
-        // NEW, fails
-        NamedList blacklab = (NamedList)queryResponse.getResponse().get("blacklabResponse");
+        NamedList<Object> blacklab = (NamedList<Object>)queryResponse.getResponse().get("blacklabResponse");
         List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");
         Assert.assertEquals(21, hits.size());
-        //*/
     }
 }
