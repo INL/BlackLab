@@ -35,7 +35,7 @@ public class ResultAutocomplete {
         IndexMetadata indexMetadata = index.metadata();
 
         term = params.getAutocompleteTerm();
-        if (term == null || term.isEmpty())
+        if (StringUtils.isEmpty(term))
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
         /*

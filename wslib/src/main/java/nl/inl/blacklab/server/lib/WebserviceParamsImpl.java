@@ -65,8 +65,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
      * @param params parameters sent to webservice
      * @return the unique key
      */
-    public static WebserviceParamsImpl get(boolean isDocs, boolean isDebugMode,
-            PlainWebserviceParams params) {
+    public static WebserviceParamsImpl get(boolean isDocs, boolean isDebugMode, PlainWebserviceParams params) {
         return new WebserviceParamsImpl(isDocs, isDebugMode, params);
     }
 

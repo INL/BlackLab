@@ -54,7 +54,7 @@ public class WebserviceParamsUtils {
      */
     public static Query parseFilterQuery(BlackLabIndex index, String docPid, String filter, String filterLang) {
         Query result;
-        if (docPid != null) {
+        if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)
             int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
             if (luceneDocId < 0)

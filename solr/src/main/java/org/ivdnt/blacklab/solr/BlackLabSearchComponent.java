@@ -2,13 +2,11 @@ package org.ivdnt.blacklab.solr;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
+import org.apache.solr.common.StringUtils;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
@@ -18,15 +16,7 @@ import org.apache.solr.search.DocList;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -151,7 +141,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             Query docFilterQuery = null; // TODO: write Query class that filters on docList
             //String field = params.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
             //String patt = params.getPattern();
-            String operation = solrParams.bl("op", "hits");
+            String operation = solrParams.getOperation();
+            if (StringUtils.isEmpty(operation))
+                operation = "hits";
             DataStream ds = new DataStreamSolr(rb.rsp).startDocument("").startEntry("blacklabResponse");
             switch (operation) {
             case "hits":
@@ -199,42 +191,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             ResultHits resultHits = WebserviceOperations.getResultHits(params);
             DStream.hitsResponse(ds, resultHits, null);
         }
-    }
-
-    private void opHitsOld(BlackLabIndex index, String field, String patt, Query docFilterQuery, ResponseBuilder rb)
-            throws IOException {
-
-        if (StringUtils.isEmpty(patt)) {
-            errorResponse("No pattern given", rb);
-            return;
-        }
-        // Perform pattern search
-        try {
-            TextPattern tp = CorpusQueryLanguageParser.parse(patt);
-            QueryExecutionContext context = index.defaultExecutionContext(index.annotatedField(field));
-            BLSpanQuery query = tp.translate(context);
-            if (docFilterQuery != null)
-                query = new SpanQueryFiltered(tp.translate(context), docFilterQuery);
-            SearchEmpty search = index.search();
-            Hits hits = search.find(query).execute();
-            List<NamedList<Object>> hitList = outputHitListOld(index, hits);
-            rb.rsp.add("blacklabResponse", hitList);
-        } catch (InvalidQuery e) {
-            throw new IOException("Error exexcuting BlackLab query", e);
-        }
-    }
-
-    private List<NamedList<Object>> outputHitListOld(BlackLabIndex index, Hits hits) {
-        List<NamedList<Object>> hitList = new ArrayList<>();
-        for (Hit hit: hits) {
-            NamedList<Object> hitDesc = new NamedList<>();
-            String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), null);
-            hitDesc.add("doc", docPid);
-            hitDesc.add("start", hit.start());
-            hitDesc.add("end", hit.end());
-            hitList.add(hitDesc);
-        }
-        return hitList;
     }
 
     /////////////////////////////////////////////

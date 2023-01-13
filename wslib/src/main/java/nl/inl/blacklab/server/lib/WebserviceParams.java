@@ -28,6 +28,57 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
  */
 public interface WebserviceParams extends PlainWebserviceParams {
 
+    static double parse(String value, double defVal) {
+        if (value != null) {
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    static int parse(String value, int defVal) {
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    static long parse(String value, long defVal) {
+        if (value != null) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                // ok, just return default
+            }
+        }
+        return defVal;
+    }
+
+    static boolean parse(String value, boolean defVal) {
+        if (value != null) {
+            switch (value) {
+            case "true":
+            case "1":
+            case "yes":
+            case "on":
+                return true;
+            case "false":
+            case "0":
+            case "no":
+            case "off":
+                return false;
+            }
+        }
+        return defVal;
+    }
+
     BlackLabIndex blIndex();
 
     boolean hasPattern() throws BlsException;

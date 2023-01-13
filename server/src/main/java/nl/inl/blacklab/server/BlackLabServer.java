@@ -40,9 +40,9 @@ import nl.inl.blacklab.server.datastream.DataStreamAbstract;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
+import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
-import nl.inl.blacklab.server.requesthandlers.BlackLabServerParams;
 import nl.inl.blacklab.server.requesthandlers.UserRequestServlet;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.requesthandlers.ServletUtil;
@@ -82,7 +82,7 @@ public class BlackLabServer extends HttpServlet {
                 searchManager = new SearchManager(config);
 
                 // Set default parameter settings from config
-                BlackLabServerParams.setDefaults(config.getParameters());
+                ParameterDefaults.set(config.getParameters());
 
                 // Configure metrics provider (e.g Prometheus)
                 setMetricsProvider(config);
