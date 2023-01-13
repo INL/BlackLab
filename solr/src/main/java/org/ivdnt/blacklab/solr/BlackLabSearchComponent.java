@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
@@ -85,8 +84,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void init(@SuppressWarnings("rawtypes") NamedList args) {
-        SolrParams initArgs = args.toSolrParams();
-        System.out.println("Parameters: " + initArgs);
+//      SolrParams initArgs = args.toSolrParams();
+//      System.out.println("Parameters: " + initArgs);
 //      if (initArgs.get("xsltFile") == null || initArgs.get("inputField") == null) {
 //          throw new RuntimeException("ApplyXsltComponent needs xsltFile and inputField parameters!");
 //      }
@@ -153,12 +152,12 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             //String field = params.bl("pattfield", index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name());
             //String patt = params.getPattern();
             String operation = solrParams.bl("op", "hits");
-            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("blacklab").startEntry("blacklab");
+            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("").startEntry("blacklabResponse");
             switch (operation) {
             case "hits":
                 String field = index.mainAnnotatedField() == null ? "contents" : index.mainAnnotatedField().name();
 
-                //*
+                /*
                 // OLD, works
                 opHitsOld(index, field, params.getPattern(), null, rb);
                 /*/

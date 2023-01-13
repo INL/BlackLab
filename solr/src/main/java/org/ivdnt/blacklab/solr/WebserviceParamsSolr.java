@@ -66,20 +66,21 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
     public long bl(String name, long def) {
         return solrParams.getLong(BL_PAR_NAME_PREFIX + name, def);
     }
+
     public Optional<String> blOpt(String name) {
-        return Optional.ofNullable(solrParams.get(name));
+        return Optional.ofNullable(solrParams.get(BL_PAR_NAME_PREFIX + name));
     }
 
     public Optional<Double> blOptDouble(String name) {
-        return Optional.ofNullable(solrParams.getDouble(name));
+        return Optional.ofNullable(solrParams.getDouble(BL_PAR_NAME_PREFIX + name));
     }
 
     public Optional<Integer> blOptInteger(String name) {
-        return Optional.ofNullable(solrParams.getInt(name));
+        return Optional.ofNullable(solrParams.getInt(BL_PAR_NAME_PREFIX + name));
     }
 
     public Optional<Long> blOptLong(String name) {
-        return Optional.ofNullable(solrParams.getLong(name));
+        return Optional.ofNullable(solrParams.getLong(BL_PAR_NAME_PREFIX + name));
     }
 
     public Set<String> blSet(String name, String def) {
@@ -196,12 +197,12 @@ public class WebserviceParamsSolr implements PlainWebserviceParams {
 
     @Override
     public long getNumberOfResultsToShow() {
-        return optNumberOfResultsToShow().orElse(0L);
+        return optNumberOfResultsToShow().orElse(20L);
     }
 
     @Override
     public int getWordsAroundHit() {
-        return bl("wordsaroundhit", 0);
+        return bl("wordsaroundhit", 5);
     }
 
     @Override

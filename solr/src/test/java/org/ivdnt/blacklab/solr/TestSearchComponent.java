@@ -83,7 +83,6 @@ public class TestSearchComponent {
         Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
     }
 
-    //@Ignore // we don't have a BlackLab index we can load yet
     @Test
     public void testSearch() throws SolrServerException, IOException {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
@@ -92,11 +91,12 @@ public class TestSearchComponent {
         solrParams.add("bl", "true"); // activate our component
         //solrParams.add("bl.pattfield", "contents"); // activate our component
         solrParams.add("bl.patt", "\"the\""); // activate our component
+        solrParams.add("bl.number", "100"); // max. number of results to get
 
-        System.err.println(CORE_NAME);
+        //System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
 
-        //*
+        /*
         // OLD, works
         List<NamedList<Object>> hits = (List<NamedList<Object>>)queryResponse.getResponse().get("blacklabResponse");
         Assert.assertEquals(21, hits.size());
