@@ -1,0 +1,7 @@
+# This is a generated file. Not intended for manual editing.
+version: "3.9"
+services:
+  solr:
+    command: "docker compose up --build -d"
+    ports:
+    - "5005:5005"

@@ -15,30 +15,31 @@ import nl.inl.blacklab.search.Span;
  * certain domain) when executing our query.
  */
 class SpansFiltered extends BLSpans {
+
+    /** Hits we're filtering. */
     final BLSpans spans;
 
-    /**
-     * Set of accepted docs. NOTE: this is not segment-based, but for the whole
-     * index!
-     */
-    final DocIdSetIterator docIdSetIter;
+    /** Keep hits from these documents. */
+    final DocIdSetIterator acceptedDocs;
 
+    /** Are there more hits available? */
     boolean more;
 
     public SpansFiltered(BLSpans spans, Scorer filterDocs) throws IOException {
+        this(spans, filterDocs == null ? null : filterDocs.iterator());
+    }
+
+    public SpansFiltered(BLSpans spans, DocIdSetIterator acceptedDocs) throws IOException {
         this.spans = spans;
-        docIdSetIter = filterDocs == null ? null : filterDocs.iterator(); //docIdSetIter = filterDocs.iterator();
-        more = false;
-        if (docIdSetIter != null) {
-            more = (docIdSetIter.nextDoc() != NO_MORE_DOCS);
-        }
+        this.acceptedDocs = acceptedDocs;
+        more = acceptedDocs != null && (acceptedDocs.nextDoc() != NO_MORE_DOCS);
     }
 
     private int synchronize() throws IOException {
-        while (more && spans.docID() != docIdSetIter.docID()) {
-            if (spans.docID() < docIdSetIter.docID()) {
-                more = spans.advance(docIdSetIter.docID()) != NO_MORE_DOCS;
-            } else if (docIdSetIter.advance(spans.docID()) == NO_MORE_DOCS) {
+        while (more && spans.docID() != acceptedDocs.docID()) {
+            if (spans.docID() < acceptedDocs.docID()) {
+                more = spans.advance(acceptedDocs.docID()) != NO_MORE_DOCS;
+            } else if (acceptedDocs.advance(spans.docID()) == NO_MORE_DOCS) {
                 more = false;
             }
         }

@@ -22,44 +22,11 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
 /**
  * Extends the PlainWebserviceParams interface with methods that instantiate searches
  * based on the parameter values.
- *
+ * <p>
  * Should probably be refactored so there's a separate class for each operation, with
  * just the parameters relevant to that operation.
  */
 public interface WebserviceParams extends PlainWebserviceParams {
-
-    static double parse(String value, double defVal) {
-        if (value != null) {
-            try {
-                return Double.parseDouble(value);
-            } catch (NumberFormatException e) {
-                // ok, just return default
-            }
-        }
-        return defVal;
-    }
-
-    static int parse(String value, int defVal) {
-        if (value != null) {
-            try {
-                return Integer.parseInt(value);
-            } catch (NumberFormatException e) {
-                // ok, just return default
-            }
-        }
-        return defVal;
-    }
-
-    static long parse(String value, long defVal) {
-        if (value != null) {
-            try {
-                return Long.parseLong(value);
-            } catch (NumberFormatException e) {
-                // ok, just return default
-            }
-        }
-        return defVal;
-    }
 
     BlackLabIndex blIndex();
 
@@ -67,11 +34,18 @@ public interface WebserviceParams extends PlainWebserviceParams {
 
     Optional<TextPattern> pattern() throws BlsException;
 
-    boolean hasFilter() throws BlsException;
-
     String getDocPid();
 
     Query filterQuery() throws BlsException;
+
+    /**
+     * Set the list of accepted doc ids.
+     * <p>
+     * Instead of using a filter query, this list will be used
+     *
+     * @param acceptedDocs global ids of documents to keep (unsorted)
+     */
+    void setFilterQuery(Query query);
 
     /**
      * @return hits - filtered then sorted then sampled then windowed
@@ -127,5 +101,4 @@ public interface WebserviceParams extends PlainWebserviceParams {
     SearchFacets facets() throws BlsException;
 
     String getFieldName();
-
 }

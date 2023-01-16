@@ -69,15 +69,19 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return new WebserviceParamsImpl(isDocs, isDebugMode, params);
     }
 
-    private PlainWebserviceParams params;
+    private final PlainWebserviceParams params;
 
-    private boolean debugMode;
+    private final boolean debugMode;
 
     /** The pattern, if parsed already */
     private TextPattern pattern;
 
     /** The filter query, if parsed already */
     private Query filterQuery;
+
+    /** If set, keep only hits from these global doc ids (filterQuery will be ignored).
+        Note that this MUST already be sorted! */
+    private Iterable<Integer> acceptedDocs;
 
     private final boolean isDocsOperation;
 
@@ -128,11 +132,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return pattern == null ? Optional.empty() : Optional.of(pattern);
     }
 
-    @Override
-    public boolean hasFilter() throws BlsException {
-        return filterQuery() != null;
-    }
-
     public void setDocPid(String pid) {
         overrideDocPid = pid;
     }
@@ -151,6 +150,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
                     getDocumentFilterLanguage());
         }
         return filterQuery;
+    }
+
+    @Override
+    public void setFilterQuery(Query query) {
+        this.filterQuery = query;
     }
 
     /**
@@ -404,7 +408,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     private SearchHits hits() throws BlsException {
         SearchEmpty search = blIndex().search(null, useCache());
         try {
-            Query filter = hasFilter() ? filterQuery() : null;
+            Query filter = filterQuery();
             Optional<TextPattern> pattern = pattern();
             if (!pattern.isPresent())
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");

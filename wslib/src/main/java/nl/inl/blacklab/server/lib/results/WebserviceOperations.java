@@ -87,7 +87,7 @@ public class WebserviceOperations {
 
     /**
      * Returns a list of metadata fields to write out.
-     *
+     * <p>
      * By default, all metadata fields are returned.
      * Special fields (pidField, titleField, etc...) are always returned.
      *
@@ -118,9 +118,9 @@ public class WebserviceOperations {
 
     /**
      * Get metadata field groups.
-     *
+     * <p>
      * This includes adding any uncategorized fields to the "default" group.
-     *
+     * <p>
      * (part of custom properties; should eventually be removed from the API)
      *
      * @param index index
@@ -159,7 +159,7 @@ public class WebserviceOperations {
 
     /**
      * Get the special metadata fields.
-     *
+     * <p>
      * (special metadata fields except pidField are part of custom properties;
      *  this method should eventually be removed from the API)
      *
@@ -182,7 +182,7 @@ public class WebserviceOperations {
 
     /**
      * Get display names for metadata fields.
-     *
+     * <p>
      * (part of custom properties; should eventually be removed from the API)
      *
      * @param index index
@@ -220,7 +220,7 @@ public class WebserviceOperations {
 
     /**
      * Returns the annotations to write out.
-     *
+     * <p>
      * By default, all annotations are returned.
      * Annotations are returned in requested order, or in their definition/display order.
      *
@@ -266,7 +266,7 @@ public class WebserviceOperations {
 
     /**
      * Get relevant facets info for display.
-     *
+     * <p>
      * Returns lists of value+count for every property faceted on.
      * Grouped by descending size.
      *
@@ -352,7 +352,7 @@ public class WebserviceOperations {
 
     /**
      * Get field value distribution in the right order for the response.
-     *
+     * <p>
      * The right order is: display order first, then sorted by displayValue
      * as a fallback, or regular value as the second fallback.
      *
@@ -410,7 +410,7 @@ public class WebserviceOperations {
 
     /**
      * Get the list of values for an annotation.
-     *
+     * <p>
      * No more than {@link #MAX_FIELD_VALUES_TO_RETURN} will be returned.
      * valueListComplete[0] will indicate if all values were returned or not
      *
@@ -457,7 +457,7 @@ public class WebserviceOperations {
 
     /**
      * Translate a thrown exception into a BlsException.
-     *
+     * <p>
      * BlsException will eventually be caught and returned as an error response.
      *
      * @param e exception thrown
@@ -481,7 +481,7 @@ public class WebserviceOperations {
 
     /**
      * Find the size of documents matching a filter query and/or property+value.
-     *
+     * <p>
      *
      * @param params operation parameters
      * @param metadataFilterQuery filter query
@@ -531,7 +531,7 @@ public class WebserviceOperations {
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!
-        Query q = params.hasFilter() ? params.filterQuery() : null;
+        Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);

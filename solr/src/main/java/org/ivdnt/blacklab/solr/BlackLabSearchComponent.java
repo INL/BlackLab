@@ -1,10 +1,8 @@
 package org.ivdnt.blacklab.solr;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.search.Query;
 import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.StringUtils;
 import org.apache.solr.common.util.NamedList;
@@ -12,8 +10,7 @@ import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
-import org.apache.solr.search.DocIterator;
-import org.apache.solr.search.DocList;
+import org.apache.solr.search.DocSet;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -45,7 +42,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     /**
      * Called when component is assigned to a core.
-     *
+     * <p>
      * Should do initialization.
      *
      * @param core The core holding this component.
@@ -71,13 +68,13 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     /**
      * Called when component is instantiated.
-     *
+     * <p>
      * Should interpret and store arguments.
      *
      * @param args arguments (from solrconfig.xml)
      */
     @Override
-    public void init(@SuppressWarnings("rawtypes") NamedList args) {
+    public void init(NamedList args) {
 //      SolrParams initArgs = args.toSolrParams();
 //      System.out.println("Parameters: " + initArgs);
 //      if (initArgs.get("xsltFile") == null || initArgs.get("inputField") == null) {
@@ -94,9 +91,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     /**
      * Prepare request.
-     *
+     * <p>
      * Called after request received, but before processing by any of the components.
-     *
+     * <p>
      * Allows us to customize how other components will process this request, so we'll
      * get the data we need for our operation.
      *
@@ -104,7 +101,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void prepare(ResponseBuilder rb) {
-        rb.setNeedDocList(true);
+        if (shouldRunComponent(rb)) {
+            rb.setNeedDocSet(true); // we need to know all the matching documents (to filter on them)
+        }
 
         /*
         // See if we can load a test file now.
@@ -119,30 +118,29 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     /**
      * Process a request.
-     *
+     * <p>
      * Called after previous (e.g. standard Solr) components have run.
      *
      * @param rb response builder where we can find request and results from previous components
-     * @throws IOException
      */
     @Override
-    public synchronized void process(ResponseBuilder rb) throws IOException {
+    public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
-        boolean shouldRun = rb.req.getParams().getBool("bl", false);
-        if (shouldRun) {
+        if (shouldRunComponent(rb)) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             if (!searchManager.getIndexManager().indexExists(index.name())) {
                 searchManager.getIndexManager().registerIndex(index);
             }
             WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index, searchManager);
-            WebserviceParams params = WebserviceParamsImpl.get(false, true, solrParams);
-            DocList docList = null;
-            if (rb.getResults() != null) {
-                docList = rb.getResults().docList;
+            WebserviceParamsImpl params = WebserviceParamsImpl.get(false, true, solrParams);
+
+            if (!solrParams.has("filter")) {
+                // No bl.filter specified; use Solr's document results as our filter query
+                DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
+                params.setFilterQuery(new DocSetFilter(docSet));
             }
-            DocIterator it = docList.iterator();
-            Query docFilterQuery = null; // TODO: write Query class that filters on docList
+
             String operation = solrParams.getOperation();
             if (StringUtils.isEmpty(operation))
                 operation = "hits";
@@ -161,11 +159,17 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 }
             } catch (BlsException e) {
                 errorResponse(e.getBlsErrorCode(), e.getMessage(), rb);
+                e.printStackTrace();
             } catch (Exception e) {
                 errorResponse("INTERNAL_ERROR", e.getMessage(), rb);
+                e.printStackTrace();
             }
             ds.endEntry().endDocument();
         }
+    }
+
+    private static boolean shouldRunComponent(ResponseBuilder rb) {
+        return rb.req.getParams().getBool("bl", false);
     }
 
     private void errorResponse(String code, String message, ResponseBuilder rb) {

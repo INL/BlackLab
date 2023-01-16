@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
-import org.apache.solr.search.DocList;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
@@ -27,18 +26,12 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     private final SolrParams solrParams;
 
-    /**
-     * Document matches from Solr.
-     */
-    private final DocList docList;
-
     private final BlackLabIndex index;
 
     private final SearchManager searchManager;
 
     public WebserviceParamsSolr(ResponseBuilder rb, BlackLabIndex index, SearchManager searchManager) {
         solrParams = rb.req.getParams();
-        docList = rb.getResults() != null ? rb.getResults().docList : null;
         this.index = index;
         this.searchManager = searchManager;
     }
