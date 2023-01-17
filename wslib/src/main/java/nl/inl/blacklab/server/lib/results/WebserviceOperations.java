@@ -256,7 +256,7 @@ public class WebserviceOperations {
             Integer docId = e.getKey();
             Document luceneDoc = e.getValue();
             String pid = getDocumentPid(index, docId, luceneDoc);
-            ResultDocInfo docInfo = new ResultDocInfo(index, null, luceneDoc, metadataFieldsToList);
+            ResultDocInfo docInfo = new ResultDocInfo(index, pid, luceneDoc, metadataFieldsToList);
             docInfos.put(pid, docInfo);
         }
         return docInfos;

@@ -41,6 +41,8 @@ public class ResultDocInfo {
     }
 
     private void initDoc(String docPid, Document document) throws BlsException {
+        if (docPid == null)
+            throw new IllegalArgumentException("Must specify docPid!");
         if (document == null) {
             this.docPid = docPid;
             if (docPid.length() == 0)
@@ -54,7 +56,6 @@ public class ResultDocInfo {
                         "INTERR_FETCHING_DOCUMENT_INFO");
         } else {
             this.document = document;
-            this.docPid = document.get(index.metadataFields().pidField().name());
         }
     }
 

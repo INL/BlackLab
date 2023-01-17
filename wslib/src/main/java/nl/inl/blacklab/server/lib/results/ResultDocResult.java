@@ -35,7 +35,7 @@ public class ResultDocResult {
         BlackLabIndex index = params.blIndex();
         Document document = index.luceneDoc(dr.docId());
         pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
-        docInfo = WebserviceOperations.docInfo(index, null, document, metadataFieldsToList);
+        docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
         // Snippets
         Hits hits = dr.storedResults().window(0, 5); // TODO: make num. snippets configurable
         numberOfHits = dr.storedResults().size();
