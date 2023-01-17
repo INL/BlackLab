@@ -79,6 +79,10 @@ public class DocSetFilter extends Query {
                     public DocIdSetIterator iterator() {
                         // Find docBase (or the first higher id) in accepted docs list
                         long start = IntBigArrays.binarySearch(acceptedDocs.elements(), 0, acceptedDocs.size64(), ctx.docBase);
+                        if (start < 0) {
+                            // Value not found; determine "insertion point" (index of first higher id) instead
+                            start = -start - 1;
+                        }
                         // Create iterator from that point (first accepted doc in this segment)
                         IntBigListIterator acceptedDocsInLeaf = acceptedDocs.listIterator(start);
                         if (acceptedDocsInLeaf.hasNext()) {
