@@ -70,17 +70,16 @@ public class TestSearchComponent {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
+        Assert.assertNull(queryResponse.getResponse().get("blacklab"));
     }
 
     @Test
     public void testEnableBlackLabButNoOps() throws SolrServerException, IOException {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
-        solrParams.add("bl", "true"); // activate our component
-        solrParams.add("bl.op", "none"); // set operation
+        solrParams.add("bl.op", "none"); // activate component and set operation
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        Assert.assertNull(queryResponse.getResponse().get("blacklabResponse"));
+        Assert.assertNull(queryResponse.getResponse().get("blacklab"));
     }
 
     @Test
@@ -88,14 +87,14 @@ public class TestSearchComponent {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add(CommonParams.FL, "fromInputFile,pid,title");
-        solrParams.add("bl", "true"); // activate our component
+        solrParams.add("bl.op", "hits"); // activate component and set operation
         solrParams.add("bl.patt", "\"the\""); // activate our component
         solrParams.add("bl.number", "100"); // max. number of results to get
 
         //System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
 
-        NamedList<Object> blacklab = (NamedList<Object>)queryResponse.getResponse().get("blacklabResponse");
+        NamedList<Object> blacklab = (NamedList<Object>)queryResponse.getResponse().get("blacklab");
         List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");
         Assert.assertEquals(21, hits.size());
     }

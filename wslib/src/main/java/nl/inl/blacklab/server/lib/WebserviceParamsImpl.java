@@ -65,11 +65,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
      * @param params parameters sent to webservice
      * @return the unique key
      */
-    public static WebserviceParamsImpl get(boolean isDocs, boolean isDebugMode, PlainWebserviceParams params) {
+    public static WebserviceParamsImpl get(boolean isDocs, boolean isDebugMode, QueryParams params) {
         return new WebserviceParamsImpl(isDocs, isDebugMode, params);
     }
 
-    private final PlainWebserviceParams params;
+    private final QueryParams params;
 
     private final boolean debugMode;
 
@@ -94,7 +94,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     private String fieldName;
 
     private WebserviceParamsImpl(boolean isDocsOperation, boolean isDebugMode,
-            PlainWebserviceParams params) {
+            QueryParams params) {
         this.isDocsOperation = isDocsOperation;
         this.debugMode = isDebugMode;
         this.params = params;

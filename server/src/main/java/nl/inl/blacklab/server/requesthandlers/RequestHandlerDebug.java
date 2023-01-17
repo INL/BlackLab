@@ -25,7 +25,7 @@ public class RequestHandlerDebug extends RequestHandler {
     @Override
     public int handle(DataStream ds) {
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        BlackLabServerParams params = new BlackLabServerParams(indexName, request, searchMan, user);
+        QueryParamsBlackLabServer params = new QueryParamsBlackLabServer(indexName, request, searchMan, user);
         WebserviceParams searchParameters = WebserviceParamsImpl.get(false, isDebugMode, params);
         ds.startMap()
                 .entry("indexName", indexName)

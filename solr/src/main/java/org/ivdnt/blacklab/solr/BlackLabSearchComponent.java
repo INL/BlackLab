@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
-import org.apache.solr.common.StringUtils;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
@@ -106,7 +105,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void prepare(ResponseBuilder rb) {
-        if (WebserviceParamsSolr.shouldRunComponent(rb.req.getParams())) {
+        if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             rb.setNeedDocSet(true); // we need to know all the matching documents (to filter on them)
         }
 
@@ -131,29 +130,27 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
-        if (WebserviceParamsSolr.shouldRunComponent(rb.req.getParams())) {
+        if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             if (!searchManager.getIndexManager().indexExists(index.name())) {
                 searchManager.getIndexManager().registerIndex(index);
             }
-            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb.req.getParams(), index, searchManager);
-            WebserviceParamsImpl params = WebserviceParamsImpl.get(false, true, solrParams);
-
-            if (!solrParams.has("filter")) {
-                // No bl.filter specified; use Solr's document results as our filter query
-                DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-                params.setFilterQuery(new DocSetFilter(docSet));
-            }
-
-            String operation = solrParams.getOperation();
-            if (StringUtils.isEmpty(operation))
-                operation = "hits";
+            WebserviceParams params = getParams(rb, index);
             DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
-            ds.startEntry("blacklabResponse");
+
+            // FIXME: Produce CSV output?
+            //   Solr includes a CSV output type, but that seems to be geared towards outputting documents
+            //   with their fields. Maybe there's some way to customize this, or add another output type for
+            //   "blacklab-csv" output?
+            //if (outputType == DataFormat.CSV)
+
+            ds.startEntry("blacklab");
             try {
+                String operation = QueryParamsSolr.getOperation(rb.req.getParams());
                 switch (operation) {
                 case "hits":
+                    // (Grouped) hits
                     opHits(params, ds);
                     break;
                 case "none":
@@ -171,6 +168,17 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         }
     }
 
+    private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
+        QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), index, searchManager);
+        WebserviceParamsImpl params = WebserviceParamsImpl.get(false, true, solrParams);
+        if (params.getDocumentFilterQuery().isEmpty()) {
+            // No explicit bl.filter specified; use Solr's document results as our filter query
+            DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
+            params.setFilterQuery(new DocSetFilter(docSet));
+        }
+        return params;
+    }
+
     private void errorResponse(Exception e, ResponseBuilder rb) {
         String code = (e instanceof BlsException) ? ((BlsException) e).getBlsErrorCode() : "INTERNAL_ERROR";
         errorResponse(code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
@@ -186,7 +194,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             System.err.println(sw);
             err.add("stackTrace", sw.toString());
         }
-        rb.rsp.add("blacklabResponse", Map.of("error", err));
+        rb.rsp.add("blacklab", Map.of("error", err));
     }
 
     private void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
@@ -196,7 +204,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             DStream.collocationsResponse(ds, tfl);
         } else {
             // Hits request
-
             Optional<String> viewgroup = params.getViewGroup();
             boolean returnListOfGroups = false;
             if (params.getGroupProps().isPresent()) {
@@ -210,9 +217,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 throw new BadRequest("ERROR_IN_GROUP_VALUE",
                         "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
             }
-            // FIXME: Produce CSV output?
-            //if (outputType == DataFormat.CSV)
-            //    handlerName += "-csv";
 
             if (returnListOfGroups) {
                 ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);

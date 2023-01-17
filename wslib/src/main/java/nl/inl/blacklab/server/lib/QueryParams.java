@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  *
  * <p>This class only includes "plain" parameters, not any objects derived from them.
  */
-public interface PlainWebserviceParams {
+public interface QueryParams {
 
     /**
      * Get a view of the parameters.

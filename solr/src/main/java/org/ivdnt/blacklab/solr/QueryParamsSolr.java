@@ -9,7 +9,7 @@ import org.apache.solr.common.params.SolrParams;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
-import nl.inl.blacklab.server.lib.PlainWebserviceParamsAbstract;
+import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -18,7 +18,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  * The parameters must be prefixed with "bl." to distinguish them from Solr parameters.
  * (in the future, we may also support a JSON Solr request that doesn't need these prefixes)
  */
-public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
+public class QueryParamsSolr extends QueryParamsAbstract {
 
     private static final String BL_PAR_NAME = "bl";
 
@@ -32,7 +32,7 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     private final SearchManager searchManager;
 
-    public WebserviceParamsSolr(SolrParams params, BlackLabIndex index, SearchManager searchManager) {
+    public QueryParamsSolr(SolrParams params, BlackLabIndex index, SearchManager searchManager) {
         solrParams = params;
         this.index = index;
         this.searchManager = searchManager;
@@ -40,6 +40,10 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     public static boolean shouldRunComponent(SolrParams params) {
         return params.get(BL_PAR_NAME_PREFIX + PAR_NAME_OPERATION) != null;
+    }
+
+    public static String getOperation(SolrParams params) {
+        return params.get(BL_PAR_NAME_PREFIX + PAR_NAME_OPERATION);
     }
 
     protected boolean has(String name) {
@@ -59,10 +63,6 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 .filter(p -> ParameterDefaults.paramExists(p.getKey())) // only existing params
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-    }
-
-    public String getOperation() {
-        return get(PAR_NAME_OPERATION);
     }
 
     @Override

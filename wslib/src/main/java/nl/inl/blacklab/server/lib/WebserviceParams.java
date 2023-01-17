@@ -20,13 +20,15 @@ import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 
 /**
- * Extends the PlainWebserviceParams interface with methods that instantiate searches
+ * Represents a webservice request, with more logic than just the query parameters.
+ * <p>
+ * Extends the QueryParams interface with methods that instantiate searches
  * based on the parameter values.
  * <p>
  * Should probably be refactored so there's a separate class for each operation, with
  * just the parameters relevant to that operation.
  */
-public interface WebserviceParams extends PlainWebserviceParams {
+public interface WebserviceParams extends QueryParams {
 
     BlackLabIndex blIndex();
 

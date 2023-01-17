@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.ConcordanceType;
  * Abstract implementation of PlainWebserviceParams that uses request parameters.
  * This is used for both BLS and Solr.
  */
-public abstract class PlainWebserviceParamsAbstract implements PlainWebserviceParams {
+public abstract class QueryParamsAbstract implements QueryParams {
 
     private static double parseDouble(String value) {
         if (value != null) {
@@ -111,7 +111,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
      * @return value
      */
     protected int getInt(String name) {
-        return PlainWebserviceParamsAbstract.parseInt(get(name));
+        return QueryParamsAbstract.parseInt(get(name));
     }
 
     /**
@@ -123,7 +123,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
      * @return value
      */
     protected long getLong(String name) {
-        return PlainWebserviceParamsAbstract.parseLong(get(name));
+        return QueryParamsAbstract.parseLong(get(name));
     }
 
     /**
@@ -162,7 +162,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
      * @return value if set
      */
     protected Optional<Double> optDouble(String name) {
-        return opt(name).map(PlainWebserviceParamsAbstract::parseDouble);
+        return opt(name).map(QueryParamsAbstract::parseDouble);
     }
 
     /**
@@ -174,7 +174,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
      * @return value if set
      */
     protected Optional<Integer> optInteger(String name) {
-        return opt(name).map(PlainWebserviceParamsAbstract::parseInt);
+        return opt(name).map(QueryParamsAbstract::parseInt);
     }
 
     /**
@@ -186,7 +186,7 @@ public abstract class PlainWebserviceParamsAbstract implements PlainWebservicePa
      * @return value if set
      */
     protected Optional<Long> optLong(String name) {
-        return opt(name).map(PlainWebserviceParamsAbstract::parseLong);
+        return opt(name).map(QueryParamsAbstract::parseLong);
     }
 
     @Override

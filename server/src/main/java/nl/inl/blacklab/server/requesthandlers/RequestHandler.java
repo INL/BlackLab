@@ -27,7 +27,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
-import nl.inl.blacklab.server.lib.PlainWebserviceParams;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -382,7 +382,7 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        PlainWebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
+        QueryParams blsParams = new QueryParamsBlackLabServer(indexName, request, searchMan, user);
         params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;

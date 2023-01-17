@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.server.lib.ParameterDefaults;
-import nl.inl.blacklab.server.lib.PlainWebserviceParamsAbstract;
+import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.search.SearchManager;
  *
  * Extracts the webservice parameters from a HttpServletRequest.
  */
-public class BlackLabServerParams extends PlainWebserviceParamsAbstract {
+public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final Map<String, String> map = new TreeMap<>();
 
@@ -25,7 +25,7 @@ public class BlackLabServerParams extends PlainWebserviceParamsAbstract {
 
     private final User user;
 
-    public BlackLabServerParams(String indexName, HttpServletRequest request, SearchManager searchMan, User user) {
+    public QueryParamsBlackLabServer(String indexName, HttpServletRequest request, SearchManager searchMan, User user) {
         this.searchMan = searchMan;
         this.user = user;
         map.put("indexname", indexName);
