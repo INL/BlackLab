@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -10,6 +11,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
@@ -26,6 +29,8 @@ import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -613,5 +618,152 @@ public class DStream {
             documentInfos(ds, hitsGrouped.getDocInfos());
         }
         ds.endMap();
+    }
+
+    public static void docsGroupedResponse(DataStream ds, ResultDocsGrouped result) {
+        DocGroups groups = result.getGroups();
+        WindowStats ourWindow = result.getOurWindow();
+
+        ds.startMap();
+
+        // The summary
+        ds.startEntry("summary").startMap();
+
+        summaryCommonFields(ds, result.getSummaryFields());
+
+        if (result.getNumResultDocs() != null) {
+            summaryNumDocs(ds, result.getNumResultDocs());
+        } else {
+            summaryNumHits(ds, result.getNumResultHits());
+        }
+
+        ds.endMap().endEntry();
+
+        ds.startEntry("docGroups").startList();
+        Iterator<CorpusSize> it = result.getCorpusSizes().iterator();
+        /* Gather group values per property:
+         * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will
+         * contain the sub properties and values in the same order.
+         */
+        List<DocProperty> prop = groups.groupCriteria().propsList();
+        for (long i = ourWindow.first(); i <= ourWindow.last(); ++i) {
+            DocGroup group = groups.get(i);
+
+            ds.startItem("docgroup").startMap()
+                    .entry("identity", group.identity().serialize())
+                    .entry("identityDisplay", group.identity().toString())
+                    .entry("size", group.size());
+
+            // Write the raw values for this group
+            ds.startEntry("properties").startList();
+            List<PropertyValue> valuesForGroup = group.identity().valuesList();
+            for (int j = 0; j < prop.size(); ++j) {
+                ds.startItem("property").startMap();
+                ds.entry("name", prop.get(j).serialize());
+                ds.entry("value", valuesForGroup.get(j).toString());
+                ds.endMap().endItem();
+            }
+            ds.endList().endEntry();
+
+            ds.entry("numberOfTokens", group.totalTokens());
+            if (result.getParams().hasPattern()) {
+                subcorpusSize(ds, it.next());
+            }
+            ds.endMap().endItem();
+        }
+        ds.endList().endEntry();
+
+        ds.endMap();
+    }
+
+    public static void docsResponse(DataStream ds, ResultDocsResponse result) throws InvalidQuery {
+        ds.startMap();
+        {
+            // The summary
+            ds.startEntry("summary").startMap();
+            {
+                summaryCommonFields(ds, result.getSummaryFields());
+                if (result.getNumResultDocs() != null) {
+                    summaryNumDocs(ds, result.getNumResultDocs());
+                } else {
+                    summaryNumHits(ds, result.getNumResultHits());
+                }
+                if (result.isIncludeTokenCount())
+                    ds.entry("tokensInMatchingDocuments", result.getTotalTokens());
+
+                metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
+            }
+            ds.endMap().endEntry();
+
+            // The hits and document info
+            ds.startEntry("docs").startList();
+            for (ResultDocResult docResult: result.getDocResults()) {
+                docResult(ds, docResult);
+            }
+            ds.endList().endEntry();
+            if (result.getFacetInfo() != null) {
+                // Now, group the docs according to the requested facets.
+                ds.startEntry("facets");
+                {
+                    facets(ds, result.getFacetInfo());
+                }
+                ds.endEntry();
+            }
+        }
+        ds.endMap();
+    }
+
+    public static void docResult(DataStream ds, ResultDocResult result) {
+        ds.startItem("doc").startMap();
+        {
+            // Combine all
+            ds.entry("docPid", result.getPid());
+            if (result.numberOfHits() > 0)
+                ds.entry("numberOfHits", result.numberOfHits());
+
+            // Doc info (metadata, etc.)
+            ds.startEntry("docInfo");
+            {
+                documentInfo(ds, result.getDocInfo());
+            }
+            ds.endEntry();
+
+            // Snippets
+            Collection<Annotation> annotationsToList = result.getAnnotationsToList();
+            if (result.numberOfHitsToShow() > 0) {
+                ds.startEntry("snippets").startList();
+                if (!result.hasConcordances()) {
+                    // KWICs
+                    for (Kwic k: result.getKwicsToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add KWIC info
+                            ds.startEntry("left").contextList(k.annotations(), annotationsToList, k.left())
+                                    .endEntry();
+                            ds.startEntry("match").contextList(k.annotations(), annotationsToList, k.match())
+                                    .endEntry();
+                            ds.startEntry("right").contextList(k.annotations(), annotationsToList, k.right())
+                                    .endEntry();
+                        }
+                        ds.endMap().endItem();
+                    }
+                } else {
+                    // Concordances from original content
+                    for (Concordance c: result.getConcordancesToShow()) {
+                        ds.startItem("snippet").startMap();
+                        {
+                            // Add concordance from original XML
+                            ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                                    .startEntry("match").xmlFragment(c.match()).endEntry()
+                                    .startEntry("right").xmlFragment(c.right()).endEntry();
+                        }
+                        ds.endMap().endItem();
+                    }
+                }
+                ds.endList().endEntry();
+            } // if snippets
+
+        }
+        ds.endMap().endItem();
     }
 }

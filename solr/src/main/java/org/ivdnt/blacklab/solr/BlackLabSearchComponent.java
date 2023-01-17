@@ -26,6 +26,8 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResultDocsGrouped;
+import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
 import nl.inl.blacklab.server.lib.results.ResultHits;
 import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
@@ -153,6 +155,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     // (Grouped) hits
                     opHits(params, ds);
                     break;
+                case "docs":
+                    opDocs(params, ds);
+                    break;
                 case "none":
                     // do nothing
                     break;
@@ -204,28 +209,52 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             DStream.collocationsResponse(ds, tfl);
         } else {
             // Hits request
-            Optional<String> viewgroup = params.getViewGroup();
-            boolean returnListOfGroups = false;
-            if (params.getGroupProps().isPresent()) {
-                // This is a grouping operation
-                if (viewgroup.isEmpty()) {
-                    // We want the list of groups, not the contents of a single group
-                    returnListOfGroups = true;
-                }
-            } else if (viewgroup.isPresent()) {
-                // "viewgroup" parameter without "group" parameter; error.
-                throw new BadRequest("ERROR_IN_GROUP_VALUE",
-                        "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
-            }
-
-            if (returnListOfGroups) {
+            if (shouldReturnListOfGroups(params)) {
+                // We're returning a list of groups
                 ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
                 DStream.hitsGroupedResponse(ds, hitsGrouped);
             } else {
-                ResultHits resultHits = WebserviceOperations.getResultHits(params);
-                DStream.hitsResponse(ds, resultHits);
+                // We're returning a list of results (ungrouped, or viewing single group)
+                ResultHits result = WebserviceOperations.getResultHits(params);
+                DStream.hitsResponse(ds, result);
             }
         }
+    }
+
+    private void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
+        if (shouldReturnListOfGroups(params)) {
+            // We're returning a list of groups
+            ResultDocsGrouped docsGrouped = WebserviceOperations.docsGrouped(params);
+            DStream.docsGroupedResponse(ds, docsGrouped);
+        } else {
+            // We're returning a list of results (ungrouped, or viewing single group)
+            ResultDocsResponse result;
+            if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
+                // View a single group in a grouped docs resultset
+                result = WebserviceOperations.viewGroupDocsResponse(params);
+            } else {
+                // Regular set of docs (no grouping first)
+                result = WebserviceOperations.regularDocsResponse(params);
+            }
+            DStream.docsResponse(ds, result);
+        }
+    }
+
+    private boolean shouldReturnListOfGroups(WebserviceParams params) {
+        Optional<String> viewgroup = params.getViewGroup();
+        boolean returnListOfGroups = false;
+        if (params.getGroupProps().isPresent()) {
+            // This is a grouping operation
+            if (viewgroup.isEmpty()) {
+                // We want the list of groups, not the contents of a single group
+                returnListOfGroups = true;
+            }
+        } else if (viewgroup.isPresent()) {
+            // "viewgroup" parameter without "group" parameter; error.
+            throw new BadRequest("ERROR_IN_GROUP_VALUE",
+                    "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
+        }
+        return returnListOfGroups;
     }
 
     /////////////////////////////////////////////

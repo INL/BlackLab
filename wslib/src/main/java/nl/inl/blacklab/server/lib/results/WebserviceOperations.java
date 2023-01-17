@@ -73,7 +73,6 @@ import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
 
@@ -783,15 +782,15 @@ public class WebserviceOperations {
         return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
     }
 
-    public static ResultServerInfo serverInfo(WebserviceParamsImpl params, boolean debugMode) {
+    public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
         return new ResultServerInfo(params, debugMode);
     }
 
-    public static ResultDocsGrouped docsGrouped(WebserviceParamsImpl params) throws InvalidQuery {
+    public static ResultDocsGrouped docsGrouped(WebserviceParams params) throws InvalidQuery {
         return new ResultDocsGrouped(params);
     }
 
-    public static ResultListInputFormats listInputFormats(WebserviceParamsImpl params) {
+    public static ResultListInputFormats listInputFormats(WebserviceParams params) {
         return new ResultListInputFormats(params);
     }
 
