@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -47,6 +48,7 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
  * Utilities for serializing BlackLab responses using DataStream.
  */
 public class DStream {
+    static final Logger logger = LogManager.getLogger(DStream.class);
 
     private DStream() {}
 
@@ -290,7 +292,7 @@ public class DStream {
         ds.endMap().endEntry();
     }
 
-    public static void listOfHits(DataStream ds, ResultListOfHits result, Logger logger) throws BlsException {
+    public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
         WebserviceParams params = result.getParams();
         Hits hits = result.getHits();
 
@@ -496,7 +498,7 @@ public class DStream {
         ds.endMap().endEntry().endMap();
     }
 
-    public static void hitsResponse(DataStream ds, ResultHits resultHits, Logger logger)
+    public static void hitsResponse(DataStream ds, ResultHits resultHits)
             throws InvalidQuery {
         WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
@@ -540,7 +542,7 @@ public class DStream {
         ds.endMap().endEntry();
 
         // Hits and docInfos
-        listOfHits(ds, listOfHits, logger);
+        listOfHits(ds, listOfHits);
         documentInfos(ds, resultHits.getDocInfos());
 
         // Facets (if requested)
@@ -553,6 +555,63 @@ public class DStream {
             ds.endEntry();
         }
 
+        ds.endMap();
+    }
+
+    public static void hitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
+        WebserviceParams params = hitsGrouped.getParams();
+        ResultSummaryCommonFields summaryFields = hitsGrouped.getSummaryFields();
+        ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
+
+        ds.startMap();
+
+        // Summary
+        ds.startEntry("summary").startMap();
+        {
+            summaryCommonFields(ds, summaryFields);
+            summaryNumHits(ds, result);
+        }
+        ds.endMap().endEntry();
+
+        ds.startEntry("hitGroups").startList();
+
+        List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
+        for (ResultHitGroup groupInfo: groupInfos) {
+
+            ds.startItem("hitgroup").startMap();
+            {
+                ds
+                        .entry("identity", groupInfo.getIdentity())
+                        .entry("identityDisplay", groupInfo.getIdentityDisplay())
+                        .entry("size", groupInfo.getSize());
+
+                ds.startEntry("properties").startList();
+                for (Pair<String, String> p: groupInfo.getProperties()) {
+                    ds.startItem("property").startMap();
+                    {
+                        ds.entry("name", p.getKey());
+                        ds.entry("value", p.getValue());
+                    }
+                    ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+
+                ds.entry("numberOfDocs", groupInfo.getNumberOfDocsInGroup());
+                if (hitsGrouped.getMetadataGroupProperties() != null) {
+                    subcorpusSize(ds, groupInfo.getSubcorpusSize());
+                }
+
+                if (groupInfo.getListOfHits() != null) {
+                    listOfHits(ds, groupInfo.getListOfHits());
+                }
+            }
+            ds.endMap().endItem();
+        }
+        ds.endList().endEntry();
+
+        if (params.includeGroupContents()) {
+            documentInfos(ds, hitsGrouped.getDocInfos());
+        }
         ds.endMap();
     }
 }

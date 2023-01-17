@@ -49,7 +49,7 @@ public class DocSetFilter extends Query {
 
     @Override
     public Weight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) {
-        return new Weight(null) {
+        return new Weight(this) {
             @Override
             public void extractTerms(Set<Term> terms) {
                 // NOP
@@ -94,7 +94,10 @@ public class DocSetFilter extends Query {
 
                                 @Override
                                 public int nextDoc() {
-                                    current = acceptedDocsInLeaf.nextInt() - ctx.docBase;
+                                    if (acceptedDocsInLeaf.hasNext())
+                                        current = acceptedDocsInLeaf.nextInt() - ctx.docBase;
+                                    else
+                                        current = DocIdSetIterator.NO_MORE_DOCS;
                                     return current;
                                 }
 

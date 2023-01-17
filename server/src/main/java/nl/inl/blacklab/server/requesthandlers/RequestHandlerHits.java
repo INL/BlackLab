@@ -31,7 +31,7 @@ public class RequestHandlerHits extends RequestHandler {
         } else {
             // Hits request
             ResultHits resultHits = WebserviceOperations.getResultHits(params);
-            DStream.hitsResponse(ds, resultHits, logger);
+            DStream.hitsResponse(ds, resultHits);
         }
         return HTTP_OK;
     }

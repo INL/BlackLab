@@ -1,6 +1,10 @@
 package org.ivdnt.blacklab.solr;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Map;
+import java.util.Optional;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
@@ -24,6 +28,7 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultHits;
+import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.search.SearchManager;
 
@@ -158,11 +163,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     throw new BadRequest("", "Unknown operation " + operation);
                 }
             } catch (BlsException e) {
-                errorResponse(e.getBlsErrorCode(), e.getMessage(), rb);
-                e.printStackTrace();
+                errorResponse(e, rb);
             } catch (Exception e) {
-                errorResponse("INTERNAL_ERROR", e.getMessage(), rb);
-                e.printStackTrace();
+                errorResponse(e, rb);
             }
             ds.endEntry().endDocument();
         }
@@ -172,11 +175,22 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         return rb.req.getParams().getBool("bl", false);
     }
 
-    private void errorResponse(String code, String message, ResponseBuilder rb) {
+    private void errorResponse(Exception e, ResponseBuilder rb) {
+        String code = (e instanceof BlsException) ? ((BlsException) e).getBlsErrorCode() : "INTERNAL_ERROR";
+        errorResponse(code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
+    }
+
+    private void errorResponse(String code, String message, Exception e, ResponseBuilder rb) {
         NamedList<Object> err = new SimpleOrderedMap<>();
-        err.add("errorCode", code);
-        err.add("errorMessage", message);
-        rb.rsp.add("blacklabResponse", err);
+        err.add("code", code);
+        err.add("message", message);
+        if (e != null) {
+            StringWriter sw = new StringWriter();
+            e.printStackTrace(new PrintWriter(sw));
+            System.err.println(sw);
+            err.add("stackTrace", sw.toString());
+        }
+        rb.rsp.add("blacklabResponse", Map.of("error", err));
     }
 
     private void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
@@ -186,8 +200,31 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             DStream.collocationsResponse(ds, tfl);
         } else {
             // Hits request
-            ResultHits resultHits = WebserviceOperations.getResultHits(params);
-            DStream.hitsResponse(ds, resultHits, null);
+
+            Optional<String> viewgroup = params.getViewGroup();
+            boolean returnListOfGroups = false;
+            if (params.getGroupProps().isPresent()) {
+                // This is a grouping operation
+                if (viewgroup.isEmpty()) {
+                    // We want the list of groups, not the contents of a single group
+                    returnListOfGroups = true;
+                }
+            } else if (viewgroup.isPresent()) {
+                // "viewgroup" parameter without "group" parameter; error.
+                throw new BadRequest("ERROR_IN_GROUP_VALUE",
+                        "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
+            }
+            // FIXME: Produce CSV output?
+            //if (outputType == DataFormat.CSV)
+            //    handlerName += "-csv";
+
+            if (returnListOfGroups) {
+                ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
+                DStream.hitsGroupedResponse(ds, hitsGrouped);
+            } else {
+                ResultHits resultHits = WebserviceOperations.getResultHits(params);
+                DStream.hitsResponse(ds, resultHits);
+            }
         }
     }
 
