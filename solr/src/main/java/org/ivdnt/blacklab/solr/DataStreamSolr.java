@@ -189,8 +189,25 @@ public class DataStreamSolr implements DataStream {
     @Override
     public DataStream contextList(List<Annotation> annotations, Collection<Annotation> annotationsToList,
             List<String> values) {
-        //@@@ TODO
-        return this;
+        startMap();
+        {
+            int valuesPerWord = annotations.size();
+            int numberOfWords = values.size() / valuesPerWord;
+            for (int k = 0; k < annotations.size(); k++) {
+                Annotation annotation = annotations.get(k);
+                if (!annotationsToList.contains(annotation))
+                    continue;
+                startEntry(annotation.name()).startList();
+                {
+                    for (int i = 0; i < numberOfWords; i++) {
+                        int vIndex = i * valuesPerWord;
+                        value(values.get(vIndex + k));
+                    }
+                }
+                endList().endEntry();
+            }
+        }
+        return endMap();
     }
 
     @Override
