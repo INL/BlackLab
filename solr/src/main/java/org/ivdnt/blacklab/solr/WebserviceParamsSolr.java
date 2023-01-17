@@ -1,11 +1,11 @@
 package org.ivdnt.blacklab.solr;
 
-import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.common.params.SolrParams;
-import org.apache.solr.handler.component.ResponseBuilder;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
@@ -24,16 +24,22 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     private static final String BL_PAR_NAME_PREFIX = BL_PAR_NAME + ".";
 
+    public static final String PAR_NAME_OPERATION = "op";
+
     private final SolrParams solrParams;
 
     private final BlackLabIndex index;
 
     private final SearchManager searchManager;
 
-    public WebserviceParamsSolr(ResponseBuilder rb, BlackLabIndex index, SearchManager searchManager) {
-        solrParams = rb.req.getParams();
+    public WebserviceParamsSolr(SolrParams params, BlackLabIndex index, SearchManager searchManager) {
+        solrParams = params;
         this.index = index;
         this.searchManager = searchManager;
+    }
+
+    public static boolean shouldRunComponent(SolrParams params) {
+        return params.get(BL_PAR_NAME_PREFIX + PAR_NAME_OPERATION) != null;
     }
 
     protected boolean has(String name) {
@@ -46,16 +52,17 @@ public class WebserviceParamsSolr extends PlainWebserviceParamsAbstract {
 
     @Override
     public Map<String, String> getParameters() {
-        return Collections.emptyMap(); // @@@ FIXME
-    }
-
-    // TODO: merge into "op" parameter?
-    public boolean isRunBlackLab() {
-        return solrParams.getBool(BL_PAR_NAME, false);
+        return solrParams.stream()
+                .filter(e -> e.getKey().startsWith(BL_PAR_NAME_PREFIX)) // Only BL params
+                .map(e -> Pair.of(
+                    e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
+                        StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
+                .filter(p -> ParameterDefaults.paramExists(p.getKey())) // only existing params
+                .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     public String getOperation() {
-        return get("op");
+        return get(PAR_NAME_OPERATION);
     }
 
     @Override

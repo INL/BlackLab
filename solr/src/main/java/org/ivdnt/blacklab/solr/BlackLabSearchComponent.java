@@ -106,7 +106,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void prepare(ResponseBuilder rb) {
-        if (shouldRunComponent(rb)) {
+        if (WebserviceParamsSolr.shouldRunComponent(rb.req.getParams())) {
             rb.setNeedDocSet(true); // we need to know all the matching documents (to filter on them)
         }
 
@@ -131,13 +131,13 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
-        if (shouldRunComponent(rb)) {
+        if (WebserviceParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             if (!searchManager.getIndexManager().indexExists(index.name())) {
                 searchManager.getIndexManager().registerIndex(index);
             }
-            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb, index, searchManager);
+            WebserviceParamsSolr solrParams = new WebserviceParamsSolr(rb.req.getParams(), index, searchManager);
             WebserviceParamsImpl params = WebserviceParamsImpl.get(false, true, solrParams);
 
             if (!solrParams.has("filter")) {
@@ -169,10 +169,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             }
             ds.endEntry().endDocument();
         }
-    }
-
-    private static boolean shouldRunComponent(ResponseBuilder rb) {
-        return rb.req.getParams().getBool("bl", false);
     }
 
     private void errorResponse(Exception e, ResponseBuilder rb) {

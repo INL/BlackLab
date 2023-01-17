@@ -2,8 +2,9 @@ package nl.inl.blacklab.server.lib;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -14,7 +15,7 @@ public class ParameterDefaults {
     /**
      * Parameters involved in search
      */
-    public static final List<String> NAMES = Arrays.asList(
+    public static final Set<String> NAMES = new HashSet<>(Arrays.asList(
             // What to search for
             "patt", "pattlang", "pattgapdata", // pattern to search for
             "filter", "filterlang", "docpid", // docs to search
@@ -68,8 +69,11 @@ public class ParameterDefaults {
             "omitemptycaptures",  // omit capture groups of length 0? (false)
 
             "debug" // include debug info (cache)
+    ));
 
-    );
+    public static boolean paramExists(String name) {
+        return NAMES.contains(name);
+    }
 
     public static String get(String name) {
         String v = values.get(name);
