@@ -25,6 +25,7 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.DStream;
@@ -158,6 +159,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case "server-info":
                     opServerInfo(params, isDebugMode(rb.req), ds);
                     break;
+                case "corpus-info":
+                    opCorpusInfo(params, ds);
+                    break;
                 case "hits":
                     // (Grouped) hits
                     opHits(params, ds);
@@ -215,6 +219,11 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     }
 
 
+
+    private static void opCorpusInfo(WebserviceParams params, DataStream ds) {
+        ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
+        DStream.indexMetadataResponse(ds, params.getIndexName(), corpusInfo);
+    }
 
     private static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
