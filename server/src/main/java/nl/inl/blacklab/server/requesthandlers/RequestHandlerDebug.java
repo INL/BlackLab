@@ -7,6 +7,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /**
  * Get debug info about the servlet and index. Only available in debug mode.

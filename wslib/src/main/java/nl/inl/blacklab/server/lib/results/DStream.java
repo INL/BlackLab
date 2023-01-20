@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.Kwic;
@@ -24,6 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -765,5 +767,45 @@ public class DStream {
 
         }
         ds.endMap().endItem();
+    }
+
+    public static void serverInfo(DataStream ds, ResultServerInfo result) {
+        ds.startMap()
+                .entry("blacklabBuildTime", BlackLab.buildTime())
+                .entry("blacklabVersion", BlackLab.version());
+
+        ds.startEntry("indices").startMap();
+        for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
+            indexInfo(ds, indexStatus);
+        }
+        ds.endMap().endEntry();
+
+        userInfo(ds, result.getUserInfo());
+
+        if (result.isDebugMode()) {
+            ds.startEntry("cacheStatus");
+            ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
+            ds.endEntry();
+        }
+        ds.endMap();
+    }
+
+    public static void indexInfo(DataStream ds, ResultIndexStatus progress) {
+        Index index = progress.getIndex();
+        IndexMetadata indexMetadata = progress.getMetadata();
+        ds.startAttrEntry("index", "name", index.getId());
+        {
+            ds.startMap();
+            {
+                ds.entry("displayName", indexMetadata.custom().get("displayName", ""));
+                ds.entry("description", indexMetadata.custom().get("description", ""));
+                ds.entry("status", index.getStatus());
+                indexProgress(ds, progress);
+                ds.entry("timeModified", indexMetadata.timeModified());
+                ds.entry("tokenCount", indexMetadata.tokenCount());
+            }
+            ds.endMap();
+        }
+        ds.endAttrEntry();
     }
 }

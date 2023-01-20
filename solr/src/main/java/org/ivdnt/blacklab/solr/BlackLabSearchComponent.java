@@ -13,7 +13,9 @@ import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
+import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.search.DocSet;
+import org.apache.solr.servlet.HttpSolrCall;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -30,8 +32,10 @@ import nl.inl.blacklab.server.lib.results.ResultDocsGrouped;
 import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
 import nl.inl.blacklab.server.lib.results.ResultHits;
 import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
+import nl.inl.blacklab.server.lib.results.ResultServerInfo;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -151,6 +155,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             try {
                 String operation = QueryParamsSolr.getOperation(rb.req.getParams());
                 switch (operation) {
+                case "server-info":
+                    opServerInfo(params, isDebugMode(rb.req), ds);
+                    break;
                 case "hits":
                     // (Grouped) hits
                     opHits(params, ds);
@@ -174,7 +181,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
         QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), index, searchManager);
         boolean isDocs = QueryParamsSolr.getOperation(rb.req.getParams()).startsWith("doc");
-        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, true, solrParams);
+        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), solrParams);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
@@ -201,7 +208,20 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         rb.rsp.add("blacklab", Map.of("error", err));
     }
 
-    private void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    private boolean isDebugMode(SolrQueryRequest req) {
+        HttpSolrCall httpSolrCall = req.getHttpSolrCall();
+        return httpSolrCall == null ? true : // testing
+                searchManager.isDebugMode(ServletUtil.getOriginatingAddress(httpSolrCall.getReq()));
+    }
+
+
+
+    private static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
+        ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
+        DStream.serverInfo(ds, serverInfo);
+    }
+
+    private static void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
         if (params.isCalculateCollocations()) {
             // Collocations request
             TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
@@ -220,7 +240,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         }
     }
 
-    private void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    private static void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
         if (shouldReturnListOfGroups(params)) {
             // We're returning a list of groups
             ResultDocsGrouped docsGrouped = WebserviceOperations.docsGrouped(params);
@@ -239,7 +259,16 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         }
     }
 
-    private boolean shouldReturnListOfGroups(WebserviceParams params) {
+    /**
+     * Is this a request for a list of groups?
+     *
+     * If not, it's either a regular request for (hits or docs) results,
+     * or a request for viewing the results in a single group.
+     *
+     * @param params parameters
+     * @return true if we should return a list of groups
+     */
+    private static boolean shouldReturnListOfGroups(WebserviceParams params) {
         Optional<String> viewgroup = params.getViewGroup();
         boolean returnListOfGroups = false;
         if (params.getGroupProps().isPresent()) {

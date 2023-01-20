@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.util;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

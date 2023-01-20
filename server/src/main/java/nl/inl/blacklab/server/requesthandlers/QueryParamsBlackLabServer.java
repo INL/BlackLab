@@ -12,6 +12,7 @@ import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.ServletUtil;
 
 /** BLS API-specific implementation of WebserviceParams.
  *

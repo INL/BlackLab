@@ -61,7 +61,8 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                 .map(e -> Pair.of(
                     e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
-                .filter(p -> ParameterDefaults.paramExists(p.getKey())) // only existing params
+                // only existing params
+                .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()))
                 .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 

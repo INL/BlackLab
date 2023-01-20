@@ -31,6 +31,7 @@ import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**

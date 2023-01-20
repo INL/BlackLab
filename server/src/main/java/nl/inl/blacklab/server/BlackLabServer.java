@@ -45,7 +45,7 @@ import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
 import nl.inl.blacklab.server.requesthandlers.UserRequestServlet;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.requesthandlers.ServletUtil;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
 public class BlackLabServer extends HttpServlet {
