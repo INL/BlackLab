@@ -296,15 +296,19 @@ public interface BlackLabIndex extends AutoCloseable {
     
     // Information about the index
     //---------------------------------------------------------------------------
-    
+
     /**
-     * Get the index name.
-     * 
-     * Usually the name of the directory the index is in.
-     * 
-     * @return index name
+     * Get an identifier for the index suitable for logging.
+     *
+     * Usually the path to the directory the index is in.
+     * If this is not available, will just return "index" by default.
+     * Don't use this for anything important, only for e.g. log messages.
+     *
+     * @return index identifier for logging
      */
-    String name();
+    default String id() {
+        return indexDirectory() == null ? "index" : indexDirectory().toString();
+    }
 
     /**
      * Get the index directory.

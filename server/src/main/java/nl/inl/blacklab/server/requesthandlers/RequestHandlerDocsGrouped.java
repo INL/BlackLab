@@ -7,9 +7,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.ResultDocsGrouped;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Request handler for grouped doc results.
@@ -22,8 +20,9 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultDocsGrouped result = WebserviceOperations.docsGrouped(params);
-        DStream.docsGroupedResponse(ds, result);
+        WebserviceRequestHandler.opDocs(params, ds);
+//        ResultDocsGrouped result = WebserviceOperations.docsGrouped(params);
+//        DStream.docsGroupedResponse(ds, result);
         return HTTP_OK;
     }
 

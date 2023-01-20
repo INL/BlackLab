@@ -275,9 +275,9 @@ public class IndexManager {
         }
     }
 
-    public void registerIndex(BlackLabIndex index) {
+    public void registerIndex(String indexId, BlackLabIndex index) {
         try {
-            indices.put(index.name(), new Index(index, this.searchMan));
+            indices.put(indexId, new Index(indexId, index, this.searchMan));
         } catch (FileNotFoundException e) {
             throw new IllegalArgumentException(e);
         }

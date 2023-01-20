@@ -315,7 +315,7 @@ class IndexerImpl implements DocWriter, Indexer {
     public void setFormatIdentifier(String formatIdentifier) throws DocumentFormatNotFound {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new DocumentFormatNotFound("Cannot set formatIdentifier '" + formatIdentifier + "' for index "
-                    + this.indexWriter.name() + "; " + formatError(formatIdentifier));
+                    + this.indexWriter.id() + "; " + formatError(formatIdentifier));
 
         this.formatIdentifier = formatIdentifier;
     }

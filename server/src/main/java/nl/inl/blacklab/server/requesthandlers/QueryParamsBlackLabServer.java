@@ -29,7 +29,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
     public QueryParamsBlackLabServer(String indexName, HttpServletRequest request, SearchManager searchMan, User user) {
         this.searchMan = searchMan;
         this.user = user;
-        map.put("indexname", indexName);
+        map.put(PARAM_INDEX_NAME, indexName);
         for (String name: ParameterDefaults.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
             if (value.length() == 0)
@@ -74,7 +74,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     @Override
     public String getIndexName() {
-        return get("indexname");
+        return get(PARAM_INDEX_NAME);
     }
 
 }

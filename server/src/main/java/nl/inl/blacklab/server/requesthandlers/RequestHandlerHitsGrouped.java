@@ -7,9 +7,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Request handler for grouped hit results.
@@ -23,8 +21,9 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
-        DStream.hitsGroupedResponse(ds, hitsGrouped);
+        WebserviceRequestHandler.opHits(params, ds);
+//        ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
+//        DStream.hitsGroupedResponse(ds, hitsGrouped);
         return HTTP_OK;
     }
 

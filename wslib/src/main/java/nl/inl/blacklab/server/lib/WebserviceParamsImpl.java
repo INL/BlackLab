@@ -725,7 +725,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public String getFieldName() {
-        return fieldName;
+        return fieldName == null ? params.getFieldName() : fieldName;
     }
 
     public void setFieldName(String fieldName) {

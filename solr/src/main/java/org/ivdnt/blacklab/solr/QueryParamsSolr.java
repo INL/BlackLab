@@ -2,6 +2,7 @@ package org.ivdnt.blacklab.solr;
 
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -28,12 +29,15 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     private final SolrParams solrParams;
 
+    private final String indexName;
+
     private final BlackLabIndex index;
 
     private final SearchManager searchManager;
 
-    public QueryParamsSolr(SolrParams params, BlackLabIndex index, SearchManager searchManager) {
+    public QueryParamsSolr(SolrParams params, String indexName, BlackLabIndex index, SearchManager searchManager) {
         solrParams = params;
+        this.indexName = indexName;
         this.index = index;
         this.searchManager = searchManager;
     }
@@ -56,14 +60,15 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     @Override
     public Map<String, String> getParameters() {
-        return solrParams.stream()
+        Stream<Pair<String, String>> params = solrParams.stream()
                 .filter(e -> e.getKey().startsWith(BL_PAR_NAME_PREFIX)) // Only BL params
                 .map(e -> Pair.of(
-                    e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
+                        e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 // only existing params
-                .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()))
-                .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+                .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
+        params = Stream.concat(Stream.of(Pair.of(PARAM_INDEX_NAME, indexName)), params); // add index name "parameter"
+        return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     @Override
@@ -78,6 +83,7 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     @Override
     public String getIndexName() {
-        return index.name();
+        return indexName;
     }
+
 }

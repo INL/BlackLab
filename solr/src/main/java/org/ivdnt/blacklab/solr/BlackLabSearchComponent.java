@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
@@ -18,23 +17,14 @@ import org.apache.solr.search.DocSet;
 import org.apache.solr.servlet.HttpSolrCall;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.ResultDocsGrouped;
-import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
-import nl.inl.blacklab.server.lib.results.ResultHits;
-import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
-import nl.inl.blacklab.server.lib.results.ResultServerInfo;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -140,10 +130,10 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
-            if (!searchManager.getIndexManager().indexExists(index.name())) {
-                searchManager.getIndexManager().registerIndex(index);
-            }
             WebserviceParams params = getParams(rb, index);
+            if (!searchManager.getIndexManager().indexExists(params.getIndexName())) {
+                searchManager.getIndexManager().registerIndex(params.getIndexName(), index);
+            }
             DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
 
             // FIXME: Produce CSV output?
@@ -154,20 +144,27 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
             ds.startEntry("blacklab");
             try {
+                boolean debugMode = isDebugMode(rb.req);
                 String operation = QueryParamsSolr.getOperation(rb.req.getParams());
                 switch (operation) {
                 case "server-info":
-                    opServerInfo(params, isDebugMode(rb.req), ds);
+                    WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
                     break;
                 case "corpus-info":
-                    opCorpusInfo(params, ds);
+                    WebserviceRequestHandler.opCorpusInfo(params, ds);
+                    break;
+                case "corpus-status":
+                    WebserviceRequestHandler.opCorpusStatus(params, ds);
+                    break;
+                case "field-info":
+                    WebserviceRequestHandler.opFieldInfo(params, ds);
                     break;
                 case "hits":
                     // (Grouped) hits
-                    opHits(params, ds);
+                    WebserviceRequestHandler.opHits(params, ds);
                     break;
                 case "docs":
-                    opDocs(params, ds);
+                    WebserviceRequestHandler.opDocs(params, ds);
                     break;
                 case "none":
                     // do nothing
@@ -183,7 +180,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     }
 
     private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
-        QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), index, searchManager);
+        QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), rb.req.getCore().getName(), index, searchManager);
         boolean isDocs = QueryParamsSolr.getOperation(rb.req.getParams()).startsWith("doc");
         WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), solrParams);
         if (params.getDocumentFilterQuery().isEmpty()) {
@@ -216,82 +213,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         HttpSolrCall httpSolrCall = req.getHttpSolrCall();
         return httpSolrCall == null ? true : // testing
                 searchManager.isDebugMode(ServletUtil.getOriginatingAddress(httpSolrCall.getReq()));
-    }
-
-
-
-    private static void opCorpusInfo(WebserviceParams params, DataStream ds) {
-        ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
-        DStream.indexMetadataResponse(ds, params.getIndexName(), corpusInfo);
-    }
-
-    private static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
-        ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
-        DStream.serverInfo(ds, serverInfo);
-    }
-
-    private static void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
-        if (params.isCalculateCollocations()) {
-            // Collocations request
-            TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
-            DStream.collocationsResponse(ds, tfl);
-        } else {
-            // Hits request
-            if (shouldReturnListOfGroups(params)) {
-                // We're returning a list of groups
-                ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
-                DStream.hitsGroupedResponse(ds, hitsGrouped);
-            } else {
-                // We're returning a list of results (ungrouped, or viewing single group)
-                ResultHits result = WebserviceOperations.getResultHits(params);
-                DStream.hitsResponse(ds, result);
-            }
-        }
-    }
-
-    private static void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
-        if (shouldReturnListOfGroups(params)) {
-            // We're returning a list of groups
-            ResultDocsGrouped docsGrouped = WebserviceOperations.docsGrouped(params);
-            DStream.docsGroupedResponse(ds, docsGrouped);
-        } else {
-            // We're returning a list of results (ungrouped, or viewing single group)
-            ResultDocsResponse result;
-            if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
-                // View a single group in a grouped docs resultset
-                result = WebserviceOperations.viewGroupDocsResponse(params);
-            } else {
-                // Regular set of docs (no grouping first)
-                result = WebserviceOperations.regularDocsResponse(params);
-            }
-            DStream.docsResponse(ds, result);
-        }
-    }
-
-    /**
-     * Is this a request for a list of groups?
-     *
-     * If not, it's either a regular request for (hits or docs) results,
-     * or a request for viewing the results in a single group.
-     *
-     * @param params parameters
-     * @return true if we should return a list of groups
-     */
-    private static boolean shouldReturnListOfGroups(WebserviceParams params) {
-        Optional<String> viewgroup = params.getViewGroup();
-        boolean returnListOfGroups = false;
-        if (params.getGroupProps().isPresent()) {
-            // This is a grouping operation
-            if (viewgroup.isEmpty()) {
-                // We want the list of groups, not the contents of a single group
-                returnListOfGroups = true;
-            }
-        } else if (viewgroup.isPresent()) {
-            // "viewgroup" parameter without "group" parameter; error.
-            throw new BadRequest("ERROR_IN_GROUP_VALUE",
-                    "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
-        }
-        return returnListOfGroups;
     }
 
     /////////////////////////////////////////////

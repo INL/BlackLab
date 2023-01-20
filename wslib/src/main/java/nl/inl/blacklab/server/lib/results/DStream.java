@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -815,11 +816,11 @@ public class DStream {
         ds.endAttrEntry();
     }
 
-    public static void indexMetadataResponse(DataStream ds, String indexName, ResultIndexMetadata result) {
+    public static void indexMetadataResponse(DataStream ds, ResultIndexMetadata result) {
         IndexMetadata metadata = result.getMetadata();
         ds.startMap();
         {
-            ds.entry("indexName", indexName)
+            ds.entry("indexName", result.getProgress().getIndex().getId())
                     .entry("displayName", metadata.custom().get("displayName", ""))
                     .entry("description", metadata.custom().get("description", ""))
                     .entry("status", result.getProgress().getIndexStatus())
@@ -903,6 +904,23 @@ public class DStream {
                 }
             }
             ds.endMap().endEntry();
+        }
+        ds.endMap();
+    }
+
+    public static void indexStatusResponse(DataStream ds, ResultIndexStatus progress) {
+        IndexMetadata metadata = progress.getMetadata();
+        ds.startMap();
+        {
+            ds.entry("indexName", progress.getIndex().getId());
+            ds.entry("displayName", metadata.custom().get("displayName", ""));
+            ds.entry("description", metadata.custom().get("description", ""));
+            ds.entry("status", progress.getIndexStatus());
+            if (!StringUtils.isEmpty(metadata.documentFormat()))
+                ds.entry("documentFormat", metadata.documentFormat());
+            ds.entry("timeModified", metadata.timeModified());
+            ds.entry("tokenCount", metadata.tokenCount());
+            indexProgress(ds, progress);
         }
         ds.endMap();
     }

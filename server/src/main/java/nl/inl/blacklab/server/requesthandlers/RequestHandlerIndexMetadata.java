@@ -5,10 +5,8 @@ import javax.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Get information about the structure of an index.
@@ -27,8 +25,7 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        ResultIndexMetadata result = WebserviceOperations.indexMetadata(params);
-        DStream.indexMetadataResponse(ds, indexName, result);
+        WebserviceRequestHandler.opCorpusInfo(params, ds);
         return HTTP_OK;
     }
 

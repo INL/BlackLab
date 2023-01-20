@@ -17,6 +17,8 @@ import nl.inl.blacklab.search.ConcordanceType;
  */
 public abstract class QueryParamsAbstract implements QueryParams {
 
+    public static final String PARAM_INDEX_NAME = "indexname";
+
     private static double parseDouble(String value) {
         if (value != null) {
             try {
@@ -361,4 +363,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public boolean isIncludeDebugInfo() { return getBool("debug"); }
+
+    @Override
+    public String getFieldName() {
+        return get("field");
+    }
 }

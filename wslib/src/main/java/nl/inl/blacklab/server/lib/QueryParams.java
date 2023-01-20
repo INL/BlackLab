@@ -138,4 +138,5 @@ public interface QueryParams {
 
     boolean isIncludeDebugInfo();
 
+    String getFieldName();
 }

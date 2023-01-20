@@ -7,9 +7,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.ResultDocsResponse;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * List documents, search for documents matching criteria.
@@ -23,6 +21,7 @@ public class RequestHandlerDocs extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
+        /*
         // Do we want to view a single group after grouping?
         ResultDocsResponse result;
         if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
@@ -32,7 +31,8 @@ public class RequestHandlerDocs extends RequestHandler {
             // Regular set of docs (no grouping first)
             result = WebserviceOperations.regularDocsResponse(params);
         }
-        DStream.docsResponse(ds, result);
+        DStream.docsResponse(ds, result);*/
+        WebserviceRequestHandler.opDocs(params, ds);
         return HTTP_OK;
     }
 

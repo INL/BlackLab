@@ -6,9 +6,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
-import nl.inl.blacklab.server.lib.results.ResultServerInfo;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Get information about this BlackLab server.
@@ -27,8 +25,7 @@ public class RequestHandlerServerInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        ResultServerInfo result = WebserviceOperations.serverInfo(params, debugMode);
-        DStream.serverInfo(ds, result);
+        WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
         return HTTP_OK;
     }
 

@@ -68,7 +68,10 @@ public class ParameterDefaults {
             "includegroupcontents", // include hits with the group response? (false)
             "omitemptycaptures",  // omit capture groups of length 0? (false)
 
-            "debug" // include debug info (cache)
+            "debug", // include debug info (cache)
+
+            "indexname",
+            "field"
     ));
 
     public static boolean paramExists(String name) {

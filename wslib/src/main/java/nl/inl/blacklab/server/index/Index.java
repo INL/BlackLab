@@ -101,8 +101,8 @@ public class Index {
     /** File where the list of users to share with is stored */
     private final File shareWithUsersFile;
 
-    public Index(BlackLabIndex index, SearchManager searchMan) throws FileNotFoundException {
-        this(index.name(), index.indexDirectory(), searchMan);
+    public Index(String indexId, BlackLabIndex index, SearchManager searchMan) throws FileNotFoundException {
+        this(indexId, index.indexDirectory(), searchMan);
 
         this.index = index;
     }
