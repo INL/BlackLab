@@ -41,11 +41,11 @@ public class RequestHandlerDocContents extends RequestHandler {
         params.setDocPid(docPid);
 
         ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
-        dstreamDocContents((DataStreamXml)ds, resultDocContents);
+        docContentsResponse((DataStreamXml)ds, resultDocContents);
         return HTTP_OK;
     }
 
-    private static void dstreamDocContents(DataStreamXml ds, ResultDocContents resultDocContents) {
+    public static void docContentsResponse(DataStreamXml ds, ResultDocContents resultDocContents) {
         if (resultDocContents.needsXmlDeclaration()) {
             // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
             ds.outputProlog();

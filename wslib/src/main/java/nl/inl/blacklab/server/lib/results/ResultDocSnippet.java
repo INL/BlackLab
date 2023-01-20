@@ -15,7 +15,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocSnippet {
@@ -32,7 +31,7 @@ public class ResultDocSnippet {
 
     private final List<Annotation> annotsToWrite;
 
-    ResultDocSnippet(WebserviceParams params, SearchManager searchMan) {
+    ResultDocSnippet(WebserviceParams params) {
         this.params = params;
 
         BlackLabIndex index = params.blIndex();
@@ -64,7 +63,7 @@ public class ResultDocSnippet {
         }
 
         // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
-        int maxContextSize = searchMan.config().getParameters().getContextSize().getMaxInt();
+        int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
         if (end - start > maxContextSize)
             end = start + maxContextSize;
         if (end - start + wordsAroundHit.left() + wordsAroundHit.right() > maxContextSize)

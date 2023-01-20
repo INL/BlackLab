@@ -721,8 +721,8 @@ public class WebserviceOperations {
         }
     }
 
-    public static ResultDocSnippet docSnippet(WebserviceParams params, SearchManager searchMan) {
-        return new ResultDocSnippet(params, searchMan);
+    public static ResultDocSnippet docSnippet(WebserviceParams params) {
+        return new ResultDocSnippet(params);
     }
 
     public static ResultListOfHits listOfHits(WebserviceParams params, Hits window, ConcordanceContext concordanceContext,

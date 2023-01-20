@@ -166,6 +166,15 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case "docs":
                     WebserviceRequestHandler.opDocs(params, ds);
                     break;
+                case "doc-contents":
+                    WebserviceRequestHandler.opDocContents(params, ds);
+                    break;
+                case "doc-info":
+                    WebserviceRequestHandler.opDocInfo(params, ds);
+                    break;
+                case "doc-snippet":
+                    WebserviceRequestHandler.opDocSnippet(params, ds);
+                    break;
                 case "none":
                     // do nothing
                     break;

@@ -20,6 +20,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.Span;
@@ -35,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
@@ -42,6 +44,7 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -921,6 +924,80 @@ public class DStream {
             ds.entry("timeModified", metadata.timeModified());
             ds.entry("tokenCount", metadata.tokenCount());
             indexProgress(ds, progress);
+        }
+        ds.endMap();
+    }
+
+    public static void docContentsResponse(ResultDocContents result, DataStream ds) {
+        ds.startMap();
+        ds.entry("docContents", "TODO"); // FIXME
+        ds.endMap();
+    }
+
+    public static void docInfoResponse(DataStream ds, ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
+            Map<String, String> docFields, Map<String, String> metaDisplayNames) {
+        ds.startMap().entry("docPid", docInfo.getPid());
+        {
+            ds.startEntry("docInfo");
+            {
+                documentInfo(ds, docInfo);
+            }
+            ds.endEntry();
+
+            // (this probably shouldn't be here)
+            metadataGroupInfo(ds, metadataFieldGroups);
+            metadataFieldInfo(ds, docFields, metaDisplayNames);
+        }
+        ds.endMap();
+    }
+
+    /**
+     * Output a hit (or just a document fragment with no hit in it)
+     *
+     * @param ds output stream
+     * @param result hit to output
+     */
+    public static void hitOrFragmentInfo(DataStream ds, ResultDocSnippet result) {
+
+        Hits hits = result.getHits();
+        Hit hit = hits.get(0);
+        ContextSize wordsAroundHit = result.getWordsAroundHit();
+        boolean useOrigContent = result.isOrigContent();
+        boolean isFragment = !result.isHit();
+        String docPid = null; // (not sure why this is always null..?) result.getParams().getDocPid();
+        List<Annotation> annotationsToList = result.getAnnotsToWrite();
+
+        // TODO: can we merge this with hit()...?
+        ds.startMap();
+        if (docPid != null) {  // always false, see above? weird!
+            // Add basic hit info
+            ds.entry("docPid", docPid);
+            ds.entry("start", hit.start());
+            ds.entry("end", hit.end());
+        }
+
+        Hits singleHit = hits.window(hit);
+        if (useOrigContent) {
+            // We're using original content.
+            Concordances concordances = singleHit.concordances(wordsAroundHit, ConcordanceType.CONTENT_STORE);
+            Concordance c = concordances.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").xmlFragment(c.left()).endEntry()
+                        .startEntry("match").xmlFragment(c.match()).endEntry()
+                        .startEntry("right").xmlFragment(c.right()).endEntry();
+            } else {
+                ds.xmlFragment(c.match());
+            }
+        } else {
+            Kwics kwics = singleHit.kwics(wordsAroundHit);
+            Kwic c = kwics.get(hit);
+            if (!isFragment) {
+                ds.startEntry("left").contextList(c.annotations(), annotationsToList, c.left()).endEntry()
+                        .startEntry("match").contextList(c.annotations(), annotationsToList, c.match()).endEntry()
+                        .startEntry("right").contextList(c.annotations(), annotationsToList, c.right()).endEntry();
+            } else {
+                ds.startEntry("snippet").contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
+            }
         }
         ds.endMap();
     }

@@ -1,5 +1,8 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -13,8 +16,20 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
+/**
+ * Handle all the different webservice requests, given the requested operation,
+ * parameters and output stream.
+ *
+ * This is used for both the BLS and Solr webservices.
+ */
 public class WebserviceRequestHandler {
 
+    /**
+     * Show information about a field in a corpus.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
     public static void opFieldInfo(WebserviceParams params, DataStream ds) {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
@@ -32,21 +47,45 @@ public class WebserviceRequestHandler {
         }
     }
 
+    /**
+     * Show information about a corpus.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
     public static void opCorpusInfo(WebserviceParams params, DataStream ds) {
         ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
         DStream.indexMetadataResponse(ds, corpusInfo);
     }
 
+    /**
+     * Show (indexing) status of a corpus.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
     public static void opCorpusStatus(WebserviceParams params, DataStream ds) {
         ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
         DStream.indexStatusResponse(ds, corpusStatus);
     }
+    /**
+     * Show server information.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
 
     public static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
         DStream.serverInfo(ds, serverInfo);
     }
 
+    /**
+     * Find or group hits.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
     public static void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
         if (params.isCalculateCollocations()) {
             // Collocations request
@@ -66,6 +105,12 @@ public class WebserviceRequestHandler {
         }
     }
 
+    /**
+     * Find or group documents.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
     public static void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
         if (shouldReturnListOfGroups(params)) {
             // We're returning a list of groups
@@ -109,5 +154,46 @@ public class WebserviceRequestHandler {
                     "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
         }
         return returnListOfGroups;
+    }
+
+    /**
+     * Return the original contents of a document.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
+    public static void opDocContents(WebserviceParams params, DataStream ds) throws InvalidQuery {
+        ResultDocContents result = WebserviceOperations.docContents(params);
+        DStream.docContentsResponse(result, ds);
+    }
+
+    /**
+     * Return metadata for a document.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
+    public static void opDocInfo(WebserviceParams params, DataStream ds) {
+        Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
+        BlackLabIndex index = params.blIndex();
+        ResultDocInfo docInfo = WebserviceOperations.docInfo(index, params.getDocPid(), null, metadataToWrite);
+
+        Map<String, List<String>> metadataFieldGroups = WebserviceOperations.getMetadataFieldGroupsWithRest(index);
+        Map<String, String> docFields = WebserviceOperations.getDocFields(index);
+        Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
+
+        // Document info
+        DStream.docInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames);
+    }
+
+    /**
+     * Return a snippet from a document.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
+    public static void opDocSnippet(WebserviceParams params, DataStream ds) {
+        ResultDocSnippet result = WebserviceOperations.docSnippet(params);
+        DStream.hitOrFragmentInfo(ds, result);
     }
 }
