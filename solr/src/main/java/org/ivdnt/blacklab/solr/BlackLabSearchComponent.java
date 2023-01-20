@@ -164,8 +164,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 default:
                     throw new BadRequest("", "Unknown operation " + operation);
                 }
-            } catch (BlsException e) {
-                errorResponse(e, rb);
             } catch (Exception e) {
                 errorResponse(e, rb);
             }
@@ -175,7 +173,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
         QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), index, searchManager);
-        WebserviceParamsImpl params = WebserviceParamsImpl.get(false, true, solrParams);
+        boolean isDocs = QueryParamsSolr.getOperation(rb.req.getParams()).startsWith("doc");
+        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, true, solrParams);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;

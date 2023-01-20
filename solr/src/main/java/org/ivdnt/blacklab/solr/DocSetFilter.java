@@ -2,6 +2,7 @@ package org.ivdnt.blacklab.solr;
 
 import java.io.IOException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -83,8 +84,27 @@ public class DocSetFilter extends Query {
                             // Value not found; determine "insertion point" (index of first higher id) instead
                             start = -start - 1;
                         }
-                        // Create iterator from that point (first accepted doc in this segment)
-                        IntBigListIterator acceptedDocsInLeaf = acceptedDocs.listIterator(start);
+
+                        // Find the highest accepted doc in this segment by looking at the next segment
+                        Optional<LeafReaderContext> nextSegment = ctx.parent.leaves().stream()
+                                .filter(l -> l.docBase > ctx.docBase)
+                                .findFirst();
+                        long end;
+                        if (nextSegment.isPresent()) {
+                            // Find index of first doc in next segment
+                            int startOfNextSegment = nextSegment.get().docBase;
+                            end = IntBigArrays.binarySearch(acceptedDocs.elements(), start, acceptedDocs.size64(), startOfNextSegment);
+                            if (end < 0) {
+                                // Value not found; determine "insertion point" (index of first higher id) instead
+                                end = -end - 1;
+                            }
+                        } else {
+                            // This is the last segment
+                            end = acceptedDocs.size64();
+                        }
+
+                        // Create iterator for all accepted docs in this segment
+                        IntBigListIterator acceptedDocsInLeaf = acceptedDocs.subList(start, end).iterator();
                         if (acceptedDocsInLeaf.hasNext()) {
                             return new DocIdSetIterator() {
                                 @Override
@@ -97,13 +117,15 @@ public class DocSetFilter extends Query {
                                     if (acceptedDocsInLeaf.hasNext())
                                         current = acceptedDocsInLeaf.nextInt() - ctx.docBase;
                                     else
-                                        current = DocIdSetIterator.NO_MORE_DOCS;
+                                        current = NO_MORE_DOCS;
                                     return current;
                                 }
 
                                 @Override
-                                public int advance(int i) {
-                                    current = acceptedDocsInLeaf.skip(i) - ctx.docBase;
+                                public int advance(int target) {
+                                    // Advance to the first beyond the current whose document number is greater than
+                                    // or equal to target
+                                    while (nextDoc() != NO_MORE_DOCS && current < target);
                                     return current;
                                 }
 

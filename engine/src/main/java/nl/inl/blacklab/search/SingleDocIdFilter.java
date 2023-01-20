@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -18,7 +19,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * A Filter that only matches a single Lucene document id.
- *
+ * <p>
  * Used for finding hits in a single document (for highlighting).
  */
 public class SingleDocIdFilter extends Query {
@@ -74,9 +75,17 @@ public class SingleDocIdFilter extends Query {
                     public DocIdSetIterator iterator() {
                         // Check that id could be in this segment, and bits allows this doc id
                         if (luceneDocId >= ctx.docBase) {
-                            // ctx is a single segment, so use docBase to adjust the id
-                            return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
+
+                            // Check that the id is really in this segment by looking at the next segment
+                            Optional<LeafReaderContext> nextSegment = ctx.parent.leaves().stream()
+                                    .filter(l -> l.docBase > ctx.docBase)
+                                    .findFirst();
+                            if (nextSegment.isEmpty() || nextSegment.get().docBase > luceneDocId) {
+                                // Doc occurs in this segment.
+                                return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
+                            }
                         }
+                        // We're in the wrong segment. Return empty set.
                         try {
                             return DocIdSet.EMPTY.iterator();
                         } catch (IOException e) {
