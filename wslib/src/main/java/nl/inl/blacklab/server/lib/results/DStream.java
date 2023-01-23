@@ -930,7 +930,7 @@ public class DStream {
 
     public static void docContentsResponse(ResultDocContents result, DataStream ds) {
         ds.startMap();
-        ds.entry("docContents", "TODO"); // FIXME
+        ds.entry("contents", result.getContent());
         ds.endMap();
     }
 
