@@ -181,7 +181,7 @@ public class ResultDocsResponse {
         hitsStats = originalHitsSearch == null ? null : originalHitsSearch.peek();
         docsStats = params.docsCount().executeAsync().peek();
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
-        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getIndexName()).getStatus();
+        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
                 null, window.windowStats());
         boolean countFailed = totalTime < 0;

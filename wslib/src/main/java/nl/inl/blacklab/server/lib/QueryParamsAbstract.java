@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.ConcordanceType;
  */
 public abstract class QueryParamsAbstract implements QueryParams {
 
-    public static final String PARAM_INDEX_NAME = "indexname";
+    public static final String PARAM_CORPUS_NAME = "indexname";
 
     private static double parseDouble(String value) {
         if (value != null) {

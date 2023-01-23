@@ -50,3 +50,79 @@ COPY . /opt/solr/server/solr/configsets/blacklab/conf
 # as soon as the container is started.
 CMD ["solr-precreate", "my-blacklab-corpus", "/opt/solr/server/solr/configsets/blacklab"]
 ```
+
+## Requests
+
+In addition to standard Solr parameters like `q` and `fq` for document 
+filtering, you can use all of the same parameters BlackLab Server uses,
+but you should prefix them with `bl.`. Some examples are shown below.
+
+Note that we always pass `rows=0` to Solr, because we don't want Solr's 
+document results; BlackLab will send a list of hits and include the document info
+for these hits automatically.
+
+Find hits: https://server/solr/corename/select?bl.op=hits&bl.patt=%22the%22&q=*%3A*&rows=0
+
+As an alternative to passing separate `bl.NAME` parameters, you can also pass a JSON
+structure with all the parameters in a parameter called `bl.req`, e.g.:
+
+```json
+{ "op": "hits", "patt": "\"the\"" }
+```
+
+The full URL in this case would be: https://server/solr/corename/select?bl.req=%7B%22op%22%3A%22hits%22%2C%22patt%22%3A%22%5C%22the%5C%22%22%7D&q=*%3A*&rows=0
+
+The JSON structure for `group` and `viewgroup` is not a simple string, but a JSON object instead.
+
+```json
+{
+  "op": "hits",
+  "patt": "\"the\"",
+  "group": [
+    {
+      "type": "field",
+      "field": "title"
+    }
+  ],
+  "viewgroup": [
+    {
+      "type": "str",
+      "value": "interview about city"
+    }
+  ]
+}
+```
+
+the above `group` and `viewgroup` parts correspond to `bl.group=field:title&bl.viewgroup=str:interview about city`.
+
+The values of `bl.op` are:
+
+| bl.op              | Operation                                        | BLS URL equivalent        | Required parameters |
+|--------------------|--------------------------------------------------|---------------------------|---------------------|
+| server-info        | Server information                               | /                         |                     |
+| corpus-info        | Corpus information, including fields and values  | /CORPUS                   |                     |
+| corpus-status      | Corpus (indexing) status                         | /CORPUS/status            |                     |
+| field-info         | Info about (metadata or annotated) field         | /CORPUS/field/FIELDNAME   | field               |
+| hits               | Search (and optionally group) hits               | /CORPUS/hits              |                     |
+| docs               | Search (and optionally group) documents          | /CORPUS/docs              |                     |
+| doc-info           | Get document metadata and other information      | /CORPUS/docs/PID          | docpid              |
+| doc-contents       | Get the full contents of a document (if allowed) | /CORPUS/docs/PID/contents | docpid              |
+| termfreq           | Calculate term frequencies                       | /CORPUS/termfreq          |                     |
+| autocomplete       | Return terms matching a prefix in a field        | /CORPUS/autocomplete      |                     |
+| list-input-formats |                                                  | /CORPUS/input-formats     |                     |
+
+(WIP)
+
+bl.op=docs&bl.patt="the"
+
+bl.op=docs&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
+
+bl.op=doc-info&bl.docpid=PRint602&bl.listvalues=lemma,word&bl.wordstart=100&bl.wordend=200&bl.field=title&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
+
+bl.op=doc-contents&bl.docpid=PRint602
+
+bl.op=doc-snippet&bl.docpid=PRint602&bl.listvalues=lemma,word&bl.wordstart=100&bl.wordend=200&bl.field=title&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
+
+bl.op=termfreq&bl.field=contents&bl.annotation=lemma
+
+bl.op=autocomplete&bl.field=contents&bl.annotation=lemma&bl.term=a

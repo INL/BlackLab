@@ -19,7 +19,7 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 /**
  * Handle all the different webservice requests, given the requested operation,
  * parameters and output stream.
- *
+ * <p>
  * This is used for both the BLS and Solr webservices.
  */
 public class WebserviceRequestHandler {
@@ -42,7 +42,7 @@ public class WebserviceRequestHandler {
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getIndexName());
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getCorpusName());
             DStream.metadataField(ds, metadataField);
         }
     }
@@ -132,7 +132,7 @@ public class WebserviceRequestHandler {
 
     /**
      * Is this a request for a list of groups?
-     *
+     * <p>
      * If not, it's either a regular request for (hits or docs) results,
      * or a request for viewing the results in a single group.
      *
@@ -195,5 +195,28 @@ public class WebserviceRequestHandler {
     public static void opDocSnippet(WebserviceParams params, DataStream ds) {
         ResultDocSnippet result = WebserviceOperations.docSnippet(params);
         DStream.hitOrFragmentInfo(ds, result);
+    }
+
+    /**
+     * Calculate term frequencies.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
+    public static void opTermFreq(WebserviceParams params, DataStream ds) {
+        TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params);
+        DStream.termFreqResponse(ds, tfl);
+    }
+
+
+    /**
+     * Return autocomplete results for metadata or annotated field.
+     *
+     * @param params parameters
+     * @param ds output stream
+     */
+    public static void opAutocomplete(WebserviceParams params, DataStream ds) {
+        ResultAutocomplete result = WebserviceOperations.autocomplete(params);
+        DStream.autoComplete(ds, result);
     }
 }

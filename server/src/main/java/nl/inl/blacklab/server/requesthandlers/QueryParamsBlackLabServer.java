@@ -26,10 +26,10 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final User user;
 
-    public QueryParamsBlackLabServer(String indexName, HttpServletRequest request, SearchManager searchMan, User user) {
+    public QueryParamsBlackLabServer(String corpusName, HttpServletRequest request, SearchManager searchMan, User user) {
         this.searchMan = searchMan;
         this.user = user;
-        map.put(PARAM_INDEX_NAME, indexName);
+        map.put(PARAM_CORPUS_NAME, corpusName);
         for (String name: ParameterDefaults.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
             if (value.length() == 0)
@@ -73,8 +73,8 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
     }
 
     @Override
-    public String getIndexName() {
-        return get(PARAM_INDEX_NAME);
+    public String getCorpusName() {
+        return get(PARAM_CORPUS_NAME);
     }
 
 }

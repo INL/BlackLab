@@ -103,7 +103,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public BlackLabIndex blIndex() {
         try {
-            return getSearchManager().getIndexManager().getIndex(getIndexName()).blIndex();
+            return getSearchManager().getIndexManager().getIndex(getCorpusName()).blIndex();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -508,8 +508,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public String getIndexName() {
-        return params.getIndexName();
+    public String getCorpusName() {
+        return params.getCorpusName();
     }
 
     @Override

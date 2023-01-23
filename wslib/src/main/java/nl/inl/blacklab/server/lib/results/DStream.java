@@ -67,6 +67,19 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 public class DStream {
     static final Logger logger = LogManager.getLogger(DStream.class);
 
+    public static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
+
+    private static final String KEY_BLACKLAB_VERSION = "blacklabVersion";
+
+    private static final String KEY_API_VERSION = "apiVersion";
+
+    /** What version of responses to write. */
+    private static ApiVersion apiVersion = ApiVersion.V3;
+
+    public static void setApiVersion(ApiVersion apiVersion) {
+        DStream.apiVersion = apiVersion;
+    }
+
     private DStream() {}
 
     /**
@@ -688,7 +701,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void docsResponse(DataStream ds, ResultDocsResponse result) throws InvalidQuery {
+    public static void docsResponse(DataStream ds, ResultDocsResponse result) {
         ds.startMap();
         {
             // The summary
@@ -780,9 +793,10 @@ public class DStream {
     }
 
     public static void serverInfo(DataStream ds, ResultServerInfo result) {
-        ds.startMap()
-                .entry("blacklabBuildTime", BlackLab.buildTime())
-                .entry("blacklabVersion", BlackLab.version());
+        ds.startMap();
+        ds.entry(KEY_API_VERSION, apiVersion.versionString());
+        ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
+                .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
 
         ds.startEntry("indices").startMap();
         for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
@@ -835,8 +849,8 @@ public class DStream {
             ds.entry("documentCount", metadata.documentCount());
 
             ds.startEntry("versionInfo").startMap()
-                    .entry("blackLabBuildTime", metadata.indexBlackLabBuildTime())
-                    .entry("blackLabVersion", metadata.indexBlackLabVersion())
+                    .entry(apiVersion == ApiVersion.V3 ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
+                    .entry(apiVersion == ApiVersion.V3 ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion())
                     .entry("indexFormat", metadata.indexFormat())
                     .entry("timeCreated", metadata.timeCreated())
                     .entry("timeModified", metadata.timeModified())
@@ -944,9 +958,12 @@ public class DStream {
             }
             ds.endEntry();
 
-            // (this probably shouldn't be here)
-            metadataGroupInfo(ds, metadataFieldGroups);
-            metadataFieldInfo(ds, docFields, metaDisplayNames);
+            if (apiVersion == ApiVersion.V3) {
+                // (this information is not specific to this document and can be found elsewhere,
+                //  so it probably shouldn't be here)
+                metadataGroupInfo(ds, metadataFieldGroups);
+                metadataFieldInfo(ds, docFields, metaDisplayNames);
+            }
         }
         ds.endMap();
     }
@@ -1000,5 +1017,23 @@ public class DStream {
             }
         }
         ds.endMap();
+    }
+
+    public static void termFreqResponse(DataStream ds, TermFrequencyList tfl) {
+        // Assemble all the parts
+        ds.startMap();
+        ds.startEntry("termFreq").startMap();
+        //DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
+        for (TermFrequency tf : tfl) {
+            ds.attrEntry("term", "text", tf.term, tf.frequency);
+        }
+        ds.endMap().endEntry();
+        ds.endMap();
+    }
+
+    public static void autoComplete(DataStream ds, ResultAutocomplete result) {
+        ds.startList();
+        result.getTerms().forEach((v) -> ds.item("term", v));
+        ds.endList();
     }
 }

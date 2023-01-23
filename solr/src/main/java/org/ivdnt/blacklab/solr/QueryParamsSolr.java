@@ -29,15 +29,15 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     private final SolrParams solrParams;
 
-    private final String indexName;
+    private final String corpusName;
 
     private final BlackLabIndex index;
 
     private final SearchManager searchManager;
 
-    public QueryParamsSolr(SolrParams params, String indexName, BlackLabIndex index, SearchManager searchManager) {
+    public QueryParamsSolr(SolrParams params, String corpusName, BlackLabIndex index, SearchManager searchManager) {
         solrParams = params;
-        this.indexName = indexName;
+        this.corpusName = corpusName;
         this.index = index;
         this.searchManager = searchManager;
     }
@@ -67,7 +67,7 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 // only existing params
                 .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
-        params = Stream.concat(Stream.of(Pair.of(PARAM_INDEX_NAME, indexName)), params); // add index name "parameter"
+        params = Stream.concat(Stream.of(Pair.of(PARAM_CORPUS_NAME, corpusName)), params); // add index name "parameter"
         return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
@@ -82,8 +82,8 @@ public class QueryParamsSolr extends QueryParamsAbstract {
     }
 
     @Override
-    public String getIndexName() {
-        return indexName;
+    public String getCorpusName() {
+        return corpusName;
     }
 
 }

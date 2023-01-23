@@ -75,7 +75,7 @@ public class ResultDocsGrouped {
         CorpusSize subcorpusSize = subcorpus.subcorpusSize();
 
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
-        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getIndexName()).getStatus();
+        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         summaryFields = WebserviceOperations.summaryCommonFields(params,
                 indexStatus, timings, groups, ourWindow);
 

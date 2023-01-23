@@ -1244,6 +1244,8 @@ By default, BlackLab Server will not allow whole documents to be retrieved using
 
 You can allow retrieving whole documents by enabling the `contentViewable` setting in the index format configuration file, or directly in the `indexmetadata.yaml` file in the index directory. Also see the next section.
 
+This setting can also be changed for individual documents by setting a metadat field with the name `contentViewable` to `true` or `false`.
+
 ## Additional index metadata
 
 Each BlackLab index gets a file containing "index metadata". This file is in YAML format. This contains information such as the time the index was generated and the BlackLab version used, plus information about annotations and metadata fields. Some of the information is generated as part of the indexing process, and some of the information is copied directly from the input format configuration file if specified. This information is mostly used by applications to learn about the structure of the index, get human-friendly names for the various parts, and decide what UI widget to show for a metadata field.

@@ -108,7 +108,7 @@ public class ResultHits {
         indexStatus = null;
         if (includeIndexStatus) {
             IndexManager indexMan = params.getIndexManager();
-            indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+            indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
         }
 
         // Do we want to view a single group after grouping?

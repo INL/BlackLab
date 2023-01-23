@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
@@ -11,16 +13,13 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.util.LuceneUtil;
 
 public class ResultAutocomplete {
 
-    private String luceneField;
+    private static final int MAX_VALUES = 30;
 
-    private String term;
-
-    private boolean sensitiveMatching;
-
-    private IndexReader reader;
+    private final List<String> terms;
 
     ResultAutocomplete(WebserviceParams params) {
         String fieldName = params.getFieldName();
@@ -34,7 +33,7 @@ public class ResultAutocomplete {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
 
-        term = params.getAutocompleteTerm();
+        String term = params.getAutocompleteTerm();
         if (StringUtils.isEmpty(term))
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
@@ -52,7 +51,8 @@ public class ResultAutocomplete {
          * Take care to pass the sensitivity we're using
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
-        sensitiveMatching = true;
+        boolean sensitiveMatching = true;
+        String luceneField;
         if (!StringUtils.isEmpty(annotationName)) {
             // Annotation on annotated field
             if (!indexMetadata.annotatedFields().exists(fieldName))
@@ -73,22 +73,13 @@ public class ResultAutocomplete {
         } else {
             luceneField = fieldName;
         }
-        reader = index.reader();
+        IndexReader reader = index.reader();
+
+        terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+
     }
 
-    public String getLuceneField() {
-        return luceneField;
-    }
-
-    public String getTerm() {
-        return term;
-    }
-
-    public boolean isSensitiveMatching() {
-        return sensitiveMatching;
-    }
-
-    public IndexReader getReader() {
-        return reader;
+    public List<String> getTerms() {
+        return terms;
     }
 }

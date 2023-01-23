@@ -36,14 +36,17 @@ public class DocSetFilter extends Query {
      * Construct a DocSetFilter from an sorted list of global doc ids.
      *
      * @param acceptedDocs sorted list of global doc ids
+     * @param excludeDocId exclude this docId from the results (metadata document id)
      */
-    public DocSetFilter(DocSet acceptedDocs) {
+    public DocSetFilter(DocSet acceptedDocs, int excludeDocId) {
         // Make a copy of docs so we can find the starting point for each per segment
         this.acceptedDocs = new IntBigArrayBigList();
         if (acceptedDocs != null) {
             DocIterator it = acceptedDocs.iterator();
             while (it.hasNext()) {
-                this.acceptedDocs.add(it.nextDoc());
+                int docId = it.nextDoc();
+                if (docId != excludeDocId)
+                    this.acceptedDocs.add(docId);
             }
         }
     }

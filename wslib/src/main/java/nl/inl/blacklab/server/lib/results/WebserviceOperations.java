@@ -554,7 +554,7 @@ public class WebserviceOperations {
 
     public static List<String> getUsersToShareWith(WebserviceParams params) {
         IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getIndexName();
+        String indexName = params.getCorpusName();
         User user = params.getUser();
         Index index = indexMan.getIndex(indexName);
         if (!index.userMayRead(user))
@@ -565,7 +565,7 @@ public class WebserviceOperations {
     public static void setUsersToShareWith(WebserviceParams params, String[] users) {
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getIndexName();
+        String indexName = params.getCorpusName();
         Index index = indexMan.getIndex(indexName);
         if (!index.isUserIndex() || (!index.userMayRead(user)))
             throw new NotAuthorized("You can only share your own private indices with others.");
@@ -619,7 +619,7 @@ public class WebserviceOperations {
     }
 
     public static String addToIndex(WebserviceParams params, Iterator<UploadedFile> dataFiles, Map<String, File> linkedFiles) {
-        Index index = params.getIndexManager().getIndex(params.getIndexName());
+        Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
         if (!index.userMayAddData(params.getUser()))
@@ -698,11 +698,11 @@ public class WebserviceOperations {
             ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, params.getListValuesFor());
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(includeIndexName ? params.getIndexName() : null, fieldDesc, annotInfos);
+        return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
     }
 
     public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
-        Index index = params.getIndexManager().getIndex(params.getIndexName());
+        Index index = params.getIndexManager().getIndex(params.getCorpusName());
         return resultIndexStatus(index);
     }
 

@@ -24,6 +24,8 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -39,6 +41,9 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private SearchManager searchManager;
 
     public BlackLabSearchComponent() {
+        // Fix small annoyances in the API, at the cost of not being strictly 100% BLS compatible.
+        // (these are things like inconsistent field names, data types, etc.)
+        DStream.setApiVersion(ApiVersion.V4);
     }
 
     /**
@@ -131,8 +136,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             WebserviceParams params = getParams(rb, index);
-            if (!searchManager.getIndexManager().indexExists(params.getIndexName())) {
-                searchManager.getIndexManager().registerIndex(params.getIndexName(), index);
+            if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
+                searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
             }
             DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
 
@@ -147,9 +152,12 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 boolean debugMode = isDebugMode(rb.req);
                 String operation = QueryParamsSolr.getOperation(rb.req.getParams());
                 switch (operation) {
+                // "Root" endpoint
                 case "server-info":
                     WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
                     break;
+
+                // Information about the corpus
                 case "corpus-info":
                     WebserviceRequestHandler.opCorpusInfo(params, ds);
                     break;
@@ -159,13 +167,18 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case "field-info":
                     WebserviceRequestHandler.opFieldInfo(params, ds);
                     break;
+
+                // Find hits or documents
                 case "hits":
-                    // (Grouped) hits
+                    // [grouped] hits
                     WebserviceRequestHandler.opHits(params, ds);
                     break;
                 case "docs":
+                    // [grouped] docs
                     WebserviceRequestHandler.opDocs(params, ds);
                     break;
+
+                // Information about a document
                 case "doc-contents":
                     WebserviceRequestHandler.opDocContents(params, ds);
                     break;
@@ -175,6 +188,27 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case "doc-snippet":
                     WebserviceRequestHandler.opDocSnippet(params, ds);
                     break;
+
+                // Other search
+                case "termfreq":
+                    WebserviceRequestHandler.opTermFreq(params, ds);
+                    break;
+                case "autocomplete":
+                    WebserviceRequestHandler.opAutocomplete(params, ds);
+                    break;
+
+                // Manage user corpora
+                case "list-input-formats":
+                    break;
+                case "write-input-format":
+                    break;
+                case "input-format-info":
+                    break;
+                case "input-format-xslt":
+                    break;
+                case "delete-input-format":
+                    break;
+
                 case "none":
                     // do nothing
                     break;
@@ -195,7 +229,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-            params.setFilterQuery(new DocSetFilter(docSet));
+            params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
         }
         return params;
     }

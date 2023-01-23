@@ -6,17 +6,24 @@ This will become a guided introduction to BlackLab Server. See the [REST API ref
 
 ## Overview
 
-### JSON or XML?
+### JSON, XML or CSV?
 
 The webservice answers in JSON or XML. Selection of the desired output format can be done two ways:
 
-- by passing the HTTP header `Accept` with the value `application/json` or `application/xml`
-- by passing an extra parameter `outputformat` with the value `json` or `xml`.
+- by passing the HTTP header `Accept` with the value `application/json`, `application/xml` or `text/csv`
+- by passing an extra parameter `outputformat` with the value `json`, `xml` or `csv`
 
 If both are specified, the parameter has precedence.
 
 We'll usually use JSON in our examples.
 
+::: info Extra parameters for CSV
+
+(for CSV hits/docs results, the parameters `csvsummary` determines whether to include a summary of 
+the search parameters in the output `[no]` and `csvsepline` determines whether to include a separator declaration 
+that will help Microsoft Excel read the file `[no]`)
+
+:::
 
 ### Running results count
 

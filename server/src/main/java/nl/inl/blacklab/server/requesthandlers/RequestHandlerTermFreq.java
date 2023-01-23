@@ -2,13 +2,11 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.search.TermFrequency;
-import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -22,21 +20,8 @@ public class RequestHandlerTermFreq extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params);
-        dstreamTermFreqResponse(ds, tfl);
+        WebserviceRequestHandler.opTermFreq(params, ds);
         return HTTP_OK;
-    }
-
-    private static void dstreamTermFreqResponse(DataStream ds, TermFrequencyList tfl) {
-        // Assemble all the parts
-        ds.startMap();
-        ds.startEntry("termFreq").startMap();
-        //DataObjectMapAttribute termFreq = new DataObjectMapAttribute("term", "text");
-        for (TermFrequency tf : tfl) {
-            ds.attrEntry("term", "text", tf.term, tf.frequency);
-        }
-        ds.endMap().endEntry();
-        ds.endMap();
     }
 
 }

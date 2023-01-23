@@ -26,7 +26,7 @@ public interface QueryParams {
      */
     Map<String, String> getParameters();
 
-    String getIndexName();
+    String getCorpusName();
 
     String getPattern();
 
