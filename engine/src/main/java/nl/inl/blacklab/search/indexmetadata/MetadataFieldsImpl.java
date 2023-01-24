@@ -67,7 +67,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     /** If we try to get() a missing field, should we throw or return a default config?
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
      */
-    private boolean throwOnMissingField = true;
+    private boolean throwOnMissingField = false;
 
     /** If throwOnMissingField is false, the implicit field configs are stored here.
      *  This map may be modified even if this instance is frozen.
