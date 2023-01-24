@@ -14,6 +14,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
@@ -21,6 +23,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
@@ -28,6 +31,7 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
+import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -77,9 +81,10 @@ public abstract class RequestHandler {
     /**
      * Handle a request by dispatching it to the corresponding subclass.
      *
-     * @param request the servlet, request and response objects
+     * @param userRequest the servlet, request and response objects
      * @param debugMode debug mode request? Allows extra parameters to be used
      * @param outputType output type requested (XML, JSON or CSV)
+     * @param instrumentationProvider instrumentation provider
      * @return the response data
      */
     public static RequestHandler create(UserRequestServlet userRequest, boolean debugMode,
@@ -383,7 +388,21 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        QueryParams blsParams = new QueryParamsBlackLabServer(indexName, searchMan, user, request);
+
+        String jsonRequest = request.getParameter("req");
+        QueryParams blsParams;
+        if (jsonRequest != null) {
+            // Request was passed as a JSON structure. Parse that.
+            try {
+                blsParams = new QueryParamsJson(indexName, searchMan, user, jsonRequest);
+            } catch (JsonProcessingException e) {
+                throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);
+            }
+        } else {
+            // Request was passed as separate bl.* parameters. Parse them.
+            blsParams = new QueryParamsBlackLabServer(indexName, searchMan, user, request);
+        }
+
         params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;

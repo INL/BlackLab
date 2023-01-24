@@ -1,4 +1,4 @@
-package org.ivdnt.blacklab.solr;
+package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,9 +13,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.resultproperty.PropertySerializeUtil;
-import nl.inl.blacklab.server.lib.ParameterDefaults;
-import nl.inl.blacklab.server.lib.QueryParamsAbstract;
-import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.Json;
 
