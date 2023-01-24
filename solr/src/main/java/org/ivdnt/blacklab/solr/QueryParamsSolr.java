@@ -8,7 +8,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.common.params.SolrParams;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
@@ -25,27 +24,21 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     private static final String BL_PAR_NAME_PREFIX = BL_PAR_NAME + ".";
 
-    public static final String PAR_NAME_OPERATION = "op";
+    public static final String PAR_NAME_JSON_REQUEST = "req";
 
     private final SolrParams solrParams;
 
-    private final String corpusName;
-
-    private final BlackLabIndex index;
-
-    public QueryParamsSolr(SolrParams params, String corpusName, BlackLabIndex index, SearchManager searchManager, User user) {
-        super(searchManager, user);
+    public QueryParamsSolr(String corpusName, SearchManager searchManager, SolrParams params, User user) {
+        super(corpusName, searchManager, user);
         solrParams = params;
-        this.corpusName = corpusName;
-        this.index = index;
     }
 
     public static boolean shouldRunComponent(SolrParams params) {
-        return params.get(BL_PAR_NAME_PREFIX + PAR_NAME_OPERATION) != null;
+        return params.get(BL_PAR_NAME_PREFIX + PARAM_NAME_OPERATION) != null || params.get(BL_PAR_NAME_PREFIX + PAR_NAME_JSON_REQUEST) != null;
     }
 
     public static String getOperation(SolrParams params) {
-        return params.get(BL_PAR_NAME_PREFIX + PAR_NAME_OPERATION);
+        return params.get(BL_PAR_NAME_PREFIX + PARAM_NAME_OPERATION);
     }
 
     protected boolean has(String name) {
@@ -64,14 +57,9 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                         e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 // only existing params
-                .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
-        params = Stream.concat(Stream.of(Pair.of(PARAM_CORPUS_NAME, corpusName)), params); // add index name "parameter"
+                .filter(p -> p.getKey().equals(PARAM_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
+        params = Stream.concat(Stream.of(Pair.of(PARAM_CORPUS_NAME, getCorpusName())), params); // add index name "parameter"
         return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-    }
-
-    @Override
-    public String getCorpusName() {
-        return corpusName;
     }
 
 }

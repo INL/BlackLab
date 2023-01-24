@@ -72,24 +72,14 @@ structure with all the parameters in a parameter called `bl.req`, e.g.:
 
 The full URL in this case would be: https://server/solr/corename/select?bl.req=%7B%22op%22%3A%22hits%22%2C%22patt%22%3A%22%5C%22the%5C%22%22%7D&q=*%3A*&rows=0
 
-The JSON structure for `group` and `viewgroup` is not a simple string, but a JSON object instead.
+The JSON structure for `group` and `viewgroup` is not a string with separators, but an array of arrays:
 
 ```json
 {
   "op": "hits",
   "patt": "\"the\"",
-  "group": [
-    {
-      "type": "field",
-      "field": "title"
-    }
-  ],
-  "viewgroup": [
-    {
-      "type": "str",
-      "value": "interview about city"
-    }
-  ]
+  "group": [ [ "field", "title" ] ],
+  "viewgroup": [ [ "str", "interview about city" ] ]
 }
 ```
 

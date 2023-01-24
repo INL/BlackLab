@@ -741,4 +741,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public boolean isIncludeDebugInfo() {
         return params.isIncludeDebugInfo();
     }
+
+    @Override
+    public String getOperation() {
+        return params.getOperation();
+    }
 }

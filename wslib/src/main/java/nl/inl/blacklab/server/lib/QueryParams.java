@@ -139,4 +139,13 @@ public interface QueryParams {
     boolean isIncludeDebugInfo();
 
     String getFieldName();
+
+    /**
+     * Get the operation, for webservices that pass operation via a parameter.
+     *
+     * For example, BLS chooses an operation based on the URL path, and doesn't use this method.
+     *
+     * @return requested operation
+     */
+    default String getOperation() { return ""; }
 }

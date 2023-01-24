@@ -156,8 +156,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             ds.startEntry("blacklab");
             try {
                 boolean debugMode = isDebugMode(rb.req);
-                String operation = QueryParamsSolr.getOperation(rb.req.getParams());
-                switch (operation) {
+                switch (params.getOperation()) {
                 // "Root" endpoint
                 case "server-info":
                     WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
@@ -219,7 +218,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     // do nothing
                     break;
                 default:
-                    throw new BadRequest("", "Unknown operation " + operation);
+                    throw new BadRequest("", "Unknown operation " + params.getOperation());
                 }
             } catch (Exception e) {
                 errorResponse(e, rb);
@@ -236,15 +235,15 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(blReq, rb.req.getCore().getName(), index, searchManager, user);
+                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchManager, user, blReq);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(solrParams, rb.req.getCore().getName(), index, searchManager, user);
+            qpSolr = new QueryParamsSolr(rb.req.getCore().getName(), searchManager, solrParams, user);
         }
-        boolean isDocs = QueryParamsSolr.getOperation(solrParams).startsWith("doc");
+        boolean isDocs = qpSolr.getOperation().startsWith("doc");
         WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), qpSolr);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query

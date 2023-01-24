@@ -18,13 +18,20 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public abstract class QueryParamsAbstract implements QueryParams {
 
-    public static final String PARAM_CORPUS_NAME = "indexname";
+    protected static final String PARAM_CORPUS_NAME = "indexname";
+
+    protected static final String PARAM_NAME_OPERATION = "op";
+
     protected final SearchManager searchMan;
+
     protected final User user;
 
-    public QueryParamsAbstract(SearchManager searchMan, User user) {
+    protected final String corpusName;
+
+    public QueryParamsAbstract(String corpusName, SearchManager searchMan, User user) {
         this.searchMan = searchMan;
         this.user = user;
+        this.corpusName = corpusName;
     }
 
     private static double parseDouble(String value) {
@@ -385,5 +392,15 @@ public abstract class QueryParamsAbstract implements QueryParams {
     @Override
     public User getUser() {
         return user;
+    }
+
+    @Override
+    public String getCorpusName() {
+        return corpusName;
+    }
+
+    @Override
+    public String getOperation() {
+        return get(PARAM_NAME_OPERATION);
     }
 }

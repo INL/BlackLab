@@ -383,13 +383,12 @@ public abstract class RequestHandler {
 
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        QueryParams blsParams = new QueryParamsBlackLabServer(indexName, request, searchMan, user);
+        QueryParams blsParams = new QueryParamsBlackLabServer(indexName, searchMan, user, request);
         params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
         this.indexName = indexName;
         this.urlResource = urlResource;
         this.urlPathInfo = urlPathInfo;
         this.user = user;
-
     }
 
     protected BlackLabIndex blIndex() throws BlsException {

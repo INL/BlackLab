@@ -22,8 +22,8 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final Map<String, String> map = new TreeMap<>();
 
-    public QueryParamsBlackLabServer(String corpusName, HttpServletRequest request, SearchManager searchMan, User user) {
-        super(searchMan, user);
+    public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request) {
+        super(corpusName, searchMan, user);
         map.put(PARAM_CORPUS_NAME, corpusName);
         for (String name: ParameterDefaults.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
