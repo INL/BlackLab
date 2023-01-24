@@ -403,4 +403,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getOperation() {
         return get(PARAM_NAME_OPERATION);
     }
+
+    @Override
+    public Optional<String> getInputFormat() {
+        return opt("inputformat");
+    }
 }

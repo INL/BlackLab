@@ -205,10 +205,12 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
                 // Manage user corpora
                 case "list-input-formats":
-                    break;
-                case "write-input-format":
+                    WebserviceRequestHandler.opListInputFormats(params, ds);
                     break;
                 case "input-format-info":
+                    WebserviceRequestHandler.opInputFormatInfo(params, ds);
+                    break;
+                case "write-input-format":
                     break;
                 case "input-format-xslt":
                     break;

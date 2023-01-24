@@ -148,4 +148,7 @@ public interface QueryParams {
      * @return requested operation
      */
     default String getOperation() { return ""; }
+
+    default Optional<String> getInputFormat() { return Optional.empty(); }
+
 }

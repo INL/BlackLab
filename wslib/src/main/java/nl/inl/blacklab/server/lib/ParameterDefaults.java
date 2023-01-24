@@ -71,7 +71,8 @@ public class ParameterDefaults {
             "debug", // include debug info (cache)
 
             "indexname",
-            "field"
+            "field",
+            "inputformat"
     ));
 
     public static boolean paramExists(String name) {

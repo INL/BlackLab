@@ -746,4 +746,14 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public String getOperation() {
         return params.getOperation();
     }
+
+    private String inputFormat;
+
+    public Optional<String> getInputFormat() {
+        return Optional.ofNullable(inputFormat);
+    }
+
+    public void setInputFormat(String inputFormat) {
+        this.inputFormat = inputFormat;
+    }
 }

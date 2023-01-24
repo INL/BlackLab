@@ -219,4 +219,14 @@ public class WebserviceRequestHandler {
         ResultAutocomplete result = WebserviceOperations.autocomplete(params);
         DStream.autoComplete(ds, result);
     }
+
+    public static void opInputFormatInfo(WebserviceParams params, DataStream ds) {
+        ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
+        DStream.formatInfoResponse(ds, result);
+    }
+
+    public static void opListInputFormats(WebserviceParams params, DataStream ds) {
+        ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
+        DStream.listFormatsResponse(ds, result);
+    }
 }

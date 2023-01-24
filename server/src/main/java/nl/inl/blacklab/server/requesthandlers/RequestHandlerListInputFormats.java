@@ -2,16 +2,14 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletRequest;
 
-import nl.inl.blacklab.index.DocIndexerFactory.Format;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.ResultInputFormat;
-import nl.inl.blacklab.server.lib.results.ResultListInputFormats;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Get information about supported input formats.
@@ -47,61 +45,24 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException {
-        if (urlResource != null && urlResource.length() > 0) {
-            // Specific input format: either format information or XSLT request
+        if (urlResource != null && urlResource.length() > 0 && isXsltRequest) {
             ResultInputFormat result = WebserviceOperations.inputFormat(urlResource);
-            if (!isXsltRequest) {
-                dstreamFormatResponse(ds, result);
-            } else {
-                dstreamFormatXsltResponse(ds, result);
-            }
+            dstreamFormatXsltResponse(ds, result);
         } else {
-            // Show list of supported input formats (for current user)
-            ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
-            dstreamListFormatsResponse(ds, result);
+            if (urlResource != null && urlResource.length() > 0) {
+                // Specific input format: either format information or XSLT request
+                params.setInputFormat(urlResource);
+                WebserviceRequestHandler.opInputFormatInfo(params, ds);
+            } else {
+                // Show list of supported input formats (for current user)
+                WebserviceRequestHandler.opListInputFormats(params, ds);
+            }
         }
         return HTTP_OK;
     }
 
-    private static void dstreamFormatResponse(DataStream ds, ResultInputFormat result) {
-        ds.startMap()
-                .entry("formatName", result.getConfig().getName())
-                .entry("configFileType", result.getConfig().getConfigFileType())
-                .entry("configFile", result.getFileContents())
-                .endMap();
-    }
-
     private static void dstreamFormatXsltResponse(DataStream ds, ResultInputFormat result) {
         ds.plain(result.getXslt());
-    }
-
-    private static void dstreamListFormatsResponse(DataStream ds, ResultListInputFormats result) {
-
-        ds.startMap();
-        {
-            DStream.userInfo(ds, result.getUserInfo());
-
-            // List supported input formats
-            // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
-            ds.startEntry("supportedInputFormats").startMap();
-            for (Format format: result.getFormats()) {
-                ds.startAttrEntry("format", "name", format.getId());
-                {
-                    ds.startMap();
-                    {
-                        ds.entry("displayName", format.getDisplayName())
-                                .entry("description", format.getDescription())
-                                .entry("helpUrl", format.getHelpUrl())
-                                .entry("configurationBased", format.isConfigurationBased())
-                                .entry("isVisible", format.isVisible());
-                    }
-                    ds.endMap();
-                }
-                ds.endAttrEntry();
-            }
-            ds.endMap().endEntry();
-        }
-        ds.endMap();
     }
 
 }

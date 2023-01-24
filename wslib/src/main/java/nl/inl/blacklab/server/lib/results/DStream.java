@@ -15,6 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.index.DocIndexerFactory;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
@@ -1036,5 +1037,42 @@ public class DStream {
         ds.startList();
         result.getTerms().forEach((v) -> ds.item("term", v));
         ds.endList();
+    }
+
+    public static void listFormatsResponse(DataStream ds, ResultListInputFormats result) {
+
+        ds.startMap();
+        {
+            userInfo(ds, result.getUserInfo());
+
+            // List supported input formats
+            // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
+            ds.startEntry("supportedInputFormats").startMap();
+            for (DocIndexerFactory.Format format: result.getFormats()) {
+                ds.startAttrEntry("format", "name", format.getId());
+                {
+                    ds.startMap();
+                    {
+                        ds.entry("displayName", format.getDisplayName())
+                                .entry("description", format.getDescription())
+                                .entry("helpUrl", format.getHelpUrl())
+                                .entry("configurationBased", format.isConfigurationBased())
+                                .entry("isVisible", format.isVisible());
+                    }
+                    ds.endMap();
+                }
+                ds.endAttrEntry();
+            }
+            ds.endMap().endEntry();
+        }
+        ds.endMap();
+    }
+
+    public static void formatInfoResponse(DataStream ds, ResultInputFormat result) {
+        ds.startMap()
+                .entry("formatName", result.getConfig().getName())
+                .entry("configFileType", result.getConfig().getConfigFileType())
+                .entry("configFile", result.getFileContents())
+                .endMap();
     }
 }

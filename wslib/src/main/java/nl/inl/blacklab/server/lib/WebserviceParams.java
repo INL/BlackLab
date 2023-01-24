@@ -102,4 +102,5 @@ public interface WebserviceParams extends QueryParams {
 
     SearchFacets facets() throws BlsException;
 
+    Optional<String> getInputFormat();
 }
