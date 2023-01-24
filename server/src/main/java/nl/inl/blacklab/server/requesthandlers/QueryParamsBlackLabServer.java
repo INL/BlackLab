@@ -22,13 +22,8 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final Map<String, String> map = new TreeMap<>();
 
-    private final SearchManager searchMan;
-
-    private final User user;
-
     public QueryParamsBlackLabServer(String corpusName, HttpServletRequest request, SearchManager searchMan, User user) {
-        this.searchMan = searchMan;
-        this.user = user;
+        super(searchMan, user);
         map.put(PARAM_CORPUS_NAME, corpusName);
         for (String name: ParameterDefaults.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
@@ -60,16 +55,6 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
     @Override
     public Map<String, String> getParameters() {
         return Collections.unmodifiableMap(map);
-    }
-
-    @Override
-    public SearchManager getSearchManager() {
-        return searchMan;
-    }
-
-    @Override
-    public User getUser() {
-        return user;
     }
 
     @Override

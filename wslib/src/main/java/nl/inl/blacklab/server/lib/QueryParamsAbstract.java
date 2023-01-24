@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.server.search.SearchManager;
 
 /**
  * Abstract implementation of PlainWebserviceParams that uses request parameters.
@@ -18,6 +19,13 @@ import nl.inl.blacklab.search.ConcordanceType;
 public abstract class QueryParamsAbstract implements QueryParams {
 
     public static final String PARAM_CORPUS_NAME = "indexname";
+    protected final SearchManager searchMan;
+    protected final User user;
+
+    public QueryParamsAbstract(SearchManager searchMan, User user) {
+        this.searchMan = searchMan;
+        this.user = user;
+    }
 
     private static double parseDouble(String value) {
         if (value != null) {
@@ -367,5 +375,15 @@ public abstract class QueryParamsAbstract implements QueryParams {
     @Override
     public String getFieldName() {
         return get("field");
+    }
+
+    @Override
+    public SearchManager getSearchManager() {
+        return searchMan;
+    }
+
+    @Override
+    public User getUser() {
+        return user;
     }
 }

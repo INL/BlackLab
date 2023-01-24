@@ -3,10 +3,12 @@ package org.ivdnt.blacklab.solr;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.Principal;
 import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
+import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
@@ -17,11 +19,15 @@ import org.apache.solr.search.DocSet;
 import org.apache.solr.servlet.HttpSolrCall;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.QueryParams;
+import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -223,15 +229,34 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     }
 
     private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
-        QueryParamsSolr solrParams = new QueryParamsSolr(rb.req.getParams(), rb.req.getCore().getName(), index, searchManager);
-        boolean isDocs = QueryParamsSolr.getOperation(rb.req.getParams()).startsWith("doc");
-        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), solrParams);
+        User user = getCurrentUser(rb);
+        SolrParams solrParams = rb.req.getParams();
+        String blReq = solrParams.get("bl.req");
+        QueryParams qpSolr;
+        if (blReq != null) {
+            // Request was passed as a JSON structure. Parse that.
+            try {
+                qpSolr = new QueryParamsJson(blReq, rb.req.getCore().getName(), index, searchManager, user);
+            } catch (JsonProcessingException e) {
+                throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
+            }
+        } else {
+            // Request was passed as separate bl.* parameters. Parse them.
+            qpSolr = new QueryParamsSolr(solrParams, rb.req.getCore().getName(), index, searchManager, user);
+        }
+        boolean isDocs = QueryParamsSolr.getOperation(solrParams).startsWith("doc");
+        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), qpSolr);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
             params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
         }
         return params;
+    }
+
+    private static User getCurrentUser(ResponseBuilder rb) {
+        Principal p = rb.req.getUserPrincipal();
+        return User.anonymous(p == null ? "UNKNOWN" : p.getName()); // FIXME: detect logged-in user vs. anonymous user with session id
     }
 
     private void errorResponse(Exception e, ResponseBuilder rb) {

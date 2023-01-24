@@ -33,13 +33,11 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     private final BlackLabIndex index;
 
-    private final SearchManager searchManager;
-
-    public QueryParamsSolr(SolrParams params, String corpusName, BlackLabIndex index, SearchManager searchManager) {
+    public QueryParamsSolr(SolrParams params, String corpusName, BlackLabIndex index, SearchManager searchManager, User user) {
+        super(searchManager, user);
         solrParams = params;
         this.corpusName = corpusName;
         this.index = index;
-        this.searchManager = searchManager;
     }
 
     public static boolean shouldRunComponent(SolrParams params) {
@@ -69,16 +67,6 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                 .filter(p -> p.getKey().equals(PAR_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
         params = Stream.concat(Stream.of(Pair.of(PARAM_CORPUS_NAME, corpusName)), params); // add index name "parameter"
         return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
-    }
-
-    @Override
-    public SearchManager getSearchManager() {
-        return searchManager;
-    }
-
-    @Override
-    public User getUser() {
-        return User.anonymous("12345"); // @@@ FIXME
     }
 
     @Override
