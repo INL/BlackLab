@@ -4,9 +4,11 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 
@@ -26,7 +28,9 @@ public class UserRequestServlet implements UserRequest {
     }
 
     @Override
-    public User determineCurrentUser(AuthMethod authObj) {
+    public User determineCurrentUser() {
+        AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
+
         // If no auth system is configured, all users are anonymous
         if (authObj == null) {
             return User.anonymous(request.getSession().getId());
@@ -111,5 +115,15 @@ public class UserRequestServlet implements UserRequest {
     @Override
     public Object getAttribute(String name) {
         return request.getAttribute(name);
+    }
+
+    @Override
+    public WebserviceParams getParams(BlackLabIndex index) {
+        return null;
+    }
+
+    @Override
+    public boolean isDebugMode() {
+        return false;
     }
 }

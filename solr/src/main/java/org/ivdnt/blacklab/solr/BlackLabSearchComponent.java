@@ -8,34 +8,25 @@ import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.cloud.ZkController;
-import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
-import org.apache.solr.request.SolrQueryRequest;
-import org.apache.solr.search.DocSet;
-import org.apache.solr.servlet.HttpSolrCall;
 import org.apache.solr.util.plugin.SolrCoreAware;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.server.search.UserRequest;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -142,7 +133,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
-            WebserviceParams params = getParams(rb, index);
+            UserRequest userRequest = new UserRequestSolr(rb, searchManager);
+            WebserviceParams params = userRequest.getParams(index);
             if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
                 searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
             }
@@ -156,7 +148,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
             ds.startEntry("blacklab");
             try {
-                boolean debugMode = isDebugMode(rb.req);
+                boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint
                 case "server-info":
@@ -230,32 +222,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         }
     }
 
-    private WebserviceParamsImpl getParams(ResponseBuilder rb, BlackLabIndex index) {
-        User user = getCurrentUser(rb);
-        SolrParams solrParams = rb.req.getParams();
-        String blReq = solrParams.get("bl.req");
-        QueryParams qpSolr;
-        if (blReq != null) {
-            // Request was passed as a JSON structure. Parse that.
-            try {
-                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchManager, user, blReq);
-            } catch (JsonProcessingException e) {
-                throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
-            }
-        } else {
-            // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(rb.req.getCore().getName(), searchManager, solrParams, user);
-        }
-        boolean isDocs = qpSolr.getOperation().startsWith("doc");
-        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(rb.req), qpSolr);
-        if (params.getDocumentFilterQuery().isEmpty()) {
-            // No explicit bl.filter specified; use Solr's document results as our filter query
-            DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-            params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
-        }
-        return params;
-    }
-
     private static User getCurrentUser(ResponseBuilder rb) {
         Principal p = rb.req.getUserPrincipal();
         return User.anonymous(p == null ? "UNKNOWN" : p.getName()); // FIXME: detect logged-in user vs. anonymous user with session id
@@ -277,12 +243,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             err.add("stackTrace", sw.toString());
         }
         rb.rsp.add("blacklab", Map.of("error", err));
-    }
-
-    private boolean isDebugMode(SolrQueryRequest req) {
-        HttpSolrCall httpSolrCall = req.getHttpSolrCall();
-        return httpSolrCall == null ? true : // testing
-                searchManager.isDebugMode(ServletUtil.getOriginatingAddress(httpSolrCall.getReq()));
     }
 
     /////////////////////////////////////////////

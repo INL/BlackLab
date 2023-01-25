@@ -1,0 +1,112 @@
+package org.ivdnt.blacklab.solr;
+
+import java.security.Principal;
+
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.handler.component.ResponseBuilder;
+import org.apache.solr.search.DocSet;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.lib.QueryParams;
+import nl.inl.blacklab.server.lib.QueryParamsJson;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.search.UserRequest;
+import nl.inl.blacklab.server.util.ServletUtil;
+
+public class UserRequestSolr implements UserRequest {
+
+    private final ResponseBuilder rb;
+    private final SearchManager searchMan;
+
+    public UserRequestSolr(ResponseBuilder rb, SearchManager searchMan) {
+        this.rb = rb;
+        this.searchMan = searchMan;
+    }
+
+    @Override
+    public User determineCurrentUser() {
+        //AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
+        // FIXME: detect logged-in user vs. anonymous user with session id
+        Principal p = rb.req.getUserPrincipal();
+        return User.anonymous(p == null ? "UNKNOWN" : p.getName());
+    }
+
+    @Override
+    public SearchManager getSearchManager() {
+        return searchMan;
+    }
+
+    @Override
+    public String getSessionId() {
+        return null;
+    }
+
+    @Override
+    public String getRemoteAddr() {
+        if (rb.req.getHttpSolrCall() == null)
+            return "UNKNOWN"; // test
+        return ServletUtil.getOriginatingAddress(rb.req.getHttpSolrCall().getReq());
+    }
+
+    @Override
+    public String getPersistedUserId() {
+        return null;
+    }
+
+    @Override
+    public void persistUser(User user, int durationSec) {
+
+    }
+
+    @Override
+    public String getHeader(String name) {
+        return null;
+    }
+
+    @Override
+    public String getParameter(String name) {
+        return null;
+    }
+
+    @Override
+    public Object getAttribute(String name) {
+        return null;
+    }
+
+    public WebserviceParamsImpl getParams(BlackLabIndex index) {
+        User user = determineCurrentUser();
+        SolrParams solrParams = rb.req.getParams();
+        String blReq = solrParams.get("bl.req");
+        QueryParams qpSolr;
+        if (blReq != null) {
+            // Request was passed as a JSON structure. Parse that.
+            try {
+                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchMan, user, blReq);
+            } catch (JsonProcessingException e) {
+                throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
+            }
+        } else {
+            // Request was passed as separate bl.* parameters. Parse them.
+            qpSolr = new QueryParamsSolr(rb.req.getCore().getName(), searchMan, solrParams, user);
+        }
+        boolean isDocs = qpSolr.getOperation().startsWith("doc");
+        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(), qpSolr);
+        if (params.getDocumentFilterQuery().isEmpty()) {
+            // No explicit bl.filter specified; use Solr's document results as our filter query
+            DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
+            params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
+        }
+        return params;
+    }
+
+    @Override
+    public boolean isDebugMode() {
+        return rb.req.getHttpSolrCall() == null || searchMan.isDebugMode(getRemoteAddr());
+    }
+
+}

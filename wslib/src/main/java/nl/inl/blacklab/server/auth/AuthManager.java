@@ -52,14 +52,14 @@ public class AuthManager {
         }
     }
 
-    public User determineCurrentUser(UserRequest request) {
-        return request.determineCurrentUser(authObj);
-    }
-
     public void persistUser(UserRequest request, User user) {
         if (authObj != null) {
             // i.e. set cookie
             authObj.persistUser(request, user);
         }
+    }
+
+    public AuthMethod getAuthObject() {
+        return authObj;
     }
 }

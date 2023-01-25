@@ -48,8 +48,6 @@ public abstract class RequestHandler {
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
-    protected RequestInstrumentationProvider instrumentationProvider;
-
     /** The available request handlers by name */
     static final Map<String, Class<? extends RequestHandler>> availableHandlers;
 
@@ -97,7 +95,7 @@ public abstract class RequestHandler {
         String requestId = instrumentationProvider.getRequestID(request).orElse("");
         ThreadContext.put("requestId", requestId);
         SearchManager searchManager = servlet.getSearchManager();
-        User user = searchManager.getAuthSystem().determineCurrentUser(new UserRequestServlet(servlet, request, null));
+        User user = userRequest.determineCurrentUser();
         String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
         if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
             String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
@@ -313,7 +311,12 @@ public abstract class RequestHandler {
             requestHandler.setDebug();
 
         requestHandler.setInstrumentationProvider(instrumentationProvider);
+        requestHandler.setUserRequest(userRequest);
         return requestHandler;
+    }
+
+    private void setUserRequest(UserRequestServlet userRequest) {
+        this.userRequest = userRequest;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -335,6 +338,8 @@ public abstract class RequestHandler {
 
     protected boolean debugMode;
 
+    private UserRequestServlet userRequest;
+
     /** The servlet object */
     protected BlackLabServer servlet;
 
@@ -343,6 +348,8 @@ public abstract class RequestHandler {
 
     /** Interprets parameters to create searches. */
     protected WebserviceParamsImpl params;
+
+    protected RequestInstrumentationProvider instrumentationProvider;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
@@ -389,6 +396,15 @@ public abstract class RequestHandler {
         boolean isDocs = isDocsOperation();
         boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
 
+        getParams(request, user, indexName, isDocs, isDebugMode);
+        this.indexName = indexName;
+        this.urlResource = urlResource;
+        this.urlPathInfo = urlPathInfo;
+        this.user = user;
+    }
+
+    private void getParams(HttpServletRequest request, User user, String indexName, boolean isDocs,
+            boolean isDebugMode) {
         String jsonRequest = request.getParameter("req");
         QueryParams blsParams;
         if (jsonRequest != null) {
@@ -402,12 +418,7 @@ public abstract class RequestHandler {
             // Request was passed as separate bl.* parameters. Parse them.
             blsParams = new QueryParamsBlackLabServer(indexName, searchMan, user, request);
         }
-
         params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
-        this.indexName = indexName;
-        this.urlResource = urlResource;
-        this.urlPathInfo = urlPathInfo;
-        this.user = user;
     }
 
     protected BlackLabIndex blIndex() throws BlsException {
