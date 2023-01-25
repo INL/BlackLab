@@ -13,6 +13,8 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
@@ -21,7 +23,10 @@ import nl.inl.blacklab.server.util.ServletUtil;
 public class UserRequestSolr implements UserRequest {
 
     private final ResponseBuilder rb;
+
     private final SearchManager searchMan;
+
+    private User user;
 
     public UserRequestSolr(ResponseBuilder rb, SearchManager searchMan) {
         this.rb = rb;
@@ -29,11 +34,14 @@ public class UserRequestSolr implements UserRequest {
     }
 
     @Override
-    public User determineCurrentUser() {
-        //AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
-        // FIXME: detect logged-in user vs. anonymous user with session id
-        Principal p = rb.req.getUserPrincipal();
-        return User.anonymous(p == null ? "UNKNOWN" : p.getName());
+    public synchronized User getUser() {
+        if (user == null) {
+            //AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
+            // FIXME: detect logged-in user vs. anonymous user with session id
+            Principal p = rb.req.getUserPrincipal();
+            user = User.anonymous(p == null ? "UNKNOWN" : p.getName());
+        }
+        return user;
     }
 
     @Override
@@ -78,15 +86,15 @@ public class UserRequestSolr implements UserRequest {
         return null;
     }
 
-    public WebserviceParamsImpl getParams(BlackLabIndex index) {
-        User user = determineCurrentUser();
+    public WebserviceParams getParams(String indexName, BlackLabIndex index, WebserviceOperation operation) {
+        User user = getUser();
         SolrParams solrParams = rb.req.getParams();
         String blReq = solrParams.get("bl.req");
         QueryParams qpSolr;
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchMan, user, blReq);
+                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchMan, user, blReq, operation);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
@@ -94,7 +102,7 @@ public class UserRequestSolr implements UserRequest {
             // Request was passed as separate bl.* parameters. Parse them.
             qpSolr = new QueryParamsSolr(rb.req.getCore().getName(), searchMan, solrParams, user);
         }
-        boolean isDocs = qpSolr.getOperation().startsWith("doc");
+        boolean isDocs = qpSolr.getOperation().isDocsOperation();
         WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(), qpSolr);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query

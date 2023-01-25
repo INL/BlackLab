@@ -1,12 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.ResultInputFormat;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
@@ -18,9 +15,9 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     private final boolean isXsltRequest;
 
-    public RequestHandlerListInputFormats(BlackLabServer servlet, HttpServletRequest request, User user,
+    public RequestHandlerListInputFormats(UserRequestBls userRequest,
             String indexName, String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.LIST_INPUT_FORMATS);
         isXsltRequest = urlResource != null && urlResource.length() > 0 && urlPathInfo != null
                 && urlPathInfo.equals("xslt");
     }

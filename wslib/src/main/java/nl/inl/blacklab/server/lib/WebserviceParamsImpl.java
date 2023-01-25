@@ -743,7 +743,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public String getOperation() {
+    public WebserviceOperation getOperation() {
         return params.getOperation();
     }
 

@@ -24,7 +24,7 @@ public class QueryParamsJson extends QueryParamsAbstract {
     /** Our parameters, "re-serialized" from the JSON structure */
     final Map<String, String> params;
 
-    public QueryParamsJson(String corpusName, SearchManager searchManager, User user, String json) throws JsonProcessingException {
+    public QueryParamsJson(String corpusName, SearchManager searchManager, User user, String json, WebserviceOperation operation) throws JsonProcessingException {
         super(corpusName, searchManager, user);
         JsonNode jsonNode = Json.getJsonObjectMapper().readTree(json);
         if (!jsonNode.isObject())
@@ -36,6 +36,8 @@ public class QueryParamsJson extends QueryParamsAbstract {
             Map.Entry<String, JsonNode> entry = it.next();
             params.put(entry.getKey(), jsonValueToString(entry.getKey(), entry.getValue()));
         }
+        if (operation != null)
+            params.put(PARAM_NAME_OPERATION, operation.getName());
     }
 
     @Override

@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 
@@ -22,15 +23,17 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final Map<String, String> map = new TreeMap<>();
 
-    public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request) {
+    public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
         super(corpusName, searchMan, user);
-        map.put(PARAM_CORPUS_NAME, corpusName);
         for (String name: ParameterDefaults.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
             if (value.length() == 0)
                 continue;
             map.put(name, value);
         }
+        map.put(PARAM_CORPUS_NAME, corpusName);
+        if (operation != null && operation != WebserviceOperation.NONE)
+            map.put(PARAM_NAME_OPERATION, operation.getName());
     }
 
     @Override

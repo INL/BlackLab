@@ -147,7 +147,7 @@ public interface QueryParams {
      *
      * @return requested operation
      */
-    default String getOperation() { return ""; }
+    default WebserviceOperation getOperation() { return WebserviceOperation.NONE; }
 
     default Optional<String> getInputFormat() { return Optional.empty(); }
 

@@ -43,7 +43,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.Response;
-import nl.inl.blacklab.server.requesthandlers.UserRequestServlet;
+import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
@@ -233,7 +233,7 @@ public class BlackLabServer extends HttpServlet {
         // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
         // TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
         DataFormat outputType = ServletUtil.getOutputType(request);
-        UserRequestServlet userRequest = new UserRequestServlet(this, request, responseObject);
+        UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
         RequestHandler requestHandler = RequestHandler.create(userRequest, debugMode, outputType, this.requestInstrumentationProvider);
         if (outputType == null)
             outputType = requestHandler.getOverrideType();

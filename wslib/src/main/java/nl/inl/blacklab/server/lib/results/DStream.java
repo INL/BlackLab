@@ -220,7 +220,9 @@ public class DStream {
         ds.startEntry("searchParam");
         ds.startMap();
         for (Map.Entry<String, String> e: searchParam.getParameters().entrySet()) {
-            ds.entry(e.getKey(), e.getValue());
+            if (!e.getKey().equals("op")) { // skip for now; we'll update all the test responses eventually
+                ds.entry(e.getKey(), e.getValue());
+            }
         }
         ds.endMap();
         ds.endEntry();

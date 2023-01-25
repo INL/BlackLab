@@ -1,19 +1,16 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 
 /**
  * Delete a user index.
  */
 public class RequestHandlerDeleteIndex extends RequestHandler {
-    public RequestHandlerDeleteIndex(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+    public RequestHandlerDeleteIndex(UserRequestBls userRequest, String indexName,
             String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DELETE_CORPUS);
     }
 
     @Override

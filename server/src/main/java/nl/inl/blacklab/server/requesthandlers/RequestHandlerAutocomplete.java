@@ -1,14 +1,11 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
@@ -17,9 +14,9 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
-    public RequestHandlerAutocomplete(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+    public RequestHandlerAutocomplete(UserRequestBls userRequest, String indexName,
             String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.AUTOCOMPLETE);
     }
 
     @Override

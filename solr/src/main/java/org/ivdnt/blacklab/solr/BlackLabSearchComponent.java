@@ -3,7 +3,6 @@ package org.ivdnt.blacklab.solr;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.security.Principal;
 import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
@@ -18,9 +17,7 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.DStream;
@@ -134,7 +131,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             UserRequest userRequest = new UserRequestSolr(rb, searchManager);
-            WebserviceParams params = userRequest.getParams(index);
+            WebserviceParams params = userRequest.getParams(rb.req.getCore().getName(), index, null);
             if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
                 searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
             }
@@ -151,80 +148,81 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint
-                case "server-info":
+                case SERVER_INFO:
                     WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
                     break;
 
                 // Information about the corpus
-                case "corpus-info":
+                case CORPUS_INFO:
                     WebserviceRequestHandler.opCorpusInfo(params, ds);
                     break;
-                case "corpus-status":
+                case CORPUS_STATUS:
                     WebserviceRequestHandler.opCorpusStatus(params, ds);
                     break;
-                case "field-info":
+                case FIELD_INFO:
                     WebserviceRequestHandler.opFieldInfo(params, ds);
                     break;
 
                 // Find hits or documents
-                case "hits":
+                case HITS: case HITS_CSV: case HITS_GROUPED:
                     // [grouped] hits
                     WebserviceRequestHandler.opHits(params, ds);
                     break;
-                case "docs":
+                case DOCS: case DOCS_CSV: case DOCS_GROUPED:
                     // [grouped] docs
                     WebserviceRequestHandler.opDocs(params, ds);
                     break;
 
                 // Information about a document
-                case "doc-contents":
+                case DOC_CONTENTS:
                     WebserviceRequestHandler.opDocContents(params, ds);
                     break;
-                case "doc-info":
+                case DOC_INFO:
                     WebserviceRequestHandler.opDocInfo(params, ds);
                     break;
-                case "doc-snippet":
+                case DOC_SNIPPET:
                     WebserviceRequestHandler.opDocSnippet(params, ds);
                     break;
 
                 // Other search
-                case "termfreq":
+                case TERMFREQ:
                     WebserviceRequestHandler.opTermFreq(params, ds);
                     break;
-                case "autocomplete":
+                case AUTOCOMPLETE:
                     WebserviceRequestHandler.opAutocomplete(params, ds);
                     break;
 
                 // Manage user corpora
-                case "list-input-formats":
+                case LIST_INPUT_FORMATS:
                     WebserviceRequestHandler.opListInputFormats(params, ds);
                     break;
-                case "input-format-info":
+                case INPUT_FORMAT_INFO:
                     WebserviceRequestHandler.opInputFormatInfo(params, ds);
                     break;
-                case "write-input-format":
-                    break;
-                case "input-format-xslt":
-                    break;
-                case "delete-input-format":
+                case INPUT_FORMAT_XSLT:
                     break;
 
-                case "none":
+                case WRITE_INPUT_FORMAT:
+                case DELETE_INPUT_FORMAT:
+                case CREATE_CORPUS:
+                case DELETE_CORPUS:
+                case ADD_TO_CORPUS:
+                case CORPUS_SHARING:
+                    throw new UnsupportedOperationException("Not yet supported: " + params.getOperation());
+
+                case CACHE_INFO:
+                case CLEAR_CACHE:
+                case STATIC_RESPONSE:
+                case DEBUG:
+                case NONE:
                     // do nothing
                     break;
-                default:
-                    throw new BadRequest("", "Unknown operation " + params.getOperation());
                 }
             } catch (Exception e) {
                 errorResponse(e, rb);
             }
             ds.endEntry().endDocument();
         }
-    }
-
-    private static User getCurrentUser(ResponseBuilder rb) {
-        Principal p = rb.req.getUserPrincipal();
-        return User.anonymous(p == null ? "UNKNOWN" : p.getName()); // FIXME: detect logged-in user vs. anonymous user with session id
     }
 
     private void errorResponse(Exception e, ResponseBuilder rb) {

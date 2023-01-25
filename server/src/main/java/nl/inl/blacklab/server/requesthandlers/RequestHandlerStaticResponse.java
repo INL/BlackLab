@@ -1,12 +1,10 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 
 /**
  * Show a static response such as an error or succes message.
@@ -117,8 +115,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + IllegalIndexName.ILLEGAL_NAME_ERROR);
     }
 
-    RequestHandlerStaticResponse(BlackLabServer servlet, HttpServletRequest request, User user, String indexName) {
-        super(servlet, request, user, indexName, null, null);
+    RequestHandlerStaticResponse(UserRequestBls userRequest, String indexName) {
+        super(userRequest, indexName, null, null, WebserviceOperation.STATIC_RESPONSE);
     }
 
     @Override

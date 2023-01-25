@@ -4,15 +4,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -20,10 +17,9 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerAddFormat extends RequestHandler {
 
-    public RequestHandlerAddFormat(BlackLabServer servlet,
-            HttpServletRequest request, User user, String indexName,
+    public RequestHandlerAddFormat(UserRequestBls userRequest, String indexName,
             String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.WRITE_INPUT_FORMAT);
     }
 
     @Override

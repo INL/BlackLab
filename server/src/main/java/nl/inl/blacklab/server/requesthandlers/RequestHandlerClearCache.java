@@ -1,18 +1,15 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 
 /**
  * Clear the cache.
  */
 public class RequestHandlerClearCache extends RequestHandler {
-    public RequestHandlerClearCache(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
+    public RequestHandlerClearCache(UserRequestBls userRequest, String indexName,
             String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CLEAR_CACHE);
     }
 
     @Override

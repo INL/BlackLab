@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /** Represents a request from the user to the webservice.
@@ -14,7 +15,7 @@ public interface UserRequest {
      *
      * @return user object (either a logged-in user or the anonymous user object)
      */
-    User determineCurrentUser();
+    User getUser();
 
     SearchManager getSearchManager();
 
@@ -74,11 +75,12 @@ public interface UserRequest {
     /**
      * Create parameters object from the request.
      *
-     * @param userRequest request made to the webservice
+     * @param indexName index name
      * @param index index we're querying
+     * @param operation operation to perform (if not passed as a parameter)
      * @return parameters object
      */
-    WebserviceParams getParams(BlackLabIndex index);
+    WebserviceParams getParams(String indexName, BlackLabIndex index, WebserviceOperation operation);
 
     /**
      * Is this a debug request?

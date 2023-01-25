@@ -400,8 +400,8 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
-    public String getOperation() {
-        return get(PARAM_NAME_OPERATION);
+    public WebserviceOperation getOperation() {
+        return WebserviceOperation.fromName(get(PARAM_NAME_OPERATION));
     }
 
     @Override
