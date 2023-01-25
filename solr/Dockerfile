@@ -1,30 +1,30 @@
 ## Stage 0: Build Solr plugin
 #=============================
-#FROM maven:3.6-jdk-11 AS builder
-#WORKDIR /app
-#
-## Copy source from stage 0
-#COPY . .
-#
+FROM maven:3.6-jdk-11 AS builder
+WORKDIR /app
+
+# Copy source
+COPY . .
+
 # Build plugin JAR
-#RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
-#
+RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
+
 
 ## Stage 1: Solr
 #=============================
-FROM solr:8.11.1
+FROM solr:8.11.2
 LABEL maintainer="Jan Niestadt <jan.niestadt@ivdnt.org>"
 
 # Place plugin JAR built in previous stage
 USER solr
-# use bind mount instead
-#COPY --from=builder /app/solr/target/blacklab-solr.jar /opt/solr/contrib/blacklab-solr/lib/
 
 # Create directory for our test core
 RUN mkdir -p /var/solr/data/test
 
 # Copy test core
 COPY solr/src/test/resources/existing-index /var/solr/data/test/
+
+# NOTE: the following commented-out locations for our JARs don't work! See below.
 
 # Install JAR in core's lib dir (will be loaded autmatically)
 # (still gives us the SPI problem though)
@@ -51,16 +51,16 @@ COPY solr/src/test/resources/existing-index /var/solr/data/test/
 
 USER root
 
-# Copy to Solr's WEB-INF/lib. THIS WORKS!!
-#COPY solr/target/blacklab-solr.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-COPY solr/target/blacklab-solr-no-deps.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-COPY solr/target/lib/*.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-#COPY solr/target/lib/blacklab-*.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-#COPY solr/target/lib/jackson-*.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-#COPY solr/target/lib/xmlresolver-*.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
+# Copy JARs from previous stage to Solr's WEB-INF/lib. THIS WORKS!!
+COPY --from=builder /app/solr/target/blacklab-solr-no-deps.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
+COPY --from=builder /app/solr/target/lib/*.jar                 /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
+
+# Copy externally built JARs to Solr's WEB-INF/lib. THIS WORKS!!
+#COPY solr/target/blacklab-solr-no-deps.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
+#COPY solr/target/lib/*.jar                 /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
 
 # Make sure the files we just copied are owner by Solr, not root
-# (not sure why they would be owner by root otherwise, but they are)
-RUN chown -R solr:solr /var/solr/data/test
+# (roundabout way of doing it, but if we don't first copy as root, then set ownership, we get an error)
+RUN chown -R "$SOLR_UID":"$SOLR_GROUP" /var/solr/data/test
 
 USER solr

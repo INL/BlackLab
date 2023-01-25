@@ -1,2 +1,8 @@
 # Node libraries
-node_modules
+/node_modules
+
+# Various files not needed inside container
+/.gitignore
+/.dockerignore
+/Dockerfile
+/*.md
