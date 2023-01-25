@@ -35,7 +35,6 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
@@ -176,15 +175,16 @@ public class TestIndex {
      */
     BlackLabIndex index;
 
+    // Either indexDir is set (when directory supplied externally), or dir is set (when we create the dir ourselves)
     private final File indexDir;
-
-    private final boolean deleteAfterTest;
+    private final UtilsForTesting.TestDir dir;
 
     private final Annotation word;
 
+    /** Open the index in this directory, does not delete the directory when closed */
     private TestIndex(File indexDir) {
         this.indexDir = indexDir;
-        this.deleteAfterTest = false;
+        this.dir = null;
         try {
             index = BlackLab.open(indexDir);
             word = index.mainAnnotatedField().annotation("word");
@@ -193,11 +193,11 @@ public class TestIndex {
         }
     }
 
+    /** Create a temporary index, delete the directory when finished */
     private TestIndex(boolean testDelete, IndexType indexType) {
-
         // Get a temporary directory for our test index
-        indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
-        this.deleteAfterTest = true;
+        dir = UtilsForTesting.createBlackLabTestDir("TestIndex");
+        indexDir = dir.file();
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
@@ -237,7 +237,7 @@ public class TestIndex {
 
     @Override
     public String toString() {
-        return (deleteAfterTest ? "" : "PREINDEXED ") + indexFormat().toString();
+        return (dir != null ? "" : "PREINDEXED ") + indexFormat().toString();
     }
 
     public BlackLabIndex index() {
@@ -247,9 +247,8 @@ public class TestIndex {
     public void close() {
         if (index != null)
             index.close();
-        if (deleteAfterTest && indexDir.getName().startsWith(UtilsForTesting.TEST_DIR_PREFIX)) {
-            FileUtil.deleteTree(indexDir);
-        }
+        if (dir != null)
+            dir.close();
     }
 
     /**

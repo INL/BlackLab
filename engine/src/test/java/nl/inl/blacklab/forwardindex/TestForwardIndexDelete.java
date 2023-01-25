@@ -1,6 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,13 +8,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestForwardIndexDelete {
     private AnnotationForwardIndexExternalWriter fi;
 
-    private File testDir;
+    private UtilsForTesting.TestDir testDir;
 
     @Before
     public void setUpForwardIndex() {
@@ -29,7 +27,7 @@ public class TestForwardIndexDelete {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new AnnotationForwardIndexExternalWriter(null, null, testDir, Collators.defaultCollator(), true);
+        fi = new AnnotationForwardIndexExternalWriter(null, null, testDir.file(), Collators.defaultCollator(), true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {
@@ -77,7 +75,7 @@ public class TestForwardIndexDelete {
         if (fi != null)
             fi.close();
         // Try to remove (some files may be locked though)
-        FileUtil.deleteTree(testDir);
+        testDir.close();
     }
 
     /** Adding a document the exact length of a gap. */

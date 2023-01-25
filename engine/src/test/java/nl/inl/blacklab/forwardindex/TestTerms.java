@@ -13,7 +13,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestTerms {
@@ -21,7 +20,7 @@ public class TestTerms {
 
     final static String[] str = { "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog" };
 
-    private static File testDir;
+    private static UtilsForTesting.TestDir testDir;
 
     @BeforeClass
     public static void setUp() {
@@ -37,7 +36,7 @@ public class TestTerms {
         for (String s: str) {
             tw.indexOf(s);
         }
-        File f = new File(testDir, "terms.dat");
+        File f = new File(testDir.file(), "terms.dat");
         tw.write(f); // close so everything is guaranteed to be written
 
         // Open for reading
@@ -47,7 +46,7 @@ public class TestTerms {
     @AfterClass
     public static void tearDown() {
         // Try to remove (some files may be locked though)
-        FileUtil.deleteTree(testDir);
+        testDir.close();
     }
 
     /**

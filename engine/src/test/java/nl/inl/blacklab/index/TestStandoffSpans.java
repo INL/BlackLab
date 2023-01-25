@@ -3,8 +3,9 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.io.IOException;
 
-import org.apache.commons.io.FileUtils;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -26,24 +27,23 @@ public class TestStandoffSpans {
 
     public static final String TEST_FORMAT_NAME = "tei-standoff-spans";
 
+    public UtilsForTesting.TestDir testDir;
+    public BlackLabIndex testIndex;
+
     @BeforeClass
-    public static void setup() throws IOException {
+    public static void beforeClass() throws IOException {
         DocIndexerFactoryConfig factoryConfig = new DocIndexerFactoryConfig();
         File file = getFile("standoff/tei-standoff-spans.blf.yaml");
         factoryConfig.load(TEST_FORMAT_NAME, file).orElseThrow();
         DocumentFormats.registerFactory(factoryConfig);
     }
 
-    private static File getFile(String path) {
-        ClassLoader classLoader = TestStandoffSpans.class.getClassLoader();
-        return new File(classLoader.getResource(path).getFile());
-    }
-
-    private static BlackLabIndex createTestIndex() {
-        File indexDir = UtilsForTesting.createBlackLabTestDir("TestIndex");
+    @Before
+    public void before() {
+        testDir = UtilsForTesting.createBlackLabTestDir("TestStandoffSpans");
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true,
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(testDir.file(), true,
                     TEST_FORMAT_NAME);
             Indexer indexer = Indexer.get(indexWriter);
             indexer.setListener(new IndexListener() {
@@ -62,30 +62,35 @@ public class TestStandoffSpans {
             }
 
             // Create the BlackLab index object
-            return BlackLab.open(indexDir);
+            testIndex = BlackLab.open(testDir.file());
         } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
         }
     }
 
-    @Test
-    public void testStandoffSpans() throws IOException, InvalidQuery {
-        File testDir;
-        try (BlackLabIndex index = createTestIndex()) {
-            testDir = index.indexDirectory();
-            SearchEmpty s = index.search();
-            String fieldName = index.mainAnnotatedField().tagsAnnotation().
-                    sensitivity(MatchSensitivity.SENSITIVE).luceneField();
-            BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
-                    "character", null);
-            Hits results = s.find(query).execute();
-            Assert.assertEquals(2, results.size());
-            Assert.assertEquals(0, results.get(0).start());
-            Assert.assertEquals(2, results.get(0).end()); // FAILS, actually 3, but that's wrong
-            Assert.assertEquals(3, results.get(1).start());
-            Assert.assertEquals(5, results.get(1).end());
-        }
-        FileUtils.deleteDirectory(testDir);
+    private static File getFile(String path) {
+        ClassLoader classLoader = TestStandoffSpans.class.getClassLoader();
+        return new File(classLoader.getResource(path).getFile());
     }
 
+    @Test
+    public void testStandoffSpans() throws IOException, InvalidQuery {
+        SearchEmpty s = testIndex.search();
+        String fieldName = testIndex.mainAnnotatedField().tagsAnnotation().
+                sensitivity(MatchSensitivity.SENSITIVE).luceneField();
+        BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
+                "character", null);
+        Hits results = s.find(query).execute();
+        Assert.assertEquals(2, results.size());
+        Assert.assertEquals(0, results.get(0).start());
+        Assert.assertEquals(2, results.get(0).end()); // FAILS, actually 3, but that's wrong
+        Assert.assertEquals(3, results.get(1).start());
+        Assert.assertEquals(5, results.get(1).end());
+    }
+
+    @After
+    public void teardown() {
+        testIndex.close();
+        testDir.close();
+    }
 }

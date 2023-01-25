@@ -1,6 +1,5 @@
 package nl.inl.blacklab.contentstore;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.FileUtil;
 import nl.inl.util.UtilsForTesting;
 
 public class TestContentStoreDirFixedBlock {
@@ -26,7 +24,7 @@ public class TestContentStoreDirFixedBlock {
     
     private ContentStoreExternal store;
 
-    private File testDir;
+    private UtilsForTesting.TestDir testDir;
 
     String[] str = { "The quick brown fox ", "jumps over the lazy ", "dog.      ", "Leentje leerde Lotje lopen lan" };
 
@@ -41,7 +39,7 @@ public class TestContentStoreDirFixedBlock {
         testDir = UtilsForTesting.createBlackLabTestDir("ContentStoreDirNew");
 
         try {
-            store = new ContentStoreFixedBlockWriter(testDir, true);
+            store = new ContentStoreFixedBlockWriter(testDir.file(), true);
             try {
 
                 // Create four different documents that span different numbers of 4K blocks.
@@ -62,7 +60,7 @@ public class TestContentStoreDirFixedBlock {
             } finally {
                 store.close(); // close so everything is guaranteed to be written
             }
-            store = new ContentStoreFixedBlockWriter(testDir, false);
+            store = new ContentStoreFixedBlockWriter(testDir.file(), false);
             currentlyWriteMode = true;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
@@ -73,8 +71,7 @@ public class TestContentStoreDirFixedBlock {
     public void tearDown() {
         if (store != null)
             store.close();
-        // Try to remove (some files may be locked though)
-        FileUtil.deleteTree(testDir);
+        testDir.close();
     }
 
     @Test
@@ -197,7 +194,7 @@ public class TestContentStoreDirFixedBlock {
             return;
         try {
             store.close();
-            store = ContentStoreExternal.open(testDir, write, false);
+            store = ContentStoreExternal.open(testDir.file(), write, false);
             currentlyWriteMode = write;
         } catch (ErrorOpeningIndex e) {
             throw BlackLabRuntimeException.wrap(e);
