@@ -15,9 +15,6 @@ RUN --mount=type=cache,target=/root/.m2 mvn --no-transfer-progress package
 FROM solr:8.11.2
 LABEL maintainer="Jan Niestadt <jan.niestadt@ivdnt.org>"
 
-# Place plugin JAR built in previous stage
-USER solr
-
 # Create directory for our test core
 RUN mkdir -p /var/solr/data/test
 
@@ -49,18 +46,7 @@ COPY solr/src/test/resources/existing-index /var/solr/data/test/
 #COPY solr/target/blacklab-solr-no-deps.jar /opt/solr/shared/
 #COPY solr/target/lib/blacklab-*.jar /opt/solr/shared/
 
-USER root
-
 # Copy JARs from previous stage to Solr's WEB-INF/lib. THIS WORKS!!
-COPY --from=builder /app/solr/target/blacklab-solr-no-deps.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-COPY --from=builder /app/solr/target/lib/*.jar                 /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-
-# Copy externally built JARs to Solr's WEB-INF/lib. THIS WORKS!!
-#COPY solr/target/blacklab-solr-no-deps.jar /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-#COPY solr/target/lib/*.jar                 /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
-
-# Make sure the files we just copied are owner by Solr, not root
-# (roundabout way of doing it, but if we don't first copy as root, then set ownership, we get an error)
-RUN chown -R "$SOLR_UID":"$SOLR_GROUP" /var/solr/data/test
-
-USER solr
+COPY --from=builder \
+     /app/solr/target/blacklab-solr-no-deps.jar /app/solr/target/lib/*.jar \
+     /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/

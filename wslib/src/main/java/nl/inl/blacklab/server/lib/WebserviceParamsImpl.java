@@ -750,7 +750,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
     private String inputFormat;
 
     public Optional<String> getInputFormat() {
-        return Optional.ofNullable(inputFormat);
+        if (inputFormat != null)
+            return Optional.of(inputFormat);
+        return params.getInputFormat();
     }
 
     public void setInputFormat(String inputFormat) {
