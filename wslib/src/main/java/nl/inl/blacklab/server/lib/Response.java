@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.requesthandlers;
+package nl.inl.blacklab.server.lib;
 
 import javax.servlet.http.HttpServletResponse;
 

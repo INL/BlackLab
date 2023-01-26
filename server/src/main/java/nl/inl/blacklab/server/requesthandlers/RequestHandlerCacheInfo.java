@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Display the contents of the cache.
@@ -20,19 +20,8 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) {
-        boolean includeDebugInfo = params.isIncludeDebugInfo();
-        dstreamCacheInfo(ds, searchMan.getBlackLabCache(), includeDebugInfo);
+        WebserviceRequestHandler.opCacheInfo(params, ds);
         return HTTP_OK;
     }
 
-    private void dstreamCacheInfo(DataStream ds, SearchCache blackLabCache, boolean includeDebugInfo) {
-        ds.startMap()
-                .startEntry("cacheStatus");
-        ds.value(blackLabCache.getStatus());
-        ds.endEntry()
-            .startEntry("cacheContents");
-        ds.value(blackLabCache.getContents(includeDebugInfo));
-        ds.endEntry()
-                .endMap();
-    }
 }

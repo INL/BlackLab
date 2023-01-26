@@ -42,7 +42,7 @@ import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
-import nl.inl.blacklab.server.requesthandlers.Response;
+import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;

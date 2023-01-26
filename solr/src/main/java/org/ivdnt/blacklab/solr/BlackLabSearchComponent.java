@@ -208,10 +208,16 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case DELETE_CORPUS:
                 case ADD_TO_CORPUS:
                 case CORPUS_SHARING:
-                    throw new UnsupportedOperationException("Not yet supported: " + params.getOperation());
+                    throw new UnsupportedOperationException("Not (yet) supported: " + params.getOperation());
 
                 case CACHE_INFO:
+                    WebserviceRequestHandler.opCacheInfo(params, ds);
+                    break;
+
                 case CLEAR_CACHE:
+                    WebserviceRequestHandler.opClearCache(params, ds, debugMode);
+                    break;
+
                 case STATIC_RESPONSE:
                 case DEBUG:
                 case NONE:

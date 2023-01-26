@@ -53,6 +53,7 @@ import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -1075,6 +1076,17 @@ public class DStream {
                 .entry("formatName", result.getConfig().getName())
                 .entry("configFileType", result.getConfig().getConfigFileType())
                 .entry("configFile", result.getFileContents())
+                .endMap();
+    }
+
+    public static void cacheInfo(DataStream ds, SearchCache blackLabCache, boolean includeDebugInfo) {
+        ds.startMap()
+                .startEntry("cacheStatus");
+        ds.value(blackLabCache.getStatus());
+        ds.endEntry()
+            .startEntry("cacheContents");
+        ds.value(blackLabCache.getContents(includeDebugInfo));
+        ds.endEntry()
                 .endMap();
     }
 }

@@ -5,14 +5,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletResponse;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
@@ -228,5 +232,20 @@ public class WebserviceRequestHandler {
     public static void opListInputFormats(WebserviceParams params, DataStream ds) {
         ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
         DStream.listFormatsResponse(ds, result);
+    }
+
+    public static void opCacheInfo(WebserviceParams params, DataStream ds) {
+        boolean includeDebugInfo = params.isIncludeDebugInfo();
+        SearchCache blackLabCache = params.getSearchManager().getBlackLabCache();
+        DStream.cacheInfo(ds, blackLabCache, includeDebugInfo);
+    }
+
+    public static int opClearCache(WebserviceParams params, DataStream ds, boolean debugMode) {
+        if (!debugMode) {
+            return Response.forbidden(ds);
+        } else {
+            params.getSearchManager().getBlackLabCache().clear(false);
+            return Response.status(ds, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
+        }
     }
 }
