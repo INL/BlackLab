@@ -14,9 +14,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
-    public RequestHandlerAutocomplete(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.AUTOCOMPLETE);
+    public RequestHandlerAutocomplete(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.AUTOCOMPLETE);
     }
 
     @Override

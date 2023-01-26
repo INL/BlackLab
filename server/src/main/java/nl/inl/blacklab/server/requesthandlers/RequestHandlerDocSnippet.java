@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  * Get a snippet of a document's contents.
  */
 public class RequestHandlerDocSnippet extends RequestHandler {
-    public RequestHandlerDocSnippet(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DOC_SNIPPET);
+    public RequestHandlerDocSnippet(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DOC_SNIPPET);
     }
 
     @Override

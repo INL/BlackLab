@@ -17,7 +17,7 @@ public class TestDataStream {
 
     DataStream jsonStream(StringWriter sw) {
         PrintWriter pw = new PrintWriter(sw);
-        return DataStreamAbstract.create(DataFormat.JSON, pw, false, null);
+        return DataStreamAbstract.create(DataFormat.JSON, pw, false);
     }
 
     @Test

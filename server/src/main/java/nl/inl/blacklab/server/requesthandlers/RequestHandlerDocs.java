@@ -11,24 +11,12 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerDocs extends RequestHandler {
 
-    public RequestHandlerDocs(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DOCS);
+    public RequestHandlerDocs(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DOCS);
     }
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        /*
-        // Do we want to view a single group after grouping?
-        ResultDocsResponse result;
-        if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
-            // View a single group in a grouped docs resultset
-            result = WebserviceOperations.viewGroupDocsResponse(params);
-        } else {
-            // Regular set of docs (no grouping first)
-            result = WebserviceOperations.regularDocsResponse(params);
-        }
-        DStream.docsResponse(ds, result);*/
         WebserviceRequestHandler.opDocs(params, ds);
         return HTTP_OK;
     }

@@ -85,10 +85,13 @@ Because this is a completely new index format, we are free to change its layout 
 ## Integrate with Solr (standalone)
 
 - [x] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
-- [ ] Study how Mtas integrates with Solr
-- [ ] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
-- [ ] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
-- [ ] Enable indexing via Solr (custom or via standard import mechanisms?)
+- [x] Study how Mtas integrates with Solr
+- [x] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
+- [x] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
+  - [x] share as much BLS code as possible
+  - [x] move BLS URL parsing into QueryParamsBls?
+  - [ ] read config file from core dir
+- [x] Enable indexing via Solr (custom or via standard import mechanisms?)
 - [ ] Make it possible to run the tests on the Solr version too
 - [ ] Create a Dockerfile for Solr+BlackLab
 

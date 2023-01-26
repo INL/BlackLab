@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.util.ServletUtil;
  * Get debug info about the servlet and index. Only available in debug mode.
  */
 public class RequestHandlerDebug extends RequestHandler {
-    public RequestHandlerDebug(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DEBUG);
+    public RequestHandlerDebug(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DEBUG);
     }
 
     @Override

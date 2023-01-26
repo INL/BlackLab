@@ -28,8 +28,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
 
-    public RequestHandlerAddToIndex(UserRequestBls userRequest, String indexName, String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.ADD_TO_CORPUS);
+    public RequestHandlerAddToIndex(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.ADD_TO_CORPUS);
     }
 
     @Override

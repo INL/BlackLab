@@ -14,9 +14,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerHitsCsv extends RequestHandler {
 
-    public RequestHandlerHitsCsv(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.HITS_CSV);
+    public RequestHandlerHitsCsv(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.HITS_CSV);
     }
 
     @Override

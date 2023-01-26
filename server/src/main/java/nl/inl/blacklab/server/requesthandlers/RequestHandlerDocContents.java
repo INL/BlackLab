@@ -15,9 +15,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerDocContents extends RequestHandler {
 
-    public RequestHandlerDocContents(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DOC_CONTENTS);
+    public RequestHandlerDocContents(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DOC_CONTENTS);
     }
 
     @Override

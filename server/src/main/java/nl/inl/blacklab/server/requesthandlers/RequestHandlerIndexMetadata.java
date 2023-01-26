@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerIndexMetadata extends RequestHandler {
 
-    public RequestHandlerIndexMetadata(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CORPUS_INFO);
+    public RequestHandlerIndexMetadata(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CORPUS_INFO);
     }
 
     @Override

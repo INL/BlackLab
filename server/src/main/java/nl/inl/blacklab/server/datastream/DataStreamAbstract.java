@@ -10,9 +10,9 @@ import java.io.PrintWriter;
  */
 public abstract class DataStreamAbstract implements DataStream {
 
-    public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint, String jsonpCallback) {
+    public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint) {
         if (format == DataFormat.JSON)
-            return new DataStreamJson(out, prettyPrint, jsonpCallback);
+            return new DataStreamJson(out, prettyPrint);
         if (format == DataFormat.CSV)
             return new DataStreamPlain(out, prettyPrint);
         return new DataStreamXml(out, prettyPrint);

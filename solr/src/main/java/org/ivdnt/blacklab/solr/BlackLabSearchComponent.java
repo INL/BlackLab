@@ -131,7 +131,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
             UserRequest userRequest = new UserRequestSolr(rb, searchManager);
-            WebserviceParams params = userRequest.getParams(rb.req.getCore().getName(), index, null);
+            WebserviceParams params = userRequest.getParams(index, null);
             if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
                 searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
             }

@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerIndexStatus extends RequestHandler {
 
-    public RequestHandlerIndexStatus(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CORPUS_STATUS);
+    public RequestHandlerIndexStatus(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CORPUS_STATUS);
     }
 
     @Override

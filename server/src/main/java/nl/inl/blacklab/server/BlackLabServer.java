@@ -66,6 +66,9 @@ public class BlackLabServer extends HttpServlet {
 
     private RequestInstrumentationProvider requestInstrumentationProvider = null;
 
+    /** Default output type to use if none given. */
+    private DataFormat defaultOutputType;
+
     @Override
     public void init() throws ServletException {
         logger.info("Starting BlackLab Server...");
@@ -87,6 +90,10 @@ public class BlackLabServer extends HttpServlet {
                 // Configure metrics provider (e.g Prometheus)
                 setMetricsProvider(config);
                 this.requestInstrumentationProvider = getRequestInstrumentationProvider(config);
+
+                // Determine default output type.
+                defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
+                        DataFormat.XML);
 
             } catch (JsonProcessingException e) {
                 throw new ConfigurationException("Invalid JSON in configuration file", e);
@@ -124,6 +131,7 @@ public class BlackLabServer extends HttpServlet {
             throw new ConfigurationException("Can not create metrics provider with class" + fqClassName);
         }
     }
+
     private RequestInstrumentationProvider getRequestInstrumentationProvider(BLSConfig config) throws ConfigurationException {
         if (requestInstrumentationProvider != null) {
             return requestInstrumentationProvider;
@@ -224,8 +232,6 @@ public class BlackLabServer extends HttpServlet {
 
         // === Create RequestHandler object
 
-        boolean debugMode = searchManager.isDebugMode(ServletUtil.getOriginatingAddress(request));
-
         // The outputType handling is a bit iffy:
         // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
         // For some other urls, the RequestHandler can only output a single type of data
@@ -234,66 +240,55 @@ public class BlackLabServer extends HttpServlet {
         // TODO "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of the printed data
         DataFormat outputType = ServletUtil.getOutputType(request);
         UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
-        RequestHandler requestHandler = RequestHandler.create(userRequest, debugMode, outputType, this.requestInstrumentationProvider);
+        RequestHandler requestHandler = RequestHandler.create(userRequest, outputType);
         if (outputType == null)
             outputType = requestHandler.getOverrideType();
         if (outputType == null)
-            outputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(), DataFormat.XML);
+            outputType = defaultOutputType;
+
+        boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", userRequest.isDebugMode());
 
         // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
         searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
 
-        // Is this a JSONP request?
-        String callbackFunction = ServletUtil.getParameter(request, "jsonp", "");
-        boolean isJsonp = callbackFunction.length() > 0;
-
         int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
-
-        boolean prettyPrint = ServletUtil.getParameter(request, "prettyprint", debugMode);
 
         String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : BLACKLAB_RESPONSE_ROOT_ELEMENT;
 
         // === Handle the request
         StringWriter buf = new StringWriter();
         PrintWriter out = new PrintWriter(buf);
-        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint, callbackFunction);
+        DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
-        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint, callbackFunction);
+        DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint);
         es.outputProlog();
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
-        if (isJsonp && !callbackFunction.matches("[_a-zA-Z]\\w+")) {
-            // Illegal JSONP callback name
-            httpCode = Response.badRequest(es, "JSONP_ILLEGAL_CALLBACK",
-                    "Illegal JSONP callback function name. Must be a valid Javascript name.");
-        } else {
-            try {
-                httpCode = requestHandler.handle(ds);
-            } catch (InvalidQuery e) {
-                httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
-            } catch (InternalServerError e) {
-                String msg = WebserviceUtil.internalErrorMessage(e, debugMode, e.getInternalErrorCode());
-                httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
-            } catch (BlsException e) {
-                httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
-            } catch (InterruptedSearch e) {
-                httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
-            } catch (RuntimeException e) {
-                httpCode = Response.internalError(es, e, debugMode, "INTERR_HANDLING_REQUEST");
-            } finally {
-                requestHandler.cleanup(); // close logger
-            }
+        try {
+            httpCode = requestHandler.handle(ds);
+        } catch (InvalidQuery e) {
+            httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+        } catch (InternalServerError e) {
+            String msg = WebserviceUtil.internalErrorMessage(e, userRequest.isDebugMode(), e.getInternalErrorCode());
+            httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
+        } catch (BlsException e) {
+            httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+        } catch (InterruptedSearch e) {
+            httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
+        } catch (RuntimeException e) {
+            httpCode = Response.internalError(es, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
+        } finally {
+            requestHandler.cleanup(); // close logger
         }
         ds.endDocument();
 
         // === Write the response headers
 
         // Write HTTP headers (status code, encoding, content type and cache)
-        if (!isJsonp) // JSONP request always returns 200 OK because otherwise script doesn't load
-            responseObject.setStatus(httpCode);
+        responseObject.setStatus(httpCode);
         responseObject.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
         responseObject.setContentType(outputType.getContentType());
         optAddAllowOriginHeader(responseObject);
@@ -363,4 +358,7 @@ public class BlackLabServer extends HttpServlet {
         return searchManager;
     }
 
+    public RequestInstrumentationProvider getInstrumentationProvider() {
+        return requestInstrumentationProvider;
+    }
 }

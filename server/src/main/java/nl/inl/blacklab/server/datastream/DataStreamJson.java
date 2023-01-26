@@ -16,18 +16,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 public class DataStreamJson extends DataStreamAbstract {
 
-    /** JSONP callback function name, or null for none */
-    final String jsonpCallback;
-
-    boolean isJsonp = false;
-
     /** First entry in map/list: don't print separator */
     boolean firstEntry = true;
 
-    public DataStreamJson(PrintWriter out, boolean prettyPrint, String jsonpCallback) {
+    public DataStreamJson(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
-        this.jsonpCallback = jsonpCallback;
-        isJsonp = jsonpCallback != null && jsonpCallback.length() > 0;
     }
 
     DataStream openbl(String str) {
@@ -42,17 +35,11 @@ public class DataStreamJson extends DataStreamAbstract {
 
     @Override
     public DataStream startDocument(String rootEl) {
-        if (isJsonp) {
-            print(jsonpCallback).print("(");
-        }
         return this;
     }
 
     @Override
     public DataStream endDocument() {
-        if (isJsonp) {
-            print(");");
-        }
         return this;
     }
 

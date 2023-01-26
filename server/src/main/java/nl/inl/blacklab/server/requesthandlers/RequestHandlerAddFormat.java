@@ -18,9 +18,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerAddFormat extends RequestHandler {
 
-    public RequestHandlerAddFormat(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.WRITE_INPUT_FORMAT);
+    public RequestHandlerAddFormat(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.WRITE_INPUT_FORMAT);
     }
 
     @Override
@@ -36,13 +35,14 @@ public class RequestHandlerAddFormat extends RequestHandler {
             throw new BadRequest("CANNOT_CREATE_INDEX",
                     "Adding a format requires the request to contain a single file in the 'data' field.");
 
+        String fileName = file.getName();
+        InputStream fileInputStream;
         try {
-            String fileName = file.getName();
-            InputStream fileInputStream = file.getInputStream();
-            WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
-            return Response.success(ds, "Format added.");
+            fileInputStream = file.getInputStream();
         } catch (IOException e) {
             throw new BadRequest("", e.getMessage());
         }
+        WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
+        return Response.success(ds, "Format added.");
     }
 }

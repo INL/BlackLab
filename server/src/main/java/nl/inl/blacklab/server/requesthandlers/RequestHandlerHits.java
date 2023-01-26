@@ -11,23 +11,12 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerHits extends RequestHandler {
 
-    public RequestHandlerHits(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.HITS);
+    public RequestHandlerHits(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.HITS);
     }
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        /*
-        if (params.isCalculateCollocations()) {
-            // Collocations request
-            TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
-            DStream.collocationsResponse(ds, tfl);
-        } else {
-            // Hits request
-            ResultHits resultHits = WebserviceOperations.getResultHits(params);
-            DStream.hitsResponse(ds, resultHits);
-        }*/
         WebserviceRequestHandler.opHits(params, ds);
         return HTTP_OK;
     }

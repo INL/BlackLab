@@ -4,8 +4,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.ThreadContext;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.auth.AuthMethod;
@@ -29,12 +33,36 @@ public class UserRequestBls implements UserRequest {
 
     private final HttpServletResponse response;
 
+    /** Corpus name from the URL path */
+    private String corpusName;
+
+    /** Resource from the URL path, e.g. "hits" */
+    private final String urlResource;
+
+    /** Any info after the resource, e.g. document PID */
+    private final String urlPathInfo;
+
     private User user;
 
     public UserRequestBls(BlackLabServer servlet, HttpServletRequest request, HttpServletResponse response) {
         this.servlet = servlet;
         this.request = request;
         this.response = response;
+
+        // Pass requestId to instrumentationProvider
+        RequestInstrumentationProvider instrumentationProvider = getInstrumentationProvider();
+        ThreadContext.put("requestId", instrumentationProvider.getRequestID(request).orElse(""));
+
+        // Parse the URL path
+        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
+        String[] parts = servletPath.split("/", 3);
+        corpusName = parts.length >= 1 ? parts[0] : "";
+        if (corpusName.startsWith(":")) {
+            // Private index. Prefix with user id.
+            corpusName = user.getUserId() + corpusName;
+        }
+        urlResource = parts.length >= 2 ? parts[1] : "";
+        urlPathInfo = parts.length >= 3 ? parts[2] : "";
     }
 
     @Override
@@ -58,6 +86,15 @@ public class UserRequestBls implements UserRequest {
                     } catch (Exception e) {
                         throw new RuntimeException("Error determining current user", e);
                     }
+                }
+            }
+
+            // Override via HTTP header? (insecure, normally disabled)
+            String debugHttpHeaderToken = getSearchManager().config().getAuthentication().getDebugHttpHeaderAuthToken();
+            if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
+                String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
+                if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
+                    user = User.loggedIn(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
                 }
             }
         }
@@ -88,7 +125,7 @@ public class UserRequestBls implements UserRequest {
 
     @Override
     public String getRemoteAddr() {
-        return request.getRemoteAddr();
+        return ServletUtil.getOriginatingAddress(request);
     }
 
     @Override
@@ -132,19 +169,19 @@ public class UserRequestBls implements UserRequest {
     }
 
     @Override
-    public WebserviceParams getParams(String indexName, BlackLabIndex index, WebserviceOperation operation) {
+    public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         String jsonRequest = getRequest().getParameter("req");
         QueryParams blsParams;
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                blsParams = new QueryParamsJson(indexName, getSearchManager(), getUser(), jsonRequest, operation);
+                blsParams = new QueryParamsJson(corpusName, getSearchManager(), getUser(), jsonRequest, operation);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            blsParams = new QueryParamsBlackLabServer(indexName, getSearchManager(), getUser(), getRequest(), operation);
+            blsParams = new QueryParamsBlackLabServer(corpusName, getSearchManager(), getUser(), getRequest(), operation);
         }
         return WebserviceParamsImpl.get(operation.isDocsOperation(), isDebugMode(), blsParams);
     }
@@ -152,5 +189,23 @@ public class UserRequestBls implements UserRequest {
     @Override
     public boolean isDebugMode() {
         return getSearchManager().isDebugMode(ServletUtil.getOriginatingAddress(request));
+    }
+
+    @Override
+    public RequestInstrumentationProvider getInstrumentationProvider() {
+        return servlet.getInstrumentationProvider();
+    }
+
+    @Override
+    public String getCorpusName() {
+        return corpusName;
+    }
+
+    public String getUrlResource() {
+        return urlResource;
+    }
+
+    public String getUrlPathInfo() {
+        return urlPathInfo;
     }
 }

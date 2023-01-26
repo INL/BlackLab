@@ -9,9 +9,8 @@ import nl.inl.blacklab.server.lib.WebserviceOperation;
  * Delete a user index.
  */
 public class RequestHandlerDeleteIndex extends RequestHandler {
-    public RequestHandlerDeleteIndex(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DELETE_CORPUS);
+    public RequestHandlerDeleteIndex(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DELETE_CORPUS);
     }
 
     @Override

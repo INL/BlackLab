@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerDocInfo extends RequestHandler {
 
-    public RequestHandlerDocInfo(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DOC_INFO);
+    public RequestHandlerDocInfo(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DOC_INFO);
     }
 
     @Override

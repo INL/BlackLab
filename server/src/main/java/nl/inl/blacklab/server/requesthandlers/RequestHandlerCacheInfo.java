@@ -8,9 +8,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  * Display the contents of the cache.
  */
 public class RequestHandlerCacheInfo extends RequestHandler {
-    public RequestHandlerCacheInfo(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CACHE_INFO);
+    public RequestHandlerCacheInfo(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CACHE_INFO);
     }
 
     @Override

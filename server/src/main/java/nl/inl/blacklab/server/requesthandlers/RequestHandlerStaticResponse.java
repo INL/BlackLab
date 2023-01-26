@@ -115,8 +115,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
         return badRequest("ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + IllegalIndexName.ILLEGAL_NAME_ERROR);
     }
 
-    RequestHandlerStaticResponse(UserRequestBls userRequest, String indexName) {
-        super(userRequest, indexName, null, null, WebserviceOperation.STATIC_RESPONSE);
+    RequestHandlerStaticResponse(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.STATIC_RESPONSE);
     }
 
     @Override

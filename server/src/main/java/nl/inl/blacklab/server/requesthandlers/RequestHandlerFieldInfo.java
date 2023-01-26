@@ -11,9 +11,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerFieldInfo extends RequestHandler {
 
-    public RequestHandlerFieldInfo(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.FIELD_INFO);
+    public RequestHandlerFieldInfo(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.FIELD_INFO);
     }
 
     @Override

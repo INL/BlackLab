@@ -11,9 +11,8 @@ import nl.inl.blacklab.server.lib.WebserviceOperation;
  * Create a user index.
  */
 public class RequestHandlerCreateIndex extends RequestHandler {
-    public RequestHandlerCreateIndex(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CREATE_CORPUS);
+    public RequestHandlerCreateIndex(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CREATE_CORPUS);
     }
 
     @Override

@@ -15,9 +15,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     private final boolean isXsltRequest;
 
-    public RequestHandlerListInputFormats(UserRequestBls userRequest,
-            String indexName, String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.LIST_INPUT_FORMATS);
+    public RequestHandlerListInputFormats(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.LIST_INPUT_FORMATS);
         isXsltRequest = urlResource != null && urlResource.length() > 0 && urlPathInfo != null
                 && urlPathInfo.equals("xslt");
     }

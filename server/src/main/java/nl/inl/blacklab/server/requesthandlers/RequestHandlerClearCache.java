@@ -8,9 +8,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  * Clear the cache.
  */
 public class RequestHandlerClearCache extends RequestHandler {
-    public RequestHandlerClearCache(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CLEAR_CACHE);
+    public RequestHandlerClearCache(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CLEAR_CACHE);
     }
 
     @Override

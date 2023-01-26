@@ -8,6 +8,7 @@ import org.apache.solr.search.DocSet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
@@ -86,7 +87,7 @@ public class UserRequestSolr implements UserRequest {
         return null;
     }
 
-    public WebserviceParams getParams(String indexName, BlackLabIndex index, WebserviceOperation operation) {
+    public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         User user = getUser();
         SolrParams solrParams = rb.req.getParams();
         String blReq = solrParams.get("bl.req");
@@ -94,13 +95,13 @@ public class UserRequestSolr implements UserRequest {
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(rb.req.getCore().getName(), searchMan, user, blReq, operation);
+                qpSolr = new QueryParamsJson(getCorpusName(), searchMan, user, blReq, operation);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(rb.req.getCore().getName(), searchMan, solrParams, user);
+            qpSolr = new QueryParamsSolr(getCorpusName(), searchMan, solrParams, user);
         }
         boolean isDocs = qpSolr.getOperation().isDocsOperation();
         WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(), qpSolr);
@@ -113,8 +114,17 @@ public class UserRequestSolr implements UserRequest {
     }
 
     @Override
+    public String getCorpusName() {
+        return rb.req.getCore().getName();
+    }
+
+    @Override
     public boolean isDebugMode() {
         return rb.req.getHttpSolrCall() == null || searchMan.isDebugMode(getRemoteAddr());
     }
 
+    @Override
+    public RequestInstrumentationProvider getInstrumentationProvider() {
+        return null; // FIXME
+    }
 }

@@ -13,8 +13,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerSharing extends RequestHandler {
 
-    public RequestHandlerSharing(UserRequestBls userRequest, String indexName, String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.CORPUS_SHARING);
+    public RequestHandlerSharing(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CORPUS_SHARING);
     }
 
     @Override

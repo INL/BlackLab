@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.search;
 
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceOperation;
@@ -80,7 +81,7 @@ public interface UserRequest {
      * @param operation operation to perform (if not passed as a parameter)
      * @return parameters object
      */
-    WebserviceParams getParams(String indexName, BlackLabIndex index, WebserviceOperation operation);
+    WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation);
 
     /**
      * Is this a debug request?
@@ -88,4 +89,20 @@ public interface UserRequest {
      * @return true if it's a debug request
      */
     boolean isDebugMode();
+
+    /**
+     * Get the instrumentation provider for metrics.
+     *
+     * Will return a "no op" version if none is configured.
+     *
+     * @return instrumentation provider
+     */
+    RequestInstrumentationProvider getInstrumentationProvider();
+
+    /**
+     * Get the name of the corpus we're accessing.
+     *
+     * @return corpus name
+     */
+    public String getCorpusName();
 }

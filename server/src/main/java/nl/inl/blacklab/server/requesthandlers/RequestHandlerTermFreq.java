@@ -10,9 +10,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerTermFreq extends RequestHandler {
 
-    public RequestHandlerTermFreq(UserRequestBls userRequest, String indexName,
-            String urlResource, String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.TERMFREQ);
+    public RequestHandlerTermFreq(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.TERMFREQ);
     }
 
     @Override

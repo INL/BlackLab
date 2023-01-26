@@ -11,9 +11,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerDeleteFormat extends RequestHandler {
 
-    public RequestHandlerDeleteFormat(UserRequestBls userRequest, String indexName, String urlResource,
-            String urlPathPart) {
-        super(userRequest, indexName, urlResource, urlPathPart, WebserviceOperation.DELETE_INPUT_FORMAT);
+    public RequestHandlerDeleteFormat(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DELETE_INPUT_FORMAT);
     }
 
     @Override
