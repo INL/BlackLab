@@ -182,3 +182,23 @@ If you tag certain tokens with labels, you can also apply "global constraints" o
     A:[] "by" B:[] :: A.word = B.word
     
 This would match "day by day", "step by step", etc.
+
+## Advanced subjects
+
+### Operator precedence
+
+This is the precedence of the different CQL operators in BlackLab, from highest to lowest:
+
+- `( ... )` grouping parens (at the token or sequence level) override everything else
+- `!` inside token
+- `=` and `!=` inside token (e.g. `[ word = "happy" ]`)
+- `&`, `|` inside token
+- `[ ... ]` token brackets
+- function call `...(...)` (only used for debug purposes ATM)
+- `:` group capture
+- `*`,`+`,`?`,`{n}`,`{n,m}` token repetition
+- `<...>`, `</...>` and `<.../>` span start, span end and entire span
+- `[] []` sequence of tokens (implied operator)
+- `|`, `&` at the sequence level
+- `within` and `containing`
+- `::` global constraint
