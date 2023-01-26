@@ -50,3 +50,11 @@ COPY solr/src/test/resources/existing-index /var/solr/data/test/
 COPY --from=builder \
      /app/solr/target/blacklab-solr-no-deps.jar /app/solr/target/lib/*.jar \
      /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
+
+USER root
+
+# Make sure Solr can write snapshot data
+RUN chgrp -R $SOLR_GROUP /var/solr/data/test/ && \
+    chmod -R g+rw /var/solr/data/test/
+
+USER $SOLR_USER
