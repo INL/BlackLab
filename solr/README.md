@@ -14,10 +14,12 @@ Add the `blacklab-search` search component, and specify the XSLT file and the So
 ```xml
 <!-- Our Apply XSLT SearchComponent -->
 <searchComponent name="blacklab-search" class="org.ivdnt.blacklab.solr.BlackLabSearchComponent" >
-  <!-- any parameters go here (none yet)
-  <str name="xsltFile">./xslt/article.xslt</str>
-  <str name="inputField">xml</str>
-  -->
+    
+    <!-- Where to find a core's BlackLab config file (value shown below is the default path).
+         Each core gets their own config file (although certain settings are engine-wide...)
+    -->
+    <str name="configFile">conf/blacklab-webservice.yaml</str>
+
 </searchComponent>
 ```
 

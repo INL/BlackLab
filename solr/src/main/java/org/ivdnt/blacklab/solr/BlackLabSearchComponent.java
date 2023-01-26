@@ -1,15 +1,18 @@
 package org.ivdnt.blacklab.solr;
 
-import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.solr.cloud.ZkController;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
+import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.util.plugin.SolrCoreAware;
@@ -29,11 +32,16 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     public static final String COMPONENT_NAME = "blacklab-search";
 
+    /** Default path and name for config file to read. */
+    public static final String DEFAULT_CONFIG_PATH = "conf/blacklab-webservice.yaml";
+
     /** The core we're attached to. */
     private SolrCore core;
 
     /** Our search manager object. */
     private SearchManager searchManager;
+
+    private String configFilePath;
 
     public BlackLabSearchComponent() {
         // Fix small annoyances in the API, at the cost of not being strictly 100% BLS compatible.
@@ -51,21 +59,47 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public void inform(SolrCore core) {
         this.core = core;
+
+        BLSConfig config = getConfig(core);
+
+        // Instantiate our search manager from the config
+        config.setIsSolr(true);
+        searchManager = new SearchManager(config);
     }
 
-    /**
-     * Find file in conf dir.
-     *
-     * @param path path relative to conf
-     * @return the file
-     */
-    protected File findFile(String path) {
-        ZkController zkController = core.getCoreContainer().getZkController();
-        if (zkController != null) {
-          throw new UnsupportedOperationException("Zookeeper not yet supported");
+    private BLSConfig getConfig(SolrCore core) {
+        // Find and load config file
+        boolean isJson = configFilePath.endsWith(".json");
+        SolrResourceLoader resourceLoader = core.getResourceLoader();
+        BLSConfig config;
+        if (resourceLoader.resourceLocation(configFilePath) != null)  {
+            try (InputStream is = resourceLoader.openResource(configFilePath)) {
+                InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
+                config = BLSConfig.read(reader, isJson);
+                System.err.println("##### Loaded BLS config file " + configFilePath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            config = new BLSConfig(); // Default config if no config file found
+            System.err.println("##### no BLS config file found at " + configFilePath);
         }
-        return new File(core.getResourceLoader().getConfigDir(), path);
+        return config;
     }
+
+//    /**
+//     * Find file in conf dir.
+//     *
+//     * @param path path relative to conf
+//     * @return the file
+//     */
+//    protected File findFile(String path) {
+//        ZkController zkController = core.getCoreContainer().getZkController();
+//        if (zkController != null) {
+//          throw new UnsupportedOperationException("Zookeeper not yet supported");
+//        }
+//        return new File(core.getResourceLoader().getConfigDir(), path);
+//    }
 
     /**
      * Called when component is instantiated.
@@ -76,6 +110,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void init(NamedList args) {
+        configFilePath = (String)args.get("configFile", DEFAULT_CONFIG_PATH);
+
 //      SolrParams initArgs = args.toSolrParams();
 //      System.out.println("Parameters: " + initArgs);
 //      if (initArgs.get("xsltFile") == null || initArgs.get("inputField") == null) {
@@ -84,10 +120,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 //      xsltFilePath = initArgs.get("xsltFile");
 //      inputField = initArgs.get("inputField");
 
-        // TODO: read config from file? (pointed to by init parameters?)
-        BLSConfig blsConfig = new BLSConfig();
-        blsConfig.setIsSolr(true);
-        searchManager = new SearchManager(blsConfig);
     }
 
     /**
@@ -106,15 +138,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             rb.setNeedDocSet(true); // we need to know all the matching documents (to filter on them)
         }
 
-        /*
-        // See if we can load a test file now.
-        String testFile = "conf/test.xslt";
-        try (InputStream is = core.getResourceLoader().openResource(testFile)) {
-            System.err.println(IOUtils.toString(is, StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }*/
-
     }
 
     /**
@@ -130,6 +153,12 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
             BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
+
+            // We keep setting the cache for every request; the cache should probably be owner by the
+            // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.
+            // For now, this doesn't cause any problems, it's just messy.
+            index.setCache(searchManager.getBlackLabCache());
+
             UserRequest userRequest = new UserRequestSolr(rb, searchManager);
             WebserviceParams params = userRequest.getParams(index, null);
             if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
