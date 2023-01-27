@@ -254,4 +254,11 @@ public class DataStreamSolr implements DataStream {
     public DataStream newline() {
         return this;
     }
+
+    @Override
+    public void csv(String csv) {
+        // Solr doesn't support custom CSV output, so we'll wrap it in a field,
+        // which the client should easily be able to extract.
+        startMap().entry("csv", csv).endMap();
+    }
 }

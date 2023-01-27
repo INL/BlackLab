@@ -19,6 +19,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WriteCsv;
 
 /**
  * Handle all the different webservice requests, given the requested operation,
@@ -247,5 +248,31 @@ public class WebserviceRequestHandler {
             params.getSearchManager().getBlackLabCache().clear(false);
             return Response.status(ds, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
         }
+    }
+
+    public static void opDocsCsv(WebserviceParams params, DataStream ds) throws InvalidQuery {
+        ResultDocsCsv result = WebserviceOperations.docsCsv(params);
+        String csv;
+        if (result.getGroups() == null || result.isViewGroup()) {
+            // No grouping applied, or viewing a single group
+            csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
+                    result.getSubcorpusResults());
+        } else {
+            // Grouped results
+            csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
+                    result.getSubcorpusResults());
+        }
+        ds.csv(csv);
+    }
+
+    public static void opHitsCsv(WebserviceParams params, DataStream ds) throws InvalidQuery {
+        ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
+        String csv;
+        if (result.getGroups() != null && !result.isViewGroup()) {
+            csv = WriteCsv.hitsGroupsResponse(result);
+        } else {
+            csv = WriteCsv.hitsResponse(result);
+        }
+        ds.csv(csv);
     }
 }

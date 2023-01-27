@@ -5,9 +5,7 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceOperation;
-import nl.inl.blacklab.server.lib.WriteCsv;
-import nl.inl.blacklab.server.lib.results.ResultDocsCsv;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Handle /docs requests that produce CSV.
@@ -20,19 +18,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     @Override
     public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        ResultDocsCsv result = WebserviceOperations.docsCsv(params);
-        String csv;
-        if (result.getGroups() == null || result.isViewGroup()) {
-            // No grouping applied, or viewing a single group
-            csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
-        } else {
-            // Grouped results
-            csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults());
-        }
-        ds.plain(csv);
-
+        WebserviceRequestHandler.opDocsCsv(params, ds);
         return HTTP_OK;
     }
 

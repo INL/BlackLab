@@ -198,11 +198,17 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     break;
 
                 // Find hits or documents
-                case HITS: case HITS_CSV: case HITS_GROUPED:
+                case HITS_CSV:
+                    WebserviceRequestHandler.opHitsCsv(params, ds);
+                    break;
+                case HITS: case HITS_GROUPED:
                     // [grouped] hits
                     WebserviceRequestHandler.opHits(params, ds);
                     break;
-                case DOCS: case DOCS_CSV: case DOCS_GROUPED:
+                case DOCS_CSV:
+                    WebserviceRequestHandler.opDocsCsv(params, ds);
+                    break;
+                case DOCS: case DOCS_GROUPED:
                     // [grouped] docs
                     WebserviceRequestHandler.opDocs(params, ds);
                     break;

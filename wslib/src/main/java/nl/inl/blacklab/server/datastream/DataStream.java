@@ -281,4 +281,7 @@ public interface DataStream {
     DataStream newline();
 
     DataStream space();
+
+    /** Output a full CSV document. */
+    default void csv(String csv) { plain(csv); }
 }
