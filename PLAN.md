@@ -90,10 +90,10 @@ Because this is a completely new index format, we are free to change its layout 
 - [x] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
   - [x] share as much BLS code as possible
   - [x] move BLS URL parsing into QueryParamsBls?
-  - [ ] read config file from core dir
+  - [x] read config file from core dir
 - [x] Enable indexing via Solr (custom or via standard import mechanisms?)
 - [ ] Make it possible to run the tests on the Solr version too
-- [ ] Create a Dockerfile for Solr+BlackLab
+- [x] Create a Dockerfile for Solr+BlackLab
 
 
 ## BlackLab Proxy
