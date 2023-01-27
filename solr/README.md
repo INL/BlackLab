@@ -89,19 +89,29 @@ the above `group` and `viewgroup` parts correspond to `bl.group=field:title&bl.v
 
 The values of `bl.op` are:
 
-| bl.op              | Operation                                        | BLS URL equivalent        | Required parameters |
-|--------------------|--------------------------------------------------|---------------------------|---------------------|
-| server-info        | Server information                               | /                         |                     |
-| corpus-info        | Corpus information, including fields and values  | /CORPUS                   |                     |
-| corpus-status      | Corpus (indexing) status                         | /CORPUS/status            |                     |
-| field-info         | Info about (metadata or annotated) field         | /CORPUS/field/FIELDNAME   | field               |
-| hits               | Search (and optionally group) hits               | /CORPUS/hits              |                     |
-| docs               | Search (and optionally group) documents          | /CORPUS/docs              |                     |
-| doc-info           | Get document metadata and other information      | /CORPUS/docs/PID          | docpid              |
-| doc-contents       | Get the full contents of a document (if allowed) | /CORPUS/docs/PID/contents | docpid              |
-| termfreq           | Calculate term frequencies                       | /CORPUS/termfreq          |                     |
-| autocomplete       | Return terms matching a prefix in a field        | /CORPUS/autocomplete      |                     |
-| list-input-formats |                                                  | /CORPUS/input-formats     |                     |
+| bl.op               | Operation                                        | BLS URL equivalent         | Extra parameter |
+|---------------------|--------------------------------------------------|----------------------------|-----------------|
+| server-info         | Server information                               | /                          |                 |
+| corpus-info         | Corpus information, including fields and values  | /CORPUS                    |                 |
+| corpus-status       | Corpus (indexing) status                         | /CORPUS/status             |                 |
+| field-info          | Info about (metadata or annotated) field         | /CORPUS/field/FIELDNAME    | field           |
+| hits                | Search (and optionally group) hits               | /CORPUS/hits               |                 |
+| docs                | Search (and optionally group) documents          | /CORPUS/docs               |                 |
+| doc-info            | Get document metadata and other information      | /CORPUS/docs/PID           | docpid          |
+| doc-contents        | Get the full contents of a document (if allowed) | /CORPUS/docs/PID/contents  | docpid          |
+| doc-snippet         | Get snippet of a document (if allowed)           | /CORPUS/docs/PID/snippet   | docpid          |
+| termfreq            | Calculate term frequencies                       | /CORPUS/termfreq           |                 |
+| autocomplete        | Return terms matching a prefix in a field        | /CORPUS/autocomplete       |                 |
+| list-input-formats  | List available input formats                     | /CORPUS/input-formats      |                 |
+| input-format-info   | Info about an input format                       | /CORPUS/input-formats/NAME | inputformat     |
+| input-format-xslt   | Generate XSLT for an input format                | /CORPUS/input-formats/NAME | inputformat     |
+| cache-info          | Show cache contents                              | /CORPUS/cache-info         |                 |
+| cache-clear         | Clear the cache (debug mode only)                | /CORPUS/cache-clear        |                 |
+| create-corpus       | Create corpus (NOT IMPLEMENTED YET)              |                            |                 |
+| delete-corpus       | Delete corpus (NOT IMPLEMENTED YET)              |                            |                 |
+| add-to-corpus       | Add to corpus (NOT IMPLEMENTED YET)              |                            |                 |
+| write-input-format  | Write input format (NOT IMPLEMENTED YET)         |                            |                 |
+| delete-input-format | Write input format (NOT IMPLEMENTED YET)         |                            |                 |
 
 (WIP)
 

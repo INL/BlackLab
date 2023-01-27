@@ -9,7 +9,7 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
  */
 public class RequestHandlerClearCache extends RequestHandler {
     public RequestHandlerClearCache(UserRequestBls userRequest) {
-        super(userRequest, WebserviceOperation.CLEAR_CACHE);
+        super(userRequest, WebserviceOperation.CACHE_CLEAR);
     }
 
     @Override

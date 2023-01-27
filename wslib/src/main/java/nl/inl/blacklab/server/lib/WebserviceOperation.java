@@ -23,15 +23,16 @@ public enum WebserviceOperation {
 
     LIST_INPUT_FORMATS("list-input-formats"),
     INPUT_FORMAT_INFO("input-format-info"),
-    WRITE_INPUT_FORMAT("write-input-format"),
     INPUT_FORMAT_XSLT("input-format-xslt"),
+    WRITE_INPUT_FORMAT("write-input-format"),
     DELETE_INPUT_FORMAT("delete-input-format"),
 
     ADD_TO_CORPUS("add-to-corpus"),
 
     CACHE_INFO("cache-info"),
-    CLEAR_CACHE("clear-cache"),
-    CREATE_CORPUS("create-index"),
+    CACHE_CLEAR("cache-clear"),
+
+    CREATE_CORPUS("create-corpus"),
     DELETE_CORPUS("delete-corpus"),
 
     STATIC_RESPONSE("static-response"), // internal, used by BLS

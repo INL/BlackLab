@@ -246,7 +246,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case CACHE_INFO:
                     WebserviceRequestHandler.opCacheInfo(params, ds);
                     break;
-                case CLEAR_CACHE:
+                case CACHE_CLEAR:
                     WebserviceRequestHandler.opClearCache(params, ds, debugMode);
                     break;
 
