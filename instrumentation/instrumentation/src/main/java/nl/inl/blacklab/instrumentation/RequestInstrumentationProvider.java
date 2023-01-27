@@ -24,5 +24,3 @@ public interface RequestInstrumentationProvider {
         return request -> Optional.empty();
     }
 }
-
-

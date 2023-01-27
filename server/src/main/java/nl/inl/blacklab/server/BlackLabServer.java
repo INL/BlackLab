@@ -89,7 +89,7 @@ public class BlackLabServer extends HttpServlet {
 
                 // Configure metrics provider (e.g Prometheus)
                 setMetricsProvider(config);
-                this.requestInstrumentationProvider = getRequestInstrumentationProvider(config);
+                getInstrumentationProvider(); // ensure creation
 
                 // Determine default output type.
                 defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
@@ -132,29 +132,13 @@ public class BlackLabServer extends HttpServlet {
         }
     }
 
-    private RequestInstrumentationProvider getRequestInstrumentationProvider(BLSConfig config) throws ConfigurationException {
-        if (requestInstrumentationProvider != null) {
-            return requestInstrumentationProvider;
+    public synchronized RequestInstrumentationProvider getInstrumentationProvider() {
+        if (requestInstrumentationProvider == null) {
+            BLSConfig config = searchManager.config();
+            requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
         }
-
-        String provider = config.getDebug().getRequestInstrumentationProvider();
-        if ( StringUtils.isBlank(provider)) {
-            return RequestInstrumentationProvider.noOpProvider();
-        }
-
-        String fqClassName = provider.startsWith("nl.inl.blacklab.instrumentation")
-            ? provider
-            : String.format("nl.inl.blacklab.instrumentation.impl.%s", provider);
-
-        try {
-            return (RequestInstrumentationProvider)
-                Class.forName(fqClassName).getDeclaredConstructor().newInstance();
-
-        } catch (Exception ex) {
-            throw new ConfigurationException("Can not create request instrumentation provider with class" + fqClassName);
-        }
+        return requestInstrumentationProvider;
     }
-
 
     /**
      * Process POST requests (add data to index)
@@ -356,9 +340,5 @@ public class BlackLabServer extends HttpServlet {
 
     public SearchManager getSearchManager() {
         return searchManager;
-    }
-
-    public RequestInstrumentationProvider getInstrumentationProvider() {
-        return requestInstrumentationProvider;
     }
 }

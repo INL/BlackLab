@@ -25,13 +25,16 @@ public class UserRequestSolr implements UserRequest {
 
     private final ResponseBuilder rb;
 
+    private final BlackLabSearchComponent searchComponent;
+
     private final SearchManager searchMan;
 
     private User user;
 
-    public UserRequestSolr(ResponseBuilder rb, SearchManager searchMan) {
+    public UserRequestSolr(ResponseBuilder rb, BlackLabSearchComponent searchComponent) {
         this.rb = rb;
-        this.searchMan = searchMan;
+        this.searchComponent = searchComponent;
+        this.searchMan = searchComponent.getSearchManager();
     }
 
     @Override
@@ -125,6 +128,6 @@ public class UserRequestSolr implements UserRequest {
 
     @Override
     public RequestInstrumentationProvider getInstrumentationProvider() {
-        return null; // FIXME
+        return searchComponent.getInstrumentationProvider();
     }
 }

@@ -17,6 +17,7 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -27,6 +28,7 @@ import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
+import nl.inl.blacklab.server.util.WebserviceUtil;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -42,6 +44,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private SearchManager searchManager;
 
     private String configFilePath;
+
+    private RequestInstrumentationProvider instrumentationProvider = RequestInstrumentationProvider.noOpProvider();
 
     public BlackLabSearchComponent() {
         // Fix small annoyances in the API, at the cost of not being strictly 100% BLS compatible.
@@ -65,6 +69,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         // Instantiate our search manager from the config
         config.setIsSolr(true);
         searchManager = new SearchManager(config);
+        instrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
     }
 
     private BLSConfig getConfig(SolrCore core) {
@@ -159,7 +164,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             // For now, this doesn't cause any problems, it's just messy.
             index.setCache(searchManager.getBlackLabCache());
 
-            UserRequest userRequest = new UserRequestSolr(rb, searchManager);
+            UserRequest userRequest = new UserRequestSolr(rb, this);
             WebserviceParams params = userRequest.getParams(index, null);
             if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
                 searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
@@ -292,4 +297,11 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         return Category.OTHER;
     }
 
+    public SearchManager getSearchManager() {
+        return searchManager;
+    }
+
+    public RequestInstrumentationProvider getInstrumentationProvider() {
+        return instrumentationProvider;
+    }
 }
