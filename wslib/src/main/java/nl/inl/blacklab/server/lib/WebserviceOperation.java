@@ -34,8 +34,7 @@ public enum WebserviceOperation {
     CREATE_CORPUS("create-index"),
     DELETE_CORPUS("delete-corpus"),
 
-    STATIC_RESPONSE("static-response"),
-    DEBUG("debug"),
+    STATIC_RESPONSE("static-response"), // internal, used by BLS
     NONE("none");
 
     private final String name;

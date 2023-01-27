@@ -49,7 +49,6 @@ public abstract class RequestHandler {
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        availableHandlers.put("debug", RequestHandlerDebug.class);
         availableHandlers.put("docs", RequestHandlerDocs.class);
         availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
         availableHandlers.put("docs-csv", RequestHandlerDocsCsv.class);
