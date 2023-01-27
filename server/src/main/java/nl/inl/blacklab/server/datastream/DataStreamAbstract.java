@@ -26,9 +26,6 @@ public abstract class DataStreamAbstract implements DataStream {
 
     private final boolean prettyPrintPref;
 
-    /** Should contextList omit empty annotations if possible? */
-    protected boolean omitEmptyAnnotations = false;
-
     public DataStreamAbstract(PrintWriter out, boolean prettyPrint) {
         this.out = out;
         this.prettyPrintPref = this.prettyPrint = prettyPrint;
@@ -118,11 +115,6 @@ public abstract class DataStreamAbstract implements DataStream {
     @Override
     public DataStream plain(String value) {
         return print(value);
-    }
-
-    @Override
-    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
-        this.omitEmptyAnnotations = omitEmptyAnnotations;
     }
 
     /**

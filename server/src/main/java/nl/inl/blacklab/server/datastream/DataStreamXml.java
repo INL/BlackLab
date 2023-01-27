@@ -22,6 +22,14 @@ public class DataStreamXml extends DataStreamAbstract {
     /** Root el document was started with (or null if none) */
     private String rootEl;
 
+    /** Should contextList omit empty annotations if possible? */
+    protected boolean omitEmptyAnnotations = false;
+
+    @Override
+    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
+        this.omitEmptyAnnotations = omitEmptyAnnotations;
+    }
+
     public DataStreamXml(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
     }

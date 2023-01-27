@@ -257,7 +257,8 @@ public interface DataStream {
 
     DataStream plain(String value);
 
-    void setOmitEmptyAnnotations(boolean omitEmptyAnnotations);
+    /** Should contextList omit empty annotations if possible? (XML only) */
+    default void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) { /* do nothing */ }
 
     DataStream xmlFragment(String fragment);
 

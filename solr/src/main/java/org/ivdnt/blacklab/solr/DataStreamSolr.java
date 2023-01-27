@@ -236,18 +236,12 @@ public class DataStreamSolr implements DataStream {
 
     @Override
     public DataStream plain(String value) {
-        //@@@@ TODO
-        return this;
-    }
-
-    @Override
-    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
-        // NOP
+        throw new UnsupportedOperationException("Not implemented for Solr");
     }
 
     @Override
     public DataStream xmlFragment(String fragment) {
-        value(fragment); //@@@ CHECK
+        value(fragment);
         return this;
     }
 
