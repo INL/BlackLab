@@ -556,38 +556,84 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     // "forEach" metadata specification
                     // (allows us to capture many metadata fields with 3 XPath expressions)
                     navpush();
-                    AutoPilot apMetaForEach = acquireAutoPilot(f.getForEachPath());
-                    AutoPilot apFieldName = acquireAutoPilot(f.getName());
-                    while (apMetaForEach.evalXPath() != -1) {
-                        // Find the fieldName and value for this forEach match
-                        apFieldName.resetXPath();
-                        String origFieldName = apFieldName.evalXPathToString();
-                        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
-                                disallowDashInname());
-                        if (!origFieldName.equals(fieldName)) {
-                            warnSanitized(origFieldName, fieldName);
+                    try {
+                        AutoPilot apMetaForEach = acquireAutoPilot(f.getForEachPath());
+                        AutoPilot apFieldName = acquireAutoPilot(f.getName());
+                        while (apMetaForEach.evalXPath() != -1) {
+                            // Find the fieldName and value for this forEach match
+                            apFieldName.resetXPath();
+                            String origFieldName = apFieldName.evalXPathToString();
+                            String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
+                                    disallowDashInname());
+                            if (!origFieldName.equals(fieldName)) {
+                                warnSanitized(origFieldName, fieldName);
+                            }
+                            ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
+
+                            // This metadata field is matched by a for-each, but if it specifies its own xpath ignore it in the for-each section
+                            // It will capture values on its own at another point in the outer loop.
+                            // Note that we check whether there is any path at all: otherwise an identical path to the for-each would capture values twice.
+                            if (metadataField.getValuePath() != null && !metadataField.getValuePath().isEmpty())
+                                continue;
+
+                            apMetadata.resetXPath();
+
+                            // Multiple matches will be indexed at the same position.
+                            AutoPilot apEvalToString = acquireAutoPilot(".");
+                            try {
+                                while (apMetadata.evalXPath() != -1) {
+                                    apEvalToString.resetXPath();
+                                    String unprocessedValue = apEvalToString.evalXPathToString();
+                                    for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
+                                            f.getMapValues())) {
+                                        // Also execute process defined for named metadata field, if any
+                                        for (String processedValue: processStringMultipleValues(value,
+                                                metadataField.getProcess(), metadataField.getMapValues())) {
+                                            addMetadataField(fieldName, processedValue);
+                                        }
+                                    }
+                                }
+                            } catch (XPathEvalException e) {
+                                // An xpath like string(@value) will make evalXPath() fail.
+                                // There is no good way to check whether this exception will occur
+                                // When the exception occurs we try to evaluate the xpath as string
+                                // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
+                                if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
+                                    warnedAboutXpathIssue = true;
+                                    logger.debug(String.format(
+                                            "An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
+                                            "string(.//tei:availability[1]/@status='free')",
+                                            "string(//tei:availability[1]/@status='free')"));
+                                }
+                                String unprocessedValue = apMetadata.evalXPathToString();
+                                for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
+                                        f.getMapValues())) {
+                                    for (String processedValue: processStringMultipleValues(value,
+                                            metadataField.getProcess(), metadataField.getMapValues())) {
+                                        addMetadataField(fieldName, processedValue);
+                                    }
+                                }
+                            }
+                            releaseAutoPilot(apEvalToString);
                         }
-                        ConfigMetadataField metadataField = b.getOrCreateField(fieldName);
-
-                        // This metadata field is matched by a for-each, but if it specifies its own xpath ignore it in the for-each section
-                        // It will capture values on its own at another point in the outer loop.
-                        // Note that we check whether there is any path at all: otherwise an identical path to the for-each would capture values twice.
-                        if (metadataField.getValuePath() != null && !metadataField.getValuePath().isEmpty())
-                            continue;
-
-                        apMetadata.resetXPath();
-
-                        // Multiple matches will be indexed at the same position.
+                        releaseAutoPilot(apMetaForEach);
+                        releaseAutoPilot(apFieldName);
+                    } finally {
+                        navpop();
+                    }
+                } else {
+                    // Regular metadata field; just the fieldName and an XPath expression for the value
+                    // Multiple matches will be indexed at the same position.
+                    navpush();
+                    try {
                         AutoPilot apEvalToString = acquireAutoPilot(".");
                         try {
                             while (apMetadata.evalXPath() != -1) {
                                 apEvalToString.resetXPath();
                                 String unprocessedValue = apEvalToString.evalXPathToString();
-                                for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                                    // Also execute process defined for named metadata field, if any
-                                    for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
-                                        addMetadataField(fieldName, processedValue);
-                                    }
+                                for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
+                                        f.getMapValues())) {
+                                    addMetadataField(f.getName(), value);
                                 }
                             }
                         } catch (XPathEvalException e) {
@@ -597,51 +643,21 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
                             if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
                                 warnedAboutXpathIssue = true;
-                                logger.debug(String.format("An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
+                                logger.debug(String.format(
+                                        "An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
                                         "string(.//tei:availability[1]/@status='free')",
                                         "string(//tei:availability[1]/@status='free')"));
                             }
                             String unprocessedValue = apMetadata.evalXPathToString();
-                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                                for (String processedValue : processStringMultipleValues(value, metadataField.getProcess(), metadataField.getMapValues())) {
-                                    addMetadataField(fieldName, processedValue);
-                                }
-                            }
-                        }
-                        releaseAutoPilot(apEvalToString);
-                    }
-                    releaseAutoPilot(apMetaForEach);
-                    releaseAutoPilot(apFieldName);
-                    navpop();
-                } else {
-                    // Regular metadata field; just the fieldName and an XPath expression for the value
-                    // Multiple matches will be indexed at the same position.
-                    AutoPilot apEvalToString = acquireAutoPilot(".");
-                    try {
-                        while (apMetadata.evalXPath() != -1) {
-                            apEvalToString.resetXPath();
-                            String unprocessedValue = apEvalToString.evalXPathToString();
-                            for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
+                            for (String value: processStringMultipleValues(unprocessedValue, f.getProcess(),
+                                    f.getMapValues())) {
                                 addMetadataField(f.getName(), value);
                             }
                         }
-                    } catch (XPathEvalException e) {
-                        // An xpath like string(@value) will make evalXPath() fail.
-                        // There is no good way to check whether this exception will occur
-                        // When the exception occurs we try to evaluate the xpath as string
-                        // NOTE: an xpath with dot like: string(.//tei:availability[1]/@status='free') may fail silently!!
-                        if (logger.isDebugEnabled() && !warnedAboutXpathIssue) {
-                            warnedAboutXpathIssue = true;
-                            logger.debug(String.format("An xpath with a dot like %s may fail silently and may have to be replaced by one like %s",
-                                    "string(.//tei:availability[1]/@status='free')",
-                                    "string(//tei:availability[1]/@status='free')"));
-                        }
-                        String unprocessedValue = apMetadata.evalXPathToString();
-                        for (String value : processStringMultipleValues(unprocessedValue, f.getProcess(), f.getMapValues())) {
-                            addMetadataField(f.getName(), value);
-                        }
+                        releaseAutoPilot(apEvalToString);
+                    } finally {
+                        navpop();
                     }
-                    releaseAutoPilot(apEvalToString);
                 }
                 releaseAutoPilot(apMetadata);
             }
