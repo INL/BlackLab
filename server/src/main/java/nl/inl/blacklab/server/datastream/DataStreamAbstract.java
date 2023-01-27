@@ -14,7 +14,7 @@ public abstract class DataStreamAbstract implements DataStream {
         if (format == DataFormat.JSON)
             return new DataStreamJson(out, prettyPrint);
         if (format == DataFormat.CSV)
-            return new DataStreamPlain(out, prettyPrint);
+            return new DataStreamCsv(out, prettyPrint);
         return new DataStreamXml(out, prettyPrint);
     }
 

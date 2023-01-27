@@ -217,13 +217,15 @@ public class BlackLabServer extends HttpServlet {
         // === Create RequestHandler object
 
         // The outputType handling is a bit iffy:
-        // For some urls the dataType is required to determined the correct RequestHandler to instance (the /docs/ and /hits/)
+        // For some urls the dataType is required to determined the correct RequestHandler to instance
+        // (the /docs/ and /hits/, because of how CSV is handled)
         // For some other urls, the RequestHandler can only output a single type of data
-        // and for the rest of the urls, it doesn't matter, so we should just use the default if no explicit type was requested.
-        // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity about which handler to use
-        // TODO return error for requests that don't support CSV;
-        //  "outputtype"="csv" is broken on the majority of requests, the outputstream will swallow the majority of
-        //  the printed data
+        // and for the rest of the urls, it doesn't matter, so we should just use the default if no explicit type
+        // was requested.
+        // As long as we're careful not to have urls in multiple of these categories there is never any ambiguity
+        // about which handler to use
+        // Note that only some requests support CSV output (hits/docs); requesting it should return an error on
+        // requests that don't support it.
         DataFormat outputType = ServletUtil.getOutputType(request);
         UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
         RequestHandler requestHandler = RequestHandler.create(userRequest, outputType);
