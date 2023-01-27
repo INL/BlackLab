@@ -95,7 +95,6 @@ public class SingleDocIdFilter extends Query {
 
 					@Override
 					public float getMaxScore(int upTo) {
-						// TODO Auto-generated method stub
 						return 0;
 					}
                 };
@@ -103,7 +102,7 @@ public class SingleDocIdFilter extends Query {
 
 			@Override
 			public boolean isCacheable(LeafReaderContext ctx) {
-				// TODO Auto-generated method stub
+				// OPT: Look in to isCacheable() and implement properly
 				return false;
 			}
 

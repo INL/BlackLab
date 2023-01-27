@@ -1,17 +1,15 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
-import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -91,7 +89,7 @@ public abstract class TermsReaderAbstract implements Terms {
         fillTermCharData(terms);
     }
 
-    // TODO optimize by removing the 1 at groupId < terms.length
+    // OPT: optimize by removing the 1 at groupId < terms.length
     // Since we know it's always there (no collisions in this section - length is always 1)
     /**
      * Initializes the following members:
@@ -302,7 +300,7 @@ public abstract class TermsReaderAbstract implements Terms {
         while (l <= r) {
             final int sortPositionToCheck = l + (r - l) / 2;
             final int groupId = sortPosition2GroupId[sortPositionToCheck];
-            final int termIdToCompareTo = this.groupId2TermIds[groupId + 1]; // TODO < numterms optimization
+            final int termIdToCompareTo = this.groupId2TermIds[groupId + 1]; // OPT: < numterms optimization
             final String termToCompareTo = get(termIdToCompareTo);
 
             final int result = coll.compare(term, termToCompareTo);

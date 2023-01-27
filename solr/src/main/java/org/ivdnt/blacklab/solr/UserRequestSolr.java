@@ -41,7 +41,7 @@ public class UserRequestSolr implements UserRequest {
     public synchronized User getUser() {
         if (user == null) {
             //AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
-            // FIXME: detect logged-in user vs. anonymous user with session id
+            // TODO: detect logged-in user vs. anonymous user with session id
             Principal p = rb.req.getUserPrincipal();
             user = User.anonymous(p == null ? "UNKNOWN" : p.getName());
         }

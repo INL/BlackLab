@@ -69,7 +69,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
 
     private void determineValueDistribution(IndexReader reader) {
         try {
-            // TODO: is this worth parallellizing?
+            // OPT: is this worth parallellizing?
             for (LeafReaderContext rc : reader.leaves()) {
                 LeafReader r = rc.reader();
                 Bits liveDocs = r.getLiveDocs();

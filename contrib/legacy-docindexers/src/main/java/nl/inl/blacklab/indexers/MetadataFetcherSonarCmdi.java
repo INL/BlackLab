@@ -88,7 +88,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
 
     @Override
     public void close() {
-        // TODO: make sure zip file is properly closed when done
+        // make sure zip file is properly closed when done
         //   (change structure so metadata fetcher isn't instantiated for each document separately)
         //metadataZipFile.close();
     }

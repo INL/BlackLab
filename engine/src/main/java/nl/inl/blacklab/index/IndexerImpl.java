@@ -182,9 +182,9 @@ class IndexerImpl implements DocWriter, Indexer {
     private int numberOfThreadsToUse = 1;
 
     // TODO this is a workaround for a bug where indexMetadata is always written, even when an indexing task was
-    // rollbacked on an empty index. Result of this is that the index can never be opened again (the forwardindex
-    // is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write
-    // the updated indexMetadata
+    //   rollbacked on an empty index. Result of this is that the index can never be opened again (the forwardindex
+    //   is missing files that the indexMetadata.yaml says must exist?) so record rollbacks and then don't write
+    //   the updated indexMetadata
     private boolean hasRollback = false;
 
     /** Was this Indexer closed? */
@@ -362,7 +362,7 @@ class IndexerImpl implements DocWriter, Indexer {
         hasRollback = true;
     }
 
-    // TODO this should call close() on running FileProcessors
+    // FIXME this should call close() on running FileProcessors
     @Override
     public synchronized void close() {
 

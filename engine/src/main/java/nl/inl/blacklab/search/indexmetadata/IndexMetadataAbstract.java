@@ -679,9 +679,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                     }
                 }
 
-                // These annotations should get no forward index
-                // TODO: refactor this so this information is stored with each annotation instead,
-                // deprecating this setting
+                // These annotations should get no forward index (deprecated setting)
                 JsonNode nodeNoForwardIndexAnnotations = fieldConfig.get("noForwardIndexProps");
                 if (nodeNoForwardIndexAnnotations instanceof ArrayNode) {
                     Iterator<JsonNode> itNFIP = nodeNoForwardIndexAnnotations.elements();
@@ -723,7 +721,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
                 if (name.endsWith("Numeric")) {
                     // Special case: this is not a annotation alternative, but a numeric
                     // alternative for a metadata field.
-                    // (TODO: this should probably be changed or removed)
+                    // (TODO: this should probably be changed or removed; improve numeric field support in general)
                     parts = new String[] { name };
                 } else {
                     parts = AnnotatedFieldNameUtil.getNameComponents(name);

@@ -72,7 +72,7 @@ public class Contexts implements Iterable<int[]> {
             return;
         HitsInternal hitsInternal = hits.getInternalHits();
 
-        // TODO: more efficient to get all contexts with one getContextWords() call!
+        // OPT: more efficient to get all contexts with one getContextWords() call!
 
         // Get punctuation context
         int[][] punctContext = null;

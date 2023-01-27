@@ -37,7 +37,7 @@ public class ResultDocResult {
         pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
         docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
         // Snippets
-        Hits hits = dr.storedResults().window(0, 5); // TODO: make num. snippets configurable
+        Hits hits = dr.storedResults().window(0, 5);
         numberOfHits = dr.storedResults().size();
 
         concordancesToShow = new ArrayList<>();

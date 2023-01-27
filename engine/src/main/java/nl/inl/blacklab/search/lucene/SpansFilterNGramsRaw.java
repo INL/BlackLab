@@ -79,7 +79,7 @@ class SpansFilterNGramsRaw extends BLSpans {
         if (op != SpanQueryPositionFilter.Operation.CONTAINING_AT_END && op != SpanQueryPositionFilter.Operation.ENDS_AT
                 && op != SpanQueryPositionFilter.Operation.MATCHES) {
             // We need to know document length to properly do expansion to the right
-            // TODO: cache this in BlackLabIndex..?
+            // OPT: cache this in BlackLabIndex..?
             lengthGetter = new DocFieldLengthGetter(reader, fieldName);
         }
         this.clause = clause;

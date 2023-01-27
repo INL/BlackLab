@@ -155,7 +155,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
      * @return the frequency
      */
     public long frequency(String token) {
-        // TODO: maybe speed this up by keeping a map of tokens and frequencies?
+        // OPT: maybe speed this up by keeping a map of tokens and frequencies?
         //       (or if sorted by freq, use binary search)
         for (TermFrequency tf : results) {
             if (tf.term.equals(token))

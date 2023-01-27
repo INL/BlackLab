@@ -108,9 +108,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     @Override
     public long ramBytesUsed() {
-        // return BASE_RAM_BYTES_USED + delegateFieldsProducer.ramBytesUsed();
-
-        // TODO: copied from mtas, improve this estimate?
         return 3 * delegateFieldsProducer.ramBytesUsed();
     }
 

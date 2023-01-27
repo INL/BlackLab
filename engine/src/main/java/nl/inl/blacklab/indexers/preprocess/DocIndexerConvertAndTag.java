@@ -127,7 +127,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
 
     @Override
     protected void storeDocument() {
-        // TODO Auto-generated method stub
+        // FIXME shouldn't we call outputIndexer.storeDocument() here?
     }
 
     @Override

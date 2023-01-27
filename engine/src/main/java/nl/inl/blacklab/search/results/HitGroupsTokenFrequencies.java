@@ -308,13 +308,13 @@ public class HitGroupsTokenFrequencies {
                 } else {
                     // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
                     // calculate the frequencies.
-                    // TODO: maybe we don't need to respect the maxHitsToCount setting here? The whole point of this
+                    // OPT: maybe we don't need to respect the maxHitsToCount setting here? The whole point of this
                     //       code is that it can perform this operation faster and using less memory, and the setting
                     //       exists to manage server load, so maybe we can ignore it here? I guess then we might need
                     //       another setting that can limit this operation as well.
                     final long maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : Long.MAX_VALUE;
                     //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
-                    final String fieldName = index.mainAnnotatedField().name(); // FIXME: could be another annotated field!
+                    final String fieldName = index.mainAnnotatedField().name(); // FIXME: shouldn't this be source.queryInfo().field() ?
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
                     // Determine all the fields we want to be able to load, so we don't need to load the entire document

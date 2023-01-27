@@ -84,8 +84,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
 		@Override
 		public ScoreMode scoreMode() {
-			// TODO Auto-generated method stub
-			return ScoreMode.COMPLETE_NO_SCORES;//no scores
+			return ScoreMode.COMPLETE_NO_SCORES;
 		}
     }
 
@@ -298,7 +297,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                             addDocResultToList(doc, hits, size);
                         }
 
-                        // TODO: use maxHitsToStorePerDoc to determine whether or not we need huge?
+                        // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
                         docHits = HitsInternal.create(-1, true, false);

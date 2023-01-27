@@ -91,7 +91,7 @@ public class SolrTestServer {
     /**
      * Add a search component via de API.
      *
-     * FIXME ERROR: unknown handler: /testcore/config
+     * ERROR: unknown handler: /testcore/config
      *
      * @param coreName core to add component to
      * @param compName component name
@@ -114,7 +114,7 @@ public class SolrTestServer {
             RequestWriter.ContentWriter contentWriter =
                     new RequestWriter.StringPayloadContentWriter(json, "application/json");
             reqAddSearchComponent.setContentWriter(contentWriter);
-            // FIXME ERROR: unknown handler: /testcore/config
+            // ERROR: unknown handler: /testcore/config
             // (but in JUnit we can just put the config in solrconfig.xml, so not needed right now)
             NamedList<Object> response = server.request(reqAddSearchComponent);
             //System.err.println("Add search component response\n" + response.toString());

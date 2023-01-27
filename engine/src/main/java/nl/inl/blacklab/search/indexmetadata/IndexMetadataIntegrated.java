@@ -736,7 +736,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void freezeBeforeIndexing() {
         // Contrary to the "classic" index format, with this one the metadata
         // cannot change while indexing. So freeze it now to enforce that.
-        // TODO: reconsider this now that we CAN update metadata (document instead of segment attributes)?
+        // FIXME: we actually CAN update metadata while indexing and probably should
+        //  (e.g. because you can add documents with different configs to one corpus)
         freeze();
     }
 
