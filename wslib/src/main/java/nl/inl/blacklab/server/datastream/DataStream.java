@@ -282,6 +282,9 @@ public interface DataStream {
 
     DataStream space();
 
-    /** Output a full CSV document. */
+    /** Output a full CSV document. Subclasses may choose to embed it in their response format. */
     default void csv(String csv) { plain(csv); }
+
+    /** Output a full XSLT document. Subclasses may choose to embed it in their response format. */
+    default void xslt(String xslt) { plain(xslt); }
 }

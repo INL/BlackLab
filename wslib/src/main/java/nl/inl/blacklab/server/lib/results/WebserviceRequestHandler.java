@@ -275,4 +275,9 @@ public class WebserviceRequestHandler {
         }
         ds.csv(csv);
     }
+
+    public static void opInputFormatXslt(WebserviceParams params, DataStream ds) {
+        ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
+        DStream.formatXsltResponse(ds, result);
+    }
 }

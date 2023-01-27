@@ -1089,4 +1089,8 @@ public class DStream {
         ds.endEntry()
                 .endMap();
     }
+
+    public static void formatXsltResponse(DataStream ds, ResultInputFormat result) {
+        ds.xslt(result.getXslt());
+    }
 }

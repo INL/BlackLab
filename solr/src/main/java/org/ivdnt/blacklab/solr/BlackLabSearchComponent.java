@@ -240,6 +240,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     WebserviceRequestHandler.opInputFormatInfo(params, ds);
                     break;
                 case INPUT_FORMAT_XSLT:
+                    WebserviceRequestHandler.opInputFormatXslt(params, ds);
                     break;
 
                 case WRITE_INPUT_FORMAT:

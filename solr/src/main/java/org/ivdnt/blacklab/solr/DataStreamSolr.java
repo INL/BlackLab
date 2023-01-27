@@ -261,4 +261,11 @@ public class DataStreamSolr implements DataStream {
         // which the client should easily be able to extract.
         startMap().entry("csv", csv).endMap();
     }
+
+    @Override
+    public void xslt(String xslt) {
+        // Solr doesn't easily support custom output formats, so we'll wrap it in a field,
+        // which the client should easily be able to extract.
+        startMap().entry("xslt", xslt).endMap();
+    }
 }

@@ -4,8 +4,6 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceOperation;
-import nl.inl.blacklab.server.lib.results.ResultInputFormat;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
@@ -42,8 +40,8 @@ public class RequestHandlerListInputFormats extends RequestHandler {
     @Override
     public int handle(DataStream ds) throws BlsException {
         if (urlResource != null && urlResource.length() > 0 && isXsltRequest) {
-            ResultInputFormat result = WebserviceOperations.inputFormat(urlResource);
-            dstreamFormatXsltResponse(ds, result);
+            params.setInputFormat(urlResource);
+            WebserviceRequestHandler.opInputFormatXslt(params, ds);
         } else {
             if (urlResource != null && urlResource.length() > 0) {
                 // Specific input format: either format information or XSLT request
@@ -55,10 +53,6 @@ public class RequestHandlerListInputFormats extends RequestHandler {
             }
         }
         return HTTP_OK;
-    }
-
-    private static void dstreamFormatXsltResponse(DataStream ds, ResultInputFormat result) {
-        ds.plain(result.getXslt());
     }
 
 }
