@@ -50,6 +50,10 @@ themeConfig:
       - solr/
       - migration-guide
       - changelog
+      - title: API redesign
+        children:
+        - api-redesign/
+        - api-redesign/API
     /:
       - ''
   # default value is true. Set it to false to hide next page links on all pages
