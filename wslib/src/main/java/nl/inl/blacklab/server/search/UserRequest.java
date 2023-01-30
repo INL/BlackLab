@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.search;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /** Represents a request from the user to the webservice.

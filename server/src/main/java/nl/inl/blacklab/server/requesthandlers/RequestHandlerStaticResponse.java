@@ -4,7 +4,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Show a static response such as an error or succes message.

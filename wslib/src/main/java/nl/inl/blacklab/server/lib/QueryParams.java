@@ -9,6 +9,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /** API-independent interface to BlackLab operation parameters.
  *

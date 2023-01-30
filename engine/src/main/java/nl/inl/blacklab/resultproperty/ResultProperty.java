@@ -4,11 +4,13 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import nl.inl.blacklab.util.PropertySerializeUtil;
+
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
  * @param <T> type of result
  */
-public interface ResultProperty<T> extends Serializable {
+public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.SerializableProperty {
 
     /**
      * Strip sensitivity information.

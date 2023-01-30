@@ -5,7 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**

@@ -12,6 +12,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A concrete value of a HitProperty of a Hit

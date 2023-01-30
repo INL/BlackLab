@@ -44,6 +44,7 @@ import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Wraps the WebserviceParams and interprets them to create searches.

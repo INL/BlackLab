@@ -11,16 +11,14 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsPar;
 
 /**
  * Abstract implementation of PlainWebserviceParams that uses request parameters.
  * This is used for both BLS and Solr.
  */
 public abstract class QueryParamsAbstract implements QueryParams {
-
-    protected static final String PARAM_CORPUS_NAME = "indexname";
-
-    protected static final String PARAM_NAME_OPERATION = "op";
 
     protected final SearchManager searchMan;
 
@@ -216,7 +214,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getPattGapData() { return get("pattgapdata"); }
 
     @Override
-    public String getDocPid() { return get("docpid"); }
+    public String getDocPid() { return get(WsPar.DOC_PID); }
 
     @Override
     public String getDocumentFilterQuery() { return get("filter"); }
@@ -401,7 +399,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public WebserviceOperation getOperation() {
-        return WebserviceOperation.fromName(get(PARAM_NAME_OPERATION));
+        return WebserviceOperation.fromValue(get(WsPar.OPERATION));
     }
 
     @Override

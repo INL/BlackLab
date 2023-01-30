@@ -4,6 +4,7 @@ import java.util.List;
 
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

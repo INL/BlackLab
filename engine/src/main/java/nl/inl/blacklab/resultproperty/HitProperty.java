@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,

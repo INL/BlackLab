@@ -1,4 +1,4 @@
-package nl.inl.blacklab.server.lib;
+package nl.inl.blacklab.webservice;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -6,29 +6,48 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.server.config.BLSConfigParameters;
+import nl.inl.blacklab.Constants;
 
-public class ParameterDefaults {
+public class WsPar {
 
+    public static final String CORPUS_NAME = "indexname";
+
+    public static final String OPERATION = "op";
+
+    public static final String DOC_PID = "docpid";
+
+    public static final String PATTERN = "patt";
+
+    public static final String FILTER = "filter";
+
+    public static final String SORT = "sort";
+
+    public static final String GROUP_BY = "group";
+
+    public static final String VIEW_GROUP = "viewgroup";
+
+    public static final String FIRST_RESULT = "first";
+
+    public static final String NUMBER_OF_RESULTS = "number";
+
+    public static final String USE_CACHE = "usecache";
     /**
      * Parameters involved in search
      */
     public static final Set<String> NAMES = new HashSet<>(Arrays.asList(
             // What to search for
-            "patt", "pattlang", "pattgapdata", // pattern to search for
-            "filter", "filterlang", "docpid", // docs to search
+            PATTERN, "pattlang", "pattgapdata", // pattern to search for
+            FILTER, "filterlang", DOC_PID, // docs to search
             "sample", "samplenum", "sampleseed", // what hits to select
             "hitfiltercrit", "hitfilterval",
 
             // How to search
             "fimatch", // [debug] set NFA FI matching threshold
-            "usecache", // [debug] use cache or bypass it?
+            USE_CACHE, // [debug] use cache or bypass it?
 
             // How to present results
-            "sort", // sorting (grouped) hits/docs
-            "first", "number", // results window
+            SORT, // sorting (grouped) hits/docs
+            FIRST_RESULT, NUMBER_OF_RESULTS, // results window
             "wordsaroundhit", "usecontent", // concordances
             "hitstart", "hitend", // doc snippets
             "wordstart", "wordend",
@@ -51,7 +70,7 @@ public class ParameterDefaults {
 
             // Alternative views
             "calc", // collocations, or other context-based calculations
-            "group", "viewgroup", // grouping hits/docs
+            GROUP_BY, VIEW_GROUP, // grouping hits/docs
             "annotation", "sensitive", "terms", // for term frequency
 
             // How to execute request
@@ -70,16 +89,16 @@ public class ParameterDefaults {
 
             "debug", // include debug info (cache)
 
-            "indexname",
+            CORPUS_NAME, // "indexname"
             "field",
             "inputformat"
     ));
 
-    public static boolean paramExists(String name) {
+    public static boolean exists(String name) {
         return NAMES.contains(name);
     }
 
-    public static String get(String name) {
+    public static String getDefaultValue(String name) {
         String v = values.get(name);
         return v == null ? "" : v;
     }
@@ -113,7 +132,7 @@ public class ParameterDefaults {
         values.put("number", "50");
         values.put("omitemptycaptures", "no");
         values.put("pattlang", "corpusql");
-        values.put("property", AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
+        values.put("property", Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
         values.put("sensitive", "no");
         //values.put("sort", "");
         //values.put("subprops", "");
@@ -126,16 +145,8 @@ public class ParameterDefaults {
         values.put("wordstart", "-1");
     }
 
-    /**
-     * Set up parameter default values from the configuration.
-     */
-    public static void set(BLSConfigParameters param) {
-        // Set up the parameter default values
-        values.put("maxretrieve", "" + param.getProcessHits().getDefaultValue());
-        values.put("maxcount", "" + param.getCountHits().getDefaultValue());
-        values.put("number", "" + param.getPageSize().getDefaultValue());
-        values.put("sensitive", param.getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-        values.put("wordsaroundhit", "" + param.getContextSize().getDefaultValue());
+    public static void setDefaultValue(String name, String value) {
+        values.put(name, value);
     }
 
 }

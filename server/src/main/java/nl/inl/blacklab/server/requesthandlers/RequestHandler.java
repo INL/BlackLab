@@ -28,7 +28,7 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;

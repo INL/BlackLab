@@ -61,7 +61,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.webservice.WsPar;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -211,7 +211,7 @@ public class DStream {
      */
     public static void summaryCommonFields(DataStream ds, ResultSummaryCommonFields summaryFields) throws BlsException {
 
-        WebserviceParams searchParam = summaryFields.getSearchParam();
+        nl.inl.blacklab.server.lib.WebserviceParams searchParam = summaryFields.getSearchParam();
         Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         SearchTimings timings = summaryFields.getTimings();
         ResultGroups<?> groups = summaryFields.getGroups();
@@ -221,7 +221,7 @@ public class DStream {
         ds.startEntry("searchParam");
         ds.startMap();
         for (Map.Entry<String, String> e: searchParam.getParameters().entrySet()) {
-            if (!e.getKey().equals("op")) { // skip for now; we'll update all the test responses eventually
+            if (!e.getKey().equals(WsPar.OPERATION)) { // skip for now; we'll update all the test responses eventually
                 ds.entry(e.getKey(), e.getValue());
             }
         }
@@ -327,7 +327,7 @@ public class DStream {
     }
 
     public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
-        WebserviceParams params = result.getParams();
+        nl.inl.blacklab.server.lib.WebserviceParams params = result.getParams();
         Hits hits = result.getHits();
 
         ds.startEntry("hits").startList();
@@ -351,7 +351,7 @@ public class DStream {
         ds.endList().endEntry();
     }
 
-    private static void hit(DataStream ds, WebserviceParams params, ConcordanceContext concordanceContext,
+    private static void hit(DataStream ds, nl.inl.blacklab.server.lib.WebserviceParams params, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, Span> capturedGroups) {
         ds.startMap();
         if (docPid != null) {
@@ -534,7 +534,7 @@ public class DStream {
 
     public static void hitsResponse(DataStream ds, ResultHits resultHits)
             throws InvalidQuery {
-        WebserviceParams params = resultHits.getParams();
+        nl.inl.blacklab.server.lib.WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
@@ -593,7 +593,7 @@ public class DStream {
     }
 
     public static void hitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
-        WebserviceParams params = hitsGrouped.getParams();
+        nl.inl.blacklab.server.lib.WebserviceParams params = hitsGrouped.getParams();
         ResultSummaryCommonFields summaryFields = hitsGrouped.getSummaryFields();
         ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
 

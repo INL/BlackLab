@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on a stored field in the corresponding Lucene

@@ -8,12 +8,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsPar;
 
 /** BLS API-specific implementation of WebserviceParams.
  *
@@ -25,15 +25,15 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
         super(corpusName, searchMan, user);
-        for (String name: ParameterDefaults.NAMES) {
+        for (String name: WsPar.NAMES) {
             String value = ServletUtil.getParameter(request, name, "");
             if (value.length() == 0)
                 continue;
             map.put(name, value);
         }
-        map.put(PARAM_CORPUS_NAME, corpusName);
+        map.put(WsPar.CORPUS_NAME, corpusName);
         if (operation != null && operation != WebserviceOperation.NONE)
-            map.put(PARAM_NAME_OPERATION, operation.getName());
+            map.put(WsPar.OPERATION, operation.value());
     }
 
     @Override
@@ -45,7 +45,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
     protected String get(String key) {
         String value = map.get(key);
         if (StringUtils.isEmpty(value)) {
-            value = ParameterDefaults.get(key);
+            value = WsPar.getDefaultValue(key);
         }
         return value;
     }
@@ -62,7 +62,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     @Override
     public String getCorpusName() {
-        return get(PARAM_CORPUS_NAME);
+        return get(WsPar.CORPUS_NAME);
     }
 
 }

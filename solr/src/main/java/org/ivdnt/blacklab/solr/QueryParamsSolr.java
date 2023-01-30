@@ -8,10 +8,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.solr.common.params.SolrParams;
 
-import nl.inl.blacklab.server.lib.ParameterDefaults;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WsPar;
 
 /**
  * Extracts the webservice parameters from the Solr request parameters.
@@ -34,11 +34,11 @@ public class QueryParamsSolr extends QueryParamsAbstract {
     }
 
     public static boolean shouldRunComponent(SolrParams params) {
-        return params.get(BL_PAR_NAME_PREFIX + PARAM_NAME_OPERATION) != null || params.get(BL_PAR_NAME_PREFIX + PAR_NAME_JSON_REQUEST) != null;
+        return params.get(BL_PAR_NAME_PREFIX + WsPar.OPERATION) != null || params.get(BL_PAR_NAME_PREFIX + PAR_NAME_JSON_REQUEST) != null;
     }
 
     public static String getOperation(SolrParams params) {
-        return params.get(BL_PAR_NAME_PREFIX + PARAM_NAME_OPERATION);
+        return params.get(BL_PAR_NAME_PREFIX + WsPar.OPERATION);
     }
 
     protected boolean has(String name) {
@@ -46,7 +46,7 @@ public class QueryParamsSolr extends QueryParamsAbstract {
     }
 
     protected String get(String name) {
-        return solrParams.get(BL_PAR_NAME_PREFIX + name, ParameterDefaults.get(name));
+        return solrParams.get(BL_PAR_NAME_PREFIX + name, WsPar.getDefaultValue(name));
     }
 
     @Override
@@ -57,8 +57,8 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                         e.getKey().substring(BL_PAR_NAME_PREFIX.length()), // strip "bl."
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 // only existing params
-                .filter(p -> p.getKey().equals(PARAM_NAME_OPERATION) || ParameterDefaults.paramExists(p.getKey()));
-        params = Stream.concat(Stream.of(Pair.of(PARAM_CORPUS_NAME, getCorpusName())), params); // add index name "parameter"
+                .filter(p -> p.getKey().equals(WsPar.OPERATION) || WsPar.exists(p.getKey()));
+        params = Stream.concat(Stream.of(Pair.of(WsPar.CORPUS_NAME, getCorpusName())), params); // add index name "parameter"
         return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 

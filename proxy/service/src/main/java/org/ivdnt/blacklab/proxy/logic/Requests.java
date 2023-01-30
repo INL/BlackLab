@@ -1,0 +1,150 @@
+package org.ivdnt.blacklab.proxy.logic;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.Map;
+
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+
+import org.ivdnt.blacklab.proxy.ProxyConfig;
+import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsPar;
+
+/** Performs requests to the BLS nodes we're aggregating */
+public class Requests {
+
+    private static final String BL_PAR_NAME_PREFIX = "bl" + ".";
+
+    private static final int MAX_GROUPS_TO_GET = Integer.MAX_VALUE - 10;
+
+    /** Is the given value the default value for this parameter?
+     *
+     * Used to omit some default values for more readable URLs.
+     */
+    private static boolean isParamDefault(String key, String value) {
+        if ("usecache".equals(key)) {
+            return value.equals("true") || value.equals("yes");
+        }
+        return false;
+    }
+
+    /**
+     * Add query params if not empty or default value.
+     *
+     * @param src target to add params to
+     * @param params params to add (key, value, key, value, etc.)
+     * @return new target
+     */
+    public static WebTarget optParams(WebTarget src, Object... params) {
+        WebTarget result = src;
+        for (int i = 0; i < params.length; i += 2) {
+            if (params[i + 1] != null) {
+                String key = params[i].toString();
+                String value = params[i + 1].toString();
+                if (!value.isEmpty() && !isParamDefault(key, value)) {
+                    result = result.queryParam(key, value);
+                }
+            }
+        }
+        return result;
+    }
+
+    public static RuntimeException translateNodeException(String url, Exception e) {
+        e.printStackTrace();
+        String msg = e.getMessage() + (e.getCause() != null ? " (" + e.getCause().getMessage() + ")" : "");
+        StringWriter stackTrace = new StringWriter();
+        e.printStackTrace(new PrintWriter(stackTrace));
+        ErrorResponse error = new ErrorResponse("ERROR_ON_NODE", msg, stackTrace.toString());
+        error.setNodeUrl(url);
+        Response resp = Response.status(Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        return new WebApplicationException(resp);
+    }
+
+    public static Response get(Client client, Map<String, String> queryParams) {
+        return request(client, queryParams, "GET", MediaType.APPLICATION_JSON_TYPE);
+    }
+
+    public static Response request(Client client, Map<String, String> queryParams, String method) {
+        return request(client, queryParams, method, MediaType.APPLICATION_JSON_TYPE);
+    }
+
+    public static Response request(Client client, Map<String, String> queryParams, String method,
+            MediaType mediaType) {
+        ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
+        String url = proxyTarget.getUrl();
+        WebTarget target = client.target(url);
+        return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
+                requestSolr(target, queryParams, method, mediaType) :
+                requestBls(target, queryParams, method, mediaType);
+    }
+
+    private static Response requestBls(WebTarget target, Map<String, String> queryParams, String method,
+            MediaType mediaType) {
+        if (queryParams != null) {
+            String corpusName = queryParams.get(WsPar.CORPUS_NAME);
+            if (corpusName != null)
+                target = target.path(corpusName);
+            String operation = queryParams.get(WsPar.OPERATION);
+            if (operation != null) {
+                WebserviceOperation op = WebserviceOperation.fromValue(operation);
+                target = target.path(op.blsPath());
+            }
+            for (Map.Entry<String, String> e: queryParams.entrySet()) {
+                String key = e.getKey();
+                if (!key.equals(WsPar.CORPUS_NAME) && !key.equals(WsPar.OPERATION))
+                    target = target.queryParam(e.getKey(), e.getValue());
+            }
+        }
+        return target.request(mediaType).method(method);
+    }
+
+    private static Response requestSolr(WebTarget target, Map<String, String> queryParams, String method,
+            MediaType mediaType) {
+        if (queryParams != null) {
+            String corpusName = queryParams.get(WsPar.CORPUS_NAME);
+            if (corpusName != null)
+                target = target.path(corpusName);
+            for (Map.Entry<String, String> e: queryParams.entrySet()) {
+                String key = e.getKey();
+                if (!key.equals(WsPar.CORPUS_NAME))
+                    target = target.queryParam(BL_PAR_NAME_PREFIX + e.getKey(), e.getValue());
+            }
+        }
+        return target.request(mediaType).method(method);
+    }
+
+    /** How to create the BLS request to a node */
+    public interface NodeRequestFactory {
+        WebTarget get(String nodeUrl);
+    }
+
+    /** Thrown when BLS returns an error response */
+    public static class BlsRequestException extends RuntimeException {
+
+        private final Response.Status status;
+
+        private final ErrorResponse response;
+
+        public BlsRequestException(Response.Status status, ErrorResponse response) {
+            super(response.getMessage());
+            this.status = status;
+            this.response = response;
+        }
+
+        public Response.Status getStatus() {
+            return status;
+        }
+
+        public ErrorResponse getResponse() {
+            return response;
+        }
+    }
+
+}

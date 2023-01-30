@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.webservice.WsPar;
 
 public class BLSConfigParameters {
     /** What pattern language to use? */
@@ -33,6 +34,17 @@ public class BLSConfigParameters {
     /** If a group of length 0 is captured (same start and end position), should we omit it instead? */
     private boolean omitEmptyCaptures = false;
 
+    /**
+     * Set up parameter default values from the configuration.
+     */
+    public void setParameterDefaults() {
+        // Set up the parameter default values
+        WsPar.setDefaultValue("maxretrieve", "" + getProcessHits().getDefaultValue());
+        WsPar.setDefaultValue("maxcount", "" + getCountHits().getDefaultValue());
+        WsPar.setDefaultValue("number", "" + getPageSize().getDefaultValue());
+        WsPar.setDefaultValue("sensitive", getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
+        WsPar.setDefaultValue("wordsaroundhit", "" + getContextSize().getDefaultValue());
+    }
 
     @JsonGetter("defaultSearchSensitivity")
     public String getDefaultSearchSensitivityName() {

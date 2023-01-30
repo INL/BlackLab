@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**

@@ -17,7 +17,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;

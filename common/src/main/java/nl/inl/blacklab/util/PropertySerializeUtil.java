@@ -1,4 +1,4 @@
-package nl.inl.blacklab.resultproperty;
+package nl.inl.blacklab.util;
 
 import java.util.List;
 
@@ -39,9 +39,9 @@ public final class PropertySerializeUtil {
 
     /**
      * Split string on first part and the rest.
-     * 
+     *
      * NOTE: only the first part is unescaped; the rest should be split later and unescaped at that time!
-     * 
+     *
      * @param partsCombined serialized parts
      * @return an array of length 1 or 2, depending on whether there's more than one part
      */
@@ -79,7 +79,11 @@ public final class PropertySerializeUtil {
         return serialized.contains(PropertySerializeUtil.MULTIPLE_SEPARATOR);
     }
 
-    public static String serializeMultiple(boolean reverse, List<? extends ResultProperty<?>> properties) {
+    public interface SerializableProperty {
+        String serialize();
+    }
+
+    public static String serializeMultiple(boolean reverse, List<? extends SerializableProperty> properties) {
         String[] values = new String[properties.size()];
         for (int i = 0; i < properties.size(); i++) {
             values[i] = properties.get(i).serialize();

@@ -12,8 +12,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.resultproperty.PropertySerializeUtil;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsPar;
 import nl.inl.util.Json;
 
 /**
@@ -37,7 +39,7 @@ public class QueryParamsJson extends QueryParamsAbstract {
             params.put(entry.getKey(), jsonValueToString(entry.getKey(), entry.getValue()));
         }
         if (operation != null)
-            params.put(PARAM_NAME_OPERATION, operation.getName());
+            params.put(WsPar.OPERATION, operation.value());
     }
 
     @Override
@@ -57,7 +59,7 @@ public class QueryParamsJson extends QueryParamsAbstract {
 
     @Override
     protected String get(String name) {
-        return params.getOrDefault(name, ParameterDefaults.get(name));
+        return params.getOrDefault(name, WsPar.getDefaultValue(name));
     }
 
     private String jsonValueToString(String name, JsonNode jsonNode) {
