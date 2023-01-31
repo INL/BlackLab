@@ -463,10 +463,15 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (contentStoreName == null) {
             AnnotatedFieldWriter main = getMainAnnotatedField();
             if (main == null) {
+                // We're indexing documents and storing the contents,
+                // but we don't have a main annotated field in the current indexing configuration.
+                // This happens when indexing linked metadata documents, which are stored but don't
+                // have annotated content to be indexed in a field.
                 // TODO: get rid of this special case!
                 contentStoreName = "metadata";
                 contentIdFieldName = "metadataCid";
             } else {
+                // Regular case. Store content for the main annotated field.
                 contentStoreName = main.name();
                 contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
             }

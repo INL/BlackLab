@@ -1,20 +1,18 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 
 /**
  * Create a user index.
  */
 public class RequestHandlerCreateIndex extends RequestHandler {
-    public RequestHandlerCreateIndex(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerCreateIndex(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.CREATE_CORPUS);
     }
 
     @Override

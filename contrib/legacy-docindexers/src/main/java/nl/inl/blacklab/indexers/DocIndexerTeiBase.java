@@ -131,7 +131,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
                 consumeCharacterContent(); // clear it to capture punctuation and words
                 String listBiblId = attributes.getValue("id");
                 @SuppressWarnings("deprecation")
-                String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata"); // TODO: remove INL-specific stuff
+                String listBiblIdToCapture = getParameter("listBiblIdToCapture", "inlMetadata");
                 captureMetadata = listBiblId != null && listBiblId.equals(listBiblIdToCapture);
             }
 

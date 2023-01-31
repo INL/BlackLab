@@ -108,11 +108,6 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public String name() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public File indexDirectory() {
         throw new UnsupportedOperationException();
     }

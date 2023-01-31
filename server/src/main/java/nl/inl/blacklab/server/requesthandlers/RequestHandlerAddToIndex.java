@@ -11,18 +11,16 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -30,10 +28,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerAddToIndex extends RequestHandler {
 
-    public RequestHandlerAddToIndex(BlackLabServer servlet,
-            HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerAddToIndex(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.ADD_TO_CORPUS);
     }
 
     @Override

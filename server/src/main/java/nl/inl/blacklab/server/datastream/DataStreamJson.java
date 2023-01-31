@@ -14,20 +14,13 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This is faster than building a full object tree first. Intended to replace
  * the DataObject classes.
  */
-public class DataStreamJson extends DataStream {
-
-    /** JSONP callback function name, or null for none */
-    final String jsonpCallback;
-
-    boolean isJsonp = false;
+public class DataStreamJson extends DataStreamAbstract {
 
     /** First entry in map/list: don't print separator */
     boolean firstEntry = true;
 
-    public DataStreamJson(PrintWriter out, boolean prettyPrint, String jsonpCallback) {
+    public DataStreamJson(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
-        this.jsonpCallback = jsonpCallback;
-        isJsonp = jsonpCallback != null && jsonpCallback.length() > 0;
     }
 
     DataStream openbl(String str) {
@@ -42,17 +35,11 @@ public class DataStreamJson extends DataStream {
 
     @Override
     public DataStream startDocument(String rootEl) {
-        if (isJsonp) {
-            print(jsonpCallback).print("(");
-        }
         return this;
     }
 
     @Override
-    public DataStream endDocument(String rootEl) {
-        if (isJsonp) {
-            print(");");
-        }
+    public DataStream endDocument() {
         return this;
     }
 
@@ -72,7 +59,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endItem() {
+    public DataStreamAbstract endItem() {
         return this;
     }
 
@@ -86,7 +73,7 @@ public class DataStreamJson extends DataStream {
         return closebl("}");
     }
 
-    DataStream optSep() {
+    DataStreamAbstract optSep() {
         if (!firstEntry)
             return print(",");
         firstEntry = false;
@@ -99,7 +86,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endEntry() {
+    public DataStreamAbstract endEntry() {
         return this;
     }
 
@@ -114,7 +101,7 @@ public class DataStreamJson extends DataStream {
     }
 
     @Override
-    public DataStream endAttrEntry() {
+    public DataStreamAbstract endAttrEntry() {
         return this;
     }
 

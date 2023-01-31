@@ -1,6 +1,11 @@
-# Ignore these subdirs when building Docker image
-.env
+# Ignore these when building Docker image
+**/.env
 **/target
+
+# don't ignore blacklab-solr.jar, copy directly to image [dev]
+#!solr/target/blacklab-*.jar
+#!solr/target/lib/*.jar
+
 **/bin
 **/.settings
 **/.idea
@@ -22,4 +27,9 @@
 **/*.log
 
 # Test defines its own container and doesn't need to be included in the main container context
-test
+/test
+
+# Ignore docker files, we don't need these inside the container.
+**/Dockerfile
+**/.dockerignore
+**/docker-compose*.yml

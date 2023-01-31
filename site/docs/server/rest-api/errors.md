@@ -98,11 +98,6 @@ Operations that do not return status or error codes and messages (which is all s
 	</tr>
 	<tr>
 		<td>400 Bad Request </td>
-		<td>JSONP_ILLEGAL_CALLBACK </td>
-		<td>Illegal JSONP callback function name. Must be a valid Javascript name.</td>
-	</tr>
-	<tr>
-		<td>400 Bad Request </td>
 		<td>SNIPPET_TOO_LARGE </td>
 		<td>Snippet too large. Maximum size for a snippet is MAXSIZE words.</td>
 	</tr>

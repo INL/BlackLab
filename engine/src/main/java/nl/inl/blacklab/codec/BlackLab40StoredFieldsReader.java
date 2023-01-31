@@ -594,7 +594,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
                 if (start.length != end.length)
                     throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);
-                // TODO: we could optimize this to avoid reading blocks twice!
+                // OPT: we could optimize this to avoid reading blocks twice!
                 //   easiest is to determine the lowest start and highest end, read the entire document part,
                 //   then cut the snippets from that. More efficient is to figure out exactly which blocks we
                 //   need, retrieve those, then cut the snippets.

@@ -168,6 +168,7 @@ Return the corpus metadata, including size, document format, annotated and metad
 - Not all information in the response is used by BlackLab itself. There is also information that may be useful to the client, such as display names for things, display order, logical groupings of fields, etc.
 - `versionInfo` gives information about when the corpus was created/updated, as well as what version of BlackLab it was created with.
 - `fieldInfo` gives information about certain special fields: `pidField` is the field used as a persistent identifier to refer to documents. The other fields, such as `titleField` are not used by BlackLab, but may be used by an application when showing search results.
+- To be consistent with the server-info response, the Solr version uses `blacklabVersion` and `blacklabBuildTime` (with a lowercase `l`).
 
 ### TODO
 

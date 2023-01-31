@@ -91,7 +91,7 @@ public class ContextualQueryLanguageParser {
         boolean isContentsSearch = false;
         String prop = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean isProperty;
-        if (index != null && !index.getClass().getSimpleName().startsWith("Mock")) // TODO: improve testability
+        if (index != null && !index.getClass().getSimpleName().startsWith("Mock"))
             isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
             isProperty = field.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME) || field.equals("lemma") || field.equals("pos"); // common case

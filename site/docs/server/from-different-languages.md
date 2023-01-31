@@ -153,8 +153,7 @@ function performSearch(patt) {
 	// Carry out the request and call the showHits function
 	$.ajax({
 		url: BASE_URL + "hits",
-		jsonp: "jsonp",
-		dataType: "jsonp",
+		dataType: "json",
 		data: {
 			patt: patt
 		},

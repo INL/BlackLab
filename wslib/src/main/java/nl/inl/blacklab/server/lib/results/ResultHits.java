@@ -94,7 +94,7 @@ public class ResultHits {
 
     private Map<String, String> metaDisplayNames;
 
-    private final Index.IndexStatus indexStatus;
+    private Index.IndexStatus indexStatus;
 
     private ResultSummaryNumHits summaryNumHits;
 
@@ -108,7 +108,7 @@ public class ResultHits {
         indexStatus = null;
         if (includeIndexStatus) {
             IndexManager indexMan = params.getIndexManager();
-            indexMan.getIndex(params.getIndexName()).getStatus();
+            indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
         }
 
         // Do we want to view a single group after grouping?

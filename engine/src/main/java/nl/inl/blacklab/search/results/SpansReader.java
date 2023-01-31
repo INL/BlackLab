@@ -40,7 +40,7 @@ class SpansReader implements Runnable {
      * Root hitQueryContext, needs to be shared between instances of SpansReader due to some internal global state.
      *
      * TODO refactor or improve documentation in HitQueryContext, the internal backing array is now shared between
-     * instances of it, and is modified in copyWith(spans), which seems...dirty and it's prone to errors.
+     *   instances of it, and is modified in copyWith(spans), which seems...dirty and it's prone to errors.
      */
     HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
     HitQueryContext hitQueryContext; // Set after initialization. Set to null after we're finished

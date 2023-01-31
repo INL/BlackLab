@@ -137,7 +137,6 @@ public interface Indexer {
     /**
      * Close the index
      */
-    // TODO this should call close() on running FileProcessors
     void close();
 
     /**

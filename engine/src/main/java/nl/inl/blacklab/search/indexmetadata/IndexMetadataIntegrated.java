@@ -75,7 +75,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // Load and deserialize metadata document.
                 String json = MetadataDocument.getMetadataJson(index.reader(), docId);
                 ObjectMapper mapper = Json.getJsonObjectMapper();
-                mapper.registerModule(new JaxbAnnotationModule());
+                JaxbAnnotationModule jaxbAnnotationModule = new JaxbAnnotationModule();
+                mapper.registerModule(jaxbAnnotationModule);
                 metadata = mapper.readValue(new StringReader(json),
                         IndexMetadataIntegrated.class);
                 metadata.fixAfterDeserialization(index, docId);
@@ -289,7 +290,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         // Create new index metadata from config
         File dir = index.indexDirectory();
         if (config == null)
-            populateWithDefaults(dir);
+            populateWithDefaults(index);
         else
             populateFromConfig(config, dir);
 
@@ -389,9 +390,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
-    private void populateWithDefaults(File indexDirectory) {
+    private void populateWithDefaults(BlackLabIndex index) {
         ensureNotFrozen();
-        custom.put("displayName", IndexMetadata.indexNameFromDirectory(indexDirectory));
+        File dir = index.indexDirectory();
+        if (dir != null)
+            custom.put("displayName", IndexMetadata.indexNameFromDirectory(dir));
         custom.put("description", "");
         custom.put("textDirection", "ltr");
         versionInfo.populateWithDefaults();
@@ -733,7 +736,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void freezeBeforeIndexing() {
         // Contrary to the "classic" index format, with this one the metadata
         // cannot change while indexing. So freeze it now to enforce that.
-        // TODO: reconsider this now that we CAN update metadata (document instead of segment attributes)?
+        // FIXME: we actually CAN update metadata while indexing and probably should
+        //  (e.g. because you can add documents with different configs to one corpus)
         freeze();
     }
 

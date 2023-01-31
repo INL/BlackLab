@@ -73,7 +73,6 @@ import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.util.LuceneUtil;
 
@@ -87,7 +86,7 @@ public class WebserviceOperations {
 
     /**
      * Returns a list of metadata fields to write out.
-     *
+     * <p>
      * By default, all metadata fields are returned.
      * Special fields (pidField, titleField, etc...) are always returned.
      *
@@ -118,9 +117,9 @@ public class WebserviceOperations {
 
     /**
      * Get metadata field groups.
-     *
+     * <p>
      * This includes adding any uncategorized fields to the "default" group.
-     *
+     * <p>
      * (part of custom properties; should eventually be removed from the API)
      *
      * @param index index
@@ -159,7 +158,7 @@ public class WebserviceOperations {
 
     /**
      * Get the special metadata fields.
-     *
+     * <p>
      * (special metadata fields except pidField are part of custom properties;
      *  this method should eventually be removed from the API)
      *
@@ -182,7 +181,7 @@ public class WebserviceOperations {
 
     /**
      * Get display names for metadata fields.
-     *
+     * <p>
      * (part of custom properties; should eventually be removed from the API)
      *
      * @param index index
@@ -204,12 +203,14 @@ public class WebserviceOperations {
      *
      * @param index where we got this document from
      * @param luceneDocId Lucene document id
-     * @param document the document object
+     * @param document the document object, or null if not available
      * @return the pid string (or Lucene doc id in string form if index has no pid
      *         field)
      */
     public static String getDocumentPid(BlackLabIndex index, int luceneDocId, Document document) {
         MetadataField pidField = index.metadataFields().pidField();
+        if (document == null)
+            document = index.luceneDoc(luceneDocId);
         String pid = pidField == null ? null : document.get(pidField.name());
         if (pid == null)
             return Integer.toString(luceneDocId);
@@ -218,7 +219,7 @@ public class WebserviceOperations {
 
     /**
      * Returns the annotations to write out.
-     *
+     * <p>
      * By default, all annotations are returned.
      * Annotations are returned in requested order, or in their definition/display order.
      *
@@ -264,7 +265,7 @@ public class WebserviceOperations {
 
     /**
      * Get relevant facets info for display.
-     *
+     * <p>
      * Returns lists of value+count for every property faceted on.
      * Grouped by descending size.
      *
@@ -350,7 +351,7 @@ public class WebserviceOperations {
 
     /**
      * Get field value distribution in the right order for the response.
-     *
+     * <p>
      * The right order is: display order first, then sorted by displayValue
      * as a fallback, or regular value as the second fallback.
      *
@@ -408,7 +409,7 @@ public class WebserviceOperations {
 
     /**
      * Get the list of values for an annotation.
-     *
+     * <p>
      * No more than {@link #MAX_FIELD_VALUES_TO_RETURN} will be returned.
      * valueListComplete[0] will indicate if all values were returned or not
      *
@@ -455,7 +456,7 @@ public class WebserviceOperations {
 
     /**
      * Translate a thrown exception into a BlsException.
-     *
+     * <p>
      * BlsException will eventually be caught and returned as an error response.
      *
      * @param e exception thrown
@@ -479,7 +480,7 @@ public class WebserviceOperations {
 
     /**
      * Find the size of documents matching a filter query and/or property+value.
-     *
+     * <p>
      *
      * @param params operation parameters
      * @param metadataFilterQuery filter query
@@ -529,7 +530,7 @@ public class WebserviceOperations {
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!
-        Query q = params.hasFilter() ? params.filterQuery() : null;
+        Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
         TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
@@ -553,7 +554,7 @@ public class WebserviceOperations {
 
     public static List<String> getUsersToShareWith(WebserviceParams params) {
         IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getIndexName();
+        String indexName = params.getCorpusName();
         User user = params.getUser();
         Index index = indexMan.getIndex(indexName);
         if (!index.userMayRead(user))
@@ -564,7 +565,7 @@ public class WebserviceOperations {
     public static void setUsersToShareWith(WebserviceParams params, String[] users) {
         User user = params.getUser();
         IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getIndexName();
+        String indexName = params.getCorpusName();
         Index index = indexMan.getIndex(indexName);
         if (!index.isUserIndex() || (!index.userMayRead(user)))
             throw new NotAuthorized("You can only share your own private indices with others.");
@@ -618,7 +619,7 @@ public class WebserviceOperations {
     }
 
     public static String addToIndex(WebserviceParams params, Iterator<UploadedFile> dataFiles, Map<String, File> linkedFiles) {
-        Index index = params.getIndexManager().getIndex(params.getIndexName());
+        Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
         if (!index.userMayAddData(params.getUser()))
@@ -697,11 +698,11 @@ public class WebserviceOperations {
             ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, params.getListValuesFor());
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(includeIndexName ? params.getIndexName() : null, fieldDesc, annotInfos);
+        return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
     }
 
     public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
-        Index index = params.getIndexManager().getIndex(params.getIndexName());
+        Index index = params.getIndexManager().getIndex(params.getCorpusName());
         return resultIndexStatus(index);
     }
 
@@ -720,8 +721,8 @@ public class WebserviceOperations {
         }
     }
 
-    public static ResultDocSnippet docSnippet(WebserviceParams params, SearchManager searchMan) {
-        return new ResultDocSnippet(params, searchMan);
+    public static ResultDocSnippet docSnippet(WebserviceParams params) {
+        return new ResultDocSnippet(params);
     }
 
     public static ResultListOfHits listOfHits(WebserviceParams params, Hits window, ConcordanceContext concordanceContext,
@@ -781,15 +782,15 @@ public class WebserviceOperations {
         return new ResultIndexMetadata(progress, afs, mfs, metadataFieldGroups);
     }
 
-    public static ResultServerInfo serverInfo(WebserviceParamsImpl params, boolean debugMode) {
+    public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
         return new ResultServerInfo(params, debugMode);
     }
 
-    public static ResultDocsGrouped docsGrouped(WebserviceParamsImpl params) throws InvalidQuery {
+    public static ResultDocsGrouped docsGrouped(WebserviceParams params) throws InvalidQuery {
         return new ResultDocsGrouped(params);
     }
 
-    public static ResultListInputFormats listInputFormats(WebserviceParamsImpl params) {
+    public static ResultListInputFormats listInputFormats(WebserviceParams params) {
         return new ResultListInputFormats(params);
     }
 

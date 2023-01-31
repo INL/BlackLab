@@ -1,14 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamXml;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.ResultDocContents;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
@@ -17,9 +15,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerDocContents extends RequestHandler {
 
-    public RequestHandlerDocContents(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerDocContents(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DOC_CONTENTS);
     }
 
     @Override
@@ -41,11 +38,11 @@ public class RequestHandlerDocContents extends RequestHandler {
         params.setDocPid(docPid);
 
         ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
-        dstreamDocContents((DataStreamXml)ds, resultDocContents);
+        docContentsResponse((DataStreamXml)ds, resultDocContents);
         return HTTP_OK;
     }
 
-    private static void dstreamDocContents(DataStreamXml ds, ResultDocContents resultDocContents) {
+    public static void docContentsResponse(DataStreamXml ds, ResultDocContents resultDocContents) {
         if (resultDocContents.needsXmlDeclaration()) {
             // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
             ds.outputProlog();

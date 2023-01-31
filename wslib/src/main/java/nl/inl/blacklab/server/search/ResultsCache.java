@@ -190,7 +190,7 @@ public class ResultsCache implements SearchCache {
 
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
-        logger.info("Removing searches for index: {}", index.name());
+        logger.info("Removing searches for index: {}", index.id());
         searchCache.asMap().keySet().removeIf(s -> s.getSearch().queryInfo().index() == index);
     }
 

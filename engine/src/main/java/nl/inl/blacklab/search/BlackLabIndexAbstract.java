@@ -611,11 +611,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter {
     }
 
     @Override
-    public String name() {
-        return indexLocation.toString();
-    }
-
-    @Override
     public IndexSearcher searcher() {
         return indexSearcher;
     }

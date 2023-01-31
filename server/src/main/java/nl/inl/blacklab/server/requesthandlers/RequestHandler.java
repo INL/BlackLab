@@ -12,7 +12,6 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -27,10 +26,11 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
-import nl.inl.blacklab.server.lib.PlainWebserviceParams;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
 /**
@@ -43,15 +43,12 @@ public abstract class RequestHandler {
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
-    protected RequestInstrumentationProvider instrumentationProvider;
-
     /** The available request handlers by name */
     static final Map<String, Class<? extends RequestHandler>> availableHandlers;
 
     // Fill the map with all the handler classes
     static {
         availableHandlers = new HashMap<>();
-        availableHandlers.put("debug", RequestHandlerDebug.class);
         availableHandlers.put("docs", RequestHandlerDocs.class);
         availableHandlers.put("docs-grouped", RequestHandlerDocsGrouped.class);
         availableHandlers.put("docs-csv", RequestHandlerDocsCsv.class);
@@ -68,7 +65,6 @@ public abstract class RequestHandler {
         availableHandlers.put("status", RequestHandlerIndexStatus.class);
         availableHandlers.put("termfreq", RequestHandlerTermFreq.class);
         availableHandlers.put("", RequestHandlerIndexMetadata.class);
-        availableHandlers.put("explain", RequestHandlerExplain.class);
         availableHandlers.put("autocomplete", RequestHandlerAutocomplete.class);
         availableHandlers.put("sharing", RequestHandlerSharing.class);
     }
@@ -76,61 +72,41 @@ public abstract class RequestHandler {
     /**
      * Handle a request by dispatching it to the corresponding subclass.
      *
-     * @param request the servlet, request and response objects
-     * @param debugMode debug mode request? Allows extra parameters to be used
+     * @param userRequest the servlet, request and response objects
      * @param outputType output type requested (XML, JSON or CSV)
      * @return the response data
      */
-    public static RequestHandler create(UserRequestServlet userRequest, boolean debugMode,
-            DataFormat outputType, RequestInstrumentationProvider instrumentationProvider) {
-
-        HttpServletRequest request = userRequest.getRequest();
-        BlackLabServer servlet = userRequest.getServlet();
+    public static RequestHandler create(UserRequestBls userRequest, DataFormat outputType) {
 
         // See if a user is logged in
-        String requestId = instrumentationProvider.getRequestID(request).orElse("");
-        ThreadContext.put("requestId", requestId);
-        SearchManager searchManager = servlet.getSearchManager();
-        User user = searchManager.getAuthSystem().determineCurrentUser(new UserRequestServlet(servlet, request, null));
-        String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
-        if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
-            String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
-            if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
-                user = User.loggedIn(request.getHeader("X-BlackLabUserId"), request.getSession().getId());
-            }
-        }
-
-        // Parse the URL
-        String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
-        String[] parts = servletPath.split("/", 3);
-        String indexName = parts.length >= 1 ? parts[0] : "";
-        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(servlet, request, user, indexName);
-        if (indexName.startsWith(":")) {
-            if (!user.isLoggedIn())
-                return errorObj.unauthorized("Log in to access your private index.");
-            // Private index. Prefix with user id.
-            indexName = user.getUserId() + indexName;
-        }
-        String urlResource = parts.length >= 2 ? parts[1] : "";
-        String urlPathInfo = parts.length >= 3 ? parts[2] : "";
-        boolean resourceOrPathGiven = urlResource.length() > 0 || urlPathInfo.length() > 0;
-        boolean pathGiven = urlPathInfo.length() > 0;
+        User user = userRequest.getUser();
+        boolean debugMode = userRequest.isDebugMode();
+        HttpServletRequest request = userRequest.getRequest();
+        RequestHandlerStaticResponse errorObj = new RequestHandlerStaticResponse(userRequest);
 
         // Debug feature: sleep for x ms before carrying out the request
-        if (debugMode && !doDebugSleep(request)) {
+        if (userRequest.isDebugMode() && !doDebugSleep(request)) {
             return errorObj.error("ROUGH_AWAKENING", "I was taking a nice nap, but something disturbed me", HttpServletResponse.SC_SERVICE_UNAVAILABLE);
         }
 
+        // What corpus (if any) is the user accessing?
+        String indexName = userRequest.getCorpusName();
+        if (indexName.startsWith(user.getUserId() + ":")) {
+            // User trying to access their own private corpus. See if they're logged in.
+            if (!user.isLoggedIn())
+                return errorObj.unauthorized("Log in to access your private index.");
+        }
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
         Index privateIndex = null;
         //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
+        IndexManager indexManager = userRequest.getSearchManager().getIndexManager();
         if (IndexUtil.isUserIndex(indexName)) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
                 return errorObj.unauthorized("Log in to access a private index.");
             try {
-                privateIndex = searchManager.getIndexManager().getIndex(indexName);
+                privateIndex = indexManager.getIndex(indexName);
                 if (!privateIndex.userMayRead(user))
                     return errorObj.unauthorized("You are not authorized to access this index.");
             } catch (IndexNotFound e) {
@@ -142,21 +118,23 @@ public abstract class RequestHandler {
         // Choose the RequestHandler subclass
         RequestHandler requestHandler = null;
 
+        String urlResource = userRequest.getUrlResource();
+        String urlPathInfo = userRequest.getUrlPathInfo();
+        boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
         String method = request.getMethod();
         if (method.equals("DELETE")) {
             // Index given and nothing else?
             if (indexName.equals("input-formats")) {
-                if (pathGiven)
+                if (!urlPathInfo.isEmpty())
                     return errorObj.methodNotAllowed("DELETE", null);
-                requestHandler = new RequestHandlerDeleteFormat(servlet, request, user, indexName, urlResource,
-                        urlPathInfo);
+                requestHandler = new RequestHandlerDeleteFormat(userRequest);
             } else {
                 if (indexName.length() == 0 || resourceOrPathGiven) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
                 if (privateIndex == null || !privateIndex.userMayDelete(user))
                     return errorObj.forbidden("You can only delete your own private indices.");
-                requestHandler = new RequestHandlerDeleteIndex(servlet, request, user, indexName, null, null);
+                requestHandler = new RequestHandlerDeleteIndex(userRequest);
             }
         } else if (method.equals("PUT")) {
             return errorObj.methodNotAllowed("PUT", "Create new index with POST to /blacklab-server");
@@ -165,8 +143,7 @@ public abstract class RequestHandler {
             if (method.equals("POST")) {
                 if (indexName.length() == 0 && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
-                    requestHandler = new RequestHandlerCreateIndex(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerCreateIndex(userRequest);
                 } else if (indexName.equals("cache-clear")) {
                     // Clear the cache
                     if (resourceOrPathGiven) {
@@ -176,13 +153,11 @@ public abstract class RequestHandler {
                         return errorObj
                                 .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
-                    requestHandler = new RequestHandlerClearCache(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerClearCache(userRequest);
                 } else if (indexName.equals("input-formats")) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You must be logged in to add a format.");
-                    requestHandler = new RequestHandlerAddFormat(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerAddFormat(userRequest);
                 } else if (ServletFileUpload.isMultipartContent(request)) {
                     // Add document to index
                     if (privateIndex == null || !privateIndex.userMayAddData(user))
@@ -192,14 +167,12 @@ public abstract class RequestHandler {
                             return errorObj.illegalIndexName(indexName);
 
                         // POST to /blacklab-server/indexName/docs/ : add data to index
-                        requestHandler = new RequestHandlerAddToIndex(servlet, request, user, indexName, urlResource,
-                                urlPathInfo);
+                        requestHandler = new RequestHandlerAddToIndex(userRequest);
                     } else if (urlResource.equals("sharing") && urlPathInfo.isEmpty()) {
                         if (!Index.isValidIndexName(indexName))
                             return errorObj.illegalIndexName(indexName);
                         // POST to /blacklab-server/indexName/sharing : set list of users to share with
-                        requestHandler = new RequestHandlerSharing(servlet, request, user, indexName, urlResource,
-                                urlPathInfo);
+                        requestHandler = new RequestHandlerSharing(userRequest);
                     } else {
                         return errorObj.methodNotAllowed("POST", "You can only add new files at .../indexName/docs/");
                     }
@@ -218,21 +191,18 @@ public abstract class RequestHandler {
                         return errorObj.unauthorized(
                                 "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
-                    requestHandler = new RequestHandlerCacheInfo(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (indexName.equals("input-formats")) {
-                    requestHandler = new RequestHandlerListInputFormats(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerListInputFormats(userRequest);
                 } else if (indexName.length() == 0) {
                     // No index or operation given; server info
-                    requestHandler = new RequestHandlerServerInfo(servlet, request, user, indexName, urlResource,
-                            urlPathInfo);
+                    requestHandler = new RequestHandlerServerInfo(userRequest);
                 } else {
                     // Choose based on urlResource
                     try {
                         String handlerName = urlResource;
 
-                        IndexStatus status = searchManager.getIndexManager().getIndex(indexName).getStatus();
+                        IndexStatus status = indexManager.getIndex(indexName).getStatus();
                         if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug")
                                 && !handlerName.equals("fields") && !handlerName.equals("status")
                                 && !handlerName.equals("sharing")) {
@@ -282,10 +252,9 @@ public abstract class RequestHandler {
                             return errorObj.unknownOperation(handlerName);
 
                         Class<? extends RequestHandler> handlerClass = availableHandlers.get(handlerName);
-                        Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(BlackLabServer.class,
-                                HttpServletRequest.class, User.class, String.class, String.class, String.class);
+                        Constructor<? extends RequestHandler> ctor = handlerClass.getConstructor(UserRequestBls.class);
                         //servlet.getSearchManager().getSearcher(indexName); // make sure it's open
-                        requestHandler = ctor.newInstance(servlet, request, user, indexName, urlResource, urlPathInfo);
+                        requestHandler = ctor.newInstance(userRequest);
                     } catch (BlsException e) {
                         return errorObj.error(e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
                     } catch (ReflectiveOperationException e) {
@@ -298,15 +267,13 @@ public abstract class RequestHandler {
                     }
                 }
             }
-            if (requestHandler == null) {
-                return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
-                        "INTERR_WRONG_HTTP_METHOD");
-            }
         }
-        if (debugMode)
-            requestHandler.setDebug();
 
-        requestHandler.setInstrumentationProvider(instrumentationProvider);
+        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
+        if (requestHandler == null) {
+            return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
+                    "INTERR_WRONG_HTTP_METHOD");
+        }
         return requestHandler;
     }
 
@@ -327,6 +294,8 @@ public abstract class RequestHandler {
         return true;
     }
 
+    private UserRequestBls userRequest;
+
     protected boolean debugMode;
 
     /** The servlet object */
@@ -337,6 +306,8 @@ public abstract class RequestHandler {
 
     /** Interprets parameters to create searches. */
     protected WebserviceParamsImpl params;
+
+    protected RequestInstrumentationProvider instrumentationProvider;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
@@ -367,12 +338,17 @@ public abstract class RequestHandler {
     @SuppressWarnings("unused")
     private RequestInstrumentationProvider requestInstrumentation;
 
-    RequestHandler(BlackLabServer servlet, HttpServletRequest request, User user, String indexName, String urlResource,
-            String urlPathInfo) {
-        this.servlet = servlet;
-        this.request = request;
+    RequestHandler(UserRequestBls userRequest, WebserviceOperation operation) {
+        this.userRequest = userRequest;
+        debugMode = userRequest.isDebugMode();
+        servlet = userRequest.getServlet();
         searchMan = servlet.getSearchManager();
         indexMan = searchMan.getIndexManager();
+        request = userRequest.getRequest();
+        user = userRequest.getUser();
+        indexName = userRequest.getCorpusName();
+        urlResource = userRequest.getUrlResource();
+        urlPathInfo = userRequest.getUrlPathInfo();
         String pathAndQueryString = ServletUtil.getPathAndQueryString(request);
 
         if (!(this instanceof RequestHandlerStaticResponse) && !pathAndQueryString.startsWith("/cache-info")) { // annoying when monitoring
@@ -380,18 +356,16 @@ public abstract class RequestHandler {
                     + request.getMethod() + " " + pathAndQueryString);
         }
 
-        boolean isDocs = isDocsOperation();
-        boolean isDebugMode = searchMan.isDebugMode(ServletUtil.getOriginatingAddress(request));
-        PlainWebserviceParams blsParams = new BlackLabServerParams(indexName, request, searchMan, user);
-        params = WebserviceParamsImpl.get(isDocs, isDebugMode, blsParams);
-        this.indexName = indexName;
-        this.urlResource = urlResource;
-        this.urlPathInfo = urlPathInfo;
-        this.user = user;
 
+        // Create the WebserviceParams structure from the UserRequest.
+        // We cast to WebserviceParamsImpl because we need to set some fields based on the URL path.
+        // Better would be to move that logic into UserRequestBls.
+        params = (WebserviceParamsImpl)userRequest.getParams(blIndex(), operation);
     }
 
     protected BlackLabIndex blIndex() throws BlsException {
+        if (indexName.isEmpty() || !indexMan.indexExists(indexName))
+            return null;
         return indexMan.getIndex(indexName).blIndex();
     }
 
@@ -438,10 +412,6 @@ public abstract class RequestHandler {
 
     protected boolean isDocsOperation() {
         return false;
-    }
-
-    private void setDebug() {
-        this.debugMode = true;
     }
 
     public void debug(Logger logger, String msg) {

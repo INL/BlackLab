@@ -15,9 +15,20 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * This is faster than building a full object tree first. Intended to replace
  * the DataObject classes.
  */
-public class DataStreamXml extends DataStream {
+public class DataStreamXml extends DataStreamAbstract {
 
     final List<String> tagStack = new ArrayList<>();
+
+    /** Root el document was started with (or null if none) */
+    private String rootEl;
+
+    /** Should contextList omit empty annotations if possible? */
+    protected boolean omitEmptyAnnotations = false;
+
+    @Override
+    public void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) {
+        this.omitEmptyAnnotations = omitEmptyAnnotations;
+    }
 
     public DataStreamXml(PrintWriter out, boolean prettyPrint) {
         super(out, prettyPrint);
@@ -41,7 +52,7 @@ public class DataStreamXml extends DataStream {
         return endOpenEl();
     }
 
-    public DataStream closeEl() {
+    public DataStreamAbstract closeEl() {
         String name = tagStack.remove(tagStack.size() - 1);
         return downindent().indent().print("</").print(name).print(">").newline();
     }
@@ -53,6 +64,7 @@ public class DataStreamXml extends DataStream {
 
     @Override
     public DataStream startDocument(String rootEl) {
+        this.rootEl = rootEl;
         if (rootEl == null)
             return this;
         outputProlog();
@@ -61,7 +73,7 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream endDocument(String rootEl) {
+    public DataStream endDocument() {
         if (rootEl == null)
             return this;
         startCompact();
@@ -114,7 +126,7 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream endItem() {
+    public DataStreamAbstract endItem() {
         return closeEl();
     }
 
@@ -164,7 +176,7 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream endEntry() {
+    public DataStreamAbstract endEntry() {
         return closeEl();
     }
 
@@ -217,7 +229,7 @@ public class DataStreamXml extends DataStream {
     }
 
     @Override
-    public DataStream endAttrEntry() {
+    public DataStreamAbstract endAttrEntry() {
         return closeEl();
     }
 

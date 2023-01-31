@@ -60,7 +60,7 @@ public class ResultHitsGrouped {
     ResultHitsGrouped(WebserviceParams params) throws InvalidQuery {
         this.params = params;
         IndexManager indexMan = params.getIndexManager();
-        indexStatus = indexMan.getIndex(params.getIndexName()).getStatus();
+        indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
 
         SearchCacheEntry<HitGroups> search;
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {

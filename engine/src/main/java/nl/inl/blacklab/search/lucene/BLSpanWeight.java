@@ -26,7 +26,7 @@ public abstract class BLSpanWeight extends SpanWeight {
     
 	@Override
 	public boolean isCacheable(LeafReaderContext ctx) {
-		// TODO Auto-generated method stub
+		// OPT look into SpanWeight.isCacheable() and implement properly
 		return false;
 	}
 

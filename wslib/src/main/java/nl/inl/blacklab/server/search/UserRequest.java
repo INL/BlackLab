@@ -1,7 +1,10 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.server.auth.AuthMethod;
+import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /** Represents a request from the user to the webservice.
  * Used to factor out implementation-specific classes like HttpServlet,
@@ -11,10 +14,9 @@ public interface UserRequest {
     /**
      * Use the specified authentication method to determine the current user.
      *
-     * @param authObj authentication method to use
      * @return user object (either a logged-in user or the anonymous user object)
      */
-    User determineCurrentUser(AuthMethod authObj);
+    User getUser();
 
     SearchManager getSearchManager();
 
@@ -70,4 +72,37 @@ public interface UserRequest {
      * @return attribute value or null if not present
      */
     Object getAttribute(String name);
+
+    /**
+     * Create parameters object from the request.
+     *
+     * @param indexName index name
+     * @param index index we're querying
+     * @param operation operation to perform (if not passed as a parameter)
+     * @return parameters object
+     */
+    WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation);
+
+    /**
+     * Is this a debug request?
+     *
+     * @return true if it's a debug request
+     */
+    boolean isDebugMode();
+
+    /**
+     * Get the instrumentation provider for metrics.
+     *
+     * Will return a "no op" version if none is configured.
+     *
+     * @return instrumentation provider
+     */
+    RequestInstrumentationProvider getInstrumentationProvider();
+
+    /**
+     * Get the name of the corpus we're accessing.
+     *
+     * @return corpus name
+     */
+    public String getCorpusName();
 }

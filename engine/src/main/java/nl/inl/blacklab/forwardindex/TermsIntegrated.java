@@ -130,7 +130,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
         int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
         
-        // TODO: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+        // OPT: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
         String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
 
         finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);

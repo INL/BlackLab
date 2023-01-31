@@ -1,17 +1,12 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ResultAutocomplete;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
-import nl.inl.util.LuceneUtil;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 
 /**
  * Autocompletion for metadata and annotated fields. Annotations must be
@@ -19,11 +14,8 @@ import nl.inl.util.LuceneUtil;
  */
 public class RequestHandlerAutocomplete extends RequestHandler {
 
-    private static final int MAX_VALUES = 30;
-
-    public RequestHandlerAutocomplete(BlackLabServer servlet, HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerAutocomplete(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.AUTOCOMPLETE);
     }
 
     @Override
@@ -50,17 +42,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         params.setFieldName(fieldName);
         params.setAnnotationName(annotationName);
 
-        ResultAutocomplete result = WebserviceOperations.autocomplete(params);
-        dstreamAutoComplete(ds, result);
+        WebserviceRequestHandler.opAutocomplete(params, ds);
         return HTTP_OK;
-    }
-
-    public static void dstreamAutoComplete(DataStream ds, ResultAutocomplete result) {
-        ds.startList();
-        LuceneUtil.findTermsByPrefix(result.getReader(), result.getLuceneField(), result.getTerm(),
-                        result.isSensitiveMatching(), MAX_VALUES)
-                .forEach((v) -> ds.item("term", v));
-        ds.endList();
     }
 
 }

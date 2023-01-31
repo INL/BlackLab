@@ -82,6 +82,10 @@ public class SearchManager {
         indexMan = null;
     }
 
+    public BlackLabEngine getEngine() {
+        return blackLab;
+    }
+
     public SearchCache getBlackLabCache() {
         return cache;
     }

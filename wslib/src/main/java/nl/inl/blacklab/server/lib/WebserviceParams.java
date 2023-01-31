@@ -20,24 +20,34 @@ import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 
 /**
- * Extends the PlainWebserviceParams interface with methods that instantiate searches
+ * Represents a webservice request, with more logic than just the query parameters.
+ * <p>
+ * Extends the QueryParams interface with methods that instantiate searches
  * based on the parameter values.
- *
+ * <p>
  * Should probably be refactored so there's a separate class for each operation, with
  * just the parameters relevant to that operation.
  */
-public interface WebserviceParams extends PlainWebserviceParams {
+public interface WebserviceParams extends QueryParams {
+
     BlackLabIndex blIndex();
 
     boolean hasPattern() throws BlsException;
 
     Optional<TextPattern> pattern() throws BlsException;
 
-    boolean hasFilter() throws BlsException;
-
     String getDocPid();
 
     Query filterQuery() throws BlsException;
+
+    /**
+     * Set the list of accepted doc ids.
+     * <p>
+     * Instead of using a filter query, this list will be used
+     *
+     * @param acceptedDocs global ids of documents to keep (unsorted)
+     */
+    void setFilterQuery(Query query);
 
     /**
      * @return hits - filtered then sorted then sampled then windowed
@@ -92,4 +102,5 @@ public interface WebserviceParams extends PlainWebserviceParams {
 
     SearchFacets facets() throws BlsException;
 
+    Optional<String> getInputFormat();
 }

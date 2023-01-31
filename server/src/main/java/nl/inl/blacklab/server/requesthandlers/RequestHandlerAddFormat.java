@@ -4,15 +4,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -20,10 +18,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerAddFormat extends RequestHandler {
 
-    public RequestHandlerAddFormat(BlackLabServer servlet,
-            HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerAddFormat(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.WRITE_INPUT_FORMAT);
     }
 
     @Override
@@ -39,13 +35,14 @@ public class RequestHandlerAddFormat extends RequestHandler {
             throw new BadRequest("CANNOT_CREATE_INDEX",
                     "Adding a format requires the request to contain a single file in the 'data' field.");
 
+        String fileName = file.getName();
+        InputStream fileInputStream;
         try {
-            String fileName = file.getName();
-            InputStream fileInputStream = file.getInputStream();
-            WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
-            return Response.success(ds, "Format added.");
+            fileInputStream = file.getInputStream();
         } catch (IOException e) {
             throw new BadRequest("", e.getMessage());
         }
+        WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
+        return Response.success(ds, "Format added.");
     }
 }

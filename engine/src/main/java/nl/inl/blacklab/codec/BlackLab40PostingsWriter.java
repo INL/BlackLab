@@ -134,17 +134,8 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      */
     @Override
     public void write(Fields fields, NormsProducer norms) throws IOException {
-
-
-        // Content store: implement custom type of stored field for content store
-        //   (that is removed before calling the delegate)
-
-        // TODO: expand write() to recognize content store fields and write those to a content store file
         write(state.fieldInfos, fields);
-
-        // TODO: wrap fields to filter out content store fields (that will be handled in our own write method)
         delegateFieldsConsumer.write(fields, norms);
-
     }
 
     /** 

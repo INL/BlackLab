@@ -22,6 +22,7 @@ import org.apache.lucene.search.Weight;
  */
 public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
+    /** If set, this query determines hits from which documents will be kept. */
     private final Query filter;
 
     /**

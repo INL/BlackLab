@@ -106,7 +106,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
             protected String getWord() {
                 // In Alto, punctuation and/or whitespace may be part of the word token.
                 // Strip it off before indexing the word.
-                // (TODO: instead of stripping it off, better to add it to punctuation index..?)
+                // (instead of stripping it off, better to add it to punctuation index..?)
                 return StringUtil.trimWhitespaceAndPunctuation(super.getWord());
             }
         });

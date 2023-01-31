@@ -1,11 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletRequest;
-
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
 /**
@@ -13,10 +11,8 @@ import nl.inl.blacklab.server.lib.results.WebserviceOperations;
  */
 public class RequestHandlerDeleteFormat extends RequestHandler {
 
-    public RequestHandlerDeleteFormat(BlackLabServer servlet,
-            HttpServletRequest request, User user, String indexName,
-            String urlResource, String urlPathPart) {
-        super(servlet, request, user, indexName, urlResource, urlPathPart);
+    public RequestHandlerDeleteFormat(UserRequestBls userRequest) {
+        super(userRequest, WebserviceOperation.DELETE_INPUT_FORMAT);
     }
 
     @Override
