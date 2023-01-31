@@ -117,7 +117,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             if (annotations.isEmpty())
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
-            boolean needsPrimaryValuePayloads = getDocWriter().indexWriter().needsPrimaryValuePayloads();
+            boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
             AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(),
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);

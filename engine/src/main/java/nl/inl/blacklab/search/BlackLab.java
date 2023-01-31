@@ -20,7 +20,7 @@ import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;

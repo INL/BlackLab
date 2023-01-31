@@ -2,11 +2,18 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.File;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.indexers.config.TextDirection;
 
-/** Information about a BlackLab index, including its fields structure. */
+/**
+ * Runtime information about the shape of a BlackLab index, such as its fields structure.
+ * Note: this has some overlap with {@link nl.inl.blacklab.indexers.config.ConfigInputFormat},
+ * with some differences:
+ * The ConfigInputFormat defines how fields etc. should be extracted from an input document, and serves as a sort of "template" for the index.
+ * This class contains no such info, it only contains info that is actually present in the index, things like: the name, all present fields (annotations and metadata both), total size, etc.
+ * 
+ * During indexing/writing, this class is mutable and constantly updated whenever a new field is encountered.
+ * During searching/reading, this class is readonly ("frozen"). At the end of the indexing process, the metadata is stored in/along the index.
+ */
 public interface IndexMetadata extends Freezable {
 
     static String indexNameFromDirectory(File directory) {

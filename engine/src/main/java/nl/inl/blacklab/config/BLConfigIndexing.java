@@ -1,6 +1,6 @@
 package nl.inl.blacklab.config;
 
-import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
 
 public class BLConfigIndexing {

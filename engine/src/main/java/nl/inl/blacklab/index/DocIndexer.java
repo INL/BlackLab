@@ -77,16 +77,6 @@ public interface DocIndexer extends AutoCloseable {
      */
     void index() throws IOException, MalformedInputFile, PluginException;
 
-    /**
-     * Enables or disables norms. Norms are disabled by default.
-     *
-     * The method name was chosen to match Lucene's Field.setOmitNorms(). Norms are
-     * only required if you want to use document-length-normalized scoring.
-     *
-     * @param b if true, doesn't store norms; if false, does store norms
-     */
-    void setOmitNorms(boolean b);
-
     boolean continueIndexing();
 
     List<String> getMetadataField(String name);

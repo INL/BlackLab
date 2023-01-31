@@ -41,6 +41,7 @@ import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
+/** Interface for reading/searching a BlackLab index. For writing, see {@link BlackLabIndexWriter}. */
 public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
@@ -281,6 +282,7 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /**
      * Get the index directory.
+     * For some implementations this may be null!
      * 
      * @return index directory
      */
@@ -482,7 +484,6 @@ public interface BlackLabIndex extends AutoCloseable {
      * a document may be viewed when a contentViewable metadata field with a value
      * true is registered with either the document or with the index metadata.
      *
-     * @param indexMetadata our index metadata
      * @param document document we want to view
      * @return true iff the content from documents in the index may be viewed
      */

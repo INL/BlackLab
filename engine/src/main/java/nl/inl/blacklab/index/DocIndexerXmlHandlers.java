@@ -386,7 +386,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
-        boolean needsPrimaryValuePayloads = docWriter.indexWriter().needsPrimaryValuePayloads();
+        boolean needsPrimaryValuePayloads = docWriter.needsPrimaryValuePayloads();
         contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
                 AnnotationSensitivities.defaultForAnnotation(mainPropName), false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();
@@ -397,7 +397,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
     }
 
     public void registerContentsField() {
-        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().metadata();
         indexMetadata.registerAnnotatedField(contentsField);
     }
 

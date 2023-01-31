@@ -12,11 +12,9 @@ import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
-import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.UnicodeStream;
@@ -69,16 +67,19 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         charsContentAlreadyStored = 0;
     }
 
+    // TODO fix, compiles but nullpointer runtime because null is passed for currentDoc.
     public void storePartCapturedContent() {
         // storePart only works for the classic external index format.
         // for internal, we just ignore it (will be fully stored eventually by final call to store())
-        if (getDocWriter().indexWriter() instanceof BlackLabIndexExternal) {
-            charsContentAlreadyStored += content.length();
-            ContentStoreExternal contentStore = (ContentStoreExternal) getDocWriter().contentStore(
-                    captureContentFieldName);
-            contentStore.storePart(new TextContent(content));
-            content.setLength(0);
-        }
+
+        getDocWriter().storeInContentStore(null, new TextContent(content), captureContentFieldName, "contents");
+//        if (getDocWriter().indexWriter() instanceof BlackLabIndexExternal) {
+//            charsContentAlreadyStored += content.length();
+//            ContentStoreExternal contentStore = (ContentStoreExternal) getDocWriter().contentStore(
+//                    captureContentFieldName);
+//            contentStore.storePart(new TextContent(content));
+//            content.setLength(0);
+//        }
     }
 
     private void appendContentInternal(String str) {
@@ -404,6 +405,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         TextContent document = new TextContent(content);
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
-        storeInContentStore(getDocWriter(), currentDoc, document, contentIdFieldName, contentStoreName);
+        getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
     }
 }

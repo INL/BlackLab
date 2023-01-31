@@ -67,6 +67,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         return new ForwardIndexExternal(this, field);
     }
 
+    @Override
     protected void deleteFromForwardIndices(Document d) {
         // Delete this document in all forward indices
         for (Map.Entry<AnnotatedField, ForwardIndex> e: forwardIndices.entrySet()) {

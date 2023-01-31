@@ -215,7 +215,7 @@ public class TestIndex {
                     indexer.close();
                     indexWriter = BlackLab.openForWriting(indexDir, false, null, null, indexType);
                     indexer = Indexer.get(indexWriter);
-                    String luceneField = indexer.indexWriter().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
+                    String luceneField = indexer.indexWriter().metadata().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
                 }
             } finally {

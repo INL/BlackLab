@@ -217,12 +217,12 @@ public interface Indexer {
      */
     default void index(String fileName, byte[] contents) { index(fileName, contents, null); }
     
-    /**
-     * Get our index directory
-     *
-     * @return the index directory
-     */
-    File indexLocation();
+//    /**
+//     * Get our index directory
+//     *
+//     * @return the index directory
+//     */
+//    File indexLocation();
 
     /**
      * The index we're writing to.

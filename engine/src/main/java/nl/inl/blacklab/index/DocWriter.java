@@ -6,24 +6,19 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
-import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
 /**
  * Interface the DocIndexer gets to store documents.
  */
 public interface DocWriter {
 
-    /**
-     * Get the general index writer object.
-     * 
-     * Not sure if this method is needed; we probably want to see if we can leave it out.
-     *   
-     * @return writer
-     */
-    BlackLabIndexWriter indexWriter();
+    IndexMetadataWriter metadata();
 
+    BLIndexObjectFactory indexObjectFactory();
+    
     /**
      * Add a Lucene document to the index
      *
@@ -74,14 +69,6 @@ public interface DocWriter {
     Optional<Function<String, File>> linkedFileResolver();
 
     /**
-     * Get the content store for the specified field.
-     * 
-     * @param captureContentFieldName field name
-     * @return content store
-     */
-    ContentStore contentStore(String captureContentFieldName);
-
-    /**
      * Add a field with its annotations to the forward index
      * 
      * @param field field to add
@@ -89,4 +76,7 @@ public interface DocWriter {
      */
     void addToForwardIndex(AnnotatedFieldWriter field, BLInputDocument currentDoc);
 
+    void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName);
+
+    boolean needsPrimaryValuePayloads();
 }

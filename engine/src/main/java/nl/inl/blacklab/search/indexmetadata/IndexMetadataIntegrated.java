@@ -52,7 +52,8 @@ import nl.inl.util.LuceneUtil;
 import nl.inl.util.TimeUtil;
 
 /**
- * Determines the structure of a BlackLab index.
+ * Implementation of IndexMetadata, which determines the structure of a BlackLab index. 
+ * See {@link IndexMetadata}
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({
@@ -138,12 +139,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             try {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
-
-                if (indexWriter.indexDirectory() != null) {
-                    // Write debug files
-                    File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata.json");
-                    FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
-                }
 
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again

@@ -30,7 +30,7 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.DownloadCache;
+import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -144,7 +144,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
         annotatedFields.put(field.name(), field);
         if (getDocWriter() != null) {
-            IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+            IndexMetadataWriter indexMetadata = getDocWriter().metadata();
             indexMetadata.registerAnnotatedField(field);
         }
     }
@@ -478,7 +478,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         } else {
             contentIdFieldName = contentStoreName + "Cid";
         }
-        storeInContentStore(getDocWriter(), currentDoc, document, contentIdFieldName, contentStoreName);
+        getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
     }
 
     /**
@@ -711,7 +711,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @return true if dashes should be sanitized from annotation names
      */
     protected boolean disallowDashInname() {
-        return !(getDocWriter().indexWriter() instanceof BlackLabIndexIntegrated);
+        return !(getDocWriter() instanceof BlackLabIndexIntegrated);
     }
-
 }

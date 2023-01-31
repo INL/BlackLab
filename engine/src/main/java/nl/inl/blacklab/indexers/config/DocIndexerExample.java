@@ -135,7 +135,6 @@ public class DocIndexerExample extends DocIndexerBase {
      * @param annotations annotations on this field
      */
     private void createSimpleAnnotatedField(String name, List<String> annotations) {
-        BlackLabIndexWriter indexWriter = getDocWriter().indexWriter();
         // Configure an annotated field "contents".
         // Add two annotations, "word" and "lemma". First one added will be the main annotation.
         ConfigAnnotatedField field = new ConfigAnnotatedField(name);
@@ -166,9 +165,8 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     private void createAnnotatedFieldWriter(ConfigAnnotatedField fieldContents) {
-        BlackLabIndexWriter indexWriter = getDocWriter().indexWriter();
         // Add the configured field to our index metadata
-        indexWriter.annotatedFields().addFromConfig(fieldContents);
+        getDocWriter().metadata().annotatedFields().addFromConfig(fieldContents);
 
         // Create a AnnotatedFieldWriter for this field so we can index it
         Collection<ConfigAnnotation> annots = fieldContents.getAnnotations().values();
@@ -177,7 +175,7 @@ public class DocIndexerExample extends DocIndexerBase {
         AnnotatedFieldWriter contents = new AnnotatedFieldWriter(fieldContents.getName(),
                 mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(),
                 false,
-                indexWriter.needsPrimaryValuePayloads());
+                getDocWriter().needsPrimaryValuePayloads());
         while (annotIt.hasNext()) {
             ConfigAnnotation annot = annotIt.next();
             boolean includePayloads = annot.getName() == AnnotatedFieldNameUtil.TAGS_ANNOT_NAME;
@@ -190,7 +188,7 @@ public class DocIndexerExample extends DocIndexerBase {
         ConfigMetadataField metaPidConfig = new ConfigMetadataField();
         metaPidConfig.setName(name);
         metaPidConfig.setType(type);
-        getDocWriter().indexWriter().metadata().metadataFields().addFromConfig(metaPidConfig);
+        getDocWriter().metadata().metadataFields().addFromConfig(metaPidConfig);
         return metaPidConfig;
     }
 

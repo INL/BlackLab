@@ -18,6 +18,9 @@ import org.mozilla.universalchardet.UniversalDetector;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
+import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
+import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -29,8 +32,11 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.ContentAccessor;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileUtil;
 import nl.inl.util.UnicodeStream;
@@ -242,7 +248,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
         // Make sure we have a supported format, and make sure a default format is recorded in the metadata.
         try {
-            this.formatIdentifier = determineFormat(indexWriter.indexDirectory(), formatIdentifier, indexWriter.metadata().documentFormat());
+            this.formatIdentifier = determineFormat(indexWriter.name(), formatIdentifier, indexWriter.metadata().documentFormat());
             BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
         } catch (DocumentFormatNotFound e) {
             indexWriter.close();
@@ -258,20 +264,20 @@ class IndexerImpl implements DocWriter, Indexer {
      * Will return a supported format, preferring the specified one to the
      * default, or throw an exception.
      *
-     * @param directory index directory (for exception message)
+     * @param indexName for exception message
      * @param formatIdentifier specified format
      * @param fallbackFormat default to fall back if the specified format is not supported
      * @return chosen format
      * @throws DocumentFormatNotFound if neither format is supported
      */
-    private String determineFormat(File directory, String formatIdentifier, String fallbackFormat)
+    private String determineFormat(String indexName, String formatIdentifier, String fallbackFormat)
             throws DocumentFormatNotFound {
         if (!DocumentFormats.isSupported(formatIdentifier)) {
             // Specified format not found; use index default
             if (fallbackFormat == null || !DocumentFormats.isSupported(fallbackFormat)) {
                 // Index default doesn't work either, error
                 throw new DocumentFormatNotFound(
-                        "Could not determine documentFormat for index " + directory + " (" + formatIdentifier
+                        "Could not determine documentFormat for index " + indexName + " (" + formatIdentifier
                                 + (fallbackFormat == null ? "" : " / " + fallbackFormat) + "): " + formatError(formatIdentifier));
             }
             formatIdentifier = fallbackFormat;
@@ -425,6 +431,34 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
+    public void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName,
+            String contentStoreName) {
+
+        Field field = indexWriter.metadata().annotatedField(contentStoreName);
+        if (field == null) field = indexWriter.metadata().metadataField(contentStoreName);
+
+        // TODO move store function into ContentStore
+        // this will require moving ContentStore into engine module so it can see BlInputDocument class.
+        ContentStore store = indexWriter.contentStore(field);
+
+        if (store instanceof ContentStoreIntegrated) {
+            AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
+            if (annotatedFields.exists(contentStoreName)) {
+                annotatedFields.get(contentStoreName).setContentStore(true);
+            }
+
+            String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
+            BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
+            currentDoc.addField(luceneFieldName, document.toString(), fieldType);
+        } else {
+            // external contentstore, different api
+            ContentStoreExternal contentStore = (ContentStoreExternal) store;
+            int contentId = contentStore.store(document);
+            currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
+        }
+    }
+
+    @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
     }
@@ -498,32 +532,6 @@ class IndexerImpl implements DocWriter, Indexer {
         return Math.max(0, maxNumberOfDocsToIndex - docsDone);
     }
 
-    /*
-     * BlackLab index version history:
-     * 1. Initial version
-     * 2. Sort index added to forward index; multiple forward indexes possible
-     */
-
-    @Override
-    public ContentStore contentStore(String fieldName) {
-        ContentAccessor contentAccessor = indexWriter.contentAccessor(indexWriter.field(fieldName));
-        if (contentAccessor == null)
-            return null;
-
-//        if (indexWriter instanceof BlackLabIndexIntegrated) {
-//            // Make sure the existence of the content store is known in the metadata.
-//            AnnotatedFieldImpl af = (AnnotatedFieldImpl) indexWriter.metadata().annotatedFields().get(fieldName);
-//            af.setContentStore(true);
-//        }
-
-        return contentAccessor.getContentStore();
-    }
-
-    @Override
-    public File indexLocation() {
-        return indexWriter.indexDirectory();
-    }
-
     @Override
     public void setIndexerParam(Map<String, String> indexerParam) {
         this.indexerParam = indexerParam;
@@ -587,5 +595,20 @@ class IndexerImpl implements DocWriter, Indexer {
             logger.info("Threaded indexing is disabled for format " + formatIdentifier);
             this.numberOfThreadsToUse = 1;
         }
+    }
+
+    @Override
+    public IndexMetadataWriter metadata() {
+        return indexWriter.metadata();
+    }
+
+    @Override
+    public BLIndexObjectFactory indexObjectFactory() {
+        return indexWriter.indexObjectFactory();
+    }
+
+    @Override
+    public boolean needsPrimaryValuePayloads() {
+        return indexWriter.needsPrimaryValuePayloads();
     }
 }

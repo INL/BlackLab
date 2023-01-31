@@ -10,12 +10,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -30,9 +26,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     protected static final Logger logger = LogManager.getLogger(DocIndexerAbstract.class);
 
     private DocWriter docWriter;
-
-    /** Do we want to omit norms? (Default: yes) */
-    protected boolean omitNorms = true;
 
     /**
      * File we're currently parsing. This can be useful for storing the original
@@ -115,19 +108,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
        }
    }
 
-    /**
-     * Enables or disables norms. Norms are disabled by default.
-     *
-     * The method name was chosen to match Lucene's Field.setOmitNorms(). Norms are
-     * only required if you want to use document-length-normalized scoring.
-     *
-     * @param b if true, doesn't store norms; if false, does store norms
-     */
-    @Override
-    public void setOmitNorms(boolean b) {
-        omitNorms = b;
-    }
-
     @Override
     public boolean continueIndexing() {
         return getDocWriter().continueIndexing();
@@ -140,23 +120,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public List<String> getMetadataField(String name) {
         return metadataFieldValues.get(name);
-    }
-
-    public static void storeInContentStore(DocWriter writer, BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName) {
-        if (writer.indexWriter() instanceof BlackLabIndexIntegrated) {
-            AnnotatedFieldsImpl annotatedFields = writer.indexWriter().metadata().annotatedFields();
-            if (annotatedFields.exists(contentStoreName)) {
-                annotatedFields.get(contentStoreName).setContentStore(true);
-            }
-
-            String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-            BLFieldType fieldType = writer.indexWriter().indexObjectFactory().fieldTypeContentStore();
-            currentDoc.addField(luceneFieldName, document.toString(), fieldType);
-        } else {
-            ContentStoreExternal contentStore = (ContentStoreExternal)writer.contentStore(contentStoreName);
-            int contentId = contentStore.store(document);
-            currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
-        }
     }
 
     @Override
@@ -173,7 +136,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         value = value.trim();
         if (!value.isEmpty()) {
             metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
-            IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+            IndexMetadataWriter indexMetadata = getDocWriter().metadata();
             indexMetadata.registerMetadataField(name);
         }
     }
@@ -201,7 +164,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public void addMetadataToDocument() {
         // See what metadatafields are missing or empty and add unknown value if desired.
-        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().metadata();
         Map<String, String> unknownValuesToUse = new HashMap<>();
         List<String> fields = indexMetadata.metadataFields().names();
         for (String field: fields) {
@@ -250,7 +213,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     public void addMetadataFieldToDocument(String name, List<String> values) {
-        IndexMetadataWriter indexMetadata = getDocWriter().indexWriter().metadata();
+        IndexMetadataWriter indexMetadata = getDocWriter().metadata();
         //indexMetadata.registerMetadataField(name);
 
         MetadataFieldImpl desc = (MetadataFieldImpl) indexMetadata.metadataFields().get(name);
@@ -332,6 +295,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
     protected BLInputDocument createNewDocument() {
-        return getDocWriter().indexWriter().indexObjectFactory().createInputDocument();
+        return getDocWriter().indexObjectFactory().createInputDocument();
     }
 }

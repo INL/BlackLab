@@ -160,10 +160,5 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         outputIndexer.setConfigInputFormat(config);
     }
 
-    @Override
-    public void setOmitNorms(boolean b) {
-        outputIndexer.setOmitNorms(b);
-    }
-
     // do not override setDocumentName
 }

@@ -7,7 +7,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-/** Configuration for annotated (formerly "complex") fields in our XML */
+/**
+ * This class represents an AnnotatedField (i.e. a collection of Annotations - formerly "complex field")
+ * as defined in a *.blf.yaml/*.blf.json file.
+ * It is mainly used by the various {@link DocIndexerConfig} classes to extract data from input text/documents.
+ */
 public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     private String name;

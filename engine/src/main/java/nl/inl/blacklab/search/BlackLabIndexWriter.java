@@ -2,15 +2,20 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 
-public interface BlackLabIndexWriter extends BlackLabIndex {
+public interface BlackLabIndexWriter extends AutoCloseable {
 
     /**
      * Return factory object for creating input documents, getting field types, etc.
@@ -42,7 +47,6 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      *
      * @return the structure object
      */
-    @Override
     IndexMetadataWriter metadata();
 
     BLIndexWriterProxy writer();
@@ -94,6 +98,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
         writer().updateDocument(term, document);
     }
 
+
     /**
      * Should TokenStream payloads contain information about primary/secondary token values?
      *
@@ -111,4 +116,31 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
      * @return whether or not TokenStream payloads should include primary value indicators
      */
     boolean needsPrimaryValuePayloads();
+
+    /**
+     * Finalize the index object. This closes the IndexSearcher and (depending on
+     * the constructor used) may also close the index reader.
+     */
+    @Override
+    void close();
+
+    String name();
+
+    /**
+     * Get the analyzer for indexing and searching.
+     *
+     * @return the analyzer
+     */
+    Analyzer analyzer();
+
+    /**
+     * Get forward index for the specified annotated field.
+     *
+     * @param field field to get forward index for
+     * @return forward index
+     */
+    ForwardIndex forwardIndex(AnnotatedField field);
+
+    /** Get the ContentStore with this name. If no such ContentStore exists, the implementation should create it. */
+    ContentStore contentStore(Field contentStoreName);
 }
