@@ -43,10 +43,12 @@ public class CorpusResource {
 
         switch (corpusName) {
         case "cache-clear":
+            // POST naar /cache-clear : clear cache (not implemented)
             return resourceNotImplemented("/cache-clear");
         }
 
-        return Response.status(Response.Status.BAD_REQUEST).build();
+        // POST naar /CORPUSNAME ; not supported
+        return resourceNotImplemented("POST to /CORPUSNAME");
     }
 
     /**
@@ -77,7 +79,9 @@ public class CorpusResource {
             return resourceNotImplemented("/cache-clear");
         }
 
-        return Requests.get(client, Map.of(WsPar.CORPUS_NAME, corpusName));
+        return Requests.get(client, Map.of(
+                WsPar.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
+                WsPar.CORPUS_NAME, corpusName));
     }
 
     /**

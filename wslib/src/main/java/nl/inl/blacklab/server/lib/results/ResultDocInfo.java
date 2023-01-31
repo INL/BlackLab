@@ -94,5 +94,4 @@ public class ResultDocInfo {
     public boolean isMayView() {
         return mayView;
     }
-
 }

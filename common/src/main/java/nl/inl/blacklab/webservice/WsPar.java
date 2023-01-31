@@ -8,6 +8,11 @@ import java.util.Set;
 
 import nl.inl.blacklab.Constants;
 
+/**
+ * Declaration of the webservice parameters and their default values.
+ *
+ * Used by BLS, the Solr component and the proxy.
+ */
 public class WsPar {
 
     public static final String CORPUS_NAME = "indexname";
@@ -31,8 +36,14 @@ public class WsPar {
     public static final String NUMBER_OF_RESULTS = "number";
 
     public static final String USE_CACHE = "usecache";
+
+    public static final String INCLUDE_DEPRECATED_FIELD_INFO = "include-deprecated";
+
     /**
      * Parameters involved in search
+     *
+     * FIXME: this seems to now be a list of all parameters? Or is it really only the parameters
+     *        that influence the search results?
      */
     public static final Set<String> NAMES = new HashSet<>(Arrays.asList(
             // What to search for
@@ -91,7 +102,8 @@ public class WsPar {
 
             CORPUS_NAME, // "indexname"
             "field",
-            "inputformat"
+            "inputformat",
+            INCLUDE_DEPRECATED_FIELD_INFO
     ));
 
     public static boolean exists(String name) {

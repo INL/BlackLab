@@ -17,6 +17,7 @@ import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.util.plugin.SolrCoreAware;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
@@ -182,7 +183,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             //   "blacklab-csv" output?
             //if (outputType == DataFormat.CSV)
 
-            ds.startEntry("blacklab");
+            ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
             try {
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
@@ -292,7 +293,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             System.err.println(sw);
             err.add("stackTrace", sw.toString());
         }
-        rb.rsp.add("blacklab", Map.of("error", err));
+        rb.rsp.add(Constants.SOLR_BLACKLAB_SECTION_NAME, Map.of("error", err));
     }
 
     /////////////////////////////////////////////

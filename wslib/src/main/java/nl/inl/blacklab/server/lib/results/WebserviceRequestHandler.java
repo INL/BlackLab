@@ -105,7 +105,7 @@ public class WebserviceRequestHandler {
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
                 ResultHits result = WebserviceOperations.getResultHits(params);
-                DStream.hitsResponse(ds, result);
+                DStream.hitsResponse(ds, result, params.includeDeprecatedFieldInfo());
             }
         }
     }
@@ -131,7 +131,7 @@ public class WebserviceRequestHandler {
                 // Regular set of docs (no grouping first)
                 result = WebserviceOperations.regularDocsResponse(params);
             }
-            DStream.docsResponse(ds, result);
+            DStream.docsResponse(ds, result, params.includeDeprecatedFieldInfo());
         }
     }
 
@@ -188,7 +188,8 @@ public class WebserviceRequestHandler {
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
 
         // Document info
-        DStream.docInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames);
+        DStream.docInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames,
+                params.includeDeprecatedFieldInfo());
     }
 
     /**

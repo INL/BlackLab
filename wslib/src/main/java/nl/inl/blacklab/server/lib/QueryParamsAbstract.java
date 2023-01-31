@@ -406,4 +406,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getInputFormat() {
         return opt("inputformat");
     }
+
+    @Override
+    public boolean includeDeprecatedFieldInfo() {
+        return getBool(WsPar.INCLUDE_DEPRECATED_FIELD_INFO);
+    }
 }

@@ -2,6 +2,7 @@ package org.ivdnt.blacklab.proxy.logic;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.ws.rs.WebApplicationException;
@@ -13,7 +14,9 @@ import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.json.JSONObject;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsPar;
 
@@ -80,6 +83,13 @@ public class Requests {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
+        if (!queryParams.containsKey(WsPar.CORPUS_NAME)) {
+            // Solr always needs a corpus name even for "server-wide" requests.
+            if (proxyTarget.getDefaultCorpusName().isEmpty())
+                throw new IllegalStateException("No corpus name. Please specify proxyTarget.defaultCorpusName in proxy config file");
+            queryParams = new HashMap<>(queryParams);
+            queryParams.put(WsPar.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
+        }
         return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
                 requestSolr(target, queryParams, method, mediaType) :
                 requestBls(target, queryParams, method, mediaType);
@@ -111,13 +121,27 @@ public class Requests {
             String corpusName = queryParams.get(WsPar.CORPUS_NAME);
             if (corpusName != null)
                 target = target.path(corpusName);
+            target = target.path("select");
             for (Map.Entry<String, String> e: queryParams.entrySet()) {
                 String key = e.getKey();
                 if (!key.equals(WsPar.CORPUS_NAME))
                     target = target.queryParam(BL_PAR_NAME_PREFIX + e.getKey(), e.getValue());
             }
         }
-        return target.request(mediaType).method(method);
+        Response solrResponse = target.request(mediaType).method(method);
+
+        MediaType type = solrResponse.getMediaType();
+        if (!MediaType.APPLICATION_JSON_TYPE.isCompatible(type)) {
+            return Response.status(Status.BAD_REQUEST).
+                    entity(new ErrorResponse("INVALID_RESPONSE", "Expected JSON response from Solr, got " + type, "")).build();
+        }
+
+        // Get the "blacklab" section from the JSON response and construct a new response from that
+        String json = solrResponse.readEntity(String.class);
+        JSONObject objBlacklabResponse = new JSONObject(json).getJSONObject(Constants.SOLR_BLACKLAB_SECTION_NAME);
+        json = objBlacklabResponse.toString(2);
+        Response blacklabResponse = Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
+        return blacklabResponse;
     }
 
     /** How to create the BLS request to a node */

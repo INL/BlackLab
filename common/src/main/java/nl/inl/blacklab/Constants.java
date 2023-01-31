@@ -1,5 +1,8 @@
 package nl.inl.blacklab;
 
+/**
+ * Constant values used in various places throughout the project.
+ */
 public class Constants {
 
     /**
@@ -22,4 +25,7 @@ public class Constants {
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = "word";
 
+    /** Key in Solr response that contains the BlackLab response
+        (also used by the proxy to retrieve the BlackLab response from the Solr response) */
+    public static final String SOLR_BLACKLAB_SECTION_NAME = "blacklab";
 }

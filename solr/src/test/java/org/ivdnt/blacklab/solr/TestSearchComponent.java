@@ -23,6 +23,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import nl.inl.blacklab.Constants;
+
 public class TestSearchComponent {
 
     static final String CORE_NAME = "testcore";
@@ -70,7 +72,7 @@ public class TestSearchComponent {
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        Assert.assertNull(queryResponse.getResponse().get("blacklab"));
+        Assert.assertNull(queryResponse.getResponse().get(Constants.SOLR_BLACKLAB_SECTION_NAME));
     }
 
     @Test
@@ -79,7 +81,7 @@ public class TestSearchComponent {
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add("bl.op", "none"); // activate component and set operation
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
-        Assert.assertNull(queryResponse.getResponse().get("blacklab"));
+        Assert.assertNull(queryResponse.getResponse().get(Constants.SOLR_BLACKLAB_SECTION_NAME));
     }
 
     @Test
@@ -94,7 +96,7 @@ public class TestSearchComponent {
         //System.err.println(CORE_NAME);
         QueryResponse queryResponse = SolrTestServer.client().query(CORE_NAME, solrParams);
 
-        NamedList<Object> blacklab = (NamedList<Object>)queryResponse.getResponse().get("blacklab");
+        NamedList<Object> blacklab = (NamedList<Object>)queryResponse.getResponse().get(Constants.SOLR_BLACKLAB_SECTION_NAME);
         List<NamedList<Object>> hits = (List<NamedList<Object>>) blacklab.get("hits");
         Assert.assertEquals(21, hits.size());
     }

@@ -759,4 +759,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public void setInputFormat(String inputFormat) {
         this.inputFormat = inputFormat;
     }
+
+    @Override
+    public boolean includeDeprecatedFieldInfo() {
+        return params.includeDeprecatedFieldInfo();
+    }
 }

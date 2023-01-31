@@ -152,4 +152,15 @@ public interface QueryParams {
 
     default Optional<String> getInputFormat() { return Optional.empty(); }
 
+    /**
+     * Should the responses include deprecated field information?
+     *
+     * A few requests would always include information that was not specific to that request,
+     * and available elsewhere, like metadata field groups, special fields, and metadata display names.
+     * This toggle is for applications that rely on these deprecated parts of the response.
+     * Caution, this will be removed in the future.
+     *
+     * @return should we include deprecated field info?
+     */
+    boolean includeDeprecatedFieldInfo();
 }

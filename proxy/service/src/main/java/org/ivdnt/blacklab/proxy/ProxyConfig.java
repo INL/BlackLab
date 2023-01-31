@@ -27,12 +27,18 @@ public class ProxyConfig {
         /** What protocol does the proxy target speak? (for now, "BLS" or "Solr") */
         private String protocol;
 
+        private String defaultCorpusName = "";
+
         public String getUrl() {
             return url;
         }
 
         public String getProtocol() {
             return protocol;
+        }
+
+        public String getDefaultCorpusName() {
+            return defaultCorpusName;
         }
     }
 

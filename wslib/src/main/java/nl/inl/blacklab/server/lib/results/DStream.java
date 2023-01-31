@@ -532,7 +532,7 @@ public class DStream {
         ds.endMap().endEntry().endMap();
     }
 
-    public static void hitsResponse(DataStream ds, ResultHits resultHits)
+    public static void hitsResponse(DataStream ds, ResultHits resultHits, boolean includeDeprecatedFieldInfo)
             throws InvalidQuery {
         nl.inl.blacklab.server.lib.WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
@@ -556,7 +556,11 @@ public class DStream {
             // Write docField (pidField, titleField, etc.) and metadata display names
             // (these arguably shouldn't be included with every hits response; can be read once from the index
             //  metadata response)
-            metadataFieldInfo(ds, resultHits.getDocFields(), resultHits.getMetaDisplayNames());
+            if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
+                // (this information is not specific to this request and can be found elsewhere,
+                //  so it probably shouldn't be here)
+                metadataFieldInfo(ds, resultHits.getDocFields(), resultHits.getMetaDisplayNames());
+            }
 
             // Include explanation of how the query was executed?
             if (params.getExplain()) {
@@ -705,7 +709,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void docsResponse(DataStream ds, ResultDocsResponse result) {
+    public static void docsResponse(DataStream ds, ResultDocsResponse result, boolean includeDeprecatedFieldInfo) {
         ds.startMap();
         {
             // The summary
@@ -720,7 +724,11 @@ public class DStream {
                 if (result.isIncludeTokenCount())
                     ds.entry("tokensInMatchingDocuments", result.getTotalTokens());
 
-                metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
+                if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
+                    // (this information is not specific to this request and can be found elsewhere,
+                    //  so it probably shouldn't be here)
+                    metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
+                }
             }
             ds.endMap().endEntry();
 
@@ -954,7 +962,7 @@ public class DStream {
     }
 
     public static void docInfoResponse(DataStream ds, ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
-            Map<String, String> docFields, Map<String, String> metaDisplayNames) {
+            Map<String, String> docFields, Map<String, String> metaDisplayNames, boolean includeDeprecatedFieldInfo) {
         ds.startMap().entry("docPid", docInfo.getPid());
         {
             ds.startEntry("docInfo");
@@ -963,7 +971,7 @@ public class DStream {
             }
             ds.endEntry();
 
-            if (apiVersion == ApiVersion.V3) {
+            if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
                 // (this information is not specific to this document and can be found elsewhere,
                 //  so it probably shouldn't be here)
                 metadataGroupInfo(ds, metadataFieldGroups);
