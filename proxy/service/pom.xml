@@ -8,16 +8,15 @@
         <artifactId>blacklab-proxy</artifactId>
         <version>4.0.0-SNAPSHOT</version>
     </parent>
-    <artifactId>blacklab-aggregator-service</artifactId>
+    <artifactId>blacklab-proxy-service</artifactId>
     <packaging>war</packaging>
 
     <name>BlackLab Server Proxy</name>
-    <description>A REST webservice that aggregates results from multiple BLS nodes, as
-        a simple proof of concept of distributed search.</description>
+    <description>A REST webservice that reverse proxies a BlackLab backend, for security and API consistency.</description>
 
     <build>
 
-        <finalName>blacklab-aggregator</finalName>
+        <finalName>blacklab-proxy</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

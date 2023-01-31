@@ -93,7 +93,7 @@ public class Server implements Cloneable {
     public String blacklabVersion;
 
     @XmlElement
-    public String apiImplementation = "aggregator-experimental";
+    public String apiImplementation = "blacklab-proxy";
 
     @XmlElementWrapper(name="indices")
     @XmlElement(name = "index")

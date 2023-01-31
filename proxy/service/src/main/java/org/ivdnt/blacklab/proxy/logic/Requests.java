@@ -17,7 +17,7 @@ import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsPar;
 
-/** Performs requests to the BLS nodes we're aggregating */
+/** Performs requests to the BLS nodes we're proxying */
 public class Requests {
 
     private static final String BL_PAR_NAME_PREFIX = "bl" + ".";
