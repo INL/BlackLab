@@ -38,13 +38,19 @@ public class SearchManager {
     /** Main BlackLab object, containing the search executor service */
     private BlackLabEngine blackLab;
 
-    public SearchManager(BLSConfig config) throws ConfigurationException {
+    /**
+     *
+     * @param config configuration
+     * @param forceApplyGlobalConfig if false, only apply global config settings if not previously done
+     * @throws ConfigurationException
+     */
+    public SearchManager(BLSConfig config, boolean forceApplyGlobalConfig) throws ConfigurationException {
         this.config = config;
 
         // load blacklab's internal config before doing anything
         // It's important we do this as early as possible as some things are loaded depending on the config
         // (such as plugins)
-        BlackLab.setConfig(config.getBLConfig());
+        BlackLab.setConfig(config.getBLConfig(), forceApplyGlobalConfig);
 
         // Create BlackLab instance with the desired number of search threads
         int maxThreadsPerSearch = config.getPerformance().getMaxThreadsPerSearch();

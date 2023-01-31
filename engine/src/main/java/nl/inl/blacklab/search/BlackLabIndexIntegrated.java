@@ -118,9 +118,9 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     /** A list of stored fields that doesn't include content store fields. */
     private Set<String> allExceptContentStoreFields;
 
-    BlackLabIndexIntegrated(BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexIntegrated(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(blackLab, reader, indexDir, indexMode, createNewIndex, config, null);
+        super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config, null);
 
         // Determine the list of all fields in the index, but skip fields that
         // represent a content store as they contain very large values (i.e. the

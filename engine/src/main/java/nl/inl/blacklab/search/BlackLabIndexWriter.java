@@ -15,7 +15,7 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
     /**
      * Return factory object for creating input documents, getting field types, etc.
      *
-     * This exists to support indexingg both directly to Lucene and inside Solr.
+     * This exists to support indexing both directly to Lucene and inside Solr.
      *
      * @return index object factory
      */
@@ -27,7 +27,6 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
             // indexTemplateFile didn't provide a default formatIdentifier,
             // overwrite it with our provided formatIdentifier
             indexWriter.metadata().setDocumentFormat(formatIdentifier);
-            indexWriter.metadata().save();
         }
     }
 
@@ -95,4 +94,21 @@ public interface BlackLabIndexWriter extends BlackLabIndex {
         writer().updateDocument(term, document);
     }
 
+    /**
+     * Should TokenStream payloads contain information about primary/secondary token values?
+     *
+     * These are indicators used to decide which value is the primary value that should be
+     * stored in the forward index so it can be used for concordances, sort, grouping, etc.
+     *
+     * Secondary values are not stored in the forward index. This might be synonyms or stemmed
+     * values.
+     *
+     * The indicator in the payload (if one was added, which we try to avoid if possible) should be
+     * skipped when using payloads.
+     *
+     * Used by the integrated index format.
+     *
+     * @return whether or not TokenStream payloads should include primary value indicators
+     */
+    boolean needsPrimaryValuePayloads();
 }

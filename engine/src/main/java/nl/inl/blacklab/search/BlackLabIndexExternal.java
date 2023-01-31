@@ -43,12 +43,12 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(blackLab, null, indexDir, indexMode, createNewIndex, config, null);
+        super(indexDir.getName(), blackLab, null, indexDir, indexMode, createNewIndex, config, null);
     }
 
     BlackLabIndexExternal(BlackLabEngine blackLab, File indexDir, boolean indexMode, boolean createNewIndex,
             File indexTemplateFile) throws ErrorOpeningIndex {
-        super(blackLab, null, indexDir, indexMode, createNewIndex, null, indexTemplateFile);
+        super(indexDir.getName(), blackLab, null, indexDir, indexMode, createNewIndex, null, indexTemplateFile);
     }
 
     @Override
@@ -79,11 +79,12 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         }
     }
 
-    protected void checkCanOpenIndex(boolean indexMode, boolean createNewIndex) throws IllegalArgumentException {
+    @Override
+    protected void checkCanOpenIndex(boolean createNewIndex) throws IllegalArgumentException {
         // If there's a version file (non-integrated index), check it now.
         File indexLocation = indexDirectory();
         if (!createNewIndex) {
-            if (!indexMode || VersionFile.exists(indexLocation)) {
+            if (!indexMode() || VersionFile.exists(indexLocation)) {
                 if (!BlackLabIndex.isIndex(indexLocation)) {
                     throw new IllegalArgumentException("Not a BlackLab index, or wrong version! "
                             + VersionFile.report(indexLocation));

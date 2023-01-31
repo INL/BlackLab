@@ -45,24 +45,6 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
-    /**
-     * Should TokenStream payloads contain information about primary/secondary token values?
-     *
-     * These are indicators used to decide which value is the primary value that should be
-     * stored in the forward index so it can be used for concordances, sort, grouping, etc.
-     *
-     * Secondary values are not stored in the forward index. This might be synonyms or stemmed
-     * values.
-     *
-     * The indicator in the payload (if one was added, which we try to avoid if possible) should be
-     * skipped when using payloads.
-     *
-     * Used by the integrated index format.
-     *
-     * @return whether or not TokenStream payloads should include primary value indicators
-     */
-    boolean needsPrimaryValuePayloads();
-
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.
         INTEGRATED,     // everything integrated into Lucene index
@@ -298,19 +280,6 @@ public interface BlackLabIndex extends AutoCloseable {
     //---------------------------------------------------------------------------
 
     /**
-     * Get an identifier for the index suitable for logging.
-     *
-     * Usually the path to the directory the index is in.
-     * If this is not available, will just return "index" by default.
-     * Don't use this for anything important, only for e.g. log messages.
-     *
-     * @return index identifier for logging
-     */
-    default String id() {
-        return indexDirectory() == null ? "index" : indexDirectory().toString();
-    }
-
-    /**
      * Get the index directory.
      * 
      * @return index directory
@@ -522,4 +491,6 @@ public interface BlackLabIndex extends AutoCloseable {
             return Boolean.parseBoolean(document.get(METADATA_FIELD_CONTENT_VIEWABLE));
         return metadata().contentViewable();
     }
+    
+    String name();
 }

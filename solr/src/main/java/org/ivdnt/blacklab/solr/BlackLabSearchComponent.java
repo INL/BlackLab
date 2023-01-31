@@ -68,7 +68,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
         // Instantiate our search manager from the config
         config.setIsSolr(true);
-        searchManager = new SearchManager(config);
+        searchManager = new SearchManager(config, false);
         instrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
     }
 
@@ -76,19 +76,23 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         // Find and load config file
         boolean isJson = configFilePath.endsWith(".json");
         SolrResourceLoader resourceLoader = core.getResourceLoader();
-        BLSConfig config;
+        BLSConfig config = null;
+        
+        
         if (resourceLoader.resourceLocation(configFilePath) != null)  {
             try (InputStream is = resourceLoader.openResource(configFilePath)) {
                 InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 config = BLSConfig.read(reader, isJson);
                 System.err.println("##### Loaded BLS config file " + configFilePath);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                // ignore, file doesn't exist, fallback to default.
             }
-        } else {
+        } 
+        if (config == null) {
             config = new BLSConfig(); // Default config if no config file found
             System.err.println("##### no BLS config file found at " + configFilePath);
         }
+     
         return config;
     }
 
@@ -157,7 +161,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         // Should we run at all?
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
             IndexReader reader = rb.req.getSearcher().getIndexReader();
-            BlackLabIndex index = searchManager.getEngine().getIndexFromReader(reader, true);
+            String indexName = rb.req.getSearcher().getCore().getName();
+            BlackLabIndex index = searchManager.getEngine().getIndexFromReader(indexName, reader, true, false);
 
             // We keep setting the cache for every request; the cache should probably be owner by the
             // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.

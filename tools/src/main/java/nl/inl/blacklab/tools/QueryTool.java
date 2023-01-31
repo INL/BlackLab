@@ -915,7 +915,7 @@ public class QueryTool {
 
     private void showIndexMetadata() {
         IndexMetadata s = index.metadata();
-        outprintln("INDEX STRUCTURE FOR INDEX " + index.id() + "\n");
+        outprintln("INDEX STRUCTURE FOR INDEX " + index.name() + "\n");
         out.println("ANNOTATED FIELDS");
         for (AnnotatedField cf: s.annotatedFields()) {
             out.println("- " + cf.name());

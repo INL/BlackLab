@@ -121,7 +121,7 @@
          between the existing compression modes in the default codec: "BEST_SPEED" (default)
          or "BEST_COMPRESSION".
     -->
-    <codecFactory class="solr.SchemaCodecFactory"/>
+    <codecFactory class="org.ivdnt.blacklab.solr.BLCodecFactory"/>
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          Index Config - These settings control low-level behavior of indexing
@@ -258,7 +258,7 @@
 
          For more details see http://wiki.apache.org/solr/SolrJmx
       -->
-    <jmx />
+<!--    <jmx />-->
     <!-- If you want to connect to a particular server, specify the
          agentId
       -->
@@ -811,6 +811,8 @@
             <str name="fmap.content">_text_</str>
         </lst>
     </requestHandler>
+
+    <requestHandler name="/update" class="org.ivdnt.blacklab.solr.BLSolrRequestHandlerUpdate"/>
 
     <!-- ADDED JN: add suggester request to suggest search terms. -->
     <requestHandler name="/suggest" class="solr.SearchHandler" startup="lazy">

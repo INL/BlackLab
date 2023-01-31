@@ -150,7 +150,6 @@ public final class BlackLab {
      * @param directory the index directory
      * @param create if true, create a new index even if one existed there
      * @param formatIdentifier default format to use
-     * @param indexTemplateFile (optional, legacy) index template file
      * @return index writer
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
@@ -187,6 +186,10 @@ public final class BlackLab {
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
             File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
         return implicitInstance().openForWriting(directory, create, formatIdentifier, indexTemplateFile, indexType);
+    }
+
+    public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
+        return (BlackLabIndexWriter) implicitInstance.wrapIndexReader(indexName, reader, true);
     }
 
     /**
@@ -237,8 +240,8 @@ public final class BlackLab {
      * @param wrapIfNotFound if not found, should we create a new instance using the supplied reader?
      * @return BlackLab index object
      */
-    public static synchronized BlackLabIndex indexFromReader(IndexReader reader, boolean wrapIfNotFound) {
-        return BlackLabEngine.indexFromReader(reader, wrapIfNotFound);
+    public static synchronized BlackLabIndex indexFromReader(String indexName, IndexReader reader, boolean wrapIfNotFound) {
+        return BlackLabEngine.indexFromReader(indexName, reader, wrapIfNotFound, false);
     }
 
     /**
@@ -372,7 +375,7 @@ public final class BlackLab {
      * This must be called before you open the first index, or an exception will be thrown,
      * because another default config has been applied already.
      */
-    public static void setConfigFromFile() {
+    public static synchronized void setConfigFromFile() {
         if (globalSettingsApplied)
             throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
             
@@ -394,9 +397,14 @@ public final class BlackLab {
      * 
      * @param config configuration to use
      */
-    public static void setConfig(BlackLabConfig config) {
-        if (globalSettingsApplied)
-            throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
+    public static synchronized void setConfig(BlackLabConfig config, boolean forceApply) {
+        if (globalSettingsApplied && !forceApply)
+            return;
+
+        if (globalSettingsApplied) {
+            throw new UnsupportedOperationException(
+                    "Cannot set default configuration - another configuration has already been applied.");
+        }
         
         blackLabConfig = config; 
     }

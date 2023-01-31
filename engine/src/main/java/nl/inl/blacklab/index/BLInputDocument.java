@@ -1,5 +1,7 @@
 package nl.inl.blacklab.index;
 
+import java.nio.charset.StandardCharsets;
+
 import org.apache.lucene.analysis.TokenStream;
 
 /**
@@ -24,6 +26,25 @@ public interface BLInputDocument {
     void addTextualMetadataField(String name, String value, BLFieldType type);
 
     String get(String name);
+
+    static String truncateValue(String value) {
+        // If a value is too long (more than 32K), just truncate it a bit.
+        // This should be very rare and would generally only affect sorting/grouping, if anything.
+        if (value.length() > MAX_DOCVALUES_LENGTH / 6) { // only when it might be too large...
+            // While it's really too large
+            byte[] utf8 = value.getBytes(StandardCharsets.UTF_8);
+            while (utf8.length > MAX_DOCVALUES_LENGTH) {
+                // assume all characters take two bytes, truncate and try again
+                int overshoot = utf8.length - MAX_DOCVALUES_LENGTH;
+                int truncateAt = value.length() - 2 * overshoot;
+                if (truncateAt < 1)
+                    truncateAt = 1;
+                value = value.substring(0, truncateAt);
+                utf8 = value.getBytes(StandardCharsets.UTF_8);
+            }
+        }
+        return value;
+    }
 
     BLIndexObjectFactory indexObjectFactory();
 

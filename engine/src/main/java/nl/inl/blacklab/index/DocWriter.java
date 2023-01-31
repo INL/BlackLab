@@ -23,7 +23,7 @@ public interface DocWriter {
      * @return writer
      */
     BlackLabIndexWriter indexWriter();
-    
+
     /**
      * Add a Lucene document to the index
      *

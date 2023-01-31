@@ -27,5 +27,6 @@ public interface BLIndexWriterProxy {
 
     long updateDocument(Term term, BLInputDocument document) throws IOException;
 
+    /** Return number of documents modified (add/remove/update) so far */
     int getNumberOfDocs();
 }

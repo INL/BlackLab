@@ -129,7 +129,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "(" + index.indexDirectory() + "/fi_*)";
+        return this.getClass().getSimpleName() + "(" + index.name() + "/fi_*)";
     }
 
     protected void add(Annotation annotation, AnnotationForwardIndex afi) {

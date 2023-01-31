@@ -98,7 +98,8 @@ public class BLFieldTypeLucene implements BLFieldType {
         this.type = type;
     }
 
-    public IndexableFieldType getLuceneFieldType() {
+    @Override
+    public IndexableFieldType luceneType() {
         return type;
     }
 

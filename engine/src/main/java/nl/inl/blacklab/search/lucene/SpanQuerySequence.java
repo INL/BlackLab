@@ -280,7 +280,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
         super.optimize(reader);
-        BlackLabIndex index = BlackLab.indexFromReader(reader, true);
+        BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
         boolean canDoNfaMatching = false;
         if (index instanceof BlackLabIndexAbstract) {
             canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();
@@ -323,7 +323,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
-        BlackLabIndex index = BlackLab.indexFromReader(reader, true);
+        BlackLabIndex index = BlackLab.indexFromReader(null /* FIXME */, reader, true);
         boolean canDoNfaMatching = false;
         if (index instanceof BlackLabIndexAbstract) {
             canDoNfaMatching = ((BlackLabIndexAbstract)index).canDoNfaMatching();

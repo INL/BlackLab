@@ -139,9 +139,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
 
-                // Write debug files
-                File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata.json");
-                FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
+                if (indexWriter.indexDirectory() != null) {
+                    // Write debug files
+                    File debugJackson = new File(indexWriter.indexDirectory(), "debug-metadata.json");
+                    FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
+                }
 
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again

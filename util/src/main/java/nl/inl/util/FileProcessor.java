@@ -444,13 +444,13 @@ public class FileProcessor implements AutoCloseable {
             return !closed; // quit processing the archive if we've received an error in the meantime
         };
 
-        if (isProcessArchives() && path.endsWith(".tar.gz") || path.endsWith(".tgz")) {
+        if (isProcessArchives() && path != null && (path.endsWith(".tar.gz") || path.endsWith(".tgz"))) {
             TarGzipReader.processTarGzip(path, is, handler);
-        } else if (isProcessArchives() && path.endsWith(".zip")) {
+        } else if (isProcessArchives() && path != null && path.endsWith(".zip")) {
             TarGzipReader.processZip(path, is, handler);
-        } else if (path.endsWith(".gz")) {
+        } else if (path != null && path.endsWith(".gz")) {
             TarGzipReader.processGzip(path, is, handler);
-        } else if (!skipFile(path) && getFileNamePattern().matcher(path).matches()) {
+        } else if (path == null || (!skipFile(path) && getFileNamePattern().matcher(path).matches())) {
             CompletableFuture.runAsync(makeRunnable(() -> fileHandler.file(path, is, file)), executor)
                     .exceptionally(e -> reportAndAbort(e, path, file));
         }

@@ -148,7 +148,7 @@ public class BlsCache implements SearchCache {
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
         // Iterate over the entries and remove the ones in the specified index
-        traceInfo("Remove searches for index: " + index.id());
+        traceInfo("Remove searches for index: " + index.name());
         Iterator<Entry<Search<?>, BlsCacheEntry<? extends SearchResult>>> it = searches.entrySet().iterator();
         while (it.hasNext()) {
             Entry<Search<?>, BlsCacheEntry<? extends SearchResult>> entry = it.next();

@@ -82,7 +82,7 @@ public class BlackLabServer extends HttpServlet {
                 BLSConfig config = readConfig();
 
                 // Create our search manager (main webservice class)
-                searchManager = new SearchManager(config);
+                searchManager = new SearchManager(config, true);
 
                 // Set default parameter settings from config
                 ParameterDefaults.set(config.getParameters());
