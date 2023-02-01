@@ -15,7 +15,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.Corpus;
+import org.ivdnt.blacklab.proxy.representation.DocInfo;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.ivdnt.blacklab.proxy.representation.HitsResults;
+import org.ivdnt.blacklab.proxy.representation.InputFormats;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsPar;
@@ -62,15 +66,19 @@ public class CorpusResource {
     public Response corpusInfo(@PathParam("corpusName") String corpusName,
             @DefaultValue("") @QueryParam("listvalues") String listvalues) {
 
+        Map<String, String> params;
         switch (corpusName) {
         case "input-formats":
-            return Requests.get(client, Map.of(
-                    WsPar.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value()));
+            params = Map.of(
+                    WsPar.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value());
+            return wrap(Requests.get(client, params, InputFormats.class));
 
         case "cache-info":
-            return Requests.get(client, Map.of(
-                    WsPar.CORPUS_NAME, corpusName,
-                    WsPar.OPERATION, WebserviceOperation.CACHE_INFO.value()));
+            return resourceNotImplemented("/cache-info");
+//            params = Map.of(
+//                    WsPar.CORPUS_NAME, corpusName,
+//                    WsPar.OPERATION, WebserviceOperation.CACHE_INFO.value());
+//            return Requests.get(client, params, CacheInfo.class);
 
         case "help":
             return resourceNotImplemented("/" + corpusName);
@@ -79,9 +87,14 @@ public class CorpusResource {
             return resourceNotImplemented("/cache-clear");
         }
 
-        return Requests.get(client, Map.of(
+        params = Map.of(
                 WsPar.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
-                WsPar.CORPUS_NAME, corpusName));
+                WsPar.CORPUS_NAME, corpusName);
+        return wrap(Requests.get(client, params, Corpus.class));
+    }
+
+    public static Response wrap(Object entity) {
+        return Response.ok().entity(entity).build();
     }
 
     /**
@@ -101,7 +114,7 @@ public class CorpusResource {
             @DefaultValue("") @QueryParam(WsPar.VIEW_GROUP) String viewGroup,
             @DefaultValue("") @QueryParam(WsPar.USE_CACHE) String useCache) {
 
-        return Requests.get(client, Map.ofEntries(
+        return wrap(Requests.get(client, Map.ofEntries(
                 Map.entry(WsPar.CORPUS_NAME, corpusName),
                 Map.entry(WsPar.OPERATION, WebserviceOperation.HITS.value()),
                 Map.entry(WsPar.PATTERN, patt),
@@ -111,7 +124,7 @@ public class CorpusResource {
                 Map.entry(WsPar.FIRST_RESULT, "" + first),
                 Map.entry(WsPar.NUMBER_OF_RESULTS, "" + number),
                 Map.entry(WsPar.VIEW_GROUP, viewGroup),
-                Map.entry(WsPar.USE_CACHE, useCache)));
+                Map.entry(WsPar.USE_CACHE, useCache)), HitsResults.class));
     }
 
     /**
@@ -124,10 +137,10 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("pid") String pid) {
 
-        return Requests.get(client, Map.of(
+        return wrap(Requests.get(client, Map.of(
                 WsPar.CORPUS_NAME, corpusName,
                 WsPar.OPERATION, WebserviceOperation.DOC_INFO.value(),
-                WsPar.DOC_PID, pid));
+                WsPar.DOC_PID, pid), DocInfo.class));
     }
 
     @GET
@@ -147,10 +160,11 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("pid") String pid) {
 
-        return Requests.get(client, Map.ofEntries(
-                Map.entry(WsPar.CORPUS_NAME, corpusName),
-                Map.entry(WsPar.OPERATION, WebserviceOperation.DOC_CONTENTS.value()),
-                Map.entry(WsPar.DOC_PID, pid)));
+        return resourceNotImplemented("/docs/PID/contents");
+//        return wrap(Requests.get(client, Map.ofEntries(
+//                Map.entry(WsPar.CORPUS_NAME, corpusName),
+//                Map.entry(WsPar.OPERATION, WebserviceOperation.DOC_CONTENTS.value()),
+//                Map.entry(WsPar.DOC_PID, pid)), ...doc contents... ));
     }
 
     @GET

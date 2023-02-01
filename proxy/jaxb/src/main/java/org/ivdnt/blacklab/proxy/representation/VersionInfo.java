@@ -6,9 +6,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class VersionInfo {
 
-    public String blackLabBuildTime = "";
+    public String blacklabBuildTime = "";
 
-    public String blackLabVersion = "";
+    public String blacklabVersion = "";
 
     public String indexFormat = "3.1";
 
@@ -16,11 +16,19 @@ public class VersionInfo {
 
     public String timeModified = "";
 
+    public String getBlackLabVersion() { return blacklabVersion; }
+
+    public String getBlackLabBuildTime() { return blacklabBuildTime; }
+
+    public void setBlackLabVersion(String v) { blacklabVersion = v; }
+
+    public void setBlackLabBuildTime(String v) { blacklabBuildTime = v; }
+
     @Override
     public String toString() {
         return "VersionInfo{" +
-                "blackLabBuildTime='" + blackLabBuildTime + '\'' +
-                ", blackLabVersion='" + blackLabVersion + '\'' +
+                "blackLabBuildTime='" + blacklabBuildTime + '\'' +
+                ", blackLabVersion='" + blacklabVersion + '\'' +
                 ", indexFormat='" + indexFormat + '\'' +
                 ", timeCreated='" + timeCreated + '\'' +
                 ", timeModified='" + timeModified + '\'' +

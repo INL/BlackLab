@@ -14,11 +14,15 @@ import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
-import org.json.JSONObject;
+import org.ivdnt.blacklab.proxy.representation.SolrResponse;
 
-import nl.inl.blacklab.Constants;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.util.Json;
 
 /** Performs requests to the BLS nodes we're proxying */
 public class Requests {
@@ -70,16 +74,11 @@ public class Requests {
         return new WebApplicationException(resp);
     }
 
-    public static Response get(Client client, Map<String, String> queryParams) {
-        return request(client, queryParams, "GET", MediaType.APPLICATION_JSON_TYPE);
+    public static <T> T get(Client client, Map<String, String> queryParams, Class<T> entityType) {
+        return request(client, queryParams, "GET", entityType);
     }
 
-    public static Response request(Client client, Map<String, String> queryParams, String method) {
-        return request(client, queryParams, method, MediaType.APPLICATION_JSON_TYPE);
-    }
-
-    public static Response request(Client client, Map<String, String> queryParams, String method,
-            MediaType mediaType) {
+    public static <T> T request(Client client, Map<String, String> queryParams, String method, Class<T> entityType) {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
@@ -91,12 +90,11 @@ public class Requests {
             queryParams.put(WsPar.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
         }
         return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
-                requestSolr(target, queryParams, method, mediaType) :
-                requestBls(target, queryParams, method, mediaType);
+                requestSolr(target, queryParams, method, entityType) :
+                requestBls(target, queryParams, method, entityType);
     }
 
-    private static Response requestBls(WebTarget target, Map<String, String> queryParams, String method,
-            MediaType mediaType) {
+    private static <T> T requestBls(WebTarget target, Map<String, String> queryParams, String method, Class<T> entityType) {
         if (queryParams != null) {
             String corpusName = queryParams.get(WsPar.CORPUS_NAME);
             if (corpusName != null)
@@ -112,11 +110,10 @@ public class Requests {
                     target = target.queryParam(e.getKey(), e.getValue());
             }
         }
-        return target.request(mediaType).method(method);
+        return target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(entityType);
     }
 
-    private static Response requestSolr(WebTarget target, Map<String, String> queryParams, String method,
-            MediaType mediaType) {
+    private static <T> T requestSolr(WebTarget target, Map<String, String> queryParams, String method, Class<T> entityType) {
         if (queryParams != null) {
             String corpusName = queryParams.get(WsPar.CORPUS_NAME);
             if (corpusName != null)
@@ -128,8 +125,17 @@ public class Requests {
                     target = target.queryParam(BL_PAR_NAME_PREFIX + e.getKey(), e.getValue());
             }
         }
-        Response solrResponse = target.request(mediaType).method(method);
+        SolrResponse solrResponse = target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(SolrResponse.class);
 
+        JsonNode blacklab = solrResponse.getBlacklab();
+        ObjectMapper objectMapper = Json.getJsonObjectMapper();
+        try {
+            return objectMapper.treeToValue(blacklab, entityType);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error interpreting response as " + entityType.getName(), e);
+        }
+
+        /*
         MediaType type = solrResponse.getMediaType();
         if (!MediaType.APPLICATION_JSON_TYPE.isCompatible(type)) {
             return Response.status(Status.BAD_REQUEST).
@@ -141,7 +147,8 @@ public class Requests {
         JSONObject objBlacklabResponse = new JSONObject(json).getJSONObject(Constants.SOLR_BLACKLAB_SECTION_NAME);
         json = objBlacklabResponse.toString(2);
         Response blacklabResponse = Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-        return blacklabResponse;
+        return blacklabResponse;*/
+
     }
 
     /** How to create the BLS request to a node */
