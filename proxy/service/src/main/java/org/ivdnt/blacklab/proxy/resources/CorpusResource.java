@@ -22,7 +22,7 @@ import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 @Path("/{corpusName}")
 public class CorpusResource {
@@ -66,11 +66,11 @@ public class CorpusResource {
     public Response corpusInfo(@PathParam("corpusName") String corpusName,
             @DefaultValue("") @QueryParam("listvalues") String listvalues) {
 
-        Map<String, String> params;
+        Map<WebserviceParameter, String> params;
         switch (corpusName) {
         case "input-formats":
             params = Map.of(
-                    WsPar.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value());
+                    WebserviceParameter.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value());
             return wrap(Requests.get(client, params, InputFormats.class));
 
         case "cache-info":
@@ -88,8 +88,8 @@ public class CorpusResource {
         }
 
         params = Map.of(
-                WsPar.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
-                WsPar.CORPUS_NAME, corpusName);
+                WebserviceParameter.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
+                WebserviceParameter.CORPUS_NAME, corpusName);
         return wrap(Requests.get(client, params, Corpus.class));
     }
 
@@ -105,26 +105,26 @@ public class CorpusResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response hits(
     		@PathParam("corpusName") String corpusName,
-    		@QueryParam(WsPar.PATTERN) String patt,
-            @DefaultValue("") @QueryParam(WsPar.FILTER) String filter,
-            @DefaultValue("") @QueryParam(WsPar.SORT) String sort,
-            @DefaultValue("") @QueryParam(WsPar.GROUP_BY) String group,
-            @DefaultValue("0") @QueryParam(WsPar.FIRST_RESULT) long first,
-            @DefaultValue("20") @QueryParam(WsPar.NUMBER_OF_RESULTS) long number,
-            @DefaultValue("") @QueryParam(WsPar.VIEW_GROUP) String viewGroup,
-            @DefaultValue("") @QueryParam(WsPar.USE_CACHE) String useCache) {
+    		@QueryParam("patt") String patt,
+            @DefaultValue("") @QueryParam("filter") String filter,
+            @DefaultValue("") @QueryParam("sort") String sort,
+            @DefaultValue("") @QueryParam("group") String group,
+            @DefaultValue("0") @QueryParam("first") long first,
+            @DefaultValue("20") @QueryParam("number") long number,
+            @DefaultValue("") @QueryParam("viewgroup") String viewGroup,
+            @DefaultValue("") @QueryParam("usecache") String useCache) {
 
         return wrap(Requests.get(client, Map.ofEntries(
-                Map.entry(WsPar.CORPUS_NAME, corpusName),
-                Map.entry(WsPar.OPERATION, WebserviceOperation.HITS.value()),
-                Map.entry(WsPar.PATTERN, patt),
-                Map.entry(WsPar.FILTER, filter),
-                Map.entry(WsPar.SORT, sort),
-                Map.entry(WsPar.GROUP_BY, group),
-                Map.entry(WsPar.FIRST_RESULT, "" + first),
-                Map.entry(WsPar.NUMBER_OF_RESULTS, "" + number),
-                Map.entry(WsPar.VIEW_GROUP, viewGroup),
-                Map.entry(WsPar.USE_CACHE, useCache)), HitsResults.class));
+                Map.entry(WebserviceParameter.CORPUS_NAME, corpusName),
+                Map.entry(WebserviceParameter.OPERATION, WebserviceOperation.HITS.value()),
+                Map.entry(WebserviceParameter.PATTERN, patt),
+                Map.entry(WebserviceParameter.FILTER, filter),
+                Map.entry(WebserviceParameter.SORT_BY, sort),
+                Map.entry(WebserviceParameter.GROUP_BY, group),
+                Map.entry(WebserviceParameter.FIRST_RESULT, "" + first),
+                Map.entry(WebserviceParameter.NUMBER_OF_RESULTS, "" + number),
+                Map.entry(WebserviceParameter.VIEW_GROUP, viewGroup),
+                Map.entry(WebserviceParameter.USE_CACHE, useCache)), HitsResults.class));
     }
 
     /**
@@ -138,9 +138,9 @@ public class CorpusResource {
             @PathParam("pid") String pid) {
 
         return wrap(Requests.get(client, Map.of(
-                WsPar.CORPUS_NAME, corpusName,
-                WsPar.OPERATION, WebserviceOperation.DOC_INFO.value(),
-                WsPar.DOC_PID, pid), DocInfo.class));
+                WebserviceParameter.CORPUS_NAME, corpusName,
+                WebserviceParameter.OPERATION, WebserviceOperation.DOC_INFO.value(),
+                WebserviceParameter.DOC_PID, pid), DocInfo.class));
     }
 
     @GET

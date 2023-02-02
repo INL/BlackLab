@@ -84,7 +84,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             try (InputStream is = resourceLoader.openResource(configFilePath)) {
                 InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 config = BLSConfig.read(reader, isJson);
-                System.err.println("##### Loaded BLS config file " + configFilePath);
+                //System.err.println("##### Loaded BLS config file " + configFilePath);
             } catch (IOException e) {
                 // ignore, file doesn't exist, fallback to default.
             }

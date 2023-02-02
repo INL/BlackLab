@@ -21,7 +21,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.Json;
 
 /** Performs requests to the BLS nodes we're proxying */
@@ -74,55 +74,55 @@ public class Requests {
         return new WebApplicationException(resp);
     }
 
-    public static <T> T get(Client client, Map<String, String> queryParams, Class<T> entityType) {
+    public static <T> T get(Client client, Map<WebserviceParameter, String> queryParams, Class<T> entityType) {
         return request(client, queryParams, "GET", entityType);
     }
 
-    public static <T> T request(Client client, Map<String, String> queryParams, String method, Class<T> entityType) {
+    public static <T> T request(Client client, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
-        if (!queryParams.containsKey(WsPar.CORPUS_NAME)) {
+        if (!queryParams.containsKey(WebserviceParameter.CORPUS_NAME)) {
             // Solr always needs a corpus name even for "server-wide" requests.
             if (proxyTarget.getDefaultCorpusName().isEmpty())
                 throw new IllegalStateException("No corpus name. Please specify proxyTarget.defaultCorpusName in proxy config file");
             queryParams = new HashMap<>(queryParams);
-            queryParams.put(WsPar.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
+            queryParams.put(WebserviceParameter.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
         }
         return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
                 requestSolr(target, queryParams, method, entityType) :
                 requestBls(target, queryParams, method, entityType);
     }
 
-    private static <T> T requestBls(WebTarget target, Map<String, String> queryParams, String method, Class<T> entityType) {
+    private static <T> T requestBls(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
         if (queryParams != null) {
-            String corpusName = queryParams.get(WsPar.CORPUS_NAME);
+            String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
             if (corpusName != null)
                 target = target.path(corpusName);
-            String operation = queryParams.get(WsPar.OPERATION);
+            String operation = queryParams.get(WebserviceParameter.OPERATION);
             if (operation != null) {
-                WebserviceOperation op = WebserviceOperation.fromValue(operation);
-                target = target.path(op.blsPath());
+                WebserviceOperation op = WebserviceOperation.fromValue(operation).orElseThrow();
+                target = target.path(op.getBlacklabServerPath());
             }
-            for (Map.Entry<String, String> e: queryParams.entrySet()) {
-                String key = e.getKey();
-                if (!key.equals(WsPar.CORPUS_NAME) && !key.equals(WsPar.OPERATION))
-                    target = target.queryParam(e.getKey(), e.getValue());
+            for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
+                WebserviceParameter key = e.getKey();
+                if (key != WebserviceParameter.CORPUS_NAME && key != WebserviceParameter.OPERATION)
+                    target = target.queryParam(e.getKey().value(), e.getValue());
             }
         }
         return target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(entityType);
     }
 
-    private static <T> T requestSolr(WebTarget target, Map<String, String> queryParams, String method, Class<T> entityType) {
+    private static <T> T requestSolr(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
         if (queryParams != null) {
-            String corpusName = queryParams.get(WsPar.CORPUS_NAME);
+            String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
             if (corpusName != null)
                 target = target.path(corpusName);
             target = target.path("select");
-            for (Map.Entry<String, String> e: queryParams.entrySet()) {
-                String key = e.getKey();
-                if (!key.equals(WsPar.CORPUS_NAME))
-                    target = target.queryParam(BL_PAR_NAME_PREFIX + e.getKey(), e.getValue());
+            for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
+                WebserviceParameter key = e.getKey();
+                if (key != WebserviceParameter.CORPUS_NAME)
+                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, e.getValue());
             }
         }
         SolrResponse solrResponse = target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(SolrResponse.class);

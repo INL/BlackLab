@@ -14,7 +14,7 @@ import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.Server;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 @Path("")
 public class RootResource {
@@ -30,7 +30,7 @@ public class RootResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response serverInfo() {
-        Map<String, String> params = Map.of(WsPar.OPERATION, WebserviceOperation.SERVER_INFO.value());
+        Map<WebserviceParameter, String> params = Map.of(WebserviceParameter.OPERATION, WebserviceOperation.SERVER_INFO.value());
         return CorpusResource.wrap(Requests.get(client, params, Server.class));
     }
 

@@ -41,6 +41,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.results.ResultHitsCsv;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Utility methods for writing CSV responses.
@@ -273,10 +274,12 @@ public class WriteCsv {
             ResultGroups<T> groups,
             CorpusSize subcorpusSize
     ) {
-        for (Map.Entry<String, String> param : searchParam.getParameters().entrySet()) {
-            if (param.getKey().equals("listvalues") || param.getKey().equals("listmetadatavalues"))
+        for (Map.Entry<WebserviceParameter, String> param : searchParam.getParameters().entrySet()) {
+            WebserviceParameter par = param.getKey();
+            if (par == WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS ||
+                    par == WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS)
                 continue;
-            writeRow(printer, numColumns, "summary.searchParam."+param.getKey(), param.getValue());
+            writeRow(printer, numColumns, "summary.searchParam." + par, param.getValue());
         }
 
         writeRow(printer, numColumns, "summary.subcorpusSize.documents", subcorpusSize.getDocuments());

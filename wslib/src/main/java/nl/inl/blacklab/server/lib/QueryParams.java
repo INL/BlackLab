@@ -10,6 +10,7 @@ import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /** API-independent interface to BlackLab operation parameters.
  *
@@ -25,7 +26,7 @@ public interface QueryParams {
      *
      * @return the view
      */
-    Map<String, String> getParameters();
+    Map<WebserviceParameter, String> getParameters();
 
     String getCorpusName();
 

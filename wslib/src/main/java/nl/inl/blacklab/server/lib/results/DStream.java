@@ -61,7 +61,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Utilities for serializing BlackLab responses using DataStream.
@@ -220,9 +220,9 @@ public class DStream {
         // Our search parameters
         ds.startEntry("searchParam");
         ds.startMap();
-        for (Map.Entry<String, String> e: searchParam.getParameters().entrySet()) {
-            if (!e.getKey().equals(WsPar.OPERATION)) { // skip for now; we'll update all the test responses eventually
-                ds.entry(e.getKey(), e.getValue());
+        for (Map.Entry<WebserviceParameter, String> e: searchParam.getParameters().entrySet()) {
+            if (!e.getKey().equals(WebserviceParameter.OPERATION)) { // skip for now; we'll update all the test responses eventually
+                ds.entry(e.getKey().value(), e.getValue());
             }
         }
         ds.endMap();

@@ -13,7 +13,7 @@ import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WsPar;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /** BLS API-specific implementation of WebserviceParams.
  *
@@ -21,31 +21,31 @@ import nl.inl.blacklab.webservice.WsPar;
  */
 public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
-    private final Map<String, String> map = new TreeMap<>();
+    private final Map<WebserviceParameter, String> map = new TreeMap<>();
 
     public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
         super(corpusName, searchMan, user);
-        for (String name: WsPar.NAMES) {
-            String value = ServletUtil.getParameter(request, name, "");
+        for (WebserviceParameter par: WebserviceParameter.values()) {
+            String value = ServletUtil.getParameter(request, par.value(), "");
             if (value.length() == 0)
                 continue;
-            map.put(name, value);
+            map.put(par, value);
         }
-        map.put(WsPar.CORPUS_NAME, corpusName);
+        map.put(WebserviceParameter.CORPUS_NAME, corpusName);
         if (operation != null && operation != WebserviceOperation.NONE)
-            map.put(WsPar.OPERATION, operation.value());
+            map.put(WebserviceParameter.OPERATION, operation.value());
     }
 
     @Override
-    protected boolean has(String key) {
+    protected boolean has(WebserviceParameter key) {
         return map.containsKey(key);
     }
 
     @Override
-    protected String get(String key) {
+    protected String get(WebserviceParameter key) {
         String value = map.get(key);
         if (StringUtils.isEmpty(value)) {
-            value = WsPar.getDefaultValue(key);
+            value = key.getDefaultValue();
         }
         return value;
     }
@@ -56,13 +56,13 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
      * @return the view
      */
     @Override
-    public Map<String, String> getParameters() {
+    public Map<WebserviceParameter, String> getParameters() {
         return Collections.unmodifiableMap(map);
     }
 
     @Override
     public String getCorpusName() {
-        return get(WsPar.CORPUS_NAME);
+        return get(WebserviceParameter.CORPUS_NAME);
     }
 
 }

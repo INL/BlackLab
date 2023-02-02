@@ -45,6 +45,7 @@ import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Wraps the WebserviceParams and interprets them to create searches.
@@ -504,7 +505,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public Map<String, String> getParameters() {
+    public Map<WebserviceParameter, String> getParameters() {
         return params.getParameters();
     }
 
