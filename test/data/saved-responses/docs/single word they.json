@@ -2,6 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
+      "op": "docs",
       "patt": "\"they\"",
       "sort": "field:pid",
       "waitfortotal": "true",

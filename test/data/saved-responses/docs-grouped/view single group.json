@@ -4,6 +4,7 @@
       "group": "field:title",
       "indexname": "test",
       "number": "30",
+      "op": "docs",
       "patt": "\"a\"",
       "sort": "size,identity",
       "viewgroup": "str:interview about conference experience and impressions of city",

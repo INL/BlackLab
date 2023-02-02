@@ -4,6 +4,7 @@
       "facets": "field:pid",
       "indexname": "test",
       "number": "0",
+      "op": "hits",
       "patt": "\"the\""
     },
     "searchTime": "VALUE_REMOVED",

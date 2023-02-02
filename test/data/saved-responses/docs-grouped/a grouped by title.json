@@ -4,6 +4,7 @@
       "group": "field:title",
       "indexname": "test",
       "number": "30",
+      "op": "docs-grouped",
       "patt": "\"a\"",
       "sort": "size,identity",
       "wordsaroundhit": "1"

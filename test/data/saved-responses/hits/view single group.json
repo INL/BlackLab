@@ -3,6 +3,7 @@
     "searchParam": {
       "group": "field:title",
       "indexname": "test",
+      "op": "hits",
       "patt": "\"a\"",
       "sort": "field:pid,hitposition",
       "viewgroup": "str:service encounter about visa application for family members",

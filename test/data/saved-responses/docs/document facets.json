@@ -3,7 +3,8 @@
     "searchParam": {
       "facets": "field:title",
       "indexname": "test",
-      "number": "0"
+      "number": "0",
+      "op": "docs"
     },
     "searchTime": "VALUE_REMOVED",
     "countTime": "VALUE_REMOVED",

@@ -3,6 +3,7 @@
     "searchParam": {
       "filter": "pid:PBsve435",
       "indexname": "test",
+      "op": "docs",
       "sort": "field:pid",
       "waitfortotal": "true",
       "wordsaroundhit": "1"

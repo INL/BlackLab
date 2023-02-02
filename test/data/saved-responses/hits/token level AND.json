@@ -2,6 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
+      "op": "hits",
       "patt": "[lemma=\"be\" & word=\"are\"]",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",

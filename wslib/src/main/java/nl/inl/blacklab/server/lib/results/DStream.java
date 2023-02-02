@@ -61,6 +61,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -210,30 +211,25 @@ public class DStream {
      * @param summaryFields info for the fields to write
      */
     public static void summaryCommonFields(DataStream ds, ResultSummaryCommonFields summaryFields) throws BlsException {
-
-        nl.inl.blacklab.server.lib.WebserviceParams searchParam = summaryFields.getSearchParam();
+        WebserviceParams params = summaryFields.getSearchParam();
         Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         SearchTimings timings = summaryFields.getTimings();
         ResultGroups<?> groups = summaryFields.getGroups();
         WindowStats window = summaryFields.getWindow();
 
         // Our search parameters
-        ds.startEntry("searchParam");
-        ds.startMap();
-        for (Map.Entry<WebserviceParameter, String> e: searchParam.getParameters().entrySet()) {
-            if (!e.getKey().equals(WebserviceParameter.OPERATION)) { // skip for now; we'll update all the test responses eventually
-                ds.entry(e.getKey().value(), e.getValue());
-            }
+        ds.startEntry("searchParam").startMap();
+        for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
+            ds.entry(e.getKey().value(), e.getValue());
         }
-        ds.endMap();
-        ds.endEntry();
+        ds.endMap().endEntry();
 
         if (indexStatus != null && indexStatus != Index.IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", indexStatus.toString());
         }
 
         // Information about hit sampling
-        SampleParameters sample = searchParam.sampleSettings();
+        SampleParameters sample = params.sampleSettings();
         if (sample != null) {
             ds.entry("sampleSeed", sample.seed());
             if (sample.isPercentage())
