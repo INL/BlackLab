@@ -231,7 +231,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     break;
 
                 // Other search
-                case TERMFREQ:
+                case TERM_FREQUENCIES:
                     WebserviceRequestHandler.opTermFreq(params, ds);
                     break;
                 case AUTOCOMPLETE:

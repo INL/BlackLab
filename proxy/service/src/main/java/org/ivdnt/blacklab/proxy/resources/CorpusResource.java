@@ -20,11 +20,13 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
+import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
 import org.ivdnt.blacklab.proxy.representation.DocInfo;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
+import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -43,6 +45,12 @@ public class CorpusResource {
 
     public static Response success(Object entity) {
         return Response.ok().entity(entity).build();
+    }
+
+    private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, String corpusName, WebserviceOperation op, String docPid) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, op);
+        params.put(WebserviceParameter.DOC_PID, docPid);
+        return params;
     }
 
     private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, String corpusName, WebserviceOperation op) {
@@ -119,9 +127,6 @@ public class CorpusResource {
         return success(Requests.get(client, params, Corpus.class));
     }
 
-    /**
-     * Perform a /hits request.
-     */
     @GET
     @Path("/hits")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -129,9 +134,6 @@ public class CorpusResource {
         return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.HITS), HitsResults.class));
     }
 
-    /**
-     * Perform a /hits request.
-     */
     @GET
     @Path("/docs/{pid}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
@@ -152,31 +154,23 @@ public class CorpusResource {
         return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.DOCS), DocsResults.class));
     }
 
-    /**
-     * Perform a /hits request.
-     */
     @GET
     @Path("/docs/{pid}/contents")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response docContents(
             @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String pid) {
-
-        return notImplemented("/docs/PID/contents");
-//        return wrap(Requests.get(client, Map.ofEntries(
-//                Map.entry(WsPar.CORPUS_NAME, corpusName),
-//                Map.entry(WsPar.OPERATION, WebserviceOperation.DOC_CONTENTS.value()),
-//                Map.entry(WsPar.DOC_PID, pid)), ...doc contents... ));
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
+        DocContentsResults entity = Requests.get(client,
+                getParams(uriInfo, corpusName, WebserviceOperation.DOC_CONTENTS, docPid), DocContentsResults.class);
+        return Response.ok().entity(entity.contents).type(MediaType.APPLICATION_XML).build();
     }
 
     @GET
     @Path("/termfreq")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response termFreq(
-            @DefaultValue("") @QueryParam("annotation") String annotation,
-            @DefaultValue("") @QueryParam("terms") String terms) {
-        // (TermFreqList resource exists, merge operation not yet, maybe implement later)
-        return notImplemented("/CORPUS/termfreq");
+    public Response termFreq(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
+        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.TERM_FREQUENCIES), TermFreqList.class));
     }
 
     @GET

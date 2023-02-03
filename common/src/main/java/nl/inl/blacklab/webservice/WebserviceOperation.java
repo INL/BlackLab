@@ -27,7 +27,7 @@ public enum WebserviceOperation {
     DOC_INFO("doc-info", "docs"),
     DOC_SNIPPET("doc-snippet", "docs"),
 
-    TERMFREQ("termfreq", "termfreq"),
+    TERM_FREQUENCIES("termfreq", "termfreq"),
     AUTOCOMPLETE("autocomplete", "autocomplete"),
 
     LIST_INPUT_FORMATS("list-input-formats", "input-formats"),

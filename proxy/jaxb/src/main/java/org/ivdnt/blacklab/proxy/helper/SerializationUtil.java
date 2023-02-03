@@ -70,6 +70,44 @@ public class SerializationUtil {
         }
     }
 
+    /** Use this to serialize a String map using MapAdapter to JSON.
+     */
+    public static class TermFreqMapSerializer extends JsonSerializer<Object> {
+        @Override
+        public void serialize(Object value, JsonGenerator jgen, SerializerProvider provider)
+                throws IOException {
+            if (value instanceof MapAdapterTermFreq.WrapperTermFreq) {
+                // This happens because of using MapAdapter with Jersey
+                jgen.writeStartObject();
+                for (Object element: ((MapAdapterTermFreq.WrapperTermFreq) value).elements) {
+                    MapAdapterTermFreq.TermFreq el = (MapAdapterTermFreq.TermFreq) element;
+                    jgen.writeNumberField(el.text, el.freq);
+                }
+                jgen.writeEndObject();
+            } else if (value instanceof Map) {
+                // This happens if we use Jackson directly without Jersey
+                jgen.writeStartObject();
+                for (Map.Entry<String, Long> entry: ((Map<String, Long>) value).entrySet()) {
+                    jgen.writeNumberField(entry.getKey(), entry.getValue());
+                }
+                jgen.writeEndObject();
+            }
+        }
+    }
+
+    /** Use this to deserialize a String map using MapAdapter from JSON.
+     *
+     * Necessary because we convert a JSON object structure to a list (because that's what the XML mapping uses).
+     */
+    public static class TermFreqMapDeserializer extends JsonDeserializer<Map<String, Long>> {
+
+        @Override
+        public Map<String, Long> deserialize(JsonParser parser, DeserializationContext deserializationContext)
+                throws IOException {
+            return readLongMap(parser);
+        }
+    }
+
     private SerializationUtil() {}
 
     public static List<String> readStringList(JsonParser parser) throws IOException {
@@ -186,6 +224,36 @@ public class SerializationUtil {
                 break;
             default:
                 throw new RuntimeException("Expected VALUE_NUMBER_INT or VALUE_STRING, found " + token);
+            }
+
+            result.put(key, value);
+        }
+        return result;
+    }
+
+    public static Map<String, Long> readLongMap(JsonParser parser) throws IOException {
+        JsonToken token = parser.currentToken();
+        if (token != JsonToken.START_OBJECT)
+            throw new RuntimeException("Expected START_OBJECT, found " + token);
+
+        Map<String, Long> result = new LinkedHashMap<>();
+        while (true) {
+            token = parser.nextToken();
+            if (token == JsonToken.END_OBJECT)
+                break;
+
+            if (token != JsonToken.FIELD_NAME)
+                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+            String key = parser.getCurrentName();
+
+            token = parser.nextToken();
+            long value;
+            switch (token) {
+            case VALUE_NUMBER_INT:
+                value = parser.getValueAsLong();
+                break;
+            default:
+                throw new RuntimeException("Expected VALUE_NUMBER_INT, found " + token);
             }
 
             result.put(key, value);

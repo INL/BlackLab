@@ -11,7 +11,7 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 public class RequestHandlerTermFreq extends RequestHandler {
 
     public RequestHandlerTermFreq(UserRequestBls userRequest) {
-        super(userRequest, WebserviceOperation.TERMFREQ);
+        super(userRequest, WebserviceOperation.TERM_FREQUENCIES);
     }
 
     @Override
