@@ -186,7 +186,7 @@ public class HitsResults implements Cloneable {
     @XmlElement(name = "hitGroup")
     @JsonProperty("hitGroups")
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<HitGroup> hitGroups;
+    public List<HitOrDocGroup> hitGroups;
 
     // required for Jersey
     @SuppressWarnings("unused")
@@ -201,7 +201,7 @@ public class HitsResults implements Cloneable {
     }
 
     @SuppressWarnings("unused")
-    public HitsResults(SearchSummary summary, List<HitGroup> groups) {
+    public HitsResults(SearchSummary summary, List<HitOrDocGroup> groups) {
         this.summary = summary;
         this.hits = null;
         this.docInfos = null;

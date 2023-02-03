@@ -13,6 +13,9 @@ public class SearchParam {
     public String indexname = "";
 
     @JsonInclude(Include.NON_EMPTY)
+    public String op = "";
+
+    @JsonInclude(Include.NON_EMPTY)
     public String patt = "";
 
     @JsonInclude(Include.NON_EMPTY)

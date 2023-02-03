@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class HitGroup {
+public class HitOrDocGroup {
     public String identity;
 
     public String identityDisplay;
@@ -20,14 +20,18 @@ public class HitGroup {
 
     public List<Property> properties;
 
-    public long numberOfDocs;
+    @JsonInclude(Include.NON_NULL)
+    public Long numberOfDocs;
+
+    @JsonInclude(Include.NON_NULL)
+    public Long numberOfTokens;
 
     @JsonInclude(Include.NON_NULL)
     public Map<String, Long> subcorpusSize;
 
-    public HitGroup() {}
+    public HitOrDocGroup() {}
 
-    public HitGroup(String identity, String identityDisplay, long size, List<Property> properties, long numberOfDocs,
+    public HitOrDocGroup(String identity, String identityDisplay, long size, List<Property> properties, long numberOfDocs,
             Map<String, Long> subcorpusSize) {
         this.identity = identity;
         this.identityDisplay = identityDisplay;

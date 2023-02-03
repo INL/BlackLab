@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
 import org.ivdnt.blacklab.proxy.representation.DocInfo;
+import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
@@ -45,9 +46,7 @@ public class CorpusResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName) {
 
-        switch (corpusName) {
-        case "cache-clear":
-            // POST naar /cache-clear : clear cache (not implemented)
+        if (corpusName.equals("cache-clear")) {// POST naar /cache-clear : clear cache (not implemented)
             return resourceNotImplemented("/cache-clear");
         }
 
@@ -146,8 +145,26 @@ public class CorpusResource {
     @GET
     @Path("/docs")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response docsNotImplemented() {
-        return resourceNotImplemented("/CORPUS/docs");
+    public Response docs(
+            @PathParam("corpusName") String corpusName,
+            @QueryParam("patt") String patt,
+            @DefaultValue("") @QueryParam("filter") String filter,
+            @DefaultValue("") @QueryParam("sort") String sort,
+            @DefaultValue("") @QueryParam("group") String group,
+            @DefaultValue("0") @QueryParam("first") long first,
+            @DefaultValue("20") @QueryParam("number") long number,
+            @DefaultValue("") @QueryParam("viewgroup") String viewGroup,
+            @DefaultValue("") @QueryParam("usecache") String useCache) {
+        return wrap(Requests.get(client, Map.ofEntries(
+                Map.entry(WebserviceParameter.CORPUS_NAME, corpusName),
+                Map.entry(WebserviceParameter.OPERATION, WebserviceOperation.DOCS.value()),
+                Map.entry(WebserviceParameter.FILTER, filter),
+                Map.entry(WebserviceParameter.SORT_BY, sort),
+                Map.entry(WebserviceParameter.GROUP_BY, group),
+                Map.entry(WebserviceParameter.FIRST_RESULT, "" + first),
+                Map.entry(WebserviceParameter.NUMBER_OF_RESULTS, "" + number),
+                Map.entry(WebserviceParameter.VIEW_GROUP, viewGroup),
+                Map.entry(WebserviceParameter.USE_CACHE, useCache)), DocsResults.class));
     }
 
     /**
