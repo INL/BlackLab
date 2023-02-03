@@ -31,7 +31,7 @@ public class RootResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response serverInfo() {
         Map<WebserviceParameter, String> params = Map.of(WebserviceParameter.OPERATION, WebserviceOperation.SERVER_INFO.value());
-        return CorpusResource.wrap(Requests.get(client, params, Server.class));
+        return CorpusResource.success(Requests.get(client, params, Server.class));
     }
 
 }

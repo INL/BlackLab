@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.proxy.resources;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.DefaultValue;
@@ -11,9 +12,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
 import org.ivdnt.blacklab.proxy.representation.DocInfo;
@@ -28,10 +32,33 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
 @Path("/{corpusName}")
 public class CorpusResource {
 
-    private static Response resourceNotImplemented(String resource) {
-        ErrorResponse error = new ErrorResponse("NOT_IMPLEMENTED",
-                "The " + resource + " resource hasn't been implemented on the proxy.", null);
-        return Response.status(Response.Status.NOT_IMPLEMENTED).entity(error).build();
+    private static Response error(Response.Status status, String code, String message) {
+        ErrorResponse error = new ErrorResponse(code, message, null);
+        return Response.status(status).entity(error).build();
+    }
+
+    private static Response notImplemented(String resource) {
+        return error(Response.Status.NOT_IMPLEMENTED, "NOT_IMPLEMENTED", "The " + resource + " resource hasn't been implemented on the proxy.");
+    }
+
+    public static Response success(Object entity) {
+        return Response.ok().entity(entity).build();
+    }
+
+    private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, String corpusName, WebserviceOperation op) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, op);
+        params.put(WebserviceParameter.CORPUS_NAME, corpusName);
+        return params;
+    }
+
+    private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, WebserviceOperation op) {
+        Map<WebserviceParameter, String> params = uriInfo.getQueryParameters().entrySet().stream()
+                .filter(e -> WebserviceParameter.fromValue(e.getKey()).isPresent()) // keep only known parameters
+                .map(e -> Map.entry(WebserviceParameter.fromValue(e.getKey()).orElse(null),
+                        StringUtils.join(e.getValue(), ",")))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        params.put(WebserviceParameter.OPERATION, op.value());
+        return params;
     }
 
     /** REST client */
@@ -47,11 +74,11 @@ public class CorpusResource {
     public Response corpusInfo(@PathParam("corpusName") String corpusName) {
 
         if (corpusName.equals("cache-clear")) {// POST naar /cache-clear : clear cache (not implemented)
-            return resourceNotImplemented("/cache-clear");
+            return notImplemented("/cache-clear");
         }
 
         // POST naar /CORPUSNAME ; not supported
-        return resourceNotImplemented("POST to /CORPUSNAME");
+        return notImplemented("POST to /CORPUSNAME");
     }
 
     /**
@@ -70,30 +97,26 @@ public class CorpusResource {
         case "input-formats":
             params = Map.of(
                     WebserviceParameter.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value());
-            return wrap(Requests.get(client, params, InputFormats.class));
+            return success(Requests.get(client, params, InputFormats.class));
 
         case "cache-info":
-            return resourceNotImplemented("/cache-info");
+            return notImplemented("/cache-info");
 //            params = Map.of(
 //                    WsPar.CORPUS_NAME, corpusName,
 //                    WsPar.OPERATION, WebserviceOperation.CACHE_INFO.value());
 //            return Requests.get(client, params, CacheInfo.class);
 
         case "help":
-            return resourceNotImplemented("/" + corpusName);
+            return notImplemented("/" + corpusName);
 
         case "cache-clear":
-            return resourceNotImplemented("/cache-clear");
+            return error(Response.Status.BAD_REQUEST, "WRONG_METHOD", "/cache-clear works only with POST");
         }
 
         params = Map.of(
                 WebserviceParameter.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
                 WebserviceParameter.CORPUS_NAME, corpusName);
-        return wrap(Requests.get(client, params, Corpus.class));
-    }
-
-    public static Response wrap(Object entity) {
-        return Response.ok().entity(entity).build();
+        return success(Requests.get(client, params, Corpus.class));
     }
 
     /**
@@ -102,28 +125,8 @@ public class CorpusResource {
     @GET
     @Path("/hits")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response hits(
-    		@PathParam("corpusName") String corpusName,
-    		@QueryParam("patt") String patt,
-            @DefaultValue("") @QueryParam("filter") String filter,
-            @DefaultValue("") @QueryParam("sort") String sort,
-            @DefaultValue("") @QueryParam("group") String group,
-            @DefaultValue("0") @QueryParam("first") long first,
-            @DefaultValue("20") @QueryParam("number") long number,
-            @DefaultValue("") @QueryParam("viewgroup") String viewGroup,
-            @DefaultValue("") @QueryParam("usecache") String useCache) {
-
-        return wrap(Requests.get(client, Map.ofEntries(
-                Map.entry(WebserviceParameter.CORPUS_NAME, corpusName),
-                Map.entry(WebserviceParameter.OPERATION, WebserviceOperation.HITS.value()),
-                Map.entry(WebserviceParameter.PATTERN, patt),
-                Map.entry(WebserviceParameter.FILTER, filter),
-                Map.entry(WebserviceParameter.SORT_BY, sort),
-                Map.entry(WebserviceParameter.GROUP_BY, group),
-                Map.entry(WebserviceParameter.FIRST_RESULT, "" + first),
-                Map.entry(WebserviceParameter.NUMBER_OF_RESULTS, "" + number),
-                Map.entry(WebserviceParameter.VIEW_GROUP, viewGroup),
-                Map.entry(WebserviceParameter.USE_CACHE, useCache)), HitsResults.class));
+    public Response hits(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
+        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.HITS), HitsResults.class));
     }
 
     /**
@@ -136,7 +139,7 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("pid") String pid) {
 
-        return wrap(Requests.get(client, Map.of(
+        return success(Requests.get(client, Map.of(
                 WebserviceParameter.CORPUS_NAME, corpusName,
                 WebserviceParameter.OPERATION, WebserviceOperation.DOC_INFO.value(),
                 WebserviceParameter.DOC_PID, pid), DocInfo.class));
@@ -145,26 +148,8 @@ public class CorpusResource {
     @GET
     @Path("/docs")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response docs(
-            @PathParam("corpusName") String corpusName,
-            @QueryParam("patt") String patt,
-            @DefaultValue("") @QueryParam("filter") String filter,
-            @DefaultValue("") @QueryParam("sort") String sort,
-            @DefaultValue("") @QueryParam("group") String group,
-            @DefaultValue("0") @QueryParam("first") long first,
-            @DefaultValue("20") @QueryParam("number") long number,
-            @DefaultValue("") @QueryParam("viewgroup") String viewGroup,
-            @DefaultValue("") @QueryParam("usecache") String useCache) {
-        return wrap(Requests.get(client, Map.ofEntries(
-                Map.entry(WebserviceParameter.CORPUS_NAME, corpusName),
-                Map.entry(WebserviceParameter.OPERATION, WebserviceOperation.DOCS.value()),
-                Map.entry(WebserviceParameter.FILTER, filter),
-                Map.entry(WebserviceParameter.SORT_BY, sort),
-                Map.entry(WebserviceParameter.GROUP_BY, group),
-                Map.entry(WebserviceParameter.FIRST_RESULT, "" + first),
-                Map.entry(WebserviceParameter.NUMBER_OF_RESULTS, "" + number),
-                Map.entry(WebserviceParameter.VIEW_GROUP, viewGroup),
-                Map.entry(WebserviceParameter.USE_CACHE, useCache)), DocsResults.class));
+    public Response docs(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
+        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.DOCS), DocsResults.class));
     }
 
     /**
@@ -177,7 +162,7 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("pid") String pid) {
 
-        return resourceNotImplemented("/docs/PID/contents");
+        return notImplemented("/docs/PID/contents");
 //        return wrap(Requests.get(client, Map.ofEntries(
 //                Map.entry(WsPar.CORPUS_NAME, corpusName),
 //                Map.entry(WsPar.OPERATION, WebserviceOperation.DOC_CONTENTS.value()),
@@ -191,17 +176,42 @@ public class CorpusResource {
             @DefaultValue("") @QueryParam("annotation") String annotation,
             @DefaultValue("") @QueryParam("terms") String terms) {
         // (TermFreqList resource exists, merge operation not yet, maybe implement later)
-        return resourceNotImplemented("/CORPUS/termfreq");
+        return notImplemented("/CORPUS/termfreq");
     }
 
-    /**
-     * Perform a /hits request.
-     */
     @GET
-    @Path("/{resource:debug|fields|status|explain|autocomplete|sharing}")
+    @Path("/fields")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response fields() {
+        return notImplemented("/fields");
+    }
+
+    @GET
+    @Path("/status")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response status() {
+        return notImplemented("/status");
+    }
+
+    @GET
+    @Path("/autocomplete")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response autocomplete() {
+        return notImplemented("/autocomplete");
+    }
+
+    @GET
+    @Path("/sharing")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response sharing() {
+        return notImplemented("/sharing");
+    }
+
+    @GET
+    @Path("/{resource:debug|explain}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response errorNotImplemented(@PathParam("resource") String resource) {
-        return resourceNotImplemented("/CORPUS/" + resource);
+        return notImplemented("/CORPUS/" + resource);
     }
 
 }
