@@ -59,7 +59,7 @@ public class SearchSummary implements Cloneable {
     public Map<String, Long> subcorpusSize;
 
     @JsonInclude(Include.NON_NULL)
-    public FieldInfo docFields;
+    public SpecialFieldInfo docFields;
 
     @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)

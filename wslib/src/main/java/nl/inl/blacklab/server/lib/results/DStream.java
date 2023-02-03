@@ -405,13 +405,9 @@ public class DStream {
             ds.startEntry("indexProgress").startMap()
                     .entry("filesProcessed", progress.getFiles())
                     .entry("docsDone", progress.getDocs())
-                    .entry("tokensProcessed", progress.getTokens())
-                    .endMap().endEntry();
+                    .entry("tokensProcessed", progress.getTokens());
+            ds.endMap().endEntry();
         }
-
-        String formatIdentifier = progress.getDocumentFormat();
-        if (formatIdentifier != null && formatIdentifier.length() > 0)
-            ds.entry("documentFormat", formatIdentifier);
     }
 
     public static void metadataField(DataStream ds, ResultMetadataField metadataField) {
@@ -833,9 +829,12 @@ public class DStream {
                 ds.entry("displayName", indexMetadata.custom().get("displayName", ""));
                 ds.entry("description", indexMetadata.custom().get("description", ""));
                 ds.entry("status", index.getStatus());
-                indexProgress(ds, progress);
+                String formatIdentifier = indexMetadata.documentFormat();
+                if (formatIdentifier != null && formatIdentifier.length() > 0)
+                    ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
                 ds.entry("tokenCount", indexMetadata.tokenCount());
+                indexProgress(ds, progress);
             }
             ds.endMap();
         }
@@ -846,16 +845,20 @@ public class DStream {
         IndexMetadata metadata = result.getMetadata();
         ds.startMap();
         {
-            ds.entry("indexName", result.getProgress().getIndex().getId())
-                    .entry("displayName", metadata.custom().get("displayName", ""))
-                    .entry("description", metadata.custom().get("description", ""))
-                    .entry("status", result.getProgress().getIndexStatus())
-                    .entry("contentViewable", metadata.contentViewable())
-                    .entry("textDirection", metadata.custom().get("textDirection", "ltr"));
+            ds.entry("indexName", result.getProgress().getIndex().getId());
 
-            indexProgress(ds, result.getProgress());
+            ds.entry("displayName", metadata.custom().get("displayName", ""));
+            ds.entry("description", metadata.custom().get("description", ""));
+            ds.entry("status", result.getProgress().getIndexStatus());
+            ds.entry("contentViewable", metadata.contentViewable());
+            ds.entry("textDirection", metadata.custom().get("textDirection", "ltr"));
+
+            String formatIdentifier = metadata.documentFormat();
+            if (formatIdentifier != null && formatIdentifier.length() > 0)
+                ds.entry("documentFormat", formatIdentifier);
             ds.entry("tokenCount", metadata.tokenCount());
             ds.entry("documentCount", metadata.documentCount());
+            indexProgress(ds, result.getProgress());
 
             ds.startEntry("versionInfo").startMap()
                     .entry(apiVersion == ApiVersion.V3 ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
@@ -942,10 +945,11 @@ public class DStream {
             ds.entry("displayName", metadata.custom().get("displayName", ""));
             ds.entry("description", metadata.custom().get("description", ""));
             ds.entry("status", progress.getIndexStatus());
-            if (!StringUtils.isEmpty(metadata.documentFormat()))
-                ds.entry("documentFormat", metadata.documentFormat());
             ds.entry("timeModified", metadata.timeModified());
             ds.entry("tokenCount", metadata.tokenCount());
+            String formatIdentifier = metadata.documentFormat();
+            if (!StringUtils.isEmpty(formatIdentifier))
+                ds.entry("documentFormat", formatIdentifier);
             indexProgress(ds, progress);
         }
         ds.endMap();

@@ -19,7 +19,9 @@ import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
+import org.ivdnt.blacklab.proxy.representation.CorpusStatus;
 import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
 import org.ivdnt.blacklab.proxy.representation.DocInfo;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
@@ -45,12 +47,6 @@ public class CorpusResource {
 
     public static Response success(Object entity) {
         return Response.ok().entity(entity).build();
-    }
-
-    private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, String corpusName, WebserviceOperation op, String docPid) {
-        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, op);
-        params.put(WebserviceParameter.DOC_PID, docPid);
-        return params;
     }
 
     private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, String corpusName, WebserviceOperation op) {
@@ -161,8 +157,9 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("pid") String docPid,
             @Context UriInfo uriInfo) {
-        DocContentsResults entity = Requests.get(client,
-                getParams(uriInfo, corpusName, WebserviceOperation.DOC_CONTENTS, docPid), DocContentsResults.class);
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_CONTENTS);
+        params.put(WebserviceParameter.DOC_PID, docPid);
+        DocContentsResults entity = Requests.get(client, params, DocContentsResults.class);
         return Response.ok().entity(entity.contents).type(MediaType.APPLICATION_XML).build();
     }
 
@@ -174,17 +171,24 @@ public class CorpusResource {
     }
 
     @GET
-    @Path("/fields")
+    @Path("/fields/{fieldName}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response fields() {
-        return notImplemented("/fields");
+    public Response fields(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("fieldName") String fieldName,
+            @Context UriInfo uriInfo) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.FIELD_INFO);
+        params.put(WebserviceParameter.FIELD, fieldName);
+        return success(Requests.get(client, params, AnnotatedField.class));
     }
 
     @GET
     @Path("/status")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response status() {
-        return notImplemented("/status");
+    public Response status(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.CORPUS_STATUS), CorpusStatus.class));
     }
 
     @GET

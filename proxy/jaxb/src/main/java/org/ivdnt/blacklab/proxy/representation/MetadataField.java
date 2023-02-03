@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.proxy.helper.MapAdapter;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+@XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" }) // this is the key of the object
 public class MetadataField implements Cloneable {

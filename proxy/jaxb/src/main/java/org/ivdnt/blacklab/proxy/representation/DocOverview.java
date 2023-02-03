@@ -33,7 +33,7 @@ public class DocOverview {
     @JsonProperty("metadataFieldGroups")
     public List<MetadataFieldGroup> metadataFieldGroups;
 
-    public FieldInfo docFields;
+    public SpecialFieldInfo docFields;
 
     @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)

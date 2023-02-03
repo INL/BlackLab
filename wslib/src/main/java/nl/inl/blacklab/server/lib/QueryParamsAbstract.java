@@ -371,7 +371,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public WebserviceOperation getOperation() {
-        return WebserviceOperation.fromValue(get(WebserviceParameter.OPERATION)).orElseThrow();
+        String op = get(WebserviceParameter.OPERATION);
+        return WebserviceOperation.fromValue(op)
+                .orElseThrow(() -> new UnsupportedOperationException("Unsupported operation '" + op + "'"));
     }
 
     @Override

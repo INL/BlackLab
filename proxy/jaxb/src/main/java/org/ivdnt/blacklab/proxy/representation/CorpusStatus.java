@@ -2,7 +2,6 @@ package org.ivdnt.blacklab.proxy.representation;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,10 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CorpusSummary implements Cloneable {
+public class CorpusStatus implements Cloneable {
 
-    @XmlAttribute
-    public String name = "";
+    public String indexName = "";
 
     public String displayName = "";
 
@@ -29,23 +27,23 @@ public class CorpusSummary implements Cloneable {
     public long tokenCount = 0;
 
     // required for Jersey
-    CorpusSummary() {}
+    CorpusStatus() {}
 
-    public CorpusSummary(String name, String displayName, String documentFormat) {
-        this.name = name;
+    public CorpusStatus(String name, String displayName, String documentFormat) {
+        this.indexName = name;
         this.displayName = displayName;
         this.documentFormat = documentFormat;
     }
 
     @Override
-    public CorpusSummary clone() throws CloneNotSupportedException {
-        return (CorpusSummary)super.clone();
+    public CorpusStatus clone() throws CloneNotSupportedException {
+        return (CorpusStatus)super.clone();
     }
 
     @Override
     public String toString() {
-        return "CorpusSummary{" +
-                "name='" + name + '\'' +
+        return "CorpusStatus{" +
+                "indexName='" + indexName + '\'' +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +
                 ", status='" + status + '\'' +

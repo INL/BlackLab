@@ -4,7 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class FieldInfo {
+public class SpecialFieldInfo {
 
     public String pidField = "";
 
@@ -15,9 +15,9 @@ public class FieldInfo {
     public String dateField = "";
 
     // required for Jersey
-    public FieldInfo() {}
+    public SpecialFieldInfo() {}
 
-    public FieldInfo(String pidField, String titleField) {
+    public SpecialFieldInfo(String pidField, String titleField) {
         this.pidField = pidField;
         this.titleField = titleField;
     }
