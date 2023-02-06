@@ -15,6 +15,7 @@ import org.ivdnt.blacklab.proxy.helper.MapAdapterFieldValues;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -64,6 +65,9 @@ public class MetadataField implements Cloneable {
     @XmlAttribute
     public String name = "title";
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public String indexName;
+
     public String fieldName = "title";
 
     public boolean isAnnotatedField = false;
@@ -107,6 +111,7 @@ public class MetadataField implements Cloneable {
     public String toString() {
         return "MetadataField{" +
                 "name='" + name + '\'' +
+                ", indexName='" + indexName + '\'' +
                 ", fieldName='" + fieldName + '\'' +
                 ", isAnnotatedField=" + isAnnotatedField +
                 ", displayName='" + displayName + '\'' +

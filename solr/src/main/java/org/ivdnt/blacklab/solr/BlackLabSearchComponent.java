@@ -24,7 +24,7 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
@@ -180,7 +180,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             //if (outputType == DataFormat.CSV)
 
             ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
-            DStream dstream = DStream.get(ds, params.apiCompatibility());
+            ResponseStreamer dstream = ResponseStreamer.get(ds, params.apiCompatibility());
             try {
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {

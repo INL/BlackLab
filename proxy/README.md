@@ -10,13 +10,12 @@ Another goal is security: it is generally not recommended to open the Solr port 
 
 This is a work in progress. Still to do:
 
+- make CI tests run with Solr as well
 - SearchParameters: support all parameters. Use Map...? (but how to deal with different types?)
-- /fields/NAME for metadata fields
+- error handling
 - /autocomplete
 - /sharing (read-only for now)
 - /cache-info
-- error handling
-- make CI tests run with Solr as well
 - ensure proxying to BlackLab Server works as well
 
 ## API v4

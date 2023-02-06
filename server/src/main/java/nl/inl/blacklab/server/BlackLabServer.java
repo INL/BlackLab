@@ -41,7 +41,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -249,12 +249,12 @@ public class BlackLabServer extends HttpServlet {
         DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
-        DStream dstream = DStream.get(ds, requestHandler.apiCompatibility());
+        ResponseStreamer dstream = ResponseStreamer.get(ds, requestHandler.apiCompatibility());
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
         DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint);
         es.outputProlog();
-        DStream errorWriter = DStream.get(es, requestHandler.apiCompatibility());
+        ResponseStreamer errorWriter = ResponseStreamer.get(es, requestHandler.apiCompatibility());
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
         try {

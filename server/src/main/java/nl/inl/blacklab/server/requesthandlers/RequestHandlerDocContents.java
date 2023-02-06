@@ -5,7 +5,7 @@ import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStreamXml;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.ResultDocContents;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -31,14 +31,14 @@ public class RequestHandlerDocContents extends RequestHandler {
     }
 
     @Override
-    public int handle(DStream ds) throws BlsException, InvalidQuery {
+    public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
         // Find the document pid
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         params.setDocPid(docPid);
 
         ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
-        docContentsResponse((DataStreamXml)ds.getDataStream(), resultDocContents);
+        docContentsResponse((DataStreamXml)rs.getDataStream(), resultDocContents);
         return HTTP_OK;
     }
 

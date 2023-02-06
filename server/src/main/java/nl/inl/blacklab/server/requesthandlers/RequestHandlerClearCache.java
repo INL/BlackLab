@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
@@ -13,8 +13,8 @@ public class RequestHandlerClearCache extends RequestHandler {
     }
 
     @Override
-    public int handle(DStream ds) {
-        return WebserviceRequestHandler.opClearCache(params, ds, debugMode);
+    public int handle(ResponseStreamer rs) {
+        return WebserviceRequestHandler.opClearCache(params, rs, debugMode);
     }
 
 }

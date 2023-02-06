@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
@@ -24,7 +24,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
     }
 
     @Override
-    public int handle(DStream ds) throws BlsException {
+    public int handle(ResponseStreamer rs) throws BlsException {
         // Get field and (optionally) annotation name from URL
         String[] pathParts = StringUtils.split(urlPathInfo, '/');
         if (pathParts.length == 0)
@@ -42,7 +42,7 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         params.setFieldName(fieldName);
         params.setAnnotationName(annotationName);
 
-        WebserviceRequestHandler.opAutocomplete(params, ds);
+        WebserviceRequestHandler.opAutocomplete(params, rs);
         return HTTP_OK;
     }
 

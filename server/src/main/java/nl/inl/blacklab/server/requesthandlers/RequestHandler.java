@@ -29,7 +29,7 @@ import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
@@ -444,13 +444,13 @@ public abstract class RequestHandler {
     /**
      * Child classes should override this to handle the request.
      *
-     * @param ds output stream
+     * @param rs where to write output
      * @return the response object
      *
      * @throws BlsException if the query can't be executed
      * @throws InterruptedSearch if the thread was interrupted
      */
-    public abstract int handle(DStream ds) throws BlsException, InvalidQuery;
+    public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
     public ApiVersion apiCompatibility() {
         return params.apiCompatibility();

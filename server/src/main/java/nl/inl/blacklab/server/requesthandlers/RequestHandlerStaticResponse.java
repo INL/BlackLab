@@ -3,7 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import javax.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
@@ -125,18 +125,18 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     }
 
     @Override
-    public int handle(DStream ds) {
+    public int handle(ResponseStreamer rs) {
         if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
-                ds.getDataStream().internalError(exception, debugMode, internalErrorCode);
+                rs.getDataStream().internalError(exception, debugMode, internalErrorCode);
             else if (msg != null)
-                ds.getDataStream().internalError(msg, debugMode, internalErrorCode);
+                rs.getDataStream().internalError(msg, debugMode, internalErrorCode);
             else
-                ds.getDataStream().internalError(internalErrorCode);
+                rs.getDataStream().internalError(internalErrorCode);
         } else if (isError) {
-            ds.getDataStream().error(code, msg);
+            rs.getDataStream().error(code, msg);
         } else {
-            ds.getDataStream().statusObject(code, msg);
+            rs.getDataStream().statusObject(code, msg);
         }
         return httpCode;
     }

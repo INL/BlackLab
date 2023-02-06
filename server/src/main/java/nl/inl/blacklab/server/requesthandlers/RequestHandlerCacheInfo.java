@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.lib.results.DStream;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
@@ -18,8 +18,8 @@ public class RequestHandlerCacheInfo extends RequestHandler {
     }
 
     @Override
-    public int handle(DStream ds) {
-        WebserviceRequestHandler.opCacheInfo(params, ds);
+    public int handle(ResponseStreamer rs) {
+        WebserviceRequestHandler.opCacheInfo(params, rs);
         return HTTP_OK;
     }
 

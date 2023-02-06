@@ -69,8 +69,8 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  *
  * Takes a DataStream and an API version to attempt compatibility with.
  */
-public class DStream {
-    static final Logger logger = LogManager.getLogger(DStream.class);
+public class ResponseStreamer {
+    static final Logger logger = LogManager.getLogger(ResponseStreamer.class);
 
     public static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
 
@@ -78,12 +78,8 @@ public class DStream {
 
     private static final String KEY_API_VERSION = "apiVersion";
 
-    public static DStream get(DataStream ds) {
-        return get(ds, ApiVersion.CURRENT);
-    }
-
-    public static DStream get(DataStream ds, ApiVersion v) {
-        return new DStream(ds, v);
+    public static ResponseStreamer get(DataStream ds, ApiVersion v) {
+        return new ResponseStreamer(ds, v);
     }
 
     /** What version of responses to write. */
@@ -92,11 +88,7 @@ public class DStream {
     /** DataStream to write to. */
     private DataStream ds;
 
-    private DStream(DataStream ds) {
-        this(ds, ApiVersion.CURRENT);
-    }
-
-    private DStream(DataStream ds, ApiVersion v) {
+    private ResponseStreamer(DataStream ds, ApiVersion v) {
         this.ds = ds;
         this.apiVersion = v;
     }
