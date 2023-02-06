@@ -2,9 +2,9 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
@@ -16,7 +16,7 @@ public class RequestHandlerCreateIndex extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DStream ds) throws BlsException {
         // Create index and return success
         try {
             String newIndexName = request.getParameter("name");

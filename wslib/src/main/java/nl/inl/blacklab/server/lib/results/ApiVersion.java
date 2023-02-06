@@ -12,6 +12,12 @@ public enum ApiVersion {
      *  field info where it doesn't belong, etc. */
     V4("4.0");
 
+    /** The current version */
+    public static final ApiVersion CURRENT = V4;
+
+    /** An experimental future version of the API, if there is one; the current one, otherwise */
+    public static final ApiVersion EXPERIMENTAL = CURRENT;
+
     private final String versionString;
 
     ApiVersion(String versionString) {
@@ -29,7 +35,12 @@ public enum ApiVersion {
      * @return
      */
     public static ApiVersion fromValue(String s) {
-        if (s.length() > 0 && s.toLowerCase().charAt(0) == 'v')
+        s = s.toLowerCase();
+        if (s.equals("current"))
+            return CURRENT;
+        if (s.equals("experimental"))
+            return EXPERIMENTAL;
+        if (s.length() > 0 && s.charAt(0) == 'v')
             s = s.substring(1);
         if (s.matches("\\d+"))
             s += ".0";
@@ -38,8 +49,8 @@ public enum ApiVersion {
             if (v.versionString.equals(s))
                 return v;
         }
-        // Just return the latest version
-        return versions[versions.length - 1];
+        // Not recognized; just use the current version
+        return CURRENT;
     }
 
     public String versionString() {

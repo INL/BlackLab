@@ -15,13 +15,13 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Add document(s) to a user index.
@@ -33,7 +33,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DStream ds) throws BlsException {
         debug(logger, "REQ add data: " + indexName);
 
         // Read uploaded files before checking for errors, or the client won't see our response :(

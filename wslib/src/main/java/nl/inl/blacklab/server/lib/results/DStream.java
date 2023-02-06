@@ -65,7 +65,9 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
- * Utilities for serializing BlackLab responses using DataStream.
+ * For serializing BlackLab response objects.
+ *
+ * Takes a DataStream and an API version to attempt compatibility with.
  */
 public class DStream {
     static final Logger logger = LogManager.getLogger(DStream.class);
@@ -76,22 +78,35 @@ public class DStream {
 
     private static final String KEY_API_VERSION = "apiVersion";
 
-    /** What version of responses to write. */
-    private static ApiVersion apiVersion = ApiVersion.V3;
-
-    public static void setApiVersion(ApiVersion apiVersion) {
-        DStream.apiVersion = apiVersion;
+    public static DStream get(DataStream ds) {
+        return get(ds, ApiVersion.CURRENT);
     }
 
-    private DStream() {}
+    public static DStream get(DataStream ds, ApiVersion v) {
+        return new DStream(ds, v);
+    }
+
+    /** What version of responses to write. */
+    private ApiVersion apiVersion;
+
+    /** DataStream to write to. */
+    private DataStream ds;
+
+    private DStream(DataStream ds) {
+        this(ds, ApiVersion.CURRENT);
+    }
+
+    private DStream(DataStream ds, ApiVersion v) {
+        this.ds = ds;
+        this.apiVersion = v;
+    }
 
     /**
      * Add info about the current logged-in user (if any) to the response.
      *
-     * @param ds output stream
      * @param userInfo user info to show
      */
-    public static void userInfo(DataStream ds, ResultUserInfo userInfo) {
+    public void userInfo(ResultUserInfo userInfo) {
         ds.startEntry("user").startMap();
         {
             ds.entry("loggedIn", userInfo.isLoggedIn());
@@ -109,11 +124,10 @@ public class DStream {
      * and it is redundant to send it with every query response. We may want
      * to deprecate this in the future.
      *
-     * @param ds output stream
      * @param docFields document field info to write
      * @param metaDisplayNames display name info to write
      */
-    public static void metadataFieldInfo(DataStream ds, Map<String, String> docFields, Map<String, String> metaDisplayNames) {
+    public void metadataFieldInfo(Map<String, String> docFields, Map<String, String> metaDisplayNames) {
         ds.startEntry("docFields").startMap();
         for (Map.Entry<String, String> e: docFields.entrySet()) {
             ds.entry(e.getKey(), e.getValue());
@@ -130,15 +144,14 @@ public class DStream {
     /**
      * Stream document information (metadata, contents authorization)
      *
-     * @param ds where to stream information
      * @param docInfos infos to write
      */
-    public static void documentInfos(DataStream ds, Map<String, ResultDocInfo> docInfos) {
+    public void documentInfos(Map<String, ResultDocInfo> docInfos) {
         ds.startEntry("docInfos").startMap();
         for (Map.Entry<String, ResultDocInfo> e: docInfos.entrySet()) {
             ds.startAttrEntry("docInfo", "pid", e.getKey());
             {
-                documentInfo(ds, e.getValue());
+                documentInfo(e.getValue());
             }
             ds.endAttrEntry();
         }
@@ -148,10 +161,9 @@ public class DStream {
     /**
      * Stream document information (metadata, contents authorization)
      *
-     * @param ds where to stream information
      * @param docInfo info to stream
      */
-    public static void documentInfo(DataStream ds, ResultDocInfo docInfo) {
+    public void documentInfo(ResultDocInfo docInfo) {
         ds.startMap();
         {
             for (Map.Entry<String, List<String>> e: docInfo.getMetadata().entrySet()) {
@@ -170,7 +182,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void metadataGroupInfo(DataStream ds, Map<String, List<String>> metadataFieldGroups) {
+    public void metadataGroupInfo(Map<String, List<String>> metadataFieldGroups) {
         ds.startEntry("metadataFieldGroups").startList();
         for (Map.Entry<String, List<String>> e: metadataFieldGroups.entrySet()) {
             ds.startItem("metadataFieldGroup").startMap();
@@ -187,7 +199,7 @@ public class DStream {
         ds.endList().endEntry();
     }
 
-    public static void facets(DataStream ds, Map<String, List<Pair<String, Long>>> facetInfo) {
+    public void facets(Map<String, List<Pair<String, Long>>> facetInfo) {
         ds.startMap();
         for (Map.Entry<String, List<Pair<String,  Long>>> e: facetInfo.entrySet()) {
             String facetBy = e.getKey();
@@ -207,10 +219,9 @@ public class DStream {
     /**
      * Output most of the fields of the search summary.
      *
-     * @param ds where to output XML/JSON
      * @param summaryFields info for the fields to write
      */
-    public static void summaryCommonFields(DataStream ds, ResultSummaryCommonFields summaryFields) throws BlsException {
+    public void summaryCommonFields(ResultSummaryCommonFields summaryFields) throws BlsException {
         WebserviceParams params = summaryFields.getSearchParam();
         Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         SearchTimings timings = summaryFields.getTimings();
@@ -258,7 +269,7 @@ public class DStream {
         }
     }
 
-    public static void summaryNumHits(DataStream ds, ResultSummaryNumHits result) {
+    public void summaryNumHits(ResultSummaryNumHits result) {
         ResultsStats hitsStats = result.getHitsStats();
         ResultsStats docsStats = result.getDocsStats();
         boolean countFailed = result.isCountFailed();
@@ -285,11 +296,11 @@ public class DStream {
         ds.entry("numberOfDocs", docsCounted)
                 .entry("numberOfDocsRetrieved", docsProcessed);
         if (subcorpusSize != null) {
-            subcorpusSize(ds, subcorpusSize);
+            subcorpusSize(subcorpusSize);
         }
     }
 
-    public static void summaryNumDocs(DataStream ds, ResultSummaryNumDocs result) {
+    public void summaryNumDocs(ResultSummaryNumDocs result) {
         DocResults docResults = result.getDocResults();
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ds.entry("stillCounting", false);
@@ -310,11 +321,11 @@ public class DStream {
             .entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
         CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (subcorpusSize != null) {
-            subcorpusSize(ds, subcorpusSize);
+            subcorpusSize(subcorpusSize);
         }
     }
 
-    public static void subcorpusSize(DataStream ds, CorpusSize subcorpusSize) {
+    public void subcorpusSize(CorpusSize subcorpusSize) {
         ds.startEntry("subcorpusSize").startMap()
                 .entry("documents", subcorpusSize.getDocuments());
         if (subcorpusSize.hasTokenCount())
@@ -322,7 +333,7 @@ public class DStream {
         ds.endMap().endEntry();
     }
 
-    public static void listOfHits(DataStream ds, ResultListOfHits result) throws BlsException {
+    public void listOfHits(ResultListOfHits result) throws BlsException {
         nl.inl.blacklab.server.lib.WebserviceParams params = result.getParams();
         Hits hits = result.getHits();
 
@@ -399,7 +410,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void indexProgress(DataStream ds, ResultIndexStatus progress)
+    public void indexProgress(ResultIndexStatus progress)
             throws BlsException {
         if (progress.getIndexStatus().equals(Index.IndexStatus.INDEXING)) {
             ds.startEntry("indexProgress").startMap()
@@ -410,7 +421,7 @@ public class DStream {
         }
     }
 
-    public static void metadataField(DataStream ds, ResultMetadataField metadataField) {
+    public void metadataField(ResultMetadataField metadataField) {
         String indexName = metadataField.getIndexName();
         MetadataField fd = metadataField.getFieldDesc();
         boolean listValues = metadataField.isListValues();
@@ -455,7 +466,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void annotatedField(DataStream ds, ResultAnnotatedField annotatedField) {
+    public void annotatedField(ResultAnnotatedField annotatedField) {
         String indexName = annotatedField.getIndexName();
         AnnotatedField fieldDesc = annotatedField.getFieldDesc();
         Map<String, ResultAnnotationInfo> annotInfos = annotatedField.getAnnotInfos();
@@ -516,7 +527,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void collocationsResponse(DataStream ds, TermFrequencyList tfl) {
+    public void collocationsResponse(TermFrequencyList tfl) {
         ds.startMap().startEntry("tokenFrequencies").startMap();
         for (TermFrequency tf : tfl) {
             ds.attrEntry("token", "text", tf.term, tf.frequency);
@@ -524,7 +535,7 @@ public class DStream {
         ds.endMap().endEntry().endMap();
     }
 
-    public static void hitsResponse(DataStream ds, ResultHits resultHits, boolean includeDeprecatedFieldInfo)
+    public void hitsResponse(ResultHits resultHits, boolean includeDeprecatedFieldInfo)
             throws InvalidQuery {
         nl.inl.blacklab.server.lib.WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
@@ -540,8 +551,8 @@ public class DStream {
         // The summary
         ds.startEntry("summary").startMap();
         {
-            summaryCommonFields(ds, summaryFields);
-            summaryNumHits(ds, result);
+            summaryCommonFields(summaryFields);
+            summaryNumHits(result);
             if (params.getIncludeTokenCount())
                 ds.entry("tokensInMatchingDocuments", resultHits.getTotalTokens());
 
@@ -551,7 +562,7 @@ public class DStream {
             if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
                 // (this information is not specific to this request and can be found elsewhere,
                 //  so it probably shouldn't be here)
-                metadataFieldInfo(ds, resultHits.getDocFields(), resultHits.getMetaDisplayNames());
+                metadataFieldInfo(resultHits.getDocFields(), resultHits.getMetaDisplayNames());
             }
 
             // Include explanation of how the query was executed?
@@ -572,15 +583,15 @@ public class DStream {
         ds.endMap().endEntry();
 
         // Hits and docInfos
-        listOfHits(ds, listOfHits);
-        documentInfos(ds, resultHits.getDocInfos());
+        listOfHits(listOfHits);
+        documentInfos(resultHits.getDocInfos());
 
         // Facets (if requested)
         if (resultHits.hasFacets()) {
             // Now, group the docs according to the requested facets.
             ds.startEntry("facets");
             {
-                facets(ds, resultHits.getFacetInfo());
+                facets(resultHits.getFacetInfo());
             }
             ds.endEntry();
         }
@@ -588,7 +599,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void hitsGroupedResponse(DataStream ds, ResultHitsGrouped hitsGrouped) {
+    public void hitsGroupedResponse(ResultHitsGrouped hitsGrouped) {
         nl.inl.blacklab.server.lib.WebserviceParams params = hitsGrouped.getParams();
         ResultSummaryCommonFields summaryFields = hitsGrouped.getSummaryFields();
         ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
@@ -598,8 +609,8 @@ public class DStream {
         // Summary
         ds.startEntry("summary").startMap();
         {
-            summaryCommonFields(ds, summaryFields);
-            summaryNumHits(ds, result);
+            summaryCommonFields(summaryFields);
+            summaryNumHits(result);
         }
         ds.endMap().endEntry();
 
@@ -628,11 +639,11 @@ public class DStream {
 
                 ds.entry("numberOfDocs", groupInfo.getNumberOfDocsInGroup());
                 if (hitsGrouped.getMetadataGroupProperties() != null) {
-                    subcorpusSize(ds, groupInfo.getSubcorpusSize());
+                    subcorpusSize(groupInfo.getSubcorpusSize());
                 }
 
                 if (groupInfo.getListOfHits() != null) {
-                    listOfHits(ds, groupInfo.getListOfHits());
+                    listOfHits(groupInfo.getListOfHits());
                 }
             }
             ds.endMap().endItem();
@@ -640,12 +651,12 @@ public class DStream {
         ds.endList().endEntry();
 
         if (params.includeGroupContents()) {
-            documentInfos(ds, hitsGrouped.getDocInfos());
+            documentInfos(hitsGrouped.getDocInfos());
         }
         ds.endMap();
     }
 
-    public static void docsGroupedResponse(DataStream ds, ResultDocsGrouped result) {
+    public void docsGroupedResponse(ResultDocsGrouped result) {
         DocGroups groups = result.getGroups();
         WindowStats ourWindow = result.getOurWindow();
 
@@ -654,12 +665,12 @@ public class DStream {
         // The summary
         ds.startEntry("summary").startMap();
 
-        summaryCommonFields(ds, result.getSummaryFields());
+        summaryCommonFields(result.getSummaryFields());
 
         if (result.getNumResultDocs() != null) {
-            summaryNumDocs(ds, result.getNumResultDocs());
+            summaryNumDocs(result.getNumResultDocs());
         } else {
-            summaryNumHits(ds, result.getNumResultHits());
+            summaryNumHits(result.getNumResultHits());
         }
 
         ds.endMap().endEntry();
@@ -692,7 +703,7 @@ public class DStream {
 
             ds.entry("numberOfTokens", group.totalTokens());
             if (result.getParams().hasPattern()) {
-                subcorpusSize(ds, it.next());
+                subcorpusSize(it.next());
             }
             ds.endMap().endItem();
         }
@@ -701,17 +712,17 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void docsResponse(DataStream ds, ResultDocsResponse result, boolean includeDeprecatedFieldInfo) {
+    public void docsResponse(ResultDocsResponse result, boolean includeDeprecatedFieldInfo) {
         ds.startMap();
         {
             // The summary
             ds.startEntry("summary").startMap();
             {
-                summaryCommonFields(ds, result.getSummaryFields());
+                summaryCommonFields(result.getSummaryFields());
                 if (result.getNumResultDocs() != null) {
-                    summaryNumDocs(ds, result.getNumResultDocs());
+                    summaryNumDocs(result.getNumResultDocs());
                 } else {
-                    summaryNumHits(ds, result.getNumResultHits());
+                    summaryNumHits(result.getNumResultHits());
                 }
                 if (result.isIncludeTokenCount())
                     ds.entry("tokensInMatchingDocuments", result.getTotalTokens());
@@ -719,7 +730,7 @@ public class DStream {
                 if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
                     // (this information is not specific to this request and can be found elsewhere,
                     //  so it probably shouldn't be here)
-                    metadataFieldInfo(ds, result.getDocFields(), result.getMetaDisplayNames());
+                    metadataFieldInfo(result.getDocFields(), result.getMetaDisplayNames());
                 }
             }
             ds.endMap().endEntry();
@@ -727,14 +738,14 @@ public class DStream {
             // The hits and document info
             ds.startEntry("docs").startList();
             for (ResultDocResult docResult: result.getDocResults()) {
-                docResult(ds, docResult);
+                docResult(docResult);
             }
             ds.endList().endEntry();
             if (result.getFacetInfo() != null) {
                 // Now, group the docs according to the requested facets.
                 ds.startEntry("facets");
                 {
-                    facets(ds, result.getFacetInfo());
+                    facets(result.getFacetInfo());
                 }
                 ds.endEntry();
             }
@@ -742,7 +753,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void docResult(DataStream ds, ResultDocResult result) {
+    public void docResult(ResultDocResult result) {
         ds.startItem("doc").startMap();
         {
             // Combine all
@@ -753,7 +764,7 @@ public class DStream {
             // Doc info (metadata, etc.)
             ds.startEntry("docInfo");
             {
-                documentInfo(ds, result.getDocInfo());
+                documentInfo(result.getDocInfo());
             }
             ds.endEntry();
 
@@ -796,20 +807,20 @@ public class DStream {
         ds.endMap().endItem();
     }
 
-    public static void serverInfo(DataStream ds, ResultServerInfo result, ApiVersion apiCompatibility) {
+    public void serverInfo(ResultServerInfo result, ApiVersion apiCompatibility) {
         ds.startMap();
-        if (DStream.apiVersion != ApiVersion.V3 && apiCompatibility != ApiVersion.V3)
+        if (apiVersion != ApiVersion.V3)
             ds.entry(KEY_API_VERSION, apiCompatibility.versionString());
         ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
                 .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
 
         ds.startEntry("indices").startMap();
         for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
-            indexInfo(ds, indexStatus);
+            indexInfo(indexStatus);
         }
         ds.endMap().endEntry();
 
-        userInfo(ds, result.getUserInfo());
+        userInfo(result.getUserInfo());
 
         if (result.isDebugMode()) {
             ds.startEntry("cacheStatus");
@@ -819,7 +830,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void indexInfo(DataStream ds, ResultIndexStatus progress) {
+    public void indexInfo(ResultIndexStatus progress) {
         Index index = progress.getIndex();
         IndexMetadata indexMetadata = progress.getMetadata();
         ds.startAttrEntry("index", "name", index.getId());
@@ -834,14 +845,14 @@ public class DStream {
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
                 ds.entry("tokenCount", indexMetadata.tokenCount());
-                indexProgress(ds, progress);
+                indexProgress(progress);
             }
             ds.endMap();
         }
         ds.endAttrEntry();
     }
 
-    public static void indexMetadataResponse(DataStream ds, ResultIndexMetadata result) {
+    public void indexMetadataResponse(ResultIndexMetadata result) {
         IndexMetadata metadata = result.getMetadata();
         ds.startMap();
         {
@@ -858,7 +869,7 @@ public class DStream {
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("tokenCount", metadata.tokenCount());
             ds.entry("documentCount", metadata.documentCount());
-            indexProgress(ds, result.getProgress());
+            indexProgress(result.getProgress());
 
             ds.startEntry("versionInfo").startMap()
                     .entry(apiVersion == ApiVersion.V3 ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
@@ -879,7 +890,7 @@ public class DStream {
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
                 ds.startAttrEntry("annotatedField", "name", annotatedField.getFieldDesc().name());
                 {
-                    annotatedField(ds, annotatedField);
+                    annotatedField(annotatedField);
                 }
                 ds.endAttrEntry();
             }
@@ -889,13 +900,13 @@ public class DStream {
             for (ResultMetadataField metadataField: result.getMetadataFields()) {
                 ds.startAttrEntry("metadataField", "name", metadataField.getFieldDesc().name());
                 {
-                    metadataField(ds, metadataField);
+                    metadataField(metadataField);
                 }
                 ds.endAttrEntry();
             }
             ds.endMap().endEntry();
 
-            metadataGroupInfo(ds, result.getMetadataFieldGroups());
+            metadataGroupInfo(result.getMetadataFieldGroups());
 
             ds.startEntry("annotationGroups").startMap();
             for (AnnotatedField f: metadata.annotatedFields()) {
@@ -937,7 +948,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void indexStatusResponse(DataStream ds, ResultIndexStatus progress) {
+    public void indexStatusResponse(ResultIndexStatus progress) {
         IndexMetadata metadata = progress.getMetadata();
         ds.startMap();
         {
@@ -950,32 +961,32 @@ public class DStream {
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
                 ds.entry("documentFormat", formatIdentifier);
-            indexProgress(ds, progress);
+            indexProgress(progress);
         }
         ds.endMap();
     }
 
-    public static void docContentsResponse(ResultDocContents result, DataStream ds) {
+    public void docContentsResponse(ResultDocContents result) {
         ds.startMap();
         ds.entry("contents", result.getContent());
         ds.endMap();
     }
 
-    public static void docInfoResponse(DataStream ds, ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
+    public void docInfoResponse(ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,
             Map<String, String> docFields, Map<String, String> metaDisplayNames, boolean includeDeprecatedFieldInfo) {
         ds.startMap().entry("docPid", docInfo.getPid());
         {
             ds.startEntry("docInfo");
             {
-                documentInfo(ds, docInfo);
+                documentInfo(docInfo);
             }
             ds.endEntry();
 
             if (apiVersion == ApiVersion.V3 || includeDeprecatedFieldInfo) {
                 // (this information is not specific to this document and can be found elsewhere,
                 //  so it probably shouldn't be here)
-                metadataGroupInfo(ds, metadataFieldGroups);
-                metadataFieldInfo(ds, docFields, metaDisplayNames);
+                metadataGroupInfo(metadataFieldGroups);
+                metadataFieldInfo(docFields, metaDisplayNames);
             }
         }
         ds.endMap();
@@ -984,10 +995,9 @@ public class DStream {
     /**
      * Output a hit (or just a document fragment with no hit in it)
      *
-     * @param ds output stream
      * @param result hit to output
      */
-    public static void hitOrFragmentInfo(DataStream ds, ResultDocSnippet result) {
+    public void hitOrFragmentInfo(ResultDocSnippet result) {
 
         Hits hits = result.getHits();
         Hit hit = hits.get(0);
@@ -1032,7 +1042,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void termFreqResponse(DataStream ds, TermFrequencyList tfl) {
+    public void termFreqResponse(TermFrequencyList tfl) {
         // Assemble all the parts
         ds.startMap();
         ds.startEntry("termFreq").startMap();
@@ -1044,17 +1054,17 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void autoComplete(DataStream ds, ResultAutocomplete result) {
+    public void autoComplete(ResultAutocomplete result) {
         ds.startList();
         result.getTerms().forEach((v) -> ds.item("term", v));
         ds.endList();
     }
 
-    public static void listFormatsResponse(DataStream ds, ResultListInputFormats result) {
+    public void listFormatsResponse(ResultListInputFormats result) {
 
         ds.startMap();
         {
-            userInfo(ds, result.getUserInfo());
+            userInfo(result.getUserInfo());
 
             // List supported input formats
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
@@ -1079,7 +1089,7 @@ public class DStream {
         ds.endMap();
     }
 
-    public static void formatInfoResponse(DataStream ds, ResultInputFormat result) {
+    public void formatInfoResponse(ResultInputFormat result) {
         ds.startMap()
                 .entry("formatName", result.getConfig().getName())
                 .entry("configFileType", result.getConfig().getConfigFileType())
@@ -1087,7 +1097,7 @@ public class DStream {
                 .endMap();
     }
 
-    public static void cacheInfo(DataStream ds, SearchCache blackLabCache, boolean includeDebugInfo) {
+    public void cacheInfo(SearchCache blackLabCache, boolean includeDebugInfo) {
         ds.startMap()
                 .startEntry("cacheStatus");
         ds.value(blackLabCache.getStatus());
@@ -1098,7 +1108,11 @@ public class DStream {
                 .endMap();
     }
 
-    public static void formatXsltResponse(DataStream ds, ResultInputFormat result) {
+    public void formatXsltResponse(ResultInputFormat result) {
         ds.xslt(result.getXslt());
+    }
+
+    public DataStream getDataStream() {
+        return ds;
     }
 }

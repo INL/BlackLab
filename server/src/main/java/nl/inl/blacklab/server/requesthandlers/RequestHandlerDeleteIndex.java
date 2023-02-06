@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
@@ -14,7 +14,7 @@ public class RequestHandlerDeleteIndex extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DStream ds) throws BlsException {
         if (indexName != null && indexName.length() > 0) {
             // Delete index
             try {

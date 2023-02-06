@@ -24,7 +24,6 @@ import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -49,9 +48,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private RequestInstrumentationProvider instrumentationProvider = RequestInstrumentationProvider.noOpProvider();
 
     public BlackLabSearchComponent() {
-        // Fix small annoyances in the API, at the cost of not being strictly 100% BLS compatible.
-        // (these are things like inconsistent field names, data types, etc.)
-        DStream.setApiVersion(ApiVersion.V4);
     }
 
     /**
@@ -184,76 +180,77 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             //if (outputType == DataFormat.CSV)
 
             ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
+            DStream dstream = DStream.get(ds, params.apiCompatibility());
             try {
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint
                 case SERVER_INFO:
-                    WebserviceRequestHandler.opServerInfo(params, debugMode, ds);
+                    WebserviceRequestHandler.opServerInfo(params, debugMode, dstream);
                     break;
 
                 // Information about the corpus
                 case CORPUS_INFO:
-                    WebserviceRequestHandler.opCorpusInfo(params, ds);
+                    WebserviceRequestHandler.opCorpusInfo(params, dstream);
                     break;
                 case CORPUS_STATUS:
-                    WebserviceRequestHandler.opCorpusStatus(params, ds);
+                    WebserviceRequestHandler.opCorpusStatus(params, dstream);
                     break;
                 case FIELD_INFO:
-                    WebserviceRequestHandler.opFieldInfo(params, ds);
+                    WebserviceRequestHandler.opFieldInfo(params, dstream);
                     break;
 
                 // Find hits or documents
                 case HITS_CSV:
-                    WebserviceRequestHandler.opHitsCsv(params, ds);
+                    WebserviceRequestHandler.opHitsCsv(params, dstream);
                     break;
                 case HITS: case HITS_GROUPED:
                     // [grouped] hits
-                    WebserviceRequestHandler.opHits(params, ds);
+                    WebserviceRequestHandler.opHits(params, dstream);
                     break;
                 case DOCS_CSV:
-                    WebserviceRequestHandler.opDocsCsv(params, ds);
+                    WebserviceRequestHandler.opDocsCsv(params, dstream);
                     break;
                 case DOCS: case DOCS_GROUPED:
                     // [grouped] docs
-                    WebserviceRequestHandler.opDocs(params, ds);
+                    WebserviceRequestHandler.opDocs(params, dstream);
                     break;
 
                 // Information about a document
                 case DOC_CONTENTS:
-                    WebserviceRequestHandler.opDocContents(params, ds);
+                    WebserviceRequestHandler.opDocContents(params, dstream);
                     break;
                 case DOC_INFO:
-                    WebserviceRequestHandler.opDocInfo(params, ds);
+                    WebserviceRequestHandler.opDocInfo(params, dstream);
                     break;
                 case DOC_SNIPPET:
-                    WebserviceRequestHandler.opDocSnippet(params, ds);
+                    WebserviceRequestHandler.opDocSnippet(params, dstream);
                     break;
 
                 // Other search
                 case TERM_FREQUENCIES:
-                    WebserviceRequestHandler.opTermFreq(params, ds);
+                    WebserviceRequestHandler.opTermFreq(params, dstream);
                     break;
                 case AUTOCOMPLETE:
-                    WebserviceRequestHandler.opAutocomplete(params, ds);
+                    WebserviceRequestHandler.opAutocomplete(params, dstream);
                     break;
 
                 // Manage user corpora
                 case LIST_INPUT_FORMATS:
-                    WebserviceRequestHandler.opListInputFormats(params, ds);
+                    WebserviceRequestHandler.opListInputFormats(params, dstream);
                     break;
                 case INPUT_FORMAT_INFO:
-                    WebserviceRequestHandler.opInputFormatInfo(params, ds);
+                    WebserviceRequestHandler.opInputFormatInfo(params, dstream);
                     break;
                 case INPUT_FORMAT_XSLT:
-                    WebserviceRequestHandler.opInputFormatXslt(params, ds);
+                    WebserviceRequestHandler.opInputFormatXslt(params, dstream);
                     break;
 
                 case CACHE_INFO:
-                    WebserviceRequestHandler.opCacheInfo(params, ds);
+                    WebserviceRequestHandler.opCacheInfo(params, dstream);
                     break;
                 case CACHE_CLEAR:
-                    WebserviceRequestHandler.opClearCache(params, ds, debugMode);
+                    WebserviceRequestHandler.opClearCache(params, dstream, debugMode);
                     break;
 
                 case WRITE_INPUT_FORMAT:

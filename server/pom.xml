@@ -14,7 +14,6 @@
     <name>BlackLab Server</name>
     <description>BlackLab Server is a REST webservice on top of corpus search engine BlackLab. It allows you to use BlackLab from any programming language.</description>
 
-
     <dependencies>
 
         <dependency>
@@ -36,38 +35,11 @@
             <version>${project.version}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-instrumentation</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-convert-and-tag-indexer</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-mocks</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.5</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-instrumentation-impl</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
     </dependencies>
 </project>

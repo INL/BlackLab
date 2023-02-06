@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BLSConfigParameters {
@@ -34,6 +35,9 @@ public class BLSConfigParameters {
     /** If a group of length 0 is captured (same start and end position), should we omit it instead? */
     private boolean omitEmptyCaptures = false;
 
+    /** API compatibility (defaults to the "current" one) */
+    private ApiVersion apiCompatibility = ApiVersion.CURRENT;
+
     /**
      * Set up parameter default values from the configuration.
      */
@@ -44,6 +48,7 @@ public class BLSConfigParameters {
         WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefaultValue());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
         WebserviceParameter.setDefaultValue(WebserviceParameter.WORDS_AROUND_HIT, "" + getContextSize().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApiCompatibility().versionString());
     }
 
     @JsonGetter("defaultSearchSensitivity")
@@ -136,5 +141,13 @@ public class BLSConfigParameters {
     @SuppressWarnings("unused")
     public void setOmitEmptyCaptures(boolean omitEmptyCaptures) {
         this.omitEmptyCaptures = omitEmptyCaptures;
+    }
+
+    public void setApiCompatibility(String apiCompatibility) {
+        this.apiCompatibility = ApiVersion.fromValue(apiCompatibility);
+    }
+
+    public ApiVersion getApiCompatibility() {
+        return this.apiCompatibility;
     }
 }

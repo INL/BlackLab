@@ -1,10 +1,10 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Delete an input format configuration.
@@ -16,7 +16,7 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DStream ds) throws BlsException {
         debug(logger, "REQ add format: " + indexName);
         WebserviceOperations.deleteUserFormat(params, urlResource);
         return Response.success(ds, "Format deleted.");

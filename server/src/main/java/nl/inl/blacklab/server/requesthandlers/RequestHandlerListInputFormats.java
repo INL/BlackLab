@@ -1,10 +1,10 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Get information about supported input formats.
@@ -38,7 +38,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(DStream ds) throws BlsException {
         if (urlResource != null && urlResource.length() > 0 && isXsltRequest) {
             params.setInputFormat(urlResource);
             WebserviceRequestHandler.opInputFormatXslt(params, ds);

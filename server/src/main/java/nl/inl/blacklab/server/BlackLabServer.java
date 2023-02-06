@@ -41,6 +41,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.DStream;
 import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -248,25 +249,27 @@ public class BlackLabServer extends HttpServlet {
         DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
+        DStream dstream = DStream.get(ds, requestHandler.apiCompatibility());
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
         DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint);
         es.outputProlog();
+        DStream errorWriter = DStream.get(es, requestHandler.apiCompatibility());
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
         try {
-            httpCode = requestHandler.handle(ds);
+            httpCode = requestHandler.handle(dstream);
         } catch (InvalidQuery e) {
-            httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+            httpCode = Response.error(errorWriter, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (InternalServerError e) {
             String msg = WebserviceUtil.internalErrorMessage(e, userRequest.isDebugMode(), e.getInternalErrorCode());
-            httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
         } catch (BlsException e) {
-            httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
         } catch (InterruptedSearch e) {
-            httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
+            httpCode = Response.error(errorWriter, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
         } catch (RuntimeException e) {
-            httpCode = Response.internalError(es, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
+            httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
         } finally {
             requestHandler.cleanup(); // close logger
         }
