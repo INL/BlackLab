@@ -6,7 +6,34 @@ One goal of this is API compatibility, to offer one API regardless of whether yo
 
 Another goal is security: it is generally not recommended to open the Solr port directly to the internet. This provides a layer of security, enabling only the BlackLab functionality and shielding any other Solr functionality (and with it, potential security issues).
 
-Work in progress.
+## TODO
+
+This is a work in progress. Still to do:
+
+- SearchParameters: support all parameters. Use Map...? (but how to deal with different types?)
+- /fields/NAME for metadata fields
+- /autocomplete
+- /sharing (read-only for now)
+- /cache-info
+- error handling
+- make CI tests run with Solr as well
+- ensure proxying to BlackLab Server works as well
+
+## API v4
+
+The Solr component and this proxy introduce v4 of the BlackLab webservice protocol.
+
+Changes:
+- New key added to server info page (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)
+- Two keys were renamed on the corpus info page (`/CORPUSNAME`) to be more consistent: in the `versionInfo` block, 
+  `blacklabVersion` and `blacklabBuildTime` are now spelled with a lowercase `l`, just like on the server info page. 
+- The `/hits` and `/docs` responses don't include the `docFields` and `metadataFieldDisplayNames` keys anymore.
+  This information can be found on the corpus info page (`/CORPUSNAME`) and need not be sent with each hit request.
+- Similarly, the document info page (`/docs/DOC_PID`) no longer includes `docFields`, `metadataFieldDisplayNames` or 
+  `metadataFieldGroups` by default.
+
+For all of these changes, you can add `compatibility=v3` to produce the old behaviour. This is meant as a transitional 
+measure, and v3 compatibility will eventually be removed.
 
 ## Configuration
 

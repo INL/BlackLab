@@ -101,7 +101,7 @@ public enum WebserviceParameter {
     CORPUS_NAME("indexname"),
     FIELD("field"),
     INPUT_FORMAT("inputformat"),
-    INCLUDE_DEPRECATED_FIELD_INFO("include-deprecated");
+    API_COMPATIBILITY("compatibility");
 
     public static Optional<WebserviceParameter> fromValue(String str) {
         for (WebserviceParameter v: values()) {

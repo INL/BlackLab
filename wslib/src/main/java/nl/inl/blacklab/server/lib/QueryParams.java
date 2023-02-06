@@ -8,6 +8,7 @@ import java.util.Set;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -163,5 +164,5 @@ public interface QueryParams {
      *
      * @return should we include deprecated field info?
      */
-    boolean includeDeprecatedFieldInfo();
+    ApiVersion apiCompatibility();
 }

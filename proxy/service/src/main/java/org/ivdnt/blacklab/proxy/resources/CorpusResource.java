@@ -1,16 +1,15 @@
 package org.ivdnt.blacklab.proxy.resources;
 
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
-import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -23,11 +22,12 @@ import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
 import org.ivdnt.blacklab.proxy.representation.CorpusStatus;
 import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
-import org.ivdnt.blacklab.proxy.representation.DocInfo;
+import org.ivdnt.blacklab.proxy.representation.DocInfoResponse;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
+import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -93,22 +93,15 @@ public class CorpusResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response corpusInfo(@PathParam("corpusName") String corpusName,
-            @DefaultValue("") @QueryParam("listvalues") String listvalues) {
+    public Response corpusInfo(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
 
-        Map<WebserviceParameter, String> params;
         switch (corpusName) {
         case "input-formats":
-            params = Map.of(
-                    WebserviceParameter.OPERATION, WebserviceOperation.LIST_INPUT_FORMATS.value());
-            return success(Requests.get(client, params, InputFormats.class));
+            return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.LIST_INPUT_FORMATS),
+                    InputFormats.class));
 
         case "cache-info":
             return notImplemented("/cache-info");
-//            params = Map.of(
-//                    WsPar.CORPUS_NAME, corpusName,
-//                    WsPar.OPERATION, WebserviceOperation.CACHE_INFO.value());
-//            return Requests.get(client, params, CacheInfo.class);
 
         case "help":
             return notImplemented("/" + corpusName);
@@ -117,10 +110,8 @@ public class CorpusResource {
             return error(Response.Status.BAD_REQUEST, "WRONG_METHOD", "/cache-clear works only with POST");
         }
 
-        params = Map.of(
-                WebserviceParameter.OPERATION, WebserviceOperation.CORPUS_INFO.value(),
-                WebserviceParameter.CORPUS_NAME, corpusName);
-        return success(Requests.get(client, params, Corpus.class));
+        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.CORPUS_INFO),
+                Corpus.class));
     }
 
     @GET
@@ -133,14 +124,14 @@ public class CorpusResource {
     @GET
     @Path("/docs/{pid}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response docOverview(
+    public Response docInfo(
             @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String pid) {
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
 
-        return success(Requests.get(client, Map.of(
-                WebserviceParameter.CORPUS_NAME, corpusName,
-                WebserviceParameter.OPERATION, WebserviceOperation.DOC_INFO.value(),
-                WebserviceParameter.DOC_PID, pid), DocInfo.class));
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_INFO);
+        params.put(WebserviceParameter.DOC_PID, docPid);
+        return success(Requests.get(client, params, DocInfoResponse.class));
     }
 
     @GET
@@ -159,7 +150,7 @@ public class CorpusResource {
             @Context UriInfo uriInfo) {
         Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_CONTENTS);
         params.put(WebserviceParameter.DOC_PID, docPid);
-        DocContentsResults entity = Requests.get(client, params, DocContentsResults.class);
+        DocContentsResults entity = (DocContentsResults)Requests.get(client, params, DocContentsResults.class);
         return Response.ok().entity(entity.contents).type(MediaType.APPLICATION_XML).build();
     }
 
@@ -179,7 +170,7 @@ public class CorpusResource {
             @Context UriInfo uriInfo) {
         Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.FIELD_INFO);
         params.put(WebserviceParameter.FIELD, fieldName);
-        return success(Requests.get(client, params, AnnotatedField.class));
+        return success(Requests.get(client, params, List.of(AnnotatedField.class, MetadataField.class)));
     }
 
     @GET

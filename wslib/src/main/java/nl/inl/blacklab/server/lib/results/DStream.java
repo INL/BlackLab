@@ -796,10 +796,10 @@ public class DStream {
         ds.endMap().endItem();
     }
 
-    public static void serverInfo(DataStream ds, ResultServerInfo result) {
+    public static void serverInfo(DataStream ds, ResultServerInfo result, ApiVersion apiCompatibility) {
         ds.startMap();
-        if (apiVersion != ApiVersion.V3)
-            ds.entry(KEY_API_VERSION, apiVersion.versionString());
+        if (DStream.apiVersion != ApiVersion.V3 && apiCompatibility != ApiVersion.V3)
+            ds.entry(KEY_API_VERSION, apiCompatibility.versionString());
         ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
                 .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
 

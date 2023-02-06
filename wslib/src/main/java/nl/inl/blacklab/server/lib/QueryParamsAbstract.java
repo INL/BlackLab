@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -380,9 +381,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getInputFormat() { return opt(WebserviceParameter.INPUT_FORMAT); }
 
     @Override
-    public boolean includeDeprecatedFieldInfo() {
-        return getBool(WebserviceParameter.INCLUDE_DEPRECATED_FIELD_INFO);
-    }
+    public ApiVersion apiCompatibility() { return ApiVersion.fromValue(get(WebserviceParameter.API_COMPATIBILITY)); }
 
     @Override
     public SearchManager getSearchManager() { return searchMan; }

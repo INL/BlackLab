@@ -9,7 +9,7 @@ import java.io.PrintWriter;
  * the DataObject classes.
  */
 public abstract class DataStreamAbstract implements DataStream {
-
+    
     public static DataStream create(DataFormat format, PrintWriter out, boolean prettyPrint) {
         if (format == DataFormat.JSON)
             return new DataStreamJson(out, prettyPrint);

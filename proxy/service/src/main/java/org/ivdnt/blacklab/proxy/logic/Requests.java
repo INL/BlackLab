@@ -3,8 +3,11 @@ package org.ivdnt.blacklab.proxy.logic;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.ws.rs.ProcessingException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
@@ -75,10 +78,14 @@ public class Requests {
     }
 
     public static <T> T get(Client client, Map<WebserviceParameter, String> queryParams, Class<T> entityType) {
-        return request(client, queryParams, "GET", entityType);
+        return (T)request(client, queryParams, "GET", List.of(entityType));
     }
 
-    public static <T> T request(Client client, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
+    public static Object get(Client client, Map<WebserviceParameter, String> queryParams, List<Class<?>> entityTypes) {
+        return request(client, queryParams, "GET", entityTypes);
+    }
+
+    public static Object request(Client client, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
@@ -90,11 +97,11 @@ public class Requests {
             queryParams.put(WebserviceParameter.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
         }
         return proxyTarget.getProtocol().equalsIgnoreCase("solr") ?
-                requestSolr(target, queryParams, method, entityType) :
-                requestBls(target, queryParams, method, entityType);
+                requestSolr(target, queryParams, method, entityTypes) :
+                requestBls(target, queryParams, method, entityTypes);
     }
 
-    private static <T> T requestBls(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
+    private static Object requestBls(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
         if (queryParams != null) {
             String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
             if (corpusName != null)
@@ -110,10 +117,35 @@ public class Requests {
                     target = target.queryParam(e.getKey().value(), e.getValue());
             }
         }
-        return target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(entityType);
+        if (entityTypes.size() == 1) {
+            // Just one option for the response type. Use that.
+            // (the loop below correctly reduces to this in the case of size() == 1, but we've kept this
+            //  'special case' for clarity)
+            return target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(entityTypes.get(0));
+        } else {
+            // Try mapping response to each of the supplied options.
+            // (mainly used for /fields/NAME, where the proxy doesn't know in advance if the field is an annotated
+            //  or metadata field; we could of course ask once and keep track of this, but we'd rather avoid that
+            //  complexity)
+            for (int i = 0; i < entityTypes.size(); i++) {
+                Class<?> entityType = entityTypes.get(i);
+                try {
+                    return target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(entityType);
+                } catch (ProcessingException e) {
+                    if (i != entityTypes.size() - 1) {
+                        // Couldn't map to this class. Try the next one.
+                    } else {
+                        // Couldn't map to any of the supplied classes. Throw the final exception.
+                        String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
+                        throw new RuntimeException("Couldn't interpret the response as the given entity class(es): " + classes, e);
+                    }
+                }
+            }
+            throw new IllegalStateException("Code should never get here");
+        }
     }
 
-    private static <T> T requestSolr(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, Class<T> entityType) {
+    private static Object requestSolr(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
         if (queryParams != null) {
             String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
             if (corpusName != null)
@@ -129,26 +161,21 @@ public class Requests {
 
         JsonNode blacklab = solrResponse.getBlacklab();
         ObjectMapper objectMapper = Json.getJsonObjectMapper();
-        try {
-            return objectMapper.treeToValue(blacklab, entityType);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error interpreting response as " + entityType.getName(), e);
+        for (int i = 0; i < entityTypes.size(); i++) {
+            Class<?> entityType = entityTypes.get(i);
+            try {
+                return objectMapper.treeToValue(blacklab, entityType);
+            } catch (JsonProcessingException e) {
+                if (i < entityTypes.size() - 1) {
+                    // Couldn't map to this class. Try the next one.
+                } else {
+                    // Couldn't map to any of the supplied classes. Fail
+                    String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
+                    throw new RuntimeException("Couldn't interpret the response as the given entity class(es): " + classes, e);
+                }
+            }
         }
-
-        /*
-        MediaType type = solrResponse.getMediaType();
-        if (!MediaType.APPLICATION_JSON_TYPE.isCompatible(type)) {
-            return Response.status(Status.BAD_REQUEST).
-                    entity(new ErrorResponse("INVALID_RESPONSE", "Expected JSON response from Solr, got " + type, "")).build();
-        }
-
-        // Get the "blacklab" section from the JSON response and construct a new response from that
-        String json = solrResponse.readEntity(String.class);
-        JSONObject objBlacklabResponse = new JSONObject(json).getJSONObject(Constants.SOLR_BLACKLAB_SECTION_NAME);
-        json = objBlacklabResponse.toString(2);
-        Response blacklabResponse = Response.ok().type(MediaType.APPLICATION_JSON_TYPE).entity(json).build();
-        return blacklabResponse;*/
-
+        throw new IllegalStateException("Code should never get here");
     }
 
     /** How to create the BLS request to a node */

@@ -1,6 +1,5 @@
 package org.ivdnt.blacklab.proxy.representation;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +21,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DocOverview {
+public class DocInfoResponse {
 
     public String docPid;
 
@@ -31,24 +30,27 @@ public class DocOverview {
     @XmlElementWrapper(name="metadataFieldGroups")
     @XmlElement(name = "metadataFieldGroup")
     @JsonProperty("metadataFieldGroups")
+    @JsonInclude(Include.NON_NULL)
     public List<MetadataFieldGroup> metadataFieldGroups;
 
+    @JsonInclude(Include.NON_NULL)
     public SpecialFieldInfo docFields;
 
-    @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
-    public Map<String, String> metadataFieldDisplayNames = new LinkedHashMap<>();
+    @JsonInclude(Include.NON_NULL)
+    public Map<String, String> metadataFieldDisplayNames;
 
-    public DocOverview() {}
+    public DocInfoResponse() {}
 
     @Override public String toString() {
         return "DocOverview{" +
                 "docPid='" + docPid + '\'' +
                 ", docInfo=" + docInfo +
-                ", docFields=" + docFields +
-                ", metadataFieldDisplayNames=" + metadataFieldDisplayNames +
+                (metadataFieldGroups == null ? "" : ", metadataFieldGroups=" + metadataFieldGroups) +
+                (docFields == null ? "" : ", docFields=" + docFields) +
+                (metadataFieldDisplayNames == null ? "" : ", metadataFieldDisplayNames=" + metadataFieldDisplayNames) +
                 '}';
     }
 }

@@ -82,7 +82,7 @@ public class WebserviceRequestHandler {
      */
     public static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
-        DStream.serverInfo(ds, serverInfo);
+        DStream.serverInfo(ds, serverInfo, params.apiCompatibility());
     }
 
     /**
@@ -105,7 +105,7 @@ public class WebserviceRequestHandler {
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
                 ResultHits result = WebserviceOperations.getResultHits(params);
-                DStream.hitsResponse(ds, result, params.includeDeprecatedFieldInfo());
+                DStream.hitsResponse(ds, result, params.apiCompatibility() == ApiVersion.V3);
             }
         }
     }
@@ -131,7 +131,7 @@ public class WebserviceRequestHandler {
                 // Regular set of docs (no grouping first)
                 result = WebserviceOperations.regularDocsResponse(params);
             }
-            DStream.docsResponse(ds, result, params.includeDeprecatedFieldInfo());
+            DStream.docsResponse(ds, result, params.apiCompatibility() == ApiVersion.V3);
         }
     }
 
@@ -189,7 +189,7 @@ public class WebserviceRequestHandler {
 
         // Document info
         DStream.docInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames,
-                params.includeDeprecatedFieldInfo());
+                params.apiCompatibility() == ApiVersion.V3);
     }
 
     /**
