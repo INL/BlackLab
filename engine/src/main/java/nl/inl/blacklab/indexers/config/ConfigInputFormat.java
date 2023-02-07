@@ -56,14 +56,20 @@ public class ConfigInputFormat {
     public enum FileTypeOption {
 
         VTD(FileType.XML, Constants.PROCESSING),
-        SAXONICA(FileType.XML, Constants.PROCESSING);
+        SAXONICA(FileType.XML, Constants.PROCESSING, "saxon");
 
         private final FileType fileType;
         private final String key;
+        private final String alternativeName;
 
         FileTypeOption(FileType fileType, String key) {
+            this(fileType, key, null);
+        }
+
+        FileTypeOption(FileType fileType, String key, String alternativeName) {
             this.fileType = fileType;
             this.key = key;
+            this.alternativeName = alternativeName;
         }
 
         public String getKey() {
@@ -72,7 +78,7 @@ public class ConfigInputFormat {
 
         public static FileTypeOption byKeyValue(String key, String value) {
             for (FileTypeOption fto : values()) {
-                if (fto.getKey().equals(key) && fto.name().equalsIgnoreCase(value)) {
+                if (fto.getKey().equals(key) && (fto.name().equalsIgnoreCase(value) || value.equalsIgnoreCase(fto.alternativeName))) {
                     return fto;
                 }
             }
