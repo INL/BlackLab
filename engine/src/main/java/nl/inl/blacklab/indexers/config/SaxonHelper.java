@@ -305,7 +305,7 @@ class SaxonHelper {
             int end = getCharPos(locator.getLineNumber(), locator.getColumnNumber());
             int begin = end;
             // now look back for the < character
-            for (int i = end - 1; i > 0; i--) {
+            for (int i = end - 1; i >= 0; i--) {
                 if ('<' == document[i]) {
                     begin = i;
                     break;
