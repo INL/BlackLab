@@ -27,7 +27,7 @@ import nl.inl.blacklab.Constants;
 
 public class TestSearchComponent {
 
-    static final String CORE_NAME = "testcore";
+    static final String CORE_NAME = "test";
 
     public static final String FIELD_TEST1 = "title";
 

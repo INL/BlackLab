@@ -1,4 +1,0 @@
-# BLS nodes to aggregate
-nodes:
-- http://node1:8080/blacklab-server
-- http://node2:8080/blacklab-server

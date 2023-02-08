@@ -68,14 +68,16 @@ services:
       - tools
     environment:
       - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
+      - CORPUS_NAME=${CORPUS_NAME:-test}
       - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
 
       # If response file for a test does not exist, the test will FAIL.
       - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=false
 
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     build: test
-    depends_on:
-      - testserver
 
   # Runs the tests locally, so we can save new test responses
   test-local:
@@ -83,18 +85,20 @@ services:
           - tools
       environment:
           - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
+          - CORPUS_NAME=${CORPUS_NAME:-test}
           - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
 
           # If response file for a test does not exist, the test will SUCCEED,
           # and the response file will be saved for future runs.
           - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
 
+      extra_hosts:
+          - "host.docker.internal:host-gateway"
+
       build: test
       volumes:
           # We need access to the previous responses and be able to save responses for any new tests.
           - ./test/data/saved-responses:/app/data/saved-responses
-      depends_on:
-          - testserver
 
 
 

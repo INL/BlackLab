@@ -2,40 +2,21 @@ version: '3.9'
 
 services:
 
-  node1:
-    image: instituutnederlandsetaal/blacklab:latest
-    environment:
-      # Give JVM enough heap memory
-      - JAVA_OPTS="-Xmx2G"
-    command: /bin/bash /etc/blacklab/start-with-test-data.sh
-    ports:
-      - "8081:8080"
-    volumes:
-      - ./testdata/node1:/input
-      - ./testdata/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
-
-  node2:
-    image: instituutnederlandsetaal/blacklab:latest
-    environment:
-      # Give JVM enough heap memory
-      - JAVA_OPTS="-Xmx2G"
-    command: /bin/bash /etc/blacklab/start-with-test-data.sh
-    ports:
-      - "8082:8080"
-    volumes:
-      - ./testdata/node2:/input
-      - ./testdata/voice-tei.blf.yaml:/etc/blacklab/formats/voice-tei.blf.yaml
-
-  aggregator:
-    profiles:
-      - aggregator # We normally test the aggregator from the IDE, so only enable it if asked
+  proxy:
     build:
       context: ..
-      dockerfile: aggregator/Dockerfile
+      dockerfile: proxy/Dockerfile
+
     volumes:
-      - ./testdata/aggregator.yaml:/etc/blacklab/aggregator.yaml
+      # Configuration file
+      - ./testdata/proxy.yaml:/etc/blacklab/proxy.yaml
+
     ports:
-      - "8083:8080"
-    depends_on:
-      - node1
-      - node2
+      # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
+      - "8080:8080"
+
+  # Solr backend we proxy to
+  solr:
+    build:
+      context: ..
+      dockerfile: solr/Dockerfile

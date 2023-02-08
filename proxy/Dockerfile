@@ -21,4 +21,4 @@ FROM tomcat:9
 RUN mkdir /etc/blacklab/
 
 # Copy the WAR file
-COPY --from=builder /app/aggregator/service/target/blacklab-proxy.war /usr/local/tomcat/webapps/blacklab-server.war
+COPY --from=builder /app/proxy/service/target/blacklab-proxy.war /usr/local/tomcat/webapps/blacklab-server.war

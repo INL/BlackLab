@@ -36,6 +36,8 @@ public class SearchParam {
 
     public long number = 20;
 
+    public int wordsaroundhit = 5;
+
     @JsonInclude(Include.NON_EMPTY)
     public String usecache = "";
 
@@ -58,6 +60,7 @@ public class SearchParam {
                 ", viewgroup='" + viewgroup + '\'' +
                 ", first=" + first +
                 ", number=" + number +
+                ", wordsaroundhit=" + wordsaroundhit +
                 ", usecache='" + usecache + '\'' +
                 '}';
     }

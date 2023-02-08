@@ -29,6 +29,7 @@ function expectHitsUnchanged(testName, params) {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')
             .query({
+                //compatibility: '3.0', // make sure Solr responds the same as classic BLS
                 sort: "field:pid,hitposition", // fully defined sort
                 wordsaroundhit: 1,
                 waitfortotal: "true",

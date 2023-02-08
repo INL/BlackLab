@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: proxy/Dockerfile
     volumes:
-      - ./testdata/aggregator.yaml:/etc/blacklab/aggregator.yaml
+      - ./testdata/proxy.yaml:/etc/blacklab/proxy.yaml
     ports:
       - "8084:8080"
     depends_on:
