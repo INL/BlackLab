@@ -66,11 +66,12 @@ cd ..
 #sleep 10 # allow a little time to start up
 export APP_URL=http://host.docker.internal:8080/blacklab-server
 export CORPUS_NAME=test
-echo $APP_URL
-echo $CORPUS_NAME
+export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
 $COMPOSE run --rm $SERVICE_NAME
 
 # Clean up
 # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-$COMPOSE stop testserver
-$COMPOSE rm -fv testserver
+cd proxy
+$COMPOSE stop
+$COMPOSE rm -fv
+cd ..

@@ -32,11 +32,14 @@ public class SearchParam {
     @JsonInclude(Include.NON_EMPTY)
     public String viewgroup = "";
 
-    public long first = 0;
+    @JsonInclude(Include.NON_EMPTY)
+    public String first = "";
 
-    public long number = 20;
+    @JsonInclude(Include.NON_EMPTY)
+    public String number = "";
 
-    public int wordsaroundhit = 5;
+    @JsonInclude(Include.NON_EMPTY)
+    public String wordsaroundhit = "";
 
     @JsonInclude(Include.NON_EMPTY)
     public String usecache = "";

@@ -50,7 +50,14 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
     if (removeParametersFromResponse) {
         keysToMakeConstant.summary.searchParam = true;
     }
-    return sanitizeResponse(response, keysToMakeConstant);
+
+    const stripDir = (v, k) => {
+        if (k === 'fromInputFile')
+            return v.replace(/^.*\\([^\\]+)$/, "$1");
+        return v;
+    };
+
+    return sanitizeResponse(response, keysToMakeConstant, stripDir);
 }
 
 /**
@@ -99,7 +106,7 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
             }
         } else {
             // No values to make constant, just regular values we want to compare.
-            cleanedData[key] = transformValueFunc ? transformValueFunc(value) : value;
+            cleanedData[key] = transformValueFunc ? transformValueFunc(value, key) : value;
         }
     }
     return cleanedData;

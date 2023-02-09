@@ -1,14 +1,13 @@
 package org.ivdnt.blacklab.proxy.representation;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 import org.ivdnt.blacklab.proxy.helper.MapAdapter;
+import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -65,7 +64,7 @@ public class SearchSummary implements Cloneable {
     @XmlJavaTypeAdapter(MapAdapter.class)
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
-    public Map<String, String> metadataFieldDisplayNames = new LinkedHashMap<>();
+    public Map<String, String> metadataFieldDisplayNames;
 
     @Override
     public SearchSummary clone() throws CloneNotSupportedException {
