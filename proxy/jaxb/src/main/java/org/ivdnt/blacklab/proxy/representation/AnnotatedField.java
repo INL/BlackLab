@@ -11,7 +11,6 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,6 +42,9 @@ public class AnnotatedField implements Cloneable {
                 return;
             jgen.writeStartObject();
             for (Annotation a: value) {
+                jgen.writeFieldName(a.name);
+                provider.defaultSerializeValue(a, jgen);
+/*
                 jgen.writeObjectFieldStart(a.name);
                 {
                     jgen.writeStringField("displayName", a.displayName);
@@ -63,6 +65,7 @@ public class AnnotatedField implements Cloneable {
                         jgen.writeStringField("parentAnnotation", a.parentAnnotation);
                 }
                 jgen.writeEndObject();
+ */
             }
             jgen.writeEndObject();
         }
@@ -80,7 +83,7 @@ public class AnnotatedField implements Cloneable {
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
                 throw new RuntimeException("Expected START_OBJECT, found " + token);
-            return SerializationUtil.readAnnotations(parser);
+            return SerializationUtil.readAnnotations(parser, deserializationContext);
         }
     }
 
@@ -102,8 +105,6 @@ public class AnnotatedField implements Cloneable {
     public boolean hasContentStore;
 
     public boolean hasXmlTags;
-
-    public boolean hasLengthTokens;
 
     public String mainAnnotation = "";
 
@@ -130,7 +131,6 @@ public class AnnotatedField implements Cloneable {
                 ", description='" + description + '\'' +
                 ", hasContentStore=" + hasContentStore +
                 ", hasXmlTags=" + hasXmlTags +
-                ", hasLengthTokens=" + hasLengthTokens +
                 ", mainAnnotation='" + mainAnnotation + '\'' +
                 ", displayOrder=" + displayOrder +
                 ", annotations=" + annotations +

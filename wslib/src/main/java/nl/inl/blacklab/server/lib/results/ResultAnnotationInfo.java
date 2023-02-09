@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.lib.results;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
@@ -17,25 +16,14 @@ public class ResultAnnotationInfo {
 
     private boolean valueListComplete = true;
 
-    ResultAnnotationInfo(BlackLabIndex index, Annotation annotation, Collection<String> listValuesFor) {
+    ResultAnnotationInfo(BlackLabIndex index, Annotation annotation, boolean showValues) {
         this.annotation = annotation;
-        showValues = annotationMatches(annotation.name(), listValuesFor);
+        this.showValues = showValues;
         if (showValues && !index.isEmpty()) {
-            boolean[] valueListCompleteArray = {
-                    true }; // array because we have to access them from the closures
+            boolean[] valueListCompleteArray = { true }; // array because we have to access them from the closures
             terms = WebserviceOperations.getAnnotationValues(index, annotation, valueListCompleteArray);
             valueListComplete = valueListCompleteArray[0];
         }
-    }
-
-    public static boolean annotationMatches(String annotationPattern, Collection<String> annotations) {
-        //return showValuesFor.contains(name);
-        for (String expr: annotations) {
-            if (annotationPattern.matches("^" + expr + "$")) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public Annotation getAnnotation() {

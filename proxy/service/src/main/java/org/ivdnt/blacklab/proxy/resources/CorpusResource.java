@@ -29,6 +29,7 @@ import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
+import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
 
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -118,7 +119,9 @@ public class CorpusResource {
     @Path("/hits")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response hits(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.HITS), HitsResults.class));
+        Object entity = Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.HITS),
+                List.of(TokenFreqList.class, HitsResults.class));
+        return success(entity);
     }
 
     @GET
@@ -158,7 +161,8 @@ public class CorpusResource {
     @Path("/termfreq")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response termFreq(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.TERM_FREQUENCIES), TermFreqList.class));
+        return success(Requests.get(client, getParams(uriInfo, corpusName,
+                WebserviceOperation.TERM_FREQUENCIES), TermFreqList.class));
     }
 
     @GET
@@ -170,7 +174,7 @@ public class CorpusResource {
             @Context UriInfo uriInfo) {
         Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.FIELD_INFO);
         params.put(WebserviceParameter.FIELD, fieldName);
-        return success(Requests.get(client, params, List.of(AnnotatedField.class, MetadataField.class)));
+        return success(Requests.get(client, params, List.of(MetadataField.class, AnnotatedField.class)));
     }
 
     @GET

@@ -45,13 +45,17 @@ public class SearchSummary implements Cloneable {
 
     public boolean stillCounting;
 
-    public long numberOfHits;
+    @JsonInclude(Include.NON_NULL)
+    public Long numberOfHits;
 
-    public long numberOfHitsRetrieved;
+    @JsonInclude(Include.NON_NULL)
+    public Long numberOfHitsRetrieved;
 
-    public boolean stoppedCountingHits;
+    @JsonInclude(Include.NON_NULL)
+    public Boolean stoppedCountingHits;
 
-    public boolean stoppedRetrievingHits;
+    @JsonInclude(Include.NON_NULL)
+    public Boolean stoppedRetrievingHits;
 
     public long numberOfDocs;
 

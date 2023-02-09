@@ -55,7 +55,12 @@ public class QueryParamsSolr extends QueryParamsAbstract {
                         StringUtils.join(e.getValue(), "; "))) // join multiple (shouldn't happen)
                 .filter(p -> p.getKey() != null); // only existing parameters
         params = Stream.concat(Stream.of(Pair.of(WebserviceParameter.CORPUS_NAME, getCorpusName())), params); // add index name "parameter"
-        return params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+        Map<WebserviceParameter, String> result = params.collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+
+        // ensure "docs" is translated to "docs-grouped" where necessary (for response consistency)
+        result.put(WebserviceParameter.OPERATION, getOperation().value());
+
+        return result;
     }
 
 }

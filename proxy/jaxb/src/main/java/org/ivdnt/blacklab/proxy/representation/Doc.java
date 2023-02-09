@@ -5,6 +5,8 @@ import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Doc {
 
@@ -14,6 +16,7 @@ public class Doc {
 
     public DocInfo docInfo;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<DocSnippet> snippets;
 
     // required for Jersey

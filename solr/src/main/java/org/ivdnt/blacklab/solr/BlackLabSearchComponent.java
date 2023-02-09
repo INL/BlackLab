@@ -268,10 +268,10 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                     // do nothing
                     break;
                 }
+                ds.endEntry().endDocument();
             } catch (Exception e) {
                 errorResponse(e, rb);
             }
-            ds.endEntry().endDocument();
         }
     }
 

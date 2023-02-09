@@ -31,6 +31,8 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
 
         // Corpus information page
         versionInfo: {
+            blacklabBuildTime: true, // API v3 inconsistent name
+            blacklabVersion: true,   // API v3 inconsistent name
             blackLabBuildTime: true,
             blackLabVersion: true,
             indexFormat: true,
@@ -51,10 +53,10 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         keysToMakeConstant.summary.searchParam = true;
     }
 
-    const stripDir = (v, k) => {
-        if (k === 'fromInputFile')
-            return v.replace(/^.*\\([^\\]+)$/, "$1");
-        return v;
+    const stripDir = (value, key) => {
+        if (key === 'fromInputFile')
+            return value.map(v => v.replace(/^.*[/\\]([^/\\]+)$/, "$1 (2)"));
+        return value;
     };
 
     return sanitizeResponse(response, keysToMakeConstant, stripDir);
@@ -78,6 +80,11 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
  */
 function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
 
+    if (response instanceof Array) {
+        // Process each element in the array recursively
+        return response.forEach(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc));
+    }
+
     // Make sure keysToMakeConstant is an object
     let recursive = false;
     if (keysToMakeConstant instanceof Array) {
@@ -99,14 +106,19 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
             // This is (or contains) a variable value we don't want to compare.
             if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !(value instanceof Array)) {
                 // Subobject; recursively fix this part of the response
-                cleanedData[key] = sanitizeResponse(response[key], keysToMakeConstant[key]);
+                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
             } else {
                 // Single value or array. Make this response value fixed
                 cleanedData[key] = "VALUE_REMOVED";
             }
         } else {
             // No values to make constant, just regular values we want to compare.
-            cleanedData[key] = transformValueFunc ? transformValueFunc(value, key) : value;
+            if (value instanceof Array) {
+                // Call ourselves to process the array
+                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
+            } else {
+                cleanedData[key] = transformValueFunc ? transformValueFunc(value, key) : value;
+            }
         }
     }
     return cleanedData;

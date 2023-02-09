@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -157,7 +158,16 @@ public class Requests {
                     target = target.queryParam(BL_PAR_NAME_PREFIX + key, e.getValue());
             }
         }
-        SolrResponse solrResponse = target.request(MediaType.APPLICATION_JSON_TYPE).method(method).readEntity(SolrResponse.class);
+        Response response = target.request(MediaType.APPLICATION_JSON_TYPE).method(method);
+        response.bufferEntity(); // so we can call readEntity() again if first call fails
+        SolrResponse solrResponse = null;
+        try {
+            solrResponse = response.readEntity(SolrResponse.class);
+        } catch (Exception e) {
+            // Not a regular response; try to read error entity
+            SolrGeneralErrorResponse err = response.readEntity(SolrGeneralErrorResponse.class);
+            throw new RuntimeException("(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl());
+        }
 
         JsonNode blacklab = solrResponse.getBlacklab();
         ObjectMapper objectMapper = Json.getJsonObjectMapper();

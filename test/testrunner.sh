@@ -28,47 +28,47 @@ export DOCKER_BUILDKIT=1
 #----------------------------------------------------------
 # Build and run BlackLab Server
 # (--force-recreate to avoid error 'network not found')
-#echo === Testing classic index format...
-#export BLACKLAB_FEATURE_integrateExternalFiles=false
-#$COMPOSE up -d --build --force-recreate testserver
-#
-## Build and run the test suite
-#$COMPOSE build "$SERVICE_NAME"
-#$COMPOSE run --rm "$SERVICE_NAME"
-#
-## Clean up
-## (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-#$COMPOSE stop testserver
-#$COMPOSE rm -fv testserver
-#
-#
-##----------------------------------------------------------
-## Re-run to test the other index format as well
-#echo === Testing integrated index format...
-#export BLACKLAB_FEATURE_integrateExternalFiles=true
-#$COMPOSE up -d testserver
-#$COMPOSE run --rm "$SERVICE_NAME"
-#
-## Clean up
-## (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-#$COMPOSE stop testserver
-#$COMPOSE rm -fv testserver
+echo === Testing classic index format...
+export BLACKLAB_FEATURE_integrateExternalFiles=false
+$COMPOSE up -d --build --force-recreate testserver
 
-
-#----------------------------------------------------------
-# Re-run the same tests using Solr+proxy
-cd proxy
-$COMPOSE up --force-recreate -d --build
-cd ..
-export APP_URL=http://host.docker.internal:8080/blacklab-server
-export CORPUS_NAME=test
-export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
-sleep 15 # allow a little time to start up
+# Build and run the test suite
+$COMPOSE build "$SERVICE_NAME"
 $COMPOSE run --rm "$SERVICE_NAME"
 
 # Clean up
 # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-cd proxy
-$COMPOSE stop
-$COMPOSE rm -fv
-cd ..
+$COMPOSE stop testserver
+$COMPOSE rm -fv testserver
+
+
+#----------------------------------------------------------
+# Re-run to test the other index format as well
+echo === Testing integrated index format...
+export BLACKLAB_FEATURE_integrateExternalFiles=true
+$COMPOSE up -d testserver
+$COMPOSE run --rm "$SERVICE_NAME"
+
+# Clean up
+# (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
+$COMPOSE stop testserver
+$COMPOSE rm -fv testserver
+
+
+##----------------------------------------------------------
+## Re-run the same tests using Solr+proxy
+#cd proxy
+#$COMPOSE up --force-recreate -d --build
+#cd ..
+#export APP_URL=http://host.docker.internal:8080/blacklab-server
+#export CORPUS_NAME=test
+#export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
+#sleep 15 # allow a little time to start up
+#$COMPOSE run --rm "$SERVICE_NAME"
+#
+## Clean up
+## (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
+#cd proxy
+#$COMPOSE stop
+#$COMPOSE rm -fv
+#cd ..

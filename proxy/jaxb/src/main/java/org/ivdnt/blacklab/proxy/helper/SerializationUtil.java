@@ -127,7 +127,7 @@ public class SerializationUtil {
         return list;
     }
 
-    public static List<Annotation> readAnnotations(JsonParser parser) throws IOException {
+    public static List<Annotation> readAnnotations(JsonParser parser, DeserializationContext deserializationContext) throws IOException {
         List<Annotation> result = new ArrayList<>();
         while (true) {
             JsonToken token = parser.nextToken();
@@ -136,6 +136,15 @@ public class SerializationUtil {
 
             if (token != JsonToken.FIELD_NAME)
                 throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+            String annotationName = parser.getCurrentName();
+
+            token = parser.nextToken();
+            if (token != JsonToken.START_OBJECT)
+                throw new RuntimeException("Expected START_OBJECT, found " + token);
+
+            Annotation annotation = deserializationContext.readValue(parser, Annotation.class);
+            annotation.name = annotationName;
+            /*
             Annotation annotation = new Annotation();
             annotation.name = parser.getCurrentName();
 
@@ -166,6 +175,7 @@ public class SerializationUtil {
                 default: throw new RuntimeException("Unexpected field " + fieldName + " in Annotation");
                 }
             }
+            */
 
             result.add(annotation);
         }

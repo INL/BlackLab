@@ -381,12 +381,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
         // requests).
         // Here we make sure we send the specific value appropriate to the rest of the parametesr, so responses are
         // consistent (important for CI testing, among other things)
+        boolean isGroupResponse = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP);
         if (op == WebserviceOperation.DOCS || op == WebserviceOperation.DOCS_GROUPED) {
-            op = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP) ?
-                    WebserviceOperation.DOCS_GROUPED : WebserviceOperation.DOCS;
+            op = isGroupResponse ? WebserviceOperation.DOCS_GROUPED : WebserviceOperation.DOCS;
         } else if (op == WebserviceOperation.HITS || op == WebserviceOperation.HITS_GROUPED) {
-            op = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP) ?
-                    WebserviceOperation.HITS_GROUPED : WebserviceOperation.HITS;
+            op = isGroupResponse ? WebserviceOperation.HITS_GROUPED : WebserviceOperation.HITS;
         }
 
         return op;

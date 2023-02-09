@@ -145,7 +145,6 @@ public class Corpus implements Cloneable {
 //                    jgen.writeStringField("description", field.description);
 //                    jgen.writeBooleanField("hasContentStore", field.hasContentStore);
 //                    jgen.writeBooleanField("hasXmlTags", field.hasXmlTags);
-//                    jgen.writeBooleanField("hasLengthTokens", field.hasLengthTokens);
 //                    jgen.writeStringField("mainAnnotation", field.mainAnnotation);
 //                    jgen.writeArrayFieldStart("displayOrder");
 //                    for (String a: field.displayOrder) {
@@ -233,7 +232,6 @@ public class Corpus implements Cloneable {
 //                    case "description": field.description = parser.getValueAsString(); break;
 //                    case "hasContentStore": field.hasContentStore = parser.getValueAsBoolean(); break;
 //                    case "hasXmlTags": field.hasXmlTags = parser.getValueAsBoolean(); break;
-//                    case "hasLengthTokens": field.hasLengthTokens = parser.getValueAsBoolean(); break;
 //                    case "mainAnnotation": field.mainAnnotation = parser.getValueAsString(); break;
 //                    case "displayOrder":
 //                        field.displayOrder = SerializationUtil.readStringList(parser);

@@ -9,9 +9,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion", "indices", "user", "helpPageUrl" })
+@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
+        "blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
+        "indices", "user" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class Server implements Cloneable {
 
@@ -90,9 +92,11 @@ public class Server implements Cloneable {
     public String apiVersion = "UNKNOWN";
 
     @XmlElement
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabBuildTime;
 
     @XmlElement
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
 
     @XmlElementWrapper(name="indices")
@@ -106,11 +110,8 @@ public class Server implements Cloneable {
     public User user;
 
     @SuppressWarnings("unused")
-    @XmlElement
-    public String helpPageUrl;
-
-    @SuppressWarnings("unused")
-    @XmlTransient
+    //@XmlTransient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public Object cacheStatus;
 
     // required for Jersey

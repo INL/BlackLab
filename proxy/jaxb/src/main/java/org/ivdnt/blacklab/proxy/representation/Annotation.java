@@ -8,11 +8,13 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonIgnoreProperties(value = { "name" }) // don't serialize name, it is used as the key
 public class Annotation implements Cloneable {
 
     @XmlAttribute
@@ -35,6 +37,7 @@ public class Annotation implements Cloneable {
     @XmlElementWrapper(name="values")
     @XmlElement(name = "value")
     @JsonInclude(Include.NON_NULL)
+    @JsonProperty("values")
     public List<String> values;
 
     @JsonInclude(Include.NON_NULL)
@@ -45,12 +48,6 @@ public class Annotation implements Cloneable {
     @JsonProperty("subannotations")
     @JsonInclude(Include.NON_NULL)
     public List<String> subannotations;
-
-    @XmlElementWrapper(name="tests")
-    @XmlElement(name = "test")
-    @JsonProperty("tests")
-    @JsonInclude(Include.NON_NULL)
-    public List<String> test = null;
 
     @JsonInclude(Include.NON_EMPTY)
     public String parentAnnotation = null;

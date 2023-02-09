@@ -3,16 +3,22 @@ package org.ivdnt.blacklab.proxy.representation;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SpecialFieldInfo {
 
-    public String pidField = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String pidField;
 
-    public String titleField = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String titleField;
 
-    public String authorField = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String authorField;
 
-    public String dateField = "";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String dateField;
 
     // required for Jersey
     public SpecialFieldInfo() {}

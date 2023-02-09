@@ -49,7 +49,6 @@ Response for an annotated field:
   "description": "Contents of the documents.",
   "hasContentStore": true,
   "hasXmlTags": true,
-  "hasLengthTokens": true,
   "mainAnnotation": "word_or_lemma",
   "displayOrder": [
     "word_or_lemma",

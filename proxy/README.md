@@ -15,15 +15,15 @@ This is a work in progress. Still to do:
   * add Solr and Proxy to main BlackLab docker-compose?
   * make tests runnable with solr as well
 - SearchParameters: support all parameters. Use Map...? (but how to deal with different types?)
-- error handling
+- better error handling. E.g. nonexistent corpus name http://localhost:8080/blacklab-proxy/testcore/hits?patt=%22the%22&outputformat=json
 - /autocomplete
 - /sharing (read-only for now)
 - /cache-info
 - ensure proxying to BlackLab Server works as well
 
-## API v4
+## API versions (v3 / v4)
 
-The Solr component and this proxy introduce v4 of the BlackLab webservice protocol.
+The Solr component and this proxy introduce version 4.0 of the BlackLab webservice protocol (API version numbers match the BlackLab version they were released with)
 
 Changes:
 - New key added to server info page (`/`): `apiVersion` (valid values: `3.0` and `4.0`; assume `3.0` if missing)

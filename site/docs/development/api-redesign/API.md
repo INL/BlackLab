@@ -80,9 +80,6 @@ Response:
     "mayCreateCorpus": false // (changed from canCreateIndex)
   },
   
-  // (REMOVE)
-  //"helpPageUrl": "/blacklab-server/help",
-  
   // Previously top-level key.
   // Meant to be a free-for-all area where any useful
   // debug info can temporarily be added. Only added in debug mode.
@@ -134,8 +131,6 @@ Response:
       //"isAnnotatedField": true,
       "hasContentStore": true,
       "hasXmlTags": true,
-      // (removed, always true)
-      //"hasLengthTokens": true,
       "mainAnnotation": "word_or_lemma",
       "custom": {
         "displayName": "Contents",
