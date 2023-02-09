@@ -20,3 +20,6 @@ services:
     build:
       context: ..
       dockerfile: solr/Dockerfile
+
+    ports:
+        - "8983:8983"
