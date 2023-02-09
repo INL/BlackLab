@@ -37,10 +37,6 @@ public class QueryParamsSolr extends QueryParamsAbstract {
         return params.get(BL_PAR_NAME_PREFIX + WebserviceParameter.OPERATION) != null || params.get(BL_PAR_NAME_PREFIX + PAR_NAME_JSON_REQUEST) != null;
     }
 
-    public static String getOperation(SolrParams params) {
-        return params.get(BL_PAR_NAME_PREFIX + WebserviceParameter.OPERATION);
-    }
-
     protected boolean has(WebserviceParameter par) {
         return !StringUtils.isEmpty(solrParams.get(BL_PAR_NAME_PREFIX + par));
     }

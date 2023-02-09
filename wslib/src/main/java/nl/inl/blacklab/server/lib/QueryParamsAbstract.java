@@ -16,7 +16,7 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
- * Abstract implementation of PlainWebserviceParams that uses request parameters.
+ * Abstract implementation of QueryParams that uses request parameters.
  * This is used for both BLS and Solr.
  */
 public abstract class QueryParamsAbstract implements QueryParams {
@@ -372,9 +372,24 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public WebserviceOperation getOperation() {
-        String op = get(WebserviceParameter.OPERATION);
-        return WebserviceOperation.fromValue(op)
-                .orElseThrow(() -> new UnsupportedOperationException("Unsupported operation '" + op + "'"));
+        String strOp = get(WebserviceParameter.OPERATION);
+        WebserviceOperation op = WebserviceOperation.fromValue(strOp)
+                .orElseThrow(() -> new UnsupportedOperationException("Unsupported operation '" + strOp + "'"));
+
+        // BLS has /hits and /docs paths for both ungrouped and grouped operations, so the two WebserviceOperations
+        // are kind of interchangeable at the moment (the proxy will only send op=hits or op=docs, even for grouped
+        // requests).
+        // Here we make sure we send the specific value appropriate to the rest of the parametesr, so responses are
+        // consistent (important for CI testing, among other things)
+        if (op == WebserviceOperation.DOCS || op == WebserviceOperation.DOCS_GROUPED) {
+            op = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP) ?
+                    WebserviceOperation.DOCS_GROUPED : WebserviceOperation.DOCS;
+        } else if (op == WebserviceOperation.HITS || op == WebserviceOperation.HITS_GROUPED) {
+            op = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP) ?
+                    WebserviceOperation.HITS_GROUPED : WebserviceOperation.HITS;
+        }
+
+        return op;
     }
 
     @Override
