@@ -2,11 +2,9 @@ package org.ivdnt.blacklab.proxy.representation;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchParam {
@@ -45,8 +43,6 @@ public class SearchParam {
     public String usecache = "";
 
     @JsonInclude(Include.NON_NULL)
-    @XmlElement(name="compatibility")
-    @JsonProperty("compatibility")
     public String compatibility;
 
     public SearchParam() {

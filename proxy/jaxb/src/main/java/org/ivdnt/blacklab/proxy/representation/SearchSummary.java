@@ -6,6 +6,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.helper.MapAdapter;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -17,7 +18,9 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SearchSummary implements Cloneable {
 
-    public SearchParam searchParam = new SearchParam();
+    //public SearchParam searchParam = new SearchParam();
+    @JsonInclude(Include.NON_NULL)
+    public Map<String, String> searchParam;
 
     public long searchTime;
 
@@ -74,7 +77,7 @@ public class SearchSummary implements Cloneable {
     @Override
     public String toString() {
         return "SearchSummary{" +
-                "searchParam=" + searchParam +
+                "searchParam=" + StringUtils.join(searchParam) +
                 ", searchTime=" + searchTime +
                 ", countTime=" + countTime +
                 ", numberOfGroups=" + numberOfGroups +
