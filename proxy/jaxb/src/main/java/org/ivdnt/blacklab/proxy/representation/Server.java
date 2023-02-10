@@ -89,7 +89,8 @@ public class Server implements Cloneable {
     }
 
     @XmlElement
-    public String apiVersion = "UNKNOWN";
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String apiVersion;
 
     @XmlElement
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -98,11 +98,7 @@
       "unknownCondition": "NEVER",
       "unknownValue": "unknown",
       "displayValues": {},
-      "fieldValues": {
-        "/test-data/input/PBsve430.xml": 1,
-        "/test-data/input/PBsve435.xml": 1,
-        "/test-data/input/PRint602.xml": 1
-      },
+      "fieldValues": "VALUE_REMOVED",
       "valueListComplete": true
     },
     "pid": {

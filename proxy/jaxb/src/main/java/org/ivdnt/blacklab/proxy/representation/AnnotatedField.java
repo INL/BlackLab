@@ -13,6 +13,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonIgnoreProperties(value = { "name" })
 public class AnnotatedField implements Cloneable {
 
     /** Use this to serialize annotatedFields to JSON.
@@ -88,7 +90,6 @@ public class AnnotatedField implements Cloneable {
     }
 
     @XmlAttribute
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String name;
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

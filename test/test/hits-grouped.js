@@ -53,7 +53,7 @@ expectHitsGroupedUnchanged('any token grouped by word',
         { patt: '[]', group: 'hit:word:i'}); // fast path
 
 // Same comparison but with metadata filter
-const filter = 'fromInputFile:"/test-data/input/PBsve430.xml"';
+const filter = 'pid:PBsve430';
 expectHitsGroupedUnchanged('any token grouped by word with filter',
         { patt: '[word != "abcdefg"]', filter, group: 'hit:word:i'}); // regular path
 expectHitsGroupedUnchanged('any token grouped by word with filter',

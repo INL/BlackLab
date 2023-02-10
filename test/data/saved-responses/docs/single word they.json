@@ -38,7 +38,7 @@
       "numberOfHits": 3,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PBsve430.xml"
+          "PBsve430.xml"
         ],
         "pid": [
           "PBsve430"

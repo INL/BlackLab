@@ -178,7 +178,7 @@
   "docInfos": {
     "PRint602": {
       "fromInputFile": [
-        "/test-data/input/PRint602.xml"
+        "PRint602.xml"
       ],
       "pid": [
         "PRint602"

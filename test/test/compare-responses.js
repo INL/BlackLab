@@ -27,7 +27,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
                 timeModified: true
             }
         },
-        cacheStatus: true,
+        cacheStatus: 'DELETE',
 
         // Corpus information page
         versionInfo: {
@@ -38,6 +38,11 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
             indexFormat: true,
             timeCreated: true,
             timeModified: true
+        },
+        metadataFields: {
+            fromInputFile: {
+                fieldValues: true    // dir names may differ, ignore
+            }
         },
 
         // Hits/docs response
@@ -55,7 +60,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
 
     const stripDir = (value, key) => {
         if (key === 'fromInputFile' && typeof value === 'string')
-            return value.map(v => v.replace(/^.*[/\\]([^/\\]+)$/, "$1 (2)"));
+            return value.replace(/^.*[/\\]([^/\\]+)$/, "$1");
         return value;
     };
 
@@ -111,8 +116,9 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
                 // Subobject; recursively fix this part of the response
                 cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
             } else {
-                // Single value or array. Make this response value fixed
-                cleanedData[key] = "VALUE_REMOVED";
+                // Single value or array. Delete or make fixed value
+                if (keysToMakeConstant[key] !== 'DELETE')
+                    cleanedData[key] = "VALUE_REMOVED";
             }
         } else {
             // No values to make constant, just regular values we want to compare.
@@ -120,8 +126,12 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
                 // Call ourselves to process the array
                 // Note that we apply transformValueFunc on the result again so we can pass the key for the array,
                 // otherwise key-specific rules won't work.
-                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, keysToMakeConstant[key], transformValueFunc), key));
+                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, {}, transformValueFunc), key));
+            } else if (typeof value === 'object') {
+                // Object; call ourselves recursively to sanitize it
+                cleanedData[key] = sanitizeResponse(value, {}, transformValueFunc);
             } else {
+                // Regular value; call transform function.
                 cleanedData[key] = transformValueFunc(value, key);
             }
         }
