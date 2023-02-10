@@ -100,7 +100,7 @@ function clearKeys(keys, data) {
     return sanitizeResponse(data, keys, (v) => {
         // Is the value an array with a single string element that only contains whitespace?
         // If so, return an empty array. Otherwise, return unchanged
-        return v instanceof Array && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+        return Array.isArray(v) && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
     });
 }
 

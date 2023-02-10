@@ -54,7 +54,7 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
     }
 
     const stripDir = (value, key) => {
-        if (key === 'fromInputFile')
+        if (key === 'fromInputFile' && typeof value === 'string')
             return value.map(v => v.replace(/^.*[/\\]([^/\\]+)$/, "$1 (2)"));
         return value;
     };
@@ -78,16 +78,19 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
  *   being made constant)
  * @return sanitized response
  */
-function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
+function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v) ) {
 
-    if (response instanceof Array) {
+    if (Array.isArray(response)) {
         // Process each element in the array recursively
-        return response.forEach(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc));
+        return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc));
+    } else if (!(typeof response === 'object')) {
+        // Regular value (probably an array element); just call the transform function and return
+        return transformValueFunc(response);
     }
 
     // Make sure keysToMakeConstant is an object
     let recursive = false;
-    if (keysToMakeConstant instanceof Array) {
+    if (Array.isArray(keysToMakeConstant)) {
         keysToMakeConstant = Object.fromEntries(keysToMakeConstant.map(v => [v, true]));
     } else if (typeof keysToMakeConstant === 'object') {
         recursive = true;
@@ -104,7 +107,7 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
         const value = response[key];
         if (key in keysToMakeConstant) {
             // This is (or contains) a variable value we don't want to compare.
-            if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !(value instanceof Array)) {
+            if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
                 // Subobject; recursively fix this part of the response
                 cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
             } else {
@@ -113,11 +116,13 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc) {
             }
         } else {
             // No values to make constant, just regular values we want to compare.
-            if (value instanceof Array) {
+            if (Array.isArray(value)) {
                 // Call ourselves to process the array
-                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
+                // Note that we apply transformValueFunc on the result again so we can pass the key for the array,
+                // otherwise key-specific rules won't work.
+                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, keysToMakeConstant[key], transformValueFunc), key));
             } else {
-                cleanedData[key] = transformValueFunc ? transformValueFunc(value, key) : value;
+                cleanedData[key] = transformValueFunc(value, key);
             }
         }
     }
