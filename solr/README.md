@@ -12,7 +12,7 @@ To enable this plugin for your core, in your `solrconfig.xml`, add this to the `
 Add the `blacklab-search` search component, and specify the XSLT file and the Solr field containing the input XML:
 
 ```xml
-<!-- Our Apply XSLT SearchComponent -->
+<!-- Our Apply SearchComponent -->
 <searchComponent name="blacklab-search" class="org.ivdnt.blacklab.solr.BlackLabSearchComponent" >
     
     <!-- Where to find a core's BlackLab config file (value shown below is the default path).

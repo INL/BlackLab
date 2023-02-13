@@ -37,7 +37,7 @@ public class TestSearchComponent {
     public static void prepareClass() throws Exception {
         final boolean USE_EXISTING_INDEX = true;
 
-        Path resourcePath = Paths.get("src", "test", "resources", "solrDir");
+        Path resourcePath = Paths.get("conf");
         Path existingIndexPath = USE_EXISTING_INDEX ? Paths.get("src", "test", "resources", "existing-index") : null;
 
         // Create srver, core and add document

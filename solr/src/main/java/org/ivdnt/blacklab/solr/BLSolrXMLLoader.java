@@ -1,6 +1,8 @@
 package org.ivdnt.blacklab.solr;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -8,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
@@ -20,6 +23,7 @@ import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
 import org.apache.solr.update.AddUpdateCommand;
+import org.apache.solr.update.CommitUpdateCommand;
 import org.apache.solr.update.processor.UpdateRequestProcessor;
 
 import nl.inl.blacklab.index.BLIndexObjectFactorySolr;
@@ -29,7 +33,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -48,18 +52,40 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
  */
 public class BLSolrXMLLoader extends ContentStreamLoader {
 
+
+
     @Override
     public void load(SolrQueryRequest req, SolrQueryResponse rsp, ContentStream stream, UpdateRequestProcessor processor) throws Exception {
-        BlackLab.implicitInstance().setIndexObjectFactory(BLIndexObjectFactorySolr.INSTANCE);
-
+        BlackLabSearchComponent searchComponent = (BlackLabSearchComponent) req.getCore().getSearchComponent(BlackLabSearchComponent.COMPONENT_NAME);
+        BlackLabEngine blacklab = searchComponent.getSearchManager().blackLabInstance();
+        blacklab.setIndexObjectFactory(BLIndexObjectFactorySolr.INSTANCE);
+        
         // find the directory
         SolrParams params = req.getParams();
         IndexReader reader = req.getSearcher().getIndexReader();
 
-        
+        // todo something like "bl.method"
+        if ("add".equals(params.get("bl.format"))) {
+            // parse request body as inputformat
+            byte[] file = stream.getStream().readAllBytes();
+
+            String name = params.get("bl.filename");
+            if (DocumentFormats.isSupported(name)) {
+                return;
+            }
+            ConfigInputFormat f = new ConfigInputFormat(name);
+            try {
+                InputFormatReader.read(new InputStreamReader(new ByteArrayInputStream(file)), false, f, __ -> Optional.empty());
+            } catch (Exception e) {
+                InputFormatReader.read(new InputStreamReader(new ByteArrayInputStream(file)), true, f, __ -> Optional.empty());
+            }
+            DocumentFormats.registerFormat(f);
+            return;
+        }
+
         ConfigInputFormat format = DocumentFormats.getConfigInputFormat(params.get("bl.format"));
         if (format == null) {
-            // format isn't recongnized by name, try loading it as string (it might be the contents of the file).
+            // format isn't recognized by name, try loading it as string (it might be the contents of the file).
             format = new ConfigInputFormat("");
             String formatString = params.get("bl.format");
             boolean isJson = formatString.trim().charAt(0) == '{';
@@ -69,7 +95,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         
         String fileName = params.get("bl.filename");
         String indexName = req.getCore().getName();
-        try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, format)) {
+        try (BlackLabIndexWriter index = blacklab.openForWriting(indexName, reader, format)) {
             Indexer indexer = Indexer.create(index, params.get("bl.format"));
             InputStream is = stream.getStream();
 
@@ -89,6 +115,8 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
                 // eventually gets to DefaultIndexingChain::processDocument
                 // fields go to DefaultIndexingChain::processField
             }
+
+            processor.processCommit(new CommitUpdateCommand(req, false));
 
             IOUtils.closeQuietly(is);
         }

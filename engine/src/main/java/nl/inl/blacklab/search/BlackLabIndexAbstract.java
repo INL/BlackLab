@@ -207,7 +207,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 // indexModule == true && indexReader != null only ever happens in solr mode
                 // so if we're here, we're in solr mode, so do not create the analyzer.
                 if (indexMode) solrMode = true;
-
+                if (solrMode) this.indexWriter = this.indexObjectFactory().indexWriterProxy(null, this);
                 // We've been passed an already-opened IndexReader. Use that, don't open our own.
                 this.reader = reader;
                 shouldCloseIndex = false; // IndexReader was already open, so we shouldn't close it

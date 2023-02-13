@@ -51,6 +51,9 @@ COPY --from=builder \
      /app/solr/target/blacklab-solr-no-deps.jar /app/solr/target/lib/*.jar \
      /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
 
+# Copy BlackLab configset & solr.xml
+COPY solr/conf /opt/solr/server/solr/
+
 USER root
 
 # Make sure Solr can write snapshot data

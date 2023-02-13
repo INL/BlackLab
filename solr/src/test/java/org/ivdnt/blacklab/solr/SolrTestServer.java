@@ -139,11 +139,12 @@ public class SolrTestServer {
      * @param confTemplatePath where template files can be found
      */
     static void createCore(String coreName, Path confTemplatePath) {
-        String pathToSolrConfigXml = confTemplatePath.resolve("solrconfig.xml").toAbsolutePath().toString();
-        String pathToSchemaXml = confTemplatePath.resolve("managed-schema").toAbsolutePath().toString();
+        String pathToSolrConfigXml = confTemplatePath.resolve("configsets").resolve("blacklab").resolve("blacklab").toAbsolutePath().toString();
+        String pathToSchemaXml = confTemplatePath.resolve("configsets").resolve("blacklab").resolve("managed-schema").toAbsolutePath().toString();
 
         CoreAdminRequest.Create request = new CoreAdminRequest.Create();
         request.setCoreName(coreName);
+//        request.setConfigSet("blacklab");
         request.setConfigName(pathToSolrConfigXml);
         request.setSchemaName(pathToSchemaXml);
 

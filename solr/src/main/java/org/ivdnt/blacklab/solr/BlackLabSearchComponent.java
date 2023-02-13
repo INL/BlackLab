@@ -1,18 +1,19 @@
 package org.ivdnt.blacklab.solr;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.handler.component.SearchComponent;
 import org.apache.solr.util.plugin.SolrCoreAware;
@@ -71,23 +72,25 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
     private BLSConfig getConfig(SolrCore core) {
         // Find and load config file
-        boolean isJson = configFilePath.endsWith(".json");
-        SolrResourceLoader resourceLoader = core.getResourceLoader();
+//        SolrResourceLoader resourceLoader = core.getResourceLoader();
         BLSConfig config = null;
-        
-        
-        if (resourceLoader.resourceLocation(configFilePath) != null)  {
-            try (InputStream is = resourceLoader.openResource(configFilePath)) {
-                InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
-                config = BLSConfig.read(reader, isJson);
-                //System.err.println("##### Loaded BLS config file " + configFilePath);
+        File configFile = new File(configFilePath);
+        if (configFile.canRead() && configFile.isFile()) {
+            try {
+                boolean isJson = configFilePath.endsWith(".json");
+                String contents = FileUtils.readFileToString(new File(configFilePath), StandardCharsets.UTF_8);
+                config = BLSConfig.read(new StringReader(contents), isJson);
+                System.err.println("##### Loaded BLS config file " + Path.of(configFilePath).toAbsolutePath());
             } catch (IOException e) {
-                // ignore, file doesn't exist, fallback to default.
+                System.err.println("##### Failed to read BLS config file at " + Path.of(configFilePath).toAbsolutePath() + " (from " + configFilePath + ")");
+                // ignore, fallback to default.
             }
-        } 
-        if (config == null) {
+        } else {
+            System.err.println("##### no BLS config file found at " + Path.of(configFilePath).toAbsolutePath() + " (from " + configFilePath + ")");
+        }
+
+        if (config == null) { // failed to read from disk, or doesn't exist.
             config = new BLSConfig(); // Default config if no config file found
-            System.err.println("##### no BLS config file found at " + configFilePath);
         }
      
         return config;

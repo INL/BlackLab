@@ -16,8 +16,10 @@ public class BLSolrRequestHandlerUpdate extends UpdateRequestHandler {
             p = args.toSolrParams();
         }
         Map<String, ContentStreamLoader> registry = super.createDefaultLoaders(args);
-        registry.put("application/xml", new BLSolrXMLLoader().init(p) );
-        registry.put("text/xml", registry.get("application/xml") );
+        registry.put("application/xml", new BLSolrXMLLoader().init(p));
+        registry.put("text/xml", registry.get("application/xml"));
+        registry.put("application/octet-stream", registry.get("application/xml"));
+        registry.put("application/x-zip-compressed", registry.get("application/xml"));
         return registry;
     }
 }

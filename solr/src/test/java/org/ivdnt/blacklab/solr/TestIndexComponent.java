@@ -51,13 +51,12 @@ public class TestIndexComponent {
     @BeforeClass
     public static void prepareClass() throws Exception
     {
-        Path resourcePath = Paths.get("src", "test", "resources", "solrDir");
-        Path confTemplatePath = resourcePath.resolve("conf");
+        Path resourcePath = Paths.get("conf");
 
         // Create server, core and add document
         SolrTestServer.createEmbeddedServer(CORE_NAME, resourcePath, null);
         SolrTestServer.setLogLevel("WARN"); // show log messages
-        SolrTestServer.createCore(CORE_NAME, confTemplatePath);
+        SolrTestServer.createCore(CORE_NAME, resourcePath);
 
         // (component is already added in solrconfig.xml, so this call is not needed,
         //  and the method unfortunately doesn't work yet anyway, see comment. we'll look at it later)
@@ -73,12 +72,13 @@ public class TestIndexComponent {
     @Test
     @Ignore
     public void testAddData() throws SolrServerException, IOException {
-        String configFileContents = FileUtils.readFileToString(Paths.get("..", "test", "data", DOCUMENT_FORMAT).toFile(), StandardCharsets.UTF_8);
-        
+        String configFileContents = FileUtils.readFileToString(Paths.get("..", "test", "data", DOCUMENT_FORMAT + ".blf.yaml").toFile(), StandardCharsets.UTF_8);
+        registerFormat(DOCUMENT_FORMAT, configFileContents);
+
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
         solrParams.add("bl", "true"); // activate our component
-        solrParams.add("bl.format", configFileContents);
+        solrParams.add("bl.format", DOCUMENT_FORMAT);
         solrParams.add("bl.filename", Strings.join(Arrays.asList(INPUT_FILE_PATH), File.separatorChar));
 
         String urlPath = "/update";
@@ -115,5 +115,20 @@ public class TestIndexComponent {
         String serialized = p.toFormattedString(field);
         Reader r = new StringReader(serialized);
         p.parse(r, new TokenStreamFromList(new ArrayList<>(), new IntArrayList(), new ArrayList<>()));
+    }
+
+
+    private void registerFormat(String formatName, String formatFileContents) throws SolrServerException, IOException {
+        ModifiableSolrParams solrParams = new ModifiableSolrParams();
+        solrParams.add(CommonParams.Q, "*:*");
+        solrParams.add("bl", "true"); // activate our component
+        solrParams.add("bl.format", "add");
+        solrParams.add("bl.filename", formatName);
+
+        String urlPath = "/update";
+        GenericSolrRequest r = new GenericSolrRequest(SolrRequest.METHOD.POST, urlPath, solrParams);
+        r.setContentWriter(new RequestWriter.StringPayloadContentWriter(formatFileContents, "application/xml"));
+
+        NamedList<Object> response = SolrTestServer.client().request(r);
     }
 }
