@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
 
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -32,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(propOrder={"summary", "hits", "docInfos", "hitGroups", "facets" })
 public class HitsResults implements Cloneable {
 
     private static class HitListSerializer extends JsonSerializer<BigList<Hit>> {
@@ -188,6 +190,11 @@ public class HitsResults implements Cloneable {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<HitOrDocGroup> hitGroups;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonSerialize(using = SerializationUtil.FacetSerializer.class)
+    @JsonDeserialize(using = SerializationUtil.FacetDeserializer.class)
+    public Map<String, List<FacetValue>> facets;
+
     // required for Jersey
     @SuppressWarnings("unused")
     public HitsResults() {}
@@ -220,6 +227,7 @@ public class HitsResults implements Cloneable {
                 ", hits=" + hits +
                 ", docInfos=" + docInfos +
                 ", hitGroups=" + hitGroups +
+                ", facets=" + facets +
                 '}';
     }
 }

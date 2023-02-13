@@ -1,13 +1,18 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlType;
+
+import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,6 +32,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
+@XmlType(propOrder={"summary", "docs", "docGroups", "facets" })
 public class DocsResults implements Cloneable {
 
     private static class DocListSerializer extends JsonSerializer<BigList<Doc>> {
@@ -79,6 +85,11 @@ public class DocsResults implements Cloneable {
     @JsonInclude(Include.NON_NULL)
     public List<HitOrDocGroup> docGroups;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonSerialize(using = SerializationUtil.FacetSerializer.class)
+    @JsonDeserialize(using = SerializationUtil.FacetDeserializer.class)
+    public Map<String, ArrayList<FacetValue>> facets;
+
     // required for Jersey
     @SuppressWarnings("unused")
     public DocsResults() {}
@@ -94,6 +105,7 @@ public class DocsResults implements Cloneable {
                 "summary=" + summary +
                 ", docs=" + docs +
                 ", docGroups=" + docGroups +
+                ", facets=" + facets +
                 '}';
     }
 }

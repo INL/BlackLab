@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.xml.bind.JAXBElement;
 
 import org.ivdnt.blacklab.proxy.representation.Annotation;
+import org.ivdnt.blacklab.proxy.representation.FacetValue;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -271,4 +272,55 @@ public class SerializationUtil {
         return result;
     }
 
+    public static class FacetSerializer extends JsonSerializer<Map<String, List<FacetValue>>> {
+        @Override
+        public void serialize(Map<String, List<FacetValue>> value, JsonGenerator jgen, SerializerProvider provider)
+                throws IOException {
+            if (value == null)
+                return;
+            jgen.writeStartObject();
+            for (Map.Entry<String, List<FacetValue>> e: value.entrySet()) {
+                jgen.writeArrayFieldStart(e.getKey());
+                for (FacetValue v: e.getValue()) {
+                    provider.defaultSerializeValue(v, jgen);
+                }
+                jgen.writeEndArray();
+            }
+            jgen.writeEndObject();
+        }
+    }
+
+    public static class FacetDeserializer extends JsonDeserializer<Map<String, List<FacetValue>>> {
+        @Override
+        public Map<String, List<FacetValue>> deserialize(JsonParser parser, DeserializationContext deserializationContext)
+                throws IOException {
+            JsonToken token = parser.getCurrentToken();
+            if (token != JsonToken.START_OBJECT)
+                throw new RuntimeException("Expected START_OBJECT, found " + token);
+
+            Map<String, List<FacetValue>> facets = new LinkedHashMap<>();
+            while (true) {
+                token = parser.nextToken();
+                if (token == JsonToken.END_OBJECT)
+                    break;
+                if (token != JsonToken.FIELD_NAME)
+                    throw new RuntimeException("Expected FIELD_NAME or END_OBJECT, found " + token);
+                String fieldName = parser.getCurrentName();
+                token = parser.nextToken();
+                if (token != JsonToken.START_ARRAY)
+                    throw new RuntimeException("Expected START_ARRAY, found " + token);
+                List<FacetValue> values = new ArrayList<>();
+                while (true) {
+                    token = parser.nextToken();
+                    if (token == JsonToken.END_ARRAY)
+                        break;
+                    if (token != JsonToken.START_OBJECT)
+                        throw new RuntimeException("Expected START_OBJECT, found " + token);
+                    values.add(deserializationContext.readValue(parser, FacetValue.class));
+                }
+                facets.put(fieldName, values);
+            }
+            return facets;
+        }
+    }
 }

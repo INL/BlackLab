@@ -12,12 +12,13 @@ public class Doc {
 
     public String docPid;
 
-    public long numberOfHits;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long numberOfHits;
 
     public DocInfo docInfo;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public List<DocSnippet> snippets;
+    public List<DocResultsHitContext> snippets;
 
     // required for Jersey
     public Doc() {}

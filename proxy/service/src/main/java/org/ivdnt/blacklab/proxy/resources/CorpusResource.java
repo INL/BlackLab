@@ -23,6 +23,7 @@ import org.ivdnt.blacklab.proxy.representation.Corpus;
 import org.ivdnt.blacklab.proxy.representation.CorpusStatus;
 import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
 import org.ivdnt.blacklab.proxy.representation.DocInfoResponse;
+import org.ivdnt.blacklab.proxy.representation.DocSnippetResponse;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
@@ -155,6 +156,18 @@ public class CorpusResource {
         params.put(WebserviceParameter.DOC_PID, docPid);
         DocContentsResults entity = (DocContentsResults)Requests.get(client, params, DocContentsResults.class);
         return Response.ok().entity(entity.contents).type(MediaType.APPLICATION_XML).build();
+    }
+
+    @GET
+    @Path("/docs/{pid}/snippet")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response docSnippet(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_SNIPPET);
+        params.put(WebserviceParameter.DOC_PID, docPid);
+        return success(Requests.get(client, params, DocSnippetResponse.class));
     }
 
     @GET
