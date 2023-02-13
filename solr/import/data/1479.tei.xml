@@ -1,0 +1,1116 @@
+<TEI xmlns:tei="http://www.tei-c.org/ns/1.0" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://www.tei-c.org/ns/1.0">
+   <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title>Corp.I, 1479, Maldegem, 31 januari 1296</title>
+                
+            </titleStmt>
+            <publicationStmt>
+                <p>
+                    <date>1296</date>
+                    <idno type="sourceID">corpusgysseling.1479</idno>
+                    <idno type="pid">INT_607341cf-afb9-42d3-af81-cd984abf5cad</idno>
+                </p>
+            </publicationStmt>
+            <notesStmt>
+                <note/>
+            </notesStmt>
+            <sourceDesc>
+                <listBibl xml:id="inlMetadata">
+                    <bibl>
+                        <interpGrp type="sourceID">
+                            <interp>corpusgysseling.1479</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="pid">
+                     <interp>INT_607341cf-afb9-42d3-af81-cd984abf5cad</interp>
+                  </interpGrp>
+                        <interpGrp type="titleLevel1">
+                            <interp>Corp.I, 1479, Maldegem, 31 januari 1296</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="titleLevel2">
+                            <interp>Corpus van Middelnederlandse teksten I</interp>
+                        </interpGrp>
+                        <interpGrp type="titleLevel3">
+                            <interp>Corpus Gysseling</interp>
+                        </interpGrp>
+                        <interpGrp type="subtitleLevel3">
+                            <interp>Een verzameling van alle dertiende-eeuwse teksten die als
+                                bronnenmateriaal hebben gediend voor het Vroegmiddelnederlands
+                                Woordenboek</interp>
+                        </interpGrp>
+                        <interpGrp type="subtitleLevel1">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="subtitleLevel2">
+                            <interp>Ambtelijke teksten</interp>
+                        </interpGrp>
+                        <interpGrp type="authorLevel1">
+                            
+                            
+                        <interp/>
+                  </interpGrp>
+                        <interpGrp type="authorLevel2">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="authorLevel3">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="editorLevel1">
+                            <interp>Maurits
+                                Gysseling</interp>
+                            <interp>Willy
+                                Pijnenburg</interp>
+                        </interpGrp>
+                        <interpGrp type="editorLevel2">
+                            <interp>Maurits
+                                Gysseling</interp>
+                            <interp>Willy
+                                Pijnenburg</interp>
+                        </interpGrp>
+                  <interpGrp type="editorLevel3">
+                            <interp/>
+                            
+                        </interpGrp>
+                  <interpGrp type="categoryLevel1">
+                            <interp>uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="categoryLevel2">
+                            <interp>uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="categoryLevel3">
+                            <interp>uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="editionLevel1">
+                            <interp>1</interp>
+                        </interpGrp>
+                        <interpGrp type="editionLevel2">
+                            <interp>1</interp>
+                        </interpGrp>
+                        <interpGrp type="editionLevel3">
+                            <interp>1</interp>
+                        </interpGrp>
+                        <interpGrp type="mediumLevel1">
+                            <interp>digitale uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="mediumLevel2">
+                            <interp>digitale uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="mediumLevel3">
+                            <interp>digitale uitgave</interp>
+                        </interpGrp>
+                        <interpGrp type="resourceURILevel1">
+                            <interp>http://gysseling.corpus.taalbanknederlands.inl.nl/gysseling/page/search</interp>
+                        </interpGrp>
+                        <interpGrp type="resourceURILevel2">
+                            <interp>http://gysseling.corpus.taalbanknederlands.inl.nl/gysseling/page/search</interp>
+                        </interpGrp>
+                        <interpGrp type="resourceURILevel3">
+                            <interp>http://gysseling.corpus.taalbanknederlands.inl.nl/gysseling/page/search</interp>
+                        </interpGrp>
+                        <interpGrp type="placePublicationLevel1">
+                            <interp>'s-Gravenhage</interp>
+                        </interpGrp>
+                        <interpGrp type="placePublicationLevel2">
+                            <interp>'s-Gravenhage</interp>
+                        </interpGrp>
+                        <interpGrp type="placePublicationLevel3">
+                            <interp>Leiden</interp>
+                        </interpGrp>
+                        <interpGrp type="publisherLevel1">
+                            <interp>Martinus Nijhoff</interp>
+                            <interp>INT</interp>
+                        </interpGrp>
+                        <interpGrp type="publisherLevel2">
+                            <interp>Martinus Nijhoff</interp>
+                            <interp>INT</interp>
+                        </interpGrp>
+                        <interpGrp type="publisherLevel3">
+                            <interp>INT</interp>
+                        </interpGrp>
+                  <interpGrp type="pubYearLevel1_from">
+                            <interp>1977</interp>
+                        </interpGrp>
+                        <interpGrp type="pubYearLevel1_to">
+                            <interp>1977</interp>
+                        </interpGrp>
+                        <interpGrp type="pubYearLevel2_from">
+                            <interp>1977</interp>
+                        </interpGrp>
+                        <interpGrp type="pubYearLevel2_to">
+                            <interp>1977</interp>
+                        </interpGrp>
+                        <interpGrp type="pubYearLevel3_from">
+                            <interp>1999</interp>
+                        </interpGrp>
+                        <interpGrp type="pubYearLevel3_to">
+                            <interp>1999</interp>
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel1_from">
+                            <interp>1296</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel1_to">
+                            <interp>1296</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel2_from">
+                            <interp>1210</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel2_to">
+                            <interp>1600</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel3_from">
+                            <interp>1190</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessYearLevel3_to">
+                            <interp>1600</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textYearLevel1_from">
+                            <interp>1296</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textYearLevel1_to">
+                            <interp>1296</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textMonthLevel1_from">
+                            <interp>januari</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textMonthLevel1_to">
+                            <interp>januari</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textDayLevel1_from">
+                            <interp>31</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textDayLevel1_to">
+                            <interp>31</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="textYearLevel2_from">
+                            <interp>1210</interp>
+                        </interpGrp>
+                        <interpGrp type="textYearLevel2_to">
+                            <interp>1310</interp>
+                        </interpGrp>
+                        <interpGrp type="textYearLevel3_from">
+                            <interp>1210</interp>
+                        </interpGrp>
+                        <interpGrp type="textYearLevel3_to">
+                            <interp>1310</interp>
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_placeLevel1">
+                     <interp>Maldegem</interp>
+                  </interpGrp>
+                        
+                        <interpGrp type="witnessLocalization_countryLevel1">
+                            <interp>België</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_regionLevel1">
+                     <interp>Oost-Vlaanderen</interp>
+                  </interpGrp>
+                        <interpGrp type="witnessLocalization_kloekecodeLevel1">
+                            <interp>I154p</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_placeLevel2">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_provinceLevel2">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_countryLevel2">
+                            <interp>Nederland</interp>
+                            <interp>België</interp>
+                            <interp>Frankrijk</interp>
+                            <interp>Duitsland</interp>
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_countryLevel3">
+                            <interp>Nederland</interp>
+                            <interp>België</interp>
+                            <interp>Frankrijk</interp>
+                            <interp>Duitsland</interp>
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_regionLevel2">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="witnessLocalization_kloekecodeLevel2">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="textLocalization_placeLevel1">
+                            <interp>Maldegem</interp>
+                            
+                        </interpGrp>
+                        
+                        <interpGrp type="textLocalization_countryLevel1">
+                            <interp>België</interp>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_regionLevel1">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_kloekecodeLevel1">
+                            <interp>I154p</interp>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_placeLevel2">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_provinceLevel2">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_countryLevel2">
+                            <interp>Nederland</interp>
+                            <interp>België</interp>
+                            <interp>Frankrijk</interp>
+                            <interp>Duitsland</interp>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_countryLevel3">
+                            <interp>Nederland</interp>
+                            <interp>België</interp>
+                            <interp>Frankrijk</interp>
+                            <interp>Duitsland</interp>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_regionLevel2">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="textLocalization_kloekecodeLevel2">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="ingestTime">
+                            
+                            <interp>2018-06-22T08:04</interp>
+                        </interpGrp>
+                        <interpGrp type="genreLevel1">
+                            
+                        <interp>prose</interp></interpGrp>
+                        <interpGrp type="genreLevel2">
+                            
+                        <interp>prose</interp></interpGrp>
+                        <interpGrp type="genreLevel3">
+                            <interp/>
+                        <interp>prose</interp></interpGrp>
+                        <interpGrp type="subgenreLevel1">
+                            <interp>officiële documenten</interp>
+                        <interp>history</interp></interpGrp>
+                        <interpGrp type="subgenreLevel2">
+                            <interp>officiële documenten</interp>
+                        <interp>history</interp></interpGrp>
+                        <interpGrp type="subgenreLevel3">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="fictionalityLevel1"><interp>non-fiction</interp></interpGrp>
+                        <interpGrp type="fictionalityLevel2"><interp>non-fiction</interp></interpGrp>
+                        <interpGrp type="fictionalityLevel3"><interp></interp></interpGrp>
+                        <interpGrp type="statusTextLevel1">
+                            <interp>geen vertaling</interp>
+                        </interpGrp>
+                        <interpGrp type="statusTextLevel2">
+                            <interp>geen vertaling</interp>
+                        </interpGrp>
+                        <interpGrp type="statusTextLevel3">
+                            <interp/>
+                        </interpGrp>
+                        <interpGrp type="primaryLanguageLevel1">
+                            <interp>odt</interp>
+                        </interpGrp>
+                        <interpGrp type="primaryLanguageLevel2">
+                            <interp>odt</interp>
+                        </interpGrp>
+                        <interpGrp type="primaryLanguageLevel3">
+                            <interp>odt</interp>
+                        </interpGrp>
+                        <interpGrp type="ipr">
+                            <interp>extern</interp>
+                        </interpGrp>
+                        <interpGrp type="copyrightHolder">
+                            <interp>Martinus Nijhoff</interp>
+                            <interp>INT</interp>
+                        </interpGrp>
+                        <interpGrp type="copyrightOwner">
+                            <interp>Martinus Nijhoff</interp>
+                            <interp>INT</interp>
+                        </interpGrp>
+                        <interpGrp type="corpusProvenance">
+                            <interp>Corpus-Gysseling</interp>
+                        </interpGrp>
+                        <interpGrp type="biblScope_pageLevel1">
+                            <interp>2255-2255</interp>
+                            
+                        </interpGrp>
+                        <interpGrp type="biblScope_pageLevel2">
+                            <interp>1-2890</interp>
+                        </interpGrp>
+                        <interpGrp type="biblScope_volumeLevel1">
+                            <interp/>
+                            
+                        </interpGrp>
+                        <interpGrp type="biblScope_volumeLevel2">
+                            <interp>1-4</interp>
+                        </interpGrp>
+                        <interpGrp type="processingMethod">
+                            <interp>born digital</interp>
+                        </interpGrp>
+                    <interpGrp type="authenticityLevel1"><interp>ORIGINEEL</interp></interpGrp><interpGrp type="signatureLevel1"><interp>Brugge, Commissie van Openbare Onderstand, Sint-Janshospitaal, nr. 239.</interp></interpGrp><interpGrp type="witness_year_from">
+          <interp>1296</interp>
+        </interpGrp><interpGrp type="witness_year_to">
+          <interp>1296</interp>
+        </interpGrp><interpGrp type="text_year_from">
+          <interp>1296</interp>
+        </interpGrp><interpGrp type="text_year_to">
+          <interp>1296</interp>
+        </interpGrp><interpGrp type="datering">
+          <interp>1296-1296</interp>
+        </interpGrp><interpGrp type="decade">
+          <interp>1290</interp>
+        </interpGrp><interpGrp type="country">
+          <interp>België</interp>
+        </interpGrp><interpGrp type="region">
+          <interp>Oost-Vlaanderen</interp>
+        </interpGrp><interpGrp type="place">
+          <interp>Maldegem</interp>
+        </interpGrp><interpGrp type="kloeke">
+          <interp>I154p</interp>
+        </interpGrp><interpGrp type="genre">
+          <interp>prose</interp>
+        </interpGrp><interpGrp type="subgenre">
+          <interp>officiële documenten</interp><interp>history</interp>
+        </interpGrp><interpGrp type="title">
+          <interp>Corp.I, 1479, Maldegem, 31 januari 1296</interp>
+        </interpGrp><interpGrp type="subtitle">
+          <interp>Ambtelijke teksten</interp>
+        </interpGrp><interpGrp type="Subcorpus">
+          <interp>Corpus van Middelnederlandse teksten I (Ambtelijke teksten)</interp>
+        </interpGrp></bibl>
+                </listBibl>
+            <listBibl type="nederlabMetadata">
+               <bibl xml:id="bibl.d9932e22.34c0a124-e59b-4944-bb25-737f0361adb9-copy" type="INL-level-0-metadata-voor-nederlab"><interpGrp type="pid"><interp>INT_91bf888a-bb99-3665-b488-1a4b00e07619</interp></interpGrp><interpGrp type="witnessLocalization_placeLevel0">
+                     <interp>Maldegem</interp>
+                  </interpGrp><interpGrp type="witnessLocalization_regionLevel0">
+                     <interp>Oost-Vlaanderen</interp>
+                  </interpGrp><interpGrp type="witnessLocalization_countryLevel0">
+                     <interp>België</interp>
+                  </interpGrp><interpGrp type="witnessLocalization_kloekecodeLevel0">
+                     <interp>I154p</interp>
+                  </interpGrp><biblScope>
+                     <span to="#lokalisering.d9932e702" from="#lokalisering.d9932e22"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e21.ffb3ba47-f824-4f53-bd0a-89d5b941a12c-copy" type="INL-level-0-metadata-voor-nederlab"><interpGrp type="pid"><interp>INT_95dab050-9dd1-3934-82d5-a0e921ab4f08</interp></interpGrp><interpGrp type="witnessYearLevel0_from">
+                     <interp>1301</interp>
+                  </interpGrp><interpGrp type="witnessYearLevel0_to">
+                     <interp>1325</interp>
+                  </interpGrp><biblScope>
+                     <span to="#datering.d9932e55" from="#datering.d9932e21"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e63.05d99b6e-1e30-49f7-84ae-ea489790c929-copy" type="INL-level-0-metadata-voor-nederlab"><interpGrp type="pid"><interp>INT_d96e5cc9-f7b3-3d2d-90f9-b3068f780b9d</interp></interpGrp><interpGrp type="witnessYearLevel0_from">
+                     <interp>1296</interp>
+                  </interpGrp><interpGrp type="witnessYearLevel0_to">
+                     <interp>1296</interp>
+                  </interpGrp><biblScope>
+                     <span to="#datering.d9932e701" from="#datering.d9932e63"/>
+                  </biblScope></bibl>
+            </listBibl>
+            <listBibl xml:id="gysseling-specific-metadata">
+               <bibl xml:id="bibl.d9932e23"><interpGrp type="pid"><interp>INT_86653df8-9961-3926-ad59-5bdb29b809c2</interp></interpGrp><interpGrp type="statushand">
+                     <interp type="statushandkode">latere documentregels, niet van de hoofdhand</interp>
+                     <interp type="statushandkode.abbr">md</interp>
+                  </interpGrp><biblScope>
+                     <span to="#hand.d9932e57" from="#hand.d9932e23"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e65"><interpGrp type="pid"><interp>INT_8f586bc5-35d3-3aa2-b6a9-a227251fbf69</interp></interpGrp><interpGrp type="statushand">
+                     <interp type="statushandkode">eerdere documentregels van de hoofdhand</interp>
+                     <interp type="statushandkode.abbr">an</interp>
+                  </interpGrp><biblScope>
+                     <span to="#hand.d9932e703" from="#hand.d9932e65"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e59"><interpGrp type="pid"><interp>INT_08e92369-26ca-381b-a594-488ea57b2624</interp></interpGrp><interpGrp type="atlas_kenmerk">
+                     <interp type="atlas_kenmerkkode">.P.</interp>
+                  </interpGrp><biblScope>
+                     <span to="#atlas_kenmerk.d9932e699" from="#atlas_kenmerk.d9932e59"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e61"><interpGrp type="pid"><interp>INT_44ce5630-1cc6-3f1d-b4e4-b53ed4cebc69</interp></interpGrp><interpGrp type="atlas_lokalisering">
+                     <interp type="kanselarij"/>
+                     <interp type="plaats_1">Maldegem</interp>
+                     <interp type="plaats_1.abbr">76</interp>
+                     <interp type="plaats_2"/>
+                     <interp type="regio_1">Oost-Vlaanderen</interp>
+                     <interp type="regio_1.abbr">9</interp>
+                     <interp type="regio_2"/>
+                     <interp type="regiostatus">zeker</interp>
+                     <interp type="regiostatus.abbr">1</interp>
+                  </interpGrp><biblScope>
+                     <span to="#atlas_lokalisering.d9932e700" from="#atlas_lokalisering.d9932e61"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e21"><interpGrp type="pid"><interp>INT_328f7ffb-3ee8-393f-a058-6bf32c9f11e1</interp></interpGrp><interpGrp type="datering">
+                     <interp type="jaar_tot">1325</interp>
+                     <interp type="jaar_van">1301</interp>
+                     <interp type="tijdsoort">ongeveer</interp>
+                     <interp type="tijdsoort.abbr">2</interp>
+                     <interp type="tijdstatus">zeker</interp>
+                     <interp type="tijdstatus.abbr">1</interp>
+                  </interpGrp><biblScope>
+                     <span to="#datering.d9932e55" from="#datering.d9932e21"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e63"><interpGrp type="pid"><interp>INT_18cb384c-57b3-3b96-9b4b-0f67997bfc12</interp></interpGrp><interpGrp type="datering">
+                     <interp type="jaar_tot">1296</interp>
+                     <interp type="jaar_van">1296</interp>
+                     <interp type="tijdsoort">precies</interp>
+                     <interp type="tijdsoort.abbr">1</interp>
+                     <interp type="tijdstatus">zeker</interp>
+                     <interp type="tijdstatus.abbr">1</interp>
+                  </interpGrp><biblScope>
+                     <span to="#datering.d9932e701" from="#datering.d9932e63"/>
+                  </biblScope></bibl>
+               <bibl xml:id="bibl.d9932e22"><interpGrp type="pid"><interp>INT_b41fee72-2744-3504-acc4-e1602f5baef8</interp></interpGrp><interpGrp type="lokalisering">
+                     <interp type="kanselarij">geen bijzonderheden</interp>
+                     <interp type="kanselarij.abbr">0</interp>
+                     <interp type="plaats_1">Maldegem</interp>
+                     <interp type="plaats_1.abbr">76</interp>
+                     <interp type="plaats_2"/>
+                     <interp type="regio_1">Oost-Vlaanderen</interp>
+                     <interp type="regio_1.abbr">9</interp>
+                     <interp type="regio_2"/>
+                     <interp type="regiostatus">zeker</interp>
+                     <interp type="regiostatus.abbr">1</interp>
+                  </interpGrp><biblScope>
+                     <span to="#lokalisering.d9932e702" from="#lokalisering.d9932e22"/>
+                  </biblScope></bibl>
+            </listBibl>
+         </sourceDesc>
+        </fileDesc>
+    <bron>&lt;bron&gt;
+&lt;document&gt;
+  &lt;auteur&gt;&lt;naam&gt;onbekend&lt;/naam&gt;&lt;/auteur&gt;
+  &lt;titel&gt;&lt;hoofd&gt;Corp.I, 1479, Maldegem, 31 januari 1296&lt;/hoofd&gt;&lt;/titel&gt;
+  &lt;brontitel&gt;Corp.I&lt;/brontitel&gt;
+  &lt;type&gt;ORIGINEEL&lt;/type&gt;
+  &lt;docid&gt;1479&lt;/docid&gt;
+  &lt;fragment/&gt;
+  &lt;placeName&gt;&lt;settlement&gt;Maldegem&lt;/settlement&gt;, &lt;region&gt;Oost-Vlaanderen&lt;/region&gt;&lt;/placeName&gt;
+  &lt;dateRange to=&quot;1296&quot; from=&quot;1296&quot;/&gt;
+  &lt;verblijfplaats&gt;Brugge, Commissie van Openbare Onderstand, Sint-Janshospitaal, nr. 239.&lt;/verblijfplaats&gt;
+&lt;/document&gt;
+
+
+
+&lt;doc&gt;1479&lt;/doc&gt;
+
+
+&lt;page&gt;2255&lt;/page&gt;&lt;nr&gt;1479&lt;/nr&gt;&lt;place&gt;Maldegem &lt;/place&gt;&lt;datum&gt;1296 januari 31&lt;/datum&gt;
+
+
+&lt;SYNOPSIS&gt;&lt;i&gt;Schepenen van Maldegem oorkonden dat Jan Cnospard en zijn vrouw
+aan Willem ver Magrieten zoon 1 bunder land gaven, dat
+laatstgenoemde vervolgens in cijns geeft aan Heineman van Scoeten
+tegen 10 s. 's jaars&lt;/i&gt;.&lt;/SYNOPSIS&gt;
+
+&lt;ORIGINEEL&gt;&lt;i&gt;A&lt;/i&gt;. Origineel:&lt;SIGNATUUR&gt; Brugge, Commissie van Openbare Onderstand,
+Sint-Janshospitaal, nr. 239.&lt;/SIGNATUUR&gt; Perkament (H 111 + plica 7, B 191 mm),
+met 6 uithangende zegels. In dorso: (1&lt;SUP&gt;e&lt;/SUP&gt; kwart 14&lt;SUP&gt;e&lt;/SUP&gt; e.:) van w&lt;i&gt;illem&lt;/i&gt;
+cnosp&lt;i&gt;ar&lt;/i&gt;d van x s. tsiaers.&lt;/ORIGINEEL&gt;
+
+&lt;p&gt;Deze oorkonde is van dezelfde hand als nr. 704.
+&lt;/p&gt;
+
+&lt;/bron&gt;</bron></teiHeader>
+   <text>
+      <body>
+         <p>
+            <pb n="2255"/>
+            <lb n="2255:15"/>
+            <milestone xml:id="datering.d9932e21" unit="datering.start"/>
+            <milestone xml:id="lokalisering.d9932e22" unit="lokalisering.start"/>
+            <milestone xml:id="hand.d9932e23" unit="hand.start"/>  
+            <w n="768717" xml:id="w.768717" lemma="VAN" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">van</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VAN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="5" n="0" type="dictionary.VMNW"><modern_lemma>van</modern_lemma><lemma>van</lemma> <def>van</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768718" xml:id="w.768718" lemma="WILHELM" pos="NOU-P(inflection=0)" type="020"><seg type="orth">w<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">illem</expan></seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>WILHELM</string></f></fs><xr extent="13" type="dictionaryLinks"><ref target="97671" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelm</modern_lemma><lemma>wilhelm</lemma> <def>Wilhelm</def> <pos>znw.m.</pos></ref><ref target="17671" n="0" type="dictionary.VMNW"><modern_lemma>Willemet</modern_lemma><lemma>willemet</lemma> <def>Willemet</def> <pos>znw.m.</pos></ref><ref target="27671" n="0" type="dictionary.VMNW"><modern_lemma>William</modern_lemma><lemma>williame</lemma> <def>William</def> <pos>znw.m.</pos></ref><ref target="50871" n="0" type="dictionary.VMNW"><modern_lemma>Willin</modern_lemma><lemma>willin</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="60871" n="0" type="dictionary.VMNW"><modern_lemma>Willoi</modern_lemma><lemma>willoi, willois</lemma> <def>Willoi</def> <pos>znw.m.</pos></ref><ref target="37671" n="0" type="dictionary.VMNW"><modern_lemma>Willetje</modern_lemma><lemma>willekin</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="96671" n="0" type="dictionary.VMNW"><modern_lemma>Willekinus</modern_lemma><lemma>willekinus</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="40871" n="0" type="dictionary.VMNW"><modern_lemma>Wilzoet</modern_lemma><lemma>wilsoete</lemma> <def>Wilsoete</def> <pos>znw.m.</pos></ref><ref target="80871" n="0" type="dictionary.VMNW"><modern_lemma>Wil</modern_lemma><lemma>wille (II)</lemma> <def>Wil(lem)</def> <pos>znw.m.</pos></ref><ref target="99771" n="0" type="dictionary.VMNW"><modern_lemma>Willinus</modern_lemma><lemma>willinus</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="50552" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelmus</modern_lemma><lemma>wilhelmus</lemma> <def>Willem</def> <pos>znw.m.</pos></ref><ref target="30871" n="0" type="dictionary.VMNW"><modern_lemma>Willeman</modern_lemma><lemma>willeman</lemma> <def>Willeman</def> <pos>znw.m.</pos></ref><ref target="97471" n="0" type="dictionary.VMNW"><modern_lemma>Willem</modern_lemma><lemma>willem</lemma> <def>Willem</def> <pos>znw.m.</pos></ref></xr></w> 
+            <lb n="2255:16"/>  
+            <w n="768719" xml:id="w.768719" lemma="KNOSPAARD" pos="NOU-P(inflection=0)" type="020"><seg type="orth">cnosp<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ar</expan>d</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>KNOSPAARD</string></f><f name="deellemma"><string>KNOSPAARDX</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="44802" n="0" citaatId="72753" type="dictionary.VMNW"><modern_lemma>Knospaard</modern_lemma><lemma>cnospart</lemma> <def>Knospaard</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768720" xml:id="w.768720" lemma="VAN" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">van</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VAN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="5" n="0" type="dictionary.VMNW"><modern_lemma>van</modern_lemma><lemma>van</lemma> <def>van</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768721" xml:id="w.768721" lemma="" pos="RES(type=uncl,inflection=oth)" type="999"><seg type="orth">x</seg><fs type="gys" groupingMainPos="RES" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="oth"/></f><f name="pos"><symbol value="RES"/></f>
+  <f name="lemma"><string/></f></fs><nolink/></w> 
+            <w n="768722" xml:id="w.768722" lemma="SOLIDUS" pos="NOU-C(number=pl,inflection=oth)" type="019"><seg type="orth"><c rend="inlFont" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ᨣ</c></seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="pl"/></f><f name="inflection"><symbol value="oth"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>SOLIDUS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="2806" n="0" type="dictionary.VMNW"><modern_lemma>solidus</modern_lemma><lemma>s (II)</lemma> <def>solidus, schelling</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768723" xml:id="w.768723" lemma="DAT+JAAR" pos="PD(type=dem,subtype=art,position=prenom,inflection=s/th)+NOU-C(number=sg,inflection=s/th)" type="472+002"><seg type="orth">tsiaers</seg><fs type="gys" groupingMainPos="PD+NOU-C" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DAT</string></f><f name="deellemma"><string>HET</string></f></fs><fs type="gys" groupingMainPos="PD+NOU-C" n="1">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>JAAR</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="30432" n="0" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (III)</lemma> <def>het; per</def> <pos>bep.lidw.</pos></ref><ref target="74432" n="1" type="dictionary.VMNW"><modern_lemma>jaar</modern_lemma><lemma>jaer</lemma> <def>jaar</def> <pos>znw.m.</pos></ref></xr></w><pc type="post">
+          .
+        </pc> 
+            <milestone xml:id="datering.d9932e55" unit="datering.end"/>
+            <milestone xml:id="hand.d9932e57" unit="hand.end"/>
+
+            <milestone xml:id="atlas_kenmerk.d9932e59" unit="atlas_kenmerk.start"/>
+            <milestone xml:id="atlas_lokalisering.d9932e61" unit="atlas_lokalisering.start"/>
+            <milestone xml:id="datering.d9932e63" unit="datering.start"/>
+            <milestone xml:id="hand.d9932e65" unit="hand.start"/>
+
+            <lb n="2255:21"/>  
+            <w n="768724" xml:id="w.768724" lemma="WIJ" pos="PD(type=pers,position=free,LN=pl,LP=1)" type="404"><seg type="orth">Wi</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="pl"/></f><f name="LP"><symbol value="1"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>WIJ</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="90332" n="0" type="dictionary.VMNW"><modern_lemma>wij</modern_lemma><lemma>wi</lemma> <def>wij; ik</def> <pos>pers.vnw.</pos></ref></xr></w>  
+            <w n="768725" xml:id="w.768725" lemma="SCHEPEN" pos="NOU-C(number=pl,inflection=n)" type="014"><seg type="orth">scepene<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="pl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>SCHEPEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="75481" n="0" type="dictionary.VMNW"><modern_lemma>schepen</modern_lemma><lemma>schepen(e)</lemma> <def>schepen</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768726" xml:id="w.768726" lemma="IN" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">jn</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>IN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="35932" n="0" type="dictionary.VMNW"><modern_lemma>in</modern_lemma><lemma>in</lemma> <def>in</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768727" xml:id="w.768727" lemma="MALDEGEM" pos="NOU-P(inflection=0)" type="020"><seg type="orth">malde<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan>ghe<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">m</expan></seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>MALDEGEM</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="48703" n="0" type="dictionary.VMNW"><modern_lemma>Maldegem</modern_lemma><lemma>maldenghem</lemma> <def>Maldegem</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768728" xml:id="w.768728" lemma="JOHANNES" pos="NOU-P(inflection=0)" type="020"><seg type="orth">jan</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>JOHANNES</string></f></fs><xr extent="24" type="dictionaryLinks"><ref target="81142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johan (II)</lemma> <def>Johan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="43142" n="0" type="dictionary.VMNW"><modern_lemma>Hannetje</modern_lemma><lemma>hannekin</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70022" n="0" type="dictionary.VMNW"><modern_lemma>Nanne</modern_lemma><lemma>nanne (I)</lemma> <def>Nanne</def> <pos>znw.m.</pos></ref><ref target="59042" n="0" type="dictionary.VMNW"><modern_lemma>Io</modern_lemma><lemma>io (I)</lemma> <def>Ie</def> <pos>znw.m.</pos></ref><ref target="52142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="82142" n="0" type="dictionary.VMNW"><modern_lemma>Janijn</modern_lemma><lemma>janin</lemma> <def>Janin</def> <pos>znw.</pos></ref><ref target="23142" n="0" type="dictionary.VMNW"><modern_lemma>Hannijn</modern_lemma><lemma>hannin</lemma> <def>Hannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="79042" n="0" type="dictionary.VMNW"><modern_lemma>Hansijn</modern_lemma><lemma>hansin</lemma> <def>Hansin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="33142" n="0" type="dictionary.VMNW"><modern_lemma>Hanne</modern_lemma><lemma>hanne</lemma> <def>Hanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="90142" n="0" type="dictionary.VMNW"><modern_lemma>Hannoot</modern_lemma><lemma>hannoot</lemma> <def>Hannoot (Johannes)</def> <pos>znw.m.</pos></ref><ref target="60142" n="0" type="dictionary.VMNW"><modern_lemma>Ja</modern_lemma><lemma>ja (I)</lemma> <def>Jacob</def> <pos>znw.m.</pos></ref><ref target="50142" n="0" type="dictionary.VMNW"><modern_lemma>Hannekinus</modern_lemma><lemma>hannekinus</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="72142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>johan (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="91142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>jehan</lemma> <def>Jehan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70142" n="0" type="dictionary.VMNW"><modern_lemma>Jaan</modern_lemma><lemma>jaen</lemma> <def>Jaan</def> <pos>znw.m.</pos></ref><ref target="42142" n="0" type="dictionary.VMNW"><modern_lemma>Jan</modern_lemma><lemma>jan</lemma> <def>Jan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="21142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (II)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="30142" n="0" type="dictionary.VMNW"><modern_lemma>Hankinus</modern_lemma><lemma>hankinus</lemma> <def>Hankin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="39042" n="0" type="dictionary.VMNW"><modern_lemma>Vanne</modern_lemma><lemma>vanne</lemma> <def>Vanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="49042" n="0" type="dictionary.VMNW"><modern_lemma>Nannetje</modern_lemma><lemma>nannekin</lemma> <def>Nannekin</def> <pos>znw.m.</pos></ref><ref target="68542" n="0" type="dictionary.VMNW"><modern_lemma>Johanna</modern_lemma><lemma>johanna (I)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="99042" n="0" type="dictionary.VMNW"><modern_lemma>Han</modern_lemma><lemma>han</lemma> <def>Han (Johannes)</def> <pos>znw.m.</pos></ref><ref target="92142" n="0" type="dictionary.VMNW"><modern_lemma>Jannijn</modern_lemma><lemma>jannin</lemma> <def>Jannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="89042" n="0" type="dictionary.VMNW"><modern_lemma>Hanneman</modern_lemma><lemma>hanneman</lemma> <def>Hanneman (Johannes)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768729" xml:id="w.768729" lemma="VROUW+ISABELLA+ZOON" pos="NOU-C(number=sg,inflection=0)+NOU-P(inflection=n)+NOU-C(number=sg,inflection=e)" type="000+024+001"><seg type="orth">v<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">er</expan>belensoene</seg><fs type="gys" groupingMainPos="NOU-C+NOU-P+NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VROUW</string></f></fs><fs type="gys" groupingMainPos="NOU-C+NOU-P+NOU-C" n="1">
+    <f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>ISABELLA</string></f></fs><fs type="gys" groupingMainPos="NOU-C+NOU-P+NOU-C" n="2">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>ZOON</string></f></fs><xr extent="6" type="dictionaryLinks"><ref target="93303" n="1" type="dictionary.VMNW"><modern_lemma>Bele</modern_lemma><lemma>bele</lemma> <def>Bele</def> <pos>znw.v.</pos></ref><ref target="62403" n="1" type="dictionary.VMNW"><modern_lemma>Beeltje</modern_lemma><lemma>beelkin</lemma> <def>Bele</def> <pos>znw.o.</pos></ref><ref target="39332" n="2" type="dictionary.VMNW"><modern_lemma>zoon</modern_lemma><lemma>sone (I)</lemma> <def>zoon</def> <pos>znw.m.</pos></ref><ref target="89232" n="0" type="dictionary.VMNW"><modern_lemma>vrouw</modern_lemma><lemma>vrouwe</lemma> <def>vrouwe; voorname vrouw; gebiedster; leenvrouwe; mens van het vrouwelijk geslacht; getrouwde vrouw; Vrouw</def> <pos>znw.v.</pos></ref><ref target="72403" n="1" type="dictionary.VMNW"><modern_lemma>Isabel</modern_lemma><lemma>isabele</lemma> <def>Isabella</def> <pos>znw.v.</pos></ref><ref target="49262" n="2" type="dictionary.VMNW"><modern_lemma>Zuun</modern_lemma><lemma>sone (II)</lemma> <def>Zuun</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768730" xml:id="w.768730" lemma="GEVARD" pos="NOU-P(inflection=0)" type="020"><seg type="orth">Gheu<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ar</expan>d</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>GEVARD</string></f><f name="deellemma"><string>GEBHARD</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="30612" n="0" type="dictionary.VMNW"><modern_lemma>Gevard</modern_lemma><lemma>ghevart</lemma> <def>Gevard</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768731" xml:id="w.768731" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=e)" type="471"><seg type="orth">de</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768732" xml:id="w.768732" lemma="SMID" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">smet</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>SMID</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="66452" n="0" type="dictionary.VMNW"><modern_lemma>smid, Smid</modern_lemma><lemma>smit</lemma> <def>smid; timmerman; Smid</def> <pos>znw.m.</pos></ref></xr></w><pc type="post">
+          .
+        </pc> 
+            <lb n="2255:22"/>  
+            <w n="768733" xml:id="w.768733" lemma="BOUDEWIJN" pos="NOU-P(inflection=0)" type="020"><seg type="orth">boud<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">en</expan></seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>BOUDEWIJN</string></f></fs><xr extent="11" type="dictionaryLinks"><ref target="78662" n="0" type="dictionary.VMNW"><modern_lemma>Boudinus</modern_lemma><lemma>boudinus</lemma> <def>Boudin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="88662" n="0" type="dictionary.VMNW"><modern_lemma>Boudezoete</modern_lemma><lemma>boudesoete</lemma> <def>Boudezoete (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="58662" n="0" type="dictionary.VMNW"><modern_lemma>Boudekijn</modern_lemma><lemma>boudekin</lemma> <def>Boudekin (Boudewijn)</def> <pos>znw.o.</pos></ref><ref target="37662" n="0" type="dictionary.VMNW"><modern_lemma>Baldewinus</modern_lemma><lemma>baldewinus</lemma> <def>Boudewijn</def> <pos>znw.m.</pos></ref><ref target="48662" n="0" type="dictionary.VMNW"><modern_lemma>Boudekinus</modern_lemma><lemma>boudekinus</lemma> <def>Boudekin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="41142" n="0" type="dictionary.VMNW"><modern_lemma>Boudewijn</modern_lemma><lemma>boudewijn</lemma> <def>Boudewijn</def> <pos>znw.m.</pos></ref><ref target="57662" n="0" type="dictionary.VMNW"><modern_lemma>Boudijn</modern_lemma><lemma>boudin</lemma> <def>Boudin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="19662" n="0" type="dictionary.VMNW"><modern_lemma>Boudsijn</modern_lemma><lemma>boutsin</lemma> <def>Boudsin (Boudewijn)</def> <pos>znw.o.</pos></ref><ref target="98662" n="0" type="dictionary.VMNW"><modern_lemma>Boudeloot</modern_lemma><lemma>boudeloot</lemma> <def>Boudeloot (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="29662" n="0" type="dictionary.VMNW"><modern_lemma>Boude</modern_lemma><lemma>boude (I)</lemma> <def>Boude (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="77662" n="0" type="dictionary.VMNW"><modern_lemma>Bouden</modern_lemma><lemma>bouden(e)</lemma> <def>Bouden (Boudewijn)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768734" xml:id="w.768734" lemma="VROUW+MABELIA" pos="NOU-C(number=sg,inflection=0)+NOU-P(inflection=n)" type="000+024"><seg type="orth">v<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">er</expan>maben</seg><fs type="gys" groupingMainPos="NOU-C+NOU-P" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VROUW</string></f></fs><fs type="gys" groupingMainPos="NOU-C+NOU-P" n="1">
+    <f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>MABELIA</string></f></fs><xr extent="3" type="dictionaryLinks"><ref target="89232" n="0" type="dictionary.VMNW"><modern_lemma>vrouw</modern_lemma><lemma>vrouwe</lemma> <def>vrouwe; voorname vrouw; gebiedster; leenvrouwe; mens van het vrouwelijk geslacht; getrouwde vrouw; Vrouw</def> <pos>znw.v.</pos></ref><ref target="87572" n="1" type="dictionary.VMNW"><modern_lemma>Mabelie</modern_lemma><lemma>mabelie</lemma> <def>Mabelia</def> <pos>znw.v.</pos></ref><ref target="97572" n="1" type="dictionary.VMNW"><modern_lemma>Mabe</modern_lemma><lemma>mabe</lemma> <def>Mabe</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768735" xml:id="w.768735" lemma="ZOON" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">soene</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>ZOON</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="39332" n="0" type="dictionary.VMNW"><modern_lemma>zoon</modern_lemma><lemma>sone (I)</lemma> <def>zoon</def> <pos>znw.m.</pos></ref><ref target="49262" n="0" type="dictionary.VMNW"><modern_lemma>Zuun</modern_lemma><lemma>sone (II)</lemma> <def>Zuun</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768736" xml:id="w.768736" lemma="JOHANNES" pos="NOU-P(inflection=0)" type="020"><seg type="orth">jan</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>JOHANNES</string></f></fs><xr extent="24" type="dictionaryLinks"><ref target="81142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johan (II)</lemma> <def>Johan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="43142" n="0" type="dictionary.VMNW"><modern_lemma>Hannetje</modern_lemma><lemma>hannekin</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70022" n="0" type="dictionary.VMNW"><modern_lemma>Nanne</modern_lemma><lemma>nanne (I)</lemma> <def>Nanne</def> <pos>znw.m.</pos></ref><ref target="59042" n="0" type="dictionary.VMNW"><modern_lemma>Io</modern_lemma><lemma>io (I)</lemma> <def>Ie</def> <pos>znw.m.</pos></ref><ref target="52142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="82142" n="0" type="dictionary.VMNW"><modern_lemma>Janijn</modern_lemma><lemma>janin</lemma> <def>Janin</def> <pos>znw.</pos></ref><ref target="23142" n="0" type="dictionary.VMNW"><modern_lemma>Hannijn</modern_lemma><lemma>hannin</lemma> <def>Hannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="79042" n="0" type="dictionary.VMNW"><modern_lemma>Hansijn</modern_lemma><lemma>hansin</lemma> <def>Hansin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="33142" n="0" type="dictionary.VMNW"><modern_lemma>Hanne</modern_lemma><lemma>hanne</lemma> <def>Hanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="90142" n="0" type="dictionary.VMNW"><modern_lemma>Hannoot</modern_lemma><lemma>hannoot</lemma> <def>Hannoot (Johannes)</def> <pos>znw.m.</pos></ref><ref target="60142" n="0" type="dictionary.VMNW"><modern_lemma>Ja</modern_lemma><lemma>ja (I)</lemma> <def>Jacob</def> <pos>znw.m.</pos></ref><ref target="50142" n="0" type="dictionary.VMNW"><modern_lemma>Hannekinus</modern_lemma><lemma>hannekinus</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="72142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>johan (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="91142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>jehan</lemma> <def>Jehan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70142" n="0" type="dictionary.VMNW"><modern_lemma>Jaan</modern_lemma><lemma>jaen</lemma> <def>Jaan</def> <pos>znw.m.</pos></ref><ref target="42142" n="0" type="dictionary.VMNW"><modern_lemma>Jan</modern_lemma><lemma>jan</lemma> <def>Jan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="21142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (II)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="30142" n="0" type="dictionary.VMNW"><modern_lemma>Hankinus</modern_lemma><lemma>hankinus</lemma> <def>Hankin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="39042" n="0" type="dictionary.VMNW"><modern_lemma>Vanne</modern_lemma><lemma>vanne</lemma> <def>Vanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="49042" n="0" type="dictionary.VMNW"><modern_lemma>Nannetje</modern_lemma><lemma>nannekin</lemma> <def>Nannekin</def> <pos>znw.m.</pos></ref><ref target="68542" n="0" type="dictionary.VMNW"><modern_lemma>Johanna</modern_lemma><lemma>johanna (I)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="99042" n="0" type="dictionary.VMNW"><modern_lemma>Han</modern_lemma><lemma>han</lemma> <def>Han (Johannes)</def> <pos>znw.m.</pos></ref><ref target="92142" n="0" type="dictionary.VMNW"><modern_lemma>Jannijn</modern_lemma><lemma>jannin</lemma> <def>Jannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="89042" n="0" type="dictionary.VMNW"><modern_lemma>Hanneman</modern_lemma><lemma>hanneman</lemma> <def>Hanneman (Johannes)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768737" xml:id="w.768737" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=e)" type="471"><seg type="orth">de</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768738" xml:id="w.768738" lemma="KORENBIJTER" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">core<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan>bit<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">re</expan></seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>KORENBIJTER</string></f><f name="deellemma"><string>KORENBIJTERX</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32882" n="0" type="dictionary.VMNW"><modern_lemma>Korenbijter</modern_lemma><lemma>corenbitere</lemma> <def>Korenbijter</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768739" xml:id="w.768739" lemma="BOUDEWIJN" pos="NOU-P(inflection=0)" type="020"><seg type="orth">boidin</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>BOUDEWIJN</string></f></fs><xr extent="11" type="dictionaryLinks"><ref target="78662" n="0" type="dictionary.VMNW"><modern_lemma>Boudinus</modern_lemma><lemma>boudinus</lemma> <def>Boudin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="88662" n="0" type="dictionary.VMNW"><modern_lemma>Boudezoete</modern_lemma><lemma>boudesoete</lemma> <def>Boudezoete (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="58662" n="0" type="dictionary.VMNW"><modern_lemma>Boudekijn</modern_lemma><lemma>boudekin</lemma> <def>Boudekin (Boudewijn)</def> <pos>znw.o.</pos></ref><ref target="37662" n="0" type="dictionary.VMNW"><modern_lemma>Baldewinus</modern_lemma><lemma>baldewinus</lemma> <def>Boudewijn</def> <pos>znw.m.</pos></ref><ref target="48662" n="0" type="dictionary.VMNW"><modern_lemma>Boudekinus</modern_lemma><lemma>boudekinus</lemma> <def>Boudekin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="41142" n="0" type="dictionary.VMNW"><modern_lemma>Boudewijn</modern_lemma><lemma>boudewijn</lemma> <def>Boudewijn</def> <pos>znw.m.</pos></ref><ref target="57662" n="0" type="dictionary.VMNW"><modern_lemma>Boudijn</modern_lemma><lemma>boudin</lemma> <def>Boudin (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="19662" n="0" type="dictionary.VMNW"><modern_lemma>Boudsijn</modern_lemma><lemma>boutsin</lemma> <def>Boudsin (Boudewijn)</def> <pos>znw.o.</pos></ref><ref target="98662" n="0" type="dictionary.VMNW"><modern_lemma>Boudeloot</modern_lemma><lemma>boudeloot</lemma> <def>Boudeloot (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="29662" n="0" type="dictionary.VMNW"><modern_lemma>Boude</modern_lemma><lemma>boude (I)</lemma> <def>Boude (Boudewijn)</def> <pos>znw.m.</pos></ref><ref target="77662" n="0" type="dictionary.VMNW"><modern_lemma>Bouden</modern_lemma><lemma>bouden(e)</lemma> <def>Bouden (Boudewijn)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768740" xml:id="w.768740" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=e)" type="471"><seg type="orth">de</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768741" xml:id="w.768741" lemma="KWINKER" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">q<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ui</expan>nkere</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>KWINKER</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="71252" n="0" type="dictionary.VMNW"><modern_lemma>Kwinker</modern_lemma><lemma>quinkere</lemma> <def>Kwinker</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768742" xml:id="w.768742" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w> 
+            <lb n="2255:23"/>  
+            <w n="768743" xml:id="w.768743" lemma="LAMBERT" pos="NOU-P(inflection=0)" type="020"><seg type="orth">la<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">m</expan>brecht</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>LAMBERT</string></f></fs><xr extent="11" type="dictionaryLinks"><ref target="98072" n="0" type="dictionary.VMNW"><modern_lemma>Lamzoet</modern_lemma><lemma>lamsoete</lemma> <def>Lamsoet (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="49072" n="0" type="dictionary.VMNW"><modern_lemma>Lambertus</modern_lemma><lemma>lambertus</lemma> <def>Lambrecht</def> <pos>znw.m.</pos></ref><ref target="38072" n="0" type="dictionary.VMNW"><modern_lemma>lambert</modern_lemma><lemma>lambloot</lemma> <def>Lamloot</def> <pos>znw.m.</pos></ref><ref target="19072" n="0" type="dictionary.VMNW"><modern_lemma>Lamme</modern_lemma><lemma>lambe</lemma> <def>Lambe (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="76072" n="0" type="dictionary.VMNW"><modern_lemma>lambert</modern_lemma><lemma>lambrecht</lemma> <def>H. Lambertus; Lambrecht</def> <pos>znw.m.</pos></ref><ref target="59072" n="0" type="dictionary.VMNW"><modern_lemma>Lammetje</modern_lemma><lemma>lambekin</lemma> <def>Lammekin (Lambrecht)</def> <pos>znw.o.</pos></ref><ref target="58072" n="0" type="dictionary.VMNW"><modern_lemma>Lambinus</modern_lemma><lemma>lambinus</lemma> <def>Lammin</def> <pos>znw.m.</pos></ref><ref target="18072" n="0" type="dictionary.VMNW"><modern_lemma>Lambijn</modern_lemma><lemma>lambin</lemma> <def>Lammin (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="88072" n="0" type="dictionary.VMNW"><modern_lemma>Lamsinus</modern_lemma><lemma>lamsinus</lemma> <def>Lamsin</def> <pos>znw.m.</pos></ref><ref target="68072" n="0" type="dictionary.VMNW"><modern_lemma>Lamsijn</modern_lemma><lemma>lamsin</lemma> <def>Lamsin (Lambrecht)</def> <pos>znw.o.</pos></ref><ref target="39072" n="0" type="dictionary.VMNW"><modern_lemma>Lambai</modern_lemma><lemma>lambai</lemma> <def>Lambai</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768744" xml:id="w.768744" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=e)" type="471"><seg type="orth">de</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768745" xml:id="w.768745" lemma="ROEDE|ROE" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">roede</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>ROEDE|ROE</string></f><f name="deellemma"><string>ROEDE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="80932" n="0" type="dictionary.VMNW"><modern_lemma>roede, roe</modern_lemma><lemma>roede</lemma> <def>tak; strafwerktuig; fluit; staf; scepter; bep. staaf; roede als lengte-, oppervlakte- en inhoudsmaat</def> <pos>znw.v.</pos></ref></xr></w><pc type="post">
+          .
+        </pc>  
+            <w n="768746" xml:id="w.768746" lemma="DOEN" pos="VRB(type=mai,finiteness=fin,tense=pres,mood=ind|conj,inflection=n)" type="204"><seg type="orth">Doen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="pres"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>DOEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="73432" n="0" type="dictionary.VMNW"><modern_lemma>doen</modern_lemma><lemma>doen (II)</lemma> <def>doen; zijn; laten; verrichten; behandelen; uitvoeren; voltooien; veroorzaken; maken; brengen; bijdragen; bedragen; nodig (hebben, zijn, krijgen, worden); afleggen; handelen; stellen; baten; zich plaatsen</def> <pos>st.ww.trans.,intr.,refl.</pos></ref></xr></w>  
+            <w n="768747" xml:id="w.768747" lemma="TE" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768748" xml:id="w.768748" lemma="WETEN" pos="VRB(type=mai,finiteness=inf,inflection=e)" type="251"><seg type="orth">wetene</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>WETEN</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="21562" n="0" type="dictionary.VMNW"><modern_lemma>weten</modern_lemma><lemma>weten (II)</lemma> <def>weten; kennen; begrijpen; vernemen; bemerken; menen; in staat zijn.</def> <pos>onreg.ww.trans.,intr.</pos></ref><ref target="90372" n="0" type="dictionary.VMNW"><modern_lemma>weten</modern_lemma><lemma>weten (III)</lemma> <def>laten we</def> <pos>ww.</pos></ref></xr></w>  
+            <w n="768749" xml:id="w.768749" lemma="AL" pos="PD(type=indef,subtype=oth,position=uncl,inflection=n)" type="324"><seg type="orth">allen</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>AL</string></f></fs><xr extent="5" type="dictionaryLinks"><ref target="57182" n="0" type="dictionary.VMNW"><modern_lemma>al</modern_lemma><lemma>al (V)</lemma> <def>al; als</def> <pos>vw.</pos></ref><ref target="18182" n="0" type="dictionary.VMNW"><modern_lemma>al</modern_lemma><lemma>al (I)</lemma> <def>(het) al</def> <pos>znw.o.</pos></ref><ref target="77182" n="0" type="dictionary.VMNW"><modern_lemma>al</modern_lemma><lemma>al (IV)</lemma> <def>over</def> <pos>vz.</pos></ref><ref target="28182" n="0" type="dictionary.VMNW"><modern_lemma>al</modern_lemma><lemma>al (II)</lemma> <def>elk; geheel; alle; alles; al</def> <pos>vnw.</pos></ref><ref target="87182" n="0" type="dictionary.VMNW"><modern_lemma>al</modern_lemma><lemma>al (III)</lemma> <def>volledig; geheel en al; al</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768750" xml:id="w.768750" lemma="DE/HET" pos="PD(type=dem,subtype=art,position=prenom,inflection=n)" type="474"><seg type="orth">den</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE/HET</string></f></fs><nolink/></w>  
+            <w n="768751" xml:id="w.768751" lemma="GENE" pos="PD(type=dem,subtype=oth,position=uncl,inflection=n)" type="414"><seg type="orth">goene<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>GENE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="39642" n="0" type="dictionary.VMNW"><modern_lemma>gene</modern_lemma><lemma>ghene (II)</lemma> <def>die/dat</def> <pos>aanw.vnw.</pos></ref></xr></w>  
+            <w n="768752" xml:id="w.768752" lemma="DIE" pos="PD(type=rel,position=uncl,inflection=e)" type="421"><seg type="orth">die</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="rel"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DIE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="36832" n="0" type="dictionary.VMNW"><modern_lemma>die</modern_lemma><lemma>die (III)</lemma> <def>die; wie</def> <pos>betr.vnw.</pos></ref></xr></w>  
+            <w n="768753" xml:id="w.768753" lemma="DEZE" pos="PD(type=dem,subtype=oth,position=uncl,inflection=e)" type="411"><seg type="orth">dese</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DEZE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="61032" n="0" type="dictionary.VMNW"><modern_lemma>deze</modern_lemma><lemma>dese</lemma> <def>deze</def> <pos>aanw.vnw.</pos></ref></xr></w>  
+            <w n="768754" xml:id="w.768754" lemma="LETTER" pos="NOU-C(number=sg,inflection=n)" type="004"><seg type="orth">lett<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">er</expan>en</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>LETTER</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="19332" n="0" type="dictionary.VMNW"><modern_lemma>letter</modern_lemma><lemma>lettere</lemma> <def>letter; opschrift; letterlijke inhoud; brief; rechtsgeldig document; geschrift; letterkunst</def> <pos>znw.v.</pos></ref></xr></w> 
+            <lb n="2255:24"/>  
+            <w n="768755" xml:id="w.768755" lemma="ZULLEN" pos="VRB(type=cop|aux,finiteness=fin,tense=pres,mood=ind|conj,inflection=n)" type="214"><seg type="orth">sullen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="cop|aux"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="pres"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>ZULLEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="51032" n="0" type="dictionary.VMNW"><modern_lemma>zullen</modern_lemma><lemma>sullen</lemma> <def>moeten; mogen; zullen; op het punt staan om; zouden moeten; (zouden) willen; (zullen/zouden) kunnen</def> <pos>onreg.ww.</pos></ref></xr></w>  
+            <w n="768756" xml:id="w.768756" lemma="ZIEN" pos="VRB(type=mai,finiteness=inf,inflection=0)" type="250"><seg type="orth">sien</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>ZIEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="35082" n="0" type="dictionary.VMNW"><modern_lemma>zien</modern_lemma><lemma>sien (II)</lemma> <def>het gezichtsvermogen hebben; kijken; uitzicht geven; toezicht houden; met de ogen waarnemen; met het geestelijk oog beschouwen; beleven; opmerken; opzoeken; zorgen voor</def> <pos>st.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768757" xml:id="w.768757" lemma="OF" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">of</seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>OF</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="77342" n="0" type="dictionary.VMNW"><modern_lemma>of</modern_lemma><lemma>ofte</lemma> <def>of; als; alsof</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768758" xml:id="w.768758" lemma="HOREN" pos="VRB(type=mai,finiteness=inf,inflection=0)" type="250"><seg type="orth">horen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>HOREN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="93642" n="0" type="dictionary.VMNW"><modern_lemma>horen</modern_lemma><lemma>horen (II)</lemma> <def>horen; behoren</def> <pos>zw.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768759" xml:id="w.768759" lemma="LEZEN" pos="VRB(type=mai,finiteness=inf,inflection=0)" type="250"><seg type="orth">lesen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>LEZEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="92542" n="0" type="dictionary.VMNW"><modern_lemma>lezen</modern_lemma><lemma>lesen (II)</lemma> <def>verzamelen; plukken; lezen; voorlezen; opzeggen; bidden; onderwijzen; vertellen; afkondigen</def> <pos>st.ww.trans.</pos></ref></xr></w><pc type="post">
+          .
+        </pc>  
+            <w n="768760" xml:id="w.768760" lemma="DAT" pos="CONJ(type=sub,inflection=0)" type="810"><seg type="orth">Dat</seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="sub"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>DAT</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="18922" n="0" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (IV)</lemma> <def>dat; toen; indien; zoals; omdat; zodat; opdat; voor zover; hoewel; totdat</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768761" xml:id="w.768761" lemma="KOMEN" pos="VRB(type=mai,finiteness=fin,tense=past,mood=ind|conj,inflection=n)" type="224"><seg type="orth">q<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ua</expan>men</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>KOMEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="89472" n="0" type="dictionary.VMNW"><modern_lemma>komen</modern_lemma><lemma>comen (III)</lemma> <def>aankomen; verschijnen; optreden; aantreden; intreden; genoemd worden; waarneembaar worden; ontstaan; afkomstig zijn (uit); voortkomen (uit); gebracht worden;gemaakt worden; in contact komen met; zich uitstrekken (tot); ten deel vallen; terechtkomen; verkrijgen; aanbreken; een zeker punt in de tijd bereiken; gebeuren; worden; worden (tot); naderen; vergaan</def> <pos>onreg.ww.intr.,onpers.</pos></ref></xr></w>  
+            <w n="768762" xml:id="w.768762" lemma="VOOR" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">vor</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VOOR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="62572" n="0" type="dictionary.VMNW"><modern_lemma>voor</modern_lemma><lemma>vore (III)</lemma> <def>voor</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768763" xml:id="w.768763" lemma="WIJ" pos="PD(type=pers,position=free,LN=pl,LP=1)" type="404"><seg type="orth">ons</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="pl"/></f><f name="LP"><symbol value="1"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>WIJ</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="90332" n="0" type="dictionary.VMNW"><modern_lemma>wij</modern_lemma><lemma>wi</lemma> <def>wij; ik</def> <pos>pers.vnw.</pos></ref></xr></w>  
+            <w n="768764" xml:id="w.768764" lemma="JOHANNES" pos="NOU-P(inflection=0)" type="020"><seg type="orth">jan</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>JOHANNES</string></f></fs><xr extent="24" type="dictionaryLinks"><ref target="81142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johan (II)</lemma> <def>Johan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="43142" n="0" type="dictionary.VMNW"><modern_lemma>Hannetje</modern_lemma><lemma>hannekin</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70022" n="0" type="dictionary.VMNW"><modern_lemma>Nanne</modern_lemma><lemma>nanne (I)</lemma> <def>Nanne</def> <pos>znw.m.</pos></ref><ref target="59042" n="0" type="dictionary.VMNW"><modern_lemma>Io</modern_lemma><lemma>io (I)</lemma> <def>Ie</def> <pos>znw.m.</pos></ref><ref target="52142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="82142" n="0" type="dictionary.VMNW"><modern_lemma>Janijn</modern_lemma><lemma>janin</lemma> <def>Janin</def> <pos>znw.</pos></ref><ref target="23142" n="0" type="dictionary.VMNW"><modern_lemma>Hannijn</modern_lemma><lemma>hannin</lemma> <def>Hannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="79042" n="0" type="dictionary.VMNW"><modern_lemma>Hansijn</modern_lemma><lemma>hansin</lemma> <def>Hansin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="33142" n="0" type="dictionary.VMNW"><modern_lemma>Hanne</modern_lemma><lemma>hanne</lemma> <def>Hanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="90142" n="0" type="dictionary.VMNW"><modern_lemma>Hannoot</modern_lemma><lemma>hannoot</lemma> <def>Hannoot (Johannes)</def> <pos>znw.m.</pos></ref><ref target="60142" n="0" type="dictionary.VMNW"><modern_lemma>Ja</modern_lemma><lemma>ja (I)</lemma> <def>Jacob</def> <pos>znw.m.</pos></ref><ref target="50142" n="0" type="dictionary.VMNW"><modern_lemma>Hannekinus</modern_lemma><lemma>hannekinus</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="72142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>johan (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="91142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>jehan</lemma> <def>Jehan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70142" n="0" type="dictionary.VMNW"><modern_lemma>Jaan</modern_lemma><lemma>jaen</lemma> <def>Jaan</def> <pos>znw.m.</pos></ref><ref target="42142" n="0" type="dictionary.VMNW"><modern_lemma>Jan</modern_lemma><lemma>jan</lemma> <def>Jan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="21142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (II)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="30142" n="0" type="dictionary.VMNW"><modern_lemma>Hankinus</modern_lemma><lemma>hankinus</lemma> <def>Hankin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="39042" n="0" type="dictionary.VMNW"><modern_lemma>Vanne</modern_lemma><lemma>vanne</lemma> <def>Vanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="49042" n="0" type="dictionary.VMNW"><modern_lemma>Nannetje</modern_lemma><lemma>nannekin</lemma> <def>Nannekin</def> <pos>znw.m.</pos></ref><ref target="68542" n="0" type="dictionary.VMNW"><modern_lemma>Johanna</modern_lemma><lemma>johanna (I)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="99042" n="0" type="dictionary.VMNW"><modern_lemma>Han</modern_lemma><lemma>han</lemma> <def>Han (Johannes)</def> <pos>znw.m.</pos></ref><ref target="92142" n="0" type="dictionary.VMNW"><modern_lemma>Jannijn</modern_lemma><lemma>jannin</lemma> <def>Jannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="89042" n="0" type="dictionary.VMNW"><modern_lemma>Hanneman</modern_lemma><lemma>hanneman</lemma> <def>Hanneman (Johannes)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768765" xml:id="w.768765" lemma="KNOSPAARD" pos="NOU-P(inflection=0)" type="020"><seg type="orth">cnospard</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>KNOSPAARD</string></f><f name="deellemma"><string>KNOSPAARDX</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="44802" n="0" citaatId="72754" type="dictionary.VMNW"><modern_lemma>Knospaard</modern_lemma><lemma>cnospart</lemma> <def>Knospaard</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768766" xml:id="w.768766" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768767" xml:id="w.768767" lemma="ZIJN" pos="PD(type=poss,position=uncl,inflection=0)" type="450"><seg type="orth">siin</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="poss"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ZIJN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="38332" n="0" type="dictionary.VMNW"><modern_lemma>zijn</modern_lemma><lemma>sijn (II)</lemma> <def>zijn</def> <pos>bez.vnw.</pos></ref></xr></w> 
+            <lb n="2255:25"/>  
+            <w n="768768" xml:id="w.768768" lemma="WIJF" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">wiif</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>WIJF</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="23432" n="0" type="dictionary.VMNW"><modern_lemma>wijf</modern_lemma><lemma>wijf</lemma> <def>vrouw; echtgenote; wijfje</def> <pos>znw.o.</pos></ref><ref target="67432" n="0" type="dictionary.VMNW"><modern_lemma>koningswijf</modern_lemma><lemma>conincswijf</lemma> <def>koningin</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768769" xml:id="w.768769" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768770" xml:id="w.768770" lemma="GEVEN" pos="VRB(type=mai,finiteness=fin,tense=past,mood=ind|conj,inflection=n)" type="224"><seg type="orth">gauen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>GEVEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="65152" n="0" type="dictionary.VMNW"><modern_lemma>geven</modern_lemma><lemma>gheven (II)</lemma> <def>geven; verschaffen; van zich doen uitgaan; uitvaardigen; toevertrouwen; betalen; doen gebeuren; ten huwelijk geven; baren; toewijzen; overdragen; veroorzaken; produceren; klinken; opbrengen; zich (aan iem.) overgeven; zich wijden (aan); bekennen</def> <pos>st.ww.trans.,refl.</pos></ref></xr></w>  
+            <w n="768771" xml:id="w.768771" lemma="WETTELIJK" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=e)" type="101"><seg type="orth">wettelike</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>WETTELIJK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="77472" n="0" type="dictionary.VMNW"><modern_lemma>wettelijk</modern_lemma><lemma>wettelijc</lemma> <def>wettig</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768772" xml:id="w.768772" lemma="GIFT" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">ghifte</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>GIFT</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="23672" n="0" type="dictionary.VMNW"><modern_lemma>gift</modern_lemma><lemma>ghifte</lemma> <def>gift; schenking</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768773" xml:id="w.768773" lemma="WILHELM" pos="NOU-P(inflection=0)" type="020"><seg type="orth">willem</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>WILHELM</string></f></fs><xr extent="13" type="dictionaryLinks"><ref target="97671" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelm</modern_lemma><lemma>wilhelm</lemma> <def>Wilhelm</def> <pos>znw.m.</pos></ref><ref target="17671" n="0" type="dictionary.VMNW"><modern_lemma>Willemet</modern_lemma><lemma>willemet</lemma> <def>Willemet</def> <pos>znw.m.</pos></ref><ref target="27671" n="0" type="dictionary.VMNW"><modern_lemma>William</modern_lemma><lemma>williame</lemma> <def>William</def> <pos>znw.m.</pos></ref><ref target="50871" n="0" type="dictionary.VMNW"><modern_lemma>Willin</modern_lemma><lemma>willin</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="60871" n="0" type="dictionary.VMNW"><modern_lemma>Willoi</modern_lemma><lemma>willoi, willois</lemma> <def>Willoi</def> <pos>znw.m.</pos></ref><ref target="37671" n="0" type="dictionary.VMNW"><modern_lemma>Willetje</modern_lemma><lemma>willekin</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="96671" n="0" type="dictionary.VMNW"><modern_lemma>Willekinus</modern_lemma><lemma>willekinus</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="40871" n="0" type="dictionary.VMNW"><modern_lemma>Wilzoet</modern_lemma><lemma>wilsoete</lemma> <def>Wilsoete</def> <pos>znw.m.</pos></ref><ref target="80871" n="0" type="dictionary.VMNW"><modern_lemma>Wil</modern_lemma><lemma>wille (II)</lemma> <def>Wil(lem)</def> <pos>znw.m.</pos></ref><ref target="99771" n="0" type="dictionary.VMNW"><modern_lemma>Willinus</modern_lemma><lemma>willinus</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="50552" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelmus</modern_lemma><lemma>wilhelmus</lemma> <def>Willem</def> <pos>znw.m.</pos></ref><ref target="30871" n="0" type="dictionary.VMNW"><modern_lemma>Willeman</modern_lemma><lemma>willeman</lemma> <def>Willeman</def> <pos>znw.m.</pos></ref><ref target="97471" n="0" type="dictionary.VMNW"><modern_lemma>Willem</modern_lemma><lemma>willem</lemma> <def>Willem</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768774" xml:id="w.768774" lemma="VROUW+MARGRIET" pos="NOU-C(number=sg,inflection=0)+NOU-P(inflection=n)" type="000+024"><seg type="orth">v<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">er</expan>mag<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">ri</expan>eten</seg><fs type="gys" groupingMainPos="NOU-C+NOU-P" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VROUW</string></f></fs><fs type="gys" groupingMainPos="NOU-C+NOU-P" n="1">
+    <f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>MARGRIET</string></f><f name="deellemma"><string>MARGARETA</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="79582" n="1" citaatId="131773" type="dictionary.VMNW"><modern_lemma>Margriet</modern_lemma><lemma>margriete</lemma> <def>Margriet (Margareta); H. Margareta; Margareta van Constantinopel</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768775" xml:id="w.768775" lemma="ZOON" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">soene</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>ZOON</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="39332" n="0" type="dictionary.VMNW"><modern_lemma>zoon</modern_lemma><lemma>sone (I)</lemma> <def>zoon</def> <pos>znw.m.</pos></ref><ref target="49262" n="0" type="dictionary.VMNW"><modern_lemma>Zuun</modern_lemma><lemma>sone (II)</lemma> <def>Zuun</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768776" xml:id="w.768776" lemma="VAN" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">va<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VAN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="5" n="0" type="dictionary.VMNW"><modern_lemma>van</modern_lemma><lemma>van</lemma> <def>van</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768777" xml:id="w.768777" lemma="EEN" pos="NUM(type=card,position=uncl,representation=uncl,inflection=n)" type="304"><seg type="orth">ene<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="NUM" n="0">
+    <f name="type"><symbol value="card"/></f><f name="position"><symbol value="uncl"/></f><f name="representation"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NUM"/></f>
+  <f name="lemma"><string>EEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="16242" n="0" type="dictionary.VMNW"><modern_lemma>een</modern_lemma><lemma>een (I)</lemma> <def>een</def> <pos>telw.</pos></ref></xr></w> 
+            <lb n="2255:26"/>  
+            <w n="768778" xml:id="w.768778" lemma="BUNDER" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">bunre</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>BUNDER</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="51632" n="0" type="dictionary.VMNW"><modern_lemma>bunder, Bunder</modern_lemma><lemma>bunre</lemma> <def>bunder</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768779" xml:id="w.768779" lemma="LAND" pos="NOU-C(number=sg,inflection=s/th)" type="002"><seg type="orth">lants</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>LAND</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="81732" n="0" type="dictionary.VMNW"><modern_lemma>land</modern_lemma><lemma>lant</lemma> <def>land; stuk land; platteland; land(streek); woonplaats, vaderland; aarde, grond; volk, bewoners</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768780" xml:id="w.768780" lemma="LIGGEN" pos="VRB(type=mai,finiteness=prespart,inflection=e)" type="271"><seg type="orth">licghende</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="prespart"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>LIGGEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="95552" n="0" type="dictionary.VMNW"><modern_lemma>liggen</modern_lemma><lemma>licghen (II)</lemma> <def>liggen; gaan liggen (?); op een slaapplaats liggen; zich bevinden; in gijzeling liggen; gevangen zitten; logeren; wonen; zijn; bezig zijn (met); rusten; staan (in); vallen (in); gebeuren; van belang zijn</def> <pos>st.ww.intr.</pos></ref></xr></w>  
+            <w n="768781" xml:id="w.768781" lemma="TE" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768782" xml:id="w.768782" lemma="VELDEKENSDAM" pos="NOU-C(number=sg,inflection=e)" corresp="#w.768783" lemmaRef="#w.768782 #w.768783" type="001"><seg type="orth">veldekins</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VELDEKENSDAM</string></f><f name="deellemma"><string>VELDEKENS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="23681" n="0" citaatId="23898" type="dictionary.VMNW"><modern_lemma>Veldekensdam</modern_lemma><lemma>veldekinsdam</lemma> <def>Veldekensdam</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768783" xml:id="w.768783" lemma="VELDEKENSDAM" pos="NOU-C(number=sg,inflection=e)" corresp="#w.768782" lemmaRef="#w.768782 #w.768783" type="001"><seg type="orth">da<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">m</expan>me</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VELDEKENSDAM</string></f><f name="deellemma"><string>DAM</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="23681" n="0" citaatId="23898" type="dictionary.VMNW"><modern_lemma>Veldekensdam</modern_lemma><lemma>veldekinsdam</lemma> <def>Veldekensdam</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768784" xml:id="w.768784" lemma="BENOORDEN" pos="ADP(type=uncl,inflection=n)" type="704"><seg type="orth">benorden</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>BENOORDEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="43642" n="0" type="dictionary.VMNW"><modern_lemma>benoorden</modern_lemma><lemma>benorden (II)</lemma> <def>ten noorden van</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768785" xml:id="w.768785" lemma="ADELHEID" pos="NOU-P(inflection=n)" type="024"><seg type="orth">alisen</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>ADELHEID</string></f></fs><xr extent="8" type="dictionaryLinks"><ref target="8113" n="0" type="dictionary.VMNW"><modern_lemma>Aleid</modern_lemma><lemma>aleit</lemma> <def>Aleid (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11794" n="0" type="dictionary.VMNW"><modern_lemma>Alise</modern_lemma><lemma>alise</lemma> <def>Alise</def> <pos>znw.v.</pos></ref><ref target="11785" n="0" type="dictionary.VMNW"><modern_lemma>Alisa</modern_lemma><lemma>alisa</lemma> <def>Alisa (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11792" n="0" type="dictionary.VMNW"><modern_lemma>Adelisa</modern_lemma><lemma>adelisa</lemma> <def>Adelisa</def> <pos>znw.v.</pos></ref><ref target="11787" n="0" type="dictionary.VMNW"><modern_lemma>Alie</modern_lemma><lemma>alie</lemma> <def>Alie</def> <pos>znw.v.</pos></ref><ref target="11790" n="0" type="dictionary.VMNW"><modern_lemma>Aleidis</modern_lemma><lemma>aleidis</lemma> <def>Aleidis (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11802" n="0" type="dictionary.VMNW"><modern_lemma>Adelise</modern_lemma><lemma>adelise</lemma> <def>Adelise</def> <pos>znw.v.</pos></ref><ref target="11776" n="0" type="dictionary.VMNW"><modern_lemma>Adelisa</modern_lemma><lemma>adelia</lemma> <def>Adelisa</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768786" xml:id="w.768786" lemma="DIEDERIK" pos="NOU-P(inflection=s/th)" type="022"><seg type="orth">diederics</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>DIEDERIK</string></f></fs><xr extent="20" type="dictionaryLinks"><ref target="33662" n="0" type="dictionary.VMNW"><modern_lemma>Tier</modern_lemma><lemma>tier</lemma> <def>Tier (Diederik)</def> <pos>znw.m.</pos></ref><ref target="27562" n="0" type="dictionary.VMNW"><modern_lemma>Didde</modern_lemma><lemma>didde</lemma> <def>Didde</def> <pos>znw.m.</pos></ref><ref target="29562" n="0" type="dictionary.VMNW"><modern_lemma>Dirkinus</modern_lemma><lemma>dirkinus</lemma> <def>Dirkje</def> <pos>znw.m.</pos></ref><ref target="61662" n="0" type="dictionary.VMNW"><modern_lemma>Tielemannus</modern_lemma><lemma>tielemannus</lemma> <def>Tieleman</def> <pos>znw.m.</pos></ref><ref target="39562" n="0" type="dictionary.VMNW"><modern_lemma>Dierlai</modern_lemma><lemma>dierlay</lemma> <def>Dierlai</def> <pos>znw.m.</pos></ref><ref target="36233" n="0" type="dictionary.VMNW"><modern_lemma>Dier</modern_lemma><lemma>diere</lemma> <def>Dier</def> <pos>znw.m.</pos></ref><ref target="28562" n="0" type="dictionary.VMNW"><modern_lemma>Diederik</modern_lemma><lemma>dierderic</lemma> <def>Dierderik</def> <pos>znw.m.</pos></ref><ref target="50662" n="0" type="dictionary.VMNW"><modern_lemma>Tiedeman</modern_lemma><lemma>tiedeman</lemma> <def>Tiedeman (Diederik)</def> <pos>znw.m.</pos></ref><ref target="77562" n="0" type="dictionary.VMNW"><modern_lemma>Diddekin</modern_lemma><lemma>diddekin</lemma> <def>Diddetje</def> <pos>znw.</pos></ref><ref target="69562" n="0" type="dictionary.VMNW"><modern_lemma>Theodericus</modern_lemma><lemma>theodericus</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="82662" n="0" type="dictionary.VMNW"><modern_lemma>Tierri</modern_lemma><lemma>tierri</lemma> <def>Tierri (Diederik)</def> <pos>znw.m.</pos></ref><ref target="22662" n="0" type="dictionary.VMNW"><modern_lemma>Tielooi</modern_lemma><lemma>thyloy</lemma> <def>Tielooi (Diederik)</def> <pos>znw.m.</pos></ref><ref target="20662" n="0" type="dictionary.VMNW"><modern_lemma>Terricus</modern_lemma><lemma>terricus</lemma> <def>Terricus (Diederik)</def> <pos>znw.m.</pos></ref><ref target="61142" n="0" type="dictionary.VMNW"><modern_lemma>Diederik</modern_lemma><lemma>diederic</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="18562" n="0" type="dictionary.VMNW"><modern_lemma>Diedericus</modern_lemma><lemma>diedericus</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="67562" n="0" type="dictionary.VMNW"><modern_lemma>Dirk</modern_lemma><lemma>dirric</lemma> <def>Dirk</def> <pos>znw.m.</pos></ref><ref target="38562" n="0" type="dictionary.VMNW"><modern_lemma>Dirkje</modern_lemma><lemma>dirkin</lemma> <def>Dirkje</def> <pos>znw.o.</pos></ref><ref target="70662" n="0" type="dictionary.VMNW"><modern_lemma>Tiedemannus</modern_lemma><lemma>tiedemannus</lemma> <def>Tiedeman (Diederik)</def> <pos>znw.m.</pos></ref><ref target="49562" n="0" type="dictionary.VMNW"><modern_lemma>Dierman</modern_lemma><lemma>dierman</lemma> <def>Dierman</def> <pos>znw.m.</pos></ref><ref target="88562" n="0" type="dictionary.VMNW"><modern_lemma>Dierin</modern_lemma><lemma>dierin</lemma> <def>Dierin</def> <pos>znw.m.</pos></ref></xr></w> 
+            <lb n="2255:27"/>  
+            <w n="768787" xml:id="w.768787" lemma="HUIS" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">huse</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>HUIS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="90932" n="0" type="dictionary.VMNW"><modern_lemma>huis</modern_lemma><lemma>huus (II)</lemma> <def>huis (woon- en/of werkplaats); paleis; bedehuis; bep. instelling; dierenverblijf; lijf; Huis; familiekring; gezin waarvoor iem. werkt; huispersoneel; geslacht; dak</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768788" xml:id="w.768788" lemma="TE" pos="ADP(type=uncl,inflection=0)" corresp="#w.768790" lemmaRef="#w.768788 #w.768790" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768789" xml:id="w.768789" lemma="MOER" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">moere</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>MOER</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="8476" n="0" type="dictionary.VMNW"><modern_lemma>moer, Moer</modern_lemma><lemma>moer (I)</lemma> <def>veen; veengrond</def> <pos>znw.m.</pos></ref><ref target="17133" n="0" type="dictionary.VMNW"><modern_lemma>muur</modern_lemma><lemma>moer (II)</lemma> <def>muur</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768790" xml:id="w.768790" lemma="WAART|WAARTS" pos="ADP(type=uncl,inflection=0)" corresp="#w.768788" lemmaRef="#w.768788 #w.768790" type="700"><seg type="orth">wart</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>WAART|WAARTS</string></f><f name="deellemma"><string>WAART</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="12669" n="0" type="dictionary.VMNW"><modern_lemma>waart, waarts</modern_lemma><lemma>wert (IV)</lemma> <def>in de richting</def> <pos>bw.</pos></ref></xr></w><pc type="post">
+          ,
+        </pc>  
+            <w n="768791" xml:id="w.768791" lemma="OP" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">vp</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>OP</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="13551" n="0" type="dictionary.VMNW"><modern_lemma>op</modern_lemma><lemma>op (II)</lemma> <def>op</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768792" xml:id="w.768792" lemma="HET+WELK" pos="PD(type=dem,subtype=art,position=prenom,inflection=0)+PD(type=rel,position=uncl,inflection=e)" type="470+421"><seg type="orth">tuelke</seg><fs type="gys" groupingMainPos="PD+PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>HET</string></f></fs><fs type="gys" groupingMainPos="PD+PD" n="1">
+    <f name="type"><symbol value="rel"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>WELK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="57313" n="1" citaatId="164844" type="dictionary.VMNW"><modern_lemma>welk</modern_lemma><lemma>welc</lemma> <def>welk; wie, wat; die, dat; dewelke, hetwelk; en die, dat; wie, wat ook maar; welke ook maar</def> <pos>vnw.</pos></ref></xr></w>  
+            <w n="768793" xml:id="w.768793" lemma="LAND" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">lant</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>LAND</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="81732" n="0" type="dictionary.VMNW"><modern_lemma>land</modern_lemma><lemma>lant</lemma> <def>land; stuk land; platteland; land(streek); woonplaats, vaderland; aarde, grond; volk, bewoners</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768794" xml:id="w.768794" lemma="JOHANNES" pos="NOU-P(inflection=0)" type="020"><seg type="orth">jan</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>JOHANNES</string></f></fs><xr extent="24" type="dictionaryLinks"><ref target="81142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johan (II)</lemma> <def>Johan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="43142" n="0" type="dictionary.VMNW"><modern_lemma>Hannetje</modern_lemma><lemma>hannekin</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70022" n="0" type="dictionary.VMNW"><modern_lemma>Nanne</modern_lemma><lemma>nanne (I)</lemma> <def>Nanne</def> <pos>znw.m.</pos></ref><ref target="59042" n="0" type="dictionary.VMNW"><modern_lemma>Io</modern_lemma><lemma>io (I)</lemma> <def>Ie</def> <pos>znw.m.</pos></ref><ref target="52142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="82142" n="0" type="dictionary.VMNW"><modern_lemma>Janijn</modern_lemma><lemma>janin</lemma> <def>Janin</def> <pos>znw.</pos></ref><ref target="23142" n="0" type="dictionary.VMNW"><modern_lemma>Hannijn</modern_lemma><lemma>hannin</lemma> <def>Hannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="79042" n="0" type="dictionary.VMNW"><modern_lemma>Hansijn</modern_lemma><lemma>hansin</lemma> <def>Hansin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="33142" n="0" type="dictionary.VMNW"><modern_lemma>Hanne</modern_lemma><lemma>hanne</lemma> <def>Hanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="90142" n="0" type="dictionary.VMNW"><modern_lemma>Hannoot</modern_lemma><lemma>hannoot</lemma> <def>Hannoot (Johannes)</def> <pos>znw.m.</pos></ref><ref target="60142" n="0" type="dictionary.VMNW"><modern_lemma>Ja</modern_lemma><lemma>ja (I)</lemma> <def>Jacob</def> <pos>znw.m.</pos></ref><ref target="50142" n="0" type="dictionary.VMNW"><modern_lemma>Hannekinus</modern_lemma><lemma>hannekinus</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="72142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>johan (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="91142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>jehan</lemma> <def>Jehan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70142" n="0" type="dictionary.VMNW"><modern_lemma>Jaan</modern_lemma><lemma>jaen</lemma> <def>Jaan</def> <pos>znw.m.</pos></ref><ref target="42142" n="0" type="dictionary.VMNW"><modern_lemma>Jan</modern_lemma><lemma>jan</lemma> <def>Jan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="21142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (II)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="30142" n="0" type="dictionary.VMNW"><modern_lemma>Hankinus</modern_lemma><lemma>hankinus</lemma> <def>Hankin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="39042" n="0" type="dictionary.VMNW"><modern_lemma>Vanne</modern_lemma><lemma>vanne</lemma> <def>Vanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="49042" n="0" type="dictionary.VMNW"><modern_lemma>Nannetje</modern_lemma><lemma>nannekin</lemma> <def>Nannekin</def> <pos>znw.m.</pos></ref><ref target="68542" n="0" type="dictionary.VMNW"><modern_lemma>Johanna</modern_lemma><lemma>johanna (I)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="99042" n="0" type="dictionary.VMNW"><modern_lemma>Han</modern_lemma><lemma>han</lemma> <def>Han (Johannes)</def> <pos>znw.m.</pos></ref><ref target="92142" n="0" type="dictionary.VMNW"><modern_lemma>Jannijn</modern_lemma><lemma>jannin</lemma> <def>Jannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="89042" n="0" type="dictionary.VMNW"><modern_lemma>Hanneman</modern_lemma><lemma>hanneman</lemma> <def>Hanneman (Johannes)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768795" xml:id="w.768795" lemma="KNOSPAARD" pos="NOU-P(inflection=0)" type="020"><seg type="orth">cnospard</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>KNOSPAARD</string></f><f name="deellemma"><string>KNOSPAARDX</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="44802" n="0" type="dictionary.VMNW"><modern_lemma>Knospaard</modern_lemma><lemma>cnospart</lemma> <def>Knospaard</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768796" xml:id="w.768796" lemma="HEBBEN" pos="VRB(type=cop|aux,finiteness=fin,tense=past,mood=ind|conj,inflection=e)" type="231"><seg type="orth">adde</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="cop|aux"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>HEBBEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="18261" n="0" type="dictionary.VMNW"><modern_lemma>hebben</modern_lemma><lemma>hebben (II)</lemma> <def>hebben; bezitten; de beschikking hebben over; besturen; dragen; bij zich hebben; ondervinden; verkeren in; in een bep. situatie hebben; voelen; tot zijn beschikking hebben; in zijn nabijheid hebben; vergezeld worden door; bedeeld zijn (met); krijgen; kopen; kunnen; moeten; nodig hebben; vasthouden; bevatten; beschermen; verdedigen; innemen; in een bep. toestand houden; houden (voor); naleven; vervullen</def> <pos>zw.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768797" xml:id="w.768797" lemma="WETTELIJK" pos="ADV(type=reg,subtype=gen,inflection=e)" type="501"><seg type="orth">wettelike</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>WETTELIJK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="39472" n="0" type="dictionary.VMNW"><modern_lemma>wettelijk</modern_lemma><lemma>wettelike</lemma> <def>op wettige wijze</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768798" xml:id="w.768798" lemma="KOPEN" pos="VRB(type=mai,finiteness=pastpart,inflection=t)" type="273"><seg type="orth">hicocht</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="pastpart"/></f><f name="inflection"><symbol value="t"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>KOPEN</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="81382" n="0" type="dictionary.VMNW"><modern_lemma>kopen</modern_lemma><lemma>copen (II)</lemma> <def>kopen; verhandelen; afkopen; bekopen</def> <pos>onreg.ww.trans.</pos></ref><ref target="21482" n="0" type="dictionary.VMNW"><modern_lemma>kopen</modern_lemma><lemma>wedercopen</lemma> <def>terugkopen</def> <pos>onreg.ww.trans.</pos></ref></xr></w> 
+            <lb n="2255:28"/>  
+            <w n="768799" xml:id="w.768799" lemma="JEGEN" pos="ADP(type=uncl,inflection=n)" type="704"><seg type="orth">ieghen</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>JEGEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="83782" n="0" type="dictionary.VMNW"><modern_lemma>jegen</modern_lemma><lemma>jeghen (II)</lemma> <def>jegens; tegenover; ten overstaan van; in de richting van; tegemoet; op; in de nabijheid van; kort voor; tegen; in strijd met; ten behoeve van; in ruil voor; van; met; in vergelijking met; aan</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768800" xml:id="w.768800" lemma="ADELHEID" pos="NOU-P(inflection=n)" type="024"><seg type="orth">alisen</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>ADELHEID</string></f></fs><xr extent="8" type="dictionaryLinks"><ref target="8113" n="0" type="dictionary.VMNW"><modern_lemma>Aleid</modern_lemma><lemma>aleit</lemma> <def>Aleid (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11794" n="0" type="dictionary.VMNW"><modern_lemma>Alise</modern_lemma><lemma>alise</lemma> <def>Alise</def> <pos>znw.v.</pos></ref><ref target="11785" n="0" type="dictionary.VMNW"><modern_lemma>Alisa</modern_lemma><lemma>alisa</lemma> <def>Alisa (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11792" n="0" type="dictionary.VMNW"><modern_lemma>Adelisa</modern_lemma><lemma>adelisa</lemma> <def>Adelisa</def> <pos>znw.v.</pos></ref><ref target="11787" n="0" type="dictionary.VMNW"><modern_lemma>Alie</modern_lemma><lemma>alie</lemma> <def>Alie</def> <pos>znw.v.</pos></ref><ref target="11790" n="0" type="dictionary.VMNW"><modern_lemma>Aleidis</modern_lemma><lemma>aleidis</lemma> <def>Aleidis (Adelheid)</def> <pos>znw.v.</pos></ref><ref target="11802" n="0" type="dictionary.VMNW"><modern_lemma>Adelise</modern_lemma><lemma>adelise</lemma> <def>Adelise</def> <pos>znw.v.</pos></ref><ref target="11776" n="0" type="dictionary.VMNW"><modern_lemma>Adelisa</modern_lemma><lemma>adelia</lemma> <def>Adelisa</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768801" xml:id="w.768801" lemma="DIEDERIK" pos="NOU-P(inflection=s/th)" type="022"><seg type="orth">diederix</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>DIEDERIK</string></f></fs><xr extent="20" type="dictionaryLinks"><ref target="33662" n="0" type="dictionary.VMNW"><modern_lemma>Tier</modern_lemma><lemma>tier</lemma> <def>Tier (Diederik)</def> <pos>znw.m.</pos></ref><ref target="27562" n="0" type="dictionary.VMNW"><modern_lemma>Didde</modern_lemma><lemma>didde</lemma> <def>Didde</def> <pos>znw.m.</pos></ref><ref target="29562" n="0" type="dictionary.VMNW"><modern_lemma>Dirkinus</modern_lemma><lemma>dirkinus</lemma> <def>Dirkje</def> <pos>znw.m.</pos></ref><ref target="61662" n="0" type="dictionary.VMNW"><modern_lemma>Tielemannus</modern_lemma><lemma>tielemannus</lemma> <def>Tieleman</def> <pos>znw.m.</pos></ref><ref target="39562" n="0" type="dictionary.VMNW"><modern_lemma>Dierlai</modern_lemma><lemma>dierlay</lemma> <def>Dierlai</def> <pos>znw.m.</pos></ref><ref target="36233" n="0" type="dictionary.VMNW"><modern_lemma>Dier</modern_lemma><lemma>diere</lemma> <def>Dier</def> <pos>znw.m.</pos></ref><ref target="28562" n="0" type="dictionary.VMNW"><modern_lemma>Diederik</modern_lemma><lemma>dierderic</lemma> <def>Dierderik</def> <pos>znw.m.</pos></ref><ref target="50662" n="0" type="dictionary.VMNW"><modern_lemma>Tiedeman</modern_lemma><lemma>tiedeman</lemma> <def>Tiedeman (Diederik)</def> <pos>znw.m.</pos></ref><ref target="77562" n="0" type="dictionary.VMNW"><modern_lemma>Diddekin</modern_lemma><lemma>diddekin</lemma> <def>Diddetje</def> <pos>znw.</pos></ref><ref target="69562" n="0" type="dictionary.VMNW"><modern_lemma>Theodericus</modern_lemma><lemma>theodericus</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="82662" n="0" type="dictionary.VMNW"><modern_lemma>Tierri</modern_lemma><lemma>tierri</lemma> <def>Tierri (Diederik)</def> <pos>znw.m.</pos></ref><ref target="22662" n="0" type="dictionary.VMNW"><modern_lemma>Tielooi</modern_lemma><lemma>thyloy</lemma> <def>Tielooi (Diederik)</def> <pos>znw.m.</pos></ref><ref target="20662" n="0" type="dictionary.VMNW"><modern_lemma>Terricus</modern_lemma><lemma>terricus</lemma> <def>Terricus (Diederik)</def> <pos>znw.m.</pos></ref><ref target="61142" n="0" type="dictionary.VMNW"><modern_lemma>Diederik</modern_lemma><lemma>diederic</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="18562" n="0" type="dictionary.VMNW"><modern_lemma>Diedericus</modern_lemma><lemma>diedericus</lemma> <def>Diederik</def> <pos>znw.m.</pos></ref><ref target="67562" n="0" type="dictionary.VMNW"><modern_lemma>Dirk</modern_lemma><lemma>dirric</lemma> <def>Dirk</def> <pos>znw.m.</pos></ref><ref target="38562" n="0" type="dictionary.VMNW"><modern_lemma>Dirkje</modern_lemma><lemma>dirkin</lemma> <def>Dirkje</def> <pos>znw.o.</pos></ref><ref target="70662" n="0" type="dictionary.VMNW"><modern_lemma>Tiedemannus</modern_lemma><lemma>tiedemannus</lemma> <def>Tiedeman (Diederik)</def> <pos>znw.m.</pos></ref><ref target="49562" n="0" type="dictionary.VMNW"><modern_lemma>Dierman</modern_lemma><lemma>dierman</lemma> <def>Dierman</def> <pos>znw.m.</pos></ref><ref target="88562" n="0" type="dictionary.VMNW"><modern_lemma>Dierin</modern_lemma><lemma>dierin</lemma> <def>Dierin</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768802" xml:id="w.768802" lemma="VOORZEGD" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=0)" type="100"><seg type="orth">vorseit</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>VOORZEGD</string></f><f name="deellemma"><string>VOORZEID</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="40432" n="0" type="dictionary.VMNW"><modern_lemma>voorzegd</modern_lemma><lemma>voreseit</lemma> <def>bovenvermeld; voorspeld</def> <pos>bnw.</pos></ref></xr></w><pc type="post">
+          .
+        </pc>  
+            <w n="768803" xml:id="w.768803" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768804" xml:id="w.768804" lemma="DAAR" pos="ADV(type=reg,subtype=dem,inflection=0)" type="510"><seg type="orth">daer</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="dem"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>DAAR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="75082" n="0" type="dictionary.VMNW"><modern_lemma>daar</modern_lemma><lemma>daer (I)</lemma> <def>daar; daarheen; toen; vervolgens; er; dan; (daar) waar; waarheen; op (naar) wie; waarop; bij wie; waarmee; aan wie; daarvan; daarop; waarover; aan wie ook maar</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768805" xml:id="w.768805" lemma="ZO" pos="ADV(type=reg,subtype=resump,inflection=0)" type="550"><seg type="orth">soe</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="resump"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>ZO</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="19472" n="0" type="dictionary.VMNW"><modern_lemma>zo</modern_lemma><lemma>so (I)</lemma> <def>zo; zozeer; zoals; ingeval; toen; echter; met die naam; dan; daarom; hoe; in die mate; ook maar</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768806" xml:id="w.768806" lemma="GAAN+HET" pos="VRB(type=mai,finiteness=fin,tense=past,mood=ind|conj,inflection=0)+PD(type=pers,position=free,LN=sg,LP=3)" type="220+403"><seg type="orth">ghincs</seg><fs type="gys" groupingMainPos="VRB+PD" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>GAAN</string></f></fs><fs type="gys" groupingMainPos="VRB+PD" n="1">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="sg"/></f><f name="LP"><symbol value="3"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>HET</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="30432" n="1" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (III)</lemma> <def>het; per</def> <pos>bep.lidw.</pos></ref><ref target="86952" n="1" type="dictionary.VMNW"><modern_lemma>het</modern_lemma><lemma>het</lemma> <def>het</def> <pos>vnw.</pos></ref></xr></w>  
+            <w n="768807" xml:id="w.768807" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=e)" type="471"><seg type="orth">die</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768808" xml:id="w.768808" lemma="JOHANNES" pos="NOU-P(inflection=0)" type="020"><seg type="orth">jan</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>JOHANNES</string></f></fs><xr extent="24" type="dictionaryLinks"><ref target="81142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johan (II)</lemma> <def>Johan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="43142" n="0" type="dictionary.VMNW"><modern_lemma>Hannetje</modern_lemma><lemma>hannekin</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70022" n="0" type="dictionary.VMNW"><modern_lemma>Nanne</modern_lemma><lemma>nanne (I)</lemma> <def>Nanne</def> <pos>znw.m.</pos></ref><ref target="59042" n="0" type="dictionary.VMNW"><modern_lemma>Io</modern_lemma><lemma>io (I)</lemma> <def>Ie</def> <pos>znw.m.</pos></ref><ref target="52142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="82142" n="0" type="dictionary.VMNW"><modern_lemma>Janijn</modern_lemma><lemma>janin</lemma> <def>Janin</def> <pos>znw.</pos></ref><ref target="23142" n="0" type="dictionary.VMNW"><modern_lemma>Hannijn</modern_lemma><lemma>hannin</lemma> <def>Hannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="79042" n="0" type="dictionary.VMNW"><modern_lemma>Hansijn</modern_lemma><lemma>hansin</lemma> <def>Hansin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="33142" n="0" type="dictionary.VMNW"><modern_lemma>Hanne</modern_lemma><lemma>hanne</lemma> <def>Hanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="90142" n="0" type="dictionary.VMNW"><modern_lemma>Hannoot</modern_lemma><lemma>hannoot</lemma> <def>Hannoot (Johannes)</def> <pos>znw.m.</pos></ref><ref target="60142" n="0" type="dictionary.VMNW"><modern_lemma>Ja</modern_lemma><lemma>ja (I)</lemma> <def>Jacob</def> <pos>znw.m.</pos></ref><ref target="50142" n="0" type="dictionary.VMNW"><modern_lemma>Hannekinus</modern_lemma><lemma>hannekinus</lemma> <def>Hannekin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="72142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>johan (I)</lemma> <def>Jochanan</def> <pos>znw.m.</pos></ref><ref target="91142" n="0" type="dictionary.VMNW"><modern_lemma>Johan</modern_lemma><lemma>jehan</lemma> <def>Jehan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="70142" n="0" type="dictionary.VMNW"><modern_lemma>Jaan</modern_lemma><lemma>jaen</lemma> <def>Jaan</def> <pos>znw.m.</pos></ref><ref target="42142" n="0" type="dictionary.VMNW"><modern_lemma>Jan</modern_lemma><lemma>jan</lemma> <def>Jan (Johannes)</def> <pos>znw.m.</pos></ref><ref target="21142" n="0" type="dictionary.VMNW"><modern_lemma>Johannes</modern_lemma><lemma>johannes (II)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="30142" n="0" type="dictionary.VMNW"><modern_lemma>Hankinus</modern_lemma><lemma>hankinus</lemma> <def>Hankin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="39042" n="0" type="dictionary.VMNW"><modern_lemma>Vanne</modern_lemma><lemma>vanne</lemma> <def>Vanne (Johannes)</def> <pos>znw.m.</pos></ref><ref target="49042" n="0" type="dictionary.VMNW"><modern_lemma>Nannetje</modern_lemma><lemma>nannekin</lemma> <def>Nannekin</def> <pos>znw.m.</pos></ref><ref target="68542" n="0" type="dictionary.VMNW"><modern_lemma>Johanna</modern_lemma><lemma>johanna (I)</lemma> <def>Johannes</def> <pos>znw.m.</pos></ref><ref target="99042" n="0" type="dictionary.VMNW"><modern_lemma>Han</modern_lemma><lemma>han</lemma> <def>Han (Johannes)</def> <pos>znw.m.</pos></ref><ref target="92142" n="0" type="dictionary.VMNW"><modern_lemma>Jannijn</modern_lemma><lemma>jannin</lemma> <def>Jannin (Johannes)</def> <pos>znw.m.</pos></ref><ref target="89042" n="0" type="dictionary.VMNW"><modern_lemma>Hanneman</modern_lemma><lemma>hanneman</lemma> <def>Hanneman (Johannes)</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768809" xml:id="w.768809" lemma="KNOSPAARD" pos="NOU-P(inflection=0)" type="020"><seg type="orth">cnospard</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>KNOSPAARD</string></f><f name="deellemma"><string>KNOSPAARDX</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="44802" n="0" type="dictionary.VMNW"><modern_lemma>Knospaard</modern_lemma><lemma>cnospart</lemma> <def>Knospaard</def> <pos>znw.m.</pos></ref></xr></w> 
+            <lb n="2255:29"/>  
+            <w n="768810" xml:id="w.768810" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768811" xml:id="w.768811" lemma="ZIJN" pos="PD(type=poss,position=uncl,inflection=0)" type="450"><seg type="orth">siin</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="poss"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ZIJN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="38332" n="0" type="dictionary.VMNW"><modern_lemma>zijn</modern_lemma><lemma>sijn (II)</lemma> <def>zijn</def> <pos>bez.vnw.</pos></ref></xr></w>  
+            <w n="768812" xml:id="w.768812" lemma="WIJF" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">wiif</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>WIJF</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="23432" n="0" type="dictionary.VMNW"><modern_lemma>wijf</modern_lemma><lemma>wijf</lemma> <def>vrouw; echtgenote; wijfje</def> <pos>znw.o.</pos></ref><ref target="67432" n="0" type="dictionary.VMNW"><modern_lemma>koningswijf</modern_lemma><lemma>conincswijf</lemma> <def>koningin</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768813" xml:id="w.768813" lemma="WETTELIJK" pos="ADV(type=reg,subtype=gen,inflection=e)" type="501"><seg type="orth">wettelike</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>WETTELIJK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="39472" n="0" type="dictionary.VMNW"><modern_lemma>wettelijk</modern_lemma><lemma>wettelike</lemma> <def>op wettige wijze</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768814" xml:id="w.768814" lemma="TE~BUITEN" pos="ADV(type=reg,subtype=gen,inflection=n)" type="504"><seg type="orth">te buten</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>TE~BUITEN</string></f><f name="deellemma"><string>TEBUITEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="64962" n="0" type="dictionary.VMNW"><modern_lemma>te~buiten</modern_lemma><lemma>tebuten</lemma> <def>naar buiten</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768815" xml:id="w.768815" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768816" xml:id="w.768816" lemma="WILHELM" pos="NOU-P(inflection=0)" type="020"><seg type="orth">willem</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>WILHELM</string></f></fs><xr extent="13" type="dictionaryLinks"><ref target="97671" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelm</modern_lemma><lemma>wilhelm</lemma> <def>Wilhelm</def> <pos>znw.m.</pos></ref><ref target="17671" n="0" type="dictionary.VMNW"><modern_lemma>Willemet</modern_lemma><lemma>willemet</lemma> <def>Willemet</def> <pos>znw.m.</pos></ref><ref target="27671" n="0" type="dictionary.VMNW"><modern_lemma>William</modern_lemma><lemma>williame</lemma> <def>William</def> <pos>znw.m.</pos></ref><ref target="50871" n="0" type="dictionary.VMNW"><modern_lemma>Willin</modern_lemma><lemma>willin</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="60871" n="0" type="dictionary.VMNW"><modern_lemma>Willoi</modern_lemma><lemma>willoi, willois</lemma> <def>Willoi</def> <pos>znw.m.</pos></ref><ref target="37671" n="0" type="dictionary.VMNW"><modern_lemma>Willetje</modern_lemma><lemma>willekin</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="96671" n="0" type="dictionary.VMNW"><modern_lemma>Willekinus</modern_lemma><lemma>willekinus</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="40871" n="0" type="dictionary.VMNW"><modern_lemma>Wilzoet</modern_lemma><lemma>wilsoete</lemma> <def>Wilsoete</def> <pos>znw.m.</pos></ref><ref target="80871" n="0" type="dictionary.VMNW"><modern_lemma>Wil</modern_lemma><lemma>wille (II)</lemma> <def>Wil(lem)</def> <pos>znw.m.</pos></ref><ref target="99771" n="0" type="dictionary.VMNW"><modern_lemma>Willinus</modern_lemma><lemma>willinus</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="50552" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelmus</modern_lemma><lemma>wilhelmus</lemma> <def>Willem</def> <pos>znw.m.</pos></ref><ref target="30871" n="0" type="dictionary.VMNW"><modern_lemma>Willeman</modern_lemma><lemma>willeman</lemma> <def>Willeman</def> <pos>znw.m.</pos></ref><ref target="97471" n="0" type="dictionary.VMNW"><modern_lemma>Willem</modern_lemma><lemma>willem</lemma> <def>Willem</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768817" xml:id="w.768817" lemma="VOORZEGD" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=0)" type="100"><seg type="orth">vorseit</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>VOORZEGD</string></f><f name="deellemma"><string>VOORZEID</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="40432" n="0" type="dictionary.VMNW"><modern_lemma>voorzegd</modern_lemma><lemma>voreseit</lemma> <def>bovenvermeld; voorspeld</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768818" xml:id="w.768818" lemma="WETTELIJK" pos="ADV(type=reg,subtype=gen,inflection=e)" type="501"><seg type="orth">wetelike</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>WETTELIJK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="39472" n="0" type="dictionary.VMNW"><modern_lemma>wettelijk</modern_lemma><lemma>wettelike</lemma> <def>op wettige wijze</def> <pos>bw.</pos></ref></xr></w>  
+            <w n="768819" xml:id="w.768819" lemma="TE~BINNEN" pos="ADV(type=reg,subtype=gen,inflection=n)" type="504"><seg type="orth">te binne<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>TE~BINNEN</string></f><f name="deellemma"><string>TEBINNEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="57612" n="0" type="dictionary.VMNW"><modern_lemma>te~binnen</modern_lemma><lemma>tebinnen</lemma> <def>naar binnen</def> <pos>bw.</pos></ref></xr></w> 
+            <lb n="2255:30"/>  
+            <w n="768820" xml:id="w.768820" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768821" xml:id="w.768821" lemma="ZIJ" pos="PD(type=pers,position=free,LN=pl,LP=3)" type="406"><seg type="orth">si</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="pl"/></f><f name="LP"><symbol value="3"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ZIJ</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="85432" n="0" type="dictionary.VMNW"><modern_lemma>zij</modern_lemma><lemma>si (II)</lemma> <def>zij &lt;I&gt;(ev.)&lt;/I&gt;</def> <pos>pers.vnw.</pos></ref><ref target="65242" n="0" type="dictionary.VMNW"><modern_lemma>zij</modern_lemma><lemma>si (III)</lemma> <def>zij &lt;I&gt;(mv.)&lt;/I&gt;</def> <pos>pers.vnw.</pos></ref></xr></w>  
+            <w n="768822" xml:id="w.768822" lemma="WEDDEN+HET" pos="VRB(type=mai,finiteness=fin,tense=past,mood=ind|conj,inflection=n)+PD(type=pers,position=free,LN=sg,LP=3)" type="224+403"><seg type="orth">weddens</seg><fs type="gys" groupingMainPos="VRB+PD" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>WEDDEN</string></f></fs><fs type="gys" groupingMainPos="VRB+PD" n="1">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="sg"/></f><f name="LP"><symbol value="3"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>HET</string></f></fs><xr extent="3" type="dictionaryLinks"><ref target="30432" n="1" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (III)</lemma> <def>het; per</def> <pos>bep.lidw.</pos></ref><ref target="86952" n="1" type="dictionary.VMNW"><modern_lemma>het</modern_lemma><lemma>het</lemma> <def>het</def> <pos>vnw.</pos></ref><ref target="26252" n="0" type="dictionary.VMNW"><modern_lemma>wedden</modern_lemma><lemma>wedden</lemma> <def>wedden; als onderpand geven; plechtig beloven</def> <pos>zw.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768823" xml:id="w.768823" lemma="HIJ" pos="PD(type=pers,position=free,LN=sg,LP=3)" type="403"><seg type="orth">hem</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="pers"/></f><f name="position"><symbol value="free"/></f><f name="LN"><symbol value="sg"/></f><f name="LP"><symbol value="3"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>HIJ</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="34" n="0" type="dictionary.VMNW"><modern_lemma>hij</modern_lemma><lemma>hi</lemma> <def>hij</def> <pos>pers.vnw.</pos></ref></xr></w>  
+            <w n="768824" xml:id="w.768824" lemma="TE" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768825" xml:id="w.768825" lemma="WET" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">wette</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>WET</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="43303" n="0" type="dictionary.VMNW"><modern_lemma>wet</modern_lemma><lemma>wet</lemma> <def>wet; gerecht; jurisprudentie; rechtspraak; recht; geboden; wetboek; wetstekst; leer; testament</def> <pos>znw.m.,v.</pos></ref></xr></w>  
+            <w n="768826" xml:id="w.768826" lemma="TE" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768827" xml:id="w.768827" lemma="WAREN" pos="VRB(type=mai,finiteness=inf,inflection=e)" type="251"><seg type="orth">waerne</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>WAREN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="91172" n="0" type="dictionary.VMNW"><modern_lemma>waren</modern_lemma><lemma>waren(en)</lemma> <def>bewaken; waarschuwen; beschermen; bewaren; waarborgen; vrijwaren van schadelijke gevolgen; zich beschermen</def> <pos>zw.ww.trans.,intr.,refl.</pos></ref></xr></w><pc type="post">
+          .
+        </pc>  
+            <w n="768828" xml:id="w.768828" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768829" xml:id="w.768829" lemma="DAT" pos="PD(type=dem,subtype=art,position=prenom,inflection=0)" type="470"><seg type="orth">dat</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DAT</string></f><f name="deellemma"><string>HET</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="30432" n="0" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (III)</lemma> <def>het; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768830" xml:id="w.768830" lemma="ZELF" pos="PD(type=dem,subtype=oth,position=uncl,inflection=e)" type="411"><seg type="orth">selue</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ZELF</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="64432" n="0" type="dictionary.VMNW"><modern_lemma>zelf</modern_lemma><lemma>selve</lemma> <def>zelf</def> <pos>aanw.vnw.</pos></ref></xr></w>  
+            <w n="768831" xml:id="w.768831" lemma="BUNDER" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">bunre</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>BUNDER</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="51632" n="0" type="dictionary.VMNW"><modern_lemma>bunder, Bunder</modern_lemma><lemma>bunre</lemma> <def>bunder</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768832" xml:id="w.768832" lemma="LAND" pos="NOU-C(number=sg,inflection=s/th)" type="002"><seg type="orth">lants</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>LAND</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="81732" n="0" type="dictionary.VMNW"><modern_lemma>land</modern_lemma><lemma>lant</lemma> <def>land; stuk land; platteland; land(streek); woonplaats, vaderland; aarde, grond; volk, bewoners</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768833" xml:id="w.768833" lemma="ZO" pos="ADV(type=reg,subtype=resump,inflection=0)" type="550"><seg type="orth">soe</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="resump"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>ZO</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="19472" n="0" type="dictionary.VMNW"><modern_lemma>zo</modern_lemma><lemma>so (I)</lemma> <def>zo; zozeer; zoals; ingeval; toen; echter; met die naam; dan; daarom; hoe; in die mate; ook maar</def> <pos>bw.</pos></ref></xr></w> 
+            <lb n="2255:31"/>  
+            <w n="768834" xml:id="w.768834" lemma="GEVEN" pos="VRB(type=mai,finiteness=fin,tense=past,mood=ind|conj,inflection=0)" type="220"><seg type="orth">gaf</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>GEVEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="65152" n="0" type="dictionary.VMNW"><modern_lemma>geven</modern_lemma><lemma>gheven (II)</lemma> <def>geven; verschaffen; van zich doen uitgaan; uitvaardigen; toevertrouwen; betalen; doen gebeuren; ten huwelijk geven; baren; toewijzen; overdragen; veroorzaken; produceren; klinken; opbrengen; zich (aan iem.) overgeven; zich wijden (aan); bekennen</def> <pos>st.ww.trans.,refl.</pos></ref></xr></w>  
+            <w n="768835" xml:id="w.768835" lemma="WILHELM" pos="NOU-P(inflection=0)" type="020"><seg type="orth">willem</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>WILHELM</string></f></fs><xr extent="13" type="dictionaryLinks"><ref target="97671" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelm</modern_lemma><lemma>wilhelm</lemma> <def>Wilhelm</def> <pos>znw.m.</pos></ref><ref target="17671" n="0" type="dictionary.VMNW"><modern_lemma>Willemet</modern_lemma><lemma>willemet</lemma> <def>Willemet</def> <pos>znw.m.</pos></ref><ref target="27671" n="0" type="dictionary.VMNW"><modern_lemma>William</modern_lemma><lemma>williame</lemma> <def>William</def> <pos>znw.m.</pos></ref><ref target="50871" n="0" type="dictionary.VMNW"><modern_lemma>Willin</modern_lemma><lemma>willin</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="60871" n="0" type="dictionary.VMNW"><modern_lemma>Willoi</modern_lemma><lemma>willoi, willois</lemma> <def>Willoi</def> <pos>znw.m.</pos></ref><ref target="37671" n="0" type="dictionary.VMNW"><modern_lemma>Willetje</modern_lemma><lemma>willekin</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="96671" n="0" type="dictionary.VMNW"><modern_lemma>Willekinus</modern_lemma><lemma>willekinus</lemma> <def>Willekin</def> <pos>znw.m.</pos></ref><ref target="40871" n="0" type="dictionary.VMNW"><modern_lemma>Wilzoet</modern_lemma><lemma>wilsoete</lemma> <def>Wilsoete</def> <pos>znw.m.</pos></ref><ref target="80871" n="0" type="dictionary.VMNW"><modern_lemma>Wil</modern_lemma><lemma>wille (II)</lemma> <def>Wil(lem)</def> <pos>znw.m.</pos></ref><ref target="99771" n="0" type="dictionary.VMNW"><modern_lemma>Willinus</modern_lemma><lemma>willinus</lemma> <def>Willin</def> <pos>znw.m.</pos></ref><ref target="50552" n="0" type="dictionary.VMNW"><modern_lemma>Wilhelmus</modern_lemma><lemma>wilhelmus</lemma> <def>Willem</def> <pos>znw.m.</pos></ref><ref target="30871" n="0" type="dictionary.VMNW"><modern_lemma>Willeman</modern_lemma><lemma>willeman</lemma> <def>Willeman</def> <pos>znw.m.</pos></ref><ref target="97471" n="0" type="dictionary.VMNW"><modern_lemma>Willem</modern_lemma><lemma>willem</lemma> <def>Willem</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768836" xml:id="w.768836" lemma="VOORZEGD" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=0)" type="100"><seg type="orth">vorseit</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>VOORZEGD</string></f><f name="deellemma"><string>VOORZEID</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="40432" n="0" type="dictionary.VMNW"><modern_lemma>voorzegd</modern_lemma><lemma>voreseit</lemma> <def>bovenvermeld; voorspeld</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768837" xml:id="w.768837" lemma="EEN" pos="PD(type=indef,subtype=oth,position=uncl,inflection=n)" type="444"><seg type="orth">ene<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>EEN</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="42042" n="0" type="dictionary.VMNW"><modern_lemma>een</modern_lemma><lemma>een (III)</lemma> <def>een</def> <pos>onbep.lidw.</pos></ref><ref target="95242" n="0" type="dictionary.VMNW"><modern_lemma>een</modern_lemma><lemma>een (II)</lemma> <def>iemand; men; iets; een zekere; enige</def> <pos>onbep.vnw.</pos></ref></xr></w>  
+            <w n="768838" xml:id="w.768838" lemma="HENDRIK" pos="NOU-P(inflection=e)" type="021"><seg type="orth">heinemanne</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>HENDRIK</string></f></fs><xr extent="15" type="dictionaryLinks"><ref target="15072" n="0" type="dictionary.VMNW"><modern_lemma>Heinoot</modern_lemma><lemma>heinoot</lemma> <def>Heinoot</def> <pos>znw.m.</pos></ref><ref target="35072" n="0" type="dictionary.VMNW"><modern_lemma>Henk</modern_lemma><lemma>henc</lemma> <def>Henk (Hendrik)</def> <pos>znw.m.</pos></ref><ref target="86532" n="0" type="dictionary.VMNW"><modern_lemma>Heineman</modern_lemma><lemma>heineman</lemma> <def>Heineman</def> <pos>znw.m.</pos></ref><ref target="25072" n="0" type="dictionary.VMNW"><modern_lemma>Heinout</modern_lemma><lemma>heinout</lemma> <def>Heinout</def> <pos>znw.m.</pos></ref><ref target="95072" n="0" type="dictionary.VMNW"><modern_lemma>Heinijn</modern_lemma><lemma>heinin</lemma> <def>Heinin (Hendrik)</def> <pos>znw.o.</pos></ref><ref target="94072" n="0" type="dictionary.VMNW"><modern_lemma>Heintje</modern_lemma><lemma>heinekin</lemma> <def>Hein (Hendrik)</def> <pos>znw.o.</pos></ref><ref target="66072" n="0" type="dictionary.VMNW"><modern_lemma>Henderich</modern_lemma><lemma>henderiche</lemma> <def>Hendrieken</def> <pos>znw.</pos></ref><ref target="73732" n="0" type="dictionary.VMNW"><modern_lemma>Heinrik</modern_lemma><lemma>heinric</lemma> <def>Hendrik</def> <pos>znw.m.</pos></ref><ref target="34072" n="0" type="dictionary.VMNW"><modern_lemma>Heiminus</modern_lemma><lemma>heiminus</lemma> <def>Heimin</def> <pos>znw.m.</pos></ref><ref target="56532" n="0" type="dictionary.VMNW"><modern_lemma>Heinricus</modern_lemma><lemma>heinricus</lemma> <def>Hendrik</def> <pos>znw.m.</pos></ref><ref target="47532" n="0" type="dictionary.VMNW"><modern_lemma>Hein</modern_lemma><lemma>heine</lemma> <def>Hein</def> <pos>znw.m.</pos></ref><ref target="44072" n="0" type="dictionary.VMNW"><modern_lemma>Haiman</modern_lemma><lemma>haiman</lemma> <def>Haiman</def> <pos>znw.m.</pos></ref><ref target="65072" n="0" type="dictionary.VMNW"><modern_lemma>Hendrik</modern_lemma><lemma>hanric</lemma> <def>Henrik</def> <pos>znw.m.</pos></ref><ref target="27532" n="0" type="dictionary.VMNW"><modern_lemma>Heinemannus</modern_lemma><lemma>heinemannus</lemma> <def>Heineman</def> <pos>znw.m.</pos></ref><ref target="55072" n="0" type="dictionary.VMNW"><modern_lemma>Henri</modern_lemma><lemma>henri</lemma> <def>Henri</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768839" xml:id="w.768839" lemma="VAN" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">va<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">n</expan></seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VAN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="5" n="0" type="dictionary.VMNW"><modern_lemma>van</modern_lemma><lemma>van</lemma> <def>van</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768840" xml:id="w.768840" lemma="SCHOTEN" pos="NOU-C(number=pl,inflection=n)" type="014"><seg type="orth">scoeten</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="pl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>SCHOTEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="76372" n="0" citaatId="119630" type="dictionary.VMNW"><modern_lemma>Schoten</modern_lemma><lemma>scoten</lemma> <def>Schoten</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768841" xml:id="w.768841" lemma="LAMBERT" pos="NOU-P(inflection=0)" type="020"><seg type="orth">la<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">m</expan>min</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>LAMBERT</string></f></fs><xr extent="11" type="dictionaryLinks"><ref target="98072" n="0" type="dictionary.VMNW"><modern_lemma>Lamzoet</modern_lemma><lemma>lamsoete</lemma> <def>Lamsoet (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="49072" n="0" type="dictionary.VMNW"><modern_lemma>Lambertus</modern_lemma><lemma>lambertus</lemma> <def>Lambrecht</def> <pos>znw.m.</pos></ref><ref target="38072" n="0" type="dictionary.VMNW"><modern_lemma>lambert</modern_lemma><lemma>lambloot</lemma> <def>Lamloot</def> <pos>znw.m.</pos></ref><ref target="19072" n="0" type="dictionary.VMNW"><modern_lemma>Lamme</modern_lemma><lemma>lambe</lemma> <def>Lambe (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="76072" n="0" type="dictionary.VMNW"><modern_lemma>lambert</modern_lemma><lemma>lambrecht</lemma> <def>H. Lambertus; Lambrecht</def> <pos>znw.m.</pos></ref><ref target="59072" n="0" type="dictionary.VMNW"><modern_lemma>Lammetje</modern_lemma><lemma>lambekin</lemma> <def>Lammekin (Lambrecht)</def> <pos>znw.o.</pos></ref><ref target="58072" n="0" type="dictionary.VMNW"><modern_lemma>Lambinus</modern_lemma><lemma>lambinus</lemma> <def>Lammin</def> <pos>znw.m.</pos></ref><ref target="18072" n="0" type="dictionary.VMNW"><modern_lemma>Lambijn</modern_lemma><lemma>lambin</lemma> <def>Lammin (Lambrecht)</def> <pos>znw.m.</pos></ref><ref target="88072" n="0" type="dictionary.VMNW"><modern_lemma>Lamsinus</modern_lemma><lemma>lamsinus</lemma> <def>Lamsin</def> <pos>znw.m.</pos></ref><ref target="68072" n="0" type="dictionary.VMNW"><modern_lemma>Lamsijn</modern_lemma><lemma>lamsin</lemma> <def>Lamsin (Lambrecht)</def> <pos>znw.o.</pos></ref><ref target="39072" n="0" type="dictionary.VMNW"><modern_lemma>Lambai</modern_lemma><lemma>lambai</lemma> <def>Lambai</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768842" xml:id="w.768842" lemma="KAN" pos="NOU-P(inflection=s/th)" type="022"><seg type="orth">cans</seg><fs type="gys" groupingMainPos="NOU-P" n="0">
+    <f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-P"/></f>
+  <f name="lemma"><string>KAN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="62613" n="0" citaatId="172995" type="dictionary.VMNW"><modern_lemma>kan, Kan</modern_lemma><lemma>canne (I)</lemma> <def>kan; Kan</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768843" xml:id="w.768843" lemma="ZWAZELING" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">suaselinc</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>ZWAZELING</string></f><f name="deellemma"><string>ZWASELING</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="42872" n="0" citaatId="111560" type="dictionary.VMNW"><modern_lemma>zwazeling</modern_lemma><lemma>swaselinc</lemma> <def>zwager; schoonzoon</def> <pos>znw.m.</pos></ref></xr></w> 
+            <lb n="2255:32"/>  
+            <w n="768844" xml:id="w.768844" lemma="TE+ERFELIJK" pos="ADP(type=uncl,inflection=0)+AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=n)" type="700+104"><seg type="orth">tharueliken</seg><fs type="gys" groupingMainPos="ADP+AA" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><fs type="gys" groupingMainPos="ADP+AA" n="1">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>ERFELIJK</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref><ref target="59442" n="1" type="dictionary.VMNW"><modern_lemma>erfelijk</modern_lemma><lemma>erfelijc</lemma> <def>erfelijk; eeuwigdurend; erfrecht hebbend</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768845" xml:id="w.768845" lemma="CIJNS" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">sceense</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>CIJNS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="24172" n="0" type="dictionary.VMNW"><modern_lemma>cijns</modern_lemma><lemma>cens (I)</lemma> <def>cijns; belasting; pachtvergoeding</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768846" xml:id="w.768846" lemma="OM" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">om</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>OM</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="14333" n="0" type="dictionary.VMNW"><modern_lemma>om</modern_lemma><lemma>ombe (II)</lemma> <def>om</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768847" xml:id="w.768847" lemma="TIEN" pos="NUM(type=card,position=uncl,representation=uncl,inflection=0)" type="300"><seg type="orth">tien</seg><fs type="gys" groupingMainPos="NUM" n="0">
+    <f name="type"><symbol value="card"/></f><f name="position"><symbol value="uncl"/></f><f name="representation"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NUM"/></f>
+  <f name="lemma"><string>TIEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="5943" n="0" type="dictionary.VMNW"><modern_lemma>tien</modern_lemma><lemma>tien (II)</lemma> <def>tien</def> <pos>telw.</pos></ref></xr></w>  
+            <w n="768848" xml:id="w.768848" lemma="SCHELLING" pos="NOU-C(number=pl,inflection=e)" type="011"><seg type="orth">sceleghe</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="pl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>SCHELLING</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="2836" n="0" citaatId="27920" type="dictionary.VMNW"><modern_lemma>schelling</modern_lemma><lemma>schellinc</lemma> <def>schelling</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768849" xml:id="w.768849" lemma="VLAAMS" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=s/th)" type="102"><seg type="orth">vlaems</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>VLAAMS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32932" n="0" type="dictionary.VMNW"><modern_lemma>Vlaams</modern_lemma><lemma>vlamesc (II)</lemma> <def>Vlaams</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768850" xml:id="w.768850" lemma="PAAIMENT" pos="NOU-C(number=sg,inflection=s/th)" type="002"><seg type="orth">paim<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">en</expan>ts</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>PAAIMENT</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="31992" n="0" type="dictionary.VMNW"><modern_lemma>paaiment</modern_lemma><lemma>payement</lemma> <def>betaling; betaaldag; aflossing; afrekening; Paaiment; gangbare munt; tegenwaarde; rekeneenheid; straf</def> <pos>znw.o.</pos></ref></xr></w>  
+            <w n="768851" xml:id="w.768851" lemma="ELK" pos="PD(type=indef,subtype=oth,position=uncl,inflection=s/th)" type="322"><seg type="orth">elcs</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ELK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="28372" n="0" type="dictionary.VMNW"><modern_lemma>elk</modern_lemma><lemma>elc</lemma> <def>elk; ieder; alle; elk van beiden</def> <pos>vnw.</pos></ref></xr></w>  
+            <w n="768852" xml:id="w.768852" lemma="JAAR" pos="NOU-C(number=sg,inflection=s/th)" type="002"><seg type="orth">jaers</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>JAAR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="74432" n="0" type="dictionary.VMNW"><modern_lemma>jaar</modern_lemma><lemma>jaer</lemma> <def>jaar</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768853" xml:id="w.768853" lemma="ERFELIJK" pos="ADV(type=reg,subtype=gen,inflection=e)" type="501"><seg type="orth">aeruelike</seg><fs type="gys" groupingMainPos="ADV" n="0">
+    <f name="type"><symbol value="reg"/></f><f name="subtype"><symbol value="gen"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="ADV"/></f>
+  <f name="lemma"><string>ERFELIJK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="69442" n="0" type="dictionary.VMNW"><modern_lemma>erfelijk</modern_lemma><lemma>erfelike</lemma> <def>erfelijk; voor altijd</def> <pos>bw.</pos></ref></xr></w> 
+            <lb n="2255:33"/>  
+            <w n="768854" xml:id="w.768854" lemma="EN" pos="CONJ(type=coor,inflection=0)" type="800"><seg type="orth">en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan></seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="coor"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>EN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="6237" n="0" type="dictionary.VMNW"><modern_lemma>en</modern_lemma><lemma>ende (III)</lemma> <def>en</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768855" xml:id="w.768855" lemma="DE" pos="PD(type=dem,subtype=art,position=prenom,inflection=n)" type="474"><seg type="orth">dien</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref></xr></w>  
+            <w n="768856" xml:id="w.768856" lemma="CIJNS" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">sceens</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>CIJNS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="24172" n="0" type="dictionary.VMNW"><modern_lemma>cijns</modern_lemma><lemma>cens (I)</lemma> <def>cijns; belasting; pachtvergoeding</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768857" xml:id="w.768857" lemma="TE" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">te</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768858" xml:id="w.768858" lemma="GELDEN" pos="VRB(type=mai,finiteness=inf,inflection=e)" type="251"><seg type="orth">gheldene</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="inf"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>GELDEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="74872" n="0" type="dictionary.VMNW"><modern_lemma>gelden</modern_lemma><lemma>ghelden (II)</lemma> <def>betalen; kopen; vergelden; opbrengen; doen toekomen; inwilligen</def> <pos>st.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768859" xml:id="w.768859" lemma="ELK" pos="PD(type=indef,subtype=oth,position=uncl,inflection=s/th)" type="322"><seg type="orth">elcs</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ELK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="28372" n="0" type="dictionary.VMNW"><modern_lemma>elk</modern_lemma><lemma>elc</lemma> <def>elk; ieder; alle; elk van beiden</def> <pos>vnw.</pos></ref></xr></w>  
+            <w n="768860" xml:id="w.768860" lemma="JAAR" pos="NOU-C(number=sg,inflection=s/th)" type="002"><seg type="orth">jaers</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>JAAR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="74432" n="0" type="dictionary.VMNW"><modern_lemma>jaar</modern_lemma><lemma>jaer</lemma> <def>jaar</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768861" xml:id="w.768861" lemma="TE+ELK" pos="ADP(type=uncl,inflection=0)+PD(type=indef,subtype=oth,position=uncl,inflection=n)" type="700+324"><seg type="orth">telken</seg><fs type="gys" groupingMainPos="ADP+PD" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><fs type="gys" groupingMainPos="ADP+PD" n="1">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ELK</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768862" xml:id="w.768862" lemma="SINT|SINT-" pos="AA(degree=uncl,position=prenom|postnom|pred,number=sg,inflection=e)" type="101"><seg type="orth">sente</seg><fs type="gys" groupingMainPos="AA" n="0">
+    <f name="degree"><symbol value="uncl"/></f><f name="position"><symbol value="prenom|postnom|pred"/></f><f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="AA"/></f>
+  <f name="lemma"><string>SINT|SINT-</string></f><f name="deellemma"><string>SINT</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="46432" n="0" type="dictionary.VMNW"><modern_lemma>sint, Sint-</modern_lemma><lemma>sente</lemma> <def>heilig</def> <pos>bnw.</pos></ref></xr></w>  
+            <w n="768863" xml:id="w.768863" lemma="BAMIS" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">bamesse</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>BAMIS</string></f><f name="deellemma"><string>BAAFSMIS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="26161" n="0" type="dictionary.VMNW"><modern_lemma>Bamis</modern_lemma><lemma>bamesse</lemma> <def>Sint-Bamis</def> <pos>znw.v.</pos></ref></xr></w><pc type="post">
+          .
+        </pc>  
+            <w n="768864" xml:id="w.768864" lemma="DIT" pos="PD(type=dem,subtype=oth,position=uncl,inflection=0)" type="410"><seg type="orth">Dit</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DIT</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="41032" n="0" type="dictionary.VMNW"><modern_lemma>dit</modern_lemma><lemma>dit</lemma> <def>dit</def> <pos>aanw.vnw.</pos></ref></xr></w>  
+            <w n="768865" xml:id="w.768865" lemma="ZIJN" pos="VRB(type=cop|aux,finiteness=fin,tense=past,mood=ind|conj,inflection=0)" type="230"><seg type="orth">was</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="cop|aux"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="past"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>ZIJN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="78532" n="0" type="dictionary.VMNW"><modern_lemma>zijn</modern_lemma><lemma>sijn (I)</lemma> <def>bestaan; leven; gebeuren; zich bevinden; zijn</def> <pos>onreg.ww.intr.</pos></ref></xr></w> 
+            <lb n="2255:34"/>  
+            <w n="768866" xml:id="w.768866" lemma="DOEN" pos="VRB(type=mai,finiteness=pastpart,inflection=n)" type="274"><seg type="orth">ghedaen</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="pastpart"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>DOEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="73432" n="0" type="dictionary.VMNW"><modern_lemma>doen</modern_lemma><lemma>doen (II)</lemma> <def>doen; zijn; laten; verrichten; behandelen; uitvoeren; voltooien; veroorzaken; maken; brengen; bijdragen; bedragen; nodig (hebben, zijn, krijgen, worden); afleggen; handelen; stellen; baten; zich plaatsen</def> <pos>st.ww.trans.,intr.,refl.</pos></ref></xr></w>  
+            <w n="768867" xml:id="w.768867" lemma="IN+DAT" pos="ADP(type=uncl,inflection=0)+PD(type=dem,subtype=art,position=prenom,inflection=0)" type="700+470"><seg type="orth">jnt</seg><fs type="gys" groupingMainPos="ADP+PD" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>IN</string></f></fs><fs type="gys" groupingMainPos="ADP+PD" n="1">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DAT</string></f><f name="deellemma"><string>HET</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="30432" n="1" type="dictionary.VMNW"><modern_lemma>dat</modern_lemma><lemma>dat (III)</lemma> <def>het; per</def> <pos>bep.lidw.</pos></ref><ref target="35932" n="0" type="dictionary.VMNW"><modern_lemma>in</modern_lemma><lemma>in</lemma> <def>in</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768868" xml:id="w.768868" lemma="JAAR" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">jaer</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>JAAR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="74432" n="0" type="dictionary.VMNW"><modern_lemma>jaar</modern_lemma><lemma>jaer</lemma> <def>jaar</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768869" xml:id="w.768869" lemma="ONS" pos="PD(type=poss,position=uncl,inflection=s/th)" type="452"><seg type="orth">ons</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="poss"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ONS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="76332" n="0" type="dictionary.VMNW"><modern_lemma>ons</modern_lemma><lemma>onse</lemma> <def>ons, onze</def> <pos>bez.vnw.</pos></ref></xr></w>  
+            <w n="768870" xml:id="w.768870" lemma="HEER" pos="NOU-C(number=sg,inflection=n)" type="004"><seg type="orth">heren</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>HEER</string></f></fs><xr extent="3" type="dictionaryLinks"><ref target="78922" n="0" type="dictionary.VMNW"><modern_lemma>heer, Heer</modern_lemma><lemma>here (I)</lemma> <def>heer; voornaam(ste) man; heerser; leenheer; leider; bestuurder; eigenaar; aanvoerder; baas; man; echtgenoot; Heer</def> <pos>znw.m.</pos></ref><ref target="25432" n="0" type="dictionary.VMNW"><modern_lemma>heer</modern_lemma><lemma>here (II)</lemma> <def>leger; schade door troepenbewegingen</def> <pos>znw.o.</pos></ref><ref target="76432" n="0" type="dictionary.VMNW"><modern_lemma>Heers</modern_lemma><lemma>here (III)</lemma> <def>Heers</def> <pos>znw.</pos></ref></xr></w>  
+            <w n="768871" xml:id="w.768871" lemma="ALS" pos="CONJ(type=rel,inflection=0)" type="850"><seg type="orth">als</seg><fs type="gys" groupingMainPos="CONJ" n="0">
+    <f name="type"><symbol value="rel"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="CONJ"/></f>
+  <f name="lemma"><string>ALS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="57242" n="0" type="dictionary.VMNW"><modern_lemma>als</modern_lemma><lemma>alse</lemma> <def>(zo)als; alsof; wanneer; toen; indien; waar; hoewel</def> <pos>vw.</pos></ref></xr></w>  
+            <w n="768872" xml:id="w.768872" lemma="MEN" pos="PD(type=indef,subtype=oth,position=uncl,inflection=0)" type="440"><seg type="orth">men</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="indef"/></f><f name="subtype"><symbol value="oth"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>MEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="14432" n="0" type="dictionary.VMNW"><modern_lemma>men</modern_lemma><lemma>men</lemma> <def>men</def> <pos>onbep.vnw.</pos></ref></xr></w>  
+            <w n="768873" xml:id="w.768873" lemma="SCHRIJVEN" pos="VRB(type=mai,finiteness=fin,tense=pres,mood=ind|conj,inflection=t)" type="203"><seg type="orth">scriift</seg><fs type="gys" groupingMainPos="VRB" n="0">
+    <f name="type"><symbol value="mai"/></f><f name="finiteness"><symbol value="fin"/></f><f name="tense"><symbol value="pres"/></f><f name="mood"><symbol value="ind|conj"/></f><f name="inflection"><symbol value="t"/></f><f name="pos"><symbol value="VRB"/></f>
+  <f name="lemma"><string>SCHRIJVEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="97113" n="0" type="dictionary.VMNW"><modern_lemma>schrijven</modern_lemma><lemma>scriven (II)</lemma> <def>schrijven; opschrijven; noteren; vermelden; in geschrifte meedelen; opvoeren; graveren</def> <pos>st.ww.trans.,intr.</pos></ref></xr></w>  
+            <w n="768874" xml:id="w.768874" lemma="ZIJN" pos="PD(type=poss,position=uncl,inflection=0)" type="450"><seg type="orth">siin</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="poss"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ZIJN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="38332" n="0" type="dictionary.VMNW"><modern_lemma>zijn</modern_lemma><lemma>sijn (II)</lemma> <def>zijn</def> <pos>bez.vnw.</pos></ref></xr></w>  
+            <w n="768875" xml:id="w.768875" lemma="INCARNATIOEN" pos="NOU-C(number=sg,inflection=0)" type="000"><seg type="orth">incarnacioen</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>INCARNATIOEN</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="84862" n="0" type="dictionary.VMNW"><modern_lemma>incarnatioen</modern_lemma><lemma>incarnacioen</lemma> <def>menswording (van Christus)</def> <pos>znw.v.,o.</pos></ref></xr></w>  
+            <w n="768876" xml:id="w.768876" lemma="1200-NEGENTIGENVIJF" pos="NUM(type=card,position=uncl,representation=uncl,inflection=e)" type="301"><seg type="orth">.m'ho. cc'ho. xc'ho. en<expan resp="editor" xmlns="http://www.tei-c.org/ns/1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ivdnt="http://www.ivdnt.org/xslt/namespaces" xmlns:tei="http://www.tei-c.org/ns/1.0">de</expan>viue</seg><fs type="gys" groupingMainPos="NUM" n="0">
+    <f name="type"><symbol value="card"/></f><f name="position"><symbol value="uncl"/></f><f name="representation"><symbol value="uncl"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NUM"/></f>
+  <f name="lemma"><string>1200-NEGENTIGENVIJF</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="43691" n="0" type="dictionary.VMNW"><modern_lemma>twaalfhonderd/1200-negentigenvijf</modern_lemma><lemma/> <def/> <pos>NULL</pos></ref></xr></w> 
+            <lb n="2255:35"/>  
+            <w n="768877" xml:id="w.768877" lemma="DE+DINSDAG" pos="PD(type=dem,subtype=art,position=prenom,inflection=s/th)+NOU-C(number=sg,inflection=s/th)" type="472+002"><seg type="orth">sdincsen daghes</seg><fs type="gys" groupingMainPos="PD+NOU-C" n="0">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><fs type="gys" groupingMainPos="PD+NOU-C" n="1">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="s/th"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>DINSDAG</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="32841" n="0" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref><ref target="11401" n="1" type="dictionary.VMNW"><modern_lemma>dinsdag</modern_lemma><lemma>disendach</lemma> <def>dinsdag</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768878" xml:id="w.768878" lemma="VOOR" pos="ADP(type=uncl,inflection=0)" type="700"><seg type="orth">vor</seg><fs type="gys" groupingMainPos="ADP" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>VOOR</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="62572" n="0" type="dictionary.VMNW"><modern_lemma>voor</modern_lemma><lemma>vore (III)</lemma> <def>voor</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768879" xml:id="w.768879" lemma="ONS" pos="PD(type=poss,position=uncl,inflection=r/re)" type="455"><seg type="orth">onser</seg><fs type="gys" groupingMainPos="PD" n="0">
+    <f name="type"><symbol value="poss"/></f><f name="position"><symbol value="uncl"/></f><f name="inflection"><symbol value="r/re"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>ONS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="76332" n="0" type="dictionary.VMNW"><modern_lemma>ons</modern_lemma><lemma>onse</lemma> <def>ons, onze</def> <pos>bez.vnw.</pos></ref></xr></w>  
+            <w n="768880" xml:id="w.768880" lemma="VROUW" pos="NOU-C(number=sg,inflection=n)" type="004"><seg type="orth">vrouwen</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="n"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>VROUW</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="89232" n="0" type="dictionary.VMNW"><modern_lemma>vrouw</modern_lemma><lemma>vrouwe</lemma> <def>vrouwe; voorname vrouw; gebiedster; leenvrouwe; mens van het vrouwelijk geslacht; getrouwde vrouw; Vrouw</def> <pos>znw.v.</pos></ref></xr></w>  
+            <w n="768881" xml:id="w.768881" lemma="DAG" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">daghe</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>DAG</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="70932" n="0" type="dictionary.VMNW"><modern_lemma>dag, Dag</modern_lemma><lemma>dach</lemma> <def>dag (overdag); etmaal; kalenderdag; tijdperk; daglicht; werkdag; Dag</def> <pos>znw.m.</pos></ref></xr></w>  
+            <w n="768882" xml:id="w.768882" lemma="TE+DE" pos="ADP(type=uncl,inflection=0)+PD(type=dem,subtype=art,position=prenom,inflection=r/re)" type="700+475"><seg type="orth">ter</seg><fs type="gys" groupingMainPos="ADP+PD" n="0">
+    <f name="type"><symbol value="uncl"/></f><f name="inflection"><symbol value="0"/></f><f name="pos"><symbol value="ADP"/></f>
+  <f name="lemma"><string>TE</string></f></fs><fs type="gys" groupingMainPos="ADP+PD" n="1">
+    <f name="type"><symbol value="dem"/></f><f name="subtype"><symbol value="art"/></f><f name="position"><symbol value="prenom"/></f><f name="inflection"><symbol value="r/re"/></f><f name="pos"><symbol value="PD"/></f>
+  <f name="lemma"><string>DE</string></f></fs><xr extent="2" type="dictionaryLinks"><ref target="32841" n="1" type="dictionary.VMNW"><modern_lemma>de</modern_lemma><lemma>die (IV)</lemma> <def>de; per</def> <pos>bep.lidw.</pos></ref><ref target="11850" n="0" type="dictionary.VMNW"><modern_lemma>te</modern_lemma><lemma>te (II)</lemma> <def>te</def> <pos>vz.</pos></ref></xr></w>  
+            <w n="768883" xml:id="w.768883" lemma="LICHTMIS" pos="NOU-C(number=sg,inflection=e)" type="001"><seg type="orth">lechtmesse</seg><fs type="gys" groupingMainPos="NOU-C" n="0">
+    <f name="number"><symbol value="sg"/></f><f name="inflection"><symbol value="e"/></f><f name="pos"><symbol value="NOU-C"/></f>
+  <f name="lemma"><string>LICHTMIS</string></f></fs><xr extent="1" type="dictionaryLinks"><ref target="93582" n="0" type="dictionary.VMNW"><modern_lemma>Lichtmis</modern_lemma><lemma>lichtmesse</lemma> <def>(Maria-)lichtmis</def> <pos>znw.v.,o.</pos></ref></xr></w>  
+            <pc type="pre">
+          ---
+        </pc>
+            <milestone xml:id="atlas_kenmerk.d9932e699" unit="atlas_kenmerk.end"/>
+            <milestone xml:id="atlas_lokalisering.d9932e700" unit="atlas_lokalisering.end"/>
+            <milestone xml:id="datering.d9932e701" unit="datering.end"/>
+            <milestone xml:id="lokalisering.d9932e702" unit="lokalisering.end"/>
+            <milestone xml:id="hand.d9932e703" unit="hand.end"/>
+         </p>
+      </body>
+   </text>
+</TEI>

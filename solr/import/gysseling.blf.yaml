@@ -1,0 +1,420 @@
+# For displaying in user interface (optional)
+displayName: "Gysseling TEI P5 @pos as PoS"
+
+# For describing input format in user interface (optional)
+description: This indexes the 'enhanced' version of the corpus, which also has CGN-ish PoS tags, with features split up in fs/f
+
+type: content
+
+fileType: xml
+
+namespaces:
+  'xml': http://www.w3.org/XML/1998/namespace
+
+documentPath: //TEI|//TEI.2
+
+# Annotated, CQL-searchable fields (also called "complex fields").
+# We usually have just one, named "contents".
+annotatedFields:
+
+  contents:
+
+    # How to display the field in the interface (optional)
+    displayName: Contents
+
+    # How to describe the field in the interface (optional)
+    description: Contents of the documents.
+
+    # What element (relative to document) contains this field's contents?
+    # (if omitted, entire document is used)
+    containerPath: .//body
+
+    # What are our word tags? (relative to container)
+    wordPath: .//w[not(ancestor::div[@type='notes'])]
+
+    # Punctuation between word tags (relative to container)
+    punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
+
+    # What annotation can each word have? How do we index them?
+    # (annotations are also called "(word) properties" in BlackLab)
+    # (valuePaths relative to word path)
+    # NOTE: forEachPath is NOT allowed for annotations, because we need to know all annotations before indexing,
+    #       and with forEachPath you could run in to an unknown new annotation mid-way through.
+
+    annotations: # basic
+
+     # Omdat dit een historisch corpus is, willen we de gebruiker in staat stellen
+    # te zoeken in zowel de moderne spelling (lemma) en de historische spelling via 1 veld
+    - name: word_or_lemma
+      valuePath: ./seg|./fs[@type='gys']/f[@name='lemma']/string
+      uiType: combobox
+      displayName: Word or lemma
+      multipleValues: true
+      allowDuplicateValues: false
+
+    - name: word
+      displayName: Word
+      valuePath: ./seg
+      uiType: combobox
+      sensitivity: sensitive_insensitive
+
+    - name: word_xml
+      valuePath: ./seg
+      captureXml: true
+      isInternal: true
+
+    - name: lemma
+      displayName: Lemma
+      valuePath: ./fs[@type='gys']/f[@name='lemma']/string
+      uiType: combobox
+      multipleValues: true
+      allowDuplicateValues: false
+      sensitivity: sensitive_insensitive
+
+      # "lemma" kan meerdere waarden hebben voor 1 woord.
+      # In dit geval moet het zoekveld "lemma" gekoppeld zijn aan bovenstaande annotatie (met meerdere waarden),
+      # Maar in de resultaattabel kunnen we slechts de eerste waarde van een veld weergeven
+      # Dus bestaat dit veld voor weergavedoeleinden: alle "lemma" waarden aan elkaar geplakt.
+      # We zetten dezelfde displayname, zodat de gebruiker hier niets van merkt.
+      # De prefix "grouping_" is omdat we hier alle lemma waarden "groeperen"
+    - name: grouping_lemma
+      displayName: Lemma # naamgevings/applicatieprobleem: verstop deze in Advanced search!
+      valuePath: "@lemma"
+      uiType: combobox
+
+    - name: grouping_poscode
+      displayName: Numerical part of speech code
+      valuePath: "@type"
+      uiType: combobox
+
+    # Unused for searching
+    # - name: articleid
+    #   displayName: Possible matching VMNW article id(s)
+    #   valuePath: .//ref/@target
+    #   multipleValues: true
+    #   allowDuplicateValues: false
+    #   isInternal: true # verbergen overal waar standaard alle annotaties in staan
+
+    # - name: citaatid
+    #   displayName: Possible matching quotation in VMNW
+    #   valuePath: .//ref/@citaatId
+    #   multipleValues: true
+    #   allowDuplicateValues: false
+    #   isInternal: true # verbergen overal waar standaard alle annotaties in staan
+
+    - name: isclitic
+      displayName: Cliticity
+      valuePath: concat(substring('clitic', 1, number((contains(@pos,'+'))) * string-length('clitic')), substring('nonclitic', 1, number(not( contains(@pos,'+') )) * string-length('nonclitic')))
+      uiType: select
+
+    - name: iswordpart
+      displayName: Complete word or word part
+#     valuePath: concat(substring('part', 1, number((contains(@pos,'wordpart'))) * string-length('part')), substring('complete', 1, number(not( contains(@pos,'wordpart') )) * string-length('complete')))
+      valuePath: concat(substring('part', 1, number((contains(@corresp,'#'))) * string-length('part')), substring('complete', 1, number(not( contains(@corresp,'#') )) * string-length('complete')))
+      uiType: select
+
+    - name: word_id
+      valuePath: ./@xml:id
+      displayName: Word id
+
+######################### CHN PoS block #####################################
+
+    # enkel hoofdttype (NOU, VRB... etc) als 1 waarde
+    - name: grouping_pos
+      displayName: "Part of speech"
+      valuePath: "@pos"
+      uiType: select
+      process:
+      - action: replace
+        find:  '\(.*?\)'
+        replace: ''
+
+    # complete type (NOU(features...), VRB(features...)... etc) als 1 waarde
+    - name: grouping_pos_full
+      displayName: "Part of speech + features"
+      valuePath: "@pos"
+      uiType: combobox
+
+    - name: pos
+      displayName: "Part of speech"
+      valuePath: fs[@type='gys']/f[@name = 'pos']/symbol/@value
+      uiType: pos
+      multipleValues: true
+      allowDuplicateValues: false
+
+      subannotations:
+      - forEachPath: fs[@type='gys']/f[(@name != 'lemma') and (@name != 'pos') and (@name != 'deellemma')]
+        namePath: "translate(@name, '-', '_')"
+        valuePath: "symbol/@value|string/text()"
+
+      # NOTE: subannotations/features uit de foreach hierboven erven geen settings; allen individueel configureren!
+      # multipleValues overal aan - clitische woorden bevatten meerdere pos-waardes
+
+      # VRB
+      - name: finiteness
+        displayName: Finiteness
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      # ADJ
+      - name: position
+        displayName: Position
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      #  all
+      - name: inflection
+        displayName: Inflection
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      # VRB
+      - name: mood
+        displayName: Mood
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: number
+        displayName: Number
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: LN
+        displayName: Lemma number
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: LP
+        displayName: Lemma person
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+      
+      - name: degree
+        displayName: "Degree"
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: representation
+        displayName: "Representation"
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: subtype
+        displayName: Subtype
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      # VRB
+      - name: tense
+        displayName: Tense
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+      - name: type
+        displayName: Type
+        uiType: select
+        multipleValues: true
+        allowDuplicateValues: false
+
+###################### end CHN PoS ###################################
+
+    # XML tags within the content we'd like to index
+    # (relative to container)
+    inlineTags:
+    - path: .//s
+      displayAs: sentence
+      #call: openSonarSentence  # to call a plugin method for this tag
+    - path: .//p
+      displayAs: paragraph
+    - path: ../l
+      displayAs: line
+    - path: .//part # document part on which metadata does not change - non-TEI tag
+      displayAs: documentPart
+
+# TEI metadata
+metadata:
+  #  maxMetadataValuesToStore: 1000
+  containerPath: //listBibl[@xml:id='inlMetadata']
+  fields:
+  - forEachPath: bibl/interpGrp
+    namePath: "@type"                  # interpGrp/@type
+    valuePath: ./interp/text()
+
+  # declare special fields upfront or blacklab won't know they exist and ignore them
+  # also never tokenize pid!
+  - name: pid
+    type: untokenized
+  - name: title
+    type: untokenized
+  - name: author # bestaat maar in enkele files!
+    type: untokenized
+    sortValues: true
+  - name: datering
+    displayName: Witness Year
+    sortValues: true
+  - name: decade
+    displayName: Witness Decade
+    sortValues: true
+
+  - name: titleWords
+    valuePath: ./bibl/interpGrp[@type='title']
+    displayName: Words in title
+    uiType: combobox
+    type: tokenized
+
+  # Special metadata fields (displayname/uitype/value substitution)
+  - name: witnessLocalization_regionLevel1
+    displayName: Area
+    sortValues: true
+  - name: witnessLocalization_kloekecodeLevel1
+    displayName: Kloeke location code
+    sortValues: true
+  - name: witnessLocalization_provinceLevel2
+    displayName: Province
+    sortValues: true
+
+  - name: genre
+    sortValues: true
+    mapValues:
+      geschiedenis: history
+      poëzie: poetry
+      proza: prose
+      taalkunde: linguistics
+      theologie: theology
+      wetenschap: science
+
+  - name: subgenre
+    sortValues: true
+    mapValues:
+      artesliteratuur: artes literature
+      bijbelteksten: biblical texts
+      biologie: biology
+      epos: epic
+      filosofie-ethiek: philosophy/ethics
+      gedichten: poetry
+      geneeskunde: medicine
+      heiligenlegende: legendary hagiography
+      heiligenleven: hagiography
+      legende: legend
+      natuurwetenschappen/biologie: science/natural history
+      officiële documenten: legal/administrative document
+      ridderroman: chivalric romance
+      woordenboek/lexicon: lexicon
+
+  - name: titleLevel2
+    displayName: Title of containing publication
+
+  - name: fictionalityLevel1
+    displayName: Fictionality
+    mapValues:
+      fictie: fiction
+      non-fictie: non-fiction
+
+  - name: fictionalityLevel2
+    displayName: Fictionality
+    mapValues:
+      fictie: fiction
+      non-fictie: non-fiction
+
+  - name: authenticityLevel1
+    displayName: Authenticity
+    sortValues: true
+    mapValues:
+        ORIGINEEL: original
+        DORSAAL: dorsal
+        AFSCHRIFT: copy
+        OMWERKING: reworking
+        VERTALING: translation
+        NETSCHRIFT: clean copy
+        ONTWERP: draft
+
+  - name: editorial_comment
+    valuePath: //teiHeader//bron
+    type: untokenized
+
+corpusConfig:
+  displayName: Corpus Gysseling
+  description: Corpus van 13e-eeuwse Middelnederlandse documenten
+  contentViewable: true
+
+  specialFields:
+    titleField: title
+    dateField: datering
+    pidField: pid
+    authorField: author
+
+  annotationGroups:
+    contents:
+    - name: Basics
+      annotations:
+      - word
+      - lemma
+      - grouping_lemma # verborgen in formulier
+      - pos
+      - grouping_pos # verborgen in formulier
+      - grouping_pos_full # verborgen in formulier
+      - grouping_poscode
+      - isclitic
+      - iswordpart
+
+    # In een groepje zodat ze netjes bij elkaar staan in menu's
+    # Over het algemeen niet weergegeven in de interface (bijna overal verborgen via custom.js)
+    # Alphabetical on displayName
+    - name: Part of Speech features
+      annotations:
+      - pos_advType
+      - pos_finiteness
+      - pos_inflection
+      - pos_mood
+      - pos_number
+      - pos_wordpart
+      - pos_person
+      - pos_subtype
+      - pos_tense
+      - pos_type
+      - pos_degree
+      - pos_LG
+      - pos_LN
+      - pos_LP
+      - pos_partType
+      - pos_position
+      - pos_representation
+
+  metadataFieldGroups:
+  - name: Date
+    fields:
+    - "datering" # verborgen in formulier via customjs, in groep voor group by/sort by dropdown
+    - "decade" # verborgen in formulier via customjs, in groep voor group by/sort by dropdown
+    # via customjs: range based op witnessYearLevel2_(from|to) en textYearLevel2_(from|to)
+
+  - name: Localization
+    fields:
+    - country
+    - region
+    - place
+    - witnessLocalization_kloekecodeLevel1
+
+  - name: Text type
+    fields:
+    - fictionalityLevel1
+    - genre
+    - subgenre
+    - authenticityLevel1
+
+  - name: Title and author
+    fields:
+    - titleWords
+    - title
+    - titleLevel2
+    - author
