@@ -19,6 +19,7 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.commons.lang3.StringUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
+import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
 import org.ivdnt.blacklab.proxy.representation.CorpusStatus;
 import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
@@ -200,10 +201,29 @@ public class CorpusResource {
     }
 
     @GET
-    @Path("/autocomplete")
+    @Path("/autocomplete/{fieldName}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response autocomplete() {
-        return notImplemented("/autocomplete");
+    public Response autocompleteMetadata(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("fieldName") String fieldName,
+            @Context UriInfo uriInfo) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.AUTOCOMPLETE);
+        params.put(WebserviceParameter.FIELD, fieldName);
+        return success(Requests.get(client, params, List.of(AutocompleteResponse.class, List.class)));
+    }
+
+    @GET
+    @Path("/autocomplete/{fieldName}/{annotationName}")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response autocompleteAnnotated(
+            @PathParam("corpusName") String corpusName,
+            @PathParam("fieldName") String fieldName,
+            @PathParam("annotationName") String annotationName,
+            @Context UriInfo uriInfo) {
+        Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.AUTOCOMPLETE);
+        params.put(WebserviceParameter.FIELD, fieldName);
+        params.put(WebserviceParameter.ANNOTATION, annotationName);
+        return success(Requests.get(client, params, List.of(AutocompleteResponse.class, List.class)));
     }
 
     @GET

@@ -356,7 +356,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     @Override
     public String getAnnotationName() {
         String annotName = get(WebserviceParameter.ANNOTATION);
-        if (annotName.length() == 0)
+        if (annotName.length() == 0 && has(WebserviceParameter.PROPERTY))
             annotName = get(WebserviceParameter.PROPERTY); // old parameter name, deprecated
         return annotName;
     }
