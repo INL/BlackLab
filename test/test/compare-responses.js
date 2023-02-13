@@ -110,15 +110,16 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
     const cleanedData = {};
     for (let key in response) {
         const value = response[key];
-        if (key in keysToMakeConstant) {
+        if (keysToMakeConstant.hasOwnProperty(key)) {
             // This is (or contains) a variable value we don't want to compare.
             if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
                 // Subobject; recursively fix this part of the response
                 cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
             } else {
                 // Single value or array. Delete or make fixed value
-                if (keysToMakeConstant[key] !== 'DELETE')
+                if (keysToMakeConstant[key] !== 'DELETE') {
                     cleanedData[key] = "VALUE_REMOVED";
+                }
             }
         } else {
             // No values to make constant, just regular values we want to compare.
