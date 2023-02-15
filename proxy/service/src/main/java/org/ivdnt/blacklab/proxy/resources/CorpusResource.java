@@ -46,8 +46,12 @@ public class CorpusResource {
 
     private static final MediaType MEDIA_TYPE_CSV = MediaType.valueOf(MIME_TYPE_CSV);
 
-    private static Response error(Response.Status status, String code, String message) {
-        ErrorResponse error = new ErrorResponse(code, message, null);
+    public static Response error(Response.Status status, String code, String message) {
+        return error(status, code, message, null);
+    }
+
+    public static Response error(Response.Status status, String code, String message, String stackTrace) {
+        ErrorResponse error = new ErrorResponse(code, message, stackTrace);
         return Response.status(status).entity(error).build();
     }
 
@@ -115,7 +119,7 @@ public class CorpusResource {
             return notImplemented("/cache-info");
 
         case "help":
-            return notImplemented("/" + corpusName);
+            return notImplemented("/help");
 
         case "cache-clear":
             return error(Response.Status.BAD_REQUEST, "WRONG_METHOD", "/cache-clear works only with POST");

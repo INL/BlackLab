@@ -10,15 +10,8 @@ Another goal is security: it is generally not recommended to open the Solr port 
 
 This is a work in progress. Still to do:
 
-- make CI tests run with Solr as well
-  * make Dockerfile for proxy
-  * add Solr and Proxy to main BlackLab docker-compose?
-  * make tests runnable with solr as well
-- SearchParameters: support all parameters. Use Map...? (but how to deal with different types?)
-- better error handling. E.g. nonexistent corpus name http://localhost:8080/blacklab-proxy/testcore/hits?patt=%22the%22&outputformat=json
-- /autocomplete
-- /sharing (read-only for now)
-- /cache-info
+- anything related to creating and adding private user corpora
+- `/cache-info`
 - ensure proxying to BlackLab Server works as well
 
 ## API versions (v3 / v4)

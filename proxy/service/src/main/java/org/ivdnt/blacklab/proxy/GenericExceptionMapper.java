@@ -13,6 +13,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.ivdnt.blacklab.proxy.resources.CorpusResource;
 
 /**
  * A catch-all for exceptions.
@@ -43,7 +46,11 @@ public class GenericExceptionMapper implements javax.ws.rs.ext.ExceptionMapper<E
 
 		// Handle standard jersey exceptions, these are thrown when a page with an invalid url is requested,
 		//	a page parameter contains an invalid value, etc.
-		if (exception instanceof WebApplicationException) {
+        if (exception instanceof Requests.BlsRequestException) {
+            Requests.BlsRequestException blsEx = (Requests.BlsRequestException) exception;
+            ErrorResponse.Desc err = blsEx.getResponse().getError();
+            return CorpusResource.error(blsEx.getStatus(), err.getCode(), err.getMessage(), err.getStackTrace());
+        } else if (exception instanceof WebApplicationException) {
 			WebApplicationException appEx = (WebApplicationException) exception;
 
 			// Preserve the original response, containing (among others) the http status code.

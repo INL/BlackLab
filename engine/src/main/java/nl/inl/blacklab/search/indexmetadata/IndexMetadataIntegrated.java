@@ -300,9 +300,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (index.indexMode())
             save(); // save debug file if any
 
-        // For integrated index, because metadata wasn't allowed to change during indexing,
-        // return a default field config if you try to get a missing field.
-        metadataFields.setThrowOnMissingField(false);
+        // During indexing, return a default field config if you try to get a missing field,
+        // so not all metadata fields have to be declared in advance (useful with forEach).
+        metadataFields.setThrowOnMissingField(!index.indexMode());
     }
 
     private void populateFromConfig(ConfigInputFormat config, File indexDirectory) {

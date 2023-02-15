@@ -1,19 +1,15 @@
 package org.ivdnt.blacklab.proxy.logic;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
@@ -65,17 +61,6 @@ public class Requests {
             }
         }
         return result;
-    }
-
-    public static RuntimeException translateNodeException(String url, Exception e) {
-        e.printStackTrace();
-        String msg = e.getMessage() + (e.getCause() != null ? " (" + e.getCause().getMessage() + ")" : "");
-        StringWriter stackTrace = new StringWriter();
-        e.printStackTrace(new PrintWriter(stackTrace));
-        ErrorResponse error = new ErrorResponse("ERROR_ON_NODE", msg, stackTrace.toString());
-        error.setNodeUrl(url);
-        Response resp = Response.status(Status.INTERNAL_SERVER_ERROR).entity(error).build();
-        return new WebApplicationException(resp);
     }
 
     public static <T> T get(Client client, Map<WebserviceParameter, String> queryParams, Class<T> entityType) {
@@ -159,6 +144,7 @@ public class Requests {
             }
         }
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).method(method);
+        int status = response.getStatus();
         response.bufferEntity(); // so we can call readEntity() again if first call fails
         SolrResponse solrResponse = null;
         try {
@@ -166,7 +152,8 @@ public class Requests {
         } catch (Exception e) {
             // Not a regular response; try to read error entity
             SolrGeneralErrorResponse err = response.readEntity(SolrGeneralErrorResponse.class);
-            throw new RuntimeException("(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl());
+            throw new BlsRequestException(Response.Status.fromStatusCode(status),
+                    new ErrorResponse("INTERNAL_ERROR", "(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl(), ""));
         }
 
         JsonNode blacklab = solrResponse.getBlacklab();
@@ -179,9 +166,15 @@ public class Requests {
                 if (i < entityTypes.size() - 1) {
                     // Couldn't map to this class. Try the next one.
                 } else {
-                    // Couldn't map to any of the supplied classes. Fail
-                    String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                    throw new RuntimeException("Couldn't interpret the response as the given entity class(es): " + classes, e);
+                    // Couldn't map to any of the supplied classes. See if it's a BLS error.
+                    try {
+                        return objectMapper.treeToValue(blacklab, ErrorResponse.class);
+                    } catch (JsonProcessingException e2) {
+                        // Error didn't work either. Fail.
+                        String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
+                        throw new RuntimeException(
+                                "Couldn't interpret the response as the given entity class(es): " + classes, e);
+                    }
                 }
             }
         }

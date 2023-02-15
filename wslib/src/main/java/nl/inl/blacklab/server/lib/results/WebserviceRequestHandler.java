@@ -19,6 +19,7 @@ import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Handle all the different webservice requests, given the requested operation,
@@ -226,7 +227,10 @@ public class WebserviceRequestHandler {
     }
 
     public static void opInputFormatInfo(WebserviceParams params, ResponseStreamer rs) {
-        ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
+        Optional<String> inputFormat = params.getInputFormat();
+        if (!inputFormat.isPresent())
+            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
+        ResultInputFormat result = WebserviceOperations.inputFormat(inputFormat.get());
         rs.formatInfoResponse(result);
     }
 
