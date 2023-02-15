@@ -1,9 +1,15 @@
 package org.ivdnt.blacklab.proxy.representation;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
+
+@XmlRootElement(name = "blacklabResponse")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class SolrGeneralErrorResponse {
     private String servlet;
 
-    private String messagee;
+    private String message;
 
     private String url;
 
@@ -17,7 +23,7 @@ public class SolrGeneralErrorResponse {
     public String toString() {
         return "SolrGeneralErrorResponse{" +
                 "servlet='" + servlet + '\'' +
-                ", messagee='" + messagee + '\'' +
+                ", messagee='" + message + '\'' +
                 ", url='" + url + '\'' +
                 ", status='" + status + '\'' +
                 '}';
@@ -28,7 +34,7 @@ public class SolrGeneralErrorResponse {
     }
 
     public String getMessage() {
-        return messagee;
+        return message;
     }
 
     public String getUrl() {
@@ -37,6 +43,22 @@ public class SolrGeneralErrorResponse {
 
     public String getStatus() {
         return status;
+    }
+
+    public void setServlet(String servlet) {
+        this.servlet = servlet;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @Override

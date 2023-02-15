@@ -193,7 +193,7 @@ public class HitsResults implements Cloneable {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSerialize(using = SerializationUtil.FacetSerializer.class)
     @JsonDeserialize(using = SerializationUtil.FacetDeserializer.class)
-    public Map<String, List<FacetValue>> facets;
+    public Map<String, ArrayList<FacetValue>> facets; // ArrayList because JAXB cannot handle interfaces
 
     // required for Jersey
     @SuppressWarnings("unused")
