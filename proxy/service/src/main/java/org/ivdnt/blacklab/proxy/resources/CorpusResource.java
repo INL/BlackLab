@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
@@ -29,6 +30,7 @@ import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
 import org.ivdnt.blacklab.proxy.representation.InputFormats;
+import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
@@ -38,6 +40,10 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
 
 @Path("/{corpusName}")
 public class CorpusResource {
+
+    private static final String MIME_TYPE_CSV = "text/csv";
+
+    private static final MediaType MEDIA_TYPE_CSV = MediaType.valueOf(MIME_TYPE_CSV);
 
     private static Response error(Response.Status status, String code, String message) {
         ErrorResponse error = new ErrorResponse(code, message, null);
@@ -119,11 +125,59 @@ public class CorpusResource {
 
     @GET
     @Path("/hits")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response hits(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        Object entity = Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.HITS),
-                List.of(TokenFreqList.class, HitsResults.class));
-        return success(entity);
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MIME_TYPE_CSV })
+    public Response hits(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers) {
+        boolean isCsv = isCsvRequest(headers);
+        WebserviceOperation op = isCsv ? WebserviceOperation.HITS_CSV : WebserviceOperation.HITS;
+        List<Class<?>> resultTypes = isCsv ? List.of(JsonCsvResponse.class) : List.of(TokenFreqList.class, HitsResults.class);
+        return handlePossibleCsvResponse(corpusName, uriInfo, op, resultTypes);
+    }
+
+    @GET
+    @Path("/docs")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MIME_TYPE_CSV })
+    public Response docs(
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers) {
+        boolean isCsv = isCsvRequest(headers);
+        WebserviceOperation op = isCsv ? WebserviceOperation.DOCS_CSV : WebserviceOperation.DOCS;
+        List<Class<?>> resultTypes = List.of(isCsv ? JsonCsvResponse.class : DocsResults.class);
+        return handlePossibleCsvResponse(corpusName, uriInfo, op, resultTypes);
+    }
+
+    /**
+     * Does this request accept a CSV response?
+     *
+     * @param headers HTTP headers
+     * @return true if CSV is accepted
+     */
+    private static boolean isCsvRequest(HttpHeaders headers) {
+        return headers.getAcceptableMediaTypes().stream().anyMatch(m -> m.isCompatible(MEDIA_TYPE_CSV));
+    }
+
+    /**
+     * Process a request that could return a CSV response.
+     *
+     * @param corpusName corpus we're querying
+     * @param uriInfo URI info
+     * @param op operation to perform
+     * @param resultTypes what types the result entity could be
+     * @return response
+     */
+    private Response handlePossibleCsvResponse(String corpusName, UriInfo uriInfo, WebserviceOperation op,
+            List<Class<?>> resultTypes) {
+        Object entity = Requests.get(client, getParams(uriInfo, corpusName, op), resultTypes);
+        if (entity instanceof JsonCsvResponse) {
+            // Return actual CSV contents instead of JSON
+            String csv = ((JsonCsvResponse) entity).csv;
+            return Response.ok().type(MIME_TYPE_CSV).entity(csv).build();
+        } else {
+            return success(entity);
+        }
     }
 
     @GET
@@ -137,13 +191,6 @@ public class CorpusResource {
         Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_INFO);
         params.put(WebserviceParameter.DOC_PID, docPid);
         return success(Requests.get(client, params, DocInfoResponse.class));
-    }
-
-    @GET
-    @Path("/docs")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response docs(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        return success(Requests.get(client, getParams(uriInfo, corpusName, WebserviceOperation.DOCS), DocsResults.class));
     }
 
     @GET
