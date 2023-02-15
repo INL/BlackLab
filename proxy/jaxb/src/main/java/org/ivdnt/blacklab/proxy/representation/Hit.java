@@ -9,6 +9,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit  {
@@ -25,6 +26,7 @@ public class Hit  {
     @XmlElementWrapper(name="captureGroups")
     @XmlElement(name = "captureGroup")
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("captureGroups")
     public List<CaptureGroup> captureGroups;
 
     public ContextWords left;

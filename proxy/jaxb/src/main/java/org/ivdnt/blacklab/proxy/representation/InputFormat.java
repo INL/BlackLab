@@ -4,18 +4,21 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonIgnoreProperties(value = { "name" })
 public class InputFormat {
     @XmlAttribute
-    String name;
+    public String name;
 
-    String displayName;
+    public String displayName;
 
-    String description;
+    public String description;
 
-    String helpUrl;
+    public String helpUrl;
 
-    String configurationBased;
+    public boolean configurationBased;
 
-    String isVisible;
+    public boolean isVisible;
 }
