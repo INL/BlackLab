@@ -182,10 +182,11 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                     // no support yet for processing steps
                     int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
                     for (Object val : saxonHelper.find(annotation.getValuePath(),word)) {
+                        String unprocessedValue;
                         if (val instanceof NodeInfo) {
-                            String unprocessedValue = saxonHelper.getValue(".", val);
+                            unprocessedValue = saxonHelper.getValue(".", val);
                         } else {
-                            String unprocessedValue = String.valueOf(val);
+                            unprocessedValue = String.valueOf(val);
                         }
                         annotation(annotation.getName(),unprocessedValue,positionIncrement,null);
                         positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
