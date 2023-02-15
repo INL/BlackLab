@@ -178,9 +178,18 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                 beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
-                    // TODO we may need to support multiple values here
-                    String value = saxonHelper.getValue(annotation.getValuePath(),word);
-                    annotation(annotation.getName(),value,1,null);
+                    // now supporting multiple values here
+                    // no support yet for processing steps
+                    int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
+                    for (Object val : saxonHelper.find(annotation.getValuePath(),word)) {
+                        if (val instanceof NodeInfo) {
+                            String unprocessedValue = saxonHelper.getValue(".", val);
+                        } else {
+                            String unprocessedValue = String.valueOf(val);
+                        }
+                        annotation(annotation.getName(),unprocessedValue,positionIncrement,null);
+                        positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
+                    }
                 }
                 charPos = saxonHelper.getEndPos(word);
                 endWord();
