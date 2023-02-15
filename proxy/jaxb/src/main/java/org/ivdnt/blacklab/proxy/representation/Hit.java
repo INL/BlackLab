@@ -1,8 +1,14 @@
 package org.ivdnt.blacklab.proxy.representation;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlTransient;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit  {
@@ -15,6 +21,11 @@ public class Hit  {
     public long start;
 
     public long end;
+
+    @XmlElementWrapper(name="captureGroups")
+    @XmlElement(name = "captureGroup")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public List<CaptureGroup> captureGroups;
 
     public ContextWords left;
 
@@ -31,21 +42,14 @@ public class Hit  {
         this.end = end;
     }
 
-    public int compareTo(Hit other) {
-        if (docPid.equals(other.docPid)) {
-            if (start == other.start)
-                return Long.compare(end, other.end);
-            return Long.compare(end, other.end);
-        }
-        return docPid.compareTo(other.docPid);
-    }
-
     @Override
     public String toString() {
         return "Hit{" +
                 "docPid='" + docPid + '\'' +
+                ", docInfo=" + docInfo +
                 ", start=" + start +
                 ", end=" + end +
+                ", captureGroups=" + captureGroups +
                 ", left=" + left +
                 ", match=" + match +
                 ", right=" + right +

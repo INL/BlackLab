@@ -156,7 +156,7 @@ public class CorpusResource {
      * @return true if CSV is accepted
      */
     private static boolean isCsvRequest(HttpHeaders headers) {
-        return headers.getAcceptableMediaTypes().stream().anyMatch(m -> m.isCompatible(MEDIA_TYPE_CSV));
+        return headers.getAcceptableMediaTypes().stream().anyMatch(m -> m.equals(MEDIA_TYPE_CSV));
     }
 
     /**
