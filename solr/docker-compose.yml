@@ -1,6 +1,6 @@
 # Docker Compose file for BlackLab with Solr.
-# NOTE: this opens port 8983, but in production, you probably don't want that,
-#       and instead run the BlackLab proxy to access Solr+BlackLab.
+# NOTE: in production, you probably want to run this with the
+#       BlackLab proxy, to avoid opening Solr to the internet directly.
 
 version: '3.9'
 
@@ -8,10 +8,5 @@ services:
 
   solr:
     build:
-        context: ..
-        dockerfile: solr/Dockerfile
-
-    ports:
-
-      # Solr runs on this port
-      - "8983:8983"
+      context: ..
+      dockerfile: solr/Dockerfile

@@ -13,7 +13,7 @@ All external files incorporated into the Lucene index.
 ## Related documents
 
 - [Integrated index format files](../index-formats/integrated.md)
-- [PLAN.md](../../PLAN.md)
+- [DISTRIBUTED PLAN.md](../DISTRIBUTED PLAN.md)
 
 ## Impact on users
 

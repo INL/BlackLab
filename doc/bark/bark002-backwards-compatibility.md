@@ -21,6 +21,8 @@ We generally support index formats for as long as possible. For example, for ver
 
 We do our best to keep the BlackLab Server REST API stable. We may add a parameter, or a key in a response object in a minor version, but will do our best not to remove anything or make other breaking changes until a major version update.
 
+We've recently introduced a `parameters.apiCompatibility` setting/parameter to deal with minor API changes. 
+
 If we decide to do a major overhaul of the REST API (which has room for improvement), we will try to add it behind a version path (e.g. `/v2/`) and still support the old API as well, at least for a while.
 
 

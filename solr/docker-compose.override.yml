@@ -9,7 +9,10 @@ services:
 
     ports:
 
-      # Allow us to attach to the JVM using JDWP for remote debugging
+        # Solr runs on this port
+        - "8983:8983"
+
+        # Allow us to attach to the JVM using JDWP for remote debugging
       - "5005:5005"
 
     environment:

@@ -89,42 +89,39 @@ the above `group` and `viewgroup` parts correspond to `bl.group=field:title&bl.v
 
 The values of `bl.op` are:
 
-| bl.op               | Operation                                        | BLS URL equivalent         | Extra parameter |
-|---------------------|--------------------------------------------------|----------------------------|-----------------|
-| server-info         | Server information                               | /                          |                 |
-| corpus-info         | Corpus information, including fields and values  | /CORPUS                    |                 |
-| corpus-status       | Corpus (indexing) status                         | /CORPUS/status             |                 |
-| field-info          | Info about (metadata or annotated) field         | /CORPUS/field/FIELDNAME    | field           |
-| hits                | Search (and optionally group) hits               | /CORPUS/hits               |                 |
-| docs                | Search (and optionally group) documents          | /CORPUS/docs               |                 |
-| doc-info            | Get document metadata and other information      | /CORPUS/docs/PID           | docpid          |
-| doc-contents        | Get the full contents of a document (if allowed) | /CORPUS/docs/PID/contents  | docpid          |
-| doc-snippet         | Get snippet of a document (if allowed)           | /CORPUS/docs/PID/snippet   | docpid          |
-| termfreq            | Calculate term frequencies                       | /CORPUS/termfreq           |                 |
-| autocomplete        | Return terms matching a prefix in a field        | /CORPUS/autocomplete       |                 |
-| list-input-formats  | List available input formats                     | /CORPUS/input-formats      |                 |
-| input-format-info   | Info about an input format                       | /CORPUS/input-formats/NAME | inputformat     |
-| input-format-xslt   | Generate XSLT for an input format                | /CORPUS/input-formats/NAME | inputformat     |
-| cache-info          | Show cache contents                              | /CORPUS/cache-info         |                 |
-| cache-clear         | Clear the cache (debug mode only)                | /CORPUS/cache-clear        |                 |
-| create-corpus       | Create corpus (NOT IMPLEMENTED YET)              |                            |                 |
-| delete-corpus       | Delete corpus (NOT IMPLEMENTED YET)              |                            |                 |
-| add-to-corpus       | Add to corpus (NOT IMPLEMENTED YET)              |                            |                 |
-| write-input-format  | Write input format (NOT IMPLEMENTED YET)         |                            |                 |
-| delete-input-format | Write input format (NOT IMPLEMENTED YET)         |                            |                 |
+| bl.op               | Operation                                              | BLS URL equivalent         | Extra parameter |
+|---------------------|--------------------------------------------------------|----------------------------|-----------------|
+| server-info         | Server information                                     | /                          |                 |
+| corpus-info         | Corpus information, including fields and values        | /CORPUS                    |                 |
+| corpus-status       | Corpus (indexing) status                               | /CORPUS/status             |                 |
+| field-info          | Info about (metadata or annotated) field               | /CORPUS/field/FIELDNAME    | field           |
+| hits                | Search (and optionally group) hits                     | /CORPUS/hits               |                 |
+| docs                | Search (and optionally group) documents                | /CORPUS/docs               |                 |
+| doc-info            | Get document metadata and other information            | /CORPUS/docs/PID           | docpid          |
+| doc-contents        | Get the full contents of a document (if allowed)       | /CORPUS/docs/PID/contents  | docpid          |
+| doc-snippet         | Get snippet of a document (if allowed)                 | /CORPUS/docs/PID/snippet   | docpid          |
+| termfreq            | Calculate term frequencies                             | /CORPUS/termfreq           |                 |
+| autocomplete        | Return terms matching a prefix in a field              | /CORPUS/autocomplete       |                 |
+| list-input-formats  | List available input formats                           | /CORPUS/input-formats      |                 |
+| input-format-info   | Info about an input format                             | /CORPUS/input-formats/NAME | inputformat     |
+| input-format-xslt   | Generate XSLT for an input format                      | /CORPUS/input-formats/NAME | inputformat     |
+| cache-info          | Show cache contents (NOT IMPLEMENTED YET)              | /CORPUS/cache-info         |                 |
+| cache-clear         | Clear the cache (debug mode only; NOT IMPLEMENTED YET) | /CORPUS/cache-clear        |                 |
+| create-corpus       | Create corpus (NOT IMPLEMENTED YET)                    |                            |                 |
+| delete-corpus       | Delete corpus (NOT IMPLEMENTED YET)                    |                            |                 |
+| add-to-corpus       | Add to corpus (NOT IMPLEMENTED YET)                    |                            |                 |
+| write-input-format  | Write input format (NOT IMPLEMENTED YET)               |                            |                 |
+| delete-input-format | Write input format (NOT IMPLEMENTED YET)               |                            |                 |
 
-(WIP)
 
-bl.op=docs&bl.patt="the"
 
-bl.op=docs&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
+Some example queries:
 
-bl.op=doc-info&bl.docpid=PRint602&bl.listvalues=lemma,word&bl.wordstart=100&bl.wordend=200&bl.field=title&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
-
-bl.op=doc-contents&bl.docpid=PRint602
-
-bl.op=doc-snippet&bl.docpid=PRint602&bl.listvalues=lemma,word&bl.wordstart=100&bl.wordend=200&bl.field=title&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city
-
-bl.op=termfreq&bl.field=contents&bl.annotation=lemma
-
-bl.op=autocomplete&bl.field=contents&bl.annotation=lemma&bl.term=a
+- Documents containing "the": `bl.op=docs&bl.patt="the"`
+- The same documents grouped by title, viewing a single group: `bl.op=docs&bl.patt="the"&bl.group=field:title`
+- Viewing a single group: `bl.op=docs&bl.patt="the"&bl.group=field:title&bl.viewgroup=str:interview about conference experience and impressions of city`
+- Information about a document: `bl.op=doc-info&bl.docpid=PRint602`
+- Document contents: `bl.op=doc-contents&bl.docpid=PRint602`
+- Document snippet: `bl.op=doc-snippet&bl.docpid=PRint602&bl.wordstart=100&bl.wordend=200`
+- Term frequencies: `bl.op=termfreq&bl.field=contents&bl.annotation=lemma`
+- Autocomplete: `bl.op=autocomplete&bl.field=contents&bl.annotation=lemma&bl.term=a`

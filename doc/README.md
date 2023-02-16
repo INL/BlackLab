@@ -3,7 +3,7 @@
 This repo contains various documents related to BlackLab development:
 
 - [BlackLab Archives of Relevant Knowledge (BARKs)](bark/#readme), high-level descriptions of the project, processes and proposed changes.
-- [PLAN.md](../PLAN.md), todo-list for the current major change. Quite technical.
+- [DISTRIBUTED PLAN.md](DISTRIBUTED PLAN.md), todo-list for the current major change. Quite technical.
 - [Docker](../docker/#readme), information about the BlackLab Docker image
 - [Instrumentation](../instrumentation/#readme), information about monitoring BlackLab Server using e.g. Prometheus.
 - [Integration tests](../test/#readme), tests for BlackLab Server that are automatically run by GitHub Actions and can also be run manually.

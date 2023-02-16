@@ -1,8 +1,6 @@
-# Plans: Solr integration
+# Enable distributed search using Solr
 
-This is where we will keep track of our current development tasks.
-
-The current major task is to enable BlackLab to integrate with Solr. The goal is to utilize Solr's distributed indexing and search capabilities with BlackLab.
+This is where we will keep track of our current goal of enabling BlackLab to integrate with Solr in order to utilize Solr's distributed indexing and search capabilities with BlackLab.
 
 Integrating with Solr will involve the following steps.
 
@@ -92,7 +90,7 @@ Because this is a completely new index format, we are free to change its layout 
   - [x] move BLS URL parsing into QueryParamsBls?
   - [x] read config file from core dir
 - [x] Enable indexing via Solr (custom or via standard import mechanisms?)
-- [ ] Make it possible to run the tests on the Solr version too
+- [x] Make it possible to run the tests on the Solr version too
 - [x] Create a Dockerfile for Solr+BlackLab
 
 
@@ -105,9 +103,11 @@ The proxy supports the full BlackLab Server API, but forwards requests to be exe
 
 Tasks:
 
-- [ ] Adapt the aggregator to be a generic BlackLab proxy with pluggable backend
-- [ ] Translate BLS requests (API versions 1 and 2) to Solr requests.
-- [ ] Translate between BLS API version 1 to 2.
+- [x] Adapt the aggregator to be a generic BlackLab proxy with pluggable backend
+- [x] Translate BLS requests to Solr requests.
+- [x] Ensure compatibility between API v3 and v4.
+
+LATER?
 - [ ] (optional) implement logic to decide per-corpus what backend we need to send the request to. I.e. if it's an old index, send it to the old BLS, otherwise send it to Solr. Also implement a merged "list corpora" view.
 
 

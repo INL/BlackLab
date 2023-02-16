@@ -4,23 +4,25 @@ version: '3.9'
 
 services:
 
+  # Our reverse proxy to Solr
   proxy:
+
     build:
       context: ..
       dockerfile: proxy/Dockerfile
 
     volumes:
-
       # Configuration file (pointing to solr and specifying a default corpus name)
-      - ./testdata/proxy.yaml:/etc/blacklab/proxy.yaml
+      - ../solr/proxy.yaml:/etc/blacklab/proxy.yaml
 
     ports:
-
       # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
       - "8080:8080"
 
+
   # Solr backend we're proxying for
   solr:
+
     build:
       context: ..
       dockerfile: solr/Dockerfile
