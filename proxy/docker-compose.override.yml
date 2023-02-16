@@ -1,0 +1,11 @@
+# Docker Compose dev override file for the BlackLab proxy.
+# NOTE: this opens port 8983, but in production, you probably don't want that.
+version: '3.9'
+
+services:
+
+  # Solr backend we proxy to
+  solr:
+
+    ports:
+        - "8983:8983"

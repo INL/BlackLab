@@ -1,0 +1,18 @@
+# Docker Compose dev override file for BlackLab with Solr.
+# NOTE: this runs the container in JVM debug mode; not suitable for production!
+
+version: '3.9'
+
+services:
+
+  solr:
+
+    ports:
+
+      # Allow us to attach to the JVM using JDWP for remote debugging
+      - "5005:5005"
+
+    environment:
+
+      # Enable JDWP remote debugging on port 5005
+      - "SOLR_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
