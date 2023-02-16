@@ -27,6 +27,7 @@ services:
       - "5005:5005"
     volumes:
       - ./data:/test-data
+      - ./start-with-test-data.sh:/etc/blacklab/start-with-test-data.sh
       - blacklab-test-data:/data
 
   # Proxy to Solr
