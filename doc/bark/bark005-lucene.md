@@ -22,4 +22,4 @@ When upgrading to a new Lucene version breaks compatibility, we will only do so 
 
 Updating to a new Lucene version may break compatibility with older indexes. For example, when updating from Lucene 5 to 8, that broke compatibility with all existing indexes. Lucene's backward compatibility policy is to support indexes of the last two major versions.
 
-Upgrading Lucene from version 8 to 9 should not break compatibility with Lucene 8 (BlackLab 3.x) indexes.
+Upgrading Lucene from version 8 to 9 should not break compatibility with Lucene 8 (BlackLab 3/4) indexes.

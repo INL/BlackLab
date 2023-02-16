@@ -16,20 +16,23 @@ We prefer to support older index versions and existing applications making use o
 
 We generally support index formats for as long as possible. For example, for version 3.0, we removed support for index formats that were replaced more than 6 years ago.
 
+However, Lucene eventually drops support for older index formats, forcing us to do so as well. See also [BARK 5 - Lucene](bark005-lucene.md).
+
 
 ### BlackLab Server REST API
 
 We do our best to keep the BlackLab Server REST API stable. We may add a parameter, or a key in a response object in a minor version, but will do our best not to remove anything or make other breaking changes until a major version update.
 
-We've recently introduced a `parameters.apiCompatibility` setting/parameter to deal with minor API changes. 
+We've recently introduced a way to deal with minor API changes: the `api` request parameter or `parameters.api` setting. See [API compatibility](https://inl.github.io/BlackLab/server/rest-api/). We will support "old" versions of the API for some time, perhaps a year or so, so users have time to update their software.
 
-If we decide to do a major overhaul of the REST API (which has room for improvement), we will try to add it behind a version path (e.g. `/v2/`) and still support the old API as well, at least for a while.
+If we decide to do a major overhaul of the REST API, we will use this parameter as well to make the transition easier.
 
 
 ### BlackLab Java API
 
 Methods slated for removal will generally be deprecated first, with a recommended alternative, then removed in the next major version. There may occasionally be exceptions to this, e.g. if the interface changes so much that supporting the deprecated method is not practical.
 
+We do generally assume that most users are using the webservice, not the Java code, so we are less worried about making Java changes than changing the REST API.
 
 
 ## Impact on users

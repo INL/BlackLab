@@ -1,7 +1,7 @@
 # BARK 9 - Optional content store
 
 - **type:** change
-- **status:** planned (2022)
+- **status:** planned
 
 Provide for alternatives to the built-in content store, such as an external webservice where the original content can be retrieved when needed.
 
