@@ -143,7 +143,7 @@ parameters:
     # What REST API version to attempt compatibility with.
     # Valid values are currently: 3.0, 4.0, current, experimental.
     # Defaults to current.
-    apiCompatibility: current
+    api: current
 
 
 

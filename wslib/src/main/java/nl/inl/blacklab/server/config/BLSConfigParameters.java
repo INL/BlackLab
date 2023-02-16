@@ -36,7 +36,7 @@ public class BLSConfigParameters {
     private boolean omitEmptyCaptures = false;
 
     /** API compatibility (defaults to the "current" one) */
-    private ApiVersion apiCompatibility = ApiVersion.CURRENT;
+    private ApiVersion api = ApiVersion.CURRENT;
 
     /**
      * Set up parameter default values from the configuration.
@@ -48,7 +48,7 @@ public class BLSConfigParameters {
         WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefaultValue());
         WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
         WebserviceParameter.setDefaultValue(WebserviceParameter.WORDS_AROUND_HIT, "" + getContextSize().getDefaultValue());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApiCompatibility().versionString());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApi().versionString());
     }
 
     @JsonGetter("defaultSearchSensitivity")
@@ -143,11 +143,11 @@ public class BLSConfigParameters {
         this.omitEmptyCaptures = omitEmptyCaptures;
     }
 
-    public void setApiCompatibility(String apiCompatibility) {
-        this.apiCompatibility = ApiVersion.fromValue(apiCompatibility);
+    public void setApi(String api) {
+        this.api = ApiVersion.fromValue(api);
     }
 
-    public ApiVersion getApiCompatibility() {
-        return this.apiCompatibility;
+    public ApiVersion getApi() {
+        return this.api;
     }
 }

@@ -4,6 +4,10 @@ This documents all of BlackLab Server's endpoints. For a more guided introducion
 
 <!-- (used this [template](https://github.com/jamescooke/restapidocs/tree/master/examples)) -->
 
+## API compatibility
+
+There are currently two supported versions of the REST API, with only minor differences between them (mostly related to consistency and not including redundant information). Configure `parameters.api` in your `blacklab-server.yaml` or pass the `api` parameter to a request to select which API version to attempt compatibility with. See [proxy/README.md](https://github.com/INL/BlackLab/blob/dev/proxy/README.md).
+
 ## Root endpoint
 
 This endpoint returns available corpora and server information.

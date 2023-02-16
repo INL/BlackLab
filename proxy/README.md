@@ -27,8 +27,8 @@ Changes:
 - Similarly, the document info page (`/docs/DOC_PID`) no longer includes `docFields`, `metadataFieldDisplayNames` or 
   `metadataFieldGroups` by default.
 
-For all of these changes, you can add `compatibility=3` to produce the old behaviour. You can also specify 
-`parameters.apiCompatibility=3` in `blacklab-server.yaml` (or `blacklab-webservice.yaml` for Solr).
+For all of these changes, you can add `api=3` to produce the old behaviour. You can also specify 
+`parameters.api=3` in `blacklab-server.yaml` (or `blacklab-webservice.yaml` for Solr).
 This is meant as a transitional measure, and v3 compatibility will eventually be removed.
 
 ## Configuration
