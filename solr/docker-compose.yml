@@ -5,8 +5,9 @@
 version: '3.9'
 
 services:
-
   solr:
+    image: instituutnederlandsetaal/blacklab-solr:${IMAGE_VERSION}
+
     build:
       context: ..
       dockerfile: solr/Dockerfile

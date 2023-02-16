@@ -18,11 +18,11 @@ services:
     volumes:
       - blacklab-data:/data
 
+
   # Creates new index
   indexer:
     image: instituutnederlandsetaal/blacklab:${IMAGE_VERSION}
-    profiles:
-      - tools
+    profiles: [ "tools" ]
     build:
         context: .
         dockerfile: docker/Dockerfile
@@ -34,6 +34,30 @@ services:
       - "${BLACKLAB_FORMATS_DIR:-./formats}:/etc/blacklab/formats"
       - "${INDEX_INPUT_DIR:-./input}:/input"
       - blacklab-data:/data
+
+
+  # BlackLab as a Solr component
+  solr:
+    profiles: [ "tools" ]
+    image: instituutnederlandsetaal/blacklab-solr:${IMAGE_VERSION}
+    build:
+      context: .
+      dockerfile: solr/Dockerfile
+
+
+  # Reverse proxy to Solr or BLS
+  proxy:
+    profiles: [ "tools" ]
+    image: instituutnederlandsetaal/blacklab-proxy:${IMAGE_VERSION}
+    build:
+      context: .
+      dockerfile: proxy/Dockerfile
+    volumes:
+      # Configuration file (pointing to solr and specifying a default corpus name)
+      - ./solr/proxy.yaml:/etc/blacklab/proxy.yaml
+    ports:
+      # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
+      - "8080:8080"
 
 
 # Volume where our indexes will be stored.

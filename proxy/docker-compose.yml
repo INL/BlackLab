@@ -6,6 +6,7 @@ services:
 
   # Our reverse proxy to Solr
   proxy:
+    image: instituutnederlandsetaal/blacklab-proxy:${IMAGE_VERSION}
 
     build:
       context: ..
