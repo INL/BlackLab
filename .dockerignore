@@ -12,6 +12,8 @@
 **/*.iml
 **/.vscode
 **/doc
+/*.md
+**/README.md
 **/.project
 **/.classpath
 **/.factorypath

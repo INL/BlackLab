@@ -26,8 +26,8 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
-        "blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
-        "indices", "user" })
+        //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
+        "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
 public class Server implements Cloneable {
 
