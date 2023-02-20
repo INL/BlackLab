@@ -21,6 +21,9 @@ RUN mkdir -p /var/solr/data/test
 # Copy test core
 COPY solr/src/test/resources/existing-index /var/solr/data/test/
 
+# Copy BlackLab configset & solr.xml
+COPY solr/conf/ /var/solr/data/
+
 # NOTE: the following commented-out locations for our JARs don't work! See below.
 
 # Install JAR in core's lib dir (will be loaded autmatically)
@@ -51,13 +54,11 @@ COPY --from=builder \
      /app/solr/target/blacklab-solr-no-deps.jar /app/solr/target/lib/*.jar \
      /opt/solr/server/solr-webapp/webapp/WEB-INF/lib/
 
-# Copy BlackLab configset & solr.xml
-COPY solr/conf /opt/solr/server/solr/
 
 USER root
 
 # Make sure Solr can write snapshot data
-RUN chgrp -R $SOLR_GROUP /var/solr/data/test/ && \
-    chmod -R g+rw /var/solr/data/test/
+RUN chgrp -R $SOLR_GROUP /var/solr/data/ && \
+    chmod -R g+rw /var/solr/data/
 
 USER $SOLR_USER

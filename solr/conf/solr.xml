@@ -21,7 +21,11 @@
 
 
 <!--
- All (relative) paths are relative to the installation path
+(within our docker container) there are two paths:
+ - /opt/solr (the installation path)
+ - /var/solr (the data path).
+
+ All (relative) paths are relative to the data path.
 -->
 <solr>
 

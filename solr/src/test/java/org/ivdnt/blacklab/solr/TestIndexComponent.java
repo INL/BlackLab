@@ -90,7 +90,7 @@ public class TestIndexComponent {
         r.setContentWriter(new RequestWriter.StringPayloadContentWriter(content, "application/xml"));
 
         NamedList<Object> response = SolrTestServer.client().request(r);
-        System.err.println("Add file response\n" + response.toString());
+        response.forEach((k, v) -> System.out.println(k + ": " + v));
     }
 
     /** A test of a weird case that somehow sometime broke the code during development */

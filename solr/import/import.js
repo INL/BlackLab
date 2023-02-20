@@ -8,7 +8,7 @@ const http = require('http');
  * @param {Record<string, string>} query 
  * @returns 
  */
-async function send(postData, query) {
+async function send(postData, query, url='/solr/blacklab/update') {
   function querystring() {
     return Object.entries(query || {}).reduce((q, [key, value]) => {
       const part = `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
@@ -18,21 +18,17 @@ async function send(postData, query) {
 
   
   query = querystring();
-  console.log(query);
-
   /** @type {http.RequestOptions} */
   var options = {
     hostname: 'localhost',
     port: 8983,
-    path: '/solr/blacklab/update' + query,
+    path: url + query,
     method: 'POST',
     headers: {
-      'Content-Type': 'application/xml',
-      'Content-Length': Buffer.byteLength(postData, 'utf8')
+      'Content-Type': postData ? 'application/xml' : 'text/plain',
+      'Content-Length': postData ? Buffer.byteLength(postData, 'utf8') : 0
     },
   };
-
-  // Object.entries(query, ([k, v]) => options.headers[k] = encodeURIComponent(v));
 
   return new Promise((resolve, reject) => {
     var req = http.request(options, (res) => {
@@ -42,23 +38,39 @@ async function send(postData, query) {
       });
     });
     req.on('error', reject);
-    req.write(postData, 'utf8');
+    if (postData) req.write(postData, 'utf8');
     req.end();
-  
   });
 }
 
 
 (async () => {
+
+   
+
   // attempt to create core
   try {
-    const r = await send('', `admin/cores?action=CREATE&name=blacklab&configSet=blacklab`)
+    const r = await send(null, {
+      action: 'CREATE', 
+      name: 'blacklab', 
+      instanceDir: 'blacklab',
+      configSet: 'blacklab',
+      // schema: '../configsets/blacklab/managed-schema',
+      // config: '../configsets/blacklab/solrconfig.xml',
+      // dataDir: 'data',
+    }, `/solr/admin/cores`)
     console.log('core created?'); 
     console.log(String(r));
   } catch (e) {
-    console.log(String(e))
-    return;
+    e = String(e);
+    if (!e.includes("exists")) {
+      console.log(String(e))
+      return;
+    } else {
+      console.log('Core already exists. Skipping creation.')
+    }
   }
+  // return;
     
     
   let config = process.argv[2];
