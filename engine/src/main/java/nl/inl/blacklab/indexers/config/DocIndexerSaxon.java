@@ -91,6 +91,12 @@ public class DocIndexerSaxon extends DocIndexerConfig {
 
     protected void processAnnotatedField(NodeInfo doc, ConfigAnnotatedField annotatedField)
             throws XPathExpressionException {
+
+        if (!annotatedField.getStandoffAnnotations().isEmpty())
+            throw new UnsupportedOperationException("standoffAnnotations section not supported with Saxon at the " +
+                    "moment. Please try using Saxon's advanced XPath support to locate the appropriate annotation " +
+                    "values for each word instead.");
+
         setCurrentAnnotatedFieldName(annotatedField.getName());
 
         /*
@@ -178,7 +184,10 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                 beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
-                    // now supporting multiple values here
+                    if (!annotation.getProcess().isEmpty())
+                        throw new UnsupportedOperationException("Processing steps on annotations are not supported " +
+                                "with Saxon at the moment. Please try using Saxon's advanced XPath support to " +
+                                "process values instead.");
                     int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
                     for (Object val : saxonHelper.find(annotation.getValuePath(),word)) {
                         String value = saxonHelper.getValue(".", val);
@@ -236,6 +245,7 @@ public class DocIndexerSaxon extends DocIndexerConfig {
             List<ConfigMetadataField> fields = b.getFields();
             for (int i = 0; i < fields.size(); i++) { // NOTE: fields may be added during loop, so can't iterate
                 ConfigMetadataField f = fields.get(i);
+
                 // Metadata field configs without a valuePath are just for
                 // adding information about fields captured in forEach's,
                 // such as extra processing steps
