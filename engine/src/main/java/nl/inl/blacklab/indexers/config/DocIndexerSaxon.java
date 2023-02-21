@@ -178,9 +178,16 @@ public class DocIndexerSaxon extends DocIndexerConfig {
                 beginWord();
                 for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
                     ConfigAnnotation annotation = an.getValue();
-                    // TODO we may need to support multiple values here
-                    String value = saxonHelper.getValue(annotation.getValuePath(),word);
-                    annotation(annotation.getName(),value,1,null);
+                    // now supporting multiple values here
+                    int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
+                    for (Object val : saxonHelper.find(annotation.getValuePath(),word)) {
+                        String value = saxonHelper.getValue(".", val);
+                        annotation(annotation.getName(),value,positionIncrement,null);
+                        if (annotation.isMultipleValues() == false) {
+                            break; // if multiple were matched, only index the first one
+                        }
+                        positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
+                    }
                 }
                 charPos = saxonHelper.getEndPos(word);
                 endWord();
