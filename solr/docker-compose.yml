@@ -35,3 +35,14 @@ services:
       # Enable JDWP remote debugging on port 5005
       - "SOLR_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
       - "SOLR_HEAP=4g"
+      - "solr.allow.unsafe.resourceloading=true" # test
+    
+    volumes: 
+    - ${HOME}/blacklab/formats:/var/solr/data/formats
+
+    networks:
+      - blacklab_duct
+
+networks:
+  blacklab_duct:
+    driver: bridge
