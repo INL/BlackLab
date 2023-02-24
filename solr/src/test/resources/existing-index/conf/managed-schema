@@ -48,6 +48,16 @@
                omitTermFreqAndPositions="true"
     />
 
+    <fieldType name="metadata_numeric" class="solr.IntPointField"
+               indexed="true"
+               stored="true"
+               docValues="false"
+               multiValued="true"
+               positionIncrementGap="100"
+               omitNorms="true"
+               omitTermFreqAndPositions="true"
+    />
+
     <fieldType name="metadata_pid" class="solr.TextField"
                indexed="true"
                stored="true"
@@ -66,7 +76,7 @@
             <tokenizer class="solr.StandardTokenizerFactory"/>
             <filter class="solr.LowerCaseFilterFactory"/>
         </analyzer>
-   </fieldType>
+    </fieldType>
 
     <fieldType name="term" class="solr.StrField"
                indexed="true"
@@ -77,12 +87,7 @@
                termOffsets="true"
     />
 
-    <!-- <fieldType name="numeric" class="solr.IntPointField"
-               indexed="true"
-               stored="true"
-               docValues="true"
-               omitPositions="true"
-    /> -->
+
 
     <!-- example annotations. Searching in these yields no results for some reason. -->
     <field name="contents%starttag@s" type="term"/>

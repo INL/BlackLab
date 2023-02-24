@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.solr;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -63,6 +64,8 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         // find the directory
         SolrParams params = req.getParams();
         IndexReader reader = req.getSearcher().getIndexReader();
+
+        registerBlackLabFormats();
 
         // todo something like "bl.method"
         if ("add".equals(params.get("bl.format"))) {
@@ -216,5 +219,10 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
             req.getCore().setLatestSchema(newSchema);
             req.updateSchemaToLatest();
         }
+    }
+
+    void registerBlackLabFormats() {
+        // TODO use solr home instead of hardcoding
+        DocumentFormats.registerFormatsInDirectories(List.of(new File("/var/solr/data/formats")));
     }
 }

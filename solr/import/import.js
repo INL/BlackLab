@@ -45,18 +45,15 @@ async function send(postData, query, url='/solr/blacklab/update') {
 
 
 (async () => {
-
-   
-
   // attempt to create core
   try {
     const r = await send(null, {
-      action: 'CREATE', 
-      name: 'blacklab', 
+      action: 'CREATE',
+      name: 'blacklab',
       instanceDir: 'blacklab',
       configSet: 'blacklab',
-      // schema: '../configsets/blacklab/managed-schema',
-      // config: '../configsets/blacklab/solrconfig.xml',
+      // schema: '../configsets/blacklab/conf/managed-schema',
+      // config: '../configsets/blacklab/conf/solrconfig.xml',
       // dataDir: 'data',
     }, `/solr/admin/cores`)
     console.log('core created?'); 
@@ -70,7 +67,7 @@ async function send(postData, query, url='/solr/blacklab/update') {
       console.log('Core already exists. Skipping creation.')
     }
   }
-  // return;
+  return;
     
     
   let config = process.argv[2];
