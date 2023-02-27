@@ -169,8 +169,10 @@ public class TermsIntegratedSegment implements AutoCloseable {
                     return null;
 
                 this.t.term = termStringFile.readString();
+
                 this.t.sortPositionInsensitive = this.termID2InsensitivePosFile.readInt();
                 this.t.sortPositionSensitive = this.termID2SensitivePosFile.readInt();
+
                 this.t.id = i++;
 
                 return this.t;

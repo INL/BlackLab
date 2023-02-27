@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
@@ -312,7 +313,7 @@ public class QueryTool {
     public static void main(String[] args) throws ErrorOpeningIndex {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
-        LogUtil.setupBasicLoggingConfig();
+        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         // Parse command line
         File indexDir = null;

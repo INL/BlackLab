@@ -9,11 +9,11 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.util.BlockTimer;
@@ -24,8 +24,8 @@ import nl.inl.util.BlockTimer;
  */
 public class TermsIntegrated extends TermsReaderAbstract {
 
-    private Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
-    private Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
+    private Map<String, CollationKey> collationCacheSensitive;
+    private Map<String, CollationKey> collationCacheInsensitive;
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
@@ -38,19 +38,19 @@ public class TermsIntegrated extends TermsReaderAbstract {
         /** This term's global id */
         int globalTermId;
 
-        /** Sort position within each segment, case-sensitive */
-        int[] segmentPosSensitive;
-
-        /** Sort position within each segment, case-insensitive */
-        int[] segmentPosInsensitive;
+//        /** Sort position within each segment, case-sensitive */
+//        int[] segmentPosSensitive;
+//
+//        /** Sort position within each segment, case-insensitive */
+//        int[] segmentPosInsensitive;
 
         public TermInIndex(String term, int globalTermId, int numberOfSegments) {
             this.term = term;
             this.globalTermId = globalTermId;
-            segmentPosSensitive = new int[numberOfSegments];
-            Arrays.fill(segmentPosSensitive, -1);
-            segmentPosInsensitive = new int[numberOfSegments];
-            Arrays.fill(segmentPosInsensitive, -1);
+//            segmentPosSensitive = new int[numberOfSegments];
+//            Arrays.fill(segmentPosSensitive, -1);
+//            segmentPosInsensitive = new int[numberOfSegments];
+//            Arrays.fill(segmentPosInsensitive, -1);
         }
 
         @Override
@@ -70,6 +70,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
         @Override
         public int compareTo(TermInIndex other) {
+            /*
+
+            @@@FI disabled because it might make things a lot slower (as well as cost a lot
+                  of extra memory to keep track of.
+
             int[] pa, pb;
 
             if (compareSensitive) {
@@ -79,6 +84,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
                 pa = segmentPosInsensitive;
                 pb = other.segmentPosInsensitive;
             }
+
             // See if there's a segment these two terms both occur in.
             // If so, we already know how these terms compare.
             for (int i = 0; i < pa.length; i++) {
@@ -89,7 +95,9 @@ public class TermsIntegrated extends TermsReaderAbstract {
                     return Integer.compare(a, b);
                 }
             }
+
             // There are no segments that these terms both occur in.
+            */
             Collator coll = compareSensitive ? collator : collatorInsensitive;
             Map<String, CollationKey> cache = compareSensitive ? collationCacheSensitive : collationCacheInsensitive;
 
@@ -119,6 +127,17 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
         super(collators);
+
+        // Cache collation keys during (multi-threaded) sort
+        // TODO: we probably won't use the "advanced" trick where we prevent comparisons
+        //   by keeping track of per-segment term ordering, as that's much slower when there's many
+        //   segments (as is often te case in large corpora). This means that we will need all
+        //   CollationKeys, so we can just calculate them beforehand, and we don't need ConcurrentHashMaps
+        //   anymore.
+        //   We can probably simplify more this way, and maybe find other ways to speed up startup
+        //   for very large corpora.
+        collationCacheSensitive = new ConcurrentHashMap<>();
+        collationCacheInsensitive = new ConcurrentHashMap<>();
 
         try (BlockTimer bt = BlockTimer.create("Determine " + luceneField + " terms list")) {
             this.indexReader = indexReader;
@@ -198,20 +217,26 @@ public class TermsIntegrated extends TermsReaderAbstract {
             // Remember the mapping from segment id to global id
             segmentToGlobal[t.id] = tii.globalTermId;
             // Remember the sort position of this term in this segment, to save time comparing later
-            tii.segmentPosSensitive[s.ord()] = t.sortPositionSensitive;
-            tii.segmentPosInsensitive[s.ord()] = t.sortPositionInsensitive;
+//            tii.segmentPosSensitive[s.ord()] = t.sortPositionSensitive;
+//            tii.segmentPosInsensitive[s.ord()] = t.sortPositionInsensitive;
         }
 
         s.close();
     }
 
     private int[] determineSort(TermInIndex[] terms, boolean sensitive) {
-        compareSensitive = sensitive;
+        compareSensitive = sensitive; // make sure we use the correct comparison
+
+        // Initialize array of indexes to be sorted
         int[] sorted = new int[terms.length];
         for (int i = 0; i < terms.length; i++) {
             sorted[i] = i;
         }
-        IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+
+        //OLD (single-threaded): IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+        //(SLOWER!) Arrays.parallelSort(sorted, Comparator.comparing(a -> terms[a]));
+        ParallelIntSorter.parallelSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+
         return sorted;
     }
 
