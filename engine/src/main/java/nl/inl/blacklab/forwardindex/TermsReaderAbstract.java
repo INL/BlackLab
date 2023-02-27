@@ -12,6 +12,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
 
 public abstract class TermsReaderAbstract implements Terms {
     protected static final Logger logger = LogManager.getLogger(TermsReaderAbstract.class);
@@ -63,30 +64,38 @@ public abstract class TermsReaderAbstract implements Terms {
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }
 
-    protected void finishInitialization(String[] terms, int[] termId2SensitivePosition,
+    protected void finishInitialization(String name, String[] terms, int[] termId2SensitivePosition,
             int[] termId2InsensitivePosition) {
 
         numberOfTerms = terms.length;
 
-        // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
+        TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds;
         int numGroupsThatAreNotSizeOne = 0;
-        TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
-        for(int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
-            int insensitivePosition = termId2InsensitivePosition[termId];
-            IntArrayList v = new IntArrayList(1);
-            v.add(termId);
+        try (BlockTimer bt = BlockTimer.create(name + ": finish > invert mapping")) {
+            // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
+            insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
+            for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
+                int insensitivePosition = termId2InsensitivePosition[termId];
+                IntArrayList v = new IntArrayList(1);
+                v.add(termId);
 
-            IntArrayList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
-            if (prev != null) {
-                v.addAll(prev);
+                IntArrayList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
+                if (prev != null) {
+                    v.addAll(prev);
 
-                if (prev.size() == 1)
-                    ++numGroupsThatAreNotSizeOne;
+                    if (prev.size() == 1)
+                        ++numGroupsThatAreNotSizeOne;
+                }
             }
         }
 
-        fillTermDataGroups(terms, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
-        fillTermCharData(terms);
+        try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermDataGroups")) {
+            fillTermDataGroups(terms, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds,
+                    numGroupsThatAreNotSizeOne);
+        }
+        try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermCharData")) {
+            fillTermCharData(terms);
+        }
     }
 
     // OPT: optimize by removing the 1 at groupId < terms.length

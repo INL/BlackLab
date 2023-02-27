@@ -16,6 +16,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -118,27 +119,50 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
         super(collators);
-        this.indexReader = indexReader;
-        this.luceneField = luceneField;
-        TermInIndex[] terms = readTermsFromIndex();
 
-        // Determine the sort orders for the terms
-        int[] sortedSensitive = determineSort(terms, true);
-        int[] sortedInsensitive = determineSort(terms, false);
+        try (BlockTimer bt = BlockTimer.create("Determine " + luceneField + " terms list")) {
+            this.indexReader = indexReader;
+            this.luceneField = luceneField;
+            TermInIndex[] terms;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": readTermsFromIndex")) {
+                terms = readTermsFromIndex();
+            }
 
-        // Process the values we've determined so far the same way as with the external forward index.
-        int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
-        int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
-        
-        // OPT: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+            // Determine the sort orders for the terms
+            int[] sortedSensitive;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": determineSort sensitive")) {
+                sortedSensitive = determineSort(terms, true);
+            }
+            int[] sortedInsensitive;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": determineSort insensitive")) {
+                sortedInsensitive = determineSort(terms, false);
+            }
 
-        finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+            // Process the values we've determined so far the same way as with the external forward index.
+            int[] termId2SensitivePosition;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": invert sensitive")) {
+                termId2SensitivePosition = invert(terms, sortedSensitive, true);
+            }
+            int[] termId2InsensitivePosition;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": invert insensitive")) {
+                termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
+            }
 
-        // clear temporary variables
-        this.collationCacheInsensitive = null;
-        this.collationCacheSensitive = null;
-        this.indexReader = null;
+            String[] termStrings;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": extract terms strings")) {
+                // OPT: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
+                termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+            }
+
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": finishInitialization")) {
+                finishInitialization(luceneField, termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+            }
+
+            // clear temporary variables
+            this.collationCacheInsensitive = null;
+            this.collationCacheSensitive = null;
+            this.indexReader = null;
+        }
     }
 
 

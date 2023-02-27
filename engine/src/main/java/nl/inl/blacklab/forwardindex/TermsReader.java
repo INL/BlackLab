@@ -52,7 +52,7 @@ public class TermsReader extends TermsReaderAbstract {
             ib.position(ib.position() + numberOfTerms); // Advance past unused sortPos -> id array (left in there for file compatibility)
             ib.get(termId2InsensitivePosition);
 
-            finishInitialization(terms, termId2SensitivePosition, termId2InsensitivePosition);
+            finishInitialization(termsFile.getAbsolutePath().toString(), terms, termId2SensitivePosition, termId2InsensitivePosition);
 
             //logger.debug("finishing initializing termsreader " + termsFile + " - " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms to process " + numberOfTerms + " terms");
         }
