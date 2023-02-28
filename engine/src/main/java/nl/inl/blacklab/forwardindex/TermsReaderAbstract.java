@@ -90,7 +90,7 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermDataGroups")) {
-            fillTermDataGroups(terms, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds,
+            fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds,
                     numGroupsThatAreNotSizeOne);
         }
         try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermCharData")) {
@@ -110,7 +110,7 @@ public abstract class TermsReaderAbstract implements Terms {
      *
      * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
      */
-    protected void fillTermDataGroups(String[] terms, int[] termId2SortPositionSensitive,
+    protected void fillTermDataGroups(int numberOfTerms, int[] termId2SortPositionSensitive,
             int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntArrayList> insensitiveSortPosition2TermIds,
             int numGroupsThatAreNotSizeOne) {
         // This is a safe upper bound: one group per sensitive (with one entry) = 2*numberOfTerms.
@@ -119,15 +119,15 @@ public abstract class TermsReaderAbstract implements Terms {
         // to accurately do this we'd need to know the number of groups with only one entry
 
         int numGroupsOfSizeOne = insensitiveSortPosition2TermIds.size() - numGroupsThatAreNotSizeOne;
-        int numTermsInGroupsAboveSizeOne = terms.length - numGroupsOfSizeOne;
+        int numTermsInGroupsAboveSizeOne = numberOfTerms - numGroupsOfSizeOne;
 
         this.termId2SensitivePosition = termId2SortPositionSensitive;
         this.termId2InsensitivePosition = termId2SortPositionInsensitive;
         // to be filled
-        this.groupId2TermIds = new int[terms.length * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne
+        this.groupId2TermIds = new int[numberOfTerms * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne
                 + numTermsInGroupsAboveSizeOne];
-        this.insensitivePosition2GroupId = new int[terms.length]; // NOTE: since not every insensitive sort position exists, this will have empty spots
-        this.sensitivePosition2GroupId = new int[terms.length];
+        this.insensitivePosition2GroupId = new int[numberOfTerms]; // NOTE: since not every insensitive sort position exists, this will have empty spots
+        this.sensitivePosition2GroupId = new int[numberOfTerms];
 
         Arrays.fill(this.insensitivePosition2GroupId, -1);
 

@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.util.BlockTimer;
@@ -234,8 +235,10 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
 
         //OLD (single-threaded): IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
-        //(SLOWER!) Arrays.parallelSort(sorted, Comparator.comparing(a -> terms[a]));
-        ParallelIntSorter.parallelSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+        //(SLOWER than single-threaded!) Arrays.parallelSort(sorted, Comparator.comparing(a -> terms[a]));
+        //(FASTER but incorrect, see TestParallelIntSorter) ParallelIntSorter.parallelSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+        //(SLOWER than GPT version!)
+        IntArrays.parallelQuickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
 
         return sorted;
     }
