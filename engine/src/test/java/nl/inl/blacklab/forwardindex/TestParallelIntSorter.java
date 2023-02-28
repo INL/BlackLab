@@ -10,7 +10,8 @@ import org.junit.Test;
 public class TestParallelIntSorter {
 
     /** Test that arrays of different sizes sort correctly (smaller arrays don't use threading). */
-    int[] SIZES_TO_TEST = { 0, 1, 2, 10, 100, 1_000, 9_999, 10_000, 10_001, 20_000, 30_000, 40_000, 100_000, 1_000_000 };
+    private static final int[] SIZES_TO_TEST = { 0, 1, 2, 10, 100, 1_000, 9_999, 10_000, 10_001, 20_000, 30_000,
+            40_000, 100_000, 1_000_000 };
 
     @BeforeClass
     public static void setUp() {

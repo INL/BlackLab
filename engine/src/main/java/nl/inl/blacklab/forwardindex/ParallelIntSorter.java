@@ -8,6 +8,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.ints.IntComparator;
+
 /**
  * Quicky sort very large primitive integer array in parallel.
  *
@@ -21,12 +24,13 @@ import java.util.concurrent.TimeUnit;
  * - originally used to create executor once, but shut it down after every call
  * - shutdown the executor before the first two tasks had a chance to add other tasks
  * - originally used Comparator, causing bad performance through boxing/unboxing
+ * - use FastUtil's quicksort for sorting smaller arrays as it's cleverer than basic quicksort
  *
  * Other than that, the code was correct.
  */
 public class ParallelIntSorter {
 
-    private static final int THRESHOLD = 10000; // Minimum size of array to parallelize sorting
+    private static final int THRESHOLD = 10_000; // Minimum size of array to parallelize sorting
 
     private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors(); // Number of threads to use
 
@@ -67,17 +71,17 @@ public class ParallelIntSorter {
         }
     }
 
-    interface IntComparator {
-        int compare(int a, int b);
-    }
-
     private static void parallelSort(int[] array, int left, int right, IntComparator comparator) {
         if (left < right) {
             int pivotIndex = partition(array, left, right, comparator);
             if (right - left + 1 < THRESHOLD) {
                 // Sort sequentially for small arrays
-                quicksort(array, left, pivotIndex - 1, comparator);
-                quicksort(array, pivotIndex + 1, right, comparator);
+
+                //quicksort(array, left, pivotIndex - 1, comparator);
+                //quicksort(array, pivotIndex + 1, right, comparator);
+                IntArrays.quickSort(array, left, pivotIndex, comparator);
+                IntArrays.quickSort(array, pivotIndex + 1, right + 1, comparator);
+
             } else {
                 // Sort left and right partitions in parallel using thread pool
                 if (ENABLE_MULTITHREADING) {
@@ -110,13 +114,13 @@ public class ParallelIntSorter {
         return storeIndex;
     }
 
-    private static void quicksort(int[] array, int left, int right, IntComparator comparator) {
-        if (left < right) {
-            int pivotIndex = partition(array, left, right, comparator);
-            quicksort(array, left, pivotIndex - 1, comparator);
-            quicksort(array, pivotIndex + 1, right, comparator);
-        }
-    }
+//    private static void quicksort(int[] array, int left, int right, IntComparator comparator) {
+//        if (left < right) {
+//            int pivotIndex = partition(array, left, right, comparator);
+//            quicksort(array, left, pivotIndex - 1, comparator);
+//            quicksort(array, pivotIndex + 1, right, comparator);
+//        }
+//    }
 
     private static void swap(int[] array, int i, int j) {
         int temp = array[i];
