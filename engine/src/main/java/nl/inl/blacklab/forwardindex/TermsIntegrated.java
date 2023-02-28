@@ -14,7 +14,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.util.BlockTimer;
@@ -45,7 +44,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
 //        /** Sort position within each segment, case-insensitive */
 //        int[] segmentPosInsensitive;
 
-        public TermInIndex(String term, int globalTermId, int numberOfSegments) {
+        public TermInIndex(String term, int globalTermId/*, int numberOfSegments*/) {
             this.term = term;
             this.globalTermId = globalTermId;
 //            segmentPosSensitive = new int[numberOfSegments];
@@ -236,9 +235,10 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
         //OLD (single-threaded): IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
         //(SLOWER than single-threaded!) Arrays.parallelSort(sorted, Comparator.comparing(a -> terms[a]));
-        //(FASTER but incorrect, see TestParallelIntSorter) ParallelIntSorter.parallelSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
-        //(SLOWER than GPT version!)
-        IntArrays.parallelQuickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+        //(SLOWER than GPT version?)
+        //IntArrays.parallelQuickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+
+        ParallelIntSorter.parallelSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
 
         return sorted;
     }
@@ -286,6 +286,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     public TermInIndex termInIndex(String term, int globalTermId) {
-        return new TermInIndex(term, globalTermId, indexReader.leaves().size());
+        return new TermInIndex(term, globalTermId/*, indexReader.leaves().size()*/);
     }
 }
