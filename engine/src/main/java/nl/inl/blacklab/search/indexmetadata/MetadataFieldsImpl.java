@@ -335,9 +335,13 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         setTopLevelCustom(metadata.custom());
 
         metadataFieldValuesFactory = factory;
-        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
-            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
-        }
+//        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
+//            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
+//        }
+
+        // Find DocValues for all metadata fields in parallel
+        metadataFieldInfos.entrySet().parallelStream().
+                forEach(e -> e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory));
     }
 
     public void setTopLevelCustom(CustomPropsMap topLevelCustom) {
