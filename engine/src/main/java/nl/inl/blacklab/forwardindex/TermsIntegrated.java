@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -85,17 +86,16 @@ public class TermsIntegrated extends TermsReaderAbstract {
         try (BlockTimer bt = BlockTimer.create("Determine " + luceneField + " terms list")) {
             this.indexReader = indexReader;
             this.luceneField = luceneField;
-            TermInIndex[] terms;
-            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": readTermsFromIndex")) {
-                terms = readTermsFromIndex();
-            }
-            String[] termStrings;
-            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": extract terms strings")) {
-                // OPT: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-                termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
-            }
 
-            // Determine the sort orders for the terms
+            // Read the terms from all the different segments and determine global term ids
+            Pair<TermInIndex[], String[]> termAndStrings;
+            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": readTermsFromIndex")) {
+                termAndStrings = readTermsFromIndex();
+            }
+            TermInIndex[] terms = termAndStrings.getLeft();
+            String[] termStrings = termAndStrings.getRight();
+
+            // Determine the sort orders for the global terms list
             List<int[]> sortedInverted;
             try (BlockTimer bt2 = BlockTimer.create(luceneField + ": determineSort and invert")) {
                 sortedInverted = List.of(true, false).parallelStream()
@@ -119,7 +119,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
             int[] termId2InsensitivePosition = sortedInverted.get(1);
 
             // Process the values we've determined so far the same way as with the external forward index.
-
             try (BlockTimer bt2 = BlockTimer.create(luceneField + ": finishInitialization")) {
                 finishInitialization(luceneField, termStrings, termId2SensitivePosition, termId2InsensitivePosition);
             }
@@ -129,7 +128,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
     }
 
-    private TermInIndex[] readTermsFromIndex() {
+    private Pair<TermInIndex[], String[]> readTermsFromIndex() {
         // A list of globally unique terms that occur in our index, sorted by (global) id.
         Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
 
@@ -138,7 +137,9 @@ public class TermsIntegrated extends TermsReaderAbstract {
             readTermsFromSegment(globalTermIds, l);
         }
 
-        return globalTermIds.values().toArray(TermInIndex[]::new);
+        TermInIndex[] terms = globalTermIds.values().toArray(TermInIndex[]::new);
+        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+        return Pair.of(terms, termStrings);
     }
 
     private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) {
