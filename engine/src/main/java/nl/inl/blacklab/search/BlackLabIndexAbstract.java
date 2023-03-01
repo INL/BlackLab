@@ -225,6 +225,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
             if (!indexMode)
                 indexMetadata.freeze();
+            if (traceIndexOpening())
+                logger.debug("    (got index metadata)");
 
             // TODO abstract away this special solrMode parameter (which is used to avoid closing the reader if we're in solr mode)
             // we should abstract out the creation of the objects that depend on the analyzer
@@ -232,6 +234,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // so that we do not need this (ugly and brittle!) check here and can just call the function on whichever IndexObjectFactory
             // we have and trust that it will do the right thing.
             finishOpeningIndex(indexDir, createNewIndex, solrMode);
+            logger.debug("    (done with finishOpeningIndex)");
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {

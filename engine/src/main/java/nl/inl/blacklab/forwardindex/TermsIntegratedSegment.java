@@ -89,8 +89,6 @@ public class TermsIntegratedSegment implements AutoCloseable {
         public String term;
         /** The local term id. */
         public int id;
-//        public int sortPositionSensitive;
-//        public int sortPositionInsensitive;
     }
 
     @NotThreadSafe
@@ -167,14 +165,8 @@ public class TermsIntegratedSegment implements AutoCloseable {
             try {
                 if (i >= n)
                     return null;
-
                 this.t.term = termStringFile.readString();
-
-//                this.t.sortPositionInsensitive = this.termID2InsensitivePosFile.readInt();
-//                this.t.sortPositionSensitive = this.termID2SensitivePosFile.readInt();
-
                 this.t.id = i++;
-
                 return this.t;
             } catch (IOException e) {
                 throw new RuntimeException(e);

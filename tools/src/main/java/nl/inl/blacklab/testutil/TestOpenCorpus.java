@@ -1,36 +1,43 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.logging.log4j.Level;
 
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.util.LogUtil;
 
 /** Simple test program to monitor opening a BlackLab corpus */
 public class TestOpenCorpus {
 
-    public static void main(String[] args) throws Exception {
+    static final AtomicBoolean terminate = new AtomicBoolean();
 
+    public static void main(String[] args) throws Exception {
+        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
-        File indexDir = new File(args[0]);
-        BlackLabIndex index = BlackLab.implicitInstance().open(indexDir);
-        TextPattern tp = CorpusQueryLanguageParser.parse("[word=\"waterval\"]");
-        QueryExecutionContext context = index.defaultExecutionContext(index.mainAnnotatedField());
-        BLSpanQuery query = tp.translate(context);
+        // Make sure we catch Ctrl+C and terminate gracefully
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.err.println("Shutdown hook running");
+            terminate.set(true);
+        }));
 
-        // Occasionally perform a simple search while we monitor init log messages. Ctrl+C to terminate.
-        while (true) {
-            Hits hits = index.search().find(query).execute();
-            System.err.println("Found " + hits.size() + "hits.");
-            Thread.sleep(100000);
+        File indexDir = new File(args[0]);
+        try (BlackLabIndex index = BlackLab.implicitInstance().open(indexDir)) {
+            // Wait until terminated by user (Ctrl+C to terminate)
+            int i = 0;
+            while (!terminate.get()) {
+                // Avoid busy waiting
+                Thread.sleep(1000);
+
+                // Show that we're still running
+                i++;
+                if (i % 30 == 0)
+                    System.err.println(String.format("%3d s...", i));
+            }
+            System.err.println("outside loop");
         }
     }
 }

@@ -99,7 +99,7 @@ public abstract class TermsReaderAbstract implements Terms {
     }
 
     // OPT: optimize by removing the 1 at groupId < terms.length
-    // Since we know it's always there (no collisions in this section - length is always 1)
+    //   Since we know it's always there (no collisions in this section - length is always 1)
     /**
      * Initializes the following members:
      * - {@link #termId2SensitivePosition}
