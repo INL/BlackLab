@@ -9,6 +9,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -69,11 +70,10 @@ public abstract class TermsReaderAbstract implements Terms {
 
         numberOfTerms = terms.length;
 
-        TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds;
+        TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
         int numGroupsThatAreNotSizeOne = 0;
         try (BlockTimer bt = BlockTimer.create(name + ": finish > invert mapping")) {
             // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
-            insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
             for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
                 int insensitivePosition = termId2InsensitivePosition[termId];
                 IntArrayList v = new IntArrayList(1);
@@ -90,8 +90,8 @@ public abstract class TermsReaderAbstract implements Terms {
         }
 
         try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermDataGroups")) {
-            fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds,
-                    numGroupsThatAreNotSizeOne);
+            fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition,
+                    insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
         }
         try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermCharData")) {
             fillTermCharData(terms);
@@ -200,9 +200,9 @@ public abstract class TermsReaderAbstract implements Terms {
         for (int i = 0; i < numberOfTerms; ++i) {
             this.termId2CharDataOffset[i] = bytesWritten;
             byte[] bytes = terms[i].getBytes(DEFAULT_CHARSET);
-            for (byte b : bytes) {
-                this.termCharData.add(bytesWritten++, b);
-            }
+            byte[][] bb = BigArrays.wrap(bytes);
+            termCharData.addElements(bytesWritten, bb);
+            bytesWritten += bytes.length;
         }
         this.termCharData.trim(); // clear extra space.
     }
