@@ -129,10 +129,12 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     private Pair<TermInIndex[], String[]> readTermsFromIndex() {
-        // A list of globally unique terms that occur in our index, sorted by (global) id.
+        // Globally unique terms that occur in our index (sorted by global id)
         Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
 
-        // Intentionally single-threaded; multi-threaded loses too much time to locking
+        // Intentionally single-threaded; multi-threaded is slower.
+        // Probably because reading from a single file sequentially is more efficient than alternating between
+        // several files..?
         for (LeafReaderContext l: indexReader.leaves()) {
             readTermsFromSegment(globalTermIds, l);
         }
@@ -190,7 +192,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
      *
      * @params terms terms the array refers to
      * @param array array of term ids sorted by term string
-     * @param sensitive sensitive comparisons?
+     * @param cmp comparator to use for equality test
      * @return inverted array
      */
     private int[] invertSortedTermsArray(TermInIndex[] terms, int[] array, Comparator<TermInIndex> cmp) {
