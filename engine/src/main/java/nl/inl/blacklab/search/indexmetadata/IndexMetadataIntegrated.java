@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,7 +12,6 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -27,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerFactory;
@@ -789,4 +788,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return custom;
     }
 
+    @Override
+    public String getIndexMetadataAsString() {
+        try {
+            return metadataDocument.getMetadataJson(index.reader(), metadataDocId());
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
 }

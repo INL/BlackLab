@@ -166,4 +166,11 @@ public interface IndexMetadata extends Freezable {
         return -1;
     }
 
+    /**
+     * Debug method to retrieve the index metadata in string form (JSON)
+     * @return index metadata
+     */
+    default String getIndexMetadataAsString() {
+        throw new UnsupportedOperationException("Not supported for this index type (check dir for existing indexmetadata.yaml)");
+    }
 }
