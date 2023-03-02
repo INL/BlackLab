@@ -179,7 +179,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
 
         // Below is about 5% faster than FastUtil's IntArrays.parallelQuickSort() for very large arrays
-        ParallelIntSorter.parallelSort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
+        ParallelIntSorter sorter = new ParallelIntSorter();
+        sorter.parallelSort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
 
         return sorted;
     }

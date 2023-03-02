@@ -6,7 +6,6 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
@@ -36,32 +35,29 @@ public class ParallelIntSorter {
 
     private static final boolean ENABLE_MULTITHREADING = true;
 
-    private static ExecutorService executor;
+    private static final Random random = new Random();
 
-    private static Random random = new Random();
+    private static final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS); // Thread pool
 
-    private static List<Future<?>> tasks = new ArrayList<>();
-
-    public static void close() {
-    }
-
-    public static void setSeed(long seed) {
-        random = new Random(seed);
-    }
-
-    public static void parallelSort(int[] array, IntComparator comparator) {
+    static {
         // Make sure our executor gets shutdown at program exit, or we will hang.
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (executor != null) {
-                synchronized (executor) {
-                    // Shut down now
-                    if (!executor.isTerminated()) {
-                        executor.shutdownNow();
-                    }
+            synchronized (executor) {
+                // Shut down now
+                if (!executor.isTerminated()) {
+                    executor.shutdownNow();
                 }
             }
         }));
-        executor = Executors.newFixedThreadPool(NUM_THREADS); // Thread pool
+    }
+
+    private List<Future<?>> tasks = new ArrayList<>();
+
+    public static void setSeed(long seed) {
+        random.setSeed(seed);
+    }
+
+    public void parallelSort(int[] array, IntComparator comparator) {
         parallelSort(array, 0, array.length - 1, comparator);
 
         // Wait for any tasks to complete
@@ -76,21 +72,9 @@ public class ParallelIntSorter {
                 throw new RuntimeException(e);
             }
         }
-
-        synchronized (executor) {
-            // Shut down gracefully
-            if (!executor.isTerminated()) {
-                executor.shutdown();
-                try {
-                    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
     }
 
-    private static void parallelSort(int[] array, int left, int right, IntComparator comparator) {
+    private void parallelSort(int[] array, int left, int right, IntComparator comparator) {
         if (left < right) {
             int pivotIndex = partition(array, left, right, comparator);
             if (right - left + 1 < THRESHOLD) {
@@ -118,7 +102,7 @@ public class ParallelIntSorter {
         }
     }
 
-    public static int partition(int[] array, int left, int right, IntComparator comparator) {
+    public int partition(int[] array, int left, int right, IntComparator comparator) {
         int pivotIndex = left + random.nextInt(right - left + 1);
         int pivotValue = array[pivotIndex];
         swap(array, pivotIndex, right);
@@ -133,15 +117,7 @@ public class ParallelIntSorter {
         return storeIndex;
     }
 
-//    private static void quicksort(int[] array, int left, int right, IntComparator comparator) {
-//        if (left < right) {
-//            int pivotIndex = partition(array, left, right, comparator);
-//            quicksort(array, left, pivotIndex - 1, comparator);
-//            quicksort(array, pivotIndex + 1, right, comparator);
-//        }
-//    }
-
-    private static void swap(int[] array, int i, int j) {
+    private void swap(int[] array, int i, int j) {
         int temp = array[i];
         array[i] = array[j];
         array[j] = temp;
