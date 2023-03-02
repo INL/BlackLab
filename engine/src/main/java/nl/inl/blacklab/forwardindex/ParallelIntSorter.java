@@ -36,17 +36,31 @@ public class ParallelIntSorter {
 
     private static final boolean ENABLE_MULTITHREADING = true;
 
-    private static ExecutorService executor; // Thread pool
+    private static ExecutorService executor;
 
     private static Random random = new Random();
 
     private static List<Future<?>> tasks = new ArrayList<>();
+
+    public static void close() {
+    }
 
     public static void setSeed(long seed) {
         random = new Random(seed);
     }
 
     public static void parallelSort(int[] array, IntComparator comparator) {
+        // Make sure our executor gets shutdown at program exit, or we will hang.
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (executor != null) {
+                synchronized (executor) {
+                    // Shut down now
+                    if (!executor.isTerminated()) {
+                        executor.shutdownNow();
+                    }
+                }
+            }
+        }));
         executor = Executors.newFixedThreadPool(NUM_THREADS); // Thread pool
         parallelSort(array, 0, array.length - 1, comparator);
 
@@ -63,11 +77,16 @@ public class ParallelIntSorter {
             }
         }
 
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (InterruptedException e) {
-            // Handle exception
+        synchronized (executor) {
+            // Shut down gracefully
+            if (!executor.isTerminated()) {
+                executor.shutdown();
+                try {
+                    executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
