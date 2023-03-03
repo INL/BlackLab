@@ -162,6 +162,10 @@ public class TermsIntegrated extends TermsReaderAbstract {
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
         int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
         while (it.hasNext()) {
+            // @@@ why doesnt this trigger...?
+            if (Thread.interrupted())
+                throw new RuntimeException("Interrupted");
+
             TermsIntegratedSegment.TermInSegment t = it.next();
             TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> new TermInIndex(t.term, globalTermIds.size()));
             // Remember the mapping from segment id to global id

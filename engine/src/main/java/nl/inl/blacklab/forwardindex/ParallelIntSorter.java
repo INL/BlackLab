@@ -6,6 +6,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
@@ -37,7 +38,17 @@ public class ParallelIntSorter {
 
     private static final Random random = new Random();
 
-    private static final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS); // Thread pool
+    /** Give each searchthread a unique number */
+    private static final AtomicInteger threadCounter = new AtomicInteger(1);
+
+    /** Our thread pool */
+    private static final ExecutorService executor = Executors.newFixedThreadPool(NUM_THREADS, runnable -> {
+        Thread worker = Executors.defaultThreadFactory().newThread(runnable);
+        int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
+        worker.setDaemon(true); // don't prevent JVM from exiting
+        worker.setName("BLParallelSort-" + threadNumber);
+        return worker;
+    });
 
     static {
         // Make sure our executor gets shutdown at program exit, or we will hang.

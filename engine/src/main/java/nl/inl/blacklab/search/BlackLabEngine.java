@@ -102,11 +102,17 @@ public final class BlackLabEngine implements AutoCloseable {
         synchronized (engines) {
             engines.add(this);
         }
-        initializationExecutorService = Executors.newSingleThreadExecutor();
+        initializationExecutorService = Executors.newSingleThreadExecutor(runnable -> {
+            Thread worker = Executors.defaultThreadFactory().newThread(runnable);
+            int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
+            worker.setDaemon(true); // don't prevent JVM exiting
+            worker.setName("BLInit-" + threadNumber);
+            return worker;
+        });
         this.searchExecutorService = Executors.newCachedThreadPool(runnable -> {
             Thread worker = Executors.defaultThreadFactory().newThread(runnable);
             int threadNumber = threadCounter.getAndUpdate(i -> (i + 1) % 10000);
-            worker.setName("SearchThread-" + threadNumber);
+            worker.setName("BLSearch-" + threadNumber);
             return worker;
         });
 
@@ -241,6 +247,7 @@ public final class BlackLabEngine implements AutoCloseable {
         closeExecutorPool(searchExecutorService);
         closeExecutorPool(initializationExecutorService);
         synchronized (indexReader2BlackLabIndex) {
+
             List<BlackLabIndex> copy = new ArrayList<>(indexReader2BlackLabIndex.values()); // avoid concurrent mod.
             for (BlackLabIndex index: copy) {
                 index.close();
