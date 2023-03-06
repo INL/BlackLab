@@ -70,7 +70,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         String fileName = params.get("bl.filename");
         String indexName = req.getCore().getName();
         try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, format)) {
-            Indexer indexer = Indexer.get(index, params.get("bl.format"));
+            Indexer indexer = Indexer.create(index, params.get("bl.format"));
             InputStream is = stream.getStream();
 
             indexer.index(fileName, is);

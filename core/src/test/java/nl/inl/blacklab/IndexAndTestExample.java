@@ -80,7 +80,7 @@ public class IndexAndTestExample {
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true,
                     "exampleformat", null);
-            indexer = Indexer.get(indexWriter, "exampleformat");
+            indexer = Indexer.create(indexWriter, "exampleformat");
             for (int i = 0; i < testData.length; i++) {
                 indexer.index("test" + (i + 1), testData[i].getBytes(StandardCharsets.UTF_8));
             }

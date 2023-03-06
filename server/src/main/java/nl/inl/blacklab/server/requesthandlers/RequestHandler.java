@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -360,13 +361,22 @@ public abstract class RequestHandler {
         // Create the WebserviceParams structure from the UserRequest.
         // We cast to WebserviceParamsImpl because we need to set some fields based on the URL path.
         // Better would be to move that logic into UserRequestBls.
-        params = (WebserviceParamsImpl)userRequest.getParams(blIndex(), operation);
+        Optional<Index> index = index();
+        BlackLabIndex blIndex = index.isEmpty() ? null : (index.get().getStatus() == IndexStatus.INDEXING ? null : index.get().blIndex());
+        params = (WebserviceParamsImpl)userRequest.getParams(blIndex, operation);
+    }
+
+    protected Optional<Index> index() {
+        if (indexName.isEmpty() || !indexMan.indexExists(indexName))
+            return Optional.empty();
+        return Optional.of(indexMan.getIndex(indexName));
     }
 
     protected BlackLabIndex blIndex() throws BlsException {
-        if (indexName.isEmpty() || !indexMan.indexExists(indexName))
-            return null;
-        return indexMan.getIndex(indexName).blIndex();
+        Optional<Index> index = index();
+        if (index.isPresent())
+            return index.get().blIndex();
+        return null;
     }
 
     public User getUser() {

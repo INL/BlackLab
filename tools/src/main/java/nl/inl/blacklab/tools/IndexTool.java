@@ -290,7 +290,7 @@ public class IndexTool {
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
                 formatIdentifier, indexTemplateFile, indexType);
-            indexer = Indexer.get(indexWriter, formatIdentifier);
+            indexer = Indexer.create(indexWriter, formatIdentifier);
         } catch (DocumentFormatNotFound e) {
             System.err.println(e.getMessage());
             usage();

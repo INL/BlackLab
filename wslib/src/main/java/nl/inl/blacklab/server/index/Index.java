@@ -49,8 +49,6 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class Index {
 
-    //private static final Logger logger = LogManager.getLogger(Index.class);
-
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
 
     public enum IndexStatus {
@@ -197,8 +195,8 @@ public class Index {
      * @throws ServiceUnavailable when the index is in use.
      */
     // TODO index should not have references to it held for longer times outside of this class
-    // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
-    // (this is a large job)
+    //   (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
+    //   (this is a large job)
     public synchronized BlackLabIndex blIndex() throws InternalServerError, ServiceUnavailable {
         openForSearching();
         return index;
@@ -253,11 +251,9 @@ public class Index {
         if (this.index != null)
             return;
 
-        //logger.debug("    Opening index '" + id + "', dir = " + dir);
         try {
             index = searchMan.blackLabInstance().open(this.dir);
             index.setCache(searchMan.getBlackLabCache());
-            //logger.debug("Done opening index '" + id + "'");
         } catch (IndexVersionMismatch e) {
             throw BlsException.indexVersionMismatch(e);
         } catch (ErrorOpeningIndex e) {
@@ -266,7 +262,7 @@ public class Index {
     }
 
     /**
-     * Get an Indexer that can be used to add new data to this Index. Only one
+     * Create an Indexer that can be used to add new data to this Index. Only one
      * indexer may be obtained at a time, meaning until the previous indexer can
      * be/has been cleaned up, ServiceUnavailable will be thrown. It is up to the
      * user to close the returned Indexer.
@@ -279,13 +275,13 @@ public class Index {
      * @throws ServiceUnavailable when there is already an Indexer on this Index
      *             that's still processing
      */
-    public synchronized Indexer getIndexer() throws InternalServerError, ServiceUnavailable {
+    public synchronized Indexer createIndexer() throws InternalServerError, ServiceUnavailable {
         cleanupClosedIndexerOrThrow();
         close(); // Close any BlackLabIndex that is still in search mode
         try {
             BlackLabIndexWriter indexWriter = searchMan.blackLabInstance()
                     .openForWriting(this.dir, false);
-            this.indexer = Indexer.get(indexWriter);
+            this.indexer = Indexer.create(indexWriter);
             indexer.setNumberOfThreadsToUse(BlackLab.config().getIndexing().getNumberOfThreads());
         } catch (Exception e) {
             throw new InternalServerError("Could not open index '" + id + "'", "INTERR_OPENING_INDEXWRITER", e);
@@ -311,10 +307,13 @@ public class Index {
     /**
      * Close this index if it's currently open. Force closes any current Indexer.
      * Has no effect if the index was already closed.
+     *
+     * TODO: this might take quite a while. It would be better not to synchronize
+     *   the entire method, but only a few quick lines that update the index status
+     *   when appropriate.
      */
     public synchronized void close() {
         if (this.index != null) {
-//          searchMan.getCache().clearCacheForIndex(this.id);
             searchMan.getBlackLabCache().removeSearchesForIndex(this.index);
 
             this.index.close();
