@@ -338,7 +338,13 @@ public class IndexManager {
 
         // Can we even delete the whole tree? If not, don't even try.
         try {
-            FileUtil.deleteTree(indexDir, true);
+            FileUtil.processTree(indexDir, new FileUtil.FileTask() {
+                @Override
+                public void process(File f) {
+                    if (!f.canWrite())
+                        throw new RuntimeException("Cannot delete " + f);
+                }
+            });
         } catch (Exception e) {
             throw new InternalServerError("Could not delete index. Can't delete all files/dirs.", "INTERR_DELETING_INDEX7");
         }
