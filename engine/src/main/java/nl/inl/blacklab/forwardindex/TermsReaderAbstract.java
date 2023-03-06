@@ -3,8 +3,6 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.util.Arrays;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import gnu.trove.iterator.TIntObjectIterator;
@@ -17,6 +15,8 @@ import nl.inl.util.BlockTimer;
 
 public abstract class TermsReaderAbstract implements Terms {
 
+    /** Log the timing of different initialization tasks? */
+    protected static final boolean LOG_TIMINGS = false;
     /** How many terms total are there? (always valid) */
     private int numberOfTerms;
 
@@ -71,7 +71,7 @@ public abstract class TermsReaderAbstract implements Terms {
 
         TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
         int numGroupsThatAreNotSizeOne = 0;
-        try (BlockTimer bt = BlockTimer.create(name + ": finish > invert mapping")) {
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > invert mapping")) {
             // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
             for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
                 int insensitivePosition = termId2InsensitivePosition[termId];
@@ -88,11 +88,11 @@ public abstract class TermsReaderAbstract implements Terms {
             }
         }
 
-        try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermDataGroups")) {
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermDataGroups")) {
             fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition,
                     insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
         }
-        try (BlockTimer bt = BlockTimer.create(name + ": finish > fillTermCharData")) {
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermCharData")) {
             fillTermCharData(terms);
         }
     }

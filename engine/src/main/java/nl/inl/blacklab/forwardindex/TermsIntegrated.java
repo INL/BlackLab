@@ -29,9 +29,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = (a, b) -> a.ckInsensitive.compareTo(b.ckInsensitive);
 
-    /** Log the timing of different initialization tasks? */
-    private static final boolean LOG_TIMINGS = false;
-
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
      *  sort positions in one of the segments is much faster than calculating CollationKeys).
