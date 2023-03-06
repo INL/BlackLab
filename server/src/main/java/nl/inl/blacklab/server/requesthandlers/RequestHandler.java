@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
@@ -360,13 +361,17 @@ public abstract class RequestHandler {
         // Create the WebserviceParams structure from the UserRequest.
         // We cast to WebserviceParamsImpl because we need to set some fields based on the URL path.
         // Better would be to move that logic into UserRequestBls.
-        params = (WebserviceParamsImpl)userRequest.getParams(blIndex(), operation);
+        BlackLabIndex index = indexMan.getIndex(indexName).getStatus() == IndexStatus.INDEXING ? null : blIndex();
+        params = (WebserviceParamsImpl)userRequest.getParams(index, operation);
     }
 
     protected BlackLabIndex blIndex() throws BlsException {
         if (indexName.isEmpty() || !indexMan.indexExists(indexName))
             return null;
-        return indexMan.getIndex(indexName).blIndex();
+        Index index = indexMan.getIndex(indexName);
+        if (index.getStatus() == IndexStatus.INDEXING)
+            throw new BlackLabRuntimeException("Index " + indexName + " is indexing, not available");
+        return index.blIndex();
     }
 
     public User getUser() {
