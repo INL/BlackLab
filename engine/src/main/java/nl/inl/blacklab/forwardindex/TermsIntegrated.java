@@ -29,6 +29,9 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = (a, b) -> a.ckInsensitive.compareTo(b.ckInsensitive);
 
+    /** Log the timing of different initialization tasks? */
+    private static final boolean LOG_TIMINGS = false;
+
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
      *  sort positions in one of the segments is much faster than calculating CollationKeys).
@@ -82,15 +85,13 @@ public class TermsIntegrated extends TermsReaderAbstract {
             throws InterruptedException {
         super(collators);
 
-        logger.debug("START TermsIntegrated constructor");
-
-        try (BlockTimer bt = BlockTimer.create("Determine " + luceneField + " terms list")) {
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, "Determine " + luceneField + " terms list")) {
             this.indexReader = indexReader;
             this.luceneField = luceneField;
 
             // Read the terms from all the different segments and determine global term ids
             Pair<TermInIndex[], String[]> termAndStrings;
-            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": readTermsFromIndex")) {
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": readTermsFromIndex")) {
                 termAndStrings = readTermsFromIndex();
             }
             TermInIndex[] terms = termAndStrings.getLeft();
@@ -98,7 +99,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
             // Determine the sort orders for the global terms list
             List<int[]> sortedInverted;
-            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": determineSort and invert")) {
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": determineSort and invert")) {
                 sortedInverted = List.of(true, false).parallelStream()
                         .map(sensitive -> {
                             Comparator<TermInIndex> cmp = sensitive ? CMP_TERM_SENSITIVE : CMP_TERM_INSENSITIVE;;
@@ -120,7 +121,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             int[] termId2InsensitivePosition = sortedInverted.get(1);
 
             // Process the values we've determined so far the same way as with the external forward index.
-            try (BlockTimer bt2 = BlockTimer.create(luceneField + ": finishInitialization")) {
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": finishInitialization")) {
                 finishInitialization(luceneField, termStrings, termId2SensitivePosition, termId2InsensitivePosition);
             }
 
@@ -164,7 +165,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
         int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
         while (it.hasNext()) {
-            // @@@ why doesnt this trigger...?
+            // Make sure this can be interrupted if e.g. a commandline utility completes
+            // before this initialization is finished.
             if (Thread.interrupted())
                 throw new InterruptedException();
 
@@ -186,6 +188,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
         // Below is about 5% faster than FastUtil's IntArrays.parallelQuickSort() for very large arrays
         ParallelIntSorter sorter = new ParallelIntSorter();
+
         sorter.parallelSort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
 
         return sorted;

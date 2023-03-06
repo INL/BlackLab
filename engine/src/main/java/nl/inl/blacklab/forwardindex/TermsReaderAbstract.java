@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
 public abstract class TermsReaderAbstract implements Terms {
-    protected static final Logger logger = LogManager.getLogger(TermsReaderAbstract.class);
 
     /** How many terms total are there? (always valid) */
     private int numberOfTerms;

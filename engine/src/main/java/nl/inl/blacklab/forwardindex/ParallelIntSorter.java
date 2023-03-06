@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
 
 /**
- * Quicky sort very large primitive integer array in parallel.
+ * Quickly sort very large primitive integer array in parallel.
  *
  * We need this for determining global term sort order while opening very large integrated indexes.
  *
@@ -25,16 +25,13 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  * - shutdown the executor before the first two tasks had a chance to add other tasks
  * - originally used Comparator, causing bad performance through boxing/unboxing
  * - use FastUtil's quicksort for sorting smaller arrays as it's cleverer than basic quicksort
- *
- * Other than that, the code was correct.
+ * - changed static methods to instance methods for threadsafety
  */
 public class ParallelIntSorter {
 
     private static final int THRESHOLD = 10_000; // Minimum size of array to parallelize sorting
 
     private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors(); // Number of threads to use
-
-    private static final boolean ENABLE_MULTITHREADING = true;
 
     private static final Random random = new Random();
 
@@ -90,24 +87,15 @@ public class ParallelIntSorter {
             int pivotIndex = partition(array, left, right, comparator);
             if (right - left + 1 < THRESHOLD) {
                 // Sort sequentially for small arrays
-
-                //quicksort(array, left, pivotIndex - 1, comparator);
-                //quicksort(array, pivotIndex + 1, right, comparator);
                 IntArrays.quickSort(array, left, pivotIndex, comparator);
                 IntArrays.quickSort(array, pivotIndex + 1, right + 1, comparator);
-
             } else {
                 // Sort left and right partitions in parallel using thread pool
-                if (ENABLE_MULTITHREADING) {
-                    Future<?> f1 = executor.submit(() -> parallelSort(array, left, pivotIndex - 1, comparator));
-                    Future<?> f2 = executor.submit(() -> parallelSort(array, pivotIndex + 1, right, comparator));
-                    synchronized (tasks) {
-                        tasks.add(f1);
-                        tasks.add(f2);
-                    }
-                } else {
-                    parallelSort(array, left, pivotIndex - 1, comparator);
-                    parallelSort(array, pivotIndex + 1, right, comparator);
+                Future<?> f1 = executor.submit(() -> parallelSort(array, left, pivotIndex - 1, comparator));
+                Future<?> f2 = executor.submit(() -> parallelSort(array, pivotIndex + 1, right, comparator));
+                synchronized (tasks) {
+                    tasks.add(f1);
+                    tasks.add(f2);
                 }
             }
         }
