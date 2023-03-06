@@ -49,8 +49,6 @@ import nl.inl.blacklab.server.search.SearchManager;
  */
 public class Index {
 
-    //private static final Logger logger = LogManager.getLogger(Index.class);
-
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
 
     public enum IndexStatus {
@@ -197,8 +195,8 @@ public class Index {
      * @throws ServiceUnavailable when the index is in use.
      */
     // TODO index should not have references to it held for longer times outside of this class
-    // (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
-    // (this is a large job)
+    //   (references should ideally never leave a synchronized(Index) block... [this might not be possible due to simultaneous searches]
+    //   (this is a large job)
     public synchronized BlackLabIndex blIndex() throws InternalServerError, ServiceUnavailable {
         openForSearching();
         return index;
@@ -253,11 +251,9 @@ public class Index {
         if (this.index != null)
             return;
 
-        //logger.debug("    Opening index '" + id + "', dir = " + dir);
         try {
             index = searchMan.blackLabInstance().open(this.dir);
             index.setCache(searchMan.getBlackLabCache());
-            //logger.debug("Done opening index '" + id + "'");
         } catch (IndexVersionMismatch e) {
             throw BlsException.indexVersionMismatch(e);
         } catch (ErrorOpeningIndex e) {
@@ -318,7 +314,6 @@ public class Index {
      */
     public synchronized void close() {
         if (this.index != null) {
-//          searchMan.getCache().clearCacheForIndex(this.id);
             searchMan.getBlackLabCache().removeSearchesForIndex(this.index);
 
             this.index.close();
