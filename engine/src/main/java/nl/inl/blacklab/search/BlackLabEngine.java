@@ -34,6 +34,12 @@ import nl.inl.util.VersionFile;
  */
 public final class BlackLabEngine implements AutoCloseable {
 
+    /** Time to wait for tasks in the pool to finish before terminating them */
+    public static final int POOL_GRACEFUL_WAIT_SEC = 10;
+
+    /** Time to wait for tasks in the pool being terminated */
+    public static final int POOL_TERMINATE_WAIT_SEC = 10;
+
     /**
      * All BlackLabEngines that have been instantiated, so we can close them on shutdown.
      */
@@ -145,10 +151,10 @@ public final class BlackLabEngine implements AutoCloseable {
         pool.shutdown(); // Disable new tasks from being submitted
         try {
             // Wait a while for existing tasks to terminate
-            if (!pool.awaitTermination(60, TimeUnit.SECONDS)) {
+            if (!pool.awaitTermination(POOL_GRACEFUL_WAIT_SEC, TimeUnit.SECONDS)) {
                 pool.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
-                if (!pool.awaitTermination(60, TimeUnit.SECONDS))
+                if (!pool.awaitTermination(POOL_TERMINATE_WAIT_SEC, TimeUnit.SECONDS))
                     System.err.println("Pool did not terminate");
             }
         } catch (InterruptedException ie) {

@@ -8,6 +8,7 @@ import java.util.concurrent.ExecutorService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -62,7 +63,19 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
                 continue;
             AnnotationForwardIndex afi = get(annotation);
             // Automatically initialize forward index (in the background)
-            executorService.execute(afi::initialize);
+            executorService.execute(() -> {
+                try {
+                    afi.initialize();
+                } catch (InterruptedSearch e) {
+                    // Initialization was interrupted. Ignore.
+                    // This can happen if e.g. a commandline utility completes
+                    // before the full initialization is done. The running threads
+                    // are interrupted and the forward index remains uninitialized.
+                    // If for some reason the program keeps running and tries to use
+                    // the forward index, it will simply try to initialize again
+                    // (running in the foreground).
+                }
+            });
         }
 
         canDoNfaMatching = fis.values().stream().allMatch(fi -> fi.canDoNfaMatching());

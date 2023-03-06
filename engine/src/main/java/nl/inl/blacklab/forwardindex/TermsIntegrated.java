@@ -78,7 +78,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
      */
     private final Map<Integer, int[]> segmentToGlobalTermIds = new HashMap<>();
 
-    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
+    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField)
+            throws InterruptedException {
         super(collators);
 
         logger.debug("START TermsIntegrated constructor");
@@ -128,7 +129,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
     }
 
-    private Pair<TermInIndex[], String[]> readTermsFromIndex() {
+    private Pair<TermInIndex[], String[]> readTermsFromIndex() throws InterruptedException {
         // Globally unique terms that occur in our index (sorted by global id)
         Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
 
@@ -144,7 +145,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return Pair.of(terms, termStrings);
     }
 
-    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) {
+    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc)
+            throws InterruptedException {
         BLTerms segmentTerms;
         try {
             segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
@@ -164,7 +166,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         while (it.hasNext()) {
             // @@@ why doesnt this trigger...?
             if (Thread.interrupted())
-                throw new RuntimeException("Interrupted");
+                throw new InterruptedException();
 
             TermsIntegratedSegment.TermInSegment t = it.next();
             TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> new TermInIndex(t.term, globalTermIds.size()));

@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
@@ -345,7 +343,6 @@ public class IndexTool {
 
     private static void exportIndexInfo(File indexDir) {
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
-
             String indexmetadata = index.metadata().getIndexMetadataAsString();
             File indexMetadataFile = new File(indexDir, IndexMetadataExternal.METADATA_FILE_NAME + ".json");
             System.out.println("Writing " + indexMetadataFile);
@@ -357,11 +354,6 @@ public class IndexTool {
             File indexInfoFile = new File(indexDir, "indexinfo.yaml");
             System.out.println("Writing " + indexInfoFile);
             FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);
-
-            ForkJoinPool.commonPool().shutdownNow(); // terminate any background initialization (e.g. sort terms)
-            ForkJoinPool.commonPool().awaitTermination(10, TimeUnit.SECONDS);
-            System.err.println("BLA");
-
         } catch (Exception e) {
             throw BlackLabRuntimeException.wrap(e);
         }
