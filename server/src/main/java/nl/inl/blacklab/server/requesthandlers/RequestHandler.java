@@ -360,7 +360,8 @@ public abstract class RequestHandler {
         // Create the WebserviceParams structure from the UserRequest.
         // We cast to WebserviceParamsImpl because we need to set some fields based on the URL path.
         // Better would be to move that logic into UserRequestBls.
-        params = (WebserviceParamsImpl)userRequest.getParams(blIndex(), operation);
+        BlackLabIndex index = indexMan.getIndex(indexName).getStatus() == IndexStatus.INDEXING ? null : blIndex();
+        params = (WebserviceParamsImpl)userRequest.getParams(index, operation);
     }
 
     protected BlackLabIndex blIndex() throws BlsException {

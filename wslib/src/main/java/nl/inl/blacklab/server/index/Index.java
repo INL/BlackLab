@@ -232,10 +232,14 @@ public class Index {
     }
 
     public synchronized IndexStatus getStatus() throws BlsException {
+        return IndexStatus.INDEXING; //@@@@DEBUG
+/*  @@@ DEBUG
         if (this.indexer != null && this.indexer.isOpen())
             return IndexStatus.INDEXING;
 
         return this.blIndex().isEmpty() ? IndexStatus.EMPTY : IndexStatus.AVAILABLE;
+
+ */
     }
 
     /**
@@ -305,7 +309,8 @@ public class Index {
         if (this.getStatus() != IndexStatus.INDEXING)
             return null;
 
-        return this.indexer.listener();
+        return new IndexListener();  //@@@DEBUG
+        //@@@DEBUG return this.indexer.listener();
     }
 
     /**
