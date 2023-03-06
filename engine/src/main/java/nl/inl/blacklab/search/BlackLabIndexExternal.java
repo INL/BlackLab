@@ -114,12 +114,12 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     @Override
     public void close() {
-        super.close();
-
         // Close the (external) forward indices
         for (ForwardIndex fi: forwardIndices.values()) {
             ((ForwardIndexAbstract)fi).close();
         }
+
+        super.close();
     }
 
     @Override
