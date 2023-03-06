@@ -27,7 +27,7 @@ public interface Indexer {
      * @return the indexer
      * @throws DocumentFormatNotFound if the default format isn't supported
      */
-    static Indexer get(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
+    static Indexer create(BlackLabIndexWriter writer) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, null);
     }
 
@@ -42,12 +42,12 @@ public interface Indexer {
      * @return the indexer
      * @throws DocumentFormatNotFound if the format isn't supported
      */
-    static Indexer get(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
+    static Indexer create(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, formatIdentifier);
     }
 
     /**
-     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
      *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
@@ -56,7 +56,7 @@ public interface Indexer {
     }
 
     /**
-     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
      *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
@@ -65,7 +65,7 @@ public interface Indexer {
     }
 
     /**
-     * @deprecated use {@link #get(BlackLabIndexWriter, String)} with
+     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
      *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
      */
     @Deprecated
@@ -216,13 +216,6 @@ public interface Indexer {
      * @param contents file contents 
      */
     default void index(String fileName, byte[] contents) { index(fileName, contents, null); }
-    
-//    /**
-//     * Get our index directory
-//     *
-//     * @return the index directory
-//     */
-//    File indexLocation();
 
     /**
      * The index we're writing to.

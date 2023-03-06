@@ -45,7 +45,7 @@ public class TestStandoffSpans {
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(testDir.file(), true,
                     TEST_FORMAT_NAME);
-            Indexer indexer = Indexer.get(indexWriter);
+            Indexer indexer = Indexer.create(indexWriter);
             indexer.setListener(new IndexListener() {
                 @Override
                 public boolean errorOccurred(Throwable e, String path, File f) {

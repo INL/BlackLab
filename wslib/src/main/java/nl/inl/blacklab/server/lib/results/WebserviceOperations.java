@@ -631,7 +631,7 @@ public class WebserviceOperations {
                     + " tokens allowed in a user index. Cannot add any more data to it.");
         }
 
-        Indexer indexer = index.getIndexer();
+        Indexer indexer = index.createIndexer();
         final String[] indexErr = { null }; // array because we set it from closure
         indexer.setListener(new IndexListenerReportConsole() {
             @Override

@@ -119,6 +119,8 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
             ((ForwardIndexAbstract)fi).close();
         }
 
+        // Note that we call super.close() AFTER closing the forward indexes, or our index will momentarily
+        // seem to be "finished" will actually being in an invalid state.
         super.close();
     }
 

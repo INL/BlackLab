@@ -73,13 +73,13 @@ public class WebserviceRequestHandler {
         ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
         DStream.indexStatusResponse(ds, corpusStatus);
     }
+
     /**
      * Show server information.
      *
      * @param params parameters
      * @param ds output stream
      */
-
     public static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
         DStream.serverInfo(ds, serverInfo);
