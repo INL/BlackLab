@@ -111,7 +111,8 @@ public class UserRequestSolr implements UserRequest {
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-            params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
+            if (docSet != null && index != null)
+                params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
         }
         return params;
     }
