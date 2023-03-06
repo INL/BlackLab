@@ -655,8 +655,4 @@ public class IndexManager {
     public DocIndexerFactoryUserFormats getUserFormatManager() {
         return userFormatManager;
     }
-
-    public boolean isIndexing(String indexName) {
-        getIndex(indexName)
-    }
 }
