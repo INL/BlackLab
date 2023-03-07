@@ -42,8 +42,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
-    private static String fieldNameForCodecAccess;
-
     private final SegmentReadState state;
 
     /** Name of PF we delegate to (the one from Lucene) */
@@ -64,6 +62,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this);
+        if (delegateFormatName == null)
+            throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
 
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
@@ -179,9 +179,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      */
     public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
         try {
-            if (fieldNameForCodecAccess == null)
-                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
-            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getFieldsProducer();
+            String field = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
+            return ((BLTerms)lrc.reader().terms(field)).getFieldsProducer();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

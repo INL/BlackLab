@@ -560,8 +560,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 }
                 if (i == numberOfContentStoreFields)
                     return 0;
-                //    throw new IllegalStateException("CS field " + fieldId + " (" + fieldInfo.name +
-                //            ") not found for docId " + docId);
 
                 // Read document length, where to find the block indexes and where the blocks start.
                 return valueIndexFile.readInt();
@@ -604,20 +602,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
                 }
                 return results;
             }
-
-//            private void printBlockInfo(int docId, String field) {
-//                try {
-//                    // Find the document
-//                    docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);
-//                    int valueIndexOffset = docIndexFile.readInt();
-//                    byte numberOfContentStoreFields = docIndexFile.readByte();
-//
-//
-//
-//                } catch (IOException e) {
-//                    //
-//                }
-//            }
         };
     }
 }
