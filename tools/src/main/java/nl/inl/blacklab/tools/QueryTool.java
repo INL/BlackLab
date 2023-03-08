@@ -1023,6 +1023,7 @@ public class QueryTool {
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
         outprintln("  snippet <x>                        # Show longer snippet around hit x");
         outprintln("  doc <id>                           # Show metadata for doc id");
+        outprintln("  doccontents <id>                   # Retrieve contents of doc id");
         outprintln("  snippetsize <n>                    # Words to show around hit in longer snippet");
         outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
         outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");
