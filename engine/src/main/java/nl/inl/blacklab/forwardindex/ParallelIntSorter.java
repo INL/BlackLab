@@ -65,6 +65,11 @@ public class ParallelIntSorter {
         random.setSeed(seed);
     }
 
+    public static void sort(int[] ret, IntComparator intComparator) {
+        ParallelIntSorter sorter = new ParallelIntSorter();
+        sorter.parallelSort(ret, intComparator);
+    }
+
     public void parallelSort(int[] array, IntComparator comparator) {
         parallelSort(array, 0, array.length - 1, comparator);
 

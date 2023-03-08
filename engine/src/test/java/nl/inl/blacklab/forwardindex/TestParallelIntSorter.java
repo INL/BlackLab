@@ -37,8 +37,7 @@ public class TestParallelIntSorter {
 
         // Determine the result from our parallel sorter
         int[] actual = Arrays.copyOf(array, array.length);
-        ParallelIntSorter sorter = new ParallelIntSorter();
-        sorter.parallelSort(actual, Integer::compare);
+        ParallelIntSorter.sort(actual, Integer::compare);
 
         Assert.assertArrayEquals("Array length " + array.length, expected, actual);
     }
