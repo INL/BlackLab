@@ -48,6 +48,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
@@ -723,6 +724,9 @@ public class QueryTool {
             } else if (lcased.startsWith("doc ")) {
                 int docId = parseInt(lcased.substring(4), 0);
                 showMetadata(docId);
+            } else if (lcased.startsWith("doccontents ")) {
+                int docId = parseInt(lcased.substring(4), 0);
+                showContents(docId);
             } else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
                 if (cmd.length() <= 7) {
                     filterQuery = null; // clear filter
@@ -867,6 +871,17 @@ public class QueryTool {
 
         if (restCommand != null)
             processCommand(restCommand);
+    }
+
+    private void showContents(int docId) {
+        if (!index.docExists(docId)) {
+            outprintln("Document " + docId + " was deleted.");
+            return;
+        }
+        Document doc = index.luceneDoc(docId);
+        ContentAccessor ca = index.contentAccessor(index.metadata().annotatedFields().main());
+        String[] content = ca.getSubstringsFromDocument(docId, doc, new int[] { -1 }, new int[] { -1 });
+        outprintln(content[0]);
     }
 
     private void showMetadata(int docId) {
