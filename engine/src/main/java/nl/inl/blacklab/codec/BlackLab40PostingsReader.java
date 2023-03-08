@@ -98,7 +98,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
     BlackLab40StoredFieldsReader getStoredFieldReader() throws IOException {
         BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
         return codec.storedFieldsFormat().fieldsReader(
-                state.segmentInfo.dir, state.segmentInfo, state.fieldInfos, state.context);
+                state.directory, state.segmentInfo, state.fieldInfos, state.context);
     }
 
     @Override
