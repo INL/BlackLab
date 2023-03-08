@@ -95,10 +95,14 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return terms;
     }
 
-    BlackLab40StoredFieldsReader getStoredFieldReader() throws IOException {
-        BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
-        return codec.storedFieldsFormat().fieldsReader(
-                state.directory, state.segmentInfo, state.fieldInfos, state.context);
+    BlackLab40StoredFieldsReader getStoredFieldReader() {
+        try {
+            BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
+            return codec.storedFieldsFormat().fieldsReader(
+                    state.directory, state.segmentInfo, state.fieldInfos, state.context);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -178,12 +182,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * @return BlackLab40PostingsReader for this leafreader
      */
     public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-        try {
-            String field = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
-            return ((BLTerms)lrc.reader().terms(field)).getFieldsProducer();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return BlackLab40Codec.getTerms(lrc).getFieldsProducer();
     }
 
 }

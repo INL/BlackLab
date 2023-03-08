@@ -48,9 +48,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     /** How much space to reserve in the buffer for decoding overhead*/
     private static final int ESTIMATED_DECODE_OVERHEAD = 1024;
 
-    /** Which field we use to access our Codec, so we can access the segment content store. */
-    private static String fieldNameForCodecAccess;
-
     /** Our segment directory */
     private final Directory directory;
 
@@ -67,7 +64,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
     private final StoredFieldsReader delegate;
 
     /** Fields with a content store and their field index. */
-    private final Map<String, Integer> fields = new HashMap<>();
+    private final Map<String, Integer> contentStoreFieldIndexes = new HashMap<>();
 
     /** Offset for each doc in the valueindex file, and number of fields stored */
     private final IndexInput _docIndexFile;
@@ -105,13 +102,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
      * @return BlackLab40StoredFieldsReader for this leafreader
      */
     public static BlackLab40StoredFieldsReader get(LeafReaderContext lrc) {
-        try {
-            if (fieldNameForCodecAccess == null)
-                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
-            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getStoredFieldsReader();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return BlackLab40Codec.getTerms(lrc).getStoredFieldsReader();
     }
 
     public BlackLab40StoredFieldsReader(Directory directory, SegmentInfo segmentInfo, IOContext ioContext, FieldInfos fieldInfos,
@@ -122,14 +113,14 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
         this.ioContext = ioContext;
         this.fieldInfos = fieldInfos;
         this.delegate = delegate;
-        this.delegateFormatName = delegateFormatName; //delegateFormat.getClass().getSimpleName(); // check that this matches what was written
+        this.delegateFormatName = delegateFormatName; // check that this matches what was written
 
         IndexInput fieldsFile = openInput(BlackLab40StoredFieldsFormat.FIELDS_EXT, directory, segmentInfo, ioContext);
         blockSizeChars = fieldsFile.readInt();
         while (fieldsFile.getFilePointer() < (fieldsFile.length() - CodecUtil.footerLength())) {
             String fieldName = fieldsFile.readString();
-            int id = fields.size();
-            fields.put(fieldName, id);
+            int fieldIndex = contentStoreFieldIndexes.size();
+            contentStoreFieldIndexes.put(fieldName, fieldIndex);
         }
         fieldsFile.close();
         _docIndexFile = openInput(BlackLab40StoredFieldsFormat.DOCINDEX_EXT, directory, segmentInfo, ioContext);
@@ -213,19 +204,6 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
             storedFieldVisitor.stringField(fieldInfo, contents);
     }
 
-    /**
-     * Get the index (in the fields file) of a field we're writing.
-     *
-     * If the field did not have an index yet, write it to the fields file and
-     * assign the index.
-     *
-     * @param luceneField field to get index for
-     * @return index for the field
-     */
-    private int getFieldIndex(String luceneField) {
-        return fields.get(luceneField);
-    }
-
     @Override
     public StoredFieldsReader clone() {
         try {
@@ -281,6 +259,8 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
 
         StoredFieldsReader mergeInstance = delegate.getMergeInstance();
         if (mergeInstance != delegate) {
+            // The delegate has a specific merge instance (i.e. didn't return itself).
+            // Create a new instance with the new delegate and return that.
             try {
                 return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                         mergeInstance, delegateFormatName);
@@ -542,7 +522,7 @@ public class BlackLab40StoredFieldsReader extends StoredFieldsReader {
              */
             private int findValueLengthChar(int docId, String luceneField) throws IOException {
                 // What's the id of the field that is references in the value index file?
-                int fieldId = getFieldIndex(luceneField);
+                int fieldId = contentStoreFieldIndexes.get(luceneField);
 
                 // Find the document
                 docIndexFile.seek(docIndexFileOffset + (long) docId * DOCINDEX_RECORD_SIZE);

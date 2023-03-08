@@ -157,7 +157,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
         // disabling this can speed up indexing a bit but also uses a lot of file descriptors;
         // it can be useful to see individual files during development. maybe make this configurable?
-        config.setUseCompoundFile(true);  //@@@@
+        config.setUseCompoundFile(false);
     }
 
     @Override

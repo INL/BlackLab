@@ -48,7 +48,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
     private final IndexOutput blocksFile;
 
     /** Fields with a content store and their field index. */
-    private final Map<String, Integer> fields = new HashMap<>();
+    private final Map<String, Integer> contentStoreFieldIndexes = new HashMap<>();
 
     /** How we (de)compress our blocks. */
     private final ContentStoreBlockCodec blockCodec = ContentStoreBlockCodecZlib.INSTANCE;
@@ -190,12 +190,12 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
      */
     private byte getFieldIndex(FieldInfo fieldInfo) throws IOException {
         String name = fieldInfo.name;
-        Integer id = fields.get(name);
+        Integer id = contentStoreFieldIndexes.get(name);
         if (id == null) {
-            id = fields.size();
+            id = contentStoreFieldIndexes.size();
             if (id == 128)
                 throw new IllegalStateException("Too many content store fields (>127)");
-            fields.put(name, id);
+            contentStoreFieldIndexes.put(name, id);
             fieldsFile.writeString(name);
         }
         return (byte)(int)id;
@@ -235,7 +235,7 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
                 RamUsageEstimator.sizeOfObject(blockIndexFile) +
                 RamUsageEstimator.sizeOfObject(blocksFile) +
                 Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
-                RamUsageEstimator.sizeOfMap(fields);
+                RamUsageEstimator.sizeOfMap(contentStoreFieldIndexes);
     }
 
     @Override
@@ -246,6 +246,15 @@ public class BlackLab40StoredFieldsWriter extends StoredFieldsWriter {
         delegate.finishDocument();
     }
 
+    /**
+     * Merge multiple segments' stored fields files.
+     *
+     * Identical to StoredFieldsWriter.merge() except we instantiate OurMergeVisitor,
+     * which recognizes content store fields and merges them appropriately.
+     *
+     * @param mergeState merge state
+     * @return number of docs
+     */
     @Override
     public int merge(MergeState mergeState) throws IOException {
         // NOTE: the default implementation just reads all the fields for each document
