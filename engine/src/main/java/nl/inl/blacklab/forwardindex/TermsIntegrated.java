@@ -2,20 +2,22 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.text.CollationKey;
-import java.text.Collator;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
+import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -23,33 +25,30 @@ import nl.inl.blacklab.codec.BlackLab40PostingsReader;
  */
 public class TermsIntegrated extends TermsReaderAbstract {
 
-    private Map<String, CollationKey> collationCacheSensitive = new HashMap<>();
-    private Map<String, CollationKey> collationCacheInsensitive = new HashMap<>();
+    private static final Comparator<TermInIndex> CMP_TERM_SENSITIVE = (a, b) -> a.ckSensitive.compareTo(b.ckSensitive);
+
+    private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = (a, b) -> a.ckInsensitive.compareTo(b.ckInsensitive);
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
      *  sort positions in one of the segments is much faster than calculating CollationKeys).
      */
-    public class TermInIndex implements Comparable<TermInIndex> {
+    private class TermInIndex {
         /** Term string */
         String term;
+
+        CollationKey ckSensitive;
+
+        CollationKey ckInsensitive;
 
         /** This term's global id */
         int globalTermId;
 
-        /** Sort position within each segment, case-sensitive */
-        int[] segmentPosSensitive;
-
-        /** Sort position within each segment, case-insensitive */
-        int[] segmentPosInsensitive;
-
-        public TermInIndex(String term, int globalTermId, int numberOfSegments) {
+        public TermInIndex(String term, int globalTermId) {
             this.term = term;
             this.globalTermId = globalTermId;
-            segmentPosSensitive = new int[numberOfSegments];
-            Arrays.fill(segmentPosSensitive, -1);
-            segmentPosInsensitive = new int[numberOfSegments];
-            Arrays.fill(segmentPosInsensitive, -1);
+            ckSensitive = collator.getCollationKey(term);
+            ckInsensitive = collatorInsensitive.getCollationKey(term);
         }
 
         @Override
@@ -67,40 +66,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
             return Integer.hashCode(globalTermId);
         }
 
-        @Override
-        public int compareTo(TermInIndex other) {
-            int[] pa, pb;
-
-            if (compareSensitive) {
-                pa = segmentPosSensitive;
-                pb = other.segmentPosSensitive;
-            } else {
-                pa = segmentPosInsensitive;
-                pb = other.segmentPosInsensitive;
-            }
-            // See if there's a segment these two terms both occur in.
-            // If so, we already know how these terms compare.
-            for (int i = 0; i < pa.length; i++) {
-                int a = pa[i], b = pb[i];
-                if (a >= 0 && b >= 0) {
-                    // Both terms occur in this segment.
-                    // Their relative ordering in that segment applies here as well.
-                    return Integer.compare(a, b);
-                }
-            }
-            // There are no segments that these terms both occur in.
-            Collator coll = compareSensitive ? collator : collatorInsensitive;
-            Map<String, CollationKey> cache = compareSensitive ? collationCacheSensitive : collationCacheInsensitive;
-
-            CollationKey a = cache.computeIfAbsent(term, __ -> coll.getCollationKey(term));
-            CollationKey b = cache.computeIfAbsent(other.term, __ -> coll.getCollationKey(other.term));
-
-            return a.compareTo(b);
-        }
-
-        public int globalId() {
-            return globalTermId;
-        }
     }
 
     private IndexReader indexReader;
@@ -113,51 +78,79 @@ public class TermsIntegrated extends TermsReaderAbstract {
      */
     private final Map<Integer, int[]> segmentToGlobalTermIds = new HashMap<>();
 
-    /** Are we sorting TermInIndex sensitively or insensitively right now? */
-    private boolean compareSensitive = true;
-
-    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField) {
+    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField)
+            throws InterruptedException {
         super(collators);
-        this.indexReader = indexReader;
-        this.luceneField = luceneField;
-        TermInIndex[] terms = readTermsFromIndex();
 
-        // Determine the sort orders for the terms
-        int[] sortedSensitive = determineSort(terms, true);
-        int[] sortedInsensitive = determineSort(terms, false);
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, "Determine " + luceneField + " terms list")) {
+            this.indexReader = indexReader;
+            this.luceneField = luceneField;
 
-        // Process the values we've determined so far the same way as with the external forward index.
-        int[] termId2SensitivePosition = invert(terms, sortedSensitive, true);
-        int[] termId2InsensitivePosition = invert(terms, sortedInsensitive, false);
-        
-        // OPT: just keep terms in String[] and have the sort arrays separately to avoid this conversion?
-        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
-
-        finishInitialization(termStrings, termId2SensitivePosition, termId2InsensitivePosition);
-
-        // clear temporary variables
-        this.collationCacheInsensitive = null;
-        this.collationCacheSensitive = null;
-        this.indexReader = null;
-    }
-
-
-    private TermInIndex[] readTermsFromIndex() {
-        // A list of globally unique terms that occur in our index.
-        Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>(); // global term ids, in the correct order
-        try {
-            List<LeafReaderContext> leaves = indexReader.leaves();
-            for (LeafReaderContext l: leaves) {
-                readTermsFromSegment(globalTermIds, l);
+            // Read the terms from all the different segments and determine global term ids
+            Pair<TermInIndex[], String[]> termAndStrings;
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": readTermsFromIndex")) {
+                termAndStrings = readTermsFromIndex();
             }
-            return globalTermIds.values().toArray(TermInIndex[]::new);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            TermInIndex[] terms = termAndStrings.getLeft();
+            String[] termStrings = termAndStrings.getRight();
+
+            // Determine the sort orders for the global terms list
+            List<int[]> sortedInverted;
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": determineSort and invert")) {
+                sortedInverted = List.of(true, false).parallelStream()
+                        .map(sensitive -> {
+                            Comparator<TermInIndex> cmp = sensitive ? CMP_TERM_SENSITIVE : CMP_TERM_INSENSITIVE;;
+
+                            // Get a sorted term index array (sort position > term id)
+                            // Note that multiple terms may be equal according to the comparator,
+                            // but they still get separate sort positions. This will be fixed later on the
+                            // second invert pass.
+                            int[] sorted = determineSort(terms, cmp);
+                            // Invert array because that's what finishInitialization needs.
+                            // Produces a term id > sort position array.
+                            // NOTE: gives equal sort positions to equal terms, so the second invert can collect
+                            // all the equal terms into one entry.
+                            return invertSortedTermsArray(terms, sorted, cmp);
+                        })
+                        .collect(Collectors.toList());
+            }
+            int[] termId2SensitivePosition = sortedInverted.get(0);
+            int[] termId2InsensitivePosition = sortedInverted.get(1);
+
+            // Process the values we've determined so far the same way as with the external forward index.
+            try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": finishInitialization")) {
+                finishInitialization(luceneField, termStrings, termId2SensitivePosition, termId2InsensitivePosition);
+            }
+
+            // clear temporary variables
+            this.indexReader = null;
         }
     }
 
-    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc) throws IOException {
-        BLTerms segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
+    private Pair<TermInIndex[], String[]> readTermsFromIndex() throws InterruptedException {
+        // Globally unique terms that occur in our index (sorted by global id)
+        Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
+
+        // Intentionally single-threaded; multi-threaded is slower.
+        // Probably because reading from a single file sequentially is more efficient than alternating between
+        // several files..?
+        for (LeafReaderContext l: indexReader.leaves()) {
+            readTermsFromSegment(globalTermIds, l);
+        }
+
+        TermInIndex[] terms = globalTermIds.values().toArray(TermInIndex[]::new);
+        String[] termStrings = Arrays.stream(terms).map(t -> t.term).toArray(String[]::new);
+        return Pair.of(terms, termStrings);
+    }
+
+    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc)
+            throws InterruptedException {
+        BLTerms segmentTerms;
+        try {
+            segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         if (segmentTerms == null) {
             // can happen if segment only contains index metadata doc
             return;
@@ -167,45 +160,53 @@ public class TermsIntegrated extends TermsReaderAbstract {
         TermsIntegratedSegment s = new TermsIntegratedSegment(r, luceneField, lrc.ord);
 
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
-        int [] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
+        int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
         while (it.hasNext()) {
+            // Make sure this can be interrupted if e.g. a commandline utility completes
+            // before this initialization is finished.
+            if (Thread.interrupted())
+                throw new InterruptedException();
+
             TermsIntegratedSegment.TermInSegment t = it.next();
-            TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> termInIndex(t.term, globalTermIds.size()));
+            TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> new TermInIndex(t.term, globalTermIds.size()));
             // Remember the mapping from segment id to global id
             segmentToGlobal[t.id] = tii.globalTermId;
-            // Remember the sort position of this term in this segment, to save time comparing later
-            tii.segmentPosSensitive[s.ord()] = t.sortPositionSensitive;
-            tii.segmentPosInsensitive[s.ord()] = t.sortPositionInsensitive;
         }
 
         s.close();
     }
 
-    private int[] determineSort(TermInIndex[] terms, boolean sensitive) {
-        compareSensitive = sensitive;
+    private int[] determineSort(TermInIndex[] terms, Comparator<TermInIndex> cmp) {
+        // Initialize array of indexes to be sorted
         int[] sorted = new int[terms.length];
         for (int i = 0; i < terms.length; i++) {
             sorted[i] = i;
         }
-        IntArrays.quickSort(sorted, (a, b) -> terms[a].compareTo(terms[b]));
+
+        // Below is about 5% faster than FastUtil's IntArrays.parallelQuickSort() for very large arrays
+        ParallelIntSorter.sort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
         return sorted;
     }
 
     /**
-     * Invert the given array so the values become the indexes and vice versa.
+     * Invert the given sorted term id array so the values become the indexes and vice versa.
      *
-     * @param array array to invert
+     * Will make sure that if multiple terms are considered equal (insensitive comparison),
+     * they all get the same sort value
+     *
+     * @params terms terms the array refers to
+     * @param array array of term ids sorted by term string
+     * @param cmp comparator to use for equality test
      * @return inverted array
      */
-    private int[] invert(TermInIndex[] terms, int[] array, boolean sensitive) {
-        compareSensitive = sensitive;
+    private int[] invertSortedTermsArray(TermInIndex[] terms, int[] array, Comparator<TermInIndex> cmp) {
         int[] result = new int[array.length];
         int prevSortPosition = -1;
         int prevTermId = -1;
         for (int i = 0; i < array.length; i++) {
             int termId = array[i];
             int sortPosition = i;
-            if (prevTermId >= 0 && terms[prevTermId].compareTo(terms[termId]) == 0) {
+            if (prevTermId >= 0 && cmp.compare(terms[prevTermId], terms[termId]) == 0) {
                 // Keep the same sort position because the terms are the same
                 sortPosition = prevSortPosition;
             } else {
@@ -233,7 +234,4 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return id < 0 ? id : mapping[id];
     }
 
-    public TermInIndex termInIndex(String term, int globalTermId) {
-        return new TermInIndex(term, globalTermId, indexReader.leaves().size());
-    }
 }

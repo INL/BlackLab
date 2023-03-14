@@ -7,7 +7,7 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
@@ -33,7 +33,7 @@ public class ResultServerInfo {
         for (Index index: indices) {
             try {
                 indexStatuses.add(WebserviceOperations.resultIndexStatus(index));
-            } catch (BlsIndexOpenException e) {
+            } catch (ErrorOpeningIndex e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
             }

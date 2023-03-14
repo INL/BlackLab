@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.search.Query;
@@ -47,6 +48,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.CompleteQuery;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
@@ -312,7 +314,7 @@ public class QueryTool {
     public static void main(String[] args) throws ErrorOpeningIndex {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
-        LogUtil.setupBasicLoggingConfig();
+        LogUtil.setupBasicLoggingConfig(Level.DEBUG);
 
         // Parse command line
         File indexDir = null;
@@ -722,6 +724,9 @@ public class QueryTool {
             } else if (lcased.startsWith("doc ")) {
                 int docId = parseInt(lcased.substring(4), 0);
                 showMetadata(docId);
+            } else if (lcased.startsWith("doccontents ")) {
+                int docId = parseInt(lcased.substring(4), 0);
+                showContents(docId);
             } else if (lcased.startsWith("filter ") || lcased.equals("filter")) {
                 if (cmd.length() <= 7) {
                     filterQuery = null; // clear filter
@@ -868,6 +873,17 @@ public class QueryTool {
             processCommand(restCommand);
     }
 
+    private void showContents(int docId) {
+        if (!index.docExists(docId)) {
+            outprintln("Document " + docId + " was deleted.");
+            return;
+        }
+        Document doc = index.luceneDoc(docId);
+        ContentAccessor ca = index.contentAccessor(index.metadata().annotatedFields().main());
+        String[] content = ca.getSubstringsFromDocument(docId, doc, new int[] { -1 }, new int[] { -1 });
+        outprintln(content[0]);
+    }
+
     private void showMetadata(int docId) {
         if (!index.docExists(docId)) {
             outprintln("Document " + docId + " was deleted.");
@@ -1007,6 +1023,7 @@ public class QueryTool {
         outprintln("  pagesize <n>                       # Set number of hits to show per page");
         outprintln("  snippet <x>                        # Show longer snippet around hit x");
         outprintln("  doc <id>                           # Show metadata for doc id");
+        outprintln("  doccontents <id>                   # Retrieve contents of doc id");
         outprintln("  snippetsize <n>                    # Words to show around hit in longer snippet");
         outprintln("  sensitive {on|off|case|diac}       # Set case-/diacritics-sensitivity");
         outprintln("  filter <luceneQuery>               # Set document filter, e.g. title:\"Smith\"");

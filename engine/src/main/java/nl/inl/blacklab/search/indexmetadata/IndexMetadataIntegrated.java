@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerFactory;
@@ -789,4 +790,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return custom;
     }
 
+    @Override
+    public String getIndexMetadataAsString() {
+        try {
+            return metadataDocument.getMetadataJson(index.reader(), metadataDocId());
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
 }

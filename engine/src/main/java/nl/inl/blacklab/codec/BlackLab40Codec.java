@@ -57,12 +57,15 @@ public class BlackLab40Codec extends Codec {
         super(NAME);
     }
 
-    static String findFieldNameForCodecAccess(LeafReaderContext lrc) throws IOException {
-        // We need to find a field that is indexed and therefore has terms.
+    public static BLTerms getTerms(LeafReaderContext lrc) {
+        // Find the first field that has terms.
         for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-            BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
-            if (terms != null) {
-                return fieldInfo.name;
+            try {
+                BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
+                if (terms != null)
+                    return terms;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         }
         throw new IllegalStateException("No suitable field found for codec access!");

@@ -38,11 +38,11 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.ParallelIntSorter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -563,11 +563,10 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     private static int[] getTermSortOrder(List<String> terms, Collator coll) {
         int[] ret = new int[terms.size()];
         for (int i = 0; i < ret.length; ++i) ret[i] = i;
-        IntArrays.quickSort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
+        ParallelIntSorter.sort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
         return ret;
     }
 
-    
     /**
      * Invert the given array so the values become the indexes and vice versa.
      *

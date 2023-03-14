@@ -22,7 +22,7 @@ import nl.inl.util.Json;
 
 public class IndexMetadataExternal extends IndexMetadataAbstract {
 
-    private static final String METADATA_FILE_NAME = "indexmetadata";
+    public static final String METADATA_FILE_NAME = "indexmetadata";
 
     private static final Charset INDEX_STRUCT_FILE_ENCODING = StandardCharsets.UTF_8;
 

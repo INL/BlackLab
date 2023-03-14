@@ -16,6 +16,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
@@ -27,8 +28,10 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -56,7 +59,7 @@ public class IndexTool {
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
-        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete"));
+        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete", "indexinfo"));
         boolean addingFiles = true;
         String deleteQuery = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
@@ -206,12 +209,17 @@ public class IndexTool {
             //System.err.println("No command specified; assuming \"add\" (--help for details)");
             //command = "add";
         }
-        if (command.equals("delete")) {
+        switch (command) {
+        case "indexinfo":
+            exportIndexInfo(indexDir);
+            return;
+        case "delete":
             commandDelete(indexDir, deleteQuery);
             return;
-        }
-        if (command.equals("create"))
+        case "create":
             forceCreateNew = true;
+            break;
+        }
 
         // We're adding files. Do we have an input dir/file and file format name?
         if (inputDir == null) {
@@ -330,6 +338,24 @@ public class IndexTool {
         Properties p = readPropertiesFromFile(propFile);
         for (Map.Entry<Object, Object> e : p.entrySet()) {
             indexerParam.put(e.getKey().toString(), e.getValue().toString());
+        }
+    }
+
+    private static void exportIndexInfo(File indexDir) {
+        try (BlackLabIndex index = BlackLab.open(indexDir)) {
+            String indexmetadata = index.metadata().getIndexMetadataAsString();
+            File indexMetadataFile = new File(indexDir, IndexMetadataExternal.METADATA_FILE_NAME + ".json");
+            System.out.println("Writing " + indexMetadataFile);
+            FileUtils.write(indexMetadataFile, indexmetadata, StandardCharsets.UTF_8);
+
+            String indexInfo =
+                    "documentCount: " + index.metadata().documentCount() + "\n" +
+                    "tokenCount: " + index.metadata().tokenCount() + "\n";
+            File indexInfoFile = new File(indexDir, "indexinfo.yaml");
+            System.out.println("Writing " + indexInfoFile);
+            FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
         }
     }
 

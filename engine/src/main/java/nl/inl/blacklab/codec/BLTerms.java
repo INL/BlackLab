@@ -38,7 +38,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
         return fieldsProducer;
     }
 
-    public BlackLab40StoredFieldsReader getStoredFieldsReader() throws IOException {
+    public BlackLab40StoredFieldsReader getStoredFieldsReader() {
         return fieldsProducer.getStoredFieldReader();
     }
 

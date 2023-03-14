@@ -26,6 +26,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.MetricsProvider;
@@ -259,6 +260,8 @@ public class BlackLabServer extends HttpServlet {
         int httpCode;
         try {
             httpCode = requestHandler.handle(dstream);
+        } catch (ErrorOpeningIndex e) {
+            httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "ERROR_OPENING_INDEX");
         } catch (InvalidQuery e) {
             httpCode = Response.error(errorWriter, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (InternalServerError e) {

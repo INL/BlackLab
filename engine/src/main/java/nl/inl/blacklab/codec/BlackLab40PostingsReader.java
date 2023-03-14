@@ -42,8 +42,6 @@ public class BlackLab40PostingsReader extends FieldsProducer {
 
     protected static final Logger logger = LogManager.getLogger(BlackLab40PostingsReader.class);
 
-    private static String fieldNameForCodecAccess;
-
     private final SegmentReadState state;
 
     /** Name of PF we delegate to (the one from Lucene) */
@@ -64,6 +62,8 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         // NOTE: opening the forward index calls openInputFile, which reads
         //       delegatePostingsFormatName, so this must be done first.
         forwardIndex = new SegmentForwardIndex(this);
+        if (delegateFormatName == null)
+            throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
 
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
@@ -95,10 +95,14 @@ public class BlackLab40PostingsReader extends FieldsProducer {
         return terms;
     }
 
-    BlackLab40StoredFieldsReader getStoredFieldReader() throws IOException {
-        BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
-        return codec.storedFieldsFormat().fieldsReader(
-                state.segmentInfo.dir, state.segmentInfo, state.fieldInfos, state.context);
+    BlackLab40StoredFieldsReader getStoredFieldReader() {
+        try {
+            BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
+            return codec.storedFieldsFormat().fieldsReader(
+                    state.directory, state.segmentInfo, state.fieldInfos, state.context);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -178,13 +182,7 @@ public class BlackLab40PostingsReader extends FieldsProducer {
      * @return BlackLab40PostingsReader for this leafreader
      */
     public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-        try {
-            if (fieldNameForCodecAccess == null)
-                fieldNameForCodecAccess = BlackLab40Codec.findFieldNameForCodecAccess(lrc);
-            return ((BLTerms)lrc.reader().terms(fieldNameForCodecAccess)).getFieldsProducer();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return BlackLab40Codec.getTerms(lrc).getFieldsProducer();
     }
 
 }

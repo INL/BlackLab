@@ -3,19 +3,20 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.util.Arrays;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.bytes.ByteBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.BlockTimer;
 
 public abstract class TermsReaderAbstract implements Terms {
-    protected static final Logger logger = LogManager.getLogger(TermsReaderAbstract.class);
 
+    /** Log the timing of different initialization tasks? */
+    protected static final boolean LOG_TIMINGS = false;
     /** How many terms total are there? (always valid) */
     private int numberOfTerms;
 
@@ -63,34 +64,41 @@ public abstract class TermsReaderAbstract implements Terms {
         this.collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }
 
-    protected void finishInitialization(String[] terms, int[] termId2SensitivePosition,
+    protected void finishInitialization(String name, String[] terms, int[] termId2SensitivePosition,
             int[] termId2InsensitivePosition) {
 
         numberOfTerms = terms.length;
 
-        // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
-        int numGroupsThatAreNotSizeOne = 0;
         TIntObjectHashMap<IntArrayList> insensitivePosition2TermIds = new TIntObjectHashMap<>(numberOfTerms);
-        for(int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
-            int insensitivePosition = termId2InsensitivePosition[termId];
-            IntArrayList v = new IntArrayList(1);
-            v.add(termId);
+        int numGroupsThatAreNotSizeOne = 0;
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > invert mapping")) {
+            // Invert the mapping of term id-> insensitive sort position into insensitive sort position -> term ids
+            for (int termId = 0; termId < termId2InsensitivePosition.length; ++termId) {
+                int insensitivePosition = termId2InsensitivePosition[termId];
+                IntArrayList v = new IntArrayList(1);
+                v.add(termId);
 
-            IntArrayList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
-            if (prev != null) {
-                v.addAll(prev);
+                IntArrayList prev = insensitivePosition2TermIds.put(insensitivePosition, v);
+                if (prev != null) {
+                    v.addAll(prev);
 
-                if (prev.size() == 1)
-                    ++numGroupsThatAreNotSizeOne;
+                    if (prev.size() == 1)
+                        ++numGroupsThatAreNotSizeOne;
+                }
             }
         }
 
-        fillTermDataGroups(terms, termId2SensitivePosition, termId2InsensitivePosition, insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
-        fillTermCharData(terms);
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermDataGroups")) {
+            fillTermDataGroups(terms.length, termId2SensitivePosition, termId2InsensitivePosition,
+                    insensitivePosition2TermIds, numGroupsThatAreNotSizeOne);
+        }
+        try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, name + ": finish > fillTermCharData")) {
+            fillTermCharData(terms);
+        }
     }
 
     // OPT: optimize by removing the 1 at groupId < terms.length
-    // Since we know it's always there (no collisions in this section - length is always 1)
+    //   Since we know it's always there (no collisions in this section - length is always 1)
     /**
      * Initializes the following members:
      * - {@link #termId2SensitivePosition}
@@ -101,7 +109,7 @@ public abstract class TermsReaderAbstract implements Terms {
      *
      * @param numGroupsThatAreNotSizeOne in the insensitive hashmap - used to initialize the groupId2termIds map at the right length.
      */
-    protected void fillTermDataGroups(String[] terms, int[] termId2SortPositionSensitive,
+    protected void fillTermDataGroups(int numberOfTerms, int[] termId2SortPositionSensitive,
             int[] termId2SortPositionInsensitive, TIntObjectHashMap<IntArrayList> insensitiveSortPosition2TermIds,
             int numGroupsThatAreNotSizeOne) {
         // This is a safe upper bound: one group per sensitive (with one entry) = 2*numberOfTerms.
@@ -110,15 +118,15 @@ public abstract class TermsReaderAbstract implements Terms {
         // to accurately do this we'd need to know the number of groups with only one entry
 
         int numGroupsOfSizeOne = insensitiveSortPosition2TermIds.size() - numGroupsThatAreNotSizeOne;
-        int numTermsInGroupsAboveSizeOne = terms.length - numGroupsOfSizeOne;
+        int numTermsInGroupsAboveSizeOne = numberOfTerms - numGroupsOfSizeOne;
 
         this.termId2SensitivePosition = termId2SortPositionSensitive;
         this.termId2InsensitivePosition = termId2SortPositionInsensitive;
         // to be filled
-        this.groupId2TermIds = new int[terms.length * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne
+        this.groupId2TermIds = new int[numberOfTerms * 2 /* sensitive groups - all size 1 */ + numGroupsThatAreNotSizeOne
                 + numTermsInGroupsAboveSizeOne];
-        this.insensitivePosition2GroupId = new int[terms.length]; // NOTE: since not every insensitive sort position exists, this will have empty spots
-        this.sensitivePosition2GroupId = new int[terms.length];
+        this.insensitivePosition2GroupId = new int[numberOfTerms]; // NOTE: since not every insensitive sort position exists, this will have empty spots
+        this.sensitivePosition2GroupId = new int[numberOfTerms];
 
         Arrays.fill(this.insensitivePosition2GroupId, -1);
 
@@ -191,9 +199,9 @@ public abstract class TermsReaderAbstract implements Terms {
         for (int i = 0; i < numberOfTerms; ++i) {
             this.termId2CharDataOffset[i] = bytesWritten;
             byte[] bytes = terms[i].getBytes(DEFAULT_CHARSET);
-            for (byte b : bytes) {
-                this.termCharData.add(bytesWritten++, b);
-            }
+            byte[][] bb = BigArrays.wrap(bytes);
+            termCharData.addElements(bytesWritten, bb);
+            bytesWritten += bytes.length;
         }
         this.termCharData.trim(); // clear extra space.
     }

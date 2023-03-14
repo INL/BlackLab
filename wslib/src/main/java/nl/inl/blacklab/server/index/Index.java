@@ -26,7 +26,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.BlsIndexOpenException;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.ServiceUnavailable;
@@ -245,20 +244,16 @@ public class Index {
      *             ongoing indexing
      * @throws InternalServerError if there was some other error opening the index
      */
-    private synchronized void openForSearching() throws ServiceUnavailable, InternalServerError {
+    private synchronized void openForSearching() throws ServiceUnavailable, ErrorOpeningIndex {
         cleanupClosedIndexerOrThrow();
 
         if (this.index != null)
             return;
 
-        try {
-            index = searchMan.blackLabInstance().open(this.dir);
-            index.setCache(searchMan.getBlackLabCache());
-        } catch (IndexVersionMismatch e) {
-            throw BlsException.indexVersionMismatch(e);
-        } catch (ErrorOpeningIndex e) {
-            throw new BlsIndexOpenException("Error opening index: " + dir, "INTERR_OPENING_INDEX", e);
-        }
+        //logger.debug("    Opening index '" + id + "', dir = " + dir);
+        index = searchMan.blackLabInstance().open(this.dir);
+        index.setCache(searchMan.getBlackLabCache());
+        //logger.debug("Done opening index '" + id + "'");
     }
 
     /**
