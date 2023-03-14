@@ -73,13 +73,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // for internal, we just ignore it (will be fully stored eventually by final call to store())
 
         getDocWriter().storeInContentStore(null, new TextContent(content), captureContentFieldName, "contents");
-//        if (getDocWriter().indexWriter() instanceof BlackLabIndexExternal) {
-//            charsContentAlreadyStored += content.length();
-//            ContentStoreExternal contentStore = (ContentStoreExternal) getDocWriter().contentStore(
-//                    captureContentFieldName);
-//            contentStore.storePart(new TextContent(content));
-//            content.setLength(0);
-//        }
     }
 
     private void appendContentInternal(String str) {

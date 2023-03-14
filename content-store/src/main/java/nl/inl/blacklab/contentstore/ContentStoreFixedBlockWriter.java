@@ -442,8 +442,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     if (encoded.length <= MAX_BLOCK_SIZE_BYTES)
                         break;
                     // Doesn't fit; make it a little smaller until it does fit.
-                    //System.err.println("Tried " + length + " characters, encoded length is " + encoded.length);
-                    //int newLength = length - (encoded.length - MAX_BLOCK_SIZE_BYTES) * 2;
                     float shrinkFactor = 1.0f + (1.05f * (encoded.length - MAX_BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
                     length = (int) (length / shrinkFactor);
                     //System.err.println("Will try " + length + " characters as blocksize next.");
@@ -463,16 +461,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                             "Error, deflate returned size of zipbuf, this indicates insufficient space");
                 }
 
-                // Check the size
-//				float waste = (float)(BLOCK_SIZE_BYTES - compressedDataLength) / BLOCK_SIZE_BYTES;
-//				float ratio = (float)length / compressedDataLength;
-
                 if (compressedDataLength > BLOCK_SIZE_BYTES) {
                     // Compressed block too large.
                     // Shrink the uncompressed data length by 5% more than what we expect to be required.
                     float shrinkFactor = 1.0f + (1.05f * (compressedDataLength - BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
-                    //logger.debug("Block size too large, retrying. Char length: " + length + ", encoded length: " +
-                    // compressedDataLength + " > " + BLOCK_SIZE_BYTES + ", shrinkFactor: " + shrinkFactor);
                     length = (int) (length / shrinkFactor);
                     if (length <= 0)
                         length = 1;
@@ -482,15 +474,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     // Grow the uncompressed data length by 5% less than what we expect is possible.
                     float growFactor = 1.0f
                             + (0.95f * (BLOCK_SIZE_BYTES - compressedDataLength)) / compressedDataLength;
-                    //logger.debug("Block size too small, retrying. Char length: " + length + ", encoded length: " +
-                    // compressedDataLength + " < " + MINIMUM_ACCEPTABLE_BLOCK_SIZE + ", growFactor: " + growFactor);
                     length = (int) (length * growFactor);
                     if (length > available)
                         length = available;
                 } else {
-                    //logger.debug("Block ok. Char length: " + length + ", encoded length: " + compressedDataLength +
-                    //", waste%: " + waste + ", ratio: " + ratio);
-
                     // NOTE: do not delete from unwrittenContents here,
                     // call site needs to know how much we advanced in the buffer to calculate how much uncompressed data was used
                     this.unwrittenIndex += length;

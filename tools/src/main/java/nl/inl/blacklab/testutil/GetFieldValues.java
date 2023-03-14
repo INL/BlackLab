@@ -38,10 +38,6 @@ public class GetFieldValues {
 
             Set<String> fieldsToLoad = new HashSet<>();
             fieldsToLoad.addAll(fieldNames);
-            /* OLD:
-            HashSet<String> lazyFieldsToLoad = new HashSet<String>();
-            FieldSelector fieldSelector = new SetBasedFieldSelector(fieldsToLoad, lazyFieldsToLoad);
-            */
             DocumentStoredFieldVisitor fieldVisitor = new DocumentStoredFieldVisitor(fieldsToLoad);
 
             int numDocs = r.numDocs();

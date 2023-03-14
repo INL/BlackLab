@@ -146,19 +146,6 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
         setTopLevelCustom(metadata.custom());
 
-        /*
-        CustomProps custom = metadata.custom();
-        if (custom.containsKey("annotationGroups")) {
-            clearAnnotationGroups();
-            Map<String, List<Map<String, Object>>> groupingsPerField = custom.get("annotationGroups", Collections.emptyMap());
-            for (Map.Entry<String, List<Map<String, Object>>> entry: groupingsPerField.entrySet()) {
-                String fieldName = entry.getKey();
-                AnnotationGroups annotationGroups = AnnotationGroups.fromCustom(fieldName, entry.getValue());
-                putAnnotationGroups(fieldName, annotationGroups);
-            }
-        }
-        */
-
         for (Map.Entry<String, AnnotatedFieldImpl> e: annotatedFields.entrySet()) {
             e.getValue().fixAfterDeserialization(index, e.getKey());
         }

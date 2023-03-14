@@ -206,8 +206,6 @@ public class IndexTool {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
             return;
-            //System.err.println("No command specified; assuming \"add\" (--help for details)");
-            //command = "add";
         }
         switch (command) {
         case "indexinfo":

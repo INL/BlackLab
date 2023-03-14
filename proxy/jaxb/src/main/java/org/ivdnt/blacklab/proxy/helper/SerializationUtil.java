@@ -145,39 +145,6 @@ public class SerializationUtil {
 
             Annotation annotation = deserializationContext.readValue(parser, Annotation.class);
             annotation.name = annotationName;
-            /*
-            Annotation annotation = new Annotation();
-            annotation.name = parser.getCurrentName();
-
-            token = parser.nextToken();
-            if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
-            while (true) {
-                token = parser.nextToken();
-                if (token == JsonToken.END_OBJECT)
-                    break;
-
-                if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                String fieldName = parser.getCurrentName();
-                parser.nextToken();
-                switch (fieldName) {
-                case "displayName": annotation.displayName = parser.getValueAsString(); break;
-                case "description": annotation.description = parser.getValueAsString(); break;
-                case "uiType": annotation.uiType = parser.getValueAsString(); break;
-                case "hasForwardIndex": annotation.hasForwardIndex = parser.getValueAsBoolean(); break;
-                case "sensitivity": annotation.sensitivity = parser.getValueAsString(); break;
-                case "offsetsAlternative": annotation.offsetsAlternative = parser.getValueAsString(); break;
-                case "isInternal": annotation.isInternal = parser.getValueAsBoolean(); break;
-                case "subannotations": annotation.subannotations = readStringList(parser); break;
-                case "parentAnnotation": annotation.parentAnnotation = parser.getValueAsString(); break;
-                case "values": annotation.values = readStringList(parser); break;
-                case "valueListComplete": annotation.valueListComplete = parser.getValueAsBoolean(); break;
-                default: throw new RuntimeException("Unexpected field " + fieldName + " in Annotation");
-                }
-            }
-            */
-
             result.add(annotation);
         }
         return result;

@@ -1,7 +1,6 @@
 # BARK 2 - Evolution and backward compatibility
 
 - **type:** process
-- **status:** active
 
 How we evolve BlackLab over time and deal with backward compatibility.
 

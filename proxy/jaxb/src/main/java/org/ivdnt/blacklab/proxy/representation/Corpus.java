@@ -136,50 +136,6 @@ public class Corpus implements Cloneable {
             for (AnnotatedField field: value) {
                 jgen.writeFieldName(field.name);
                 provider.defaultSerializeValue(field, jgen);
-
-//                jgen.writeStartObject();
-//                {
-//                    jgen.writeStringField("fieldName", field.fieldName);
-//                    jgen.writeBooleanField("isAnnotatedField", field.isAnnotatedField);
-//                    jgen.writeStringField("displayName", field.displayName);
-//                    jgen.writeStringField("description", field.description);
-//                    jgen.writeBooleanField("hasContentStore", field.hasContentStore);
-//                    jgen.writeBooleanField("hasXmlTags", field.hasXmlTags);
-//                    jgen.writeStringField("mainAnnotation", field.mainAnnotation);
-//                    jgen.writeArrayFieldStart("displayOrder");
-//                    for (String a: field.displayOrder) {
-//                        jgen.writeString(a);
-//                    }
-//                    jgen.writeEndArray();
-//                    jgen.writeFieldName("annotations");
-//                    provider.defaultSerializeValue(field.annotations, jgen);
-//
-////                    jgen.writeObjectFieldStart("annotations");
-////                    for (Annotation a: field.annotations) {
-////                        jgen.writeObjectFieldStart(a.name);
-////                        {
-////                            jgen.writeStringField("displayName", a.displayName);
-////                            jgen.writeStringField("description", a.description);
-////                            jgen.writeStringField("uiType", a.uiType);
-////                            jgen.writeBooleanField("hasForwardIndex", a.hasForwardIndex);
-////                            jgen.writeStringField("sensitivity", a.sensitivity);
-////                            jgen.writeStringField("offsetsAlternative", a.offsetsAlternative);
-////                            jgen.writeBooleanField("isInternal", a.isInternal);
-////                            if (a.subannotations != null && !a.subannotations.isEmpty()) {
-////                                jgen.writeArrayFieldStart("subannotations");
-////                                for (String sub: a.subannotations) {
-////                                    jgen.writeString(sub);
-////                                }
-////                                jgen.writeEndArray();
-////                            }
-////                            if (!StringUtils.isEmpty(a.parentAnnotation))
-////                                jgen.writeStringField("parentAnnotation", a.parentAnnotation);
-////                        }
-////                        jgen.writeEndObject();
-////                    }
-////                    jgen.writeEndObject();
-//                }
-//                jgen.writeEndObject();
             }
             jgen.writeEndObject();
         }
@@ -216,36 +172,6 @@ public class Corpus implements Cloneable {
                 AnnotatedField field = deserializationContext.readValue(parser, AnnotatedField.class);
                 field.name = fieldName;
                 result.add(field);
-//                while (true) {
-//                    token = parser.nextToken();
-//                    if (token == JsonToken.END_OBJECT)
-//                        break;
-//
-//                    if (token != JsonToken.FIELD_NAME)
-//                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-//                    String fieldName = parser.getCurrentName();
-//                    token = parser.nextToken();
-//                    switch (fieldName) {
-//                    case "fieldName": field.fieldName = parser.getValueAsString(); break;
-//                    case "isAnnotatedField": field.isAnnotatedField = parser.getValueAsBoolean(); break;
-//                    case "displayName": field.displayName = parser.getValueAsString(); break;
-//                    case "description": field.description = parser.getValueAsString(); break;
-//                    case "hasContentStore": field.hasContentStore = parser.getValueAsBoolean(); break;
-//                    case "hasXmlTags": field.hasXmlTags = parser.getValueAsBoolean(); break;
-//                    case "mainAnnotation": field.mainAnnotation = parser.getValueAsString(); break;
-//                    case "displayOrder":
-//                        field.displayOrder = SerializationUtil.readStringList(parser);
-//                        break;
-//                    case "annotations":
-//                        if (token != JsonToken.START_OBJECT)
-//                            throw new RuntimeException("Expected START_OBJECT, found " + token);
-//                        field.annotations = SerializationUtil.readAnnotations(parser);
-//                        break;
-//                    default: throw new RuntimeException("Unexpected field " + fieldName + " in AnnotatedField");
-//                    }
-//                }
-//
-//                result.add(field);
             }
             return result;
         }

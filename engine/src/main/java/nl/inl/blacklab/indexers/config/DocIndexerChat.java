@@ -187,12 +187,6 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     }
 
-    // JN Added some helper variables and methods
-
-//	private static void output(String msg) {
-//        System.out.println(msg);
-//    }
-
     private void log(String msg) {
         if (log != null)
             log.println("LOG: " + msg);
@@ -491,8 +485,6 @@ public class DocIndexerChat extends DocIndexerConfig {
                 if (inBlock)
                     endBlock();
 
-//                printHeaderMetadata(metadata);
-//                output("\n\n");
                 headerModified = false;
 
                 startBlock();
@@ -501,10 +493,6 @@ public class DocIndexerChat extends DocIndexerConfig {
                 metadata.put("uttid", uttId);
                 treatUtt(line, metadata);
 
-//                String corpus = getCorpus(metadata);
-//                String parseFileName = getParseFile(corpus, currentFileBaseName, uttId);
-//                metadata.put("parsefile", parseFileName);
-
                 int endspk = line.indexOf(':');
                 if (endspk < 0)
                     log("error in line: " + line);
@@ -512,11 +500,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 String cleanEntry = cleanText(entry);
                 writeToCleanFile(entry, cleanEntry);
                 checkLine(line, cleanEntry, lineNumber);
-//                updateCharMap(cleanentry, charmap);
-
-//                printUttMetadata(metadata);
                 addWords(cleanEntry);
-//                output("\n");
                 uttId++;
             } else if (startChar == ANNO_CHAR) {
                 // to be implemented
@@ -604,8 +588,6 @@ public class DocIndexerChat extends DocIndexerConfig {
                     Date date = normalizeDate(cleanEntry);
                     hp.put(cleanHeaderNameBase, date);
                 } else if (cleanHeaderNameBase.equals("age of")) {
-                    // print("<{}>".format(cleanentry), file = logfile)
-                    // print(input("Continue?"), file = logfile)
                     hp.put("age", cleanEntry);
                     int months = getMonths(cleanEntry);
                     if (months != 0)
@@ -718,21 +700,13 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // constants
 
-//  private final List<String> CHA_EXTS = Arrays.asList(".cha", ".cex");
-//  private final String DEFAULT_OUT_EXT = ".txt";
-//  private final String PARSE_EXT = ".xml";
-
-//  private final String TAB = "\t";
-//  private final String MY_QUOTE_CHAR = "\"";
     private static final char MD_CHAR = '@';
     private static final char UTT_CHAR = '*';
     private static final char ANNO_CHAR = '%';
     private static final char SPACE_CHAR = ' ';
     private static final String HEADERLINE_END_SYMB = ":";
     private static final String ID_SEP = "\\|";
-//    private final String META_KW = "##META";
     private static final String SPACE = " ";
-//  private final String UNDERSCORE = "_";
 
     private static final String SEPS = "[-.,/;:_!~\\\\]";
     private static final String ONE_OR_MORE_DIGITS = "[0-9]+";
@@ -785,46 +759,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     private Map<String, Integer> counter;
 
-//    private PrintStream logfile;
-
     private String currentFileBaseName;
-
-//    public static void main(String[] argv) {
-//        File f = new File("D:\\werk\\mee\\chat-examples\\Adler\\adler01a.cha");
-//
-//        DocIndexerChat di = new DocIndexerChat();
-//        di.setDocumentName(f.getPath().replaceAll("\\\\", "/"));
-//    	di.setDocument(f, StandardCharsets.UTF_8);
-//    	di.setLog(new PrintWriter(System.out));
-//    	di.index();
-//
-////
-////        /*
-////        String hexformat = "{0:#06X}";
-////        // hexformat = "0x%0.4X"
-////        charmapfile = open(charmapfilename, "w", encoding = "utf8");
-////        charmapwriter = csv.writer(charmapfile, delimiter = tab, quotechar = myquotechar, 
-    // quoting = csv.QUOTE_MINIMAL, lineterminator = "\n");
-////        for (el in charmap) {
-////            ordel = ord(el)
-////            therow = [el, ordel , hexformat.format(ordel), charmap[el]]
-////            charmapwriter.writerow(therow)
-////        }*/
-////
-////        // read metadata from the CHA file
-////
-////        // first read the character encoding
-////
-////        // and convert it to PaQu style plain text metadata annotations
-////
-////        // and convert it to LASSY XML meta elements and integrate with a Alpino-parsed  XML-file
-////
-////        // and convert it to FoliA
-//    }
-
-//--------------------------------
-
-    //class CleanChildesMetadata {
 
     public static String scoped(String str) {
         return "<(([^<>]|\\[<\\]|\\[>\\])*)>\\s*" + str;
@@ -835,11 +770,6 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final int SKIP_LINES = 1;
     static final int HEADER = 1;
     static final int LCTR = 0;
-
-    // hexformat = "{0:#06X}"
-    //final String hexformat = "\\u{0:04X}";
-
-    // scopestr = "<([^<>]*)>\\s*"
 
     static final String GT_REPL = "\u00A9"; // copyright sign
     static final String LT_REPL = "\u00AE"; // Registered sign
@@ -863,8 +793,6 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final String LT_STR = "\\[<]";
     static final Pattern LT_REGEX = Pattern.compile(LT_STR);
 
-    // ltre1 = Pattern.compile(scoped(ltstr))
-    // ltre2 = Pattern.compile(ltstr)
     static final String DOUBLE_SLASH_STR = "\\[//]";
     static final Pattern DOUBLE_SLASH_SCOPED = Pattern.compile(scoped(DOUBLE_SLASH_STR));
     static final Pattern DOUBLE_SLASH_UNSCOPED = Pattern.compile(DOUBLE_SLASH_STR);
@@ -875,8 +803,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final Pattern SLASH_UNSCOPED = Pattern.compile(SLASH_STR);
     static final String GT_STR = "\\[>]";
     static final Pattern GT_REGEX = Pattern.compile(GT_STR);
-    // gtre1 = Pattern.compile(scoped(gtstr))
-    // gtre2 = Pattern.compile(gtstr)
+
     static final String Q_STR = "\\[\\?]";
     static final Pattern Q_REGEX_SCOPED = Pattern.compile(scoped(Q_STR));
     static final Pattern Q_REGEX_UNSCOPED = Pattern.compile(Q_STR);
@@ -888,15 +815,6 @@ public class DocIndexerChat extends DocIndexerConfig {
     static final Pattern PLUS3 = Pattern.compile("\\+/(/)?[.?]");
     static final Pattern PLUS2 = Pattern.compile("\\+[.^<,+\"]");
     static final Pattern PLUS_QUOTE = Pattern.compile("\\+(\\+\"\\.|!\\?)");
-    // nesting = Pattern.compile(r"<([^<>]*(<[^<>]*>(\[>\]|\[<\]|[^<>])*)+)>")
-    // nesting = Pattern.compile(r"<(([^<>]|\[<\]|\[>\])*)>")
-
-    // content = r"(([^<>])|\[<\]|\[>\])*"
-    // content = r"(([^<>])|(\[<\])|(\[>\]))*"
-    // content = r"((\[<\])|(\[>\])|([^<>]))*"
-    // nested = r"(<" + content + r">" + content + r")+"
-    // neststr = r"(<" + content + nested + r">)"
-    // nesting = Pattern.compile(neststr)
 
     public static String bracket(String str) {
         return "(" + str + ")";
@@ -966,9 +884,6 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     private String cleanText(String str) {
         String result = str;
-
-        // if times.search(result) {
-        // print("[x ...] found, line = {}".format(result), file = logfile)
 
         // page references are to MacWhinney chat manual version 21 april 2015
 
@@ -1166,6 +1081,5 @@ public class DocIndexerChat extends DocIndexerConfig {
         }
         return result;
     }
-    //}
 
 }

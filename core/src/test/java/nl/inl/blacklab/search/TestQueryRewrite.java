@@ -323,8 +323,9 @@ public class TestQueryRewrite {
     @Test
     public void testRewritePropertyRegexMatchAll() {
         assertRewriteResult("[lemma='.*']", "ANYTOKEN(1, 1)");
-        //FIXME: assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
-        //FIXME: assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
+        assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
+        // TODO: this actually rewrites to AND(ANYTOKEN(1, 1), ANYTOKEN(1, 1)), which is redundant
+        //  assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
     }
 
 }

@@ -20,10 +20,6 @@ public class InterruptedSearch extends BlackLabRuntimeException {
 
     private SearchCacheEntry<?> cacheEntry;
 
-//    public InterruptedSearch() {
-//        super(DEFAULT_MESSAGE);
-//    }
-
     public InterruptedSearch(Throwable e) {
         super(DEFAULT_MESSAGE, e);
     }

@@ -46,28 +46,6 @@ public class AnnotatedField implements Cloneable {
             for (Annotation a: value) {
                 jgen.writeFieldName(a.name);
                 provider.defaultSerializeValue(a, jgen);
-/*
-                jgen.writeObjectFieldStart(a.name);
-                {
-                    jgen.writeStringField("displayName", a.displayName);
-                    jgen.writeStringField("description", a.description);
-                    jgen.writeStringField("uiType", a.uiType);
-                    jgen.writeBooleanField("hasForwardIndex", a.hasForwardIndex);
-                    jgen.writeStringField("sensitivity", a.sensitivity);
-                    jgen.writeStringField("offsetsAlternative", a.offsetsAlternative);
-                    jgen.writeBooleanField("isInternal", a.isInternal);
-                    if (a.subannotations != null && !a.subannotations.isEmpty()) {
-                        jgen.writeArrayFieldStart("subannotations");
-                        for (String sub: a.subannotations) {
-                            jgen.writeString(sub);
-                        }
-                        jgen.writeEndArray();
-                    }
-                    if (!StringUtils.isEmpty(a.parentAnnotation))
-                        jgen.writeStringField("parentAnnotation", a.parentAnnotation);
-                }
-                jgen.writeEndObject();
- */
             }
             jgen.writeEndObject();
         }

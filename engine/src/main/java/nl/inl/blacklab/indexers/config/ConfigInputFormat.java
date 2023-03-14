@@ -227,8 +227,6 @@ public class ConfigInputFormat {
         fileType = baseFormat.getFileType();
         if (baseFormat.getFileTypeOptions() != null)
             fileTypeOptions.putAll(baseFormat.getFileTypeOptions());
-//        if (baseFormat.getTabularOptions() != null)
-//            tabularOptions = baseFormat.getTabularOptions().copy();
         corpusConfig = baseFormat.corpusConfig.copy();
         namespaces.putAll(baseFormat.getNamespaces());
         documentPath = baseFormat.getDocumentPath();
@@ -254,8 +252,6 @@ public class ConfigInputFormat {
         String t = "input format";
         req(name, t, "name");
         req(documentPath, t, "documentPath");
-//        if (tabularOptions != null)
-//            tabularOptions.validate();
         for (ConfigMetadataBlock b : metadataBlocks)
             b.validate();
         for (ConfigAnnotatedField af : annotatedFields.values()) {

@@ -453,20 +453,6 @@ class SaxonHelper {
         return startEndPosMap.get(getCharPos(nodeInfo)).endPos;
     }
 
-    void test(NodeInfo doc, ConfigAnnotatedField annotatedField)
-            throws XPathExpressionException {
-        for (NodeInfo word : findNodes(annotatedField.getWordsPath(),contents)) {
-//            int start = getStartPos(word);
-//            int endPos = getEndPos(word);
-//            System.out.println(new String(Arrays.copyOfRange(chars, start, endPos)) +
-//                    ": " + start + " - " + endPos);
-            for (Map.Entry<String, ConfigAnnotation> an : annotatedField.getAnnotations().entrySet()) {
-                ConfigAnnotation annotation = an.getValue();
-                getValue(annotation.getValuePath(),word);
-            }
-        }
-    }
-
     public static class NodeInfoComparator implements Comparator<NodeInfo> {
 
         @Override

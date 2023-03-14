@@ -1,7 +1,6 @@
 # BARK 5 - Relationship with Lucene
 
 - **type:** information
-- **status:** active
 
 How BlackLab uses Lucene and why staying up to date is important.
 

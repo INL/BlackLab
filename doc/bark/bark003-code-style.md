@@ -1,7 +1,6 @@
 # BARK 3 - Code style
 
 - **type:** information
-- **status:** active
 
 For contributors: please use your IDEs built-in code formatter to adhere to BlackLab's coding style. It is mostly standard Java style.
 

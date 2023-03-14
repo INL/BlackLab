@@ -89,8 +89,6 @@ public final class LuceneUtil {
             }
             if (!terms.hasPositions())
                 throw new IllegalArgumentException("Field " + luceneName + " has no character postion information");
-            // String[] docTerms = new String[(int) terms.size()];
-            // final List<BytesRef> termsList = new ArrayList<BytesRef>();
             TermsEnum termsEnum = terms.iterator();
 
             // Verzamel concordantiewoorden uit term vector
@@ -100,9 +98,6 @@ public final class LuceneUtil {
             while (termsEnum.next() != null) {
                 docPosEnum = termsEnum.postings(docPosEnum, PostingsEnum.POSITIONS);
                 while (docPosEnum.nextDoc() != DocIdSetIterator.NO_MORE_DOCS) {
-                    // NOTE: .docId() will always return 0 in this case
-                    //if (docPosEnum.docID() != doc)
-                    //	throw new BLRuntimeException("Wrong doc id: " + docPosEnum.docID() + " (expected " + doc + ")");
                     for (int i = 0; i < docPosEnum.freq(); i++) {
                         int position = docPosEnum.nextPosition();
                         if (position == -1)
@@ -371,7 +366,7 @@ public final class LuceneUtil {
                 }
             }
         } else {
-            BytesRef cur = null;
+            BytesRef cur;
             while ((cur = it.next()) != null) {
                 String term = cur.utf8ToString();
                 if (freq.containsKey(term)) {
@@ -392,8 +387,6 @@ public final class LuceneUtil {
                     // if this LeafReader doesn't include this field, just skip it
                     continue;
                 }
-//				if (terms == null)
-//					throw new BLRuntimeException("Field " + luceneField + " does not exist!");
                 totalTerms += terms.getSumTotalTermFreq();
             }
             return totalTerms;

@@ -18,7 +18,6 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 
@@ -85,9 +84,6 @@ public class DocIndexerExample extends DocIndexerBase {
 
     /** Are we in an annotated field block and have we called beginWord()? Then make sure to call endWord(). */
     private boolean inWord = false;
-
-//    /** What position increment should the next annotation values get? */
-//    private int posIncr;
 
     /** What's the token position of the current token we're parsing?
      * (only valid if currentAnnotatedField != null) */

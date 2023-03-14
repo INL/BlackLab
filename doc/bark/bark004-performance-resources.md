@@ -1,7 +1,6 @@
 # BARK 4 - Performance and resource requirements
 
 - **type:** information
-- **status:** active
 
 Why BlackLab has limits, and general ways to improve matters.
 

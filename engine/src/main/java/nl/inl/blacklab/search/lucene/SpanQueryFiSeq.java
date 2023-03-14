@@ -132,10 +132,6 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
         return "FISEQ(" + clausesToString(field) + ", " + nfa.getNfa() + ", " + direction + ")";
     }
 
-    // public SpanQueryFiSeq copy() {
-    // return new SpanQueryFiSeq(clauses.get(0), startOfAnchor, nfaFrag, direction, fiAccessor);
-    // }
-
     @Override
     public boolean matchesEmptySequence() {
         return false; // can't be used if clause matches empty sequence, we need anchors

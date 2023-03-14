@@ -1,7 +1,6 @@
 # BARK 1 - The story so far
 
 - **type:** information
-- **status:** active
 
 This will give a general overview of how BlackLab (Server) has changed since its inception. More details can be found in the [change log](../../core/src/site/markdown/changelog.md).
 

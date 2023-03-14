@@ -110,11 +110,4 @@ public class TestHookableSaxParser {
         parser.parse(inputSource, hookableSaxHandler);
         Assert.assertEquals("<<$><<$><<$>>><<$><<$>>>>", hookHandler.toString());
     }
-
-//	@Test
-//	public void testAttribute() throws SAXException, IOException {
-//		hookableSaxHandler.addHook("//@att", hookHandler, true);
-//		parser.parse(inputSource, hookableSaxHandler);
-//		Assert.assertEquals("@@", hookHandler.toString());
-//	}
 }
