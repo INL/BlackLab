@@ -30,7 +30,7 @@ This version uses Lucene 8. This unfortunately means that corpora created with o
 
 There is a high-level [roadmap](https://inl.github.io/BlackLab/roadmap.html) page on the documentation site. There are also [BlackLab Archives of Relevant Knowledge (BARKs)](doc/bark/#readme) that go into more detail.
 
-For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](PLAN.md).
+For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](doc/DISTRIBUTED PLAN.md).
 
 
 ## Development workflow

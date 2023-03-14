@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /** Property value that represents a BlackLab document */
 public class PropertyValueDoc extends PropertyValue {

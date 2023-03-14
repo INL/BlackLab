@@ -20,7 +20,6 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
@@ -28,11 +27,13 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -443,12 +444,15 @@ public abstract class RequestHandler {
     /**
      * Child classes should override this to handle the request.
      *
-     * @param ds output stream
+     * @param rs where to write output
      * @return the response object
      *
      * @throws BlsException if the query can't be executed
      * @throws InterruptedSearch if the thread was interrupted
      */
-    public abstract int handle(DataStream ds) throws BlsException, InvalidQuery;
+    public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
+    public ApiVersion apiCompatibility() {
+        return params.apiCompatibility();
+    }
 }

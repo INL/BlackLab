@@ -11,12 +11,13 @@ import org.apache.solr.response.SolrQueryResponse;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.server.datastream.DataStream;
 
 public class TestDataStreamSolr {
 
     DataStream solrStream(SolrQueryResponse rsp) {
-        return new DataStreamSolr(rsp).startDocument("blacklab");
+        return new DataStreamSolr(rsp).startDocument(Constants.SOLR_BLACKLAB_SECTION_NAME);
     }
 
     @Test

@@ -1,7 +1,8 @@
 {
   "summary": {
     "searchParam": {
-      "indexname": "test-index-1938"
+      "indexname": "test-index-1938",
+      "op": "docs"
     },
     "searchTime": 0,
     "windowFirstResult": 0,

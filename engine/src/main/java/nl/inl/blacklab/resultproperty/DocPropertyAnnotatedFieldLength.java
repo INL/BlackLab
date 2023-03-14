@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.DocValuesUtil;
 import nl.inl.util.NumericDocValuesCacher;
 

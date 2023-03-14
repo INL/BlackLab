@@ -3,6 +3,7 @@
     "searchParam": {
       "group": "field:title",
       "indexname": "test",
+      "op": "hits",
       "patt": "\"a\"",
       "sort": "field:pid,hitposition",
       "viewgroup": "str:service encounter about visa application for family members",
@@ -273,7 +274,7 @@
   "docInfos": {
     "PBsve430": {
       "fromInputFile": [
-        "/test-data/input/PBsve430.xml"
+        "PBsve430.xml"
       ],
       "pid": [
         "PBsve430"

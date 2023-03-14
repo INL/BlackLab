@@ -140,6 +140,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
 
+                // Write debug files
+                File tmpDir = new File(System.getProperty("java.io.tmpdir"));
+                File debugJackson = new File(tmpDir, "debug-metadata.json");
+                FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
+
                 // Create a metadata document with the metadata JSON, config format file,
                 // and a marker field to we can find it again
                 BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
@@ -295,9 +300,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (index.indexMode())
             save(); // save debug file if any
 
-        // For integrated index, because metadata wasn't allowed to change during indexing,
-        // return a default field config if you try to get a missing field.
-        metadataFields.setThrowOnMissingField(false);
+        // During indexing, return a default field config if you try to get a missing field,
+        // so not all metadata fields have to be declared in advance (useful with forEach).
+        metadataFields.setThrowOnMissingField(!index.indexMode());
     }
 
     private void populateFromConfig(ConfigInputFormat config, File indexDirectory) {

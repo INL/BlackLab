@@ -2,10 +2,10 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Request handler for hit results.
@@ -17,8 +17,8 @@ public class RequestHandlerHitsCsv extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opHitsCsv(params, ds);
+    public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
+        WebserviceRequestHandler.opHitsCsv(params, rs);
         return HTTP_OK;
     }
 

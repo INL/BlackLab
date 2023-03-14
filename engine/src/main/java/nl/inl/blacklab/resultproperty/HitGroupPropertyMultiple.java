@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A collection of HitGroupProperty's.

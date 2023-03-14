@@ -140,6 +140,11 @@ parameters:
     # "omitemptycaptures" parameter.
     omitEmptyCaptures: false
 
+    # What REST API version to attempt compatibility with.
+    # Valid values are currently: 3.0, 4.0, current, experimental.
+    # Defaults to current.
+    api: current
+
 
 
 #  Settings for job caching.

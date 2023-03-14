@@ -2,9 +2,9 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import javax.servlet.http.HttpServletResponse;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Show a static response such as an error or succes message.
@@ -125,18 +125,18 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) {
+    public int handle(ResponseStreamer rs) {
         if (internalErrorCode != null && internalErrorCode.length() > 0) {
             if (exception != null)
-                ds.internalError(exception, debugMode, internalErrorCode);
+                rs.getDataStream().internalError(exception, debugMode, internalErrorCode);
             else if (msg != null)
-                ds.internalError(msg, debugMode, internalErrorCode);
+                rs.getDataStream().internalError(msg, debugMode, internalErrorCode);
             else
-                ds.internalError(internalErrorCode);
+                rs.getDataStream().internalError(internalErrorCode);
         } else if (isError) {
-            ds.error(code, msg);
+            rs.getDataStream().error(code, msg);
         } else {
-            ds.statusObject(code, msg);
+            rs.getDataStream().statusObject(code, msg);
         }
         return httpCode;
     }

@@ -1,0 +1,37 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+    http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>nl.inl.blacklab</groupId>
+        <artifactId>blacklab-all</artifactId>
+        <version>4.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>blacklab-proxy</artifactId>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>jaxb</module>
+        <module>service</module>
+    </modules>
+
+    <name>BlackLab Server Proxy</name>
+    <description>A REST webservice that can proxy BlackLab webservice requests to a backend,
+        such as the Solr BlackLab API or BlackLab Server.
+
+        Can be used for security (e.g. don't expose Solr to the internet directly) and API compatibility
+        (e.g. call older BLS endpoint using newer API version).
+    </description>
+
+    <properties>
+        <project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
+        <jersey.version>2.35</jersey.version> <!-- 2.25.1 works. 3.0.4 does not. -->
+        <jackson.version>2.13.3</jackson.version> <!-- parent: 2.11.1 -->
+        <jaxb.version>2.3.1</jaxb.version> <!-- WAS: 2.3.0 -->
+    </properties>
+
+    <dependencies>
+
+    </dependencies>
+</project>

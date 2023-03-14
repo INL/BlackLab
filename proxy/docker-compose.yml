@@ -1,0 +1,29 @@
+# Docker Compose file for the BlackLab proxy.
+# This runs the proxy on localhost:8080/blacklab-server, so it behaves exactly like BLS.
+version: '3.9'
+
+services:
+
+  # Our reverse proxy to Solr
+  proxy:
+    image: instituutnederlandsetaal/blacklab-proxy:${IMAGE_VERSION}
+
+    build:
+      context: ..
+      dockerfile: proxy/Dockerfile
+
+    volumes:
+      # Configuration file (pointing to solr and specifying a default corpus name)
+      - ../solr/proxy.yaml:/etc/blacklab/proxy.yaml
+
+    ports:
+      # Use port 8080 so it's the same exact URL as BLS would be (for running the same tests)
+      - "8080:8080"
+
+
+  # Solr backend we're proxying for
+  solr:
+
+    build:
+      context: ..
+      dockerfile: solr/Dockerfile

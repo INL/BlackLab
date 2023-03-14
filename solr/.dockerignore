@@ -1,0 +1,35 @@
+# Ignore these when building Docker image
+**/.env
+**/target
+
+# don't ignore blacklab-solr.jar, copy directly to image [dev]
+#!solr/target/blacklab-*.jar
+#!solr/target/lib/*.jar
+
+**/bin
+**/.settings
+**/.idea
+**/*.iml
+**/.vscode
+**/doc
+**/.project
+**/.classpath
+**/.factorypath
+**/.apt_generated/
+**/.apt_generated_tests/
+
+.git
+
+# vi temporary files
+**/*.swp
+
+# log files, such as JVM crash files
+**/*.log
+
+# Test defines its own container and doesn't need to be included in the main container context
+/test
+
+# Ignore docker files, we don't need these inside the container.
+**/Dockerfile
+**/.dockerignore
+**/docker-compose*.yml

@@ -2,6 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
+      "op": "hits",
       "patt": "[lemma=\"be\" & word=\"are\"]",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
@@ -365,7 +366,7 @@
   "docInfos": {
     "PBsve430": {
       "fromInputFile": [
-        "/test-data/input/PBsve430.xml"
+        "PBsve430.xml"
       ],
       "pid": [
         "PBsve430"
@@ -378,7 +379,7 @@
     },
     "PRint602": {
       "fromInputFile": [
-        "/test-data/input/PRint602.xml"
+        "PRint602.xml"
       ],
       "pid": [
         "PRint602"

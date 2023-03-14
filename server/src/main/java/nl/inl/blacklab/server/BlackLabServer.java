@@ -40,9 +40,9 @@ import nl.inl.blacklab.server.datastream.DataStreamAbstract;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
-import nl.inl.blacklab.server.lib.ParameterDefaults;
-import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.lib.Response;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
+import nl.inl.blacklab.server.requesthandlers.RequestHandler;
 import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
@@ -84,8 +84,8 @@ public class BlackLabServer extends HttpServlet {
                 // Create our search manager (main webservice class)
                 searchManager = new SearchManager(config, true);
 
-                // Set default parameter settings from config
-                ParameterDefaults.set(config.getParameters());
+                // Set defaults from config in ParameterDefaults
+                config.getParameters().setParameterDefaults();
 
                 // Configure metrics provider (e.g Prometheus)
                 setMetricsProvider(config);
@@ -249,25 +249,27 @@ public class BlackLabServer extends HttpServlet {
         DataStream ds = DataStreamAbstract.create(outputType, out, prettyPrint);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         ds.startDocument(rootEl);
+        ResponseStreamer dstream = ResponseStreamer.get(ds, requestHandler.apiCompatibility());
         StringWriter errorBuf = new StringWriter();
         PrintWriter errorOut = new PrintWriter(errorBuf);
         DataStream es = DataStreamAbstract.create(outputType, errorOut, prettyPrint);
         es.outputProlog();
+        ResponseStreamer errorWriter = ResponseStreamer.get(es, requestHandler.apiCompatibility());
         int errorBufLengthBefore = errorBuf.getBuffer().length();
         int httpCode;
         try {
-            httpCode = requestHandler.handle(ds);
+            httpCode = requestHandler.handle(dstream);
         } catch (InvalidQuery e) {
-            httpCode = Response.error(es, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
+            httpCode = Response.error(errorWriter, "INVALID_QUERY", e.getMessage(), HttpServletResponse.SC_BAD_REQUEST);
         } catch (InternalServerError e) {
             String msg = WebserviceUtil.internalErrorMessage(e, userRequest.isDebugMode(), e.getInternalErrorCode());
-            httpCode = Response.error(es, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), msg, e.getHttpStatusCode(), e);
         } catch (BlsException e) {
-            httpCode = Response.error(es, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
+            httpCode = Response.error(errorWriter, e.getBlsErrorCode(), e.getMessage(), e.getHttpStatusCode());
         } catch (InterruptedSearch e) {
-            httpCode = Response.error(es, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
+            httpCode = Response.error(errorWriter, "INTERRUPTED", e.getMessage(), HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
         } catch (RuntimeException e) {
-            httpCode = Response.internalError(es, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
+            httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
         } finally {
             requestHandler.cleanup(); // close logger
         }

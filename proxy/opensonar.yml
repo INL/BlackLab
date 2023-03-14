@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+
+  proxy:
+    build:
+      context: ..
+      dockerfile: proxy/Dockerfile
+    volumes:
+      - ./testdata/proxy.yaml:/etc/blacklab/proxy.yaml
+    ports:
+      - "8084:8080"
+    depends_on:
+      - node1
+      - node2

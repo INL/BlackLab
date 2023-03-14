@@ -8,6 +8,7 @@
     <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
 
     <!-- fieldType "text_general" is referred to from solrconfig.xml (maybe change this) -->
+
     <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
         <analyzer type="index">
             <tokenizer class="solr.StandardTokenizerFactory"/>

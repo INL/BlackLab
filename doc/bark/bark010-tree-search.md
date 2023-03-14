@@ -1,7 +1,7 @@
 # BARK 10 - Searching tree-like structures
 
 - **type:** change
-- **status:** planned (before 2024)
+- **status:** planned (2023)
 
 We want to enable additional search operations on tree-like structures.
 

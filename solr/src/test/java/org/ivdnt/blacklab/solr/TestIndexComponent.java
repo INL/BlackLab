@@ -43,7 +43,7 @@ import nl.inl.blacklab.index.annotated.TokenStreamFromList;
 
 public class TestIndexComponent {
 
-    static final String CORE_NAME = "testcore";
+    static final String CORE_NAME = "test";
 
     public static final String DOCUMENT_FORMAT = "voice-tei";
     public static final String[] INPUT_FILE_PATH = new String[] {"..", "test", "data", "input", "PBsve430.xml"};

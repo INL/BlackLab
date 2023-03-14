@@ -5,7 +5,7 @@ const should = chai.should();
 chai.use(chaiHttp);
 
 const constants = require('./constants');
-const { expectUnchanged, expectUrlUnchanged} = require("./compare-responses");
+const { expectUnchanged, expectUrlUnchanged, sanitizeResponse} = require("./compare-responses");
 
 /**
  * Test that a hits search returns the same response as before.
@@ -45,7 +45,6 @@ function expectHitsUnchanged(testName, params) {
         });
     });
 }
-
 
 // Single word
 expectHitsUnchanged("single word the", '"the"');

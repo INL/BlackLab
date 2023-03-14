@@ -345,7 +345,6 @@ You should see something like:
         <loggedIn>false</loggedIn>
         <canCreateIndex>false</canCreateIndex>
     </user>
-    <helpPageUrl>/blacklab-server-2.1.0/help</helpPageUrl>
 </blacklabResponse>
 ```
 

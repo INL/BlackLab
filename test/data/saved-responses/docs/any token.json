@@ -2,6 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
+      "op": "docs",
       "patt": "[]",
       "sort": "field:pid",
       "waitfortotal": "true",
@@ -37,7 +38,7 @@
       "numberOfHits": 334,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PBsve430.xml"
+          "PBsve430.xml"
         ],
         "pid": [
           "PBsve430"
@@ -372,7 +373,7 @@
       "numberOfHits": 164,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PBsve435.xml"
+          "PBsve435.xml"
         ],
         "pid": [
           "PBsve435"
@@ -707,7 +708,7 @@
       "numberOfHits": 268,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PRint602.xml"
+          "PRint602.xml"
         ],
         "pid": [
           "PRint602"

@@ -2,6 +2,7 @@
   "summary": {
     "searchParam": {
       "indexname": "test",
+      "op": "hits",
       "patt": "[]",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
@@ -2378,7 +2379,7 @@
   "docInfos": {
     "PBsve430": {
       "fromInputFile": [
-        "/test-data/input/PBsve430.xml"
+        "PBsve430.xml"
       ],
       "pid": [
         "PBsve430"

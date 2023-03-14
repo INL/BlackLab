@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Get information about a document.
@@ -15,14 +15,14 @@ public class RequestHandlerDocInfo extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(ResponseStreamer rs) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         params.setDocPid(docPid);
 
         debug(logger, "REQ doc info: " + indexName + "-" + params.getDocPid());
 
-        WebserviceRequestHandler.opDocInfo(params, ds);
+        WebserviceRequestHandler.opDocInfo(params, rs);
         return HTTP_OK;
     }
 

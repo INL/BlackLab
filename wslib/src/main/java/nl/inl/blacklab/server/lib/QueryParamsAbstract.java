@@ -10,17 +10,16 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
- * Abstract implementation of PlainWebserviceParams that uses request parameters.
+ * Abstract implementation of QueryParams that uses request parameters.
  * This is used for both BLS and Solr.
  */
 public abstract class QueryParamsAbstract implements QueryParams {
-
-    protected static final String PARAM_CORPUS_NAME = "indexname";
-
-    protected static final String PARAM_NAME_OPERATION = "op";
 
     protected final SearchManager searchMan;
 
@@ -91,31 +90,31 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * This disregards any default values configured for the parameter,
      * and only checks if this request included a value for it.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return true if this request included an explicit value for the parameter
      */
-    protected abstract boolean has(String name);
+    protected abstract boolean has(WebserviceParameter par);
 
     /**
      * Get the parameter value.
      *
      * If this request didn't include an explicit value, use the configured default value.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value
      */
-    protected abstract String get(String name);
+    protected abstract String get(WebserviceParameter par);
 
     /**
      * Get parameter value as a boolean.
      *
      * If not explicitly set, uses the configured default value, or false if none configured.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value
      */
-    protected boolean getBool(String name) {
-        String value = get(name);
+    protected boolean getBool(WebserviceParameter par) {
+        String value = get(par);
         return parseBoolean(value);
     }
 
@@ -124,11 +123,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, uses the configured default value, or 0 if none configured.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value
      */
-    protected int getInt(String name) {
-        return QueryParamsAbstract.parseInt(get(name));
+    protected int getInt(WebserviceParameter par) {
+        return QueryParamsAbstract.parseInt(get(par));
     }
 
     /**
@@ -136,11 +135,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, uses the configured default value, or 0 if none configured.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value
      */
-    protected long getLong(String name) {
-        return QueryParamsAbstract.parseLong(get(name));
+    protected long getLong(WebserviceParameter par) {
+        return QueryParamsAbstract.parseLong(get(par));
     }
 
     /**
@@ -148,14 +147,14 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, uses the configured default value, or an empty set if none configured.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value
      */
-    protected Set<String> getSet(String name) {
-        String par = get(name).trim();
-        return StringUtils.isEmpty(par) ?
+    protected Set<String> getSet(WebserviceParameter par) {
+        String val = get(par).trim();
+        return StringUtils.isEmpty(val) ?
                 Collections.emptySet() :
-                new HashSet<>(Arrays.asList(par.split("\\s*,\\s*")));
+                new HashSet<>(Arrays.asList(val.split("\\s*,\\s*")));
     }
 
     /**
@@ -163,11 +162,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, will return an empty Optional.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value if set
      */
-    protected Optional<String> opt(String name) {
-        return has(name) ? Optional.of(get(name)) : Optional.empty();
+    protected Optional<String> opt(WebserviceParameter par) {
+        return has(par) ? Optional.of(get(par)) : Optional.empty();
     }
 
     /**
@@ -175,11 +174,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, will return an empty Optional.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value if set
      */
-    protected Optional<Double> optDouble(String name) {
-        return opt(name).map(QueryParamsAbstract::parseDouble);
+    protected Optional<Double> optDouble(WebserviceParameter par) {
+        return opt(par).map(QueryParamsAbstract::parseDouble);
     }
 
     /**
@@ -187,11 +186,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, will return an empty Optional.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value if set
      */
-    protected Optional<Integer> optInteger(String name) {
-        return opt(name).map(QueryParamsAbstract::parseInt);
+    protected Optional<Integer> optInteger(WebserviceParameter par) {
+        return opt(par).map(QueryParamsAbstract::parseInt);
     }
 
     /**
@@ -199,104 +198,97 @@ public abstract class QueryParamsAbstract implements QueryParams {
      *
      * If not explicitly set, will return an empty Optional.
      *
-     * @param name parameter name
+     * @param par parameter type
      * @return value if set
      */
-    protected Optional<Long> optLong(String name) {
-        return opt(name).map(QueryParamsAbstract::parseLong);
+    protected Optional<Long> optLong(WebserviceParameter par) {
+        return opt(par).map(QueryParamsAbstract::parseLong);
     }
 
     @Override
-    public String getPattern() { return get("patt"); }
+    public String getPattern() { return get(WebserviceParameter.PATTERN); }
 
     @Override
-    public String getPattLanguage() { return get("pattlang"); }
+    public String getPattLanguage() { return get(WebserviceParameter.PATTERN_LANGUAGE); }
 
     @Override
-    public String getPattGapData() { return get("pattgapdata"); }
+    public String getPattGapData() { return get(WebserviceParameter.PATTERN_GAP_DATA); }
 
     @Override
-    public String getDocPid() { return get("docpid"); }
+    public String getDocPid() { return get(WebserviceParameter.DOC_PID); }
 
     @Override
-    public String getDocumentFilterQuery() { return get("filter"); }
+    public String getDocumentFilterQuery() { return get(WebserviceParameter.FILTER); }
 
     @Override
-    public String getDocumentFilterLanguage() { return get("filterlang"); }
+    public String getDocumentFilterLanguage() { return get(WebserviceParameter.FILTER_LANGUAGE); }
 
     @Override
-    public String getHitFilterCriterium() { return get("hitfiltercrit"); }
+    public String getHitFilterCriterium() { return get(WebserviceParameter.HIT_FILTER_CRITERIUM); }
 
     @Override
-    public String getHitFilterValue() {
-        return get("hitfilterval");
-    }
+    public String getHitFilterValue() { return get(WebserviceParameter.HIT_FILTER_VALUE); }
 
     @Override
-    public Optional<Double> getSampleFraction() { return optDouble("sample"); }
+    public Optional<Double> getSampleFraction() { return optDouble(WebserviceParameter.SAMPLE); }
 
     @Override
-    public Optional<Integer> getSampleNumber() { return optInteger("samplenum"); }
+    public Optional<Integer> getSampleNumber() { return optInteger(WebserviceParameter.SAMPLE_NUMBER); }
 
     @Override
-    public Optional<Long> getSampleSeed() { return optLong("sampleseed"); }
+    public Optional<Long> getSampleSeed() { return optLong(WebserviceParameter.SAMPLE_SEED); }
 
     @Override
-    public boolean getUseCache() { return getBool("usecache"); }
+    public boolean getUseCache() { return getBool(WebserviceParameter.USE_CACHE); }
 
     @Override
-    public int getForwardIndexMatchFactor() { return getInt("fimatch"); }
+    public int getForwardIndexMatchFactor() { return getInt(WebserviceParameter.FORWARD_INDEX_MATCHING_SETTING); }
 
     @Override
-    public long getMaxRetrieve() { return getLong("maxretrieve"); }
+    public long getMaxRetrieve() { return getLong(WebserviceParameter.MAX_HITS_TO_RETRIEVE); }
 
     @Override
-    public long getMaxCount() { return getLong("maxcount"); }
+    public long getMaxCount() { return getLong(WebserviceParameter.MAX_HITS_TO_COUNT); }
 
     @Override
-    public long getFirstResultToShow() { return getLong("first"); }
+    public long getFirstResultToShow() { return getLong(WebserviceParameter.FIRST_RESULT); }
 
     @Override
-    public Optional<Long> optNumberOfResultsToShow() { return optLong("number"); }
+    public Optional<Long> optNumberOfResultsToShow() { return optLong(WebserviceParameter.NUMBER_OF_RESULTS); }
 
     @Override
     public long getNumberOfResultsToShow() {
         // NOTE: this is NOT the same as optNumberOfResultsToShow.orElse(0L) because
-        //       getString() sets a default value if "number" param is not set
+        //       getLong() sets the configured default value if "number" param is not set
         //       (yes, this is smelly)
-        return getLong("number");
+        return getLong(WebserviceParameter.NUMBER_OF_RESULTS);
     }
 
     @Override
-    public int getWordsAroundHit() { return getInt("wordsaroundhit"); }
+    public int getWordsAroundHit() { return getInt(WebserviceParameter.WORDS_AROUND_HIT); }
 
     @Override
     public ConcordanceType getConcordanceType() {
-        return get("usecontent").equals("orig") ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+        return get(WebserviceParameter.CREATE_CONCORDANCES_FROM).equals("orig") ? ConcordanceType.CONTENT_STORE :
+                ConcordanceType.FORWARD_INDEX;
     }
 
     @Override
-    public boolean getIncludeGroupContents() { return getBool("includegroupcontents"); }
+    public boolean getIncludeGroupContents() { return getBool(WebserviceParameter.INCLUDE_GROUP_CONTENTS); }
 
     @Override
-    public boolean getOmitEmptyCaptures() { return getBool("omitemptycaptures"); }
+    public boolean getOmitEmptyCaptures() { return getBool(WebserviceParameter.OMIT_EMPTY_CAPTURES); }
 
     @Override
-    public Optional<String> getFacetProps() { return opt("facets"); }
+    public Optional<String> getFacetProps() { return opt(WebserviceParameter.INCLUDE_FACETS); }
 
-    public Optional<String> getGroupProps() {
-        return opt("group");
-    }
+    public Optional<String> getGroupProps() { return opt(WebserviceParameter.GROUP_BY); }
 
     @Override
-    public Optional<String> getSortProps() {
-        return opt("sort");
-    }
+    public Optional<String> getSortProps() { return opt(WebserviceParameter.SORT_BY); }
 
     @Override
-    public Optional<String> getViewGroup() {
-        return opt("viewgroup");
-    }
+    public Optional<String> getViewGroup() { return opt(WebserviceParameter.VIEW_GROUP); }
 
     /**
      * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
@@ -305,7 +297,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * @return which annotations to list
      */
     @Override
-    public Set<String> getListValuesFor() { return getSet("listvalues"); }
+    public Set<String> getListValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS); }
 
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
@@ -314,98 +306,103 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * @return which metadata fields to list
      */
     @Override
-    public Set<String> getListMetadataValuesFor() { return getSet("listmetadatavalues"); }
+    public Set<String> getListMetadataValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
 
     @Override
-    public Collection<String> getListSubpropsFor() { return getSet("subprops"); }
+    public Collection<String> getListSubpropsFor() { return getSet(WebserviceParameter.LIST_SUBPROP_VALUES); }
 
     @Override
-    public boolean getWaitForTotal() { return getBool("waitfortotal"); }
+    public boolean getWaitForTotal() { return getBool(WebserviceParameter.WAIT_FOR_TOTAL_COUNT); }
 
     @Override
     public boolean getIncludeTokenCount() {
-        return getBool("includetokencount");
+        return getBool(WebserviceParameter.INCLUDE_TOKEN_COUNT);
     }
 
     @Override
     public boolean getCsvIncludeSummary() {
-        return getBool("csvsummary");
+        return getBool(WebserviceParameter.CSV_INCLUDE_SUMMARY);
     }
 
     @Override
     public boolean getCsvDeclareSeparator() {
-        return getBool("csvsepline");
+        return getBool(WebserviceParameter.CSV_DECLARE_SEPARATOR);
     }
 
     @Override
-    public boolean getExplain() {
-        return getBool("explain");
-    }
+    public boolean getExplain() { return getBool(WebserviceParameter.EXPLAIN_QUERY_REWRITE); }
 
     @Override
-    public boolean getSensitive() { return getBool("sensitive"); }
+    public boolean getSensitive() { return getBool(WebserviceParameter.SENSITIVE); }
 
     @Override
-    public int getWordStart() { return getInt("wordstart"); }
+    public int getWordStart() { return getInt(WebserviceParameter.WORD_START); }
 
     @Override
-    public int getWordEnd() {
-        return getInt("wordend");
-    }
+    public int getWordEnd() { return getInt(WebserviceParameter.WORD_END); }
 
     @Override
-    public Optional<Integer> getHitStart() { return optInteger("hitstart"); }
+    public Optional<Integer> getHitStart() { return optInteger(WebserviceParameter.HIT_START); }
 
     @Override
-    public int getHitEnd() { return getInt("hitend"); }
+    public int getHitEnd() { return getInt(WebserviceParameter.HIT_END); }
 
     @Override
-    public String getAutocompleteTerm() { return get("term"); }
+    public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }
 
     @Override
-    public boolean isCalculateCollocations() { return get("calc").equals("colloc"); }
+    public boolean isCalculateCollocations() { return get(WebserviceParameter.CALCULATE_STATS).equals("colloc"); }
 
     @Override
     public String getAnnotationName() {
-        String annotName = get("annotation");
-        if (annotName.length() == 0)
-            annotName = get("property"); // old parameter name, deprecated
+        String annotName = get(WebserviceParameter.ANNOTATION);
+        if (annotName.length() == 0 && has(WebserviceParameter.PROPERTY))
+            annotName = get(WebserviceParameter.PROPERTY); // old parameter name, deprecated
         return annotName;
     }
 
     @Override
-    public Set<String> getTerms() { return getSet("terms"); }
+    public Set<String> getTerms() { return getSet(WebserviceParameter.TERMS); }
 
     @Override
-    public boolean isIncludeDebugInfo() { return getBool("debug"); }
+    public boolean isIncludeDebugInfo() { return getBool(WebserviceParameter.DEBUG); }
 
     @Override
-    public String getFieldName() {
-        return get("field");
-    }
-
-    @Override
-    public SearchManager getSearchManager() {
-        return searchMan;
-    }
-
-    @Override
-    public User getUser() {
-        return user;
-    }
-
-    @Override
-    public String getCorpusName() {
-        return corpusName;
-    }
+    public String getFieldName() { return get(WebserviceParameter.FIELD); }
 
     @Override
     public WebserviceOperation getOperation() {
-        return WebserviceOperation.fromName(get(PARAM_NAME_OPERATION));
+        String strOp = get(WebserviceParameter.OPERATION);
+        WebserviceOperation op = WebserviceOperation.fromValue(strOp)
+                .orElseThrow(() -> new UnsupportedOperationException("Unsupported operation '" + strOp + "'"));
+
+        // BLS has /hits and /docs paths for both ungrouped and grouped operations, so the two WebserviceOperations
+        // are kind of interchangeable at the moment (the proxy will only send op=hits or op=docs, even for grouped
+        // requests).
+        // Here we make sure we send the specific value appropriate to the rest of the parametesr, so responses are
+        // consistent (important for CI testing, among other things)
+        boolean isGroupResponse = has(WebserviceParameter.GROUP_BY) && !has(WebserviceParameter.VIEW_GROUP);
+        if (op == WebserviceOperation.DOCS || op == WebserviceOperation.DOCS_GROUPED) {
+            op = isGroupResponse ? WebserviceOperation.DOCS_GROUPED : WebserviceOperation.DOCS;
+        } else if (op == WebserviceOperation.HITS || op == WebserviceOperation.HITS_GROUPED) {
+            op = isGroupResponse ? WebserviceOperation.HITS_GROUPED : WebserviceOperation.HITS;
+        }
+
+        return op;
     }
 
     @Override
-    public Optional<String> getInputFormat() {
-        return opt("inputformat");
-    }
+    public Optional<String> getInputFormat() { return opt(WebserviceParameter.INPUT_FORMAT); }
+
+    @Override
+    public ApiVersion apiCompatibility() { return ApiVersion.fromValue(get(WebserviceParameter.API_COMPATIBILITY)); }
+
+    @Override
+    public SearchManager getSearchManager() { return searchMan; }
+
+    @Override
+    public User getUser() { return user; }
+
+    @Override
+    public String getCorpusName() { return corpusName; }
 }

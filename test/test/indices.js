@@ -100,7 +100,7 @@ function clearKeys(keys, data) {
     return sanitizeResponse(data, keys, (v) => {
         // Is the value an array with a single string element that only contains whitespace?
         // If so, return an empty array. Otherwise, return unchanged
-        return v instanceof Array && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
+        return Array.isArray(v) && v.length === 1 && typeof v[0] === "string" && v[0].trim() === "" ? [] : v;
     });
 }
 
@@ -142,87 +142,89 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
     return request.send()
 }
 
+if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement these functions yet
 
-describe('Indexing tests', () => {
-    it('create a new index', async () => {
-        const indexName = createIndexName();
-        const respFormat = await createInputFormat();
-        assert.isTrue(respFormat.ok);
+    describe('Indexing tests', () => {
+        it('create a new index', async () => {
+            const indexName = createIndexName();
+            const respFormat = await createInputFormat();
+            assert.isTrue(respFormat.ok);
 
-        const createRes = await createIndex(indexName);
-        assert.isTrue(createRes.ok);
+            const createRes = await createIndex(indexName);
+            assert.isTrue(createRes.ok);
 
-        const resGetIndex = await getIndexRequest(indexName);
-        assert.isTrue(resGetIndex.ok);
-    });
-    it('adds to index', async () => {
+            const resGetIndex = await getIndexRequest(indexName);
+            assert.isTrue(resGetIndex.ok);
+        });
+        it('adds to index', async () => {
 
-        const indexName = createIndexName();
-        const req = await createInputFormat();
-        assert.isTrue(req.ok);
+            const indexName = createIndexName();
+            const req = await createInputFormat();
+            assert.isTrue(req.ok);
 
-        const createRes = await createIndex(indexName);
-        assert.isTrue(createRes.ok);
+            const createRes = await createIndex(indexName);
+            assert.isTrue(createRes.ok);
 
-        const addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-        assert.isTrue(addReq.ok);
+            const addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
+            assert.isTrue(addReq.ok);
 
-        const indexContents = await getIndexContent(indexName);
-        assert.isTrue(indexContents.ok);
+            const indexContents = await getIndexContent(indexName);
+            assert.isTrue(indexContents.ok);
 
-        const body = indexContents.body;
-        const expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH, READ_FILE_OPTS));
+            const body = indexContents.body;
+            const expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH, READ_FILE_OPTS));
 
-        const keys = ['summary', 'searchTime'];
-        expect(clearKeys(keys, expectedContent)).to.be.deep.equal(clearKeys(keys, body));
-    }).timeout(3000); // allow a little more time for slower servers
+            const keys = ['summary', 'searchTime'];
+            expect(clearKeys(keys, expectedContent)).to.be.deep.equal(clearKeys(keys, body));
+        }).timeout(3000); // allow a little more time for slower servers
 
-    it('get index metadata', async () => {
-        const indexName = createIndexName();
-        await createInputFormat();
+        it('get index metadata', async () => {
+            const indexName = createIndexName();
+            await createInputFormat();
 
-        let createRes = await createIndex(indexName);
-        assert.isTrue(createRes.ok);
+            let createRes = await createIndex(indexName);
+            assert.isTrue(createRes.ok);
 
-        let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-        //assert.isTrue(addReq.ok);
-        assert.equal(200, addReq.status);
+            let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
+            //assert.isTrue(addReq.ok);
+            assert.equal(200, addReq.status);
 
-        const indexMetadata = await getIndexMetadata(indexName);
-        const body = indexMetadata.body;
-        assert.isTrue(indexMetadata.ok);
+            const indexMetadata = await getIndexMetadata(indexName);
+            const body = indexMetadata.body;
+            assert.isTrue(indexMetadata.ok);
 
-        const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
+            const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
 
-        const keys = ['indexName', 'displayName', 'versionInfo', 'documentFormat']
-        expect(clearKeys(keys, expectedMetadata)).to.be.deep.equal(clearKeys(keys, body));
-    });
+            const keys = ['indexName', 'displayName', 'versionInfo', 'documentFormat']
+            expect(clearKeys(keys, expectedMetadata)).to.be.deep.equal(clearKeys(keys, body));
+        });
 
-    it('query from config', async () => {
-        const indexName = createIndexName();
-        await createInputFormat();
+        it('query from config', async () => {
+            const indexName = createIndexName();
+            await createInputFormat();
 
-        let createRes = await createIndex(indexName);
-        assert.isTrue(createRes.ok);
+            let createRes = await createIndex(indexName);
+            assert.isTrue(createRes.ok);
 
-        let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-        assert.isTrue(addReq.ok);
+            let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
+            assert.isTrue(addReq.ok);
 
-        const queriesTest = TEST_CONFIG['queries'];
-        for (let [testName, testCase] of Object.entries(queriesTest)) {
-            const filterTerms = testCase['filters'];
-            const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
-            assert.isTrue(queryInd.ok);
-            const body = await xmlToJson(queryInd.body);
+            const queriesTest = TEST_CONFIG['queries'];
+            for (let [testName, testCase] of Object.entries(queriesTest)) {
+                const filterTerms = testCase['filters'];
+                const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
+                assert.isTrue(queryInd.ok);
+                const body = await xmlToJson(queryInd.body);
 
-            const key = 'summary';
-            if (testCase['expected'] === null) {
-                const results = clearKeys(key, body['blacklabResponse']);
-                expect(results['hits']).to.be.empty;
-            } else {
-                const expectedOutput = await xmlToJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
-                expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(key, body['blacklabResponse']));
+                const key = 'summary';
+                if (testCase['expected'] === null) {
+                    const results = clearKeys(key, body['blacklabResponse']);
+                    expect(results['hits']).to.be.empty;
+                } else {
+                    const expectedOutput = await xmlToJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
+                    expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(key, body['blacklabResponse']));
+                }
             }
-        }
+        });
     });
-});
+}

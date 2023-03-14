@@ -10,7 +10,7 @@ To build it, run:
 DOCKER_BUILDKIT=1 docker build -f Dockerfile -t instituutnederlandsetaal/blacklab ..
 ```
 
-This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`; if necessary, you can overwrite this with your own version.
+This image has a default configuration file in `/etc/blacklab/blacklab-server.yaml`; if necessary, you can overwrite this with your own version (using the `$CONFIG_ROOT` environment variable, or by deriving your own image, or some other way).
 
 ## Making indexes available
 

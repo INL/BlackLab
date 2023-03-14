@@ -14,6 +14,5 @@
   "user": {
     "loggedIn": false,
     "canCreateIndex": false
-  },
-  "cacheStatus": "VALUE_REMOVED"
+  }
 }

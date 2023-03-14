@@ -6,12 +6,12 @@ import java.util.List;
 
 import org.apache.commons.fileupload.FileItem;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Add or update an input format configuration.
@@ -23,7 +23,7 @@ public class RequestHandlerAddFormat extends RequestHandler {
     }
 
     @Override
-    public int handle(final DataStream ds) throws BlsException {
+    public int handle(final ResponseStreamer rs) throws BlsException {
         debug(logger, "REQ add format: " + indexName);
 
         List<FileItem> files = FileUploadHandler.getFiles(request);
@@ -43,6 +43,6 @@ public class RequestHandlerAddFormat extends RequestHandler {
             throw new BadRequest("", e.getMessage());
         }
         WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
-        return Response.success(ds, "Format added.");
+        return Response.success(rs, "Format added.");
     }
 }

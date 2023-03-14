@@ -43,7 +43,10 @@ import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Wraps the WebserviceParams and interprets them to create searches.
@@ -92,6 +95,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     private String overrideAnnotationName;
 
     private String fieldName;
+
+    private String inputFormat;
 
     private WebserviceParamsImpl(boolean isDocsOperation, boolean isDebugMode,
             QueryParams params) {
@@ -503,7 +508,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public Map<String, String> getParameters() {
+    public Map<WebserviceParameter, String> getParameters() {
         return params.getParameters();
     }
 
@@ -747,7 +752,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getOperation();
     }
 
-    private String inputFormat;
+    @Override
+    public ApiVersion apiCompatibility() { return params.apiCompatibility(); }
 
     public Optional<String> getInputFormat() {
         if (inputFormat != null)

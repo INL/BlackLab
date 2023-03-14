@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Get information about the structure of an index.
@@ -20,8 +20,8 @@ public class RequestHandlerIndexMetadata extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
-        WebserviceRequestHandler.opCorpusInfo(params, ds);
+    public int handle(ResponseStreamer rs) throws BlsException {
+        WebserviceRequestHandler.opCorpusInfo(params, rs);
         return HTTP_OK;
     }
 

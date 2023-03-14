@@ -14,7 +14,7 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -111,7 +111,7 @@ public class UserRequestSolr implements UserRequest {
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query
             DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-            if (docSet != null && index != null)
+            if (docSet != null && docSet.size() > 0 && index != null)
                 params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
         }
         return params;

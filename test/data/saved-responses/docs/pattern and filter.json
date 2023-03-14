@@ -3,6 +3,7 @@
     "searchParam": {
       "filter": "pid:PBsve435",
       "indexname": "test",
+      "op": "docs",
       "patt": "\"the\"",
       "sort": "field:pid",
       "waitfortotal": "true",
@@ -38,7 +39,7 @@
       "numberOfHits": 9,
       "docInfo": {
         "fromInputFile": [
-          "/test-data/input/PBsve435.xml"
+          "PBsve435.xml"
         ],
         "pid": [
           "PBsve435"

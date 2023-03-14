@@ -1,10 +1,10 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Get information about a field in the index.
@@ -21,7 +21,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
+    public int handle(ResponseStreamer rs) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         if (fieldName.length() == 0) {
@@ -30,7 +30,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
         }
         params.setFieldName(fieldName);
 
-        WebserviceRequestHandler.opFieldInfo(params, ds);
+        WebserviceRequestHandler.opFieldInfo(params, rs);
 
         // Remove any empty settings
         //response.removeEmptyMapValues();

@@ -36,6 +36,9 @@
         <!-- Solr integration (experimental) -->
         <module>solr</module>
 
+        <!-- BlackLab Proxy (experimental) -->
+        <module>proxy</module>
+
         <!-- Optional instrumentation modules -->
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>

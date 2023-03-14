@@ -694,8 +694,10 @@ public class WebserviceOperations {
     public static ResultAnnotatedField annotatedField(WebserviceParams params, AnnotatedField fieldDesc, boolean includeIndexName) {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         BlackLabIndex index = params.blIndex();
+        Collection<String> listValuesFor = params.getListValuesFor();
         for (Annotation annotation: fieldDesc.annotations()) {
-            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, params.getListValuesFor());
+            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation,
+                    listValuesFor.contains(annotation.name()));
             annotInfos.put(annotation.name(), ai);
         }
         return new ResultAnnotatedField(includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);

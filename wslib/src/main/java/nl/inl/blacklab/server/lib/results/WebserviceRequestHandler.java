@@ -14,12 +14,12 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.searches.SearchCache;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Handle all the different webservice requests, given the requested operation,
@@ -33,9 +33,9 @@ public class WebserviceRequestHandler {
      * Show information about a field in a corpus.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opFieldInfo(WebserviceParams params, DataStream ds) {
+    public static void opFieldInfo(WebserviceParams params, ResponseStreamer rs) {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
         String fieldName = params.getFieldName();
@@ -43,12 +43,12 @@ public class WebserviceRequestHandler {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
-            DStream.annotatedField(ds, resultAnnotatedField);
+            rs.annotatedField(resultAnnotatedField);
         } else {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
             ResultMetadataField metadataField = WebserviceOperations.metadataField(fieldDesc, params.getCorpusName());
-            DStream.metadataField(ds, metadataField);
+            rs.metadataField(metadataField);
         }
     }
 
@@ -56,56 +56,56 @@ public class WebserviceRequestHandler {
      * Show information about a corpus.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opCorpusInfo(WebserviceParams params, DataStream ds) {
+    public static void opCorpusInfo(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
-        DStream.indexMetadataResponse(ds, corpusInfo);
+        rs.indexMetadataResponse(corpusInfo);
     }
 
     /**
      * Show (indexing) status of a corpus.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opCorpusStatus(WebserviceParams params, DataStream ds) {
+    public static void opCorpusStatus(WebserviceParams params, ResponseStreamer rs) {
         ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
-        DStream.indexStatusResponse(ds, corpusStatus);
+        rs.indexStatusResponse(corpusStatus);
     }
 
     /**
      * Show server information.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opServerInfo(WebserviceParams params, boolean debugMode, DataStream ds) {
+    public static void opServerInfo(WebserviceParams params, boolean debugMode, ResponseStreamer rs) {
         ResultServerInfo serverInfo = WebserviceOperations.serverInfo(params, debugMode);
-        DStream.serverInfo(ds, serverInfo);
+        rs.serverInfo(serverInfo, params.apiCompatibility());
     }
 
     /**
      * Find or group hits.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opHits(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    public static void opHits(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         if (params.isCalculateCollocations()) {
             // Collocations request
             TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
-            DStream.collocationsResponse(ds, tfl);
+            rs.collocationsResponse(tfl);
         } else {
             // Hits request
             if (shouldReturnListOfGroups(params)) {
                 // We're returning a list of groups
                 ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
-                DStream.hitsGroupedResponse(ds, hitsGrouped);
+                rs.hitsGroupedResponse(hitsGrouped);
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
                 ResultHits result = WebserviceOperations.getResultHits(params);
-                DStream.hitsResponse(ds, result);
+                rs.hitsResponse(result, params.apiCompatibility() == ApiVersion.V3);
             }
         }
     }
@@ -114,13 +114,13 @@ public class WebserviceRequestHandler {
      * Find or group documents.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opDocs(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    public static void opDocs(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         if (shouldReturnListOfGroups(params)) {
             // We're returning a list of groups
             ResultDocsGrouped docsGrouped = WebserviceOperations.docsGrouped(params);
-            DStream.docsGroupedResponse(ds, docsGrouped);
+            rs.docsGroupedResponse(docsGrouped);
         } else {
             // We're returning a list of results (ungrouped, or viewing single group)
             ResultDocsResponse result;
@@ -131,7 +131,7 @@ public class WebserviceRequestHandler {
                 // Regular set of docs (no grouping first)
                 result = WebserviceOperations.regularDocsResponse(params);
             }
-            DStream.docsResponse(ds, result);
+            rs.docsResponse(result, params.apiCompatibility() == ApiVersion.V3);
         }
     }
 
@@ -165,20 +165,20 @@ public class WebserviceRequestHandler {
      * Return the original contents of a document.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opDocContents(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    public static void opDocContents(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         ResultDocContents result = WebserviceOperations.docContents(params);
-        DStream.docContentsResponse(result, ds);
+        rs.docContentsResponse(result);
     }
 
     /**
      * Return metadata for a document.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opDocInfo(WebserviceParams params, DataStream ds) {
+    public static void opDocInfo(WebserviceParams params, ResponseStreamer rs) {
         Collection<MetadataField> metadataToWrite = WebserviceOperations.getMetadataToWrite(params);
         BlackLabIndex index = params.blIndex();
         ResultDocInfo docInfo = WebserviceOperations.docInfo(index, params.getDocPid(), null, metadataToWrite);
@@ -188,29 +188,30 @@ public class WebserviceRequestHandler {
         Map<String, String> metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
 
         // Document info
-        DStream.docInfoResponse(ds, docInfo, metadataFieldGroups, docFields, metaDisplayNames);
+        rs.docInfoResponse(docInfo, metadataFieldGroups, docFields, metaDisplayNames,
+                params.apiCompatibility() == ApiVersion.V3);
     }
 
     /**
      * Return a snippet from a document.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opDocSnippet(WebserviceParams params, DataStream ds) {
+    public static void opDocSnippet(WebserviceParams params, ResponseStreamer rs) {
         ResultDocSnippet result = WebserviceOperations.docSnippet(params);
-        DStream.hitOrFragmentInfo(ds, result);
+        rs.hitOrFragmentInfo(result);
     }
 
     /**
      * Calculate term frequencies.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opTermFreq(WebserviceParams params, DataStream ds) {
+    public static void opTermFreq(WebserviceParams params, ResponseStreamer rs) {
         TermFrequencyList tfl = WebserviceOperations.getTermFrequencies(params);
-        DStream.termFreqResponse(ds, tfl);
+        rs.termFreqResponse(tfl);
     }
 
 
@@ -218,39 +219,42 @@ public class WebserviceRequestHandler {
      * Return autocomplete results for metadata or annotated field.
      *
      * @param params parameters
-     * @param ds output stream
+     * @param rs output stream
      */
-    public static void opAutocomplete(WebserviceParams params, DataStream ds) {
+    public static void opAutocomplete(WebserviceParams params, ResponseStreamer rs) {
         ResultAutocomplete result = WebserviceOperations.autocomplete(params);
-        DStream.autoComplete(ds, result);
+        rs.autoComplete(result);
     }
 
-    public static void opInputFormatInfo(WebserviceParams params, DataStream ds) {
-        ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
-        DStream.formatInfoResponse(ds, result);
+    public static void opInputFormatInfo(WebserviceParams params, ResponseStreamer rs) {
+        Optional<String> inputFormat = params.getInputFormat();
+        if (!inputFormat.isPresent())
+            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
+        ResultInputFormat result = WebserviceOperations.inputFormat(inputFormat.get());
+        rs.formatInfoResponse(result);
     }
 
-    public static void opListInputFormats(WebserviceParams params, DataStream ds) {
+    public static void opListInputFormats(WebserviceParams params, ResponseStreamer rs) {
         ResultListInputFormats result = WebserviceOperations.listInputFormats(params);
-        DStream.listFormatsResponse(ds, result);
+        rs.listFormatsResponse(result);
     }
 
-    public static void opCacheInfo(WebserviceParams params, DataStream ds) {
+    public static void opCacheInfo(WebserviceParams params, ResponseStreamer rs) {
         boolean includeDebugInfo = params.isIncludeDebugInfo();
         SearchCache blackLabCache = params.getSearchManager().getBlackLabCache();
-        DStream.cacheInfo(ds, blackLabCache, includeDebugInfo);
+        rs.cacheInfo(blackLabCache, includeDebugInfo);
     }
 
-    public static int opClearCache(WebserviceParams params, DataStream ds, boolean debugMode) {
+    public static int opClearCache(WebserviceParams params, ResponseStreamer rs, boolean debugMode) {
         if (!debugMode) {
-            return Response.forbidden(ds);
+            return Response.forbidden(rs);
         } else {
             params.getSearchManager().getBlackLabCache().clear(false);
-            return Response.status(ds, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
+            return Response.status(rs, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
         }
     }
 
-    public static void opDocsCsv(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    public static void opDocsCsv(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         ResultDocsCsv result = WebserviceOperations.docsCsv(params);
         String csv;
         if (result.getGroups() == null || result.isViewGroup()) {
@@ -262,10 +266,10 @@ public class WebserviceRequestHandler {
             csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
                     result.getSubcorpusResults());
         }
-        ds.csv(csv);
+        rs.getDataStream().csv(csv);
     }
 
-    public static void opHitsCsv(WebserviceParams params, DataStream ds) throws InvalidQuery {
+    public static void opHitsCsv(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
         String csv;
         if (result.getGroups() != null && !result.isViewGroup()) {
@@ -273,11 +277,11 @@ public class WebserviceRequestHandler {
         } else {
             csv = WriteCsv.hitsResponse(result);
         }
-        ds.csv(csv);
+        rs.getDataStream().csv(csv);
     }
 
-    public static void opInputFormatXslt(WebserviceParams params, DataStream ds) {
+    public static void opInputFormatXslt(WebserviceParams params, ResponseStreamer rs) {
         ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
-        DStream.formatXsltResponse(ds, result);
+        rs.formatXsltResponse(result);
     }
 }

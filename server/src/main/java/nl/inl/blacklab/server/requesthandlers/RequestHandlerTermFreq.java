@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Request handler for term frequencies for a set of documents.
@@ -11,12 +11,12 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 public class RequestHandlerTermFreq extends RequestHandler {
 
     public RequestHandlerTermFreq(UserRequestBls userRequest) {
-        super(userRequest, WebserviceOperation.TERMFREQ);
+        super(userRequest, WebserviceOperation.TERM_FREQUENCIES);
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException {
-        WebserviceRequestHandler.opTermFreq(params, ds);
+    public int handle(ResponseStreamer rs) throws BlsException {
+        WebserviceRequestHandler.opTermFreq(params, rs);
         return HTTP_OK;
     }
 

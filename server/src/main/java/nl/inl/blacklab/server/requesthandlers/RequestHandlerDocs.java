@@ -1,10 +1,10 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * List documents, search for documents matching criteria.
@@ -16,8 +16,8 @@ public class RequestHandlerDocs extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opDocs(params, ds);
+    public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
+        WebserviceRequestHandler.opDocs(params, rs);
         return HTTP_OK;
     }
 

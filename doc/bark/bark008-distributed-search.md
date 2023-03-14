@@ -17,10 +17,8 @@ Using Solr's distributed search, after integrating BlackLab with Solr (see [BARK
 
 ## When?
 
-Work on this has started in 2022. It should be complete by the end of 2020.
+Work on this has started in 2022. It should be complete by the end of 2023 or beginning of 2024.
 
 ## Impact on users
 
-Distributed search will be an option, not a requirement. Solr can also be run standalone, and 
-classic BlackLab Server will be supported for the foreseeable future.
-
+Distributed search will be an option, not a requirement. Solr can also be run standalone, and classic BlackLab Server will be supported for the foreseeable future.

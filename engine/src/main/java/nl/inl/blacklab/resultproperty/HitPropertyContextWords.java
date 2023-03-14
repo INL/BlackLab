@@ -13,6 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on the context of the hit.

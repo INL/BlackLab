@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import nl.inl.blacklab.server.datastream.DataStream;
-import nl.inl.blacklab.server.lib.WebserviceOperation;
+import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
  * Display the contents of the cache.
@@ -18,8 +18,8 @@ public class RequestHandlerCacheInfo extends RequestHandler {
     }
 
     @Override
-    public int handle(DataStream ds) {
-        WebserviceRequestHandler.opCacheInfo(params, ds);
+    public int handle(ResponseStreamer rs) {
+        WebserviceRequestHandler.opCacheInfo(params, rs);
         return HTTP_OK;
     }
 

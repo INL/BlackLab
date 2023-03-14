@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BLSConfigParameters {
     /** What pattern language to use? */
@@ -33,6 +35,21 @@ public class BLSConfigParameters {
     /** If a group of length 0 is captured (same start and end position), should we omit it instead? */
     private boolean omitEmptyCaptures = false;
 
+    /** API compatibility (defaults to the "current" one) */
+    private ApiVersion api = ApiVersion.CURRENT;
+
+    /**
+     * Set up parameter default values from the configuration.
+     */
+    public void setParameterDefaults() {
+        // Set up the parameter default values
+        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_RETRIEVE, "" + getProcessHits().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_COUNT, "" + getCountHits().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
+        WebserviceParameter.setDefaultValue(WebserviceParameter.WORDS_AROUND_HIT, "" + getContextSize().getDefaultValue());
+        WebserviceParameter.setDefaultValue(WebserviceParameter.API_COMPATIBILITY, "" + getApi().versionString());
+    }
 
     @JsonGetter("defaultSearchSensitivity")
     public String getDefaultSearchSensitivityName() {
@@ -124,5 +141,13 @@ public class BLSConfigParameters {
     @SuppressWarnings("unused")
     public void setOmitEmptyCaptures(boolean omitEmptyCaptures) {
         this.omitEmptyCaptures = omitEmptyCaptures;
+    }
+
+    public void setApi(String api) {
+        this.api = ApiVersion.fromValue(api);
+    }
+
+    public ApiVersion getApi() {
+        return this.api;
     }
 }

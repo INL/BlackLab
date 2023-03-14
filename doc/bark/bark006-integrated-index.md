@@ -1,7 +1,7 @@
 # BARK 6 - Integrated index format
 
 - **type:** change
-- **status:** in development
+- **status:** experimental
 
 All external files incorporated into the Lucene index.
 
@@ -13,7 +13,7 @@ All external files incorporated into the Lucene index.
 ## Related documents
 
 - [Integrated index format files](../index-formats/integrated.md)
-- [PLAN.md](../../PLAN.md)
+- [Supporting distributed indexing and search](../DISTRIBUTED PLAN.md)
 
 ## Impact on users
 

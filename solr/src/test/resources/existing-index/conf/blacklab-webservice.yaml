@@ -26,6 +26,8 @@ protocol:
     defaultOutputType: JSON
 
 
+
+
 # Defaults and maximum values for parameters
 # (some values will affect server load)
 parameters:

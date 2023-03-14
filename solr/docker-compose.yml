@@ -1,33 +1,13 @@
 # Docker Compose file for BlackLab with Solr.
+# NOTE: in production, you probably want to run this with the
+#       BlackLab proxy, to avoid opening Solr to the internet directly.
 
 version: '3.9'
 
 services:
-
   solr:
+    image: instituutnederlandsetaal/blacklab-solr:${IMAGE_VERSION}
+
     build:
-        context: ..
-        dockerfile: solr/Dockerfile
-
-    #volumes:
-      # Bind mount the JAR so we don't have to run Maven to recreate the image. [dev only]
-      #- ./target/blacklab-solr.jar:/opt/solr/contrib/blacklab-solr/lib/blacklab-solr.jar
-      #- ./target/blacklab-solr.jar:/opt/solr/lib/blacklab-solr.jar
-
-      # Bind mount test core
-      # (the problem with this is the files have the owner uid from the host,
-      #  so Solr isn't allowed to write its core.properties there)
-      #- src/test/resources/existing-index:/var/solr/data/test
-
-    ports:
-
-      # Solr runs on this port
-      - "8983:8983"
-
-      # Allow us to attach to the JVM using JDWP for remote debugging
-      - "5005:5005"
-
-    environment:
-
-      # Enable JDWP remote debugging on port 5005
-      - "SOLR_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+      context: ..
+      dockerfile: solr/Dockerfile

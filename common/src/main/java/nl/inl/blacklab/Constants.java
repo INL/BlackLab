@@ -1,5 +1,8 @@
 package nl.inl.blacklab;
 
+/**
+ * Constant values used in various places throughout the project.
+ */
 public class Constants {
 
     /**
@@ -18,4 +21,11 @@ public class Constants {
      * https://stackoverflow.com/questions/25609840/java-hashmap-max-size-of-5770/25610054
      */
     public static final int JAVA_MAX_HASHMAP_SIZE = Integer.MAX_VALUE / 4;
+
+    /** Used as a default value if no name has been specified (legacy indexers only) */
+    public static final String DEFAULT_MAIN_ANNOT_NAME = "word";
+
+    /** Key in Solr response that contains the BlackLab response
+        (also used by the proxy to retrieve the BlackLab response from the Solr response) */
+    public static final String SOLR_BLACKLAB_SECTION_NAME = "blacklab";
 }
