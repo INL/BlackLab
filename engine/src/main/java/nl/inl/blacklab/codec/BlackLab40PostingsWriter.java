@@ -442,14 +442,15 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
      * @throws IOException       When failing to write
      */
     private void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
-        int max = 0;
+        int max = 0, min = 0;
         boolean allTheSame = tokensInDoc.length > 0; // if no tokens, then not all the same.
         int last = -1;
         for (int token: tokensInDoc) {
             max = Math.max(max, token);
+            min = Math.min(min, token);
             allTheSame = allTheSame && (last == -1 || last == token);
             last = token;
-            if (max > Short.MAX_VALUE && !allTheSame) // stop if already at worst case (int per token + not all the same).
+            if ((min < Short.MIN_VALUE || max > Short.MAX_VALUE) && !allTheSame) // stop if already at worst case (int per token + not all the same).
                 break;
         }
 
@@ -461,9 +462,9 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
         switch (tokensCodec) {
             case ALL_TOKENS_THE_SAME: tokensCodecParameter = 0; break;
             case VALUE_PER_TOKEN: {
-                if (max <= Byte.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.BYTE.code;
-                else if (max <= Short.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.SHORT.code;
-                else if (max <= 0xFFFFFF) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.THREE_BYTES.code;
+                if (min >= Byte.MIN_VALUE && max <= Byte.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.BYTE.code;
+                else if (min >= Short.MIN_VALUE && max <= Short.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.SHORT.code;
+                else if (min >= ThreeByteInt.MIN_VALUE && max <= ThreeByteInt.MAX_VALUE) tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.THREE_BYTES.code;
                 else tokensCodecParameter = VALUE_PER_TOKEN_PARAMETER.INT.code;
                 break;
             }
@@ -496,9 +497,7 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
                     break;
                 case THREE_BYTES:
                     for (int token : tokensInDoc) {
-                        outTokensFile.writeByte((byte)(token >> 16));
-                        outTokensFile.writeByte((byte)(token >>  8));
-                        outTokensFile.writeByte((byte) token);
+                        ThreeByteInt.write((b) -> outTokensFile.writeByte(b), token);
                     }
                     break;
                 case INT:
