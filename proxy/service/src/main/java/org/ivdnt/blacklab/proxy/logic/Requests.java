@@ -139,8 +139,14 @@ public class Requests {
             target = target.path("select");
             for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
                 WebserviceParameter key = e.getKey();
-                if (key != WebserviceParameter.CORPUS_NAME)
-                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, e.getValue());
+                if (key != WebserviceParameter.CORPUS_NAME) {
+                    // Escape { and } or they will be interpreted them as template slots
+                    // (no, this shouldn't be necessary, but it is)
+                    String value = e.getValue()
+                            .replaceAll("\\{", "%7B")
+                            .replaceAll("\\}", "%7D");
+                    target = target.queryParam(BL_PAR_NAME_PREFIX + key, value);
+                }
             }
         }
         Response response = target.request(MediaType.APPLICATION_JSON_TYPE).method(method);

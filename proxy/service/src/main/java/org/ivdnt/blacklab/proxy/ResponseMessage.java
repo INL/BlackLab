@@ -11,6 +11,7 @@ import org.json.JSONObject;
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ResponseMessage {
+    String code = "INTERNAL_ERROR";
 	String message;
 	Object content; //Either a string, JSONObject or JSONArray
 
