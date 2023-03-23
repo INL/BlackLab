@@ -76,7 +76,18 @@ public class ParallelIntSorter {
         // Wait for any tasks to complete
         while (true) {
             synchronized (tasks) {
-                if (tasks.stream().allMatch(Future::isDone))
+                boolean allDone = true;
+
+                // NOTE: we don't iterate or use streams here
+                // to avoid creating a lot of garbage in such
+                // frequently called code.
+                for (int i = 0; i < tasks.size(); i++)  {
+                    if (!tasks.get(i).isDone()) {
+                        allDone = false;
+                        break;
+                    }
+                }
+                if (allDone)
                     break;
             }
             try {
