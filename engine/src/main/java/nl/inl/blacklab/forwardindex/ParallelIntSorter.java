@@ -29,10 +29,16 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  */
 public class ParallelIntSorter {
 
-    private static final int THRESHOLD = 10_000; // Minimum size of array to parallelize sorting
+    /** Minimum size of array to parallelize sorting */
+    private static final int PARALLEL_THRESHOLD = 150_000;
 
-    private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors(); // Number of threads to use
+    /** Only use this version for arrays of length 5M and up, otherwise use FastUtil. */
+    private static final int FASTUTIL_THRESHOLD = 5_000_000;
 
+    /** Number of threads to use */
+    private static final int NUM_THREADS = Runtime.getRuntime().availableProcessors();
+
+    /** Used to choose pivot point */
     private static final Random random = new Random();
 
     /** Give each searchthread a unique number */
@@ -65,12 +71,27 @@ public class ParallelIntSorter {
         random.setSeed(seed);
     }
 
+    public static void sort(int[] ret) {
+        sort(ret, Integer::compare);
+    }
+
     public static void sort(int[] ret, IntComparator intComparator) {
         ParallelIntSorter sorter = new ParallelIntSorter();
         sorter.parallelSort(ret, intComparator);
     }
 
     public void parallelSort(int[] array, IntComparator comparator) {
+        if (array.length < FASTUTIL_THRESHOLD) {
+            // Use fastutil unless the array is really huge, otherwise this is slower
+            if (array.length < PARALLEL_THRESHOLD) {
+                // Sort sequentially for small arrays
+                IntArrays.quickSort(array, comparator);
+            } else {
+                IntArrays.parallelQuickSort(array, comparator);
+            }
+            return;
+        }
+
         parallelSort(array, 0, array.length - 1, comparator);
 
         // Wait for any tasks to complete
@@ -101,7 +122,7 @@ public class ParallelIntSorter {
     private void parallelSort(int[] array, int left, int right, IntComparator comparator) {
         if (left < right) {
             int pivotIndex = partition(array, left, right, comparator);
-            if (right - left + 1 < THRESHOLD) {
+            if (right - left + 1 < PARALLEL_THRESHOLD) {
                 // Sort sequentially for small arrays
                 IntArrays.quickSort(array, left, pivotIndex, comparator);
                 IntArrays.quickSort(array, pivotIndex + 1, right + 1, comparator);
