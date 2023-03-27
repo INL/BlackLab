@@ -9,7 +9,7 @@ import org.apache.lucene.util.BytesRef;
  *
  * Specifically:
  * <ul>
- * <li>a payload is stored in the "starttag" annotation to indicate the end position
+ * <li>a payload is stored in the "starttag"/"_relation" annotation to indicate the end position
  * of a span</li>
  * <li>while indexing, payloads are used to distinguish between "primary values" (that are
  * recorded in the forward index) and "secondary values" (that are not). These indicators will stripped

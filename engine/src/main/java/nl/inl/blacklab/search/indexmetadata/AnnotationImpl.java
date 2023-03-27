@@ -263,7 +263,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     }
 
     private boolean nameImpliesInternal() {
-        return name != null && (name.equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME) ||
+        return name != null && (isRelationAnnotation() ||
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
     }
 

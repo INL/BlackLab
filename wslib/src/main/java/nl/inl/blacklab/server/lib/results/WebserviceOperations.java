@@ -419,14 +419,16 @@ public class WebserviceOperations {
      * @return values for this annotation
      */
     public static Set<String> getAnnotationValues(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
-        boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        boolean isRelationAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.relationAnnotationName(index));
         final Set<String> terms = new TreeSet<>();
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
                 MatchSensitivity.INSENSITIVE :
                 MatchSensitivity.SENSITIVE;
         AnnotationSensitivity as = annotation.sensitivity(sensitivity);
         String luceneField = as.luceneField();
-        if (isInlineTagAnnotation) {
+        if (isRelationAnnotation) {
+            // TODO: get rid of this weird quirk?
+            //   (should be a specific operation, not a special case in getAnnotationValues())
             // Tags. Skip attribute values, only show elements.
             LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
                 if (!term.startsWith("@") && !terms.contains(term)) {

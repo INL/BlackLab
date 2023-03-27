@@ -21,9 +21,12 @@ public interface AnnotatedField extends Field {
 	    return annotations().get(name);
 	}
 
-	boolean hasXmlTags();
+    @Deprecated
+	default boolean hasXmlTags() { return hasRelationAnnotation(); }
 
-	String tokenLengthField();
+    boolean hasRelationAnnotation();
+
+    String tokenLengthField();
 
     @Override
     default String contentsFieldName() {
@@ -34,11 +37,7 @@ public interface AnnotatedField extends Field {
         return offsetsSensitivity.luceneField();
     }
 
-	default Annotation tagsAnnotation() {
-		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME): null;
-	}
-
-	default Annotation punctAnnotation() {
+    default Annotation punctAnnotation() {
 		return hasXmlTags() ? annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME): null;
 	}
 }

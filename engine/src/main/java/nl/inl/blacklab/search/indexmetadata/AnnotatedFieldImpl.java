@@ -127,7 +127,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     }
 
     @Override
-    public boolean hasXmlTags() {
+    public boolean hasRelationAnnotation() {
         return xmlTags;
     }
 
@@ -184,7 +184,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     
         // Not a bookkeeping field; must be a annotation (alternative).
         AnnotationImpl annotation = getOrCreateAnnotation(annotName);
-        if (annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+        if (annotation.isRelationAnnotation())
             xmlTags = true;
         if (parts.length > 2) {
             if (parts[2] != null) {
@@ -214,7 +214,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     synchronized void putAnnotation(AnnotationImpl annotDesc) {
         ensureNotFrozen();
         annots.put(annotDesc.name(), annotDesc);
-        if (annotDesc.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME))
+        if (annotDesc.isRelationAnnotation())
             xmlTags = true;
     }
 

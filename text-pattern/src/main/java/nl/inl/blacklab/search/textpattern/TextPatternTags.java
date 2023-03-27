@@ -6,7 +6,6 @@ import java.util.Map;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -36,7 +35,7 @@ public class TextPatternTags extends TextPattern {
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
-        context = context.withAnnotation(context.field().annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME));
+        context = context.withRelationAnnotation();
         String elementName1 = optInsensitive(context, elementName);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
@@ -44,7 +43,7 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        QueryExecutionContext startTagContext = context.withXmlTagsAnnotation();
+        QueryExecutionContext startTagContext = context.withRelationAnnotation();
         String startTagFieldName = startTagContext.luceneField();
         return new SpanQueryTags(QueryInfo.create(context.index(), context.field()), startTagFieldName, elementName1, attrOptIns);
     }

@@ -582,7 +582,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions,
             int spanEndPos) {
-        AnnotationWriter annotation = getAnnotation(spanEndPos >= 0 ? AnnotatedFieldNameUtil.TAGS_ANNOT_NAME : name);
+        AnnotationWriter annotation = getAnnotation(
+                spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()) : name);
         if (annotation != null) {
             BytesRef payload = null;
             if (spanEndPos >= 0) {

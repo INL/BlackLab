@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -62,9 +63,15 @@ public class QueryExecutionContext {
         return new QueryExecutionContext(index, sensitivity.annotation(), matchSensitivity);
     }
 
+    public QueryExecutionContext withRelationAnnotation() {
+        if (!field().hasXmlTags())
+            throw new RuntimeException("Field has no relation annotation!");
+        return withAnnotation(field().annotation(AnnotatedFieldNameUtil.relationAnnotationName(index)));
+    }
+
+    @Deprecated
     public QueryExecutionContext withXmlTagsAnnotation() {
-        Annotation annotation = sensitivity.annotation().field().tagsAnnotation();
-        return new QueryExecutionContext(index, annotation, requestedSensitivity);
+        return withRelationAnnotation();
     }
 
     public String optDesensitize(String value) {
@@ -117,19 +124,6 @@ public class QueryExecutionContext {
         return sensitivity.luceneField();
     }
 
-    /**
-     * What to prefix values with (for "subannotations", like PoS features, etc.)
-     *
-     * Subannotations are indexed with this prefix before every value. When
-     * searching, we also prefix our search string with this value.
-     *
-     * @return prefix what to prefix search strings with to find the right
-     *         subannotation value
-     */
-    public String subannotPrefix() {
-        return subpropPrefix;
-    }
-
     public BlackLabIndex index() {
         return index;
     }
@@ -142,5 +136,4 @@ public class QueryExecutionContext {
     public AnnotatedField field() {
         return sensitivity.annotation().field();
     }
-
 }

@@ -16,6 +16,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryTags;
@@ -76,9 +78,11 @@ public class TestStandoffSpans {
     @Test
     public void testStandoffSpans() throws IOException, InvalidQuery {
         SearchEmpty s = testIndex.search();
-        String fieldName = testIndex.mainAnnotatedField().tagsAnnotation().
+
+        AnnotatedField field = testIndex.mainAnnotatedField();
+        String luceneFieldName = field.annotation(AnnotatedFieldNameUtil.relationAnnotationName(testIndex)).
                 sensitivity(MatchSensitivity.SENSITIVE).luceneField();
-        BLSpanQuery query = new SpanQueryTags(s.queryInfo(), fieldName,
+        BLSpanQuery query = new SpanQueryTags(s.queryInfo(), luceneFieldName,
                 "character", null);
         Hits results = s.find(query).execute();
         Assert.assertEquals(2, results.size());

@@ -10,9 +10,7 @@
   "displayOrder": [
     "word",
     "lemma",
-    "pos",
-    "starttag",
-    "punct"
+    "pos"
   ],
   "annotations": {
     "word": {

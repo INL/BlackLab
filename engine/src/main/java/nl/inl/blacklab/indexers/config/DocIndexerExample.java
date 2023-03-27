@@ -140,7 +140,7 @@ public class DocIndexerExample extends DocIndexerBase {
                     true);
         }
         // Add a special annotation where we can index arbitrary spans.
-        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()),
                 AnnotationSensitivities.ONLY_SENSITIVE, false);
         // Add a special annotation where whitespace and punctuation between words is stored.
         addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
@@ -168,13 +168,13 @@ public class DocIndexerExample extends DocIndexerBase {
         Collection<ConfigAnnotation> annots = fieldContents.getAnnotations().values();
         Iterator<ConfigAnnotation> annotIt = annots.iterator();
         ConfigAnnotation mainAnnotation = annotIt.next();
-        AnnotatedFieldWriter contents = new AnnotatedFieldWriter(fieldContents.getName(),
+        AnnotatedFieldWriter contents = new AnnotatedFieldWriter(getDocWriter(), fieldContents.getName(),
                 mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(),
                 false,
                 getDocWriter().needsPrimaryValuePayloads());
         while (annotIt.hasNext()) {
             ConfigAnnotation annot = annotIt.next();
-            boolean includePayloads = annot.getName() == AnnotatedFieldNameUtil.TAGS_ANNOT_NAME;
+            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()));
             contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads, annot.createForwardIndex());
         }
         addAnnotatedField(contents);

@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -57,6 +58,9 @@ public class AnnotatedFieldWriter {
 
     private AnnotatedField field;
 
+    /** The name of the annotation where relations and spans are stored. */
+    private final String relationAnnotationName;
+
     public void setNoForwardIndexProps(Set<String> noForwardIndexAnnotations) {
         this.noForwardIndexAnnotations.clear();
         this.noForwardIndexAnnotations.addAll(noForwardIndexAnnotations);
@@ -75,8 +79,9 @@ public class AnnotatedFieldWriter {
      * @param mainPropHasPayloads does the main annotation have payloads?
      * @param needsPrimaryValuePayloads should payloads indicate whether value is primary or not?
      */
-    public AnnotatedFieldWriter(String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
+    public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
+        relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(docWriter);
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -163,9 +168,9 @@ public class AnnotatedFieldWriter {
     }
 
     public AnnotationWriter tagsAnnotation() {
-        AnnotationWriter rv = annotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+        AnnotationWriter rv = annotation(relationAnnotationName);
         if (rv == null) {
-            throw new IllegalArgumentException("Undefined annotation '" + AnnotatedFieldNameUtil.TAGS_ANNOT_NAME + "'");
+            throw new IllegalArgumentException("Undefined annotation '" + relationAnnotationName + "'");
         }
         return rv;
     }

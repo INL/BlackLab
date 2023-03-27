@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexExternal;
 
 /**
  * Some utility functions for dealing with annotated field names.
@@ -24,7 +27,13 @@ public final class AnnotatedFieldNameUtil {
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
 
-    public static final String TAGS_ANNOT_NAME = "starttag";
+    private static final String LEGACY_TAGS_ANNOT_NAME = "starttag";
+
+    @Deprecated
+    /** @deprecated use {@link #relationAnnotationName(DocWriter)} instead */
+    public static final String TAGS_ANNOT_NAME = LEGACY_TAGS_ANNOT_NAME;
+
+    private static final String RELATIONS_ANNOT_NAME = "_relation";
 
     /** Annotation name for the spaces and punctuation between words */
     public static final String PUNCTUATION_ANNOT_NAME = "punct";
@@ -106,6 +115,37 @@ public final class AnnotatedFieldNameUtil {
      */
     public static String tagAttributeIndexValue(String name, String value) {
         return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+    }
+
+    /**
+     * Get the name of the annotation that stores the relations between words.
+     * @param index the index
+     * @return name of annotation that stores the relations between words
+     */
+    public static String relationAnnotationName(BlackLabIndex index) {
+        return relationAnnotationName(index instanceof BlackLabIndexExternal);
+    }
+
+    /**
+     * Get the name of the annotation that stores the relations between words.
+     *
+     * This includes spans like sentences, paragraphs, etc.
+     *
+     * @param docWriter the document writer
+     * @return name of annotation that stores the relations between words
+     */
+    public static String relationAnnotationName(DocWriter docWriter) {
+        return relationAnnotationName(docWriter.metadata() instanceof IndexMetadataExternal);
+    }
+
+    public static String relationAnnotationName(boolean isLegacy) {
+        return isLegacy ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
+    }
+
+    public static boolean isRelationAnnotation(String name) {
+        // TODO: icky, we can't name an annotation "starttag" in the integrated index this way.
+        //   not a huge deal, and we can remove it when we remove the external index.
+        return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
     }
 
     public enum BookkeepFieldType {

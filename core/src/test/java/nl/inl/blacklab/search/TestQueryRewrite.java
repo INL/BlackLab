@@ -12,6 +12,7 @@ import org.junit.runners.Parameterized;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -31,9 +32,13 @@ public class TestQueryRewrite {
 
     private BlackLabIndex index;
 
+    /** Name of the relations annotation */
+    private String relName;
+
     @Before
     public void setUp() {
         index = testIndex.index();
+        relName = AnnotatedFieldNameUtil.relationAnnotationName(index);
         ClauseCombinerNfa.setForwardIndexMatchingEnabled(false);
     }
 
@@ -181,14 +186,14 @@ public class TestQueryRewrite {
     public void testRewriteRepetitionTags() {
         assertRewrite("<s test='1' /> <s test='1' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(s, {test=1}))",
-                "REP(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), 2, 2)");
+                "REP(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), 2, 2)");
 
         assertRewrite("<s test='1' /> <t test='1' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(t, {test=1}))",
-                "SEQ(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), POSFILTER(TAGS(t), TERM(contents%starttag@s:@test__1), STARTS_AT))");
+                "SEQ(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), POSFILTER(TAGS(t), TERM(contents%" + relName + "@s:@test__1), STARTS_AT))");
         assertRewrite("<s test='1' /> <s test='2' />",
                 "SEQ(TAGS(s, {test=1}), TAGS(s, {test=2}))",
-                "SEQ(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__2), STARTS_AT))");
+                "SEQ(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__2), STARTS_AT))");
     }
 
     @Test
@@ -298,7 +303,7 @@ public class TestQueryRewrite {
         assertRewriteResult("<s> ('a' 'b') 'c' </s>",
                 "POSFILTER(TAGS(s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), MATCHES)");
         assertRewriteResult("<s test='1'> 'a' </s>",
-                "POSFILTER(POSFILTER(TAGS(s), TERM(contents%starttag@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");
+                "POSFILTER(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");
     }
 
     @Test
