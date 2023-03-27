@@ -174,8 +174,7 @@ class SegmentForwardIndex implements AutoCloseable {
                         case THREE_BYTES:
                             _tokens.seek(docTokensOffset + (long) start * 3);
                             for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = (((_tokens.readByte() & 0xFF) << 16)
-                                        | ((_tokens.readByte() & 0xFF) <<  8) |  (_tokens.readByte() & 0xFF));
+                                snippet[j] = ThreeByteInt.read( () -> _tokens.readByte() );
 
                             }
                             break;
