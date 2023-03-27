@@ -20,6 +20,7 @@ const SAVED_RESPONSES_PATH =  constants.SAVED_RESPONSES_PATH;
 function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
     const keysToMakeConstant = {
         // Server information page
+        apiVersion: 'DELETE',
         blacklabBuildTime: true,
         blacklabVersion: true,
         indices: {
@@ -31,10 +32,10 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
 
         // Corpus information page
         versionInfo: {
-            blacklabBuildTime: true, // API v3 inconsistent name
-            blacklabVersion: true,   // API v3 inconsistent name
-            blackLabBuildTime: true,
-            blackLabVersion: true,
+            blacklabBuildTime: true, // API v4
+            blacklabVersion: true,   // API v4
+            blackLabBuildTime: true, // API v3 (inconsistent casing)
+            blackLabVersion: true,   // API v3 (inconsistent casing)
             indexFormat: true,
             timeCreated: true,
             timeModified: true
@@ -58,13 +59,24 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
         keysToMakeConstant.summary.searchParam = true;
     }
 
-    const stripDir = (value, key) => {
-        if (key === 'fromInputFile' && typeof value === 'string')
+    const transformValues = (value, key) => {
+        if (key === 'displayName' && value === 'Starttag') {
+            // Renamed to _relation in integrated index format
+            return '_relation';
+        }
+        if (key === 'fromInputFile' && typeof value === 'string') {
+            // Strip directory from fromInputFile field values
             return value.replace(/^.*[/\\]([^/\\]+)$/, "$1");
+        }
         return value;
     };
 
-    return sanitizeResponse(response, keysToMakeConstant, stripDir);
+    const transformKeys = (key) => {
+        // starttag annotation has been renamed to _relation in integrated index format
+        return key === 'starttag' ? '_relation' : key;
+    }
+
+    return sanitizeResponse(response, keysToMakeConstant, transformValues, transformKeys);
 }
 
 /**
@@ -81,13 +93,15 @@ function sanitizeBlsResponse(response, removeParametersFromResponse = false) {
  *   strings is also allowed. If null or undefined are specified, an empty object is used.
  * @param transformValueFunc (optional) function to apply to all values copied from the response (i.e. values not
  *   being made constant)
+ * @param transformKeyFunc (optional) function to apply to all keys
  * @return sanitized response
  */
-function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v) ) {
+function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v),
+                          transformKeyFunc = ((k, _) => k )) {
 
     if (Array.isArray(response)) {
         // Process each element in the array recursively
-        return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc));
+        return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc, transformKeyFunc));
     } else if (!(typeof response === 'object')) {
         // Regular value (probably an array element); just call the transform function and return
         return transformValueFunc(response);
@@ -108,13 +122,14 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
     // Replace any of the keys from keysToMakeConstant with constant values,
     // and perform any other fixes if fixValueFunc was supplied.
     const cleanedData = {};
-    for (let key in response) {
-        const value = response[key];
+    for (let origKey in response) {
+        const value = response[origKey];
+        const key = transformKeyFunc(origKey, value);
         if (keysToMakeConstant.hasOwnProperty(key)) {
             // This is (or contains) a variable value we don't want to compare.
             if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
                 // Subobject; recursively fix this part of the response
-                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc);
+                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc, transformKeyFunc);
             } else {
                 // Single value or array. Delete or make fixed value
                 if (keysToMakeConstant[key] !== 'DELETE') {
@@ -125,12 +140,12 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
             // No values to make constant, just regular values we want to compare.
             if (Array.isArray(value)) {
                 // Call ourselves to process the array
-                // Note that we apply transformValueFunc on the result again so we can pass the key for the array,
-                // otherwise key-specific rules won't work.
-                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, {}, transformValueFunc), key));
+                // Note that we apply transformValueFunc on the result again so we can pass the origKey for the array,
+                // otherwise origKey-specific rules won't work.
+                cleanedData[key] = value.map(v => transformValueFunc(sanitizeResponse(v, {}, transformValueFunc, transformKeyFunc), key));
             } else if (typeof value === 'object') {
                 // Object; call ourselves recursively to sanitize it
-                cleanedData[key] = sanitizeResponse(value, {}, transformValueFunc);
+                cleanedData[key] = sanitizeResponse(value, {}, transformValueFunc, transformKeyFunc);
             } else {
                 // Regular value; call transform function.
                 cleanedData[key] = transformValueFunc(value, key);
@@ -183,6 +198,7 @@ function expectUrlUnchanged(category, testName, url, expectedType = 'application
             chai
                     .request(constants.SERVER_URL)
                     .get(url)
+                    .query({ api: constants.TEST_API_VERSION })
                     .set('Accept', expectedType)
                     .end((err, res) => {
                         if (err)
@@ -198,6 +214,7 @@ function expectUrlUnchanged(category, testName, url, expectedType = 'application
 
 module.exports = {
     sanitizeResponse,
+    sanitizeBlsResponse,
     expectUnchanged,
     expectUrlUnchanged,
 };

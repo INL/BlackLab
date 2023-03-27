@@ -63,8 +63,13 @@ class SpansEdge extends BLSpans {
     @Override
     public int advanceStartPosition(int target) throws IOException {
         if (rightEdge) {
-            // We can't skip because we're looking at end positions
-            return super.advanceStartPosition(target);
+            // We can't skip because the spans we produce are not sorted by start.
+            // Call the naive implementation.
+            // (note that this method should not be called on Spans that are not sorted by start,
+            //  as it only makes sense in terms of sorted spans)
+            if (super.advanceStartPosition(target) == NO_MORE_POSITIONS)
+                return NO_MORE_POSITIONS;
+            return clause.endPosition();
         }
         return clause.advanceStartPosition(target);
     }

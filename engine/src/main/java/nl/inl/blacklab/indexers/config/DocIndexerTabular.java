@@ -9,15 +9,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -34,10 +30,10 @@ import nl.inl.util.FileUtil;
  * An indexer for tabular file formats, such as tab-separated or comma-separated
  * values.
  */
-public class DocIndexerTabular extends DocIndexerConfig {
+public class DocIndexerTabular extends DocIndexerTabularBase {
 
     /** Tabular types we support */
-    enum Type {
+    private enum Type {
         CSV,
         TSV;
 
@@ -50,43 +46,13 @@ public class DocIndexerTabular extends DocIndexerConfig {
             }
             return valueOf(str.toUpperCase());
         }
-
-        public String stringValue() {
-            return toString().toLowerCase();
-        }
     }
 
-    /**
-     * Regex for recognizing open or close tag and capturing tag name and attributes
-     * part
-     */
-    final static Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
+    private Iterable<CSVRecord> records;
 
-    /** Single- or double-quoted attribute in a tag */
-    static final Pattern REGEX_ATTR = Pattern.compile("\\b(\\w+)\\s*=\\s*(\"[^\"]*\"|'[^']*')");
+    private CSVFormat tabularFormat = CSVFormat.EXCEL;
 
-    private static Map<String, String> getAttr(String group) {
-        if (group == null)
-            return Collections.emptyMap();
-        String strAttrDef = group.trim();
-        Matcher m = REGEX_ATTR.matcher(strAttrDef);
-        Map<String, String> attributes = new LinkedHashMap<>();
-        while (m.find()) {
-            String key = m.group(1);
-            String value = m.group(2);
-            value = value.substring(1, value.length() - 1); // chop quotes
-            attributes.put(key, value);
-        }
-        return attributes;
-    }
-
-    private static final Object GLUE_TAG_NAME = "g";
-
-    Iterable<CSVRecord> records;
-
-    CSVFormat tabularFormat = CSVFormat.EXCEL;
-
-    StringBuilder csvData;
+    private StringBuilder csvData;
 
     private boolean hasInlineTags;
 
@@ -99,9 +65,11 @@ public class DocIndexerTabular extends DocIndexerConfig {
      */
     private boolean allowSeparatorsAfterInlineTags;
 
-    private String multipleValuesSeparator = ";";
-
     private BufferedReader inputReader;
+
+    public DocIndexerTabular() {
+        super(";");
+    }
 
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
@@ -134,7 +102,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
         hasInlineTags = opt.containsKey("inlineTags") && opt.get("inlineTags").equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey("glueTags") && opt.get("glueTags").equalsIgnoreCase("true");
         if (opt.containsKey("multipleValuesSeparator"))
-            multipleValuesSeparator = opt.get("multipleValuesSeparator");
+            multipleValuesSeparatorRegex = opt.get("multipleValuesSeparator");
     }
 
     @Override
@@ -178,6 +146,15 @@ public class DocIndexerTabular extends DocIndexerConfig {
         // Clear csvData (we use this to store the document)
         csvData.delete(0, csvData.length());
     }
+
+    /**
+     * Regex for recognizing open or close tag and capturing tag name and attributes
+     * part
+     */
+    private static final Pattern REGEX_TAG = Pattern.compile("^\\s*<\\s*(/\\s*)?(\\w+)((\\b[^>]+)?)>\\s*$");
+
+    /** Glue tag (if present) */
+    private static final String GLUE_TAG_NAME = "g";
 
     @Override
     public void index() throws MalformedInputFile, PluginException, IOException {
@@ -234,7 +211,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                                     // Start a new document and add attributes as metadata fields
                                     inDocument = true;
                                     startDocument();
-                                    for (Entry<String, String> e : attributes.entrySet()) {
+                                    for (Map.Entry<String, String> e : attributes.entrySet()) {
                                         String value = processMetadataValue(e.getKey(), e.getValue());
                                         addMetadataField(e.getKey(), value);
                                     }
@@ -264,7 +241,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
                     // For each annotation
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
-                        // Either column number of name
+                        // Either column number or name
                         String value;
                         if (annotation.isValuePathInteger()) {
                             int i = annotation.getValuePathInt() - 1;
@@ -278,23 +255,7 @@ public class DocIndexerTabular extends DocIndexerConfig {
                             else
                                 value = "";
                         }
-                        value = processString(value, annotation.getProcess(), null);
-                        if (annotation.isMultipleValues()) {
-                            // Multiple values possible. Split on multipleValuesSeparator.
-                            boolean first = true;
-                            List<String> values = Arrays.asList(value.split(multipleValuesSeparator, -1));
-                            if (!annotation.isAllowDuplicateValues()) {
-                                // Discard any duplicate values from the list
-                                values = values.stream().distinct().collect(Collectors.toList());
-                            }
-                            for (String v : values) {
-                                annotation(annotation.getName(), v, first ? 1 : 0, null);
-                                first = false;
-                            }
-                        } else {
-                            // Single value.
-                            annotation(annotation.getName(), value, 1, null);
-                        }
+                        indexValue(annotation, value);
                     }
                     endWord();
                 }
@@ -303,6 +264,29 @@ public class DocIndexerTabular extends DocIndexerConfig {
 
         if (!lookForDocumentTags)
             endDocument();
+    }
+
+    /** Single- or double-quoted attribute in a tag */
+    private static final Pattern REGEX_ATTR = Pattern.compile("\\b(\\w+)\\s*=\\s*(\"[^\"]*\"|'[^']*')");
+
+    /**
+     * Get attributes from part of an XML tag.
+     * @param group the attributes part of the tag
+     * @return attributes map
+     */
+    private static Map<String, String> getAttr(String group) {
+        if (group == null)
+            return Collections.emptyMap();
+        String strAttrDef = group.trim();
+        Matcher m = REGEX_ATTR.matcher(strAttrDef);
+        Map<String, String> attributes = new LinkedHashMap<>();
+        while (m.find()) {
+            String key = m.group(1);
+            String value = m.group(2);
+            value = value.substring(1, value.length() - 1); // chop quotes
+            attributes.put(key, value);
+        }
+        return attributes;
     }
 
     @Override

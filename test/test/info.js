@@ -10,8 +10,9 @@ const SERVER_URL = constants.SERVER_URL;
 describe('Server info page', () => {
     it('should return server info', done => {
         chai
-            .request(SERVER_URL)
+            .request(constants.SERVER_URL)
             .get('/')
+            .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
             .end((err, res) => {
                 if (err)

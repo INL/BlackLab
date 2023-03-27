@@ -94,8 +94,8 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
     public String getElementName() {
         BLSpanQuery cl = clauses.get(0);
-        if (cl instanceof SpanQueryTags) {
-            return ((SpanQueryTags) cl).getElementName();
+        if (cl instanceof TagQuery) {
+            return ((TagQuery) cl).getElementName();
         }
         return null;
     }

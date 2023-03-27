@@ -3,9 +3,6 @@ package nl.inl.blacklab.search;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
 /**
@@ -36,16 +33,7 @@ public class ContentAccessor {
     }
 
     private int getContentId(int docId, Document d) {
-        if (contentStore instanceof ContentStoreIntegrated) {
-            // Integrated index format. Content is stored in the segment by Lucene docId.
-            return docId;
-        } else {
-            // Classic external index format. Read the content store id field.
-            String contentIdStr = d.get(contentIdField);
-            if (contentIdStr == null)
-                throw new BlackLabRuntimeException("Lucene document has no content id: " + d);
-            return Integer.parseInt(contentIdStr);
-        }
+        return contentStore.getContentId(docId, d, contentIdField);
     }
 
     /**
@@ -83,10 +71,8 @@ public class ContentAccessor {
     }
 
     private void delete(int contentId) {
-        if (contentStore instanceof ContentStoreExternal)
-            ((ContentStoreExternal)contentStore).delete(contentId);
-        else
-            throw new UnsupportedOperationException("Cannot delete from content store in integrated index format");
+        // (NOTE: this will throw if we're an integrated index)
+        contentStore.delete(contentId);
     }
 
     public void close() {

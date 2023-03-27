@@ -35,8 +35,9 @@ public class DocFieldLengthGetter {
         if (reader != null) {
             try {
                 cachedFieldLengths = reader.getNumericDocValues(lengthTokensFieldName);
-                if (cachedFieldLengths == null)
-                    throw new BlackLabRuntimeException("No DocValues for field " + lengthTokensFieldName);
+                if (cachedFieldLengths == null) {
+                    // this is fine if there are no real documents in this segment (i.e. only metadata value doc)
+                }
             } catch (IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }
@@ -74,6 +75,13 @@ public class DocFieldLengthGetter {
 
         if (useTestValues)
             return 6; // while testing, all documents have same length
+
+        if (cachedFieldLengths == null) {
+            // We must be in a segment that only contains the metadata doc.
+            // Return 0 for the length, which is essentially correct.
+            // (metadata doc contains no annotated field value).
+            return 0;
+        }
 
         try {
             if (cachedFieldLengths.advanceExact(doc)){

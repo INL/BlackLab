@@ -128,7 +128,7 @@ Below is the template schema used for testing, modify the metadata and annotatio
     />
 
     <!-- example annotations. Searching in these yields no results for some reason. -->
-    <field name="contents#starttag@s" type="term"/>
+    <field name="contents#_relation@s" type="term"/>
     <field name="contents#punct@i" type="term"/>
     <field name="contents#word@s" type="term"/>
     <field name="contents#word@i" type="term"/>

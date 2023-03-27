@@ -100,6 +100,7 @@ class SpansNGrams extends BLSpans {
                 return NO_MORE_DOCS;
             }
             boolean currentDocIsDeletedDoc;
+            boolean currentDocIsMetadataDoc;
             do {
                 currentDoc++;
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);

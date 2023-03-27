@@ -23,7 +23,12 @@ import nl.inl.util.LogUtil;
 public class ExportForwardIndex {
 
     // Annotations to skip
-    private static final List<String> SKIP_ANNOTATIONS = List.of("pos", AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
+    private static final List<String> SKIP_ANNOTATIONS = List.of(
+            "pos",
+            AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+            AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.EXTERNAL_FILES),
+            AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.INTEGRATED)
+    );
 
     private static final int MAX_DOCS = 30;
 

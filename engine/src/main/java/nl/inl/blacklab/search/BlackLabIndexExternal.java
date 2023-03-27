@@ -19,6 +19,8 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Bits;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
@@ -32,8 +34,14 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
+import nl.inl.blacklab.search.lucene.SpanQueryTagsExternal;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.VersionFile;
 
 /**
@@ -113,6 +121,20 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     }
 
     @Override
+    protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
+        // Classic external index format. Open external content store.
+        File dir = new File(indexDir, "cs_" + field.name());
+        if (!dir.exists() && !createNewContentStore) {
+            throw new IllegalStateException("Field " + field.name() +
+                    " should have content store, but directory " + dir + " not found!");
+        }
+        if (traceIndexOpening())
+            logger.debug("    " + dir + "...");
+        ContentStore cs = ContentStoreExternal.open(dir, indexMode(), createNewContentStore);
+        registerContentStore(field, cs);
+    }
+
+    @Override
     public void close() {
         // Close the (external) forward indices
         for (ForwardIndex fi: forwardIndices.values()) {
@@ -127,6 +149,23 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorExternal(this, annotatedField(searchField));
+    }
+
+    @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes) {
+        return new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+    }
+
+    @Override
+    public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+        throw new UnsupportedOperationException("Relations queries are not supported with the external index format.");
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.EXTERNAL_FILES;
     }
 
     @Override

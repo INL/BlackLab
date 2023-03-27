@@ -10,6 +10,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -160,17 +161,18 @@ public class MockSpans extends BLSpans {
         return endPos; //spans.endPosition();
     }
 
-    private void setPayloadsInt(int[] aEnd) {
+    private void setPayloadsInt(int[] aStart, int[] aEnd) {
         this.payloads = new byte[aEnd.length][];
         for (int i = 0; i < aEnd.length; i++) {
             this.payloads[i] = ByteBuffer.allocate(4).putInt(aEnd[i]).array();
         }
     }
 
-    private void setPayloadsInt(int[] aEnd, boolean[] aIsPrimary) {
+    private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new byte[aEnd.length][];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef bytesRef = PayloadUtils.tagEndPositionPayload(aEnd[i]);
+            BytesRef bytesRef = PayloadUtils.tagEndPositionPayload(aStart[i], aEnd[i],
+                    BlackLabIndex.IndexType.EXTERNAL_FILES);
             BytesRef withPrimary = PayloadUtils.addIsPrimary(aIsPrimary[i], bytesRef);
             byte[] b = new byte[withPrimary.length];
             System.arraycopy(withPrimary.bytes, withPrimary.offset, b, 0, b.length);
@@ -247,13 +249,13 @@ public class MockSpans extends BLSpans {
 
     public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aEnd);
+        spans.setPayloadsInt(aStart, aEnd);
         return spans;
     }
 
     public static BLSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aEnd, aIsPrimary);
+        spans.setPayloadsInt(aStart, aEnd, aIsPrimary);
         return spans;
     }
 

@@ -816,4 +816,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             throw new RuntimeException("Cannot save indexmetadata in search mode!");
         metadataDocument.saveToIndex(indexWriter, metadata);
     }
+
+    public BlackLabIndex.IndexType getIndexType() {
+        return BlackLabIndex.IndexType.INTEGRATED;
+    }
 }

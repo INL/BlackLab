@@ -150,9 +150,7 @@ Response:
           "pos",
           "pos_type",
           "pos_subtype",
-          "pos_wordpart",
-          "starttag",
-          "punct"
+          "pos_wordpart"
         ]
       },
       "annotations": {
