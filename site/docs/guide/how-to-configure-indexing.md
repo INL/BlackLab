@@ -158,7 +158,7 @@ What alternatives are indexed determines how specifically you can specify the de
 
 If you don't configure these, BlackLab will pick default values:
 * annotations named `word` or `lemma` get `sensitive_insensitive`<br/>(**THIS IS DEPRECATED!** Please explicitly declare sensitivity for these annotations. Eventually the default for all user-defined annotations will be `insensitive`)
-* (internal annotation `punct` (punctuation between words, if any) always gets `insensitive` and internal annotation `starttag` (inline tags like `<p/>`, `<s/>` or `<b/>`) always gets `sensitive`)
+* (internal annotation `punct` (punctuation between words, if any) always gets `insensitive` and internal annotation `_relation`/`starttag` (inline tags like `<p/>`, `<s/>` or `<b/>`) always gets `sensitive`)
 * all other annotations get `insensitive`
 
 

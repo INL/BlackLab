@@ -5,13 +5,14 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocWriter;
@@ -37,7 +38,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
  * each instruction being an uppercase word followed by 0 or more parameter(s),
  * whitespace-separated. Anything after a hash symbol is ignored.
  *
- * Below is a small example. For a larger excample, see example/example.txt in
+ * Below is a small example. For a larger example, see example/example.txt in
  * the resources dir.
  *
  * <code>
@@ -140,7 +141,7 @@ public class DocIndexerExample extends DocIndexerBase {
                     true);
         }
         // Add a special annotation where we can index arbitrary spans.
-        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                 AnnotationSensitivities.ONLY_SENSITIVE, false);
         // Add a special annotation where whitespace and punctuation between words is stored.
         addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
@@ -168,13 +169,13 @@ public class DocIndexerExample extends DocIndexerBase {
         Collection<ConfigAnnotation> annots = fieldContents.getAnnotations().values();
         Iterator<ConfigAnnotation> annotIt = annots.iterator();
         ConfigAnnotation mainAnnotation = annotIt.next();
-        AnnotatedFieldWriter contents = new AnnotatedFieldWriter(fieldContents.getName(),
+        AnnotatedFieldWriter contents = new AnnotatedFieldWriter(getDocWriter(), fieldContents.getName(),
                 mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(),
                 false,
                 getDocWriter().needsPrimaryValuePayloads());
         while (annotIt.hasNext()) {
             ConfigAnnotation annot = annotIt.next();
-            boolean includePayloads = annot.getName() == AnnotatedFieldNameUtil.TAGS_ANNOT_NAME;
+            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()));
             contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads, annot.createForwardIndex());
         }
         addAnnotatedField(contents);
@@ -294,13 +295,15 @@ public class DocIndexerExample extends DocIndexerBase {
             String spanType = parameters[0];
             int spanStart = Integer.parseInt(parameters[1]);
             int spanEnd = Integer.parseInt(parameters[2]);   // end position (exclusive)
-            tagsAnnotation().addValueAtPosition(spanType, spanStart, PayloadUtils.tagEndPositionPayload(spanEnd));
-            // Add the span's attributes, if any
+            Map<String, String> spanAttributes = new HashMap<>();
             for (int i = 3; i < parameters.length; i += 2) {
                 String attName = parameters[i];
                 String attValue = parameters[i + 1];
-                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(attName, attValue), spanStart, null);
+                spanAttributes.put(attValue, attValue);
             }
+
+            tagsAnnotation().indexInlineTag(spanType, spanStart, spanEnd,
+                    spanAttributes, getIndexType());
             break;
 
         case "FIELD_END":

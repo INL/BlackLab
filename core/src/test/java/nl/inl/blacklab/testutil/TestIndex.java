@@ -23,7 +23,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
-import nl.inl.blacklab.search.BlackLabIndexExternal;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -227,13 +226,13 @@ public class TestIndex {
         }
     }
 
-    public IndexType indexFormat() {
-        return index instanceof BlackLabIndexExternal ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
+    public IndexType getIndexType() {
+        return index.getType();
     }
 
     @Override
     public String toString() {
-        return (dir != null ? "" : "PREINDEXED ") + indexFormat().toString();
+        return (dir != null ? "" : "PREINDEXED ") + getIndexType().toString();
     }
 
     public BlackLabIndex index() {

@@ -1,10 +1,15 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Some utility functions for dealing with annotated field names.
@@ -24,7 +29,13 @@ public final class AnnotatedFieldNameUtil {
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
 
-    public static final String TAGS_ANNOT_NAME = "starttag";
+    private static final String LEGACY_TAGS_ANNOT_NAME = "starttag";
+
+    @Deprecated
+    /** @deprecated use {@link #relationAnnotationName(DocWriter)} instead */
+    public static final String TAGS_ANNOT_NAME = LEGACY_TAGS_ANNOT_NAME;
+
+    private static final String RELATIONS_ANNOT_NAME = "_relation";
 
     /** Annotation name for the spaces and punctuation between words */
     public static final String PUNCTUATION_ANNOT_NAME = "punct";
@@ -78,6 +89,22 @@ public final class AnnotatedFieldNameUtil {
             FORWARD_INDEX_ID_BOOKKEEP_NAME,
             LENGTH_TOKENS_BOOKKEEP_NAME);
 
+    /** Separator before attribute name+value in _relation annotation. */
+    private  static final String ATTR_SEPARATOR = "\u0001";
+
+    /** Separator between attr and value in _relation annotation. */
+    private  static final String KEY_VALUE_SEPARATOR = "\u0002";
+
+    /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
+     *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
+    private static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+
+    /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
+    public static final String RELATION_CLASS_INLINE_TAG = "__tag";
+
+    /** Relation class to use for dependency relations. */
+    public static final String RELATION_CLASS_DEPENDENCY = "dep";
+
     private AnnotatedFieldNameUtil() {
     }
 
@@ -89,23 +116,146 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
+     * Determine the term to index in Lucene for a relation.
+     *
+     * @param fullRelationType full relation type
+     * @param attributes any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static String relationIndexTerm(String fullRelationType, Map<String, String> attributes) {
+        if (attributes == null)
+            return fullRelationType + ATTR_SEPARATOR;
+
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                                BlackLabIndex.IndexType.INTEGRATED))
+                .collect(Collectors.joining());
+
+        // The term to index consists of the type followed by the (sorted) attributes.
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
+    }
+
+    /**
+     * Determine the term to index in Lucene for a relation.
+     *
+     * @param fullRelationType full relation type
+     * @param attributes any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static String relationIndexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
+        if (attributes == null)
+            return fullRelationType + ATTR_SEPARATOR;
+
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getValue().stream()
+                        .map( v -> AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), v,
+                                    BlackLabIndex.IndexType.INTEGRATED))
+                        .collect(Collectors.joining()))
+                .collect(Collectors.joining());
+
+        // The term to index consists of the type followed by the (sorted) attributes.
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
+    }
+
+    /**
+     * Determine the search regex for a relation.
+     *
+     * NOTE: both fullRelationType and attribute names/values are interpreted as regexes,
+     * so any regex special characters you wish to find should be escaped!
+     *
+     * @param fullRelationType full relation type
+     * @param attributes any attribute criteria for this relation
+     * @return regex to find this relation
+     */
+    public static String relationSearchRegex(String fullRelationType, Map<String, String> attributes) {
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes == null ? "" : attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
+                .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
+
+        // The regex consists of the type part followed by the (sorted) attributes part.
+        return fullRelationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
+    }
+
+    /**
+     * Get the full relation type for a relation class and relation type.
+     *
+     * @param relClass relation class, e.g. "dep" for dependency relations
+     * @param type relation type, e.g. "nsubj" for a nominal subject
+     * @return full relation type
+     */
+    public static String fullRelationType(String relClass, String type) {
+        return relClass + RELATION_CLASS_TYPE_SEPARATOR + type;
+    }
+
+    /**
+     * Get the full relation type for an inline tag.
+     *
+     * @param tagName tag name
+     * @return full relation type
+     */
+    public static String tagFullRelationType(String tagName) {
+        return fullRelationType(RELATION_CLASS_INLINE_TAG, tagName);
+    }
+
+    /**
+     * Split a full relation type into relation class and relation type.
+     *
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The class is used to distinguish between different groups of relations, e.g. inline tags
+     * and dependency relations.
+     *
+     * @param fullRelationType full relation type
+     * @return relation class and relation type
+     */
+    public static String[] relationClassAndType(String fullRelationType) {
+        int sep = fullRelationType.indexOf(RELATION_CLASS_TYPE_SEPARATOR);
+        if (sep < 0)
+            return new String[] { "", fullRelationType };
+        return new String[] { fullRelationType.substring(0, sep), fullRelationType.substring(sep + RELATION_CLASS_TYPE_SEPARATOR.length()) };
+    }
+
+    /**
      * What value do we index for attributes to tags (spans)?
      *
-     * For example, a tag <s id="123"> ... </s> would be indexed in annotations "starttag"
-     * with two tokens at the same position: "s" and "@iid__123".
+     * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
+     * with a single tokens: "__tag\u0002s\u0001id\u0002123\u0001".
      *
-     * FIXME: this means that currently, we cannot distinguish between attributes for
-     *   different start tags occurring at the same token position! We should change the index
-     *   format to at least include tag name with each attribute, but this will break index
-     *   compatibility. We'll probably do this as part of a larger update to how document
-     *   structure is indexed (for syntactic search features).
+     * (classic external index) A tag <s id="123"> ... </s> would be indexed in annotation "starttag"
+     * with two tokens at the same position: "s" and "@id__123".
      *
      * @param name attribute name
      * @param value attribute value
      * @return value to index for this attribute
      */
-    public static String tagAttributeIndexValue(String name, String value) {
-        return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+    public static String tagAttributeIndexValue(String name, String value, BlackLabIndex.IndexType indexType) {
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+             // NOTE: this means that we cannot distinguish between attributes for
+             // different start tags occurring at the same token position!
+             // (In the integrated index format, we include all attributes in the term)
+            return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+        }
+        return name + KEY_VALUE_SEPARATOR + value + ATTR_SEPARATOR;
+    }
+
+    /**
+     * Get the name of the annotation that stores the relations between words.
+     * @param indexType index type
+     * @return name of annotation that stores the relations between words (and inline tags)
+     */
+    public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
+        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
+    }
+
+    public static boolean isRelationAnnotation(String name) {
+        // TODO: icky, we can't name an annotation "starttag" in the integrated index this way.
+        //   not a huge deal, and we can remove it when we remove the external index.
+        return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
     }
 
     public enum BookkeepFieldType {

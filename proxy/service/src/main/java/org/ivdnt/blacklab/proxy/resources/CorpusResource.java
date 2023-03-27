@@ -18,7 +18,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.lang3.StringUtils;
-import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
 import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
@@ -107,8 +106,6 @@ public class CorpusResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        String defaultCorpusName = ProxyConfig.get().getProxyTarget().getDefaultCorpusName();
-
         switch (corpusName) {
         case "cache-info":
             return notImplemented("/cache-info");

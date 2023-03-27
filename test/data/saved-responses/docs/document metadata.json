@@ -12,29 +12,5 @@
     ],
     "lengthInTokens": 334,
     "mayView": true
-  },
-  "metadataFieldGroups": [
-    {
-      "name": "Other fields group",
-      "fields": [
-        "fromInputFile",
-        "pid"
-      ]
-    },
-    {
-      "name": "Title group",
-      "fields": [
-        "title"
-      ]
-    }
-  ],
-  "docFields": {
-    "pidField": "pid",
-    "titleField": "title"
-  },
-  "metadataFieldDisplayNames": {
-    "fromInputFile": "From input file",
-    "pid": "Pid",
-    "title": "Title"
   }
 }

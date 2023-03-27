@@ -19,7 +19,6 @@ import org.mozilla.universalchardet.UniversalDetector;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
@@ -31,6 +30,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
@@ -414,9 +414,9 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentDoc) {
-        ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
-        if (fi instanceof ForwardIndexExternal) {
+        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // External forward index: add to it (with the integrated forward index, this is handled in the codec)
+            ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
             Map<Annotation, List<String>> annotations = new HashMap<>();
             Map<Annotation, List<Integer>> posIncr = new HashMap<>();
             for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
@@ -441,7 +441,8 @@ class IndexerImpl implements DocWriter, Indexer {
         // this will require moving ContentStore into engine module so it can see BlInputDocument class.
         ContentStore store = indexWriter.contentStore(field);
 
-        if (store instanceof ContentStoreIntegrated) {
+        if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
+            // Integrated index: store as a field in the document
             AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
             if (annotatedFields.exists(contentStoreName)) {
                 annotatedFields.get(contentStoreName).setContentStore(true);
@@ -451,7 +452,7 @@ class IndexerImpl implements DocWriter, Indexer {
             BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
             currentDoc.addField(luceneFieldName, document.toString(), fieldType);
         } else {
-            // external contentstore, different api
+            // External content store, with content id stored in the document
             ContentStoreExternal contentStore = (ContentStoreExternal) store;
             int contentId = contentStore.store(document);
             currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);

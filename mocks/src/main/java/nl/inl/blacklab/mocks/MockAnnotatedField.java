@@ -83,7 +83,7 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public boolean hasXmlTags() {
+    public boolean hasRelationAnnotation() {
         return false;
     }
 

@@ -89,7 +89,7 @@ public class DocIndexerFactoryConfig implements DocIndexerFactory {
         // Note that these names should not collide with the abbreviations used by DocIndexerFactoryClass, 
         // or this will override those classes.
         String[] formats = {
-                "chat", "cmdi", "csv",
+                "chat", "cmdi", "conll-u", "csv",
                 "eaf", "folia", "naf", "sketch-wpl",
                 "tcf", "tei-p5", "tei-p4-legacy",
                 "tei-p5-legacy", "testformat", "tsv-frog",

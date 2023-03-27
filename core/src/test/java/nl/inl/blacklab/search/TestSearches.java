@@ -298,6 +298,20 @@ public class TestSearches {
     }
 
     @Test
+    public void testLocalConstraint() {
+        expected = List.of("[The quick brown fox jumps over the lazy] dog");
+        Assert.assertEquals(expected,
+                testIndex.findConc("(a:[] ([]{1,5} containing 'brown') b:[] :: a.lemma = b.lemma) 'lazy'"));
+    }
+
+    @Test
+    public void testLocalConstraintAnyTokens() {
+        expected = List.of("noot [mier aap mier mier] mier", "aap [mier mier mier noot] noot", "noot [aap aap aap aap]");
+        Assert.assertEquals(expected,
+                testIndex.findConc("(a:[] [] b:[] :: a.lemma = b.lemma) []"));
+    }
+
+    @Test
     public void testNGramContainingWithAdjustment() {
         expected = Arrays.asList(
             "[The quick brown] fox",

@@ -1,6 +1,7 @@
 {
   "summary": {
     "searchParam": {
+      "api": "4.0",
       "indexname": "test",
       "op": "hits",
       "patt": "\"the\"",
@@ -21,16 +22,7 @@
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
     "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
+    "numberOfDocsRetrieved": 3
   },
   "hits": [
     {

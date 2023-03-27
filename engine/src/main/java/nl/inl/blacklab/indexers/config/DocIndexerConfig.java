@@ -66,6 +66,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         case CHAT:
             docIndexer = new DocIndexerChat();
             break;
+        case CONLL_U:
+            docIndexer = new DocIndexerCoNLLU();
+            break;
         default:
             throw new InvalidInputFormatConfig(
                     "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
@@ -118,13 +121,14 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
             ConfigAnnotation mainAnnotation = annotations.get(0);
             boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
-            AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(af.getName(),
+            AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(getDocWriter(), af.getName(),
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME,
+            AnnotationWriter annotRelation = fieldWriter.addAnnotation(
+                    AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                     AnnotationSensitivities.ONLY_SENSITIVE, true, false);
-            annotStartTag.setHasForwardIndex(false);
+            annotRelation.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {

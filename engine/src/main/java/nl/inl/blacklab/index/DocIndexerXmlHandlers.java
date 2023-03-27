@@ -231,6 +231,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
     final List<Integer> openTagIndexes = new ArrayList<>();
 
+    final List<Integer> openTagPositions = new ArrayList<>();
+
     /** Handle tags. */
     public class InlineTagHandler extends ElementHandler {
 
@@ -239,23 +241,26 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) {
             int currentPos = propMain.lastValuePosition() + 1;
-            propTags.addValueAtPosition(localName, currentPos, null);
-            int startTagIndex = propTags.lastValueIndex();
-            openTagIndexes.add(startTagIndex);
+
+            Map<String, String> attrMap = new HashMap<>();
             for (int i = 0; i < attributes.getLength(); i++) {
-                // Index element attribute values
-                String name = attributes.getLocalName(i);
-                String value = attributes.getValue(i);
-                propTags.addValue(AnnotatedFieldNameUtil.tagAttributeIndexValue(name.toLowerCase(), value.toLowerCase()), 0, null);
+                attrMap.put(attributes.getLocalName(i), attributes.getValue(i));
             }
+            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap, getIndexType());
+            openTagIndexes.add(openTagIndex);
+            openTagPositions.add(currentPos);
         }
 
         /** Close tag: store the end tag location */
         @Override
         public void endElement(String uri, String localName, String qName) {
             // Add payload to start tag annotation indicating end position
-            Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(propMain.lastValuePosition() + 1);
+            int lastIndex = openTagIndexes.size() - 1;
+            Integer openTagIndex = openTagIndexes.remove(lastIndex);
+            int openTagPosition = openTagPositions.remove(lastIndex);
+            int closeTagPosition = propMain.lastValuePosition() + 1;
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTagPosition,
+                    closeTagPosition, getIndexType());
             propTags.setPayloadAtIndex(openTagIndex, payload);
         }
 
@@ -387,11 +392,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         // Define the properties that make up our annotated field
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean needsPrimaryValuePayloads = docWriter.needsPrimaryValuePayloads();
-        contentsField = new AnnotatedFieldWriter(Indexer.DEFAULT_CONTENTS_FIELD_NAME, mainPropName,
-                AnnotationSensitivities.defaultForAnnotation(mainPropName), false, needsPrimaryValuePayloads);
+        contentsField = new AnnotatedFieldWriter(getDocWriter(), Indexer.DEFAULT_CONTENTS_FIELD_NAME,
+                mainPropName, AnnotationSensitivities.defaultForAnnotation(mainPropName),
+                false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propTags = addAnnotation(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME, true); // start tag
+        propTags = addAnnotation(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()), true); // start tag
         // positions
         propTags.setHasForwardIndex(false);
     }

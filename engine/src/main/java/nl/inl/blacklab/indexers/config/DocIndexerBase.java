@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -30,13 +29,13 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UnicodeStream;
@@ -55,9 +54,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         public final int index;
 
-        public OpenTagInfo(String name, int index) {
+        private final int position;
+
+        public OpenTagInfo(String name, int index, int position) {
             this.name = name;
             this.index = index;
+            this.position = position;
         }
     }
 
@@ -73,8 +75,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     /** The indexing object for the annotated field we're currently processing. */
     private AnnotatedFieldWriter currentAnnotatedField;
 
-    /** The tag annotation for the annotated field we're currently processing. */
-    private AnnotationWriter annotStartTag;
+    /** The _relation annotation (where inline tags and dependency relations are stored)
+        for the annotated field we're currently processing. */
+    private AnnotationWriter annotRelation;
 
     /** The main annotation for the annotated field we're currently processing. */
     private AnnotationWriter annotMain;
@@ -177,7 +180,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (currentAnnotatedField == null)
             throw new InvalidInputFormatConfig("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
-        annotStartTag = currentAnnotatedField.tagsAnnotation();
+        annotRelation = currentAnnotatedField.tagsAnnotation();
         annotMain = currentAnnotatedField.mainAnnotation();
         annotPunct = currentAnnotatedField.punctAnnotation();
     }
@@ -199,16 +202,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected AnnotationWriter tagsAnnotation() {
-        return annotStartTag;
+        return annotRelation;
     }
 
     protected AnnotationWriter punctAnnotation() {
         return annotPunct;
-    }
-
-    @Deprecated
-    protected AnnotationWriter propTags() {
-        return tagsAnnotation();
     }
 
     @Deprecated
@@ -489,23 +487,13 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     protected abstract void storeDocument();
 
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
+        int currentPos = getCurrentTokenPosition();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-
-            tagsAnnotation().addValueAtPosition(tagName, getCurrentTokenPosition(), null);
-            openInlineTags.add(new OpenTagInfo(tagName, tagsAnnotation().lastValueIndex()));
-
-            for (Entry<String, String> e : attributes.entrySet()) {
-                // Index element attribute values
-                String name = e.getKey();
-                String value = e.getValue();
-                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value), getCurrentTokenPosition(), null);
-            }
-
+            int tagIndex = tagsAnnotation().indexInlineTag(tagName, currentPos, -1, attributes, getIndexType());
+            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos));
         } else {
             traceln("</" + tagName + ">");
-
-            int currentPos = getCurrentTokenPosition();
 
             // Add payload to start tag annotation indicating end position
             if (openInlineTags.isEmpty())
@@ -514,7 +502,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(currentPos);
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTag.position, currentPos, getIndexType());
             tagsAnnotation().setPayloadAtIndex(openTag.index, payload);
         }
     }
@@ -571,39 +559,69 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * null), or to add annotations at specific positions (indexAtPositions contains
      * positions). The latter is used for standoff annotations.
      *
-     * Also called for subannotations (with the value already prepared)
+     * Also used to index inline tags (spans). In that case, spanEndPos is >= 0.
+     * For the external index, this method is called several times, once for the tag
+     * name and once for each attribute. For the internal index, this method is
+     * called once, with an already-prepared term to index that includes all this information.
      *
-     * @param name annotation name
-     * @param value annotation value
-     * @param increment if indexAtPosition == null: the token increment to use
+     * @param name annotation name (or attribute name for span annotations, see below)
+     * @param value annotation value (or span name or span attribute value)
+     * @param increment if indexAtPosition == null: the token increment to use relative to the current position
      * @param indexAtPositions if null: index at the current position; otherwise:
      *            index at these positions
      * @param spanEndPos if >= 0, this is a span annotation and this is the first token position after the span
      */
-    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions,
-            int spanEndPos) {
-        AnnotationWriter annotation = getAnnotation(spanEndPos >= 0 ? AnnotatedFieldNameUtil.TAGS_ANNOT_NAME : name);
+    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions, int spanEndPos) {
+        // Normally name gives the annotation to index this is, but for span annotations,
+        // we already know the annotation and name is instead used for attribute values (see below).
+        AnnotationWriter annotation = getAnnotation(
+                spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : name);
+
         if (annotation != null) {
-            BytesRef payload = null;
             if (spanEndPos >= 0) {
-                // This is a span annotation. These are all indexed in one Lucene field (the annotation called "starttag")
-                // with the attribute name and value combined.
-                payload = PayloadUtils.tagEndPositionPayload(spanEndPos);
+                // This is a span annotation.
+
+                // These are all indexed in one annotation (i.e. Lucene field).
+                // For the external index format (annotation "starrtag"), we index several terms:
+                // one for the span name, and one for each attribute name and value.
+                // For the integrated index (annotation "_relation"), we only index one term,
+                // containing both the span name and the attributes.
                 if (name != null) {
-                    // Attribute (otherwise it's the span name, e.g. "named-entity", which is indexed unchanged)
-                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value);
+                    // This is the external index, and this is an attribute name and value.
+                    // Encode it as such.
+                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value,
+                            BlackLabIndex.IndexType.EXTERNAL_FILES);
+                } else {
+                    // If name == null, value is the span name (external index format) or the
+                    // pre-encoded term to index (integrated index format), so in both cases we can
+                    // just index it unmodified.
                 }
             }
+
+            // Actually index the value
+            BytesRef payload = null;
             if (indexAtPositions == null) {
+                // Index at the current position
                 int position = annotation.lastValuePosition() + increment;
+                if (spanEndPos >= 0) {
+                    // Span annotation payload
+                    payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
+                }
                 if (name != null && name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
                     trace(value + " ");
                 annotation.addValueAtPosition(value, position, payload);
             } else {
+                // Index at several positions
+                // (these are usually stanoff annotations specifying multiple positions for value)
                 for (Integer position : indexAtPositions) {
+                    if (spanEndPos >= 0) {
+                        // Span annotation payload
+                        payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
+                    }
                     annotation.addValueAtPosition(value, position, payload);
                 }
             }
+
         } else {
             // Annotation not declared; report, but keep going
             if (!skippedAnnotations.contains(name)) {
@@ -706,11 +724,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * True for classic index format, false for integrated index format.
      * Annotation names must be valid XML element names, which is why we sanitize certain
      * characters. But dashes are valid in XML element names. For compatibility, classic index
-     * format still forbids dashes, but the new integrated index format allows them.
+     * format still forbids dashes, but newer index formats allow them.
      *
      * @return true if dashes should be sanitized from annotation names
      */
     protected boolean disallowDashInname() {
-        return !(getDocWriter() instanceof BlackLabIndexIntegrated);
+        return getDocWriter().getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
     }
 }

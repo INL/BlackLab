@@ -60,9 +60,7 @@ Return the corpus metadata, including size, document format, annotated and metad
         "pos",
         "pos_type",
         "pos_subtype",
-        "pos_wordpart",
-        "starttag",
-        "punct"
+        "pos_wordpart"
       ],
       "annotations": {
         "word": {

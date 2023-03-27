@@ -9,8 +9,8 @@
   "tokenCount": 766,
   "documentCount": 3,
   "versionInfo": {
-    "blackLabBuildTime": "VALUE_REMOVED",
-    "blackLabVersion": "VALUE_REMOVED",
+    "blacklabBuildTime": "VALUE_REMOVED",
+    "blacklabVersion": "VALUE_REMOVED",
     "indexFormat": "VALUE_REMOVED",
     "timeCreated": "VALUE_REMOVED",
     "timeModified": "VALUE_REMOVED"
@@ -33,9 +33,7 @@
       "displayOrder": [
         "word",
         "lemma",
-        "pos",
-        "starttag",
-        "punct"
+        "pos"
       ],
       "annotations": {
         "word": {
@@ -65,8 +63,8 @@
           "offsetsAlternative": "",
           "isInternal": false
         },
-        "starttag": {
-          "displayName": "Starttag",
+        "_relation": {
+          "displayName": "_relation",
           "description": "",
           "uiType": "",
           "hasForwardIndex": false,

@@ -40,7 +40,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -419,14 +418,19 @@ public class WebserviceOperations {
      * @return values for this annotation
      */
     public static Set<String> getAnnotationValues(BlackLabIndex index, Annotation annotation, boolean[] valueListComplete) {
-        boolean isInlineTagAnnotation = annotation.name().equals(AnnotatedFieldNameUtil.TAGS_ANNOT_NAME);
         final Set<String> terms = new TreeSet<>();
         MatchSensitivity sensitivity = annotation.hasSensitivity(MatchSensitivity.INSENSITIVE) ?
                 MatchSensitivity.INSENSITIVE :
                 MatchSensitivity.SENSITIVE;
         AnnotationSensitivity as = annotation.sensitivity(sensitivity);
         String luceneField = as.luceneField();
-        if (isInlineTagAnnotation) {
+        if (annotation.isRelationAnnotation()) {
+            // FIXME doesn't work with _relation annotation
+
+            // TODO: get rid of this weird quirk?
+            //   (getting just the tag names should be a specific operation,
+            //    not a special case in getAnnotationValues(); this method should do what it says
+            //    and return all the annotation values)
             // Tags. Skip attribute values, only show elements.
             LuceneUtil.getFieldTerms(index.reader(), luceneField, null, term -> {
                 if (!term.startsWith("@") && !terms.contains(term)) {

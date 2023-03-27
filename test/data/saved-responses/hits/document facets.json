@@ -1,6 +1,7 @@
 {
   "summary": {
     "searchParam": {
+      "api": "4.0",
       "facets": "field:pid",
       "indexname": "test",
       "number": "0",
@@ -20,16 +21,7 @@
     "stoppedCountingHits": false,
     "stoppedRetrievingHits": false,
     "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    }
+    "numberOfDocsRetrieved": 3
   },
   "hits": [],
   "docInfos": {},

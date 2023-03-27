@@ -29,6 +29,7 @@ function expectHitsUnchanged(testName, params) {
             chai.request(constants.SERVER_URL)
             .get('/test/hits')
             .query({
+                api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
                 wordsaroundhit: 1,
                 waitfortotal: "true",

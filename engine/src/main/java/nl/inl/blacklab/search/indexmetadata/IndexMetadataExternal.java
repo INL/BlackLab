@@ -206,4 +206,9 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     public int documentCount() {
         return index.reader().numDocs(); // not strictly correct; includes deleted docs
     }
+
+    @Override
+    public BlackLabIndex.IndexType getIndexType() {
+        return BlackLabIndex.IndexType.EXTERNAL_FILES;
+    }
 }

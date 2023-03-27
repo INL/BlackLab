@@ -41,14 +41,15 @@ public class ConfigInputFormat {
         XML,
         TABULAR, // csv, tsv
         TEXT, // plain text
-        CHAT; // CHILDES CHAT format
+        CHAT, // CHILDES CHAT format
+        CONLL_U; // CoNLL-U format
 
         public static FileType fromStringValue(String str) {
-            return valueOf(str.toUpperCase());
+            return valueOf(str.toUpperCase().replaceAll("-", "_"));
         }
 
         public String stringValue() {
-            return toString().toLowerCase();
+            return toString().toLowerCase().replaceAll("_", "-");
         }
     }
 

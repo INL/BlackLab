@@ -33,6 +33,7 @@ function expectDocsUnchanged(testName, params, filter) {
             chai.request(constants.SERVER_URL)
             .get('/test/docs')
             .query({
+                api: constants.TEST_API_VERSION,
                 sort: "field:pid",
                 wordsaroundhit: 1,
                 waitfortotal: "true",

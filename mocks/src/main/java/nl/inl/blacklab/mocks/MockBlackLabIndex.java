@@ -35,6 +35,8 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -264,6 +266,23 @@ public class MockBlackLabIndex implements BlackLabIndex {
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         }
+    }
+
+    @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.INTEGRATED;
     }
 
     @Override

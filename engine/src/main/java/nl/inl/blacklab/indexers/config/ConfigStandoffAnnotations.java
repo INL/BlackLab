@@ -3,6 +3,8 @@ package nl.inl.blacklab.indexers.config;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * Configuration for a block of standoff annotations (annotations that don't
  * reside under the word tag but elsewhere in the document).
@@ -102,6 +104,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public String getSpanEndPath() {
         return spanEndPath;
+    }
+
+    public boolean isSpans() {
+        return !StringUtils.isEmpty(spanEndPath);
     }
 
     public void setSpanEndPath(String spanEndPath) {

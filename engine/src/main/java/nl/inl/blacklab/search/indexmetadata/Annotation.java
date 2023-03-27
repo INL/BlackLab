@@ -156,4 +156,8 @@ public interface Annotation {
     boolean isSubannotation();
 
     Annotation parentAnnotation();
+
+    default boolean isRelationAnnotation() {
+        return AnnotatedFieldNameUtil.isRelationAnnotation(name());
+    }
 }

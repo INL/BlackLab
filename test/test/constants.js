@@ -10,6 +10,7 @@ const SHOULD_EXPECT_DOCS_IN_GROUPS = 'RESPONSE_SHOULD_HAVE_DOCS_IN_GROUPS' in pr
     : false;
 const TEST_DATA_ROOT = process.env.TEST_DATA_ROOT || "data";
 const SAVED_RESPONSES_PATH = process.env.SAVED_RESPONSES_PATH || `${TEST_DATA_ROOT}/saved-responses`;
+const TEST_API_VERSION = "4.0";
 
 module.exports = {
     SERVER_URL,
@@ -19,5 +20,6 @@ module.exports = {
     SHOULD_HAVE_CONTEXT,
     SHOULD_EXPECT_DOCS_IN_GROUPS,
     TEST_DATA_ROOT,
-    SAVED_RESPONSES_PATH
+    SAVED_RESPONSES_PATH,
+    TEST_API_VERSION
 };

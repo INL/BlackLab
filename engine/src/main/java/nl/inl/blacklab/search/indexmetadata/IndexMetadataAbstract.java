@@ -44,7 +44,6 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.util.Json;
 import nl.inl.util.TimeUtil;
 
@@ -1089,7 +1088,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
         if (annotation.isInternal()) {
             annotationNode.put("isInternal", annotation.isInternal());
         }
-        if (index instanceof BlackLabIndexIntegrated) {
+        if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
             annotationNode.put("hasForwardIndex", annotation.createForwardIndex());
         }
         if (annotation.getSubAnnotations().size() > 0) {

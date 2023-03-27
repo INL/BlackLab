@@ -12,8 +12,8 @@ All external files incorporated into the Lucene index.
 
 ## Related documents
 
-- [Integrated index format files](../index-formats/integrated.md)
-- [Supporting distributed indexing and search](../DISTRIBUTED PLAN.md)
+- [Integrated index format files](../technical/index-formats/integrated.md)
+- [Supporting distributed indexing and search](../technical/design/plan-distributed.md)
 
 ## Impact on users
 
