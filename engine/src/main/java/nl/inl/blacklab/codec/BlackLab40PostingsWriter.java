@@ -1,6 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.text.CollationKey;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,11 +39,11 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.ParallelIntSorter;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -562,7 +563,13 @@ public class BlackLab40PostingsWriter extends FieldsConsumer {
     private static int[] getTermSortOrder(List<String> terms, Collator coll) {
         int[] ret = new int[terms.size()];
         for (int i = 0; i < ret.length; ++i) ret[i] = i;
-        ParallelIntSorter.sort(ret, (a, b) -> coll.compare(terms.get(a), terms.get(b)));
+
+        // Collator.compare() is synchronized, so precomputing the collation keys speeds things up
+        CollationKey[] ck = new CollationKey[terms.size()];
+        for (int i = 0; i < ck.length; ++i)
+            ck[i] = coll.getCollationKey(terms.get(i));
+
+        IntArrays.parallelQuickSort(ret, (a, b) -> ck[a].compareTo(ck[b]));
         return ret;
     }
 

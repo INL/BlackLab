@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.util.BlockTimer;
@@ -182,9 +183,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         for (int i = 0; i < terms.length; i++) {
             sorted[i] = i;
         }
-
-        // Below is about 5% faster than FastUtil's IntArrays.parallelQuickSort() for very large arrays
-        ParallelIntSorter.sort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
+        IntArrays.parallelQuickSort(sorted, (a, b) -> cmp.compare(terms[a], terms[b]));
         return sorted;
     }
 
