@@ -22,8 +22,6 @@ Very complex issues and enhancements that may be of limited use should be tackle
 
 ### Forward index
 
-- [x] Rename "tokens encoding" to "tokens codec" to be more in line with `ContentStoreBlockCodec` (and Lucene terminology in general). See e.g. `TokensEncoding`, `SegmentForwardIndex`, `integrated.md`, etc.
-- [x] We don't always need 4 bytes per token id to store the tokens. If all of the token ids in a document are less than 256, we only need a single byte. If less than 16384, two bytes, etc. Store the number of bytes per token as a parameter for the tokens codec, and use this number of bytes to store the term ids.
 - [ ] Check how `IndexInput.clone()` is used. This method is NOT threadsafe, so we must do this in a synchronized method!
 - [ ] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Consider pooling encoder/decoder as well if useful.
 
@@ -80,32 +78,12 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
 
 
-## Integrate with Solr (standalone)
-
-- [x] Refactor BlackLab Server to isolate executing the requests from gathering parameters and sending the response. Essentially, each operation would get a request class (containing all required parameters, checked, converted and ready for BlackLab to use) and results class (containing the requested hits window, docinfos, and an object for the running count). We can reuse these classes and the methods that perform the actual operations when we implement them in Solr. They can also form the basis for API v2 in BlackLab Server itself.
-- [x] Study how Mtas integrates with Solr
-- [x] Add a request handler that can perform a simple BlackLab request (e.g. group hits)
-- [x] Add other operations to the request handler (find hits, docs, snippet, metadata, highlighted doc contents, etc.)
-  - [x] share as much BLS code as possible
-  - [x] move BLS URL parsing into QueryParamsBls?
-  - [x] read config file from core dir
-- [x] Enable indexing via Solr (custom or via standard import mechanisms?)
-- [x] Make it possible to run the tests on the Solr version too
-- [x] Create a Dockerfile for Solr+BlackLab
-
-
 ## BlackLab Proxy
 
 The proxy supports the full BlackLab Server API, but forwards requests to be executed by another server:
 
 - Solr (standalone or SolrCloud)
 - it could even translate version 2 of the API to version 1 and forward requests to an older BLS. This could help us support old user corpora in AutoSearch.
-
-Tasks:
-
-- [x] Adapt the aggregator to be a generic BlackLab proxy with pluggable backend
-- [x] Translate BLS requests to Solr requests.
-- [x] Ensure compatibility between API v3 and v4.
 
 LATER?
 - [ ] (optional) implement logic to decide per-corpus what backend we need to send the request to. I.e. if it's an old index, send it to the old BLS, otherwise send it to Solr. Also implement a merged "list corpora" view.

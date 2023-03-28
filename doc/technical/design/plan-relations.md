@@ -1,0 +1,159 @@
+# Relations between words and word groups
+
+(see GitHub issue [#405](https://github.com/INL/BlackLab/issues/405))
+
+## Goal
+
+We want to index (and search for) relations between two words, such as "verb X has object Y". In this case, we have two words, X and Y, and the `has_object` relation pointing from X to Y:
+
+    X  ---has_object-->  Y
+
+Example:
+
+             Y <-o- X 
+    Small   man   bites   large   dog.
+
+> **NOTE:** linguists call X the _head_ of the relation and Y the _dependent_; we will stick with the more general _source_ for X and _target_ for Y in BlackLab. The latter terms reflect that this primitive has many potential usages and are easier to understand for users of different backgrounds
+
+The most common case is that a word can be the source for multiple relations and the target for only one, but ideally our implementation doesn't care about this and can handle any set of relations.
+
+Obviously it would also be very useful to be able to index relations between groups of words. In the example, the object of the sentence is not just "man" but actually "Small man". We will look for an implementation that will allow us to store relations between groups of words as well, although full support for this might not be in the initial version.
+
+## How to index relations
+
+One way to index these kinds of relations (suggested by @JessedeDoes) is similar to how we index spans such as `<s/>`. Spans are indexed at the starting token, with the end position stored in the payload.
+
+We could index these in the same annotation as spans are already indexed in. We'd have to be careful to make sure both can easily be distinguished from one another.
+
+Better yet, we should generalize notion of a span we have right now to be a relation as well:
+
+      X ---starts_sentence_ending_at--> Y
+    Small     man    bites    large    dog.
+
+We could index relations at the source position X (with the term we index representing the type of relation, i.e. `has_object`) and store the position of the target Y in the payload.
+
+For performance reasons (see below), it might be useful to also do the opposite, store the same relation at the target position Y with the source position X in the payload. If we do index both of these, we also need to indicate the direction of the relation in the payload, so we know which is source and which is target (so we'd store a boolean meaning "I am the source token" or "I am the target token").
+
+To support relations between groups of words, we could of course add two length values to the payload as well. The first one would indicate the length of group X (the token the relation is indexed at) and the second one the length of group Y (the token indicated in the payload).
+
+> **NOTE:** consider using VInts and relative positions to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because of more efficient disk caching). Also consider only storing a value if it's different from the common case and leaving it out otherwise (e.g. if we're not dealing with word groups, don't store two 1s for the length).
+
+## Searching and combining multiple relations
+
+Obviously, we'd need a query to find a relation:
+
+1. find all `has_object` relations
+2. find `has_object` relations where the source lemma equals `bite`
+3. find all relations where the source lemma equals `bite`
+4. find `has_object` relations where the target lemma equals `man`
+
+1-3 are straightforward with the proposed way to index. Number 4 would probably benefit from indexing relations at both positions, because we could find matches without having to decode the payload.
+
+Of course, we also want to run more complex queries that combine several relations. There's two common ways to combine relations: pointing from/to the same word or transitive. Examples:
+
+- Find verbs where "man" is object and "dog" is subject. In other words, we're looking for a word that is the source for two specific relations. Visually:     `man <--o-- X --s--> dog `
+- Find subjects where its verb is "bite" and that verb has "man" as its object. In other words, we're looking for a word that is the target for a word that is itself the source for another relation. Visually: `man <--o-- bite --s--> X`
+
+In the first case, we can find matches for both relations, keep just the source positions of those matches, then combine those using AND.
+
+In the second case, we find matches for both relations, keeping matches from the second relation where its source exactly matches the target of the first relation, then finally find the targets of those filtered matches.
+
+If we generalize this to groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principle remains the same.
+
+## CQL syntax
+
+We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now. We can always add support for other query languages later if we want.
+
+### Finding relations
+
+Below are examples of how to use the `rel(source, type, target)` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used. Parameter defaults are: `rel(source=[], type='.*', target=[])`.
+
+Find `has_object` relations where the source word equals bites:
+
+    rel('bites', 'has_object')
+
+Find all relations where the source word equals bites:
+
+    rel('bites')
+
+Find `has_object` relations where the target word equals man:
+
+    rel(_, 'has_object', 'man')
+
+Find all relations where the target word equals man (the following 2 are equivalent):
+
+    rel(_, '.*', 'man')
+    rel(_, _, 'man')
+
+Find all `has_object` relations (the following 3 are equivalent):
+
+    rel([], [rel='has_object'])
+    rel(_, [rel='has_object'])
+    rel(_, 'has_object')
+
+Find all relations (a very taxing query in a huge corpus, obviously) (the following are all equivalent):
+
+    rel([], [rel='.*'], [])
+    rel([], '.*', [])
+    rel(_, _, _)
+    rel()
+
+### Combining relation matches
+
+As explained above, we need different operators for combining relation matches. Here are some important ones, but others may be needed.
+
+Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
+
+    rels(_, 'has_object', 'man')
+
+Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
+
+    relt('bites', 'has_object')
+
+Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
+
+    rels(_, 'has_object', 'man') & rels(_, 'has_subject', 'dog')
+
+Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
+
+    relt(_, 'has_object') & relt(_, 'has_subject')
+
+Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
+
+    relt(rels(_, 'has_object', 'man'), 'has_subject')
+
+Find sentences (exact encoding of span information will probably change):
+
+    <s/>
+    rel(_, reltype("span", "tag", "s"))
+    rel(_, "span{tag:s}")
+
+Find sentences with happy sentiment (exact encoding of span information will probably change):
+
+    <s sentiment='happy' confidence="10" />
+    rel(_, reltype("span", "tag", "s", "sentiment", "happy", "confidence", "10"))
+    rel(_ "span{tag:s}.*{sentiment:happy}.*{confidence:10}.*|span{tag:s}.*{confidence:10}.*{sentiment:happy}.*|")
+
+(note that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations. The downside is that the regex becomes more complicated)
+
+Find sources of relation matches:
+
+    get_source(<complex query yielding relation matches>)
+
+Find destinations of relation matches:
+
+    get_destination(<complex query yielding relation matches>)
+
+### Capturing parts
+
+Just like in other CQL queries, we can tag parts with a group name to capture them:
+
+    match_ends(rel(V:[pos="VERB"], "nsubj", S:[]), rel([pos="VERB"], "obj", O:[])), same_src, combine)
+
+The above will find spans containing a verb with its subject and object. `match_ends` finds relations from two sets that have a match in one of their ends. The third parameter specifies which ends to match (`same_src` looks for relations with the same source; other values might be `same_dst` for same destination, `dst_src` for the first destination equals the second source, etc.). The fourth parameter indicates what to do when a match is found: `combine` would create a span that includes both relations fully; `first` would keep only the first relation, `second` only the second, etc.
+
+## Document format and test data
+
+The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
+
+Eventually we'll look at adding support for TEI with dependency relations as well.
