@@ -134,14 +134,14 @@ Find all relations (a very taxing query in a huge corpus, obviously) (the follow
 Find sentences (exact encoding of span information will probably change):
 
     <s/>
-    rel(_, reltype("span", "tag", "s"))
-    rel(_, "span{tag:s}")
+    rel(_, reltype('span', 'tag', 's'))
+    rel(_, 'span{tag:s}')
 
 Find sentences with happy sentiment (exact encoding of span information will probably change):
 
-    <s sentiment='happy' confidence="10" />
-    rel(_, reltype("span", "tag", "s", "sentiment", "happy", "confidence", "10"))
-    rel(_ "span{tag:s}.*{sentiment:happy}.*{confidence:10}.*|span{tag:s}.*{confidence:10}.*{sentiment:happy}.*|")
+    <s sentiment='happy' confidence='10' />
+    rel(_, reltype('span', 'tag', 's', 'sentiment', 'happy', 'confidence', '10'))
+    rel(_ 'span{tag:s}.*{sentiment:happy}.*{confidence:10}.*|span{tag:s}.*{confidence:10}.*{sentiment:happy}.*|')
 
 (note that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations. The downside is that the regex becomes more complicated)
 
@@ -166,8 +166,8 @@ We can use `rmatch` to match and combine relations in various ways:
 Example:
 
     rmatch(
-      rel([pos="VERB"], "nsubj"),
-      rel([pos="VERB"], "obj"),
+      rel([pos='VERB'], 'nsubj'),
+      rel([pos='VERB'], 'obj'),
       source,
       combine
     )
@@ -222,8 +222,8 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
     rmatch(
-      rel(V:[pos="VERB"], "has_subject", S:[]),
-      rel([pos="VERB"], "has_object", O:[]),
+      rel(V:[pos='VERB'], 'has_subject', S:[]),
+      rel([pos='VERB'], 'has_object', O:[]),
       source,
       combine
     )
