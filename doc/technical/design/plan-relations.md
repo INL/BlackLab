@@ -44,7 +44,13 @@ To support relations between groups of words, we could of course add two length 
 > This should probably be a clean break for the integrated index while it's still  experimental, so we don't have to support different variations. The older, external index format would be unaffected.
 > - consider including a document-unique relation id in the payload, so we can use that later to look up details about a relation. This could be useful e.g. if we want to keep track of hierarchical relationships between spans separately, so we can more easily find ancestors or descendants of a span.
 
-## Searching and combining multiple relations
+### Document format and test data
+
+The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
+
+Eventually we'll look at adding support for TEI with dependency relations as well.
+
+## How to implement relations search
 
 Obviously, we'd need a query to find a relation:
 
@@ -66,9 +72,25 @@ In the second case, we find matches for both relations, keeping matches from the
 
 If we generalize this to groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principle remains the same.
 
+
 ## CQL syntax
 
 We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now. We can always add support for other query languages later if we want.
+
+### Quick reference
+
+Find relation:
+
+    rel(source, reltype, target)
+
+Get sources/targets of relation matches:
+
+    source( <relation-matches> )
+    target( <relation-matches> )
+
+Encode relation type (with optional attributes):
+
+    reltype(relname, attr1, value1, attr2, value2, ...)
 
 ### Finding relations
 
@@ -104,29 +126,6 @@ Find all relations (a very taxing query in a huge corpus, obviously) (the follow
     rel(_, _, _)
     rel()
 
-### Combining relation matches
-
-As explained above, we need different operators for combining relation matches. Here are some important ones, but others may be needed.
-
-Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
-
-    rels(_, 'has_object', 'man')
-
-Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
-
-    relt('bites', 'has_object')
-
-Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
-
-    rels(_, 'has_object', 'man') & rels(_, 'has_subject', 'dog')
-
-Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
-
-    relt(_, 'has_object') & relt(_, 'has_subject')
-
-Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
-
-    relt(rels(_, 'has_object', 'man'), 'has_subject')
 
 Find sentences (exact encoding of span information will probably change):
 
@@ -142,24 +141,87 @@ Find sentences with happy sentiment (exact encoding of span information will pro
 
 (note that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations. The downside is that the regex becomes more complicated)
 
-Find sources of relation matches:
 
-    get_source(<complex query yielding relation matches>)
+### Extract source or target
 
-Find destinations of relation matches:
+Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
 
-    get_destination(<complex query yielding relation matches>)
+    source(rel(_, 'has_object', 'man'))
+
+Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
+
+    target(rel('bites', 'has_object'))
+
+
+### Combining relation matches
+
+We can use `relmatch` to match and combine relations in various ways:
+
+    relmatch(rel1, rel2, matchtype, action)
+
+Example:
+
+    relmatch(
+      rel([pos="VERB"], "nsubj"),
+      rel([pos="VERB"], "obj"),
+      src,
+      combine
+    )
+
+The above will find spans containing a verb with its subject and object.
+
+The third parameter, `matchtype`, specifies which ends to match:
+- `src` checks if `rel1` and `rel2` have the same source
+- `dst` checks for same destination
+- `dst_src` checks if the first's destination equals the second's source
+- `src_dst` checks if the first's source equals the second's destination
+
+The fourth parameter, `action`, indicates what to do when a match is found:
+- `combine` would create a span that includes both relations fully
+- `first` would keep only the first relation
+- `second` would keep only the second relation
+
+When using `combine`, you will need capture groups if you want to know which parts of the match correspond to what; see below.
+
+Some examples follow.
+
+Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
+
+    source(relmatch(
+      rel(_, 'has_object', 'man'),
+      rel(_, 'has_subject', 'dog'),
+      source,
+      first
+    ))
+
+Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
+
+    target(relmatch(
+      rel(_, 'has_object'),
+      rel(_, 'has_subject'),
+      target,
+      first
+    ))
+
+Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
+
+    target(relmatch(
+      rel(_, 'has_subject'),
+      rels(_, 'has_object', 'man'),
+      target_source,
+      first
+    ))
+
 
 ### Capturing parts
 
-Just like in other CQL queries, we can tag parts with a group name to capture them:
+Just like in other CQL queries, we can tag parts with a group name to capture them.
 
-    match_ends(rel(V:[pos="VERB"], "nsubj", S:[]), rel([pos="VERB"], "obj", O:[])), same_src, combine)
+    relmatch(
+      rel(V:[pos="VERB"], "nsubj", S:[]),
+      rel([pos="VERB"], "obj", O:[]),
+      src,
+      combine
+    )
 
-The above will find spans containing a verb with its subject and object. `match_ends` finds relations from two sets that have a match in one of their ends. The third parameter specifies which ends to match (`same_src` looks for relations with the same source; other values might be `same_dst` for same destination, `dst_src` for the first destination equals the second source, etc.). The fourth parameter indicates what to do when a match is found: `combine` would create a span that includes both relations fully; `first` would keep only the first relation, `second` only the second, etc.
-
-## Document format and test data
-
-The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
-
-Eventually we'll look at adding support for TEI with dependency relations as well.
+This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.
