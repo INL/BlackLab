@@ -212,7 +212,7 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
     rtarget(rmatch(
       rel(_, 'has_subject'),
       rels(_, 'has_object', 'man'),
-      target_source,
+      source,
       first
     ))
 
@@ -222,8 +222,8 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
     rmatch(
-      rel(V:[pos="VERB"], "nsubj", S:[]),
-      rel([pos="VERB"], "obj", O:[]),
+      rel(V:[pos="VERB"], "has_subject", S:[]),
+      rel([pos="VERB"], "has_object", O:[]),
       source,
       combine
     )
