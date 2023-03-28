@@ -83,18 +83,23 @@ Find relation:
 
     rel(source, reltype, target)
 
+Match and combine relations in various ways:
+
+    rmatch(rel1, rel2, matchtype, action)
+
 Get sources/targets of relation matches:
 
-    source( <relation-matches> )
-    target( <relation-matches> )
+    rsource( <relation-matches> )
+    rtarget( <relation-matches> )
 
 Encode relation type (with optional attributes):
 
-    reltype(relname, attr1, value1, attr2, value2, ...)
+    rtype(relname, attr1, value1, attr2, value2, ...)
+
 
 ### Finding relations
 
-Below are examples of how to use the `rel(source, type, target)` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used. Parameter defaults are: `rel(source=[], type='.*', target=[])`.
+Below are examples of how to use the `rel(source, type, target)` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used. Parameter defaults are: `rel(source=[], type='.+', target=[])`.
 
 Find `has_object` relations where the source word equals bites:
 
@@ -110,19 +115,18 @@ Find `has_object` relations where the target word equals man:
 
 Find all relations where the target word equals man (the following 2 are equivalent):
 
-    rel(_, '.*', 'man')
+    rel(_, '.+', 'man')
     rel(_, _, 'man')
 
-Find all `has_object` relations (the following 3 are equivalent):
+Find all `has_object` relations (the following are equivalent):
 
-    rel([], [rel='has_object'])
-    rel(_, [rel='has_object'])
+    rel([], [_relation='has_object'])
     rel(_, 'has_object')
 
 Find all relations (a very taxing query in a huge corpus, obviously) (the following are all equivalent):
 
-    rel([], [rel='.*'], [])
-    rel([], '.*', [])
+    rel([], [_relation='.+'], [])
+    rel([], '.+', [])
     rel(_, _, _)
     rel()
 
@@ -146,35 +150,35 @@ Find sentences with happy sentiment (exact encoding of span information will pro
 
 Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
 
-    source(rel(_, 'has_object', 'man'))
+    rsource(rel(_, 'has_object', 'man'))
 
 Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
 
-    target(rel('bites', 'has_object'))
+    rtarget(rel('bites', 'has_object'))
 
 
 ### Combining relation matches
 
-We can use `relmatch` to match and combine relations in various ways:
+We can use `rmatch` to match and combine relations in various ways:
 
-    relmatch(rel1, rel2, matchtype, action)
+    rmatch(rel1, rel2, matchtype, action)
 
 Example:
 
-    relmatch(
+    rmatch(
       rel([pos="VERB"], "nsubj"),
       rel([pos="VERB"], "obj"),
-      src,
+      source,
       combine
     )
 
 The above will find spans containing a verb with its subject and object.
 
 The third parameter, `matchtype`, specifies which ends to match:
-- `src` checks if `rel1` and `rel2` have the same source
-- `dst` checks for same destination
-- `dst_src` checks if the first's destination equals the second's source
-- `src_dst` checks if the first's source equals the second's destination
+- `source` checks if `rel1` and `rel2` have the same source
+- `target` checks for same target
+- `target_source` checks if the first's target equals the second's source
+- `source_target` checks if the first's source equals the second's target
 
 The fourth parameter, `action`, indicates what to do when a match is found:
 - `combine` would create a span that includes both relations fully
@@ -187,7 +191,7 @@ Some examples follow.
 
 Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
 
-    source(relmatch(
+    rsource(rmatch(
       rel(_, 'has_object', 'man'),
       rel(_, 'has_subject', 'dog'),
       source,
@@ -196,7 +200,7 @@ Find words that have 'man' as their object and 'dog' as their subject (i.e. find
 
 Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
 
-    target(relmatch(
+    rtarget(rmatch(
       rel(_, 'has_object'),
       rel(_, 'has_subject'),
       target,
@@ -205,7 +209,7 @@ Find words that are the target of both a `has_object` and a `has_subject` relati
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
-    target(relmatch(
+    rtarget(rmatch(
       rel(_, 'has_subject'),
       rels(_, 'has_object', 'man'),
       target_source,
@@ -217,10 +221,10 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
 
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
-    relmatch(
+    rmatch(
       rel(V:[pos="VERB"], "nsubj", S:[]),
       rel([pos="VERB"], "obj", O:[]),
-      src,
+      source,
       combine
     )
 
