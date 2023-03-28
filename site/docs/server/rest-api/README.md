@@ -6,7 +6,10 @@ This documents all of BlackLab Server's endpoints. For a more guided introducion
 
 ## API compatibility
 
-There are currently two supported versions of the REST API, with only minor differences between them (mostly related to consistency and not including redundant information). Configure `parameters.api` in your `blacklab-server.yaml` or pass the `api` parameter to a request to select which API version to attempt compatibility with. See [proxy/README.md](https://github.com/INL/BlackLab/blob/dev/proxy/README.md).
+Use `api=3` or `api=4` to specify the API version to use. Differences from 3 to 4 are minor; some inconsistencies are fixed and some redundant information was removed from responses. Configure `parameters.api` in your `blacklab-server.yaml` to set the default version to use. Support for older version(s) is a transitionary measure and will eventually be dropped.
+
+Full details can be found in [API versions](api-versions.md).
+
 
 ## Root endpoint
 

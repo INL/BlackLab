@@ -1078,8 +1078,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
             ArrayNode annotations) {
         ensureNotFrozen();
         String annotationName = annotation.getName();
-        if (!annotation.isInternal())
-            displayOrder.add(annotationName);
+        displayOrder.add(annotationName);
         if (!annotation.createForwardIndex())
             noForwardIndexAnnotations.add(annotationName);
         ObjectNode annotationNode = annotations.addObject();

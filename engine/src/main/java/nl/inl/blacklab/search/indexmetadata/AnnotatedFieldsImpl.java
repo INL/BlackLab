@@ -197,7 +197,6 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
             annotation.setOffsetsMatchSensitivity(annotation.mainSensitivity().sensitivity());
 
         f.putAnnotation(annotation);
-        if (!annotation.isInternal())
-            displayOrder.add(annotation.name());
+        displayOrder.add(annotation.name());
     }
 }

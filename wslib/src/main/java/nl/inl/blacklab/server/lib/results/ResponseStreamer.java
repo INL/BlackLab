@@ -435,9 +435,11 @@ public class ResponseStreamer {
                 .entry("uiType", fd.custom().get("uiType"));
         ds
                 .entry("type", fd.type().toString())
-                .entry("analyzer", fd.analyzerName())
-                .entry("unknownCondition", fd.custom().get("unknownCondition").toString().toUpperCase())
-                .entry("unknownValue", fd.custom().get("unknownValue"));
+                .entry("analyzer", fd.analyzerName());
+        Object unknownCondition = fd.custom().get("unknownCondition");
+        if (unknownCondition != null)
+            ds.entry("unknownCondition", unknownCondition.toString().toUpperCase());
+        ds.entry("unknownValue", fd.custom().get("unknownValue"));
         if (listValues) {
             final Map<String, String> displayValues = fd.custom().get("displayValues",
                     Collections.emptyMap());
@@ -478,7 +480,11 @@ public class ResponseStreamer {
                 .entry("hasXmlTags", fieldDesc.hasXmlTags());
         ds.entry("mainAnnotation", annotations.main().name());
         ds.startEntry("displayOrder").startList();
-        annotations.stream().map(Annotation::name).forEach(id -> ds.item("fieldName", id));
+        boolean internalAnnotsInDisplayOrder = apiVersion == ApiVersion.V3;
+        annotations.stream()
+                .filter(a -> internalAnnotsInDisplayOrder || !a.isInternal())
+                .map(Annotation::name)
+                .forEach(id -> ds.item("fieldName", id));
         ds.endList().endEntry();
 
         ds.startEntry("annotations").startMap();

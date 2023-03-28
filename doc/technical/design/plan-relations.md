@@ -38,6 +38,12 @@ To support relations between groups of words, we could of course add two length 
 
 > **NOTE:** consider using VInts and relative positions to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because of more efficient disk caching). Also consider only storing a value if it's different from the common case and leaving it out otherwise (e.g. if we're not dealing with word groups, don't store two 1s for the length).
 
+> We should take the opportunity to:
+> - unify spans (<s/>, <named-entity/>, etc.) with relations as described above, including changes to how we store the payload
+> - rename the starttag annotation to _relations (_ to avoid collisions).
+> This should probably be a clean break for the integrated index while it's still  experimental, so we don't have to support different variations. The older, external index format would be unaffected.
+> - consider including a document-unique relation id in the payload, so we can use that later to look up details about a relation. This could be useful e.g. if we want to keep track of hierarchical relationships between spans separately, so we can more easily find ancestors or descendants of a span.
+
 ## Searching and combining multiple relations
 
 Obviously, we'd need a query to find a relation:
