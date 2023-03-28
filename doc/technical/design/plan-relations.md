@@ -70,7 +70,11 @@ In the first case, we can find matches for both relations, keep just the source 
 
 In the second case, we find matches for both relations, keeping matches from the second relation where its source exactly matches the target of the first relation, then finally find the targets of those filtered matches.
 
-If we generalize this to groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principle remains the same.
+In certain cases we may want to combine two relations into a single span that only has a source or target (we don't intend to keep track of multiple targets for a single source, or vice versa). After doing this, the source or target need not be the first and last word of the span, so these positions need to be kept track of separately.
+
+### Longer sources and targets
+
+If we generalize the above to sources/targets that are groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principle remains the same.
 
 
 ## CQL syntax
@@ -176,11 +180,15 @@ The third parameter, `matchtype`, specifies which ends to match:
 - `source_target` checks if the first's source equals the second's target
 
 The fourth parameter, `action`, indicates what to do when a match is found:
-- `combine` would create a span that includes both relations fully
-- `first` would keep only the first relation
-- `second` would keep only the second relation
+- `combine` create a span that includes both relations fully
+- `first` keep only the first relation
+- `second` keep only the second relation
 
-When using `combine`, you will need capture groups if you want to know which parts of the match correspond to what; see below.
+> **NOTE:** `combine` will retain the matched source or target from the first relation. For example, if we used `source_target` as our `matchtype`, `combine` would result in a span that has only a source (from the first relation) and no target.
+> 
+> Trying to use the target on such a "half-relation" would result in an error.
+
+Capture groups could be used to identify specific parts of the match, just like with regular CQL queries. See below.
 
 Some examples follow.
 
@@ -226,14 +234,24 @@ Just like in other CQL queries, we can tag parts with a group name to capture th
 This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.
 
 
-### Other functions
+### Encoding regular spans as relations
+
+As mentioned earlier, we want to unify the spans we already supported in BlackLab (i.e. XML tags like `<s/>`) with the new relations. This means we need a way to encode regular spans plus their attributes as relations.
+
+One way to encode `<s sentiment="happy"/>` to a term we can index in the `_relation` attribute is:
+
+    span{tag:s}{sentiment:happy}
+
+A utility function could be used in queries where needed:
 
     rtype('span', 'tag', 's', 'sentiment', 'happy')
 
-is roughty equivalent to (specific way of indexing may change):
+is roughly equivalent to (specific way of encoding attributes may change):
 
     [_relation="span{tag:s}.*{sentiment:happy}.*"]
 
-Note that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations. The downside is that the regex becomes more complicated)
-
-
+> **NOTE:** that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations.
+> 
+> A downside is that this can greatly increase the number of unique terms in the index, which consumes more disk space and can slow down queries. We should offer the option to exclude certain attributes from indexing.
+> 
+> Another downside is that the regex becomes more complicated if you specify multiple attributes. We could say that tag is always the first attribute, but if you specify more than one other attribute, you will need regexes like `.*A.*B.*|.*B.*A.*`, which rapidly gets out of hand as you add more attributes. Better is probably to use e.g. `[_relation="span{tag:s}.*{sentiment:happy}.*" & _relation="span{tag:s}.*{confidence:10}.*"]`. We would always want a fixed prefix as that speeds up queries considerably.
