@@ -26,8 +26,8 @@ public class ExportForwardIndex {
     private static final List<String> SKIP_ANNOTATIONS = List.of(
             "pos",
             AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-            AnnotatedFieldNameUtil.relationAnnotationName(true),
-            AnnotatedFieldNameUtil.relationAnnotationName(false)
+            AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.EXTERNAL_FILES),
+            AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.INTEGRATED)
     );
 
     private static final int MAX_DOCS = 30;

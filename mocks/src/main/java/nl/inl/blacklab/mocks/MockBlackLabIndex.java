@@ -267,6 +267,17 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.INTEGRATED;
+    }
+
+    @Override
     public String name() { 
         return "MockBlackLabIndex";
     }

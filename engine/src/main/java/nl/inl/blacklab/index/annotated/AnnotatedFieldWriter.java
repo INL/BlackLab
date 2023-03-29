@@ -81,7 +81,7 @@ public class AnnotatedFieldWriter {
      */
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
-        relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(docWriter);
+        relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(docWriter.getIndexType());
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");

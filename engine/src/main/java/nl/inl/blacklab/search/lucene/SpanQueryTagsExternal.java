@@ -17,6 +17,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -25,10 +26,13 @@ import nl.inl.blacklab.search.results.QueryInfo;
  *
  * Returns spans corresponding to a certain element (tag) type.
  *
+ * This version is for legacy indexes that don't have the new _relation annotation
+ * (i.e. the classic external index format).
+ *
  * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
  * elements in the document.
  */
-public class SpanQueryTags extends BLSpanQuery {
+public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
 
     final BLSpanTermQuery clause;
 
@@ -40,7 +44,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
     private final String startTagFieldName;
 
-    public SpanQueryTags(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
+    public SpanQueryTagsExternal(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
         super(queryInfo);
         this.tagName = tagName;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
@@ -57,7 +61,8 @@ public class SpanQueryTags extends BLSpanQuery {
         // Construct attribute filters
         List<BLSpanQuery> attrFilters = new ArrayList<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
-            String value = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue());
+            String value = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                    BlackLabIndex.IndexType.EXTERNAL_FILES);
             attrFilters.add(new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, value)));
         }
 
@@ -69,7 +74,7 @@ public class SpanQueryTags extends BLSpanQuery {
             filter = attrFilters.get(0);
         else
             filter = new SpanQueryAnd(attrFilters);
-        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTags(queryInfo, startTagFieldName, tagName, null), filter,
+        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTagsExternal(queryInfo, startTagFieldName, tagName, null), filter,
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
         r.setQueryInfo(queryInfo);
         return r;
@@ -96,7 +101,7 @@ public class SpanQueryTags extends BLSpanQuery {
 
         public SpanWeightTags(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryTags.this, searcher, terms, boost);
+            super(SpanQueryTagsExternal.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -117,7 +122,7 @@ public class SpanQueryTags extends BLSpanQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(startTagFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansTags(startTags, primaryIndicator);
+            return new SpansTagsExternal(startTags, primaryIndicator);
         }
 
     }
@@ -148,7 +153,7 @@ public class SpanQueryTags extends BLSpanQuery {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SpanQueryTags other = (SpanQueryTags) obj;
+        SpanQueryTagsExternal other = (SpanQueryTagsExternal) obj;
         if (attr == null) {
             if (other.attr != null)
                 return false;

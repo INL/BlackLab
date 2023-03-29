@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.text.Collator;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -35,6 +36,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -45,6 +47,10 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
+
+    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes);
+
+    IndexType getType();
 
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.

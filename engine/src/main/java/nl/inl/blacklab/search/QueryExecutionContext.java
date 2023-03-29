@@ -66,7 +66,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withRelationAnnotation() {
         if (!field().hasXmlTags())
             throw new RuntimeException("Field has no relation annotation!");
-        String name = AnnotatedFieldNameUtil.relationAnnotationName(index);
+        String name = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
         if (field().annotation(name) == null)
             throw new RuntimeException("Field has no relation annotation named " + name + "!");
         return withAnnotation(field().annotation(name));

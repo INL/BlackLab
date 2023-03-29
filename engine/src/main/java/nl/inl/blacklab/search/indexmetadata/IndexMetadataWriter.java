@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Used to write information about a BlackLab index, including its fields structure. */
 public interface IndexMetadataWriter extends IndexMetadata {
@@ -110,4 +111,6 @@ public interface IndexMetadataWriter extends IndexMetadata {
 
     @Override
     AnnotatedFieldsImpl annotatedFields();
+
+    BlackLabIndex.IndexType getIndexType();
 }

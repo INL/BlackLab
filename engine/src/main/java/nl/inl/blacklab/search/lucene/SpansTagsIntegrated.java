@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.Span;
 /**
  * Gets spans for a certain XML element.
  */
-class SpansTags extends BLSpans {
+class SpansTagsIntegrated extends BLSpans {
 
     private final BLSpans tags;
 
@@ -32,7 +32,7 @@ class SpansTags extends BLSpans {
      * @param startTags the positions of our start tags
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansTags(BLSpans startTags, boolean payloadIndicatesPrimaryValues) {
+    public SpansTagsIntegrated(BLSpans startTags, boolean payloadIndicatesPrimaryValues) {
         this.tags = startTags;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
     }
@@ -92,6 +92,8 @@ class SpansTags extends BLSpans {
                 ByteBuffer bb = ByteBuffer.wrap(payload);
                 if (payloadIndicatesPrimaryValues)
                     bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator
+
+                // FIXME: convert to the new (integrated) payload format
                 end = bb.getInt();
             }
             return end;

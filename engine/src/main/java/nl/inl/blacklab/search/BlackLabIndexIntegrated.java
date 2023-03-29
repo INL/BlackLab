@@ -3,6 +3,7 @@ package nl.inl.blacklab.search;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlTransient;
@@ -33,6 +34,9 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryTagsIntegrated;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -163,6 +167,17 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorIntegrated(this, annotatedField(searchField));
+    }
+
+    @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes) {
+        return new SpanQueryTagsIntegrated(queryInfo, luceneField, tagName, attributes);
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.INTEGRATED;
     }
 
     @Override

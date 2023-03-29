@@ -34,6 +34,9 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryTagsExternal;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.VersionFile;
 
 /**
@@ -127,6 +130,17 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     @Override
     public ForwardIndexAccessor forwardIndexAccessor(String searchField) {
         return new ForwardIndexAccessorExternal(this, annotatedField(searchField));
+    }
+
+    @Override
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+            Map<String, String> attributes) {
+        return new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+    }
+
+    @Override
+    public IndexType getType() {
+        return IndexType.EXTERNAL_FILES;
     }
 
     @Override

@@ -140,7 +140,7 @@ public class DocIndexerExample extends DocIndexerBase {
                     true);
         }
         // Add a special annotation where we can index arbitrary spans.
-        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()),
+        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                 AnnotationSensitivities.ONLY_SENSITIVE, false);
         // Add a special annotation where whitespace and punctuation between words is stored.
         addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
@@ -174,7 +174,7 @@ public class DocIndexerExample extends DocIndexerBase {
                 getDocWriter().needsPrimaryValuePayloads());
         while (annotIt.hasNext()) {
             ConfigAnnotation annot = annotIt.next();
-            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()));
+            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()));
             contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads, annot.createForwardIndex());
         }
         addAnnotatedField(contents);
@@ -299,7 +299,8 @@ public class DocIndexerExample extends DocIndexerBase {
             for (int i = 3; i < parameters.length; i += 2) {
                 String attName = parameters[i];
                 String attValue = parameters[i + 1];
-                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(attName, attValue), spanStart, null);
+                String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(attName, attValue, getIndexType());
+                tagsAnnotation().addValueAtPosition(term, spanStart, null);
             }
             break;
 

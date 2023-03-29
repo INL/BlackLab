@@ -115,9 +115,9 @@ Get sources/targets of relation matches:
     rsource( <relation-matches> )
     rtarget( <relation-matches> )
 
-Encode relation type (with optional attributes):
+Encode span term with optional attributes:
 
-    rtype(relname, attr1, value1, attr2, value2, ...)
+    rtspan(tagName, attr1, value1, attr2, value2, ...)
 
 
 ### Finding relations
@@ -157,12 +157,13 @@ Find all relations (a very taxing query in a huge corpus, obviously) (the follow
 Find sentences:
 
     <s/>
-    rel(_, rtype('span', 'tag', 's'))
+    rel(_, rtspan('s'))
 
-Find sentences with happy sentiment:
+Find sentences with happy sentiment (these are all equivalent):
 
     <s sentiment='happy' confidence='10' />
-    rel(_, rtype('span', 'tag', 's', 'sentiment', 'happy', 'confidence', '10'))
+    rel(_, rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
+    rel(_, 'span\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
 
 ### Extract source or target
 
@@ -243,27 +244,36 @@ This would return spans including a verb and its subject and object, with the ve
 
 As mentioned earlier, we want to unify the spans we already supported in BlackLab (i.e. XML tags like `<s/>`) with the new relations. This means we need a way to encode regular spans plus their attributes as relations.
 
-One way to encode `<s sentiment="happy"/>` to a term we can index in the `_relation` attribute is:
+#### Single term
 
-    span{tag:s}{sentiment:happy}
+We will encode the tag name and all attribute values into a single indexed term, so we only need to store the payload once and cannot accidentally mix up attributes with those of other spans/relations (as is a problem in the classic external index format).
 
-A utility function could be used in queries where needed:
+A potential downside of is that this could greatly increase the number of unique terms in the index, if there's multiple attributes and many different combinations of attribute values. This would consume more disk space and could slow down queries. While this doesn't seem to be a huge problem for most typical datasets, perhaps we could offer the option to exclude certain attributes from indexing.
 
-    rtype('span', 'tag', 's', 'sentiment', 'happy')
+#### Example encoding
 
-is roughly equivalent to (specific way of encoding attributes may change):
+For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    [_relation="span{tag:s}.*{sentiment:happy}.*"]
+    span\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
 
-> **NOTE:** that we now encode all attribute values into the indexed term, so we only need to store the payload once and cannot mix up attributes with those of other spans/relations.
-> 
-> A downside is that this can greatly increase the number of unique terms in the index, which consumes more disk space and can slow down queries. We should offer the option to exclude certain attributes from indexing.
-> 
-> Another downside is that the regex becomes more complicated if you specify multiple attributes. We could say that tag is always the first attribute, but if you specify more than one other attribute, you will need regexes like `.*A.*B.*|.*B.*A.*`, which rapidly gets out of hand as you add more attributes. Better is probably to use e.g. `[_relation="span{tag:s}.*{sentiment:happy}.*" & _relation="span{tag:s}.*{confidence:10}.*"]`. We would always want a fixed prefix as that speeds up queries considerably.
+So the "relation type" here is `span\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
+
+After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
+
+### rtspan function
+
+Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtspan` could be provided, so that:
+
+    rtspan('s', 'sentiment', 'happy', 'confidence', '10')
+
+would return the regex:
+
+    span\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+
 
 ### Better keep track of spans hierarchy?
 
-(this is beyong the scope of this task, but it's good to keep it in the back of our mind)
+> **NOTE:** this is beyong the scope of this task, but it's good to keep it in the back of our mind
 
 Span nesting has never been completely accurately recorded in the index, because only the start and end token is stored, not the nesting level. If two spans have the same start and end, we can't tell which one is the parent of the other.
 

@@ -30,13 +30,14 @@ import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.index.DocIndexerAbstract;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.StringUtil;
 import nl.inl.util.UnicodeStream;
@@ -499,7 +500,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 // Index element attribute values
                 String name = e.getKey();
                 String value = e.getValue();
-                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value), getCurrentTokenPosition(), null);
+                BlackLabIndex.IndexType indexType = getIndexType();
+                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value, indexType), getCurrentTokenPosition(), null);
             }
 
         } else {
@@ -583,7 +585,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions,
             int spanEndPos) {
         AnnotationWriter annotation = getAnnotation(
-                spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()) : name);
+                spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : name);
         if (annotation != null) {
             BytesRef payload = null;
             if (spanEndPos >= 0) {
@@ -592,7 +594,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 payload = PayloadUtils.tagEndPositionPayload(spanEndPos);
                 if (name != null) {
                     // Attribute (otherwise it's the span name, e.g. "named-entity", which is indexed unchanged)
-                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value);
+                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value, getIndexType());
                 }
             }
             if (indexAtPositions == null) {

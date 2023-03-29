@@ -246,7 +246,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 // Index element attribute values
                 String name = attributes.getLocalName(i);
                 String value = attributes.getValue(i);
-                propTags.addValue(AnnotatedFieldNameUtil.tagAttributeIndexValue(name.toLowerCase(), value.toLowerCase()), 0, null);
+                String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(name.toLowerCase(), value.toLowerCase(), getIndexType());
+                propTags.addValue(term, 0, null);
             }
         }
 
@@ -392,7 +393,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propTags = addAnnotation(AnnotatedFieldNameUtil.relationAnnotationName(docWriter), true); // start tag
+        propTags = addAnnotation(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()), true); // start tag
         // positions
         propTags.setHasForwardIndex(false);
     }

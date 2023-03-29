@@ -123,7 +123,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     needsPrimaryValuePayloads);
 
             AnnotationWriter annotStartTag = fieldWriter.addAnnotation(
-                    AnnotatedFieldNameUtil.relationAnnotationName(getDocWriter()),
+                    AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                     AnnotationSensitivities.ONLY_SENSITIVE, true, false);
             annotStartTag.setHasForwardIndex(false);
 

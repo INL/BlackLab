@@ -2,12 +2,13 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexExternal;
 
 /**
  * Some utility functions for dealing with annotated field names.
@@ -87,6 +88,12 @@ public final class AnnotatedFieldNameUtil {
             FORWARD_INDEX_ID_BOOKKEEP_NAME,
             LENGTH_TOKENS_BOOKKEEP_NAME);
 
+    /** Separator before attribute name+value in _relation annotation. */
+    private  static final String NAME_PREFIX_CHAR = "\u0001";
+
+    /** Separator between attr and value in _relation annotation. */
+    private  static final String VALUE_PREFIX_CHAR = "\u0002";
+
     private AnnotatedFieldNameUtil() {
     }
 
@@ -98,23 +105,66 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
+     * Determine the term to index in Lucene for a relation.
+     *
+     * @param relationType relation type
+     * @param attributes any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static String relationIndexTerm(String relationType, Map<String, String> attributes) {
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
+                .collect(Collectors.joining());
+
+        // The term to index consists of the type followed by the (sorted) attributes.
+        return relationType + attrPart;
+    }
+
+    /**
+     * Determine the search regex for a relation.
+     *
+     * NOTE: both relationType and attributes are interpreted as regexes,
+     * so any regex special characters you wish to find should be escaped!
+     *
+     * @param relationType relation type
+     * @param attributes any attribute criteria for this relation
+     * @return regex to find this relation
+     */
+    public static String relationSearchRegex(String relationType, Map<String, String> attributes) {
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
+                .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
+
+        // The regex consists of the type part followed by the (sorted) attributes part.
+        return relationType + ".*" + attrPart;
+    }
+
+    public static String spanRelationType(String tagName) {
+        return "span" + VALUE_PREFIX_CHAR + tagName;
+    }
+
+    /**
      * What value do we index for attributes to tags (spans)?
      *
      * For example, a tag <s id="123"> ... </s> would be indexed in annotation "_relation"
      * with two tokens at the same position: "s" and "@iid__123".
      *
-     * FIXME: this means that currently, we cannot distinguish between attributes for
-     *   different start tags occurring at the same token position! We should change the index
-     *   format to at least include tag name with each attribute, but this will break index
-     *   compatibility. We'll probably do this as part of a larger update to how document
-     *   structure is indexed (for syntactic search features).
-     *
      * @param name attribute name
      * @param value attribute value
      * @return value to index for this attribute
      */
-    public static String tagAttributeIndexValue(String name, String value) {
-        return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+    public static String tagAttributeIndexValue(String name, String value, BlackLabIndex.IndexType indexType) {
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+             // NOTE: this means that we cannot distinguish between attributes for
+             // different start tags occurring at the same token position!
+             // (In the integrated index format, we include all attributes in the term)
+            return "@" + name.toLowerCase() + "__" + value.toLowerCase();
+        }
+        return NAME_PREFIX_CHAR + name + VALUE_PREFIX_CHAR + value;
     }
 
     /**
@@ -122,24 +172,8 @@ public final class AnnotatedFieldNameUtil {
      * @param index the index
      * @return name of annotation that stores the relations between words
      */
-    public static String relationAnnotationName(BlackLabIndex index) {
-        return relationAnnotationName(index instanceof BlackLabIndexExternal);
-    }
-
-    /**
-     * Get the name of the annotation that stores the relations between words.
-     *
-     * This includes spans like sentences, paragraphs, etc.
-     *
-     * @param docWriter the document writer
-     * @return name of annotation that stores the relations between words
-     */
-    public static String relationAnnotationName(DocWriter docWriter) {
-        return relationAnnotationName(docWriter.metadata() instanceof IndexMetadataExternal);
-    }
-
-    public static String relationAnnotationName(boolean isLegacy) {
-        return isLegacy ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
+    public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
+        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
     }
 
     public static boolean isRelationAnnotation(String name) {

@@ -38,7 +38,7 @@ public class TestQueryRewrite {
     @Before
     public void setUp() {
         index = testIndex.index();
-        relName = AnnotatedFieldNameUtil.relationAnnotationName(index);
+        relName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
         ClauseCombinerNfa.setForwardIndexMatchingEnabled(false);
     }
 

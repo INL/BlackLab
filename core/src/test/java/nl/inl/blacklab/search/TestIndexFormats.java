@@ -194,7 +194,7 @@ public class TestIndexFormats {
         boolean isIntegrated = index instanceof BlackLabIndexIntegrated;
         Set<String> expectedAnnotations =
                 new HashSet<>(Arrays.asList("word", "lemma", "pos",
-                AnnotatedFieldNameUtil.relationAnnotationName(index), AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
+                AnnotatedFieldNameUtil.relationAnnotationName(index.getType()), AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());

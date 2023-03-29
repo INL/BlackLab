@@ -7,7 +7,6 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryTags;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -43,9 +42,8 @@ public class TextPatternTags extends TextPattern {
         }
 
         // Return the proper SpanQuery depending on index version
-        QueryExecutionContext startTagContext = context.withRelationAnnotation();
-        String startTagFieldName = startTagContext.luceneField();
-        return new SpanQueryTags(QueryInfo.create(context.index(), context.field()), startTagFieldName, elementName1, attrOptIns);
+        QueryInfo queryInfo = QueryInfo.create(context.index(), context.field());
+        return context.index().tagQuery(queryInfo, context.luceneField(), elementName1, attrOptIns);
     }
 
     @Override
