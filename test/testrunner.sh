@@ -47,6 +47,7 @@ $COMPOSE rm -fv testserver
 
 ##----------------------------------------------------------
 ## Re-run the same tests using Solr+proxy
+echo === Testing Solr \(with integrated index format\)...
 $COMPOSE build proxy solr "$SERVICE_NAME"
 $COMPOSE up --force-recreate -d proxy solr
 export APP_URL=http://proxy:8080/blacklab-server

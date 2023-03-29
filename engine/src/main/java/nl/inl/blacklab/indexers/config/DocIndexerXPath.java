@@ -832,7 +832,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
         // If indexAtPositions == null, this positionIncrement will be used.
         int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
         if (spanEndPos >= 0) {
-            // For span annotations (which are all added to the same annotation, "starttag"),
+            // For span annotations (which are all added to the same annotation, "_relation"),
             // the span name has already been indexed at this position with an increment of 1,
             // so the attribute values we're indexing here should all get position increment 0.
             positionIncrement = 0;

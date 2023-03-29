@@ -587,7 +587,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (annotation != null) {
             BytesRef payload = null;
             if (spanEndPos >= 0) {
-                // This is a span annotation. These are all indexed in one Lucene field (the annotation called "starttag")
+                // This is a span annotation. These are all indexed in one Lucene field (the annotation called "_relation")
                 // with the attribute name and value combined.
                 payload = PayloadUtils.tagEndPositionPayload(spanEndPos);
                 if (name != null) {

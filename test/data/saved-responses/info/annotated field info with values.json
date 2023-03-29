@@ -207,8 +207,8 @@
       "offsetsAlternative": "",
       "isInternal": false
     },
-    "starttag": {
-      "displayName": "Starttag",
+    "_relation": {
+      "displayName": "_relation",
       "description": "",
       "uiType": "",
       "hasForwardIndex": false,

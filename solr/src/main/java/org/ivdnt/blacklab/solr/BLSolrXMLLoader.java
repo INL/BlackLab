@@ -172,7 +172,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
                     fieldAttributes.put("omitPositions", !(indexed || offsets));
                     fieldAttributes.put("storeOffsetsWithPositions", offsets);
                     fieldAttributes.put("docValues", false);
-                    fieldAttributes.put("termPayloads", missingAnnot.luceneField().contains("starttag")); // FIXME: is correct (only the inline tags have payloads currently), but this way of determining is icky
+                    fieldAttributes.put("termPayloads", missingAnnot.annotation().isRelationAnnotation()); // FIXME: is correct (only the inline tags have payloads currently), but this way of determining is icky
                     fieldAttributes.put("useDocValuesAsStored", false);
                     fieldAttributes.put("large", false);
                     fieldAttributes.put("uninvertible", false);

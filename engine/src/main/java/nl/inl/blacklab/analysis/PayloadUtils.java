@@ -171,7 +171,7 @@ public class PayloadUtils {
     /**
      * Get the payload to store with the span start tag.
      *
-     * Spans are stored in the "starttag" annotation, at the token position of the start tag.
+     * Spans are stored in the "_relation" annotation, at the token position of the start tag.
      * The payload gives the token position of the end tag.
      *
      * @param endPosition end position (exclusive), or the first token after the span

@@ -100,7 +100,7 @@ public final class AnnotatedFieldNameUtil {
     /**
      * What value do we index for attributes to tags (spans)?
      *
-     * For example, a tag <s id="123"> ... </s> would be indexed in annotations "starttag"
+     * For example, a tag <s id="123"> ... </s> would be indexed in annotation "_relation"
      * with two tokens at the same position: "s" and "@iid__123".
      *
      * FIXME: this means that currently, we cannot distinguish between attributes for
