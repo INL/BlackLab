@@ -4,7 +4,7 @@
 
 ## Goal
 
-We want to index (and search for) relations between two words, such as "verb X has object Y". In this case, we have two words, X and Y, and the `has_object` relation pointing from X to Y:
+We want to index (and search for) relations between two words, such as the dependency relation "verb X has object Y". In this case, we have two words, X and Y, and the `has_object` relation pointing from X to Y:
 
     X  ---has_object-->  Y
 
@@ -13,36 +13,53 @@ Example:
              Y <-o- X 
     Small   man   bites   large   dog.
 
-> **NOTE:** linguists call X the _head_ of the relation and Y the _dependent_; we will stick with the more general _source_ for X and _target_ for Y in BlackLab. The latter terms reflect that this primitive has many potential usages and are easier to understand for users of different backgrounds
+For dependency relations, the most common case is that a word can point to multiple other words, but can only be pointed to by one other word. We don't want to limit the relations primitive to just dependency relations though, so our implementation will be able to handle any set of relations.
 
-The most common case is that a word can be the source for multiple relations and the target for only one, but ideally our implementation doesn't care about this and can handle any set of relations.
+### Terminology
 
-Obviously it would also be very useful to be able to index relations between groups of words. In the example, the object of the sentence is not just "man" but actually "Small man". We will look for an implementation that will allow us to store relations between groups of words as well, although full support for this might not be in the initial version.
+For dependency relations, linguists call the start of the arrow X the _head_ of the relation and the end of the arrow Y the _dependent_.
+
+However, because we don't want to limit the relations primitive to only dependency relations, and because the term _head_ can be confusing (there's also the "head of an arrow", but that's the other end), we will use _source_ for X and _target_ for Y in BlackLab.
+ 
+Of course, in addition to the CQL extension functions described below, we could also include functions specifically suited for working with dependency relations, which would use the common terminology of _head_ and _dependent_.
+
+### Relations beteween groups of words
+
+Obviously it would also be very useful to be able to index relations between groups of words. For example, in the example above, the object of the sentence is not just "man" but actually "Small man".
+
+Our implementation should allow us to store relations between groups of words as well, although full support for this might not be in the initial version.
+
 
 ## How to index relations
 
-One way to index these kinds of relations (suggested by @JessedeDoes) is similar to how we index spans such as `<s/>`. Spans are indexed at the starting token, with the end position stored in the payload.
+Indexing relations will mean changes to the index format. We will implement these changes in the integrated index format only; the classic external index format will not support them. We will simply change the integrated index format, so older integrated indexes will no longer be readable. This is okay as long as the integrated index format is still experimental.
 
-We could index these in the same annotation as spans are already indexed in. We'd have to be careful to make sure both can easily be distinguished from one another.
+### Unification with spans
 
-Better yet, we should generalize notion of a span we have right now to be a relation as well:
+A good way to index relations is similar to how we index spans such as `<s/>`. Spans are indexed at the starting token, with the end position stored in the payload.
+
+We could index these in the same annotation spans are already indexed in (historically called `starttag`, but we will rename it to `_relation`). We'd have to be careful to make sure both can easily be distinguished from one another.
+
+Better yet, we should generalize the notion of a span we have right now to be indexed as a relation as well, i.e.:
 
       X ---starts_sentence_ending_at--> Y
     Small     man    bites    large    dog.
 
-We could index relations at the source position X (with the term we index representing the type of relation, i.e. `has_object`) and store the position of the target Y in the payload.
+> **NOTE:** Unification also means changes to how we store the payload and how we index tag attributes (combining them all into one term string? probably provide a way to exclude unique id attributes then?). See below.
 
-For performance reasons (see below), it might be useful to also do the opposite, store the same relation at the target position Y with the source position X in the payload. If we do index both of these, we also need to indicate the direction of the relation in the payload, so we know which is source and which is target (so we'd store a boolean meaning "I am the source token" or "I am the target token").
+### Where to index relations
+
+We could index relations at the source or target position X (with the term we index representing the type of relation, i.e. `has_object`) and store the position of the opposite position (target/source) Y in the payload. Which token we should choose to store a relation depends on which direction is more commonly queried, as having to decode the payload to find the "other end" of the relation takes slightly longer. We may even choose to index at both positions, meaning we would also need to store the direction of the relation. Though we should first test if any of this actually makes a difference in practice.
+
+### Groups of words
 
 To support relations between groups of words, we could of course add two length values to the payload as well. The first one would indicate the length of group X (the token the relation is indexed at) and the second one the length of group Y (the token indicated in the payload).
 
-> **NOTE:** consider using VInts and relative positions to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because of more efficient disk caching). Also consider only storing a value if it's different from the common case and leaving it out otherwise (e.g. if we're not dealing with word groups, don't store two 1s for the length).
+### Optimizations
 
-> We should take the opportunity to:
-> - unify spans (`<s/>`, `<named-entity/>`, etc.) with relations as described above, including changes to how we store the payload and how we index any attributes (combining them all into one term string? probably provide a way to exclude unique id attributes then?).
-> - rename the `starttag` annotation to `_relations` (`_` to avoid collisions).
-> This should probably be a clean break for the integrated index while it's still  experimental, so we don't have to support different variations. The older, external index format would be unaffected.
-> - consider including a document-unique relation id in the payload, so we can use that later to look up details about a relation. This could be useful e.g. if we want to keep track of hierarchical relationships between spans separately, so we can more easily find ancestors or descendants of a span.
+We should consider using relative positions and variable-length integers to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because more dense storage makes better use of the disk cache).
+
+We should also consider only storing certain values if they differ from the common case (e.g. if we're not dealing with word groups, don't store two 1s for the length).
 
 ### Document format and test data
 
@@ -52,29 +69,31 @@ Eventually we'll look at adding support for TEI with dependency relations as wel
 
 ## How to implement relations search
 
-Obviously, we'd need a query to find a relation:
+Obviously, we'd need a query to find a relation, such as:
 
 1. find all `has_object` relations
 2. find `has_object` relations where the source lemma equals `bite`
 3. find all relations where the source lemma equals `bite`
 4. find `has_object` relations where the target lemma equals `man`
 
-1-3 are straightforward with the proposed way to index. Number 4 would probably benefit from indexing relations at both positions, because we could find matches without having to decode the payload.
-
-Of course, we also want to run more complex queries that combine several relations. There's two common ways to combine relations: pointing from/to the same word or transitive. Examples:
+Of course, we also want to run more complex queries that combine several relations. There's two common ways to combine relations: two relations involving the same word, and two transitive relations. Examples:
 
 - Find verbs where "man" is object and "dog" is subject. In other words, we're looking for a word that is the source for two specific relations. Visually:     `man <--o-- X --s--> dog `
 - Find subjects where its verb is "bite" and that verb has "man" as its object. In other words, we're looking for a word that is the target for a word that is itself the source for another relation. Visually: `man <--o-- bite --s--> X`
 
-In the first case, we can find matches for both relations, keep just the source positions of those matches, then combine those using AND.
+In the first case, we can search for both relations, and find matches between them based on their source positions.
 
 In the second case, we find matches for both relations, keeping matches from the second relation where its source exactly matches the target of the first relation, then finally find the targets of those filtered matches.
 
-In certain cases we may want to combine two relations into a single span that only has a source or target (we don't intend to keep track of multiple targets for a single source, or vice versa). After doing this, the source or target need not be the first and last word of the span, so these positions need to be kept track of separately.
+### Combining two relations into a larger span.
+
+In certain cases we may want to combine two relations into a single larger span, while retaining the source or target we matched them on. After doing this, the source or target need not be the first and last word of the span, so these positions need to be kept track of separately.
+
+A simple way to implement this operation is to return a combined span that has the source and target of the first relation. The source/target from the second relation that was not matched on is lost, but users could still capture those in a group if necessary.
 
 ### Longer sources and targets
 
-If we generalize the above to sources/targets that are groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principle remains the same.
+If we generalize the above to sources/targets that are groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principles remain the same.
 
 
 ## CQL syntax
@@ -158,37 +177,25 @@ Find words that are the object for 'bites' ("find relation target where source i
 
 ### Combining relation matches
 
-We can use `rmatch` to match and combine relations in various ways:
+We can use `rmatch` to match relations in various ways:
 
-    rmatch(rel1, rel2, matchtype, action)
+    rmatch(rel1, rel2, matchtype)
 
 Example:
 
     rmatch(
       rel([pos='VERB'], 'nsubj'),
       rel([pos='VERB'], 'obj'),
-      source,
-      combine
+      source
     )
 
-The above will find spans containing a verb with its subject and object.
+This will find spans containing a verb with its subject and object. It will return a larger span that includes the spans from both relations, with the source and target of the first relation (i.e. the verb and subject).
 
 The third parameter, `matchtype`, specifies which ends to match:
-- `source` checks if `rel1` and `rel2` have the same source
-- `target` checks for same target
-- `target_source` checks if the first's target equals the second's source
-- `source_target` checks if the first's source equals the second's target
-
-The fourth parameter, `action`, indicates what to do when a match is found:
-- `combine` create a span that includes both relations fully
-- `first` keep only the first relation
-- `second` keep only the second relation
-
-> **NOTE:** `combine` will retain the matched source or target from the first relation. For example, if we used `source_target` as our `matchtype`, `combine` would result in a span that has only a source (from the first relation) and no target.
-> 
-> Trying to use the target on such a "half-relation" would result in an error.
-
-Capture groups could be used to identify specific parts of the match, just like with regular CQL queries. See below.
+- `source` or `s` matches the sources of `rel1` and `rel2`
+- `target` or `t` matches the targets
+- `target_source` or `ts` matches the first's target to the second's source
+- `source_target` or `st` matches the first's source to the second's target
 
 Some examples follow.
 
@@ -197,8 +204,7 @@ Find words that have 'man' as their object and 'dog' as their subject (i.e. find
     rsource(rmatch(
       rel(_, 'has_object', 'man'),
       rel(_, 'has_subject', 'dog'),
-      source,
-      first
+      source
     ))
 
 Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
@@ -206,8 +212,7 @@ Find words that are the target of both a `has_object` and a `has_subject` relati
     rtarget(rmatch(
       rel(_, 'has_object'),
       rel(_, 'has_subject'),
-      target,
-      first
+      target
     ))
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
@@ -215,8 +220,7 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
     rtarget(rmatch(
       rel(_, 'has_subject'),
       rel(_, 'has_object', 'man'),
-      source,
-      first
+      source
     ))
 
 
@@ -227,12 +231,13 @@ Just like in other CQL queries, we can tag parts with a group name to capture th
     rmatch(
       rel(V:[pos='VERB'], 'has_subject', S:[]),
       rel([pos='VERB'], 'has_object', O:[]),
-      source,
-      combine
+      source
     )
 
 This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.
 
+
+## Changes to regular span indexing
 
 ### Encoding regular spans as relations
 
@@ -255,3 +260,14 @@ is roughly equivalent to (specific way of encoding attributes may change):
 > A downside is that this can greatly increase the number of unique terms in the index, which consumes more disk space and can slow down queries. We should offer the option to exclude certain attributes from indexing.
 > 
 > Another downside is that the regex becomes more complicated if you specify multiple attributes. We could say that tag is always the first attribute, but if you specify more than one other attribute, you will need regexes like `.*A.*B.*|.*B.*A.*`, which rapidly gets out of hand as you add more attributes. Better is probably to use e.g. `[_relation="span{tag:s}.*{sentiment:happy}.*" & _relation="span{tag:s}.*{confidence:10}.*"]`. We would always want a fixed prefix as that speeds up queries considerably.
+
+### Better keep track of spans hierarchy?
+
+(this is beyong the scope of this task, but it's good to keep it in the back of our mind)
+
+Span nesting has never been completely accurately recorded in the index, because only the start and end token is stored, not the nesting level. If two spans have the same start and end, we can't tell which one is the parent of the other.
+
+We could include the nesting hierarchy in the indexed term, e.g. `<b><i>dog</i></b>` would be indexed as `b_i`. In addition to giving us the correct nesting, it would also help to speed up queries like `("dog" within <i/>) within <b/>`, which would only have to search for `"dog" within <b_i />`
+
+We also can't efficiently find a span's ancestors or descendants; `within` and `contains` are relatively expensive, especially in large documents. We could (for certain relations?) store a unique relation id in the payload and have a separate index file where we can look up parent/child relations, so we can quickly walk the tree. This would help if we want to support complex XPath-like search queries.
+
