@@ -30,6 +30,12 @@ Obviously it would also be very useful to be able to index relations between gro
 Our implementation should allow us to store relations between groups of words as well, although full support for this might not be in the initial version.
 
 
+## Document format and test data
+
+The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
+
+Eventually we'll look at adding support for TEI with dependency relations as well.
+
 ## How to index relations
 
 Indexing relations will mean changes to the index format. We will implement these changes in the integrated index format only; the classic external index format will not support them. We will simply change the integrated index format, so older integrated indexes will no longer be readable. This is okay as long as the integrated index format is still experimental.
@@ -40,7 +46,7 @@ A good way to index relations is similar to how we index spans such as `<s/>`. S
 
 We could index these in the same annotation spans are already indexed in (historically called `starttag`, but we will rename it to `_relation`). We'd have to be careful to make sure both can easily be distinguished from one another.
 
-Better yet, we should generalize the notion of a span we have right now to be indexed as a relation as well, i.e.:
+Better yet, we should generalize the notion of an "inline tag" such as `<s/>` we have right now to be indexed as a relation as well, i.e.:
 
       X ---starts_sentence_ending_at--> Y
     Small     man    bites    large    dog.
@@ -57,15 +63,9 @@ To support relations between groups of words, we could of course add two length 
 
 ### Optimizations
 
-We should consider using relative positions and variable-length integers to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because more dense storage makes better use of the disk cache).
+We should use relative positions and variable-length integers to store information in the payload, as this could save significant amounts of disk space and potentially be faster (because more dense storage makes better use of the disk cache).
 
 We should also consider only storing certain values if they differ from the common case (e.g. if we're not dealing with word groups, don't store two 1s for the length).
-
-### Document format and test data
-
-The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
-
-Eventually we'll look at adding support for TEI with dependency relations as well.
 
 ## How to implement relations search
 
@@ -115,7 +115,7 @@ Get sources/targets of relation matches:
     rsource( <relation-matches> )
     rtarget( <relation-matches> )
 
-Encode span term with optional attributes:
+Encode inline tag term with optional attributes:
 
     rtspan(tagName, attr1, value1, attr2, value2, ...)
 
@@ -163,7 +163,7 @@ Find sentences with happy sentiment (these are all equivalent):
 
     <s sentiment='happy' confidence='10' />
     rel(_, rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
-    rel(_, 'span\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel(_, '_tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
 
 ### Extract source or target
 
@@ -238,7 +238,7 @@ Just like in other CQL queries, we can tag parts with a group name to capture th
 This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.
 
 
-## Changes to regular span indexing
+## Changes to regular inline tag indexing
 
 ### Encoding regular spans as relations
 
@@ -254,9 +254,9 @@ A potential downside of is that this could greatly increase the number of unique
 
 For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    span\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
+    _tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
 
-So the "relation type" here is `span\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
+So the "relation type" here is `_tag\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
 
 After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
@@ -268,7 +268,7 @@ Because we have XML-style syntax for spans, we likely won't need it, but just in
 
 would return the regex:
 
-    span\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+    _tag\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
 
 
 ### Better keep track of spans hierarchy?
@@ -279,5 +279,51 @@ Span nesting has never been completely accurately recorded in the index, because
 
 We could include the nesting hierarchy in the indexed term, e.g. `<b><i>dog</i></b>` would be indexed as `b_i`. In addition to giving us the correct nesting, it would also help to speed up queries like `("dog" within <i/>) within <b/>`, which would only have to search for `"dog" within <b_i />`
 
-We also can't efficiently find a span's ancestors or descendants; `within` and `contains` are relatively expensive, especially in large documents. We could (for certain relations?) store a unique relation id in the payload and have a separate index file where we can look up parent/child relations, so we can quickly walk the tree. This would help if we want to support complex XPath-like search queries.
+We also can't efficiently find an inline tag's ancestors or descendants; `within` and `contains` are relatively expensive, especially in large documents. We could (for certain relations?) store a unique relation id in the payload and have a separate index file where we can look up parent/child relations, so we can quickly walk the tree. This would help if we want to support complex XPath-like search queries.
 
+
+## Specification of indexing relations
+
+This is a complete specification of how relations will be indexed in BlackLab. This includes the new way of
+indexing spans as relations as well.
+
+Relations (and spans) are indexed in the `_relation` annotation. A relation is encoded as a single term with a payload.
+
+For now, we will only index a relation at one end. The other end follows from the payload; see below.
+
+We have to choose between either always indexing relations at one end, e.g. the source, or adding a field to the payload indicating what end the relation was indexed at. The advantage of the former is that in some cases we might not need to decode the payload (although this is probably rare), and it matches the way inline tags are indexed now, so current invariants and associated optimizations don't change. The advantage of the latter is that we can choose where to index a relation depending on what's convenient for the input format, or what we think will be best for performance.
+
+For now, we should probably keep it simple and always index relations at the source end.
+
+### Term
+
+The term indexed is a string of the form:
+
+    relationtype\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
+
+The relationtype always ends with `\u0001`. For spans, the relation type is `_tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
+
+Attributes are sorted alphabetically by name. Each attribute name is followed by `\u0002`, then the value, and finally `\u0001`.
+
+### Payload
+
+The payload uses Lucene's `VInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space.
+
+Because `VInt` doesn't deal well with negative numbers, we use Zigzag encoding to encode the relative position number. See [here](https://en.wikipedia.org/wiki/Variable-length_quantity#Zigzag_encoding). We call these `ZVInt` below.
+
+The payload for a relation consists of the following fields:
+
+* `targetStart: ZVInt`: relative position of the (start of the) target.
+* `flags: byte`: must be 0. Currently unused, but included for future compatibility.
+* `sourceLength: VInt`: length of the source end of this relation. For a word group, this would be greater than one.
+* `targetLength: VInt`: length of the other end of this relation. For a word group, this would be greater than one.
+
+One or both length values may be ommitted from the end if they equal 1 (you obviously _cannot_ include `targetLength` but omit `sourceLength`). If both length values are ommited, the `flags` value may also be omitted.
+
+In the future, we likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The `flags` byte is included as a way to maintain upward binary compatiblity with such future additions.
+
+For an inline tag such as `<s/>`, the payload just consists of the `targetStart` value.
+
+A relation has a source and target (which may be word groups or single words) as well as a span. The span runs between source and target. In Lucene, the end of the span always points to the first token not in the span, so 1 is added to the last position to get the span. So the Lucene span for a relation becomes:
+
+    [min(source.start, target.start), max(source.end, target.end) + 1)

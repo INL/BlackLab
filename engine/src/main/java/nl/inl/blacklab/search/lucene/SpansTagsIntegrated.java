@@ -1,10 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -89,12 +89,11 @@ class SpansTagsIntegrated extends BLSpans {
                 //   each start tag gets a payload, so there should always be one
                 tags.collect(collector);
                 byte[] payload = collector.getPayloads().iterator().next();
-                ByteBuffer bb = ByteBuffer.wrap(payload);
-                if (payloadIndicatesPrimaryValues)
-                    bb.position(PayloadUtils.getPrimaryValueIndicatorLength(payload)); // skip indicator
+                int skipBytes = payloadIndicatesPrimaryValues ? PayloadUtils.getPrimaryValueIndicatorLength(payload) : 0;
+                ByteArrayDataInput dataInput = new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
 
                 // FIXME: convert to the new (integrated) payload format
-                end = bb.getInt();
+                end = dataInput.readVInt();
             }
             return end;
         } catch (IOException e) {
