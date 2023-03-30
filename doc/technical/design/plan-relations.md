@@ -168,7 +168,7 @@ Find sentences with happy sentiment (these are all equivalent):
 
     <s sentiment='happy' confidence='10' />
     rel(_, rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
-    rel(_, '_tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel(_, '__tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
 
 ### Extract source or target
 
@@ -259,9 +259,9 @@ A potential downside of is that this could greatly increase the number of unique
 
 For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    _tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
+    __tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
 
-So the "relation type" here is `_tag\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
+So the "relation type" here is `__tag\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
 
 After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
@@ -273,7 +273,7 @@ Because we have XML-style syntax for spans, we likely won't need it, but just in
 
 would return the regex:
 
-    _tag\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+    __tag\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
 
 
 ### Better keep track of spans hierarchy?
@@ -307,7 +307,7 @@ The term indexed is a string of the form:
 
     relationtype\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
 
-The relationtype always ends with `\u0001` (such a closing character is useful to avoid unwanted prefix matches when using regexes). For spans, the relation type is `_tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
+The relationtype always ends with `\u0001` (such a closing character is useful to avoid unwanted prefix matches when using regexes). For spans, the relation type is `__tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
 
 Attributes are sorted alphabetically by name. Each attribute name is followed by `\u0002`, then the value, and finally `\u0001`.
 

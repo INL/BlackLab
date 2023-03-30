@@ -12,9 +12,11 @@ import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.index.BLIndexObjectFactory;
+import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -380,4 +382,36 @@ public class AnnotationWriter {
     public AnnotationSensitivities getSensitivitySetting() {
         return sensitivitySetting;
     }
+
+    /**
+     * Index an inline tag in this annotation.
+     *
+     * Writes the tags differently depending on the index type.
+     *
+     * @param tagName the tag name
+     * @param startPos the start position of the tag
+     * @param endPos the end position of the tag
+     * @param attributes the tag attributes
+     * @param indexType index type (external files or integrated)
+     */
+    public void indexInlineTag(String tagName, int startPos, int endPos,
+            Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+        BytesRef payload = PayloadUtils.tagEndPositionPayload(startPos, endPos,
+                indexType);
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            // classic external index; tag name and attributes are indexed separately
+            addValueAtPosition(tagName, startPos, payload);
+            for (Map.Entry<String, String> e: attributes.entrySet()) {
+                String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                        BlackLabIndex.IndexType.EXTERNAL_FILES);
+                addValueAtPosition(term, startPos, null);
+            }
+        } else {
+            // integrated index; everything is indexed as a single term
+            String relType = AnnotatedFieldNameUtil.spanRelationType(tagName);
+            String value = AnnotatedFieldNameUtil.relationIndexTerm(relType, attributes);
+            addValueAtPosition(value, startPos, payload);
+        }
+    }
+
 }

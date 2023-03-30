@@ -98,7 +98,7 @@ class SpansTagsIntegrated extends BLSpans {
             return NO_MORE_POSITIONS;
         try {
             if (end == END_PAYLOAD_NOT_YET_READ) {
-                extractPayload();
+                decodePayload();
             }
             return end;
         } catch (IOException e) {
@@ -106,24 +106,23 @@ class SpansTagsIntegrated extends BLSpans {
         }
     }
 
-    private void extractPayload() throws IOException {
+    private void decodePayload() throws IOException {
         // Fetch the payload
         collector.reset();
         // NOTE: tags is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
         //   each start tag gets a payload, so there should always be one
         tags.collect(collector);
         byte[] payload = collector.getPayloads().iterator().next();
-        int skipBytes = payloadIndicatesPrimaryValues ? PayloadUtils.getPrimaryValueIndicatorLength(payload) : 0;
-        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
+        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
         relationInfo.deserialize(startPosition(), dataInput);
 
         // Calculate the end of the relation's span
-        end = startPosition() + Math.max(relationInfo.sourceEnd, relationInfo.targetEnd);
+        end = startPosition() + Math.max(relationInfo.getSourceEnd(), relationInfo.getTargetEnd());
     }
 
     public RelationInfo getRelationInfo() throws IOException {
         if (end == END_PAYLOAD_NOT_YET_READ)
-            extractPayload();
+            decodePayload();
         return relationInfo;
     }
 

@@ -56,9 +56,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         public final int index;
 
-        public OpenTagInfo(String name, int index) {
+        private final int position;
+
+        public OpenTagInfo(String name, int index, int position) {
             this.name = name;
             this.index = index;
+            this.position = position;
         }
     }
 
@@ -490,11 +493,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     protected abstract void storeDocument();
 
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
+        int currentPos = getCurrentTokenPosition();
         if (isOpenTag) {
             trace("<" + tagName + ">");
 
-            tagsAnnotation().addValueAtPosition(tagName, getCurrentTokenPosition(), null);
-            openInlineTags.add(new OpenTagInfo(tagName, tagsAnnotation().lastValueIndex()));
+            tagsAnnotation().addValueAtPosition(tagName, currentPos, null);
+            openInlineTags.add(new OpenTagInfo(tagName, tagsAnnotation().lastValueIndex(), currentPos));
 
             for (Entry<String, String> e : attributes.entrySet()) {
                 // Index element attribute values
@@ -507,8 +511,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         } else {
             traceln("</" + tagName + ">");
 
-            int currentPos = getCurrentTokenPosition();
-
             // Add payload to start tag annotation indicating end position
             if (openInlineTags.isEmpty())
                 throw new MalformedInputFile("Close tag " + tagName + " found, but that tag is not open");
@@ -516,7 +518,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(currentPos);
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTag.position, currentPos, getIndexType());
             tagsAnnotation().setPayloadAtIndex(openTag.index, payload);
         }
     }
@@ -582,8 +584,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      *            index at these positions
      * @param spanEndPos if >= 0, this is a span annotation and this is the first token position after the span
      */
-    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions,
-            int spanEndPos) {
+    protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions, int spanEndPos) {
         AnnotationWriter annotation = getAnnotation(
                 spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : name);
         if (annotation != null) {
@@ -591,7 +592,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (spanEndPos >= 0) {
                 // This is a span annotation. These are all indexed in one Lucene field (the annotation called "_relation")
                 // with the attribute name and value combined.
-                payload = PayloadUtils.tagEndPositionPayload(spanEndPos);
                 if (name != null) {
                     // Attribute (otherwise it's the span name, e.g. "named-entity", which is indexed unchanged)
                     value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value, getIndexType());
@@ -599,11 +599,19 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             }
             if (indexAtPositions == null) {
                 int position = annotation.lastValuePosition() + increment;
+                if (spanEndPos >= 0) {
+                    // Span annotation payload
+                    payload = getSpanPayload(position, spanEndPos);
+                }
                 if (name != null && name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
                     trace(value + " ");
                 annotation.addValueAtPosition(value, position, payload);
             } else {
                 for (Integer position : indexAtPositions) {
+                    if (spanEndPos >= 0) {
+                        // Span annotation payload
+                        payload = getSpanPayload(position, spanEndPos);
+                    }
                     annotation.addValueAtPosition(value, position, payload);
                 }
             }
@@ -614,6 +622,12 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
+    }
+
+    private BytesRef getSpanPayload(int spanStartPos, int spanEndPos) {
+        BytesRef payload;
+        payload = PayloadUtils.tagEndPositionPayload(spanStartPos, spanEndPos, getIndexType());
+        return payload;
     }
 
     @Override

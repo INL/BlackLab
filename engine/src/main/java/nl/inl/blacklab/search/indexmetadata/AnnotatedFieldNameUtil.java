@@ -94,6 +94,10 @@ public final class AnnotatedFieldNameUtil {
     /** Separator between attr and value in _relation annotation. */
     private  static final String VALUE_PREFIX_CHAR = "\u0002";
 
+    /** When indexing inline tags as relations, what prefix do we use before the tag name?
+     *  Chosen to avoid collision with regular relation types. */
+    private  static final String INLINE_TAG_RELATION_TYPE_PREFIX = "__tag";
+
     private AnnotatedFieldNameUtil() {
     }
 
@@ -144,7 +148,7 @@ public final class AnnotatedFieldNameUtil {
     }
 
     public static String spanRelationType(String tagName) {
-        return "span" + VALUE_PREFIX_CHAR + tagName;
+        return INLINE_TAG_RELATION_TYPE_PREFIX + VALUE_PREFIX_CHAR + tagName;
     }
 
     /**

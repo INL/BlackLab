@@ -231,6 +231,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
     final List<Integer> openTagIndexes = new ArrayList<>();
 
+    final List<Integer> openTagPositions = new ArrayList<>();
+
     /** Handle tags. */
     public class InlineTagHandler extends ElementHandler {
 
@@ -242,6 +244,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             propTags.addValueAtPosition(localName, currentPos, null);
             int startTagIndex = propTags.lastValueIndex();
             openTagIndexes.add(startTagIndex);
+            openTagPositions.add(currentPos);
             for (int i = 0; i < attributes.getLength(); i++) {
                 // Index element attribute values
                 String name = attributes.getLocalName(i);
@@ -255,8 +258,12 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         @Override
         public void endElement(String uri, String localName, String qName) {
             // Add payload to start tag annotation indicating end position
-            Integer openTagIndex = openTagIndexes.remove(openTagIndexes.size() - 1);
-            BytesRef payload = PayloadUtils.tagEndPositionPayload(propMain.lastValuePosition() + 1);
+            int lastIndex = openTagIndexes.size() - 1;
+            Integer openTagIndex = openTagIndexes.remove(lastIndex);
+            int openTagPosition = openTagPositions.remove(lastIndex);
+            int closeTagPosition = propMain.lastValuePosition() + 1;
+            BytesRef payload = PayloadUtils.tagEndPositionPayload(openTagPosition,
+                    closeTagPosition, getIndexType());
             propTags.setPayloadAtIndex(openTagIndex, payload);
         }
 

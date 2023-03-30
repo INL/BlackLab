@@ -1,8 +1,15 @@
 package nl.inl.blacklab.analysis;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.apache.lucene.store.ByteArrayDataInput;
+import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
+
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Utilities for dealing with payloads in BlackLab.
@@ -170,17 +177,32 @@ public class PayloadUtils {
 
     /**
      * Get the payload to store with the span start tag.
-     *
      * Spans are stored in the "_relation" annotation, at the token position of the start tag.
      * The payload gives the token position of the end tag.
      *
-     * @param endPosition end position (exclusive), or the first token after the span
-     * @param isPrimaryValue if true, resulting payload will indicate if that this is a primary value. Pass false if
-     *                       this is not a primary value, or if primary value status should not be recorded in the
-     *                       payload (i.e. because there is no forward index)
+     * @param startPosition  start position (inclusive), or the first token of the span
+     * @param endPosition    end position (exclusive), or the first token after the span
+     * @param indexType
      * @return payload to store
      */
-    public static BytesRef tagEndPositionPayload(int endPosition) {
-        return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
+    public static BytesRef tagEndPositionPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
+        if (true || indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
+            return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
+
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            DataOutput dataOutput = new OutputStreamDataOutput(os);
+            dataOutput.writeVInt(endPosition - startPosition);
+            // (rest of RelationInfo members have the default value)
+            return new BytesRef(os.toByteArray());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) throws
+            IOException {
+        int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
+        return new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
     }
 }

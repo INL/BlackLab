@@ -16,15 +16,15 @@ public class RelationInfo {
 
     private static final int DEFAULT_LENGTH = 1;
 
-    boolean onlyHasTarget;
+    private boolean onlyHasTarget;
 
-    int sourceStart;
+    private int sourceStart;
 
-    int sourceEnd;
+    private int sourceEnd;
 
-    int targetStart;
+    private int targetStart;
 
-    int targetEnd;
+    private int targetEnd;
 
     public RelationInfo() {
         onlyHasTarget = false;
@@ -38,16 +38,18 @@ public class RelationInfo {
         // Read values from payload (or use defaults for missing values)
         int relOtherStart = DEFAULT_REL_OTHER_START, thisLength = DEFAULT_LENGTH, otherLength = DEFAULT_LENGTH;
         byte flags = DEFAULT_FLAGS;
-        if (!dataInput.eof())
+        if (!dataInput.eof()) {
             relOtherStart = dataInput.readVInt();
-        if (!dataInput.eof())
-            flags = dataInput.readByte();
-        boolean indexedAtTarget = (flags & SpansTagsIntegrated.REL_FLAG_INDEXED_AT_TARGET) != 0;
-        boolean onlyHasTarget = (flags & SpansTagsIntegrated.REL_FLAG_ONLY_HAS_TARGET) != 0;
-        if (!dataInput.eof())
-            thisLength = dataInput.readVInt();
-        if (!dataInput.eof())
-            otherLength = dataInput.readVInt();
+            if (!dataInput.eof()) {
+                flags = dataInput.readByte();
+                if (!dataInput.eof()) {
+                    thisLength = dataInput.readVInt();
+                    if (!dataInput.eof()) {
+                        otherLength = dataInput.readVInt();
+                    }
+                }
+            }
+        }
 
         // Calculate start and end positions
         int thisEnd = currentTokenPosition + thisLength;
@@ -55,8 +57,8 @@ public class RelationInfo {
         int otherEnd = otherStart + otherLength;
 
         // Fill the relationinfo structure with the source and target start/end positions
-        this.onlyHasTarget = onlyHasTarget;
-        if (indexedAtTarget) {
+        this.onlyHasTarget = (flags & SpansTagsIntegrated.REL_FLAG_ONLY_HAS_TARGET) != 0;
+        if ((flags & SpansTagsIntegrated.REL_FLAG_INDEXED_AT_TARGET) != 0) {
             // Relation was indexed at the target position.
             this.sourceStart = otherStart;
             this.sourceEnd = otherEnd;
