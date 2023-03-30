@@ -15,9 +15,18 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansTagsIntegrated extends BLSpans {
 
+    private final int END_NOT_YET_NEXTED = -1;
+
+    private final int END_PAYLOAD_NOT_YET_READ = -2;
+
+    /** Term query that found our relations */
     private final BLSpans tags;
 
-    private int end = -1; // -1: not nexted yet. -2: payload not read yet.
+    /** Span end position (or END_NOT_YET_NEXTED, or END_PAYLOAD_NOT_YET_READ) */
+    private int end = END_NOT_YET_NEXTED;
+
+    /** Source and target for this relation */
+    private RelationInfo relationInfo = new RelationInfo();
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private boolean payloadIndicatesPrimaryValues;
@@ -49,13 +58,13 @@ class SpansTagsIntegrated extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
-        end = -1; // not nexted yet
+        end = END_NOT_YET_NEXTED;
         return tags.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
-        end = -1; // not nexted yet
+        end = END_NOT_YET_NEXTED;
         return tags.advance(target);
     }
 
@@ -66,7 +75,7 @@ class SpansTagsIntegrated extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
-        end = -2; // payload not read yet
+        end = END_PAYLOAD_NOT_YET_READ;
         return tags.nextStartPosition();
     }
 
@@ -77,29 +86,45 @@ class SpansTagsIntegrated extends BLSpans {
 
     private final PayloadSpanCollector collector = new PayloadSpanCollector();
 
+    /** Was the relationship indexed at the target instead of the source? */
+    public static final byte REL_FLAG_INDEXED_AT_TARGET = 0x01;
+
+    /** Is it a root relationship, that only has a target, no source? */
+    public static final byte REL_FLAG_ONLY_HAS_TARGET = 0x02;
+
     @Override
     public int endPosition() {
         if (tags.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
         try {
-            if (end == -2) {
-                collector.reset();
-
-                // NOTE: tags is a BLSpanTermQuery, a leaf, so we know there can only be one payload
-                //   each start tag gets a payload, so there should always be one
-                tags.collect(collector);
-                byte[] payload = collector.getPayloads().iterator().next();
-                int skipBytes = payloadIndicatesPrimaryValues ? PayloadUtils.getPrimaryValueIndicatorLength(payload) : 0;
-                ByteArrayDataInput dataInput = new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
-
-                // FIXME: convert to the new (integrated) payload format
-                end = dataInput.readVInt();
+            if (end == END_PAYLOAD_NOT_YET_READ) {
+                extractPayload();
             }
             return end;
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
+    }
 
+    private void extractPayload() throws IOException {
+        // Fetch the payload
+        collector.reset();
+        // NOTE: tags is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
+        //   each start tag gets a payload, so there should always be one
+        tags.collect(collector);
+        byte[] payload = collector.getPayloads().iterator().next();
+        int skipBytes = payloadIndicatesPrimaryValues ? PayloadUtils.getPrimaryValueIndicatorLength(payload) : 0;
+        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
+        relationInfo.deserialize(startPosition(), dataInput);
+
+        // Calculate the end of the relation's span
+        end = startPosition() + Math.max(relationInfo.sourceEnd, relationInfo.targetEnd);
+    }
+
+    public RelationInfo getRelationInfo() throws IOException {
+        if (end == END_PAYLOAD_NOT_YET_READ)
+            extractPayload();
+        return relationInfo;
     }
 
     @Override

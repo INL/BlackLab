@@ -15,6 +15,11 @@ Example:
 
 For dependency relations, the most common case is that a word can point to multiple other words, but can only be pointed to by one other word. We don't want to limit the relations primitive to just dependency relations though, so our implementation will be able to handle any set of relations.
 
+### Special relations
+
+For dependency relations, there's a special relation called the `root` relation, which has a target (dep) but not a source (head). We will need to record this special case as an option in the payload.
+
+
 ### Terminology
 
 For dependency relations, linguists call the start of the arrow X the _head_ of the relation and the end of the arrow Y the _dependent_.
@@ -289,11 +294,12 @@ indexing spans as relations as well.
 
 Relations (and spans) are indexed in the `_relation` annotation. A relation is encoded as a single term with a payload.
 
-For now, we will only index a relation at one end. The other end follows from the payload; see below.
+We have to choose where to index relations:
 
-We have to choose between either always indexing relations at one end, e.g. the source, or adding a field to the payload indicating what end the relation was indexed at. The advantage of the former is that in some cases we might not need to decode the payload (although this is probably rare), and it matches the way inline tags are indexed now, so current invariants and associated optimizations don't change. The advantage of the latter is that we can choose where to index a relation depending on what's convenient for the input format, or what we think will be best for performance.
+1. always at the source, or always at the target
+2. always at the first position in the document (whether that's the source or target)
 
-For now, we should probably keep it simple and always index relations at the source end.
+We'll start with the second option, which has the advantage that the associated spans don't need to be sorted to be in order of increasing start position. It is also the way inline tags are indexed right now, so no existing invariants and optimizations are messed up. This does need that we will have to record whether the relation was indexed at the source or target.
 
 ### Term
 
@@ -301,29 +307,46 @@ The term indexed is a string of the form:
 
     relationtype\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
 
-The relationtype always ends with `\u0001`. For spans, the relation type is `_tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
+The relationtype always ends with `\u0001` (such a closing character is useful to avoid unwanted prefix matches when using regexes). For spans, the relation type is `_tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
 
 Attributes are sorted alphabetically by name. Each attribute name is followed by `\u0002`, then the value, and finally `\u0001`.
 
 ### Payload
 
-The payload uses Lucene's `VInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space.
-
-Because `VInt` doesn't deal well with negative numbers, we use Zigzag encoding to encode the relative position number. See [here](https://en.wikipedia.org/wiki/Variable-length_quantity#Zigzag_encoding). We call these `ZVInt` below.
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the other end to save space, but we don't need `ZInt` right now because we always index relations at the first position in the document, so the relative position is always non-negative.
 
 The payload for a relation consists of the following fields:
 
-* `targetStart: ZVInt`: relative position of the (start of the) target.
-* `flags: byte`: must be 0. Currently unused, but included for future compatibility.
-* `sourceLength: VInt`: length of the source end of this relation. For a word group, this would be greater than one.
-* `targetLength: VInt`: length of the other end of this relation. For a word group, this would be greater than one.
+* `relOtherStart: VInt`: relative position of the (start of the) other end. This is always non-negative if we index relations at the first position in the document. Default: `1`.
+* `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). The other bits are reserved for future use and must not be set. Default: `0`.
+* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. Default: `1`
+* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. Default: `1`
 
-One or both length values may be ommitted from the end if they equal 1 (you obviously _cannot_ include `targetLength` but omit `sourceLength`). If both length values are ommited, the `flags` value may also be omitted.
+Fields may be ommitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 1, otherLength: 1 }`.
 
-In the future, we likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The `flags` byte is included as a way to maintain upward binary compatiblity with such future additions.
+In the future, we likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
 
-For an inline tag such as `<s/>`, the payload just consists of the `targetStart` value.
+### Calculate Lucene span from relation term
 
-A relation has a source and target (which may be word groups or single words) as well as a span. The span runs between source and target. In Lucene, the end of the span always points to the first token not in the span, so 1 is added to the last position to get the span. So the Lucene span for a relation becomes:
+When found using BlackLab, a relation has a source and target (which may be word groups or single words) as well as a "regular" span.
 
-    [min(source.start, target.start), max(source.end, target.end) + 1)
+The span normally runs between source and target, but operations combining relations may enlarge the span so this no longer holds.
+
+To calculate the Lucene span from a matched relation term's payload, first a few helper values:
+
+    thisStart = position the relation was indexed at
+    thisEnd = thisStart + thisLength
+    otherStart = thisStart + relOtherStart
+    otherEnd = otherStart + otherLength
+
+So the Lucene span for a relation is:
+
+    [thisStart, otherEnd)
+
+or maybe even
+
+    [thisStart, max(thisEnd, otherEnd) )
+
+although it seems unlikely that we want the source and target to overlap.
+
+(note that Lucene spans are half-open, i.e. the end position is not included in the span)

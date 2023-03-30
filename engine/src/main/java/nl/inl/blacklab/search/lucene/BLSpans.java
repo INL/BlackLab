@@ -128,4 +128,9 @@ public abstract class BLSpans extends Spans {
         }
         return spans;
     }
+
+    public RelationInfo getRelationInfo() throws IOException {
+        return null;
+    }
+
 }
