@@ -26,13 +26,15 @@ For dependency relations, linguists call the start of the arrow X the _head_ of 
 
 However, because we don't want to limit the relations primitive to only dependency relations, and because the term _head_ can be confusing (there's also the "head of an arrow", but that's the other end), we will use _source_ for X and _target_ for Y in BlackLab.
  
-Of course, in addition to the CQL extension functions described below, we could also include functions specifically suited for working with dependency relations, which would use the common terminology of _head_ and _dependent_.
+Of course, in addition to the CQL extension functions described below, we could also include syntax specifically suited for working with dependency relations, which would use the common terminology of _head_ and _dependent_.
 
 ### Relations beteween groups of words
 
 Obviously it would also be very useful to be able to index relations between groups of words. For example, in the example above, the object of the sentence is not just "man" but actually "Small man".
 
 Our implementation should allow us to store relations between groups of words as well, although full support for this might not be in the initial version.
+
+We might even want to support discontinuous groups of words at some point, but the initial version does not do this.
 
 
 ## Document format and test data

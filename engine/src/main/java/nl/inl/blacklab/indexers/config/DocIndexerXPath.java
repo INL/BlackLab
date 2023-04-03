@@ -433,8 +433,8 @@ public class DocIndexerXPath extends DocIndexerConfig {
             AutoPilot apStandoff = acquireAutoPilot(standoff.getPath());
             AutoPilot apTokenPos = acquireAutoPilot(standoff.getTokenRefPath());
             AutoPilot apSpanEnd = null, apSpanName = null;
-            if (!StringUtils.isEmpty(standoff.getSpanEndPath())) {
-                // This is a span annotation. Also get XPaths for span end and name.
+            if (standoff.isSpans()) {
+                // These define spans. Also get XPaths for span end and name.
                 apSpanEnd = acquireAutoPilot(standoff.getSpanEndPath());
                 apSpanName = acquireAutoPilot(standoff.getSpanNamePath());
             }
@@ -485,14 +485,31 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     }
                     navpop();
                     if (spanEndPos >= 0) {
-                        // Span annotation. First index the span name at this position, then any configured
-                        // annotations as attributes.
-                        // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
-                        //  not an attribute)
-                        annotation(null, spanName, 1, tokenPositions, spanEndPos);
-                    }
-                    for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                        processAnnotation(annotation, tokenPositions, spanEndPos);
+                        // Standoff annotation to index a span.
+
+//                        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+                            // Classic external index format. Span name and attributes indexed separately.
+
+                            // First index the span name at this position, then any configured
+                            // annotations as attributes.
+                            // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
+                            //  not an attribute)
+                            annotation(null, spanName, 1, tokenPositions, spanEndPos);
+                            for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                                processAnnotation(annotation, tokenPositions, spanEndPos);
+                            }
+//                        } else {
+//                            // Integrated index format. Span name and attributes indexed together as one term.
+//                            //@@@@
+//                            valueToIndex = AnnotatedFieldNameUtil.spanRelationType(spanName) +
+//                            annotation(null, valueToIndex, 1, tokenPositions, spanEndPos);
+//                        }
+                    } else {
+                        // "Regular" standoff annotation for a single token.
+                        // Index annotation values at the position(s) indicated
+                        for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                            processAnnotation(annotation, tokenPositions, spanEndPos);
+                        }
                     }
                 } else {
                     // Regular (non-span) standoff annotation.
@@ -701,88 +718,18 @@ public class DocIndexerXPath extends DocIndexerConfig {
             releaseAutoPilot(apBase);
         }
         try {
-            String valuePath = annotation.getValuePath();
+
+            String valuePath = determineValuePath(annotation);
             if (valuePath == null) {
                 // No valuePath given. Assume this will be captured using forEach.
                 return;
             }
 
-            // See if we want to capture any values and substitute them into the XPath
-            int i = 1;
-            for (String captureValuePath : annotation.getCaptureValuePaths()) {
-                AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
-                String value = apCaptureValuePath.evalXPathToString();
-                releaseAutoPilot(apCaptureValuePath);
-                valuePath = valuePath.replace("$" + i, value);
-                i++;
-            }
-
             // Find matches for this annotation.
-            Collection<String> annotValue = findAnnotationMatches(annotation, valuePath, indexAtPositions,
+            Collection<String> annotValues = findProcessAndIndexAnnotationMatches(annotation, valuePath, indexAtPositions,
                     null, spanEndPos);
 
-            // For each configured subannotation...
-            for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
-                // Subannotation configs without a valuePath are just for
-                // adding information about subannotations captured in forEach's,
-                // such as extra processing steps
-                if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
-                    continue;
-
-                // Capture this subannotation value
-                if (subAnnot.isForEach()) {
-                    // "forEach" subannotation specification
-                    // (allows us to capture multiple subannotations with 3 XPath expressions)
-                    navpush();
-                    AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
-                    AutoPilot apName = acquireAutoPilot(subAnnot.getName());
-                    while (apForEach.evalXPath() != -1) {
-                        // Find the name and value for this forEach match
-                        apName.resetXPath();
-
-                        String name = apName.evalXPathToString();
-                        String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
-                        ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
-                        
-                        // It's not possible to create annotation on the fly at the moment. 
-                        // So since this was not declared in the config file, emit a warning and skip.
-                        if (actualSubAnnot == null) {
-                            if (!skippedAnnotations.contains(subannotationName)) {
-                                skippedAnnotations.add(subannotationName);
-                                logger.error(documentName + ": skipping undeclared annotation " + name + " (" + "as subannotation of forEachPath " + subAnnot.getName() + ")");
-                            }
-                            continue;
-                        }
-
-                        // The forEach xpath matched an annotation that specifies its own valuepath
-                        // Skip it as part of the forEach, because it will be processed by itself later.
-                        if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
-                            continue;
-                        }
-
-                        boolean reuseAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                            actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                            actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                            actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                        findAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions,
-                                reuseAnnotationValue ? annotValue : null, spanEndPos);
-                    }
-                    releaseAutoPilot(apForEach);
-                    releaseAutoPilot(apName);
-                    navpop();
-                } else {
-                    // Regular subannotation; just the fieldName and an XPath expression for the value
-
-                    boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
-                        subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
-                        subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
-                        subAnnot.isCaptureXml() == annotation.isCaptureXml();
-
-                    findAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions,
-                            reuseParentAnnotationValue ? annotValue : null, spanEndPos);
-                }
-            }
+            processSubannotations(annotation, indexAtPositions, spanEndPos, annotValues);
 
         } finally {
             if (basePath != null) {
@@ -792,14 +739,169 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
+    private String determineValuePath(ConfigAnnotation annotation) {
+        // See if we want to capture any values and substitute them into the XPath
+        int i = 1;
+        String valuePath = annotation.getValuePath();
+        if (valuePath == null) {
+            // No valuePath given. Assume this will be captured using forEach.
+            return null;
+        }
+        for (String captureValuePath : annotation.getCaptureValuePaths()) {
+            AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
+            String value = apCaptureValuePath.evalXPathToString();
+            releaseAutoPilot(apCaptureValuePath);
+            valuePath = valuePath.replace("$" + i, value);
+            i++;
+        }
+        return valuePath;
+    }
+
+    private void processSubannotations(ConfigAnnotation annotation, List<Integer> indexAtPositions, int spanEndPos,
+            Collection<String> parentAnnotValues) throws XPathEvalException, NavException {
+        // For each configured subannotation...
+        for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
+            // Subannotation configs without a valuePath are just for
+            // adding information about subannotations captured in forEach's,
+            // such as extra processing steps
+            if (subAnnot.getValuePath() == null || subAnnot.getValuePath().isEmpty())
+                continue;
+
+            // Capture this subannotation value
+            if (subAnnot.isForEach()) {
+                // "forEach" subannotation specification
+                // (allows us to capture multiple subannotations with 3 XPath expressions)
+                navpush();
+                AutoPilot apForEach = acquireAutoPilot(subAnnot.getForEachPath());
+                AutoPilot apName = acquireAutoPilot(subAnnot.getName());
+                while (apForEach.evalXPath() != -1) {
+                    // Find the name and value for this forEach match
+                    apName.resetXPath();
+
+                    String name = apName.evalXPathToString();
+                    String subannotationName = annotation.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
+                    ConfigAnnotation actualSubAnnot = annotation.getSubAnnotation(subannotationName);
+
+                    // It's not possible to create annotation on the fly at the moment.
+                    // So since this was not declared in the config file, emit a warning and skip.
+                    if (actualSubAnnot == null) {
+                        if (!skippedAnnotations.contains(subannotationName)) {
+                            skippedAnnotations.add(subannotationName);
+                            logger.error(documentName + ": skipping undeclared annotation " + name + " (" + "as subannotation of forEachPath " + subAnnot.getName() + ")");
+                        }
+                        continue;
+                    }
+
+                    // The forEach xpath matched an annotation that specifies its own valuepath
+                    // Skip it as part of the forEach, because it will be processed by itself later.
+                    if (actualSubAnnot.getValuePath() != null && !actualSubAnnot.getValuePath().isEmpty()) {
+                        continue;
+                    }
+
+                    // Can we reuse the values from our parent annotation? Only if all options are the same.
+                    boolean reuseAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
+                        actualSubAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                        actualSubAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                        actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
+
+                    findProcessAndIndexAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions,
+                            reuseAnnotationValue ? parentAnnotValues : null, spanEndPos);
+                }
+                releaseAutoPilot(apForEach);
+                releaseAutoPilot(apName);
+                navpop();
+            } else {
+                // Regular subannotation; just the fieldName and an XPath expression for the value
+
+                boolean reuseParentAnnotationValue = subAnnot.getValuePath().equals(annotation.getValuePath()) &&
+                    subAnnot.isMultipleValues() == annotation.isMultipleValues() &&
+                    subAnnot.isAllowDuplicateValues() == annotation.isAllowDuplicateValues() &&
+                    subAnnot.isCaptureXml() == annotation.isCaptureXml();
+
+                findProcessAndIndexAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions,
+                        reuseParentAnnotationValue ? parentAnnotValues : null, spanEndPos);
+            }
+        }
+    }
+
     protected AutoPilot apDot = null;
-    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos)
-                throws XPathEvalException, NavException {
-        boolean evalXml = annotation.isCaptureXml();
+
+    protected Collection<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
         List<ConfigProcessStep> processingSteps = annotation.getProcess();
         boolean hasProcessing = !processingSteps.isEmpty();
 
+        // Do we have anything to do?
+        boolean nothingToProcess = !hasProcessing || values.isEmpty();
+        boolean noDupesToEliminate = values.size() <= 1 || annotation.isAllowDuplicateValues();
+        if (nothingToProcess && noDupesToEliminate) {
+            // No processing or deduplication to do; just return the values as-is
+            return values;
+        }
+
+        Collection<String> results = new ArrayList<>();
+
+        // Apply processing steps
+        if (annotation.isMultipleValues()) {
+            // Could there be multiple values here? (either there already are, or a processing step might create them)
+            // (this is to prevent allocating a set if we don't have to)
+
+            // If duplicates are not allowed, keep track of values we've already added
+            Set<String> valuesSeen = annotation.isAllowDuplicateValues() ? null : new HashSet<>();
+            for (String rawValue: values) {
+                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
+                    if (annotation.isAllowDuplicateValues() || !valuesSeen.contains(processedValue)) {
+                        // Not a duplicate, or we don't care about duplicates. Add it.
+                        results.add(processedValue);
+                        if (valuesSeen != null)
+                            valuesSeen.add(processedValue);
+                    }
+                }
+            }
+        } else {
+            // Single value (the collection should only contain one entry)
+            for (String rawValue: values) {
+                results.add(processString(rawValue, processingSteps, null));
+                break; // if multiple were matched, only index the first one
+            }
+        }
+        return results;
+    }
+
+    protected Collection<String> findProcessAndIndexAnnotationMatches(ConfigAnnotation annotation, String valuePath,
+            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos)
+                throws XPathEvalException, NavException {
+        // Find matches for this annotation.
+        Collection<String> valuesFound = findAnnotationMatches(annotation, valuePath, reuseValueFromParentAnnot);
+
+        // Process and dedupe values before indexing.
+        Collection<String> valuesToIndex = processAnnotationValues(annotation, valuesFound);
+
+        indexAnnotationValues(annotation, indexAtPositions, spanEndPos, valuesToIndex);
+
+        return valuesFound; // so subannotations can reuse it if they use the same valuePath
+    }
+
+    private void indexAnnotationValues(ConfigAnnotation annotation, List<Integer> indexAtPositions, int spanEndPos,
+            Collection<String> valuesToIndex) {
+        // If indexAtPositions == null, this positionIncrement will be used.
+
+        // the first value should get increment 1; the rest will get 0
+
+        // For span annotations (which are all added to the same annotation, "_relation"),
+        // the span name has already been indexed at this position with an increment of 1,
+        // so the attribute values we're indexing here should all get position increment 0.
+        boolean isSpan = spanEndPos >= 0;
+        int positionIncrement = isSpan ? 0 : 1;
+
+        // Now add values to the index
+        for (String value: valuesToIndex) {
+            annotation(annotation.getName(), value, positionIncrement, indexAtPositions, spanEndPos);
+            positionIncrement = 0; // only the first value should get increment 1
+        }
+    }
+
+    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath,
+            Collection<String> reuseValueFromParentAnnot) throws XPathEvalException, NavException {
         Collection<String> values = reuseValueFromParentAnnot;
         if (values == null) {
             // Not the same values as the parent annotation; we have to find our own.
@@ -812,7 +914,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 AutoPilot apValue = apDot == null ? apDot = acquireAutoPilot(".") : apDot;
 
                 while (apValuePath.evalXPath() != -1) {
-                    String unprocessedValue = evalXml ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
+                    String unprocessedValue = annotation.isCaptureXml() ? apValue.evalXPath() != -1 ? getXml(apValue) : "" : apValue.evalXPathToString();
                     values.add(unprocessedValue);
                 }
 
@@ -822,54 +924,13 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 }
             } else {
                 // Single value expected
-                String unprocessedValue = evalXml ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
+                String unprocessedValue = annotation.isCaptureXml() ? apValuePath.evalXPath() != -1 ? getXml(apValuePath) : "" : apValuePath.evalXPathToString();
                 values.add(unprocessedValue);
             }
             releaseAutoPilot(apValuePath);
             navpop();
         }
-
-        // If indexAtPositions == null, this positionIncrement will be used.
-        int positionIncrement = 1; // the first value should get increment 1; the rest will get 0
-        if (spanEndPos >= 0) {
-            // For span annotations (which are all added to the same annotation, "_relation"),
-            // the span name has already been indexed at this position with an increment of 1,
-            // so the attribute values we're indexing here should all get position increment 0.
-            positionIncrement = 0;
-        }
-
-        // Now apply process and add to index
-        if (annotation.isMultipleValues()) {
-            // Could there be multiple values here? (either there already are, or a processing step might create them)
-            // (this is to prevent allocating a set if we don't have to)
-            boolean mightHaveDuplicates = values.size() > 1 || hasProcessing;
-
-            // If duplicates are not allowed, keep track of values we've already added
-            boolean duplicatesOkay = annotation.isAllowDuplicateValues() || !mightHaveDuplicates;
-            Set<String> valuesSeen = duplicatesOkay ? null : new HashSet<>();
-
-            for (String rawValue: values) {
-                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
-                    if (duplicatesOkay || !valuesSeen.contains(processedValue)) {
-                        // Not a duplicate, or we don't care about duplicates. Add it.
-                        annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
-                                spanEndPos);
-                        positionIncrement = 0; // only the first value should get increment 1; the rest get 0 (same pos)
-                        if (valuesSeen != null)
-                            valuesSeen.add(processedValue);
-                    }
-                }
-            }
-        } else {
-            // Single value (the collection should only contain one entry)
-            for (String rawValue: values) {
-                String processedValue = processString(rawValue, processingSteps, null);
-                annotation(annotation.getName(), processedValue, positionIncrement, indexAtPositions,
-                        spanEndPos);
-                break; // if multiple were matched, only index the first one
-            }
-        }
-        return values; // so subannotations can reuse it if they use the same valuePath
+        return values;
     }
 
     @Override
