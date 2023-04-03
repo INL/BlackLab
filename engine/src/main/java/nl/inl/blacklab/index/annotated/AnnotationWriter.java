@@ -263,6 +263,20 @@ public class AnnotationWriter {
      * @return new position of the last token, in case it changed.
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
+
+        if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
+                AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
+                !value.isEmpty() && !value.contains("\u0001")) {
+
+            // This is the _relation annotation in the integrated index format, but not the right sort of value
+            // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
+            // Warn the user.
+            System.err.println("===== WARNING: your DocIndexer is using AnnotationWriter.addValuePosition() to index " +
+                    "inline tags. To work properly with the new index format, update it to use " +
+                    "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
+
+        }
+
         if (value.length() > MAXIMUM_VALUE_LENGTH) {
             // Let's keep a sane maximum value length.
             // (Lucene's is 32766, but we don't want to go that far)
@@ -388,19 +402,25 @@ public class AnnotationWriter {
      *
      * Writes the tags differently depending on the index type.
      *
+     * If endPos is not known yet, we don't write the payload yet; it will
+     * have to be written later, at the index returned by this method.
+     *
      * @param tagName the tag name
      * @param startPos the start position of the tag
-     * @param endPos the end position of the tag
+     * @param endPos the end position of the tag, or -1 if we don't know it yet
      * @param attributes the tag attributes
      * @param indexType index type (external files or integrated)
+     * @return index the tag was stored at (so we can add payload later if needed)
      */
-    public void indexInlineTag(String tagName, int startPos, int endPos,
+    public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        BytesRef payload = PayloadUtils.tagEndPositionPayload(startPos, endPos,
-                indexType);
+        BytesRef payload = endPos >= 0 ? PayloadUtils.tagEndPositionPayload(startPos, endPos,
+                indexType) : null;
+        int tagIndexInAnnotation;
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
             // classic external index; tag name and attributes are indexed separately
             addValueAtPosition(tagName, startPos, payload);
+            tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
                 String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                         BlackLabIndex.IndexType.EXTERNAL_FILES);
@@ -411,7 +431,9 @@ public class AnnotationWriter {
             String relType = AnnotatedFieldNameUtil.spanRelationType(tagName);
             String value = AnnotatedFieldNameUtil.relationIndexTerm(relType, attributes);
             addValueAtPosition(value, startPos, payload);
+            tagIndexInAnnotation = lastValueIndex();
         }
+        return tagIndexInAnnotation;
     }
 
 }

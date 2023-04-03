@@ -31,7 +31,7 @@ public interface DocIndexer extends AutoCloseable {
      * @return index type
      */
     default BlackLabIndex.IndexType getIndexType() {
-        return getIndexType();
+        return getDocWriter().getIndexType();
     }
 
     /**

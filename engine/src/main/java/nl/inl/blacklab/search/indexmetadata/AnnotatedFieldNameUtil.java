@@ -89,10 +89,10 @@ public final class AnnotatedFieldNameUtil {
             LENGTH_TOKENS_BOOKKEEP_NAME);
 
     /** Separator before attribute name+value in _relation annotation. */
-    private  static final String NAME_PREFIX_CHAR = "\u0001";
+    private  static final String ATTR_SEPARATOR = "\u0001";
 
     /** Separator between attr and value in _relation annotation. */
-    private  static final String VALUE_PREFIX_CHAR = "\u0002";
+    private  static final String KEY_VALUE_SEPARATOR = "\u0002";
 
     /** When indexing inline tags as relations, what prefix do we use before the tag name?
      *  Chosen to avoid collision with regular relation types. */
@@ -144,18 +144,21 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return relationType + ".*" + attrPart;
+        return relationType + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
     }
 
     public static String spanRelationType(String tagName) {
-        return INLINE_TAG_RELATION_TYPE_PREFIX + VALUE_PREFIX_CHAR + tagName;
+        return INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR + tagName + ATTR_SEPARATOR;
     }
 
     /**
      * What value do we index for attributes to tags (spans)?
      *
-     * For example, a tag <s id="123"> ... </s> would be indexed in annotation "_relation"
-     * with two tokens at the same position: "s" and "@iid__123".
+     * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
+     * with a single tokens: "__tag\u0002s\u0001id\u0002123\u0001".
+     *
+     * (classic external index) A tag <s id="123"> ... </s> would be indexed in annotation "starttag"
+     * with two tokens at the same position: "s" and "@id__123".
      *
      * @param name attribute name
      * @param value attribute value
@@ -168,7 +171,7 @@ public final class AnnotatedFieldNameUtil {
              // (In the integrated index format, we include all attributes in the term)
             return "@" + name.toLowerCase() + "__" + value.toLowerCase();
         }
-        return NAME_PREFIX_CHAR + name + VALUE_PREFIX_CHAR + value;
+        return name + KEY_VALUE_SEPARATOR + value + ATTR_SEPARATOR;
     }
 
     /**

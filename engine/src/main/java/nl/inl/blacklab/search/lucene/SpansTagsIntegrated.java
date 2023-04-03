@@ -116,8 +116,8 @@ class SpansTagsIntegrated extends BLSpans {
         ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
         relationInfo.deserialize(startPosition(), dataInput);
 
-        // Calculate the end of the relation's span
-        end = startPosition() + Math.max(relationInfo.getSourceEnd(), relationInfo.getTargetEnd());
+        // Determine the end of the relation's span
+        end = Math.max(relationInfo.getSourceEnd(), relationInfo.getTargetEnd());
     }
 
     public RelationInfo getRelationInfo() throws IOException {

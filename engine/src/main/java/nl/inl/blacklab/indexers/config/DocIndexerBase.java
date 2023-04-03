@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -33,7 +32,6 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -496,18 +494,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         int currentPos = getCurrentTokenPosition();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-
-            tagsAnnotation().addValueAtPosition(tagName, currentPos, null);
-            openInlineTags.add(new OpenTagInfo(tagName, tagsAnnotation().lastValueIndex(), currentPos));
-
-            for (Entry<String, String> e : attributes.entrySet()) {
-                // Index element attribute values
-                String name = e.getKey();
-                String value = e.getValue();
-                BlackLabIndex.IndexType indexType = getIndexType();
-                tagsAnnotation().addValueAtPosition(AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value, indexType), getCurrentTokenPosition(), null);
-            }
-
+            int tagIndex = tagsAnnotation().indexInlineTag(tagName, currentPos, -1, attributes, getIndexType());
+            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos));
         } else {
             traceln("</" + tagName + ">");
 

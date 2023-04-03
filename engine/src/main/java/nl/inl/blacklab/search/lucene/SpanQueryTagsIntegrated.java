@@ -31,28 +31,43 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
 
-    final BLSpanMultiTermQueryWrapper<RegexpQuery> clause;
+    private BLSpanQuery clause;
 
-    private final String tagName;
+    private String tagName;
 
-    private final String baseFieldName;
+    private String baseFieldName;
 
-    private final String startTagFieldName;
+    private String startTagFieldName;
 
     public SpanQueryTagsIntegrated(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attributes) {
         super(queryInfo);
+
+        // Construct the clause from the field, tag name and attributes
+        String relationType = AnnotatedFieldNameUtil.spanRelationType(tagName);
+        String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
+        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, new RegexpQuery(new Term(startTagFieldName, regexp)));
+
+        init(startTagFieldName, tagName, clause);
+    }
+
+    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String startTagFieldName, String tagName, BLSpanQuery clause) {
+        super(queryInfo);
+        init(startTagFieldName, tagName, clause);
+    }
+
+    private void init(String startTagFieldName, String tagName, BLSpanQuery clause) {
         this.tagName = tagName;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
         this.startTagFieldName = startTagFieldName;
-
-        String relationType = AnnotatedFieldNameUtil.spanRelationType(tagName);
-        String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
-        clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, new RegexpQuery(new Term(startTagFieldName, regexp)));
+        this.clause = clause;
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) {
-        return this;
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        BLSpanQuery rewritten = clause.rewrite(reader);
+        if (rewritten == clause)
+            return this;
+        return new SpanQueryTagsIntegrated(queryInfo, startTagFieldName, tagName, rewritten);
     }
 
     @Override

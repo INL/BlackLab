@@ -177,8 +177,13 @@ public class PayloadUtils {
 
     /**
      * Get the payload to store with the span start tag.
+     *
      * Spans are stored in the "_relation" annotation, at the token position of the start tag.
      * The payload gives the token position of the end tag.
+     *
+     * Note that in the integrated index, we store the relative position of the last token
+     * inside the span, not the first token after the span. This is so it matches how relations
+     * are stored.
      *
      * @param startPosition  start position (inclusive), or the first token of the span
      * @param endPosition    end position (exclusive), or the first token after the span
@@ -186,13 +191,14 @@ public class PayloadUtils {
      * @return payload to store
      */
     public static BytesRef tagEndPositionPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType) {
-        if (true || indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
+        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
             return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
 
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             DataOutput dataOutput = new OutputStreamDataOutput(os);
-            dataOutput.writeVInt(endPosition - startPosition);
+            int relativePositionOfLastToken = endPosition - 1 - startPosition;
+            dataOutput.writeVInt(relativePositionOfLastToken);
             // (rest of RelationInfo members have the default value)
             return new BytesRef(os.toByteArray());
         } catch (IOException e) {
@@ -200,8 +206,7 @@ public class PayloadUtils {
         }
     }
 
-    public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) throws
-            IOException {
+    public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) {
         int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
         return new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
     }
