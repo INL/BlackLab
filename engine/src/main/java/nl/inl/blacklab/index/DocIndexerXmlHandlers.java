@@ -241,17 +241,14 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         public void startElement(String uri, String localName, String qName,
                 Attributes attributes) {
             int currentPos = propMain.lastValuePosition() + 1;
-            propTags.addValueAtPosition(localName, currentPos, null);
-            int startTagIndex = propTags.lastValueIndex();
+
+            Map<String, String> attrMap = new HashMap<>();
+            for (int i = 0; i < attributes.getLength(); i++) {
+                attrMap.put(attributes.getLocalName(i), attributes.getValue(i));
+            }
+            int startTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap, getIndexType());
             openTagIndexes.add(startTagIndex);
             openTagPositions.add(currentPos);
-            for (int i = 0; i < attributes.getLength(); i++) {
-                // Index element attribute values
-                String name = attributes.getLocalName(i);
-                String value = attributes.getValue(i);
-                String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(name.toLowerCase(), value.toLowerCase(), getIndexType());
-                propTags.addValue(term, 0, null);
-            }
         }
 
         /** Close tag: store the end tag location */
