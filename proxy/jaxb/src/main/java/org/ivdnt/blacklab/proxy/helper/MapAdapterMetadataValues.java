@@ -21,9 +21,9 @@ import org.w3c.dom.Element;
  */
 public class MapAdapterMetadataValues extends XmlAdapter<MapAdapterMetadataValues.MapWrapperMetadataValues, Map<String, MetadataValues>> {
     @Override
-    public MapWrapperMetadataValues marshal(Map<String, MetadataValues> m) throws Exception {
+    public MapWrapperMetadataValues marshal(Map<String, MetadataValues> m) {
         MapWrapperMetadataValues wrapper = new MapWrapperMetadataValues();
-        List elements = new ArrayList();
+        List<JAXBElement<MetadataValues>> elements = new ArrayList<>();
         for (Map.Entry<String, MetadataValues> property : m.entrySet()) {
 
             elements.add(new JAXBElement<>(new QName(SerializationUtil.getCleanLabel(property.getKey())),
@@ -34,9 +34,9 @@ public class MapAdapterMetadataValues extends XmlAdapter<MapAdapterMetadataValue
     }
 
     @Override
-    public Map<String, MetadataValues> unmarshal(MapWrapperMetadataValues v) throws Exception {
-        Map<String, MetadataValues> returnval = new LinkedHashMap();
-        for (Object o : v.elements) {
+    public Map<String, MetadataValues> unmarshal(MapWrapperMetadataValues v) {
+        Map<String, MetadataValues> returnval = new LinkedHashMap<>();
+        for (JAXBElement<MetadataValues> o : v.elements) {
             Element e = (Element) o;
 
             List<String> values = new ArrayList<>();
