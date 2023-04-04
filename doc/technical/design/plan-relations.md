@@ -102,10 +102,31 @@ A simple way to implement this operation is to return a combined span that has t
 
 If we generalize the above to sources/targets that are groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principles remain the same.
 
+### Looking for different words with the same relation
+
+If we want to find e.g. two different adjectives applied to a word, we'll need a way to ensure that two matches are different. We could use "global constraints" for this. One issue is that CQL generally only allows these at the top-level of the query (hence the word _global_), but it seems that this is not a fundamental limitation. A query such as `(A:[] "que" B:[] :: A.lemma = B.lemma) [lemma="willen"]` should be valid, as long as the constraint only references groups captured within the parentheses.
+
+These "local constraints" combined with the ability to check if two groups are (not) equal, e.g. something like `A@start > B@start` to ensure `A` occurs after `B`, should be enough to implement this.
+
+### Building up a tree fragment while matching?
+
+Ideally, we'd like to build a tree structure of relations that can be included with the match.
+
+This would mean joining relations into a tree structure each time we combine two relations.  
+
+Dependency relations are never cyclic, but because we want our relations support to be generic and future-proof, we should ensure cycles don't cause problems.
+
+### Finding descendants
+
+In addition to finding specific relations and combining them, maybe we want to find any "descendants" starting from a specific word. Getting this to perform well would probably be challenging though. 
+
 
 ## CQL syntax
 
-We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now. We can always add support for other query languages later if we want.
+We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now.
+
+We can always add more user-friendly CQL extensions or additional query languages later if we want.
+
 
 ### Quick reference
 
@@ -115,7 +136,7 @@ Find relation:
 
 Match and combine relations in various ways:
 
-    rmatch(rel1, rel2, matchtype, action)
+    rmatch(rel1, rel2, matchtype)
 
 Get sources/targets of relation matches:
 
@@ -202,8 +223,11 @@ This will find spans containing a verb with its subject and object. It will retu
 The third parameter, `matchtype`, specifies which ends to match:
 - `source` or `s` matches the sources of `rel1` and `rel2`
 - `target` or `t` matches the targets
-- `target_source` or `ts` matches the first's target to the second's source
-- `source_target` or `st` matches the first's source to the second's target
+- `target_source` matches the first's target to the second's source
+- `source_target` matches the first's source to the second's target
+- `source_start` matches the first's source to the second's span start
+- `source_span` matches the first's source to the second's complete span
+- `source_end` matches the first's source to the second's span end
 
 Some examples follow.
 
