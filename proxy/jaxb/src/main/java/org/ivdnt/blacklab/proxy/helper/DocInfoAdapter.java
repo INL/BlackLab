@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlAnyElement;
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.namespace.QName;
@@ -20,6 +21,9 @@ public class DocInfoAdapter extends XmlAdapter<DocInfoAdapter.DocInfoWrapper, Do
 
     @XmlSeeAlso({MetadataValues.class})
     public static class DocInfoWrapper {
+        @XmlAttribute
+        String pid;
+
         @XmlAnyElement
         List<JAXBElement<?>> elements;
     }
@@ -27,6 +31,7 @@ public class DocInfoAdapter extends XmlAdapter<DocInfoAdapter.DocInfoWrapper, Do
     @Override
     public DocInfoWrapper marshal(DocInfo m) {
         DocInfoWrapper wrapper = new DocInfoWrapper();
+        wrapper.pid = m.pid;
         wrapper.elements = new ArrayList<>();
         for (Map.Entry<String, MetadataValues> e: m.metadata.entrySet()) {
             QName elName = new QName(SerializationUtil.getCleanLabel(e.getKey()));
