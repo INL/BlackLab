@@ -173,4 +173,8 @@ public interface IndexMetadata extends Freezable {
     default String getIndexMetadataAsString() {
         throw new UnsupportedOperationException("Not supported for this index type (check dir for existing indexmetadata.yaml)");
     }
+
+    default void setIndexMetadataFromString(String indexmetadata) {
+        throw new UnsupportedOperationException("Not supported for this index type (check dir for existing indexmetadata.yaml)");
+    }
 }
