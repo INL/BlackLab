@@ -146,16 +146,27 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                 File debugJackson = new File(tmpDir, "debug-metadata.json");
                 FileUtils.writeStringToFile(debugJackson, metadataJson, StandardCharsets.UTF_8);
 
-                // Create a metadata document with the metadata JSON, config format file,
-                // and a marker field to we can find it again
-                BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
-                indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
-                indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
-                indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
-
+                updateMetadataDoc(indexWriter, metadataJson);
             } catch (IOException e) {
                 throw new RuntimeException("Error saving index metadata", e);
             }
+        }
+
+        public void saveToIndex(BlackLabIndexWriter indexWriter, String metadataJson) {
+            try {
+                updateMetadataDoc(indexWriter, metadataJson);
+            } catch (IOException e) {
+                throw new RuntimeException("Error saving index metadata", e);
+            }
+        }
+
+        private void updateMetadataDoc(BlackLabIndexWriter indexWriter, String metadataJson) throws IOException {
+            // Create a metadata document with the metadata JSON, config format file,
+            // and a marker field to we can find it again
+            BLInputDocument indexmetadataDoc = indexWriter.indexObjectFactory().createInputDocument();
+            indexmetadataDoc.addStoredField(METADATA_FIELD_NAME, metadataJson);
+            indexmetadataDoc.addField(METADATA_MARKER, METADATA_MARKER, indexWriter.indexObjectFactory().fieldTypeIndexMetadataMarker());
+            indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
         }
 
         private String serializeToJson(IndexMetadataIntegrated metadata) {
@@ -797,5 +808,12 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }
+    }
+
+    @Override
+    public void setIndexMetadataFromString(String metadata) {
+        if (!index.indexMode())
+            throw new RuntimeException("Cannot save indexmetadata in search mode!");
+        metadataDocument.saveToIndex(indexWriter, metadata);
     }
 }

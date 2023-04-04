@@ -20,6 +20,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -59,7 +61,7 @@ public class IndexTool {
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
-        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete", "indexinfo"));
+        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete", "indexinfo", "import-indexinfo"));
         boolean addingFiles = true;
         String deleteQuery = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
@@ -211,6 +213,9 @@ public class IndexTool {
         case "indexinfo":
             exportIndexInfo(indexDir);
             return;
+        case "import-indexinfo":
+            importIndexInfo(indexDir);
+            return;
         case "delete":
             commandDelete(indexDir, deleteQuery);
             return;
@@ -357,6 +362,26 @@ public class IndexTool {
         }
     }
 
+    private static void importIndexInfo(File indexDir) {
+        try (BlackLabIndexWriter index = BlackLab.openForWriting(indexDir, false)) {
+            File indexMetadataFile = new File(indexDir, IndexMetadataExternal.METADATA_FILE_NAME + ".json");
+            System.out.println("Reading " + indexMetadataFile);
+            String indexmetadata = FileUtils.readFileToString(indexMetadataFile, StandardCharsets.UTF_8);
+
+            try {
+                // Check that indexmetadata is valid JSON using FasterXML Jackson's JSON parser
+                // (this will throw an exception if it's not valid JSON)
+                new ObjectMapper().readTree(indexmetadata);
+            } catch (Exception e) {
+                throw new RuntimeException("Invalid JSON in " + indexMetadataFile + ": " + e.getMessage(), e);
+            }
+
+            index.metadata().setIndexMetadataFromString(indexmetadata);
+        } catch (Exception e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
+
     private static void commandDelete(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
         if (deleteQuery == null) {
             System.err.println("No delete query given.");
@@ -376,6 +401,8 @@ public class IndexTool {
                 .println("Usage:\n"
                         + "  IndexTool {add|create} [options] <indexdir> <inputdir> <format>\n"
                         + "  IndexTool delete <indexdir> <filterQuery>\n"
+                        + "  IndexTool indexinfo <indexdir>         # export indexmetadata.json from index\n"
+                        + "  IndexTool import-indexinfo <indexdir>  # imports indexmetadata.json into index\n"
                         + "\n"
                         + "Options:\n"
                         + "  --maxdocs <n>                  Stop after indexing <n> documents\n"

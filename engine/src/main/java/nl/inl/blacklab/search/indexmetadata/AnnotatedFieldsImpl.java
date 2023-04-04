@@ -164,18 +164,21 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
         if (!f.getAnnotations().isEmpty())
             annotatedField.setMainAnnotationName(f.getAnnotations().values().iterator().next().getName());
-        int n = 0;
+        boolean isFirstAnnotation = true;
         boolean hasOffsets;
         for (ConfigAnnotation configAnnot: f.getAnnotations().values()) {
-            hasOffsets = n == 0; // first annotation gets offsets
+            hasOffsets = isFirstAnnotation; // first annotation gets offsets
             addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
-            n++;
+            isFirstAnnotation = false;
+            for (ConfigAnnotation subAnnot: configAnnot.getSubAnnotations()) {
+                addAnnotationInfo(annotatedField, subAnnot, false, displayOrder);
+            }
         }
         for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
             for (ConfigAnnotation configAnnot: standoff.getAnnotations().values()) {
-                hasOffsets = n == 0; // first annotation gets offsets
+                hasOffsets = isFirstAnnotation; // first annotation gets offsets
                 addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
-                n++;
+                isFirstAnnotation = false;
             }
         }
         annotatedField.putCustom("displayOrder", displayOrder);
@@ -187,6 +190,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         CustomPropsMap custom = annotation.custom();
         custom.put("displayName", config.getDisplayName());
         custom.put("description", config.getDescription());
+        custom.put("uiType", config.getUiType());
 
         annotation.createSensitivities(config.getSensitivitySetting());
         if (hasOffsets)
