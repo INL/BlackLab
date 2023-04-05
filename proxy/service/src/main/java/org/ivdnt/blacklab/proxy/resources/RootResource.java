@@ -49,7 +49,7 @@ public class RootResource {
             @Context HttpHeaders headers) {
         Map<WebserviceParameter, String> params = CorpusResource.getParams(uriInfo, WebserviceOperation.LIST_INPUT_FORMATS);
         InputFormats entity = Requests.get(client, params, InputFormats.class);
-        return Response.ok().entity(entity).type(MediaType.APPLICATION_XML).build();
+        return Response.ok().entity(entity).build();
     }
 
     @GET
@@ -62,7 +62,7 @@ public class RootResource {
         Map<WebserviceParameter, String> params = CorpusResource.getParams(uriInfo, WebserviceOperation.INPUT_FORMAT_INFO);
         params.put(WebserviceParameter.INPUT_FORMAT, formatName);
         InputFormatInfo entity = Requests.get(client, params, InputFormatInfo.class);
-        return Response.ok().entity(entity).type(MediaType.APPLICATION_XML).build();
+        return Response.ok().entity(entity).build();
     }
 
     @GET
