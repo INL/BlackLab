@@ -22,10 +22,10 @@ public class DocInfoAdapter extends XmlAdapter<DocInfoAdapter.DocInfoWrapper, Do
     @XmlSeeAlso({MetadataValues.class})
     public static class DocInfoWrapper {
         @XmlAttribute
-        String pid;
+        public String pid;
 
         @XmlAnyElement
-        List<JAXBElement<?>> elements;
+        public List<JAXBElement<?>> elements;
     }
 
     @Override

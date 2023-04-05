@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -34,26 +35,56 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 public class DocInfo {
 
     /** Use this to serialize this class to JSON */
-    public static class Serializer extends JsonSerializer<DocInfo> {
+    public static class Serializer extends JsonSerializer<Object> {
         @Override
-        public void serialize(DocInfo el, JsonGenerator jgen, SerializerProvider provider)
+        public void serialize(Object elObj, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
 
-            if (el == null)
+            if (elObj == null)
                 return;
-            jgen.writeStartObject();
-            for (Map.Entry<String, MetadataValues> v: el.metadata.entrySet()) {
-                jgen.writeArrayFieldStart(v.getKey());
-                for (String x: v.getValue().getValue()) {
-                    jgen.writeString(x);
+            if (elObj instanceof DocInfo) {
+                DocInfo el = (DocInfo) elObj;
+                jgen.writeStartObject();
+                for (Map.Entry<String, MetadataValues> v: el.metadata.entrySet()) {
+                    jgen.writeArrayFieldStart(v.getKey());
+                    for (String x: v.getValue().getValue()) {
+                        jgen.writeString(x);
+                    }
+                    jgen.writeEndArray();
                 }
-                jgen.writeEndArray();
-            }
-            if (el.lengthInTokens != null)
-                jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
-            if (el.mayView != null)
-                jgen.writeBooleanField("mayView", el.mayView);
-            jgen.writeEndObject();
+                if (el.lengthInTokens != null)
+                    jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
+                if (el.mayView != null)
+                    jgen.writeBooleanField("mayView", el.mayView);
+                jgen.writeEndObject();
+            } else if (elObj instanceof DocInfoAdapter.DocInfoWrapper) {
+                DocInfoAdapter.DocInfoWrapper el = ((DocInfoAdapter.DocInfoWrapper) elObj);
+                jgen.writeStartObject();
+                Integer lengthInTokens = null;
+                Boolean mayView = null;
+                for (JAXBElement jaxbe: el.elements) {
+                    String name = jaxbe.getName().getLocalPart();
+                    if (name.equals("lengthInTokens") || name.equals("mayView")) {
+                        if (name.equals("lengthInTokens"))
+                            lengthInTokens = (Integer) jaxbe.getValue();
+                        else
+                            mayView = (Boolean) jaxbe.getValue();
+                        continue;
+                    }
+                    jgen.writeArrayFieldStart(name);
+                    MetadataValues mv = (MetadataValues) jaxbe.getValue();
+                    for (String x: mv.getValue()) {
+                        jgen.writeString(x);
+                    }
+                    jgen.writeEndArray();
+                }
+                if (lengthInTokens != null)
+                    jgen.writeNumberField("lengthInTokens", lengthInTokens);
+                if (mayView != null)
+                    jgen.writeBooleanField("mayView", mayView);
+                jgen.writeEndObject();
+            } else
+                throw new RuntimeException("Unexpected type " + elObj.getClass().getName());
         }
     }
 
