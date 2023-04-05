@@ -30,7 +30,6 @@ import org.ivdnt.blacklab.proxy.representation.DocSnippetResponse;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
-import org.ivdnt.blacklab.proxy.representation.InputFormats;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
@@ -39,7 +38,7 @@ import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
-@Path("/{corpusName : ^(?!input-formats$)}")
+@Path("/{corpusName : (?!input-formats\\b)[^/]+}")
 public class CorpusResource {
 
     private static final String MIME_TYPE_CSV = "text/csv";
