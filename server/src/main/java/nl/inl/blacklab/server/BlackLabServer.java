@@ -53,9 +53,6 @@ public class BlackLabServer extends HttpServlet {
 
     private static final Logger logger = LogManager.getLogger(BlackLabServer.class);
 
-    /** Root element to use for XML responses. */
-    public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
-
     private static final Charset REQUEST_ENCODING = StandardCharsets.UTF_8;
 
     private static final Charset OUTPUT_ENCODING = StandardCharsets.UTF_8;
@@ -242,7 +239,7 @@ public class BlackLabServer extends HttpServlet {
 
         int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
 
-        String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : BLACKLAB_RESPONSE_ROOT_ELEMENT;
+        String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
 
         // === Handle the request
         StringWriter buf = new StringWriter();

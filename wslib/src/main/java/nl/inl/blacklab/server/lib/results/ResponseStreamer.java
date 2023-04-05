@@ -70,6 +70,8 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  * Takes a DataStream and an API version to attempt compatibility with.
  */
 public class ResponseStreamer {
+    /** Root element to use for XML responses. */
+    public static final String BLACKLAB_RESPONSE_ROOT_ELEMENT = "blacklabResponse";
     static final Logger logger = LogManager.getLogger(ResponseStreamer.class);
 
     public static final String KEY_BLACKLAB_BUILD_TIME = "blacklabBuildTime";
@@ -958,10 +960,48 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    public void docContentsResponse(ResultDocContents result) {
+    public String getDocContentsResponsePlain(ResultDocContents resultDocContents) {
+        StringBuilder b = new StringBuilder();
+
+        if (resultDocContents.needsXmlDeclaration()) {
+            // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
+            b.append(DataStream.XML_PROLOG);
+        }
+
+        // Output root element and namespaces if necessary
+        // (i.e. when we're not returning the full document, only part of it)
+        if (!resultDocContents.isFullDocument()) {
+            // Surround with root element and make sure it has the required namespaces
+            b.append(DataStream.XML_PROLOG);
+            b.append("<" + BLACKLAB_RESPONSE_ROOT_ELEMENT);
+            for (String ns: resultDocContents.getNamespaces()) {
+                b.append(" ").append(ns);
+            }
+            for (String anon: resultDocContents.getAnonNamespaces()) {
+                b.append(" ").append(anon);
+            }
+            b.append(">");
+        }
+
+        // Output (part of) the document
+        b.append(resultDocContents.getContent());
+
+        if (!resultDocContents.isFullDocument()) {
+            // Close the root el we opened
+            b.append("</" + BLACKLAB_RESPONSE_ROOT_ELEMENT + ">");
+        }
+
+        return b.toString();
+    }
+
+    public void docContentsResponseAsCdata(ResultDocContents result) {
         ds.startMap();
-        ds.entry("contents", result.getContent());
+        ds.entry("contents", getDocContentsResponsePlain(result));
         ds.endMap();
+    }
+
+    public void docContentsResponsePlain(ResultDocContents resultDocContents) {
+        ds.plain(getDocContentsResponsePlain(resultDocContents));
     }
 
     public void docInfoResponse(ResultDocInfo docInfo, Map<String, List<String>> metadataFieldGroups,

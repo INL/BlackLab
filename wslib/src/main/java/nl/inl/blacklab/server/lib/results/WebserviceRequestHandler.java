@@ -169,7 +169,7 @@ public class WebserviceRequestHandler {
      */
     public static void opDocContents(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
         ResultDocContents result = WebserviceOperations.docContents(params);
-        rs.docContentsResponse(result);
+        rs.docContentsResponseAsCdata(result);
     }
 
     /**
