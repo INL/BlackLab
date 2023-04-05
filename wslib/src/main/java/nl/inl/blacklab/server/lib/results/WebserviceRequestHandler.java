@@ -281,7 +281,10 @@ public class WebserviceRequestHandler {
     }
 
     public static void opInputFormatXslt(WebserviceParams params, ResponseStreamer rs) {
-        ResultInputFormat result = WebserviceOperations.inputFormat(params.getInputFormat().get());
+        Optional<String> inputFormat = params.getInputFormat();
+        if (!inputFormat.isPresent())
+            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
+        ResultInputFormat result = WebserviceOperations.inputFormat(inputFormat.get());
         rs.formatXsltResponse(result);
     }
 }

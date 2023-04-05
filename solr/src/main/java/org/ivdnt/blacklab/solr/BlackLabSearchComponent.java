@@ -157,31 +157,31 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
-            IndexReader reader = rb.req.getSearcher().getIndexReader();
-            String indexName = rb.req.getSearcher().getCore().getName();
-            BlackLabIndex index = searchManager.getEngine().getIndexFromReader(indexName, reader, true, false);
-
-            // We keep setting the cache for every request; the cache should probably be owner by the
-            // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.
-            // For now, this doesn't cause any problems, it's just messy.
-            index.setCache(searchManager.getBlackLabCache());
-
-            UserRequest userRequest = new UserRequestSolr(rb, this);
-            WebserviceParams params = userRequest.getParams(index, null);
-            if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
-                searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
-            }
-            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
-
-            // FIXME: Produce CSV output?
-            //   Solr includes a CSV output type, but that seems to be geared towards outputting documents
-            //   with their fields. Maybe there's some way to customize this, or add another output type for
-            //   "blacklab-csv" output?
-            //if (outputType == DataFormat.CSV)
-
-            ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
-            ResponseStreamer dstream = ResponseStreamer.get(ds, params.apiCompatibility());
             try {
+                IndexReader reader = rb.req.getSearcher().getIndexReader();
+                String indexName = rb.req.getSearcher().getCore().getName();
+                BlackLabIndex index = searchManager.getEngine().getIndexFromReader(indexName, reader, true, false);
+
+                // We keep setting the cache for every request; the cache should probably be owner by the
+                // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.
+                // For now, this doesn't cause any problems, it's just messy.
+                index.setCache(searchManager.getBlackLabCache());
+
+                UserRequest userRequest = new UserRequestSolr(rb, this);
+                WebserviceParams params = userRequest.getParams(index, null);
+                if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
+                    searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
+                }
+                DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
+
+                // FIXME: Produce CSV output?
+                //   Solr includes a CSV output type, but that seems to be geared towards outputting documents
+                //   with their fields. Maybe there's some way to customize this, or add another output type for
+                //   "blacklab-csv" output?
+                //if (outputType == DataFormat.CSV)
+
+                ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
+                ResponseStreamer dstream = ResponseStreamer.get(ds, params.apiCompatibility());
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint

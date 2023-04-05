@@ -6,17 +6,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DocContentsResults {
+public class InputFormatXsltResults {
 
-    public String contents;
+    public String xslt;
 
     // required for Jersey
-    public DocContentsResults() {}
+    public InputFormatXsltResults() {}
 
     @Override
     public String toString() {
-        return "DocContentsResults{" +
-                "contents='" + contents + '\'' +
+        return "InputFormatXsltResults{" +
+                "xslt='" + xslt + '\'' +
                 '}';
     }
 }

@@ -174,7 +174,9 @@ public class Requests {
                 } else {
                     // Couldn't map to any of the supplied classes. See if it's a BLS error.
                     try {
-                        return objectMapper.treeToValue(blacklab, ErrorResponse.class);
+                        ErrorResponse err = objectMapper.treeToValue(blacklab, ErrorResponse.class);
+                        // Yes. Throw it so it will be handled by the GenericExceptionMapper.
+                        throw new BlsRequestException(Response.Status.fromStatusCode(status), err);
                     } catch (JsonProcessingException e2) {
                         // Error didn't work either. Fail.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
