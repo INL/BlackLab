@@ -159,7 +159,7 @@ public class Requests {
             // Not a regular response; try to read error entity
             SolrGeneralErrorResponse err = response.readEntity(SolrGeneralErrorResponse.class);
             throw new BlsRequestException(Response.Status.fromStatusCode(status),
-                    new ErrorResponse("INTERNAL_ERROR", "(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl(), ""));
+                    new ErrorResponse(500, "INTERNAL_ERROR", "(" + err.getServlet() + ") " + err.getStatus() + " " + err.getMessage() + ": " + err.getUrl(), ""));
         }
 
         JsonNode blacklab = solrResponse.getBlacklab();
@@ -176,7 +176,7 @@ public class Requests {
                     try {
                         ErrorResponse err = objectMapper.treeToValue(blacklab, ErrorResponse.class);
                         // Yes. Throw it so it will be handled by the GenericExceptionMapper.
-                        throw new BlsRequestException(Response.Status.fromStatusCode(status), err);
+                        throw new BlsRequestException(Response.Status.fromStatusCode(err.getError().getHttpStatusCode()), err);
                     } catch (JsonProcessingException e2) {
                         // Error didn't work either. Fail.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));

@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
@@ -270,18 +271,22 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 }
                 ds.endEntry().endDocument();
             } catch (Exception e) {
-                errorResponse(e, rb);
+                int httpStatusCode = 500; // internal error
+                if (e instanceof NotFound)
+                    httpStatusCode = 404;
+                errorResponse(httpStatusCode, e, rb);
             }
         }
     }
 
-    private void errorResponse(Exception e, ResponseBuilder rb) {
+    private void errorResponse(int httpStatusCode, Exception e, ResponseBuilder rb) {
         String code = (e instanceof BlsException) ? ((BlsException) e).getBlsErrorCode() : "INTERNAL_ERROR";
-        errorResponse(code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
+        errorResponse(httpStatusCode, code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
     }
 
-    private void errorResponse(String code, String message, Exception e, ResponseBuilder rb) {
+    private void errorResponse(int httpStatusCode, String code, String message, Exception e, ResponseBuilder rb) {
         NamedList<Object> err = new SimpleOrderedMap<>();
+        err.add("httpStatusCode", httpStatusCode);
         err.add("code", code);
         err.add("message", message);
         if (e != null) {

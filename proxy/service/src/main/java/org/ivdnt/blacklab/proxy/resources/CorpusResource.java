@@ -50,7 +50,7 @@ public class CorpusResource {
     }
 
     public static Response error(Response.Status status, String code, String message, String stackTrace) {
-        ErrorResponse error = new ErrorResponse(code, message, stackTrace);
+        ErrorResponse error = new ErrorResponse(status.getStatusCode(), code, message, stackTrace);
         return Response.status(status).entity(error).build();
     }
 
