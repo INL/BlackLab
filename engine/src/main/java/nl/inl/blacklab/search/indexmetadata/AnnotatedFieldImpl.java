@@ -36,10 +36,9 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
                 // Set during indexing, when we don't actually have annotation information
                 // available (because the index is being built up, so we couldn't detect
                 // it on startup).
-                // Just create an annotation with the correct name, or retrieve it if it
-                // was defined in the indexmetadata.
+                // Just retrieve it now.
                 mainAnnotation = annots.get(mainAnnotationName);
-                mainAnnotationName = null;
+                //mainAnnotationName = null;
             }
             return mainAnnotation;
         }
@@ -228,7 +227,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             if (!annots.containsKey(mainAnnotationName))
                 throw new IllegalArgumentException("Main annotation '" + mainAnnotationName + "' (from index metadata) not found!");
             mainAnnotation = annots.get(mainAnnotationName);
-            mainAnnotationName = null;
         }
         
         if (annots.isEmpty())
@@ -292,7 +290,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     
     @Override
     public String offsetsField() {
-        AnnotationSensitivity offsetsSensitivity = mainAnnotation.offsetsSensitivity();
+        AnnotationSensitivity offsetsSensitivity = annotations.main().offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
 
