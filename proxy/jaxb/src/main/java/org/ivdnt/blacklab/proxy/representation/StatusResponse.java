@@ -26,7 +26,7 @@ public class StatusResponse {
     }
 
     public StatusResponse(String code, String message, String stackTrace) {
-        this.status = new Desc(code, message, stackTrace);
+        this.status = new Desc(200, code, message, stackTrace);
     }
 
     public String getMessage() {
@@ -42,7 +42,7 @@ public class StatusResponse {
     }
 
     public void setStatus(String code, String message, String stackTrace) {
-        status = new Desc(code, message, stackTrace);
+        status = new Desc(200, code, message, stackTrace);
     }
 
     public Desc getStatus() {

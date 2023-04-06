@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
@@ -157,31 +158,31 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
         if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
-            IndexReader reader = rb.req.getSearcher().getIndexReader();
-            String indexName = rb.req.getSearcher().getCore().getName();
-            BlackLabIndex index = searchManager.getEngine().getIndexFromReader(indexName, reader, true, false);
-
-            // We keep setting the cache for every request; the cache should probably be owner by the
-            // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.
-            // For now, this doesn't cause any problems, it's just messy.
-            index.setCache(searchManager.getBlackLabCache());
-
-            UserRequest userRequest = new UserRequestSolr(rb, this);
-            WebserviceParams params = userRequest.getParams(index, null);
-            if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
-                searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
-            }
-            DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
-
-            // FIXME: Produce CSV output?
-            //   Solr includes a CSV output type, but that seems to be geared towards outputting documents
-            //   with their fields. Maybe there's some way to customize this, or add another output type for
-            //   "blacklab-csv" output?
-            //if (outputType == DataFormat.CSV)
-
-            ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
-            ResponseStreamer dstream = ResponseStreamer.get(ds, params.apiCompatibility());
             try {
+                IndexReader reader = rb.req.getSearcher().getIndexReader();
+                String indexName = rb.req.getSearcher().getCore().getName();
+                BlackLabIndex index = searchManager.getEngine().getIndexFromReader(indexName, reader, true, false);
+
+                // We keep setting the cache for every request; the cache should probably be owner by the
+                // BlackLabEngine, and set automatically when the BlackLabIndex is instantiated.
+                // For now, this doesn't cause any problems, it's just messy.
+                index.setCache(searchManager.getBlackLabCache());
+
+                UserRequest userRequest = new UserRequestSolr(rb, this);
+                WebserviceParams params = userRequest.getParams(index, null);
+                if (!searchManager.getIndexManager().indexExists(params.getCorpusName())) {
+                    searchManager.getIndexManager().registerIndex(params.getCorpusName(), index);
+                }
+                DataStream ds = new DataStreamSolr(rb.rsp).startDocument("");
+
+                // FIXME: Produce CSV output?
+                //   Solr includes a CSV output type, but that seems to be geared towards outputting documents
+                //   with their fields. Maybe there's some way to customize this, or add another output type for
+                //   "blacklab-csv" output?
+                //if (outputType == DataFormat.CSV)
+
+                ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
+                ResponseStreamer dstream = ResponseStreamer.get(ds, params.apiCompatibility());
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint
@@ -270,18 +271,22 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 }
                 ds.endEntry().endDocument();
             } catch (Exception e) {
-                errorResponse(e, rb);
+                int httpStatusCode = 500; // internal error
+                if (e instanceof NotFound)
+                    httpStatusCode = 404;
+                errorResponse(httpStatusCode, e, rb);
             }
         }
     }
 
-    private void errorResponse(Exception e, ResponseBuilder rb) {
+    private void errorResponse(int httpStatusCode, Exception e, ResponseBuilder rb) {
         String code = (e instanceof BlsException) ? ((BlsException) e).getBlsErrorCode() : "INTERNAL_ERROR";
-        errorResponse(code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
+        errorResponse(httpStatusCode, code, e == null ? "UNKNOWN" : e.getMessage(), e, rb);
     }
 
-    private void errorResponse(String code, String message, Exception e, ResponseBuilder rb) {
+    private void errorResponse(int httpStatusCode, String code, String message, Exception e, ResponseBuilder rb) {
         NamedList<Object> err = new SimpleOrderedMap<>();
+        err.add("httpStatusCode", httpStatusCode);
         err.add("code", code);
         err.add("message", message);
         if (e != null) {

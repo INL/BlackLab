@@ -30,7 +30,6 @@ import org.ivdnt.blacklab.proxy.representation.DocSnippetResponse;
 import org.ivdnt.blacklab.proxy.representation.DocsResults;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.HitsResults;
-import org.ivdnt.blacklab.proxy.representation.InputFormats;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.MetadataField;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
@@ -39,7 +38,7 @@ import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
-@Path("/{corpusName}")
+@Path("/{corpusName : (?!input-formats\\b)[^/]+}")
 public class CorpusResource {
 
     private static final String MIME_TYPE_CSV = "text/csv";
@@ -51,7 +50,7 @@ public class CorpusResource {
     }
 
     public static Response error(Response.Status status, String code, String message, String stackTrace) {
-        ErrorResponse error = new ErrorResponse(code, message, stackTrace);
+        ErrorResponse error = new ErrorResponse(status.getStatusCode(), code, message, stackTrace);
         return Response.status(status).entity(error).build();
     }
 
@@ -69,7 +68,7 @@ public class CorpusResource {
         return params;
     }
 
-    private static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, WebserviceOperation op) {
+    static Map<WebserviceParameter, String> getParams(UriInfo uriInfo, WebserviceOperation op) {
         Map<WebserviceParameter, String> params = uriInfo.getQueryParameters().entrySet().stream()
                 .filter(e -> WebserviceParameter.fromValue(e.getKey()).isPresent()) // keep only known parameters
                 .map(e -> Map.entry(WebserviceParameter.fromValue(e.getKey()).orElse(null),
@@ -111,10 +110,6 @@ public class CorpusResource {
         String defaultCorpusName = ProxyConfig.get().getProxyTarget().getDefaultCorpusName();
 
         switch (corpusName) {
-        case "input-formats":
-            return success(Requests.get(client, getParams(uriInfo, defaultCorpusName, WebserviceOperation.LIST_INPUT_FORMATS),
-                    InputFormats.class));
-
         case "cache-info":
             return notImplemented("/cache-info");
 
@@ -208,7 +203,7 @@ public class CorpusResource {
             @Context UriInfo uriInfo) {
         Map<WebserviceParameter, String> params = getParams(uriInfo, corpusName, WebserviceOperation.DOC_CONTENTS);
         params.put(WebserviceParameter.DOC_PID, docPid);
-        DocContentsResults entity = (DocContentsResults)Requests.get(client, params, DocContentsResults.class);
+        DocContentsResults entity = Requests.get(client, params, DocContentsResults.class);
         return Response.ok().entity(entity.contents).type(MediaType.APPLICATION_XML).build();
     }
 

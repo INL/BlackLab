@@ -10,6 +10,8 @@ public class ErrorResponse {
 
     @XmlAccessorType(XmlAccessType.FIELD)
     public static class Desc {
+        int httpStatusCode = 200;
+
         String code;
 
         String message;
@@ -18,10 +20,14 @@ public class ErrorResponse {
 
         private Desc() {}
 
-        public Desc(String code, String message, String stackTrace) {
+        public Desc(int httpStatusCode, String code, String message, String stackTrace) {
             this.code = code;
             this.message = message;
             this.stackTrace = stackTrace;
+        }
+
+        public int getHttpStatusCode() {
+            return httpStatusCode;
         }
 
         public String getCode() {
@@ -45,16 +51,16 @@ public class ErrorResponse {
         this.error = error;
     }
 
-    public ErrorResponse(String code, String message, String stackTrace) {
-        this.error = new Desc(code, message, stackTrace);
+    public ErrorResponse(int httpStatusCode, String code, String message, String stackTrace) {
+        this.error = new Desc(httpStatusCode, code, message, stackTrace);
     }
 
     public String getMessage() {
         return error.code + "||" + error.message;
     }
 
-    public void setError(String code, String message, String stackTrace) {
-        error = new Desc(code, message, stackTrace);
+    public void setError(int httpStatusCode, String code, String message, String stackTrace) {
+        error = new Desc(httpStatusCode, code, message, stackTrace);
     }
 
     public Desc getError() {

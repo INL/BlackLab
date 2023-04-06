@@ -1,9 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
-import nl.inl.blacklab.server.datastream.DataStreamXml;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.ResultDocContents;
@@ -38,38 +36,8 @@ public class RequestHandlerDocContents extends RequestHandler {
         params.setDocPid(docPid);
 
         ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
-        docContentsResponse((DataStreamXml)rs.getDataStream(), resultDocContents);
+        rs.docContentsResponsePlain(resultDocContents);
         return HTTP_OK;
-    }
-
-    public static void docContentsResponse(DataStreamXml ds, ResultDocContents resultDocContents) {
-        if (resultDocContents.needsXmlDeclaration()) {
-            // We haven't outputted an XML declaration yet, and there's none in the document. Do so now.
-            ds.outputProlog();
-        }
-
-        // Output root element and namespaces if necessary
-        // (i.e. when we're not returning the full document, only part of it)
-        if (!resultDocContents.isFullDocument()) {
-            // Surround with root element and make sure it has the required namespaces
-            ds.outputProlog();
-            ds.startOpenEl(BlackLabServer.BLACKLAB_RESPONSE_ROOT_ELEMENT);
-            for (String ns: resultDocContents.getNamespaces()) {
-                ds.plain(" ").plain(ns);
-            }
-            for (String anon: resultDocContents.getAnonNamespaces()) {
-                ds.plain(" ").plain(anon);
-            }
-            ds.endOpenEl();
-        }
-
-        // Output (part of) the document
-        ds.plain(resultDocContents.getContent());
-
-        if (!resultDocContents.isFullDocument()) {
-            // Close the root el we opened
-            ds.closeEl();
-        }
     }
 
     @Override

@@ -106,7 +106,12 @@ public class UserRequestSolr implements UserRequest {
             // Request was passed as separate bl.* parameters. Parse them.
             qpSolr = new QueryParamsSolr(getCorpusName(), searchMan, solrParams, user);
         }
-        boolean isDocs = qpSolr.getOperation().isDocsOperation();
+        try {
+            operation = qpSolr.getOperation();
+        } catch (UnsupportedOperationException e) {
+            throw new BadRequest("UNKNOWN_OPERATION", "Unknown operation");
+        }
+        boolean isDocs = operation.isDocsOperation();
         WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(), qpSolr);
         if (params.getDocumentFilterQuery().isEmpty()) {
             // No explicit bl.filter specified; use Solr's document results as our filter query

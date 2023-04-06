@@ -10,14 +10,15 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
 public interface DataStream {
+    String XML_PROLOG = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
+
     /**
      * Construct a simple status response object.
-     *
      * Status response may indicate success, or e.g. that the server is carrying out
      * the request and will have results later.
      *
      * @param code (string) status code
-     * @param msg the message
+     * @param msg  the message
      */
     default void statusObject(String code, String msg) {
         startMap()
@@ -34,8 +35,8 @@ public interface DataStream {
      * Construct a simple error response object.
      *
      * @param code (string) error code
-     * @param msg the error message
-     * @param e if specified, include stack trace
+     * @param msg  the error message
+     * @param e    if specified, include stack trace
      */
     default void error(String code, String msg, Throwable e) {
         startMap()
@@ -58,7 +59,7 @@ public interface DataStream {
      * Construct a simple error response object.
      *
      * @param code (string) error code
-     * @param msg the error message
+     * @param msg  the error message
      */
     default void error(String code, String msg) {
         error(code, msg, null);
@@ -146,7 +147,9 @@ public interface DataStream {
         return startEntry(key).value(value).endEntry();
     }
 
-    default DataStream entry(String key, boolean value) { return startEntry(key).value(value).endEntry(); }
+    default DataStream entry(String key, boolean value) {
+        return startEntry(key).value(value).endEntry();
+    }
 
     default DataStream attrEntry(String elementName, String attrName, String key, String value) {
         return startAttrEntry(elementName, attrName, key).value(value).endAttrEntry();
@@ -190,18 +193,17 @@ public interface DataStream {
 
     /**
      * Output a map.
-     *
      * May contain nested structures (Map, List) and/or values.
      *
      * @param value map to output
-     * @param <S> entry key type
-     * @param <T> entry value type
+     * @param <S>   entry key type
+     * @param <T>   entry value type
      * @return this data stream
      */
     default <S, T> DataStream value(Map<S, T> value) {
         startMap();
         if (value != null) {
-            for (Map.Entry<S, T> entry : value.entrySet()) {
+            for (Map.Entry<S, T> entry: value.entrySet()) {
                 startEntry(entry.getKey().toString()).value(entry.getValue()).endEntry();
             }
         }
@@ -211,19 +213,17 @@ public interface DataStream {
 
     /**
      * Output a list.
-     *
      * May contain nested structures (Map, List) and/or values.
-     *
      * Uses "item" for the list item name (in XML mode).
      *
      * @param value list to output
-     * @param <T> list item type
+     * @param <T>   list item type
      * @return this data stream
      */
     default <T> DataStream value(List<T> value) {
         startList();
         if (value != null) {
-            for (T item : value) {
+            for (T item: value) {
                 startItem("item").value(item).endItem();
             }
         }
@@ -239,17 +239,17 @@ public interface DataStream {
      */
     default DataStream value(Object value) {
         if (value instanceof Map) {
-            return value((Map)value);
+            return value((Map) value);
         } else if (value instanceof List) {
-            return value((List)value);
+            return value((List) value);
         } else if (value instanceof String) {
-            return value((String)value);
+            return value((String) value);
         } else if (value instanceof Integer || value instanceof Long) {
             return value(((Number) value).longValue());
         } else if (value instanceof Double || value instanceof Float) {
             return value(((Number) value).doubleValue());
         } else if (value instanceof Boolean) {
-            return value((boolean)value);
+            return value((boolean) value);
         } else {
             return value(value == null ? "" : value.toString());
         }
@@ -257,7 +257,9 @@ public interface DataStream {
 
     DataStream plain(String value);
 
-    /** Should contextList omit empty annotations if possible? (XML only) */
+    /**
+     * Should contextList omit empty annotations if possible? (XML only)
+     */
     default void setOmitEmptyAnnotations(boolean omitEmptyAnnotations) { /* do nothing */ }
 
     DataStream xmlFragment(String fragment);
@@ -282,9 +284,32 @@ public interface DataStream {
 
     DataStream space();
 
-    /** Output a full CSV document. Subclasses may choose to embed it in their response format. */
-    default void csv(String csv) { plain(csv); }
+    /**
+     * Output a full CSV document. Subclasses may choose to embed it in their response format.
+     */
+    default void csv(String csv) {
+        plain(csv);
+    }
 
-    /** Output a full XSLT document. Subclasses may choose to embed it in their response format. */
-    default void xslt(String xslt) { plain(xslt); }
+    /**
+     * Output a full XSLT document. Subclasses may choose to embed it in their response format.
+     */
+    default void xslt(String xslt) {
+        plain(xslt);
+    }
+
+    /** Needed to return parts of the XML document, wrapped in an extra root element and optional namespaces. */
+    default DataStream startOpenEl(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Needed to return parts of the XML document, wrapped in an extra root element and optional namespaces. */
+    default DataStream endOpenEl() {
+        throw new UnsupportedOperationException();
+    }
+
+    /** Needed to return parts of the XML document, wrapped in an extra root element and optional namespaces. */
+    default DataStream closeEl() {
+        throw new UnsupportedOperationException();
+    }
 }

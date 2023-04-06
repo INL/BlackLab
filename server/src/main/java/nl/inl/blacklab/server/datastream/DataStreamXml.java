@@ -59,7 +59,7 @@ public class DataStreamXml extends DataStreamAbstract {
 
     @Override
     public void outputProlog() {
-        print("<?xml version=\"1.0\" encoding=\"utf-8\" ?>").newline();
+        print(XML_PROLOG).newline();
     }
 
     @Override
