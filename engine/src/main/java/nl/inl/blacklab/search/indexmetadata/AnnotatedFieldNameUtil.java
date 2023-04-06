@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -119,7 +120,29 @@ public final class AnnotatedFieldNameUtil {
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
+                .map(e -> AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
+                                BlackLabIndex.IndexType.INTEGRATED))
+                .collect(Collectors.joining());
+
+        // The term to index consists of the type followed by the (sorted) attributes.
+        return relationType + attrPart;
+    }
+
+    /**
+     * Determine the term to index in Lucene for a relation.
+     *
+     * @param relationType relation type
+     * @param attributes any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static String relationIndexTermMulti(String relationType, Map<String, Collection<String>> attributes) {
+        // Sort and concatenate the attribute names and values
+        String attrPart = attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> e.getValue().stream()
+                        .map( v -> AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), v,
+                                    BlackLabIndex.IndexType.INTEGRATED))
+                        .collect(Collectors.joining()))
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.

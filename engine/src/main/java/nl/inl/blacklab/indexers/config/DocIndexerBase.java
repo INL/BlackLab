@@ -209,11 +209,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     @Deprecated
-    protected AnnotationWriter propTags() {
-        return tagsAnnotation();
-    }
-
-    @Deprecated
     protected AnnotationWriter propPunct() {
         return punctAnnotation();
     }
@@ -563,46 +558,69 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * null), or to add annotations at specific positions (indexAtPositions contains
      * positions). The latter is used for standoff annotations.
      *
-     * Also called for subannotations (with the value already prepared)
+     * Also used to index inline tags (spans). In that case, spanEndPos is >= 0.
+     * For the external index, this method is called several times, once for the tag
+     * name and once for each attribute. For the internal index, this method is
+     * called once, with an already-prepared term to index that includes all this information.
      *
-     * @param name annotation name
-     * @param value annotation value
-     * @param increment if indexAtPosition == null: the token increment to use
+     * @param name annotation name (or attribute name for span annotations, see below)
+     * @param value annotation value (or span name or span attribute value)
+     * @param increment if indexAtPosition == null: the token increment to use relative to the current position
      * @param indexAtPositions if null: index at the current position; otherwise:
      *            index at these positions
      * @param spanEndPos if >= 0, this is a span annotation and this is the first token position after the span
      */
     protected void annotation(String name, String value, int increment, List<Integer> indexAtPositions, int spanEndPos) {
+        // Normally name gives the annotation to index this is, but for span annotations,
+        // we already know the annotation and name is instead used for attribute values (see below).
         AnnotationWriter annotation = getAnnotation(
                 spanEndPos >= 0 ? AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()) : name);
+
         if (annotation != null) {
-            BytesRef payload = null;
             if (spanEndPos >= 0) {
-                // This is a span annotation. These are all indexed in one Lucene field (the annotation called "_relation")
-                // with the attribute name and value combined.
+                // This is a span annotation.
+
+                // These are all indexed in one annotation (i.e. Lucene field).
+                // For the external index format (annotation "starrtag"), we index several terms:
+                // one for the span name, and one for each attribute name and value.
+                // For the integrated index (annotation "_relation"), we only index one term,
+                // containing both the span name and the attributes.
                 if (name != null) {
-                    // Attribute (otherwise it's the span name, e.g. "named-entity", which is indexed unchanged)
-                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value, getIndexType());
+                    // This is the external index, and this is an attribute name and value.
+                    // Encode it as such.
+                    value = AnnotatedFieldNameUtil.tagAttributeIndexValue(name, value,
+                            BlackLabIndex.IndexType.EXTERNAL_FILES);
+                } else {
+                    // If name == null, value is the span name (external index format) or the
+                    // pre-encoded term to index (integrated index format), so in both cases we can
+                    // just index it unmodified.
                 }
             }
+
+            // Actually index the value
+            BytesRef payload = null;
             if (indexAtPositions == null) {
+                // Index at the current position
                 int position = annotation.lastValuePosition() + increment;
                 if (spanEndPos >= 0) {
                     // Span annotation payload
-                    payload = getSpanPayload(position, spanEndPos);
+                    payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
                 }
                 if (name != null && name.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME))
                     trace(value + " ");
                 annotation.addValueAtPosition(value, position, payload);
             } else {
+                // Index at several positions
+                // (these are usually stanoff annotations specifying multiple positions for value)
                 for (Integer position : indexAtPositions) {
                     if (spanEndPos >= 0) {
                         // Span annotation payload
-                        payload = getSpanPayload(position, spanEndPos);
+                        payload = PayloadUtils.tagEndPositionPayload(position, spanEndPos, getIndexType());
                     }
                     annotation.addValueAtPosition(value, position, payload);
                 }
             }
+
         } else {
             // Annotation not declared; report, but keep going
             if (!skippedAnnotations.contains(name)) {
@@ -610,12 +628,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 logger.error(documentName + ": skipping undeclared annotation " + name);
             }
         }
-    }
-
-    private BytesRef getSpanPayload(int spanStartPos, int spanEndPos) {
-        BytesRef payload;
-        payload = PayloadUtils.tagEndPositionPayload(spanStartPos, spanEndPos, getIndexType());
-        return payload;
     }
 
     @Override

@@ -246,8 +246,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             for (int i = 0; i < attributes.getLength(); i++) {
                 attrMap.put(attributes.getLocalName(i), attributes.getValue(i));
             }
-            int startTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap, getIndexType());
-            openTagIndexes.add(startTagIndex);
+            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap, getIndexType());
+            openTagIndexes.add(openTagIndex);
             openTagPositions.add(currentPos);
         }
 

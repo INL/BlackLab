@@ -43,6 +43,7 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.XmlUtil;
@@ -391,7 +392,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                 // For each configured annotation...
                 int lastValuePosition = -1; // keep track of last value position so we can update lagging annotations
                 for (ConfigAnnotation annotation : annotatedField.getAnnotations().values()) {
-                    processAnnotation(annotation, null, -1);
+                    processAnnotation(annotation, null, -1, null);
                     AnnotationWriter annotWriter = getAnnotation(annotation.getName());
                     int lvp = annotWriter.lastValuePosition();
                     if (lastValuePosition < lvp) {
@@ -487,7 +488,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     if (spanEndPos >= 0) {
                         // Standoff annotation to index a span.
 
-//                        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+                        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
                             // Classic external index format. Span name and attributes indexed separately.
 
                             // First index the span name at this position, then any configured
@@ -496,25 +497,29 @@ public class DocIndexerXPath extends DocIndexerConfig {
                             //  not an attribute)
                             annotation(null, spanName, 1, tokenPositions, spanEndPos);
                             for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                                processAnnotation(annotation, tokenPositions, spanEndPos);
+                                processAnnotation(annotation, tokenPositions, spanEndPos, null);
                             }
-//                        } else {
-//                            // Integrated index format. Span name and attributes indexed together as one term.
-//                            //@@@@
-//                            valueToIndex = AnnotatedFieldNameUtil.spanRelationType(spanName) +
-//                            annotation(null, valueToIndex, 1, tokenPositions, spanEndPos);
-//                        }
+                        } else {
+                            // Integrated index format. Span name and attributes indexed together as one term.
+                            Map<String, Collection<String>> attributes = new HashMap<>();
+                            for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
+                                processAnnotation(annotation, tokenPositions, spanEndPos,
+                                (annot, values) -> attributes.put(annot.getName(), values));
+                            }
+                            String valueToIndex = AnnotatedFieldNameUtil.relationIndexTermMulti(spanName, attributes);
+                            annotation(null, valueToIndex, 1, tokenPositions, spanEndPos);
+                        }
                     } else {
                         // "Regular" standoff annotation for a single token.
                         // Index annotation values at the position(s) indicated
                         for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                            processAnnotation(annotation, tokenPositions, spanEndPos);
+                            processAnnotation(annotation, tokenPositions, -1, null);
                         }
                     }
                 } else {
                     // Regular (non-span) standoff annotation.
                     for (ConfigAnnotation annotation: standoff.getAnnotations().values()) {
-                        processAnnotation(annotation, tokenPositions, -1);
+                        processAnnotation(annotation, tokenPositions, -1, null);
                     }
                 }
             }
@@ -693,6 +698,10 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
+    interface AnnotationHandler {
+        void handleValues(ConfigAnnotation annotation, Collection<String> values);
+    }
+
     /**
      * Process an annotation at the current position.
      *
@@ -705,10 +714,11 @@ public class DocIndexerXPath extends DocIndexerConfig {
      * @param indexAtPositions if null: index at the current position; otherwise,
      *                         index at all these positions
      * @param spanEndPos       if >= 0, index as a span annotation with this end position (exclusive)
+     * @param handler          if specified, call handler for each value found, including that of subannotations
      * @throws VTDException on XPath error
      */
     protected void processAnnotation(ConfigAnnotation annotation, List<Integer> indexAtPositions,
-            int spanEndPos) throws VTDException {
+            int spanEndPos, AnnotationHandler handler) throws VTDException {
         String basePath = annotation.getBasePath();
         if (basePath != null) {
             // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
@@ -727,9 +737,9 @@ public class DocIndexerXPath extends DocIndexerConfig {
 
             // Find matches for this annotation.
             Collection<String> annotValues = findProcessAndIndexAnnotationMatches(annotation, valuePath, indexAtPositions,
-                    null, spanEndPos);
+                    null, spanEndPos, handler);
 
-            processSubannotations(annotation, indexAtPositions, spanEndPos, annotValues);
+            processSubannotations(annotation, indexAtPositions, spanEndPos, annotValues, handler);
 
         } finally {
             if (basePath != null) {
@@ -739,14 +749,28 @@ public class DocIndexerXPath extends DocIndexerConfig {
         }
     }
 
+    /**
+     * Determine the valuePath for an annotation at the current word.
+     *
+     * The reason this can vary per word is the captureValuePath feature.
+     * This will capture a value from the current word and substitute it
+     * into the valuePath, allowing us to look up information elsewhere in the
+     * document.
+     *
+     * This is probably no longer needed when using Saxon, which has better
+     * support for advanced XPath features.
+     *
+     * @param annotation annotation we're processing
+     * @return the valuePath with any substitutions made
+     */
     private String determineValuePath(ConfigAnnotation annotation) {
-        // See if we want to capture any values and substitute them into the XPath
         int i = 1;
         String valuePath = annotation.getValuePath();
         if (valuePath == null) {
             // No valuePath given. Assume this will be captured using forEach.
             return null;
         }
+        // Substitute any captured values into the valuePath?
         for (String captureValuePath : annotation.getCaptureValuePaths()) {
             AutoPilot apCaptureValuePath = acquireAutoPilot(captureValuePath);
             String value = apCaptureValuePath.evalXPathToString();
@@ -758,7 +782,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     private void processSubannotations(ConfigAnnotation annotation, List<Integer> indexAtPositions, int spanEndPos,
-            Collection<String> parentAnnotValues) throws XPathEvalException, NavException {
+            Collection<String> parentAnnotValues, AnnotationHandler handler) throws XPathEvalException, NavException {
         // For each configured subannotation...
         for (ConfigAnnotation subAnnot : annotation.getSubAnnotations()) {
             // Subannotation configs without a valuePath are just for
@@ -805,7 +829,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                         actualSubAnnot.isCaptureXml() == annotation.isCaptureXml();
 
                     findProcessAndIndexAnnotationMatches(actualSubAnnot, subAnnot.getValuePath(), indexAtPositions,
-                            reuseAnnotationValue ? parentAnnotValues : null, spanEndPos);
+                            reuseAnnotationValue ? parentAnnotValues : null, spanEndPos, handler);
                 }
                 releaseAutoPilot(apForEach);
                 releaseAutoPilot(apName);
@@ -819,7 +843,7 @@ public class DocIndexerXPath extends DocIndexerConfig {
                     subAnnot.isCaptureXml() == annotation.isCaptureXml();
 
                 findProcessAndIndexAnnotationMatches(subAnnot, subAnnot.getValuePath(), indexAtPositions,
-                        reuseParentAnnotationValue ? parentAnnotValues : null, spanEndPos);
+                        reuseParentAnnotationValue ? parentAnnotValues : null, spanEndPos, handler);
             }
         }
     }
@@ -868,16 +892,15 @@ public class DocIndexerXPath extends DocIndexerConfig {
     }
 
     protected Collection<String> findProcessAndIndexAnnotationMatches(ConfigAnnotation annotation, String valuePath,
-            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos)
-                throws XPathEvalException, NavException {
-        // Find matches for this annotation.
+            List<Integer> indexAtPositions, final Collection<String> reuseValueFromParentAnnot, int spanEndPos,
+            AnnotationHandler handler) throws XPathEvalException, NavException {
+        // Find annotation matches, process and dedupe and index them.
         Collection<String> valuesFound = findAnnotationMatches(annotation, valuePath, reuseValueFromParentAnnot);
-
-        // Process and dedupe values before indexing.
         Collection<String> valuesToIndex = processAnnotationValues(annotation, valuesFound);
-
-        indexAnnotationValues(annotation, indexAtPositions, spanEndPos, valuesToIndex);
-
+        if (handler != null)
+            handler.handleValues(annotation, valuesToIndex);
+        else
+            indexAnnotationValues(annotation, indexAtPositions, spanEndPos, valuesToIndex);
         return valuesFound; // so subannotations can reuse it if they use the same valuePath
     }
 
