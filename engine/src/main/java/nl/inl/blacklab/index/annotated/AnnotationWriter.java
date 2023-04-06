@@ -428,7 +428,7 @@ public class AnnotationWriter {
             }
         } else {
             // integrated index; everything is indexed as a single term
-            String relType = AnnotatedFieldNameUtil.spanRelationType(tagName);
+            String relType = AnnotatedFieldNameUtil.inlineTagRelationType(tagName);
             String value = AnnotatedFieldNameUtil.relationIndexTerm(relType, attributes);
             addValueAtPosition(value, startPos, payload);
             tagIndexInAnnotation = lastValueIndex();

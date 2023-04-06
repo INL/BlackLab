@@ -11,16 +11,20 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Span;
 
 /**
- * Gets spans for a certain XML element.
+ * Gets spans for relations matches.
+ *
+ * Relations are indexed in the _relation annotation, with information in the
+ * payload to determine the source and target of the relation. The source and
+ * target also define the span that is returned.
  */
-class SpansTagsIntegrated extends BLSpans {
+class SpansRelations extends BLSpans {
 
     private final int END_NOT_YET_NEXTED = -1;
 
     private final int END_PAYLOAD_NOT_YET_READ = -2;
 
     /** Term query that found our relations */
-    private final BLSpans tags;
+    private final BLSpans relationsMatches;
 
     /** Span end position (or END_NOT_YET_NEXTED, or END_PAYLOAD_NOT_YET_READ) */
     private int end = END_NOT_YET_NEXTED;
@@ -32,17 +36,17 @@ class SpansTagsIntegrated extends BLSpans {
     private boolean payloadIndicatesPrimaryValues;
 
     /**
-     * Construct SpansTags.
+     * Construct SpansRelations.
      *
-     * NOTE: start tag payloads contain the location of the end tag. To work with these,
+     * NOTE: relation payloads contain the location of the other side of the relation. To work with these,
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
-     * @param spans relation matches for us to decode
+     * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansTagsIntegrated(BLSpans spans, boolean payloadIndicatesPrimaryValues) {
-        this.tags = spans;
+    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues) {
+        this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
     }
 
@@ -59,42 +63,36 @@ class SpansTagsIntegrated extends BLSpans {
     @Override
     public int nextDoc() throws IOException {
         end = END_NOT_YET_NEXTED;
-        return tags.nextDoc();
+        return relationsMatches.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
         end = END_NOT_YET_NEXTED;
-        return tags.advance(target);
+        return relationsMatches.advance(target);
     }
 
     @Override
     public int docID() {
-        return tags.docID();
+        return relationsMatches.docID();
     }
 
     @Override
     public int nextStartPosition() throws IOException {
         end = END_PAYLOAD_NOT_YET_READ;
-        return tags.nextStartPosition();
+        return relationsMatches.nextStartPosition();
     }
 
     @Override
     public int startPosition() {
-        return tags.startPosition();
+        return relationsMatches.startPosition();
     }
 
     private final PayloadSpanCollector collector = new PayloadSpanCollector();
 
-    /** Was the relationship indexed at the target instead of the source? */
-    public static final byte REL_FLAG_INDEXED_AT_TARGET = 0x01;
-
-    /** Is it a root relationship, that only has a target, no source? */
-    public static final byte REL_FLAG_ONLY_HAS_TARGET = 0x02;
-
     @Override
     public int endPosition() {
-        if (tags.startPosition() == NO_MORE_POSITIONS)
+        if (relationsMatches.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
         try {
             if (end == END_PAYLOAD_NOT_YET_READ) {
@@ -109,15 +107,13 @@ class SpansTagsIntegrated extends BLSpans {
     private void decodePayload() throws IOException {
         // Fetch the payload
         collector.reset();
-        // NOTE: tags is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
-        //   each start tag gets a payload, so there should always be one
-        tags.collect(collector);
+        // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
+        //   each relation gets a payload, so there should always be one
+        relationsMatches.collect(collector);
         byte[] payload = collector.getPayloads().iterator().next();
         ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
         relationInfo.deserialize(startPosition(), dataInput);
-
-        // Determine the end of the relation's span
-        end = Math.max(relationInfo.getSourceEnd(), relationInfo.getTargetEnd());
+        end = relationInfo.getSpanEnd();
     }
 
     public RelationInfo getRelationInfo() throws IOException {
@@ -128,17 +124,17 @@ class SpansTagsIntegrated extends BLSpans {
 
     @Override
     public int width() {
-        return tags.width();
+        return relationsMatches.width();
     }
 
     @Override
     public void collect(SpanCollector collector) throws IOException {
-        tags.collect(collector);
+        relationsMatches.collect(collector);
     }
 
     @Override
     public float positionsCost() {
-        return tags.positionsCost();
+        return relationsMatches.positionsCost();
     }
 
 }

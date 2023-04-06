@@ -156,6 +156,12 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     }
 
     @Override
+    public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
+            Map<String, String> attributes) {
+        throw new UnsupportedOperationException("Relations queries are not supported with the external index format.");
+    }
+
+    @Override
     public IndexType getType() {
         return IndexType.EXTERNAL_FILES;
     }

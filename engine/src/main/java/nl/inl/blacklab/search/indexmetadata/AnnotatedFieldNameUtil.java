@@ -152,7 +152,7 @@ public final class AnnotatedFieldNameUtil {
     /**
      * Determine the search regex for a relation.
      *
-     * NOTE: both relationType and attributes are interpreted as regexes,
+     * NOTE: both relationType and attribute names/values are interpreted as regexes,
      * so any regex special characters you wish to find should be escaped!
      *
      * @param relationType relation type
@@ -170,8 +170,18 @@ public final class AnnotatedFieldNameUtil {
         return relationType + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
     }
 
-    public static String spanRelationType(String tagName) {
+    public static String inlineTagRelationType(String tagName) {
         return INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR + tagName + ATTR_SEPARATOR;
+    }
+
+    public static String inlineTagNameFromRelationType(String relationType) {
+        if (relationType.startsWith(INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR)) {
+            // Actual inline tag relation. Strip off the prefix and suffix.
+            return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length(),
+                    relationType.length() - ATTR_SEPARATOR.length());
+        }
+        // Other type of relation. Just return unchanged.
+        return relationType;
     }
 
     /**
@@ -199,8 +209,8 @@ public final class AnnotatedFieldNameUtil {
 
     /**
      * Get the name of the annotation that stores the relations between words.
-     * @param index the index
-     * @return name of annotation that stores the relations between words
+     * @param indexType index type
+     * @return name of annotation that stores the relations between words (and inline tags)
      */
     public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
         return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;

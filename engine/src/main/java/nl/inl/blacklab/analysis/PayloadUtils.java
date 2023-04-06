@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * Utilities for dealing with payloads in BlackLab.
@@ -196,10 +196,7 @@ public class PayloadUtils {
 
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            DataOutput dataOutput = new OutputStreamDataOutput(os);
-            int relativePositionOfLastToken = endPosition - 1 - startPosition;
-            dataOutput.writeVInt(relativePositionOfLastToken);
-            // (rest of RelationInfo members have the default value)
+            RelationInfo.serializeInlineTag(startPosition, endPosition, new OutputStreamDataOutput(os));
             return new BytesRef(os.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);

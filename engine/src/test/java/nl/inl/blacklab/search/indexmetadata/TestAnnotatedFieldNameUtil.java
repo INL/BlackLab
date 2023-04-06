@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -59,5 +61,26 @@ public class TestAnnotatedFieldNameUtil {
         Assert.assertEquals("fun.word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun.word", false));
         Assert.assertEquals("fun_word", AnnotatedFieldNameUtil.sanitizeXmlElementName("fun_word", false));
         Assert.assertEquals("word0", AnnotatedFieldNameUtil.sanitizeXmlElementName("word0", false));
+    }
+
+    @Test
+    public void testInlineTagRelationType() {
+        String rt = AnnotatedFieldNameUtil.inlineTagRelationType("word");
+        String tagName = AnnotatedFieldNameUtil.inlineTagNameFromRelationType(rt);
+        Assert.assertEquals("word", tagName);
+    }
+
+    @Test
+    public void testRelationIndexTerm() {
+        String rt = AnnotatedFieldNameUtil.inlineTagRelationType("word");
+
+        // Index with attributes in one order - should be sorted alphabetically
+        Map<String, String> attr = Map.of("attr3", "v3", "attr2", "v2", "attr1", "v1");
+        String term = AnnotatedFieldNameUtil.relationIndexTerm(rt, attr);
+
+        // Now search with attributes in a different order - should again be sorted so the regex matches
+        Map<String, String> attrSearch = Map.of("attr1", "v1", "attr3", "v3", "attr2", "v2");
+        String regex = AnnotatedFieldNameUtil.relationSearchRegex(rt, attrSearch);
+        Assert.assertTrue(term.matches(regex));
     }
 }

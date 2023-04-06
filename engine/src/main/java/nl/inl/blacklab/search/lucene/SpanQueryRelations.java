@@ -22,41 +22,41 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  *
- * Returns spans corresponding to a certain element (tag) type.
+ * Returns relation spans matching the given type and (optionally) attributes.
  * <p>
  * This version works with the integrated index and the new _relation annotation.
  * <p>
  * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
  * elements in the document.
  */
-public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
+public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private BLSpanQuery clause;
 
-    private String tagName;
+    private String relationType;
 
     private String baseFieldName;
 
     private String relationFieldName;
 
-    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String relationFieldName, String tagName, Map<String, String> attributes) {
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, Map<String, String> attributes) {
         super(queryInfo);
 
-        // Construct the clause from the field, tag name and attributes
-        String relationType = AnnotatedFieldNameUtil.spanRelationType(tagName);
+        // Construct the clause from the field, relation type and attributes
         String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
-        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, new RegexpQuery(new Term(relationFieldName, regexp)));
+        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
+        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
 
-        init(relationFieldName, tagName, clause);
+        init(relationFieldName, relationType, clause);
     }
 
-    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String relationFieldName, String tagName, BLSpanQuery clause) {
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause) {
         super(queryInfo);
-        init(relationFieldName, tagName, clause);
+        init(relationFieldName, relationType, clause);
     }
 
-    private void init(String relationFieldName, String tagName, BLSpanQuery clause) {
-        this.tagName = tagName;
+    private void init(String relationFieldName, String relationType, BLSpanQuery clause) {
+        this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
         this.clause = clause;
@@ -67,7 +67,7 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryTagsIntegrated(queryInfo, relationFieldName, tagName, rewritten);
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten);
     }
 
     @Override
@@ -89,7 +89,7 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
 
         public Weight(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryTagsIntegrated.this, searcher, terms, boost);
+            super(SpanQueryRelations.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -111,14 +111,15 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansTagsIntegrated(spans, primaryIndicator);
+            return new SpansRelations(spans, primaryIndicator);
         }
 
     }
 
     @Override
     public String toString(String field) {
-        return "TAGS(" + tagName + ")";
+        // TODO: we should really change this to REL but it breaks tests for the integrated index...
+        return "TAGS(" + relationType + ")";
     }
 
     @Override
@@ -127,14 +128,14 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        SpanQueryTagsIntegrated that = (SpanQueryTagsIntegrated) o;
-        return clause.equals(that.clause) && tagName.equals(that.tagName) && baseFieldName.equals(that.baseFieldName)
+        SpanQueryRelations that = (SpanQueryRelations) o;
+        return clause.equals(that.clause) && relationType.equals(that.relationType) && baseFieldName.equals(that.baseFieldName)
                 && relationFieldName.equals(that.relationFieldName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, tagName, baseFieldName, relationFieldName);
+        return Objects.hash(clause, relationType, baseFieldName, relationFieldName);
     }
 
     /**
@@ -156,7 +157,11 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
     }
 
     public String getElementName() {
-        return tagName;
+        return AnnotatedFieldNameUtil.inlineTagNameFromRelationType(relationType);
+    }
+
+    public String getRelationType() {
+        return relationType;
     }
 
     @Override

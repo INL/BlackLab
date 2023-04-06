@@ -291,6 +291,12 @@ So the "relation type" here is `__tag\u0002s`, from which the tag name `s` can b
 
 After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
+#### Source and target
+
+Inline tags don't really have a source and target word, and using the first word of the sentence and the last word (or the first word of the next sentence) creates awkward situations when trying to determine the span start and end from the source and target.
+
+Instead, we'll opt to store a 0-length source and target for the tag. This source will start and end at the first word of the tag, and the target will start and end at the first word after the tag. This was the calculations line up.
+
 ### rtspan function
 
 Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtspan` could be provided, so that:
@@ -343,12 +349,12 @@ The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an imple
 
 The payload for a relation consists of the following fields:
 
-* `relOtherStart: VInt`: relative position of the (start of the) other end. This is always non-negative if we index relations at the first position in the document. Default: `1`.
+* `relOtherStart: VInt`: relative position of the (start of the) other end. This should always be non-negative if we index relations at the first position in the document. Default: `1`.
 * `flags: byte`: if `0x01` is set, the relation was indexed at the target, otherwise at the source. If `0x02` is set, the relation only has a target (root relation). The other bits are reserved for future use and must not be set. Default: `0`.
-* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. Default: `1`
-* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. Default: `1`
+* `thisLength: VInt`: length of this end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0`
+* `otherLength: VInt`: length of the other end of the relation. For a word group, this would be greater than one. For inline tags, this is set to 0. Default: `0`
 
-Fields may be ommitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 1, otherLength: 1 }`.
+Fields may be ommitted from the end if they have the default value. Therefore, an empty payload means `{ relOtherStart: 1, flags: 0, thisLength: 0, otherLength: 0 }`.
 
 In the future, we likely want to include unique relation ids (for some relations), for example to look up hierarchy information about inline tags. The unused bits in the `flags` byte could be used as a way to maintain backward binary compatibility with such future additions.
 
@@ -367,12 +373,8 @@ To calculate the Lucene span from a matched relation term's payload, first a few
 
 So the Lucene span for a relation is:
 
-    [thisStart, otherEnd)
-
-or maybe even
-
     [thisStart, max(thisEnd, otherEnd) )
 
-although it seems unlikely that we want the source and target to overlap.
+(although it seems unlikely that we want the source and target to overlap)
 
 (note that Lucene spans are half-open, i.e. the end position is not included in the span)

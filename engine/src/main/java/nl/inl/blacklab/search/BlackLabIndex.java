@@ -50,6 +50,8 @@ public interface BlackLabIndex extends AutoCloseable {
 
     BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes);
 
+    BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType, Map<String, String> attributes);
+
     IndexType getType();
 
     enum IndexType {
