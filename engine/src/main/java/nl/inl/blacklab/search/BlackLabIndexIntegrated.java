@@ -22,6 +22,8 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.codec.BlackLab40Codec;
 import nl.inl.blacklab.codec.BlackLab40PostingsReader;
 import nl.inl.blacklab.codec.BlackLab40StoredFieldsReader;
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -32,6 +34,8 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -149,6 +153,13 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         if (indexTemplateFile != null)
             throw new IllegalArgumentException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
         return getIndexMetadata(createNewIndex, (ConfigInputFormat)null);
+    }
+
+    @Override
+    protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
+        String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
+        ContentStore cs = ContentStoreIntegrated.open(reader(), luceneField);
+        registerContentStore(field, cs);
     }
 
     public ForwardIndex createForwardIndex(AnnotatedField field) {

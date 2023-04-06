@@ -31,8 +31,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -44,7 +42,6 @@ import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -605,25 +602,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return reader;
     }
 
-    protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex {
-        ContentStore cs;
-        if (this instanceof BlackLabIndexIntegrated) {
-            String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
-            cs = ContentStoreIntegrated.open(reader, luceneField);
-        } else {
-            // Classic external index format. Open external content store.
-            File dir = new File(indexDir, "cs_" + field.name());
-            if (dir.exists() || createNewContentStore) {
-                if (traceIndexOpening())
-                    logger.debug("    " + dir + "...");
-                cs = ContentStoreExternal.open(dir, indexMode, createNewContentStore);
-            } else {
-                throw new IllegalStateException("Field " + field.name() +
-                        " should have content store, but directory " + dir + " not found!");
-            }
-        }
-        registerContentStore(field, cs);
-    }
+    protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
     public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField) {

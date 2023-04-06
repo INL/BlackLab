@@ -32,7 +32,7 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.DownloadCache;
@@ -711,11 +711,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * True for classic index format, false for integrated index format.
      * Annotation names must be valid XML element names, which is why we sanitize certain
      * characters. But dashes are valid in XML element names. For compatibility, classic index
-     * format still forbids dashes, but the new integrated index format allows them.
+     * format still forbids dashes, but newer index formats allow them.
      *
      * @return true if dashes should be sanitized from annotation names
      */
     protected boolean disallowDashInname() {
-        return !(getDocWriter() instanceof BlackLabIndexIntegrated);
+        return getDocWriter().getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
     }
 }

@@ -19,6 +19,8 @@ import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Bits;
 
+import nl.inl.blacklab.contentstore.ContentStore;
+import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
@@ -32,6 +34,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorExternal;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -113,6 +116,20 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
             }
         }
         return writer;
+    }
+
+    @Override
+    protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
+        // Classic external index format. Open external content store.
+        File dir = new File(indexDir, "cs_" + field.name());
+        if (!dir.exists() && !createNewContentStore) {
+            throw new IllegalStateException("Field " + field.name() +
+                    " should have content store, but directory " + dir + " not found!");
+        }
+        if (traceIndexOpening())
+            logger.debug("    " + dir + "...");
+        ContentStore cs = ContentStoreExternal.open(dir, indexMode(), createNewContentStore);
+        registerContentStore(field, cs);
     }
 
     @Override

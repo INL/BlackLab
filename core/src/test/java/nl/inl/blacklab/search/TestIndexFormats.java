@@ -50,7 +50,7 @@ public class TestIndexFormats {
     int numberOfTerms() {
         // HACK. 28 is the "correcter" value (including secondary values that are not stored in the forward index)
         //   but the external index excludes the two secondary values.
-        return testIndex.indexFormat() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
+        return testIndex.getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
     }
 
     private static BlackLabIndex index;
@@ -191,7 +191,6 @@ public class TestIndexFormats {
         AnnotatedField field = index.metadata().annotatedFields().get("contents");
         Assert.assertTrue(field.hasXmlTags());
         Assert.assertTrue(field.hasContentStore());
-        boolean isIntegrated = index instanceof BlackLabIndexIntegrated;
         Set<String> expectedAnnotations =
                 new HashSet<>(Arrays.asList("word", "lemma", "pos",
                 AnnotatedFieldNameUtil.relationAnnotationName(index.getType()), AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
