@@ -122,10 +122,10 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
 
-            AnnotationWriter annotStartTag = fieldWriter.addAnnotation(
+            AnnotationWriter annotRelation = fieldWriter.addAnnotation(
                     AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
                     AnnotationSensitivities.ONLY_SENSITIVE, true, false);
-            annotStartTag.setHasForwardIndex(false);
+            annotRelation.setHasForwardIndex(false);
 
             // Create properties for the other annotations
             for (int i = 1; i < annotations.size(); i++) {

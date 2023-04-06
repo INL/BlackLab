@@ -75,8 +75,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     /** The indexing object for the annotated field we're currently processing. */
     private AnnotatedFieldWriter currentAnnotatedField;
 
-    /** The tag annotation for the annotated field we're currently processing. */
-    private AnnotationWriter annotStartTag;
+    /** The _relation annotation (where inline tags and dependency relations are stored)
+        for the annotated field we're currently processing. */
+    private AnnotationWriter annotRelation;
 
     /** The main annotation for the annotated field we're currently processing. */
     private AnnotationWriter annotMain;
@@ -179,7 +180,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         if (currentAnnotatedField == null)
             throw new InvalidInputFormatConfig("Tried to index annotated field " + name
                     + ", but field wasn't created. Likely cause: init() wasn't called. Did you call the base class method in index()?");
-        annotStartTag = currentAnnotatedField.tagsAnnotation();
+        annotRelation = currentAnnotatedField.tagsAnnotation();
         annotMain = currentAnnotatedField.mainAnnotation();
         annotPunct = currentAnnotatedField.punctAnnotation();
     }
@@ -201,7 +202,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected AnnotationWriter tagsAnnotation() {
-        return annotStartTag;
+        return annotRelation;
     }
 
     protected AnnotationWriter punctAnnotation() {

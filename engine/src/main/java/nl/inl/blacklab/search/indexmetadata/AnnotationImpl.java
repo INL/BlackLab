@@ -39,7 +39,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     private final CustomPropsMap custom = new CustomPropsMap();
 
     /**
-     * Is this an internal annotation, not relevant for a search interface (e.g. punct, starttag)
+     * Is this an internal annotation, not relevant for a search interface (e.g. punct, _relation)
      */
     private boolean isInternal;
 

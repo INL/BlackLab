@@ -37,28 +37,28 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
 
     private String baseFieldName;
 
-    private String startTagFieldName;
+    private String relationFieldName;
 
-    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attributes) {
+    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String relationFieldName, String tagName, Map<String, String> attributes) {
         super(queryInfo);
 
         // Construct the clause from the field, tag name and attributes
         String relationType = AnnotatedFieldNameUtil.spanRelationType(tagName);
         String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
-        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, new RegexpQuery(new Term(startTagFieldName, regexp)));
+        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, new RegexpQuery(new Term(relationFieldName, regexp)));
 
-        init(startTagFieldName, tagName, clause);
+        init(relationFieldName, tagName, clause);
     }
 
-    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String startTagFieldName, String tagName, BLSpanQuery clause) {
+    public SpanQueryTagsIntegrated(QueryInfo queryInfo, String relationFieldName, String tagName, BLSpanQuery clause) {
         super(queryInfo);
-        init(startTagFieldName, tagName, clause);
+        init(relationFieldName, tagName, clause);
     }
 
-    private void init(String startTagFieldName, String tagName, BLSpanQuery clause) {
+    private void init(String relationFieldName, String tagName, BLSpanQuery clause) {
         this.tagName = tagName;
-        baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
-        this.startTagFieldName = startTagFieldName;
+        baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
+        this.relationFieldName = relationFieldName;
         this.clause = clause;
     }
 
@@ -67,7 +67,7 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryTagsIntegrated(queryInfo, startTagFieldName, tagName, rewritten);
+        return new SpanQueryTagsIntegrated(queryInfo, relationFieldName, tagName, rewritten);
     }
 
     @Override
@@ -106,12 +106,12 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
 
         @Override
         public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
-            BLSpans startTags = weight.getSpans(context, requiredPostings);
-            if (startTags == null)
+            BLSpans spans = weight.getSpans(context, requiredPostings);
+            if (spans == null)
                 return null;
-            FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(startTagFieldName);
+            FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansTagsIntegrated(startTags, primaryIndicator);
+            return new SpansTagsIntegrated(spans, primaryIndicator);
         }
 
     }
@@ -129,12 +129,12 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
             return false;
         SpanQueryTagsIntegrated that = (SpanQueryTagsIntegrated) o;
         return clause.equals(that.clause) && tagName.equals(that.tagName) && baseFieldName.equals(that.baseFieldName)
-                && startTagFieldName.equals(that.startTagFieldName);
+                && relationFieldName.equals(that.relationFieldName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, tagName, baseFieldName, startTagFieldName);
+        return Objects.hash(clause, tagName, baseFieldName, relationFieldName);
     }
 
     /**
@@ -152,7 +152,7 @@ public class SpanQueryTagsIntegrated extends BLSpanQuery implements TagQuery {
 
     @Override
     public String getRealField() {
-        return startTagFieldName;
+        return relationFieldName;
     }
 
     public String getElementName() {

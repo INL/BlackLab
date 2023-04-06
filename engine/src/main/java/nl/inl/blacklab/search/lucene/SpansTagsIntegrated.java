@@ -38,11 +38,11 @@ class SpansTagsIntegrated extends BLSpans {
      * we also need to know if there's "is primary value" indicators in (some of) the payloads,
      * so we can skip these. See {@link PayloadUtils}.
      *
-     * @param startTags the positions of our start tags
+     * @param spans relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansTagsIntegrated(BLSpans startTags, boolean payloadIndicatesPrimaryValues) {
-        this.tags = startTags;
+    public SpansTagsIntegrated(BLSpans spans, boolean payloadIndicatesPrimaryValues) {
+        this.tags = spans;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
     }
 
