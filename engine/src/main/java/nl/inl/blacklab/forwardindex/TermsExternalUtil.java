@@ -22,7 +22,8 @@ public abstract class TermsExternalUtil {
      * mapped file in Java, and Windows doesn't allow truncating a mapped file). The
      * lower value on Windows prevents too much wasted space.
      */
-    protected static final int DEFAULT_MAX_FILE_MAP_SIZE = File.separatorChar == '\\' ? 100_000_000 : Integer.MAX_VALUE - 100;
+    protected static final int DEFAULT_MAX_FILE_MAP_SIZE_READ = Integer.MAX_VALUE - 100;
+    protected static final int DEFAULT_MAX_FILE_MAP_SIZE_WRITE = File.separatorChar == '\\' ? 100_000_000 : Integer.MAX_VALUE - 100;
 
     /**
      * The maximum block size to use while writing the terms file. Usually around
@@ -30,7 +31,8 @@ public abstract class TermsExternalUtil {
      * that this should be significantly larger than maxBlockSize, because we also
      * need to store offsets.
      */
-    protected static final int MAX_FILE_MAP_SIZE = DEFAULT_MAX_FILE_MAP_SIZE;
+    protected static final int MAX_FILE_MAP_SIZE_WRITE = DEFAULT_MAX_FILE_MAP_SIZE_WRITE;
+    protected static final int MAX_FILE_MAP_SIZE_READ = DEFAULT_MAX_FILE_MAP_SIZE_READ;
 
     /**
      * Read term strings from the given file.
@@ -42,7 +44,7 @@ public abstract class TermsExternalUtil {
     protected static Pair<IntBuffer, String[]> readTermsFromFileChannel(FileChannel fc, long fileLength) throws
             IOException {
         long fileMapStart = 0;
-        long fileMapLength = Math.min(MAX_FILE_MAP_SIZE, fileLength);
+        long fileMapLength = Math.min(MAX_FILE_MAP_SIZE_READ, fileLength);
         MappedByteBuffer buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
 
         int n = buf.getInt();
@@ -81,7 +83,7 @@ public abstract class TermsExternalUtil {
             // (and before we read the sort buffers)
             long bytesRead = buf.position();
             fileMapStart += bytesRead;
-            fileMapLength = Math.min(MAX_FILE_MAP_SIZE, fileLength - fileMapStart);
+            fileMapLength = Math.min(MAX_FILE_MAP_SIZE_READ, fileLength - fileMapStart);
             if (fileMapLength > 0) {
                 buf = fc.map(MapMode.READ_ONLY, fileMapStart, fileMapLength);
                 ib = buf.asIntBuffer();

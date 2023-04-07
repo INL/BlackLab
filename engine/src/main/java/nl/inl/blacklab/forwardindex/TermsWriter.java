@@ -40,7 +40,7 @@ class TermsWriter implements Terms {
     protected static final Logger logger = LogManager.getLogger(TermsWriter.class);
 
     /** Maximum size for blocks of term strings. */
-    private static final int DEFAULT_MAX_BLOCK_SIZE = TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE;
+    private static final int DEFAULT_MAX_BLOCK_SIZE = TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE_WRITE;
 
     /**
      * Number of sort buffers we store in the terms file (case-sensitive/insensitive
@@ -153,7 +153,7 @@ class TermsWriter implements Terms {
                     // "block-based" version of terms file that can grow larger than 2 GB.
                     // (this is now the only supported version)
 
-                    long fileMapStart = 0, fileMapLength = TermsExternalUtil.MAX_FILE_MAP_SIZE;
+                    long fileMapStart = 0, fileMapLength = TermsExternalUtil.MAX_FILE_MAP_SIZE_WRITE;
                     buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
                     buf.putInt(n); // Start with the number of terms      //@4
                     ib = buf.asIntBuffer();
@@ -303,8 +303,8 @@ class TermsWriter implements Terms {
     }
 
     public void setMaxBlockSize(int maxBlockSize) {
-        if ((long) maxBlockSize > ((long) TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE))
-            throw new BlackLabRuntimeException("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
+        if ((long) maxBlockSize > ((long) TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE_WRITE))
+            throw new BlackLabRuntimeException("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE_WRITE);
         this.maxBlockSize = maxBlockSize;
     }
 
