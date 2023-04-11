@@ -66,6 +66,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         case CHAT:
             docIndexer = new DocIndexerChat();
             break;
+        case CONLL_U:
+            docIndexer = new DocIndexerCoNLLU();
+            break;
         default:
             throw new InvalidInputFormatConfig(
                     "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");

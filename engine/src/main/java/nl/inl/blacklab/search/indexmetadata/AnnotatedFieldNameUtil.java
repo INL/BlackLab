@@ -117,6 +117,9 @@ public final class AnnotatedFieldNameUtil {
      * @return term to index in Lucene
      */
     public static String relationIndexTerm(String relationType, Map<String, String> attributes) {
+        if (attributes == null)
+            return relationType + ATTR_SEPARATOR;
+
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -125,7 +128,7 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return relationType + attrPart;
+        return relationType + ATTR_SEPARATOR + attrPart;
     }
 
     /**
@@ -171,14 +174,20 @@ public final class AnnotatedFieldNameUtil {
     }
 
     public static String inlineTagRelationType(String tagName) {
-        return INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR + tagName + ATTR_SEPARATOR;
+        return INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR + tagName;
     }
 
     public static String inlineTagNameFromRelationType(String relationType) {
         if (relationType.startsWith(INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR)) {
             // Actual inline tag relation. Strip off the prefix and suffix.
-            return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length(),
-                    relationType.length() - ATTR_SEPARATOR.length());
+            if (relationType.endsWith(ATTR_SEPARATOR)) {
+                // Trailing separator; remove it
+                return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length(),
+                        relationType.length() - ATTR_SEPARATOR.length());
+            } else {
+                // No trailing separator
+                return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length());
+            }
         }
         // Other type of relation. Just return unchanged.
         return relationType;

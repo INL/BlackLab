@@ -39,7 +39,7 @@ import nl.inl.util.FileUtil;
 /**
  * Class to read files in (CHILDES) CHAT format.
  *
- * Ported from Python code by Jan Odijk, see https://github.com/JanOdijk/chamd
+ * Ported from Python code by Jan Odijk, see https://github.com/UUDigitalHumanitieslab/chamd
  */
 public class DocIndexerChat extends DocIndexerConfig {
 

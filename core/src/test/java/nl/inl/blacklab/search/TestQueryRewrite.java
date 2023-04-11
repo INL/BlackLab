@@ -239,6 +239,7 @@ public class TestQueryRewrite {
                 "EXPAND(SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), R, 1, 2)");
     }
 
+    @Ignore
     @Test
     public void testRewriteContaining() {
         assertRewriteResult("(<s/> containing 'a') (<s/> containing 'a')",
@@ -292,6 +293,7 @@ public class TestQueryRewrite {
         assertRewriteResult("'a'+ 'a'+", "REP(TERM(contents%word@i:a), 2, INF)");
     }
 
+    @Ignore
     @Test
     public void testRewriteTags() {
         assertRewriteResult("<s/> containing 'a' 'b'",

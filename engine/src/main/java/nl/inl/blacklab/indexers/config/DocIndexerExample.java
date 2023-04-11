@@ -38,7 +38,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
  * each instruction being an uppercase word followed by 0 or more parameter(s),
  * whitespace-separated. Anything after a hash symbol is ignored.
  *
- * Below is a small example. For a larger excample, see example/example.txt in
+ * Below is a small example. For a larger example, see example/example.txt in
  * the resources dir.
  *
  * <code>

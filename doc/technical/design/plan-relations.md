@@ -41,6 +41,8 @@ We might even want to support discontinuous groups of words at some point, but t
 
 The [CoNLL-U format](https://universaldependencies.org/format.html) is commonly used to encode texts with these kinds of dependency relations. We should support this format. We can use the [LassySmall](https://github.com/UniversalDependencies/UD_Dutch-LassySmall) corpus for testing.
 
+This [CoNNL-U viewer](https://universaldependencies.org/conllu_viewer.html) is convenient for visualizing data in this format.
+
 Eventually we'll look at adding support for TEI with dependency relations as well.
 
 ## How to index relations
@@ -98,6 +100,8 @@ In certain cases we may want to combine two relations into a single larger span,
 
 A simple way to implement this operation is to return a combined span that has the source and target of the first relation. The source/target from the second relation that was not matched on is lost, but users could still capture those in a group if necessary.
 
+For the low-level syntax, capturing would be up to the user, but for the specicic dependency relations syntax, we could automatically capture relevant parts.
+
 ### Longer sources and targets
 
 If we generalize the above to sources/targets that are groups of words, the operations become slightly more complicated, because source and target are both spans in their own right, but the principles remain the same.
@@ -126,6 +130,15 @@ In addition to finding specific relations and combining them, maybe we want to f
 We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now.
 
 We can always add more user-friendly CQL extensions or additional query languages later if we want.
+
+For example, a syntax specific to dependency relations (the likely most common use case) could be added as an extension to CQL that can be enabled if desired. This extension could also include automatic capturing of relevant parts of the query.
+
+
+**TODO:**
+
+- exclude relations
+- requirement that certain groups may not contain the same match (e.g. targets of two relations attached to the same source must be different, so you can e.g. find two different adjectives attached to a noun)
+- ordering restrictions (combine with previous item? different matches implies different positions. although overlapping matches can be different as well, which might complicate matters)
 
 
 ### Quick reference
@@ -295,7 +308,7 @@ After that, the attributes follow, in alphabetical order, each attribute name pr
 
 Inline tags don't really have a source and target word, and using the first word of the sentence and the last word (or the first word of the next sentence) creates awkward situations when trying to determine the span start and end from the source and target.
 
-Instead, we'll opt to store a 0-length source and target for the tag. This source will start and end at the first word of the tag, and the target will start and end at the first word after the tag. This was the calculations line up.
+Instead, we'll opt to store a 0-length source and target for the tag. This source will start and end at the first word of the tag, and the target will start and end at the first word after the tag. This way the calculations line up.
 
 ### rtspan function
 

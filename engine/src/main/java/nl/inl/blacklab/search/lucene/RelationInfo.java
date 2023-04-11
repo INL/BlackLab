@@ -195,4 +195,9 @@ public class RelationInfo {
     public int hashCode() {
         return Objects.hash(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
     }
+
+    public boolean isTag() {
+        return !onlyHasTarget && sourceEnd - sourceStart == 1 && targetEnd - targetStart == 1 &&
+                sourceStart <= targetStart;
+    }
 }

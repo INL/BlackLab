@@ -1,5 +1,7 @@
 package nl.inl.blacklab.index.annotated;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -8,11 +10,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -21,6 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
 
 /**
@@ -414,26 +417,48 @@ public class AnnotationWriter {
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        BytesRef payload = endPos >= 0 ? PayloadUtils.tagEndPositionPayload(startPos, endPos,
-                indexType) : null;
+        RelationInfo relationInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
+        String relationType = AnnotatedFieldNameUtil.inlineTagRelationType(tagName);
+        return indexRelation(relationType, startPos, attributes, indexType, relationInfo);
+    }
+
+    public int indexRelation(String relationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
+            int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+        RelationInfo relationInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+        int indexAt = Math.min(sourceStart, targetStart);
+        return indexRelation(relationType, indexAt, attributes, indexType, relationInfo);
+    }
+
+    private int indexRelation(String relationType, int indexAt, Map<String, String> attributes,
+            BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        try {
+            relationInfo.serialize(indexAt, new OutputStreamDataOutput(os));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        BytesRef payload = new BytesRef(os.toByteArray());
+
         int tagIndexInAnnotation;
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            if (relationInfo.isTag()) {
+                // Classic external index doesn't support relations; ignore
+                return indexAt;
+            }
             // classic external index; tag name and attributes are indexed separately
-            addValueAtPosition(tagName, startPos, payload);
+            addValueAtPosition(relationType, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
                 String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                         BlackLabIndex.IndexType.EXTERNAL_FILES);
-                addValueAtPosition(term, startPos, null);
+                addValueAtPosition(term, indexAt, null);
             }
         } else {
             // integrated index; everything is indexed as a single term
-            String relType = AnnotatedFieldNameUtil.inlineTagRelationType(tagName);
-            String value = AnnotatedFieldNameUtil.relationIndexTerm(relType, attributes);
-            addValueAtPosition(value, startPos, payload);
+            String value = AnnotatedFieldNameUtil.relationIndexTerm(relationType, attributes);
+            addValueAtPosition(value, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
         }
         return tagIndexInAnnotation;
     }
-
 }
