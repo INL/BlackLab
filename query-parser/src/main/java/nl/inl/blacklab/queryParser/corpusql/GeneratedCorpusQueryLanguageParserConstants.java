@@ -68,6 +68,7 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"|\"",
     "\"->\"",
     "\":\"",
+    "\"_\"",
     "\"[\"",
     "\"]\"",
   };

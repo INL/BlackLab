@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.textpattern;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,32 +46,53 @@ public class QueryExtensions {
                 fiAccessor);
     };
 
+    enum ArgType {
+        QUERY,
+        STRING
+    }
+
+    private static class FuncInfo {
+        FunctionType func;
+
+        List<ArgType> argTypes;
+
+        List<Object> defaultValues;
+
+        public FuncInfo(FunctionType func, List<ArgType> argTypes, List<Object> defaultValues) {
+            this.func = func;
+            this.argTypes = argTypes;
+            this.defaultValues = defaultValues;
+        }
+    }
+
     /** Registry of extension functions by name */
-    private static Map<String, FunctionType> functions = new HashMap<>();
+    private static Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
         // Add some debug functions to the registry
-        add("_FI1", _FI1);
-        add("_FI2", _FI2);
+        register("_FI1", _FI1, List.of(ArgType.QUERY, ArgType.QUERY));
+        register("_FI2", _FI2, List.of(ArgType.QUERY, ArgType.QUERY));
     }
 
     /**
      * Add a query function to the registry.
      *
      * @param func query extension function
+     * @param argTypes argument types
      */
-    public static void add(String name, FunctionType func) {
-        functions.put(name, func);
+    public static void register(String name, FunctionType func, List<ArgType> argTypes) {
+        functions.put(name, new FuncInfo(func, argTypes, Collections.emptyList()));
     }
 
     /**
-     * Get a query function from the registry.
+     * Add a query function to the registry.
      *
-     * @param name name of the query function
-     * @return the query function, or null if not found
+     * @param func query extension function
+     * @param argTypes argument types
+     * @param defaultValues default values for arguments
      */
-    public static FunctionType get(String name) {
-        return functions.get(name);
+    public static void register(String name, FunctionType func, List<ArgType> argTypes, List<Object> defaultValues) {
+        functions.put(name, new FuncInfo(func, argTypes, defaultValues));
     }
 
     /**
@@ -82,6 +105,34 @@ public class QueryExtensions {
     }
 
     /**
+     * Make sure we recognize a string arg as a string and not a query.
+     *
+     * @param name name of the function
+     * @param args arguments
+     * @return arguments with the correct type
+     */
+    public static List<?> preprocessArgs(String name, List<?> args) {
+        FuncInfo funcInfo = functions.get(name);
+        if (funcInfo == null)
+            throw new UnsupportedOperationException("Unknown function: " + name);
+
+        // Add any default argument values
+        List<Object> newArgs = new ArrayList<>(args);
+        for (int i = 0; i < args.size(); i++) {
+            Object arg = args.get(i);
+            switch (funcInfo.argTypes.get(i)) {
+            case STRING:
+                if (arg instanceof TextPatternTerm) {
+                    // Interpret as regular string, not as a query
+                    newArgs.set(i, ((TextPatternTerm) arg).getValue());
+                }
+                break;
+            }
+        }
+        return newArgs;
+    }
+
+    /**
      * Apply a query extension function.
      * @param name name of the function
      * @param context query execution context
@@ -89,10 +140,42 @@ public class QueryExtensions {
      * @return the query returned by the function
      */
     public static BLSpanQuery apply(String name, QueryExecutionContext context, List<Object> args) {
-        FunctionType functionType = QueryExtensions.get(name);
-        if (functionType == null)
-            throw new UnsupportedOperationException("Unsupported query function: " + name);
-        return functionType.apply(context, args);
+        FuncInfo funcInfo = functions.get(name);
+        if (funcInfo == null)
+            throw new UnsupportedOperationException("Unknown function: " + name);
+
+        // Add any default argument values
+        List<Object> newArgs = new ArrayList<>(args);
+        for (int i = 0; i < funcInfo.argTypes.size(); i++) {
+            // Fill in default value for argument if missing
+            if (i >= args.size()) {
+                // Missing argument.
+                if (i >= funcInfo.defaultValues.size())
+                    throw new IllegalArgumentException("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
+                newArgs.add(funcInfo.defaultValues.get(i));
+            } else if (newArgs.get(i) == null) {
+                // Explicitly set to empty (_)
+                newArgs.set(i, funcInfo.defaultValues.get(i));
+            }
+
+            // Check argument type
+            ArgType expectedType = funcInfo.argTypes.get(i);
+            boolean wrongType = true;
+            switch (expectedType) {
+            case QUERY:
+                wrongType = !(newArgs.get(i) instanceof BLSpanQuery);
+                break;
+            case STRING:
+                wrongType = !(newArgs.get(i) instanceof String);
+            }
+            if (wrongType)
+                throw new IllegalArgumentException("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
+                        + ", got " + expectedType);
+        }
+
+        if (newArgs.size() != funcInfo.argTypes.size())
+            throw new IllegalArgumentException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
+        return funcInfo.func.apply(context, args);
     }
 
 }

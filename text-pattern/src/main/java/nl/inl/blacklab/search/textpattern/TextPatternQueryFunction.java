@@ -19,21 +19,19 @@ public class TextPatternQueryFunction extends TextPattern {
 
     private final String name;
 
-    private final List<? extends Object> args;
+    private final List<?> args;
 
     public static TextPatternQueryFunction create(String name, List<TextPattern> args) {
         return new TextPatternQueryFunction(name, args);
     }
 
-    public TextPatternQueryFunction(String name, List<? extends Object> args) {
-        this.name = name;
-        this.args = new ArrayList<>(args);
-
+    public TextPatternQueryFunction(String name, List<?> args) {
         if (!QueryExtensions.exists(name))
             throw new UnsupportedOperationException("Supported query function: _FI1, _FI2");
+        this.name = name;
 
-        if (args.size() != 2)
-            throw new UnsupportedOperationException("Query function must get two arguments!");
+        // Make sure string arguments are recognized as such (and not seen as a query)
+        this.args = QueryExtensions.preprocessArgs(name, args);
     }
 
     @Override

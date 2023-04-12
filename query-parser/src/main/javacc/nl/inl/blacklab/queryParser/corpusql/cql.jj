@@ -348,7 +348,7 @@ TextPattern sequencePart():
 }
 {
     LOOKAHEAD(2)
-    ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
     {
         if (rep != null)
         {
@@ -365,7 +365,7 @@ TextPattern sequencePart():
         return m;
     }
 |
-	label=captureLabel() ":" ( m=tag() | m=position() | "(" m=complexQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
+	label=captureLabel() ":" ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
 		{
@@ -386,30 +386,39 @@ TextPattern sequencePart():
 TextPattern queryFunctionCall():
 {
     Token func = null;
-    List<TextPattern> queryFuncParamList;
+    List<Object> queryFuncParamList;
 }
 {
-    func=<NAME> "(" queryFuncParamList=commaSeparatedListOfQueries() ")"
+    func=<NAME> "(" queryFuncParamList=commaSeparatedParamList() ")"
     {
         String funcName = func.toString(); 
-        if (!funcName.startsWith("_")) {
+        /*if (!funcName.startsWith("_")) {
             throw new UnsupportedOperationException("Query functions are a BlackLab-specific extension to Corpus Query Language and, to avoid future problems, must start with '_' !");
-        }
+        }*/
         return new TextPatternQueryFunction(funcName, queryFuncParamList);
     }
 }
 
-List<TextPattern> commaSeparatedListOfQueries():
+List<Object> commaSeparatedParamList():
 {
-    TextPattern q = null;
-    List<TextPattern> p = new ArrayList<TextPattern>();
+    Object q = null;
+    List<Object> p = new ArrayList<Object>();
 }
 {
-    q=complexQuery() [ "," p=commaSeparatedListOfQueries() ]
+    q=functionParam() [ "," p=commaSeparatedParamList() ]
     {
         p.add(0, q);
         return p;
     }
+}
+
+Object functionParam():
+{
+    Object q;
+}
+{
+    q=constrainedQuery() { return q; /* this covers both actual queries and plain old strings */ }
+|   "_"              { return null; /* use default value for parameter */ }
 }
 
 String captureLabel():

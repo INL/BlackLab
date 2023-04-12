@@ -233,7 +233,7 @@ Example:
 
 This will find spans containing a verb with its subject and object. It will return a larger span that includes the spans from both relations, with the source and target of the first relation (i.e. the verb and subject).
 
-The third parameter, `matchtype`, specifies which ends to match:
+The third parameter, `matchtype`, is a string that specifies which ends to match:
 - `source` or `s` matches the sources of `rel1` and `rel2`
 - `target` or `t` matches the targets
 - `target_source` matches the first's target to the second's source
@@ -249,7 +249,7 @@ Find words that have 'man' as their object and 'dog' as their subject (i.e. find
     rsource(rmatch(
       rel(_, 'has_object', 'man'),
       rel(_, 'has_subject', 'dog'),
-      source
+      'source'
     ))
 
 Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
@@ -257,7 +257,7 @@ Find words that are the target of both a `has_object` and a `has_subject` relati
     rtarget(rmatch(
       rel(_, 'has_object'),
       rel(_, 'has_subject'),
-      target
+      'target'
     ))
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
@@ -265,7 +265,7 @@ Find words that are the subject of a word that has 'man' as its object (i.e. fin
     rtarget(rmatch(
       rel(_, 'has_subject'),
       rel(_, 'has_object', 'man'),
-      source
+      'source'
     ))
 
 
@@ -276,7 +276,7 @@ Just like in other CQL queries, we can tag parts with a group name to capture th
     rmatch(
       rel(V:[pos='VERB'], 'has_subject', S:[]),
       rel([pos='VERB'], 'has_object', O:[]),
-      source
+      'source'
     )
 
 This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.
