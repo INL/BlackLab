@@ -1,0 +1,289 @@
+{
+  "summary": {
+    "searchParam": {
+      "sort": "field:pid,hitposition",
+      "wordsaroundhit": "1",
+      "starts": "29,51,255,323,326",
+      "ends": "30,52,256,324,327",
+      "pids": "PBsve430,PBsve430,PBsve430,PBsve430,PBsve430",
+      "waitfortotal": "true",
+      "op": "hits",
+      "indexname": "test"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "windowFirstResult": 0,
+    "requestedWindowSize": 50,
+    "actualWindowSize": 5,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 5,
+    "numberOfHitsRetrieved": 5,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    }
+  },
+  "hits": [
+    {
+      "docPid": "PBsve430",
+      "start": 29,
+      "end": 30,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "need"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "need"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "letter"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "letter"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 51,
+      "end": 52,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "have"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "have"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "look"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "look"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 255,
+      "end": 256,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "visa"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "visa"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 323,
+      "end": 324,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "thank"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "thanks"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "lot"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 326,
+      "end": 327,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "thank"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "thanks"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "lot"
+        ]
+      }
+    }
+  ],
+  "docInfos": {
+    "PBsve430": {
+      "fromInputFile": [
+        "PBsve430.xml"
+      ],
+      "pid": [
+        "PBsve430"
+      ],
+      "title": [
+        "service encounter about visa application for family members"
+      ],
+      "lengthInTokens": 334,
+      "mayView": true
+    }
+  }
+}

@@ -45,6 +45,7 @@ import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -415,8 +416,29 @@ public class WebserviceParamsImpl implements WebserviceParams {
         try {
             Query filter = filterQuery();
             Optional<TextPattern> pattern = pattern();
-            if (!pattern.isPresent())
-                throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
+            if (!pattern.isPresent()) {
+                String[] pids = getHitPids();
+                int[] docIds = new int[pids.length];
+                int[] starts = getHitStarts();
+                int[] ends = getHitEnds();
+
+                // todo use hitLenghts if hitEnds is not provided
+                if (starts.length != pids.length || ends.length != pids.length) {
+                    throw new BadRequest("INVALID_PARAMETER", "Number of values for pids, starts and ends must be equal. (pids: " + pids.length + ", starts: " + starts.length + ", ends: " + ends.length + ")");
+                }
+                for (int i = 0; i < pids.length; i++) {
+                    int id = docIds[i] = BlsUtils.getDocIdFromPid(blIndex(), pids[i]);
+                    if (id == -1) throw new BadRequest("INVALID_PARAMETER", "Unknown pid: " + pids[i]);
+                }
+
+                // only now check if the secondary mode params were supplied at all, if not, throw the error for missing pattern
+                // (this is to avoid the error message for missing pattern when the user actually supplied pids)
+                if (pids.length == 0) {
+                    throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
+                }
+
+                return search.find(docIds, starts, ends, searchSettings());
+            }
 
             SearchSettings searchSettings = searchSettings();
             return search.find(pattern.get().toQuery(search.queryInfo(), filter), searchSettings);
@@ -731,6 +753,21 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public String getFieldName() {
         return fieldName == null ? params.getFieldName() : fieldName;
+    }
+
+    @Override
+    public String[] getHitPids() {
+        return params.getHitPids();
+    }
+
+    @Override
+    public int[] getHitStarts() {
+        return params.getHitStarts();
+    }
+
+    @Override
+    public int[] getHitEnds() {
+        return params.getHitEnds();
     }
 
     public void setFieldName(String fieldName) {

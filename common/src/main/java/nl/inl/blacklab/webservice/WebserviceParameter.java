@@ -51,6 +51,11 @@ public enum WebserviceParameter {
     HIT_END("hitend"),
     WORD_START("wordstart"),
     WORD_END("wordend"),
+    
+    // Hits from hit start+hit end+docpid
+    HIT_STARTS("starts"),
+    HIT_ENDS("ends"),
+    HIT_PIDS("pids"),
 
     EXPLAIN_QUERY_REWRITE("explain"),
 

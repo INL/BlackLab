@@ -163,7 +163,9 @@ function expectUnchanged(category, testName, actualResponse, removeParametersFro
     const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanitizeFileName(category), `${sanitizeFileName(testName)}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
-        const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
+        let savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
+        if (removeParametersFromResponse)
+            savedResponse = sanitizeBlsResponse(savedResponse, true);
 
         // Compare
         expect(sanitized).to.be.deep.equal(savedResponse);

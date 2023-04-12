@@ -156,6 +156,19 @@ public abstract class QueryParamsAbstract implements QueryParams {
                 Collections.emptySet() :
                 new HashSet<>(Arrays.asList(val.split("\\s*,\\s*")));
     }
+    
+    /**
+     * Get the parameter value as a list of strings. Split on ","
+     * 
+     * @param par parameter type
+     * @return value
+     */
+    protected String[] getList(WebserviceParameter par) {
+    	String val = get(par);
+        if (val == null)
+            return new String[0];
+    	return val.split(",");
+    }
 
     /**
      * Get parameter value if it was explicitly passed with the request.
@@ -346,6 +359,24 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public int getHitEnd() { return getInt(WebserviceParameter.HIT_END); }
+
+    public int[] getHitStarts() {
+    	String[] starts = getList(WebserviceParameter.HIT_STARTS);
+    	int[] numbers = new int[starts.length];
+    	for (int i = 0; i < starts.length; ++i) numbers[i] = Integer.parseInt(starts[i]);
+    	return numbers;
+    }
+
+    public int[] getHitEnds() {
+    	String[] ends = getList(WebserviceParameter.HIT_ENDS);
+    	int[] numbers = new int[ends.length];
+    	for (int i = 0; i < ends.length; ++i) numbers[i] = Integer.parseInt(ends[i]);
+    	return numbers;
+    }
+
+    public String[] getHitPids() {
+    	return getList(WebserviceParameter.HIT_PIDS);
+    }
 
     @Override
     public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }

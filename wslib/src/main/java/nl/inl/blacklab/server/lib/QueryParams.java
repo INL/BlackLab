@@ -143,6 +143,12 @@ public interface QueryParams {
 
     String getFieldName();
 
+    String[] getHitPids();
+
+    int[] getHitStarts();
+
+    int[] getHitEnds();
+
     /**
      * Get the operation, for webservices that pass operation via a parameter.
      *

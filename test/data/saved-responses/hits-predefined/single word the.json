@@ -1,0 +1,1067 @@
+{
+  "summary": {
+    "searchParam": {
+      "sort": "field:pid,hitposition",
+      "wordsaroundhit": "1",
+      "starts": "9,19,81,135,144,183,191,248,28,35,90,95,111,114,137,141,148,92,198,235,236",
+      "ends": "10,20,82,136,145,184,192,249,29,36,91,96,112,115,138,142,149,93,199,236,237",
+      "pids": "PBsve430,PBsve430,PBsve430,PBsve430,PBsve430,PBsve430,PBsve430,PBsve430,PBsve435,PBsve435,PBsve435,PBsve435,PBsve435,PBsve435,PBsve435,PBsve435,PBsve435,PRint602,PRint602,PRint602,PRint602",
+      "waitfortotal": "true",
+      "op": "hits",
+      "indexname": "test"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "countTime": "VALUE_REMOVED",
+    "windowFirstResult": 0,
+    "requestedWindowSize": 50,
+    "actualWindowSize": 21,
+    "windowHasPrevious": false,
+    "windowHasNext": false,
+    "stillCounting": false,
+    "numberOfHits": 21,
+    "numberOfHitsRetrieved": 21,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    }
+  },
+  "hits": [
+    {
+      "docPid": "PBsve430",
+      "start": 9,
+      "end": 10,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "visum"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "visa"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 19,
+      "end": 20,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "district"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "district"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 81,
+      "end": 82,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "need"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "need"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "confirmation"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "confirmation"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 135,
+      "end": 136,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "you"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "confirmation"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "confirmation"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 144,
+      "end": 145,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "is"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "right"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "right"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 183,
+      "end": 184,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "until"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "until"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "end"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "end"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 191,
+      "end": 192,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "and"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "and"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "monthly"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "monthly"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve430",
+      "start": 248,
+      "end": 249,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "all"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "all"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "scholarship"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "scholarship"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 28,
+      "end": 29,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "er"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "er"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "address"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "address"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 35,
+      "end": 36,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "er"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "er"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "new"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "new"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 90,
+      "end": 91,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "address"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "address"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 95,
+      "end": 96,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_1"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "confirmation"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "confirmation"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 111,
+      "end": 112,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 114,
+      "end": 115,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "new"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "new"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 137,
+      "end": 138,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "'s"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "confirmation"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "confirmation"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 141,
+      "end": 142,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "period"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "period"
+        ]
+      }
+    },
+    {
+      "docPid": "PBsve435",
+      "start": 148,
+      "end": 149,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "till"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "till"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "thirtieth"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "thirtieth"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 92,
+      "end": 93,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "join"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "join"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "conference"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "conference"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 198,
+      "end": 199,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "vienna"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "vienna"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 235,
+      "end": 236,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      }
+    },
+    {
+      "docPid": "PRint602",
+      "start": 236,
+      "end": 237,
+      "left": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "match": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "right": {
+        "punct": [
+          " "
+        ],
+        "lemma": [
+          "er"
+        ],
+        "pos": [
+          ""
+        ],
+        "word": [
+          "er"
+        ]
+      }
+    }
+  ],
+  "docInfos": {
+    "PBsve430": {
+      "fromInputFile": [
+        "PBsve430.xml"
+      ],
+      "pid": [
+        "PBsve430"
+      ],
+      "title": [
+        "service encounter about visa application for family members"
+      ],
+      "lengthInTokens": 334,
+      "mayView": true
+    },
+    "PRint602": {
+      "fromInputFile": [
+        "PRint602.xml"
+      ],
+      "pid": [
+        "PRint602"
+      ],
+      "title": [
+        "interview about conference experience and impressions of city"
+      ],
+      "lengthInTokens": 268,
+      "mayView": true
+    },
+    "PBsve435": {
+      "fromInputFile": [
+        "PBsve435.xml"
+      ],
+      "pid": [
+        "PBsve435"
+      ],
+      "title": [
+        "service encounter about getting an address printed out"
+      ],
+      "lengthInTokens": 164,
+      "mayView": true
+    }
+  }
+}
