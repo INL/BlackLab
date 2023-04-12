@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.lucene.SpanQueryTagsExternal;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.VersionFile;
@@ -157,7 +158,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
 
     @Override
     public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes) {
+            Map<String, String> attributes, SpanQueryRelations.Filter filter) {
         throw new UnsupportedOperationException("Relations queries are not supported with the external index format.");
     }
 

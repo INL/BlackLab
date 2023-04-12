@@ -33,6 +33,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
@@ -50,7 +51,8 @@ public interface BlackLabIndex extends AutoCloseable {
 
     BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes);
 
-    BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType, Map<String, String> attributes);
+    BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
+            Map<String, String> attributes, SpanQueryRelations.Filter filter);
 
     IndexType getType();
 

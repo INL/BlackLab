@@ -31,6 +31,39 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
+    public enum Filter {
+        // Only return root relations (relations without a source)
+        ROOT("root"),
+
+        // Only return relations where target occurs after source
+        FORWARD("forward"),
+
+        // Only return relations where target occurs before source
+        BACKWARD("backward"),
+
+        // Return any relation
+        BOTH_DIRECTIONS("both");
+
+        private String code;
+
+        Filter(String code) {
+            this.code = code;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        public static Filter fromCode(String code) {
+            for (Filter filter : values()) {
+                if (filter.getCode().equals(code)) {
+                    return filter;
+                }
+            }
+            throw new IllegalArgumentException("Unknown relation filter: " + code);
+        }
+    }
+
     private BLSpanQuery clause;
 
     private String relationType;
@@ -39,7 +72,9 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private String relationFieldName;
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, Map<String, String> attributes) {
+    private Filter filter;
+
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, Map<String, String> attributes, Filter filter) {
         super(queryInfo);
 
         // Construct the clause from the field, relation type and attributes
@@ -47,19 +82,20 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
 
-        init(relationFieldName, relationType, clause);
+        init(relationFieldName, relationType, clause, filter);
     }
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause) {
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause, Filter filter) {
         super(queryInfo);
-        init(relationFieldName, relationType, clause);
+        init(relationFieldName, relationType, clause, filter);
     }
 
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause) {
+    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Filter filter) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
         this.clause = clause;
+        this.filter = filter;
     }
 
     @Override
@@ -67,7 +103,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten);
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten, filter);
     }
 
     @Override
@@ -111,7 +147,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(spans, primaryIndicator);
+            return new SpansRelations(spans, primaryIndicator, filter);
         }
 
     }

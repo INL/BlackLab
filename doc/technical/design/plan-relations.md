@@ -143,140 +143,119 @@ For example, a syntax specific to dependency relations (the likely most common u
 
 ### Quick reference
 
-Find relation:
+Find relations by type, what direction they point in and whether or not they are root.
+Use `spanMode` to indicate what you want the associated span start/end to be.
 
-    rel(source, reltype, target)
+    rel(reltype, filter = "both")
 
-Match and combine relations in various ways:
+    # filter: "root", "forward", "backward", "both" (default)
 
-    rmatch(rel1, rel2, matchtype)
+Span adjustment:
 
-Get sources/targets of relation matches:
+    # Same relation matches, but span is set to the source
+    rspan(relation_matches, 'source')
 
-    rsource( <relation-matches> )
-    rtarget( <relation-matches> )
+    # Same relation matches, but span is set to the target
+    rspan(relation_matches, 'target')
 
-Encode inline tag term with optional attributes:
-
-    rtspan(tagName, attr1, value1, attr2, value2, ...)
+    # Same relation matches, but span is set to contain both source and target
+    rspan(relation_matches, 'full')
 
 
 ### Finding relations
 
 Below are examples of how to use the `rel(source, type, target)` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used. Parameter defaults are: `rel(source=[], type='.+', target=[])`.
 
-Find `has_object` relations where the source word equals bites:
+Find `has_object` relations where the source word equals `bites`:
 
-    rel('bites', 'has_object')
+    'bites' & rspan(rel('has_object'), 'source')
 
-Find all relations where the source word equals bites:
+Find all relations where the source word equals `bites`:
 
-    rel('bites')
+    'bites' & rspan(rel(), 'source'))
 
-Find `has_object` relations where the target word equals man:
+Find `has_object` relations where the target word equals `man`:
 
-    rel(_, 'has_object', 'man')
+    'man' & rspan(rel('has_object'), 'target')
 
-Find all relations where the target word equals man (the following 2 are equivalent):
+Find all relations where the target word equals `man`:
 
-    rel(_, '.+', 'man')
-    rel(_, _, 'man')
+    'man' & rspan(rel(_), 'target')
 
-Find all `has_object` relations (the following are equivalent):
+Find all `has_object` relations:
 
-    rel([], [_relation='has_object'])
-    rel(_, 'has_object')
+    rel('has_object')
 
-Find all relations (a very taxing query in a huge corpus, obviously) (the following are all equivalent):
+Find all `has_object` relations that point forward:
 
-    rel([], [_relation='.+'], [])
-    rel([], '.+', [])
-    rel(_, _, _)
+    rel('has_object', 'forward')
+
+Find all root relations:
+
+    rel(_, 'root')
+
+Find all relations (a very taxing query in a huge corpus, obviously):
+
     rel()
-
 
 Find sentences:
 
     <s/>
-    rel(_, rtspan('s'))
+    rel(rtspan('s'))
 
 Find sentences with happy sentiment (these are all equivalent):
 
     <s sentiment='happy' confidence='10' />
-    rel(_, rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
-    rel(_, '__tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel(rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
+    rel('__tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
 
 ### Extract source or target
 
 Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
 
-    rsource(rel(_, 'has_object', 'man'))
+    'man' & rspan(rel('has_object'), 'target'))
+    rsource(man'))
 
 Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
 
-    rtarget(rel('bites', 'has_object'))
+    rspan('bites' & rspan(rel('has_object'), 'source'), 'target')
 
 
 ### Combining relation matches
 
-We can use `rmatch` to match relations in various ways:
-
-    rmatch(rel1, rel2, matchtype)
-
-Example:
-
-    rmatch(
-      rel([pos='VERB'], 'nsubj'),
-      rel([pos='VERB'], 'obj'),
-      source
-    )
-
-This will find spans containing a verb with its subject and object. It will return a larger span that includes the spans from both relations, with the source and target of the first relation (i.e. the verb and subject).
-
-The third parameter, `matchtype`, is a string that specifies which ends to match:
-- `source` or `s` matches the sources of `rel1` and `rel2`
-- `target` or `t` matches the targets
-- `target_source` matches the first's target to the second's source
-- `source_target` matches the first's source to the second's target
-- `source_start` matches the first's source to the second's span start
-- `source_span` matches the first's source to the second's complete span
-- `source_end` matches the first's source to the second's span end
+We can combine relation matches using the standard CQL operators.
 
 Some examples follow.
 
-Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
-
-    rsource(rmatch(
-      rel(_, 'has_object', 'man'),
-      rel(_, 'has_subject', 'dog'),
-      'source'
-    ))
-
 Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
 
-    rtarget(rmatch(
-      rel(_, 'has_object'),
-      rel(_, 'has_subject'),
-      'target'
-    ))
+    rspan(rel('has_object'), 'target') &
+    rspan(rel('has_subject'), 'target')
+
+Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
+
+    rspan(rspan(rel('has_object'), 'target') & 'man', 'source') &
+    rspan(rspan(rel('has_subject'), 'target') & 'dog', 'source')
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
-    rtarget(rmatch(
-      rel(_, 'has_subject'),
-      rel(_, 'has_object', 'man'),
-      'source'
-    ))
+    rspan(
+        rspan(rel('has_subject'), 'source') &
+        rspan(rspan(rel('has_object'), 'target') & 'man', 'source'),
+        'target'
+    )
+
+Note in the above that when combining relations matches with `&`, a new relations match is created that has the first relation as its 'main' relation, although it remembers all relations involved in matching, so a tree structure could be built.
 
 
 ### Capturing parts
 
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
-    rmatch(
-      rel(V:[pos='VERB'], 'has_subject', S:[]),
-      rel([pos='VERB'], 'has_object', O:[]),
-      'source'
+    V:(
+        rspan(S:rspan(rel('has_subject'), 'target'), 'source') & 
+        rspan(O:rspan(rel('has_object'), 'target'), 'source') & 
+        [pos='VERB']
     )
 
 This would return spans including a verb and its subject and object, with the verb tagged as `V`, the subject as `S` and the object as `O`.

@@ -152,7 +152,7 @@ public class RelationInfo {
         targetEnd = other.targetEnd;
     }
 
-    public boolean isOnlyHasTarget() {
+    public boolean isRoot() {
         return onlyHasTarget;
     }
 

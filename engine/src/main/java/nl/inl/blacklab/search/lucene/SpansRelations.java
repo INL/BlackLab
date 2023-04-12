@@ -35,6 +35,9 @@ class SpansRelations extends BLSpans {
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private boolean payloadIndicatesPrimaryValues;
 
+    /** Filter to apply to the relations */
+    private SpanQueryRelations.Filter filter;
+
     /**
      * Construct SpansRelations.
      *
@@ -45,9 +48,10 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues) {
+    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, SpanQueryRelations.Filter filter) {
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
+        this.filter = filter;
     }
 
     @Override
@@ -80,7 +84,28 @@ class SpansRelations extends BLSpans {
     @Override
     public int nextStartPosition() throws IOException {
         end = END_PAYLOAD_NOT_YET_READ;
-        return relationsMatches.nextStartPosition();
+        int startPosition;
+        do {
+            startPosition = relationsMatches.nextStartPosition();
+            if (startPosition == NO_MORE_POSITIONS)
+                break;
+        } while (!matchesFilter());
+        return startPosition;
+    }
+
+    private boolean matchesFilter() throws IOException {
+        switch (filter) {
+        case ROOT:
+            return getRelationInfo().isRoot();
+        case FORWARD:
+            return getRelationInfo().getSourceStart() <= getRelationInfo().getTargetStart();
+        case BACKWARD:
+            return getRelationInfo().getSourceStart() >= getRelationInfo().getTargetStart();
+        case BOTH_DIRECTIONS:
+            return true;
+        default:
+            throw new IllegalArgumentException("Unknown filter: " + filter);
+        }
     }
 
     @Override

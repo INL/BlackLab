@@ -184,13 +184,13 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
             Map<String, String> attributes) {
         return relationQuery(queryInfo, luceneField, AnnotatedFieldNameUtil.inlineTagRelationType(tagName),
-                attributes);
+                attributes, SpanQueryRelations.Filter.BOTH_DIRECTIONS);
     }
 
     @Override
     public BLSpanQuery relationQuery(QueryInfo queryInfo, String luceneField, String relationType,
-            Map<String, String> attributes) {
-        return new SpanQueryRelations(queryInfo, luceneField, relationType, attributes);
+            Map<String, String> attributes, SpanQueryRelations.Filter filter) {
+        return new SpanQueryRelations(queryInfo, luceneField, relationType, attributes, filter);
     }
 
     @Override

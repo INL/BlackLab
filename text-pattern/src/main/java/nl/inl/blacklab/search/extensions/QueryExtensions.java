@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.textpattern;
+package nl.inl.blacklab.search.extensions;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,44 +7,32 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 
 /**
  * Manages extension functions that can be used in queries.
  */
 public class QueryExtensions {
 
-    /**
-     * A function that can be used as a sequence part in CQL.
-     *
-     * Such a function takes a number of arguments and returns a BLSpanQuery.
-     */
-    interface FunctionType {
-        BLSpanQuery apply(QueryExecutionContext context, List<Object> args);
-    }
+    /** A single query as an argument */
+    public static final List<ArgType> ARGS_Q = List.of(ArgType.QUERY);
 
-    /** Resolve second clause using forward index and the first clause using regular reverse index */
-    private static FunctionType _FI1 = (context, args) -> {
-        BLSpanQuery a = (BLSpanQuery)args.get(0);
-        BLSpanQuery b = (BLSpanQuery)args.get(1);
-        ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(b.getField());
-        NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
-        return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b, SpanQueryFiSeq.DIR_TO_RIGHT,
-                fiAccessor);
-    };
+    /** Two queries as an argument */
+    public static final List<ArgType> ARGS_QQ = List.of(ArgType.QUERY, ArgType.QUERY);
 
-    /** Resolve first clause using forward index and the second clause using regular reverse index */
-    private static FunctionType _FI2 = (context, args) -> {
-        BLSpanQuery a = (BLSpanQuery)args.get(0);
-        BLSpanQuery b = (BLSpanQuery)args.get(1);
-        ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(a.getField());
-        NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
-        return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT,
-                fiAccessor);
-    };
+    /** Three queries as an argument */
+    public static final List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
+
+    /** A query and a string */
+    public static final List<ArgType> ARGS_QS = List.of(ArgType.QUERY, ArgType.STRING);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_QSQ = List.of(ArgType.QUERY, ArgType.STRING, ArgType.QUERY);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
 
     enum ArgType {
         QUERY,
@@ -52,13 +40,13 @@ public class QueryExtensions {
     }
 
     private static class FuncInfo {
-        FunctionType func;
+        ExtensionFunction func;
 
         List<ArgType> argTypes;
 
         List<Object> defaultValues;
 
-        public FuncInfo(FunctionType func, List<ArgType> argTypes, List<Object> defaultValues) {
+        public FuncInfo(ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
             this.func = func;
             this.argTypes = argTypes;
             this.defaultValues = defaultValues;
@@ -69,9 +57,15 @@ public class QueryExtensions {
     private static Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
-        // Add some debug functions to the registry
-        register("_FI1", _FI1, List.of(ArgType.QUERY, ArgType.QUERY));
-        register("_FI2", _FI2, List.of(ArgType.QUERY, ArgType.QUERY));
+        register(XFDebugForwardIndexMatching.class);
+    }
+
+    public static void register(Class<? extends ExtensionFunctionClass> extClass) {
+        try {
+            extClass.getConstructor().newInstance().register();
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -80,7 +74,7 @@ public class QueryExtensions {
      * @param func query extension function
      * @param argTypes argument types
      */
-    public static void register(String name, FunctionType func, List<ArgType> argTypes) {
+    public static void register(String name, ExtensionFunction func, List<ArgType> argTypes) {
         functions.put(name, new FuncInfo(func, argTypes, Collections.emptyList()));
     }
 
@@ -91,7 +85,7 @@ public class QueryExtensions {
      * @param argTypes argument types
      * @param defaultValues default values for arguments
      */
-    public static void register(String name, FunctionType func, List<ArgType> argTypes, List<Object> defaultValues) {
+    public static void register(String name, ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
         functions.put(name, new FuncInfo(func, argTypes, defaultValues));
     }
 
@@ -139,7 +133,7 @@ public class QueryExtensions {
      * @param args arguments
      * @return the query returned by the function
      */
-    public static BLSpanQuery apply(String name, QueryExecutionContext context, List<Object> args) {
+    public static BLSpanQuery apply(String name, QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         FuncInfo funcInfo = functions.get(name);
         if (funcInfo == null)
             throw new UnsupportedOperationException("Unknown function: " + name);
@@ -175,7 +169,7 @@ public class QueryExtensions {
 
         if (newArgs.size() != funcInfo.argTypes.size())
             throw new IllegalArgumentException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
-        return funcInfo.func.apply(context, args);
+        return funcInfo.func.apply(queryInfo, context, args);
     }
 
 }

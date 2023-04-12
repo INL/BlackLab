@@ -7,7 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A TextPattern that applies a function to a list of patterns to produce a new pattern.
@@ -47,7 +49,8 @@ public class TextPatternQueryFunction extends TextPattern {
             }
         }
 
-        return QueryExtensions.apply(name, context, translated);
+        QueryInfo queryInfo = QueryInfo.create(context.index(), context.field());
+        return QueryExtensions.apply(name, queryInfo, context, translated);
     }
 
     @Override
