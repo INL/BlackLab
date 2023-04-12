@@ -9,6 +9,7 @@ import java.util.Map;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 
 /**
@@ -57,7 +58,8 @@ public class QueryExtensions {
     private static Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
-        register(XFDebugForwardIndexMatching.class);
+        register(XFDebugForwardIndexMatching.class); // _FI1(), _FI2()
+        register(XFRelations.class);                 // rel(), ...
     }
 
     public static void register(Class<? extends ExtensionFunctionClass> extClass) {
@@ -116,7 +118,16 @@ public class QueryExtensions {
             Object arg = args.get(i);
             switch (funcInfo.argTypes.get(i)) {
             case STRING:
-                if (arg instanceof TextPatternTerm) {
+                if (arg instanceof TextPatternRegex) {
+                    // Interpret as regular string, not as a query
+                    // kind of a hack, but should work
+                    String regex = ((TextPatternTerm) arg).getValue();
+                    if (regex.startsWith("^") && regex.endsWith("$")) {
+                        // strip off ^ and $
+                        regex = regex.substring(1, regex.length() - 1);
+                    }
+                    newArgs.set(i, regex);
+                } else if (arg instanceof TextPatternTerm) {
                     // Interpret as regular string, not as a query
                     newArgs.set(i, ((TextPatternTerm) arg).getValue());
                 }

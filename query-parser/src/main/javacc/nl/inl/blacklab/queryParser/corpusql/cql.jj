@@ -365,6 +365,7 @@ TextPattern sequencePart():
         return m;
     }
 |
+    LOOKAHEAD(2)
 	label=captureLabel() ":" ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() ) [ LOOKAHEAD(6) rep=repetitionAmount() ]
 	{
 		if (rep != null)
@@ -405,7 +406,8 @@ List<Object> commaSeparatedParamList():
     List<Object> p = new ArrayList<Object>();
 }
 {
-    q=functionParam() [ "," p=commaSeparatedParamList() ]
+    /* empty parameterlist */ { return p;}
+|   q=functionParam() [ "," p=commaSeparatedParamList() ]
     {
         p.add(0, q);
         return p;

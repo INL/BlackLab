@@ -29,7 +29,7 @@ public class TextPatternQueryFunction extends TextPattern {
 
     public TextPatternQueryFunction(String name, List<?> args) {
         if (!QueryExtensions.exists(name))
-            throw new UnsupportedOperationException("Supported query function: _FI1, _FI2");
+            throw new UnsupportedOperationException("Extension function not found: " + name);
         this.name = name;
 
         // Make sure string arguments are recognized as such (and not seen as a query)
