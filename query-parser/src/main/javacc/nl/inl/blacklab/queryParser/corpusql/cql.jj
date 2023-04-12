@@ -18,6 +18,7 @@ PARSER_BEGIN(GeneratedCorpusQueryLanguageParser)
 package nl.inl.blacklab.queryParser.corpusql;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -387,10 +388,10 @@ TextPattern sequencePart():
 TextPattern queryFunctionCall():
 {
     Token func = null;
-    List<Object> queryFuncParamList;
+    List<Object> queryFuncParamList = Collections.emptyList();
 }
 {
-    func=<NAME> "(" queryFuncParamList=commaSeparatedParamList() ")"
+    func=<NAME> "(" [ queryFuncParamList=commaSeparatedParamList() ] ")"
     {
         String funcName = func.toString(); 
         /*if (!funcName.startsWith("_")) {
@@ -406,8 +407,7 @@ List<Object> commaSeparatedParamList():
     List<Object> p = new ArrayList<Object>();
 }
 {
-    /* empty parameterlist */ { return p;}
-|   q=functionParam() [ "," p=commaSeparatedParamList() ]
+    q=functionParam() [ "," p=commaSeparatedParamList() ]
     {
         p.add(0, q);
         return p;
