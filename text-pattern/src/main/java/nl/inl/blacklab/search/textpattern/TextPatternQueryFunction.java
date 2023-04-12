@@ -7,10 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
-import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
 
 /**
  * A TextPattern that applies a function to a list of patterns to produce a new pattern.
@@ -22,13 +19,17 @@ public class TextPatternQueryFunction extends TextPattern {
 
     private final String name;
 
-    private final List<TextPattern> args;
+    private final List<? extends Object> args;
 
-    public TextPatternQueryFunction(String name, List<TextPattern> args) {
+    public static TextPatternQueryFunction create(String name, List<TextPattern> args) {
+        return new TextPatternQueryFunction(name, args);
+    }
+
+    public TextPatternQueryFunction(String name, List<? extends Object> args) {
         this.name = name;
         this.args = new ArrayList<>(args);
 
-        if (!name.equals("_FI1") && !name.equals("_FI2"))
+        if (!QueryExtensions.exists(name))
             throw new UnsupportedOperationException("Supported query function: _FI1, _FI2");
 
         if (args.size() != 2)
@@ -37,27 +38,18 @@ public class TextPatternQueryFunction extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        BLSpanQuery a = args.get(0).translate(context);
-        BLSpanQuery b = args.get(1).translate(context);
+        List<Object> translated = new ArrayList<>();
+        for (Object arg: args) {
+            if (arg instanceof TextPattern) {
+                // Translate any TextPattern arguments to BLSpanQuery
+                translated.add(((TextPattern) arg).translate(context));
+            } else {
+                // Just copy other argument types
+                translated.add(arg);
+            }
+        }
 
-        switch (name) {
-        case "_FI1":
-        {
-            // Resolve first clause using forward index and the second clause using regular reverse index
-            ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(a.getField());
-            NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
-            return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
-        }
-        case "_FI2":
-        {
-            // Resolve second clause using forward index and the first clause using regular reverse index
-            ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(b.getField());
-            NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
-            return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
-        }
-        default:
-            throw new UnsupportedOperationException("Query function " + name + " not implemented!");
-        }
+        return QueryExtensions.apply(name, context, translated);
     }
 
     @Override
