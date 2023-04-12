@@ -108,6 +108,13 @@
       "helpUrl": "https://www.clarin.eu/content/component-metadata",
       "configurationBased": true,
       "isVisible": false
+    },
+    "conll-u": {
+      "configurationBased": true,
+      "description": "Tab-delimited (TSV) format that includes support for dependency relations",
+      "displayName": "CoNLL-U",
+      "helpUrl": "https://universaldependencies.org/format.html",
+      "isVisible": true
     }
   }
 }
