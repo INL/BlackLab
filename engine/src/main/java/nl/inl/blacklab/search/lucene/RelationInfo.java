@@ -197,7 +197,10 @@ public class RelationInfo {
     }
 
     public boolean isTag() {
-        return !onlyHasTarget && sourceEnd - sourceStart == 1 && targetEnd - targetStart == 1 &&
-                sourceStart <= targetStart;
+        // A tag is a relation with source and target, both of which are length 0, and source occurs before target.
+        // (target can also be -1, which means we don't know yet)
+        // (or rather, such a relation can be indexed as a tag in the classic external index)
+        return !onlyHasTarget && (sourceEnd - sourceStart == 0 && targetEnd - targetStart == 0 &&
+                (targetStart == -1 || sourceStart <= targetStart));
     }
 }

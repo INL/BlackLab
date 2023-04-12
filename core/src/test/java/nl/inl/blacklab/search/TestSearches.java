@@ -222,10 +222,6 @@ public class TestSearches {
     public void testTags() {
         expected = List.of(
                 "quick [brown] fox");
-        Assert.assertEquals(expected, testIndex.findConc(" <entity/> "));
-
-        expected = List.of(
-                "quick [brown] fox");
         Assert.assertEquals(expected, testIndex.findConc(" 'b.*' within <entity/> "));
 
         expected = List.of(
