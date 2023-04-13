@@ -9,12 +9,13 @@ import java.util.TreeMap;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /** Captured group information for a list of hits. */
 public class CapturedGroupsImpl implements CapturedGroups {
 
     /** The captured groups per hit. */
-    private final Map<Hit, Span[]> capturedGroups;
+    private final Map<Hit, RelationInfo[]> capturedGroups;
 
     /** Capture group names. */
     private final List<String> capturedGroupNames;
@@ -30,7 +31,7 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @param hit the hit
      * @param groups groups for thishit
      */
-    public void put(Hit hit, Span[] groups) {
+    public void put(Hit hit, RelationInfo[] groups) {
         capturedGroups.put(hit, groups);
     }
 
@@ -51,17 +52,17 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @return groups
      */
     @Override
-    public Span[] get(Hit hit, boolean omitEmpty) {
+    public RelationInfo[] get(Hit hit, boolean omitEmpty) {
         if (capturedGroups == null)
             return null;
-        Span[] groups = capturedGroups.get(hit);
+        RelationInfo[] groups = capturedGroups.get(hit);
         if (omitEmpty) {
             // We don't want any Spans where start and end are equal. Replace them with null instead.
-            Span[] withoutEmpty = null;
+            RelationInfo[] withoutEmpty = null;
             for (int i = 0; i < groups.length; i++) {
-                if (groups[i].length() == 0) {
+                if (groups[i].isFullSpanEmpty()) {
                     if (withoutEmpty == null) {
-                        withoutEmpty = new Span[groups.length];
+                        withoutEmpty = new RelationInfo[groups.length];
                         System.arraycopy(groups, 0, withoutEmpty, 0, groups.length);
                     }
                     withoutEmpty[i] = null;
@@ -86,16 +87,16 @@ public class CapturedGroupsImpl implements CapturedGroups {
      * @return groups
      */
     @Override
-    public Map<String, Span> getMap(Hit hit, boolean omitEmpty) {
+    public Map<String, RelationInfo> getMap(Hit hit, boolean omitEmpty) {
         if (capturedGroups == null)
             return null;
         List<String> names = names();
-        Span[] groups = capturedGroups.get(hit);
+        RelationInfo[] groups = capturedGroups.get(hit);
         if (groups == null)
             return null;
-        Map<String, Span> result = new TreeMap<>(); // TreeMap to maintain group ordering
+        Map<String, RelationInfo> result = new TreeMap<>(); // TreeMap to maintain group ordering
         for (int i = 0; i < names.size(); i++) {
-            if (!omitEmpty || (groups[i] != null && groups[i].length() > 0)) {
+            if (!omitEmpty || (groups[i] != null && !groups[i].isFullSpanEmpty())) {
                 result.put(names.get(i), groups[i]);
             }
         }

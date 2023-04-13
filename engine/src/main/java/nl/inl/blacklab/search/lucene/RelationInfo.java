@@ -11,6 +11,10 @@ import org.apache.lucene.store.DataOutput;
  */
 public class RelationInfo {
 
+    public static RelationInfo captureGroupSpan(int start, int end) {
+        return new RelationInfo(false, start, start, end, end);
+    }
+
     /**
      * Different spans we can return for a relation
      */
@@ -266,5 +270,9 @@ public class RelationInfo {
         // (or rather, such a relation can be indexed as a tag in the classic external index)
         return !onlyHasTarget && (sourceEnd - sourceStart == 0 && targetEnd - targetStart == 0 &&
                 (targetStart == -1 || sourceStart <= targetStart));
+    }
+
+    public boolean isFullSpanEmpty() {
+        return getFullSpanStart() == getFullSpanEnd();
     }
 }

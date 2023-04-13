@@ -43,7 +43,7 @@ class SpansTagsExternal extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         // NOP
     }
 

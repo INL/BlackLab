@@ -148,7 +148,7 @@ final class PerDocumentSortedSpans extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
             return;
         bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);

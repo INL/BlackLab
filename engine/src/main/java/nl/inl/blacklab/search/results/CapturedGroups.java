@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /** Captured group information for a list of hits.
  *
@@ -24,7 +24,7 @@ public interface CapturedGroups {
      * @param hit hit to get groups for
      * @return groups
      */
-    default Span[] get(Hit hit) {
+    default RelationInfo[] get(Hit hit) {
         return get(hit, false);
     }
 
@@ -35,7 +35,7 @@ public interface CapturedGroups {
      * @param omitEmpty if true, instead of a Span with length 0, null will be returned (default: false)
      * @return groups
      */
-    Span[] get(Hit hit, boolean omitEmpty);
+    RelationInfo[] get(Hit hit, boolean omitEmpty);
 
     /**
      * Get a map of the captured groups.
@@ -45,7 +45,7 @@ public interface CapturedGroups {
      * @param hit hit to get groups for
      * @return groups
      */
-    default Map<String, Span> getMap(Hit hit) {
+    default Map<String, RelationInfo> getMap(Hit hit) {
         return getMap(hit, false);
     }
 
@@ -61,7 +61,7 @@ public interface CapturedGroups {
      * @param omitEmpty if true, instead of a Span with length 0, null will be returned (default: false)
      * @return groups
      */
-    Map<String, Span> getMap(Hit hit, boolean omitEmpty);
+    Map<String, RelationInfo> getMap(Hit hit, boolean omitEmpty);
 
     @Override
     String toString();

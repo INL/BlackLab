@@ -50,7 +50,6 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.DocUtil;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -61,6 +60,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -1512,9 +1512,9 @@ public class QueryTool {
         public final String hitText;
         public final String right;
 
-        public final Map<String, Span> capturedGroups;
+        public final Map<String, RelationInfo> capturedGroups;
 
-        public HitToShow(int doc, String left, String hitText, String right, Map<String, Span> capturedGroups) {
+        public HitToShow(int doc, String left, String hitText, String right, Map<String, RelationInfo> capturedGroups) {
             super();
             this.doc = doc;
             this.left = left;
@@ -1564,7 +1564,7 @@ public class QueryTool {
             hitText = stripXML ? XmlUtil.xmlToPlainText(conc.match()) : conc.match();
             right = stripXML ? XmlUtil.xmlToPlainText(conc.right()) : conc.right();
 
-            Map<String, Span> capturedGroups = null;
+            Map<String, RelationInfo> capturedGroups = null;
             if (window.hasCapturedGroups())
                 capturedGroups = window.capturedGroups().getMap(hit);
             toShow.add(new HitToShow(hit.doc(), left, hitText, right, capturedGroups));

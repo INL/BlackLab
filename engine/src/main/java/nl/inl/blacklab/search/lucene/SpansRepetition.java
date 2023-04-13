@@ -223,7 +223,7 @@ class SpansRepetition extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         int index = firstToken + numRepetitions - 1; // use the last match for captured groups
         source.getCapturedGroups(index, capturedGroups);
     }

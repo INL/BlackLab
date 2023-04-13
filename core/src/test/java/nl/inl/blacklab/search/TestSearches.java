@@ -26,6 +26,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
@@ -458,11 +459,11 @@ public class TestSearches {
         Hits hits = testIndex.find("A:'aap'");
         Assert.assertEquals(5, hits.size());
         Assert.assertTrue(hits.hasCapturedGroups());
-        Span[] group = hits.capturedGroups().get(hits.get(0));
+        RelationInfo[] group = hits.capturedGroups().get(hits.get(0));
         Assert.assertNotNull(group);
         Assert.assertEquals(1, group.length);
-        Assert.assertEquals(2, group[0].start());
-        Assert.assertEquals(3, group[0].end());
+        Assert.assertEquals(2, group[0].getFullSpanStart());
+        Assert.assertEquals(3, group[0].getFullSpanEnd());
     }
 
     @Test

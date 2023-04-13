@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.QueryExplanation;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -37,6 +36,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.ValueListComplete;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -336,7 +336,7 @@ public class ResponseStreamer {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
-                Map<String, Span> capturedGroups = null;
+                Map<String, RelationInfo> capturedGroups = null;
                 if (hits.hasCapturedGroups()) {
                     capturedGroups = hits.capturedGroups().getMap(hit, params.omitEmptyCapture());
                     if (capturedGroups == null && logger != null)
@@ -353,7 +353,7 @@ public class ResponseStreamer {
     }
 
     private static void hit(DataStream ds, nl.inl.blacklab.server.lib.WebserviceParams params, ConcordanceContext concordanceContext,
-            Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, Span> capturedGroups) {
+            Collection<Annotation> annotationsToList, Hit hit, String docPid, Map<String, RelationInfo> capturedGroups) {
         ds.startMap();
         if (docPid != null) {
             // Add basic hit info
@@ -364,13 +364,13 @@ public class ResponseStreamer {
 
         if (capturedGroups != null) {
             ds.startEntry("captureGroups").startList();
-            for (Map.Entry<String, Span> capturedGroup : capturedGroups.entrySet()) {
+            for (Map.Entry<String, RelationInfo> capturedGroup : capturedGroups.entrySet()) {
                 if (capturedGroup.getValue() != null) {
                     ds.startItem("group").startMap();
                     {
                         ds.entry("name", capturedGroup.getKey());
-                        ds.entry("start", capturedGroup.getValue().start());
-                        ds.entry("end", capturedGroup.getValue().end());
+                        ds.entry("start", capturedGroup.getValue().getFullSpanStart());
+                        ds.entry("end", capturedGroup.getValue().getFullSpanEnd());
                     }
                     ds.endMap().endItem();
                 }

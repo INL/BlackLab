@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.ThreadAborter;
 
 /** 
@@ -217,7 +218,7 @@ class SpansReader implements Runnable {
             return;
 
         final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
-        final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
+        final ArrayList<RelationInfo[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
 
         final HitsInternalMutable results = HitsInternal.create(-1, true, true);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
@@ -276,7 +277,7 @@ class SpansReader implements Runnable {
                     int end = spans.endPosition();
                     results.add(doc, start, end);
                     if (capturedGroups != null) {
-                        Span[] groups = new Span[numCaptureGroups];
+                        RelationInfo[] groups = new RelationInfo[numCaptureGroups];
                         hitQueryContext.getCapturedGroups(groups);
                         capturedGroups.add(groups);
                     }
@@ -308,7 +309,7 @@ class SpansReader implements Runnable {
         this.leafReaderContext = null;
     }
 
-    void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
+    void addToGlobalResults(HitsInternal hits, List<RelationInfo[]> capturedGroups) {
         globalResults.addAll(hits);
 
         if (globalCapturedGroups != null) {

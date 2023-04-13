@@ -1,10 +1,10 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Contexts;
 import nl.inl.blacklab.search.results.Hit;
@@ -63,10 +63,10 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public PropertyValueContextWords get(long hitIndex) {
         // Determine group start/end
         Hit hit = hits.get(hitIndex);
-        Span[] capturedGroups = hits.capturedGroups().get(hit);
-        Span group = capturedGroups[groupIndex];
-        int start = group.start();
-        int end = group.end();
+        RelationInfo[] capturedGroups = hits.capturedGroups().get(hit);
+        RelationInfo group = capturedGroups[groupIndex];
+        int start = group.getFullSpanStart();
+        int end = group.getFullSpanEnd();
         int startOfGroupWithinHit = start - hit.start();
         int endOfGroupWithinHit = end - hit.start();
 

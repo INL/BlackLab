@@ -1,10 +1,10 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 public class MatchFilterTokenAnnotation extends MatchFilter {
     private final String groupName;
@@ -62,11 +62,11 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-        Span span = capturedGroups[groupIndex];
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
+        RelationInfo span = capturedGroups[groupIndex];
         if (span == null)
             return ConstraintValue.undefined();
-        int tokenPosition = span.start();
+        int tokenPosition = span.getFullSpanStart();
         if (annotationIndex < 0)
             return ConstraintValue.get(tokenPosition);
         int segmentTermId = fiDoc.getTokenSegmentTermId(annotationIndex, tokenPosition);

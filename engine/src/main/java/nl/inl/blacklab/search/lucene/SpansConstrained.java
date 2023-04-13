@@ -24,7 +24,7 @@ public class SpansConstrained extends BLSpans {
     private HitQueryContext context;
 
     /** The current captured groups */
-    private Span[] capturedGroups;
+    private RelationInfo[] capturedGroups;
 
     /** Maps from term strings to term indices for each annotation. */
     private final ForwardIndexAccessorLeafReader fiAccessor;
@@ -58,7 +58,7 @@ public class SpansConstrained extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         clause.getCapturedGroups(capturedGroups);
     }
 
@@ -141,7 +141,7 @@ public class SpansConstrained extends BLSpans {
         int startPos = clause.startPosition();
         while (startPos != Spans.NO_MORE_POSITIONS) {
             if (capturedGroups == null) {
-                capturedGroups = new Span[context.getCapturedGroupNames().size()];
+                capturedGroups = new RelationInfo[context.getCapturedGroupNames().size()];
             } else {
                 Arrays.fill(capturedGroups, null);
             }

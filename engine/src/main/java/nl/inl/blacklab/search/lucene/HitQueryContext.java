@@ -82,7 +82,7 @@ public class HitQueryContext {
      *
      * @param capturedGroups array to place the captured group information into
      */
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         rootSpans.getCapturedGroups(capturedGroups);
     }
 

@@ -3,11 +3,11 @@ package nl.inl.blacklab.search.matchfilter;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
     private final String groupName;
@@ -82,11 +82,11 @@ public class MatchFilterTokenPropertyEqualsString extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
-        Span span = capturedGroups[groupIndex];
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
+        RelationInfo span = capturedGroups[groupIndex];
         if (span == null)
             return ConstraintValue.undefined();
-        int tokenPosition = span.start();
+        int tokenPosition = span.getFullSpanStart();
         if (annotIndex < 0)
             return ConstraintValue.get(tokenPosition);
         int leftTermGlobalId = fiDoc.getTokenGlobalTermId(annotIndex, tokenPosition);

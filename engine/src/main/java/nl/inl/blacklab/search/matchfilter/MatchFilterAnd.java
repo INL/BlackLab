@@ -1,9 +1,9 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 
 public class MatchFilterAnd extends MatchFilter {
 
@@ -59,7 +59,7 @@ public class MatchFilterAnd extends MatchFilter {
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, RelationInfo[] capturedGroups) {
         ConstraintValue ra = a.evaluate(fiDoc, capturedGroups);
         if (!ra.isTruthy())
             return ra;

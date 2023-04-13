@@ -103,6 +103,6 @@ public interface SpansInBuckets {
      *            for
      * @param capturedGroups where to add the captured group information
      */
-    void getCapturedGroups(int indexInBucket, Span[] capturedGroups);
+    void getCapturedGroups(int indexInBucket, RelationInfo[] capturedGroups);
 
 }

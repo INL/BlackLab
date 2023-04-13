@@ -44,7 +44,6 @@ import org.apache.lucene.search.spans.SpanWeight;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.PriorityQueue;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -644,7 +643,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
 
                 @Override
-                public void getCapturedGroups(Span[] capturedGroups) {
+                public void getCapturedGroups(RelationInfo[] capturedGroups) {
                     if (!childClausesCaptureGroups)
                         return;
                     ((BLSpans) topPositionSpans).getCapturedGroups(capturedGroups);

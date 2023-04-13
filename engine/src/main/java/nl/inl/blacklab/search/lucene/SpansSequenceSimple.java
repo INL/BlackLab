@@ -198,7 +198,7 @@ class SpansSequenceSimple extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         if (!childClausesCaptureGroups)
             return;
         left.getCapturedGroups(capturedGroups);

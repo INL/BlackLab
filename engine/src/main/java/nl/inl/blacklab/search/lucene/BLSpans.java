@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
  * guarantees about the hits in this Spans object, such as if every hit is equal
@@ -66,7 +64,7 @@ public abstract class BLSpans extends Spans {
      *            query; the start and end positions for the groups in this subtree
      *            will be placed in here.
      */
-    abstract public void getCapturedGroups(Span[] capturedGroups);
+    abstract public void getCapturedGroups(RelationInfo[] capturedGroups);
 
     /**
      * Advance the start position in the current doc to target or beyond.

@@ -221,7 +221,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         // no clause, no groups
     }
 

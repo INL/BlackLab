@@ -59,7 +59,7 @@ public class BLSpansWrapper extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getCapturedGroups(RelationInfo[] capturedGroups) {
         if (!childClausesCaptureGroups)
             return;
         if (source instanceof BLSpans) // shouldn't happen, but ok

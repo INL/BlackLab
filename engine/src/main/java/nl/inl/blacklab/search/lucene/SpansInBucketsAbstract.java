@@ -43,7 +43,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
      * For each hit we fetched, store the captured groups, so we don't lose this
      * information.
      */
-    private Long2ObjectMap<Span[]> capturedGroupsPerHit = null;
+    private Long2ObjectMap<RelationInfo[]> capturedGroupsPerHit = null;
 
     /**
      * Size of the current bucket, or -1 if we're not at a valid bucket.
@@ -65,7 +65,7 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
         bucket.add(span);
         if (doCapturedGroups) {
             // Store captured group information
-            Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
+            RelationInfo[] capturedGroups = new RelationInfo[hitQueryContext.numberOfCapturedGroups()];
             source.getCapturedGroups(capturedGroups);
             if (capturedGroupsPerHit == null)
                 capturedGroupsPerHit = new Long2ObjectOpenHashMap<>(HASHMAP_INITIAL_CAPACITY);
@@ -229,10 +229,10 @@ abstract class SpansInBucketsAbstract implements SpansInBuckets {
     }
 
     @Override
-    public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
+    public void getCapturedGroups(int indexInBucket, RelationInfo[] capturedGroups) {
         if (!doCapturedGroups)
             return;
-        Span[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
+        RelationInfo[] previouslyCapturedGroups = capturedGroupsPerHit.get(bucket.getLong(indexInBucket));
         if (previouslyCapturedGroups != null) {
             for (int i = 0; i < capturedGroups.length; i++) {
                 if (previouslyCapturedGroups[i] != null)
