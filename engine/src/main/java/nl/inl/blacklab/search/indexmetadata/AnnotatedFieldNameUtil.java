@@ -95,9 +95,15 @@ public final class AnnotatedFieldNameUtil {
     /** Separator between attr and value in _relation annotation. */
     private  static final String KEY_VALUE_SEPARATOR = "\u0002";
 
-    /** When indexing inline tags as relations, what prefix do we use before the tag name?
-     *  Chosen to avoid collision with regular relation types. */
-    private  static final String INLINE_TAG_RELATION_TYPE_PREFIX = "__tag";
+    /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
+     *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
+    private static final String RELATION_CLASS_TYPE_SEPARATOR = "::";
+
+    /** Relation class used for inline tags. Deliberately obscure to avoid collisions with "real" relations. */
+    public static final String RELATION_CLASS_INLINE_TAG = "__tag";
+
+    /** Relation class to use for dependency relations. */
+    public static final String RELATION_CLASS_DEPENDENCY = "dep";
 
     private AnnotatedFieldNameUtil() {
     }
@@ -112,13 +118,13 @@ public final class AnnotatedFieldNameUtil {
     /**
      * Determine the term to index in Lucene for a relation.
      *
-     * @param relationType relation type
+     * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
      * @return term to index in Lucene
      */
-    public static String relationIndexTerm(String relationType, Map<String, String> attributes) {
+    public static String relationIndexTerm(String fullRelationType, Map<String, String> attributes) {
         if (attributes == null)
-            return relationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -128,19 +134,19 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return relationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
     }
 
     /**
      * Determine the term to index in Lucene for a relation.
      *
-     * @param relationType relation type
+     * @param fullRelationType full relation type
      * @param attributes any attributes for this relation
      * @return term to index in Lucene
      */
-    public static String relationIndexTermMulti(String relationType, Map<String, Collection<String>> attributes) {
+    public static String relationIndexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
         if (attributes == null)
-            return relationType + ATTR_SEPARATOR;
+            return fullRelationType + ATTR_SEPARATOR;
 
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
@@ -152,20 +158,20 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return relationType + ATTR_SEPARATOR + attrPart;
+        return fullRelationType + ATTR_SEPARATOR + attrPart;
     }
 
     /**
      * Determine the search regex for a relation.
      *
-     * NOTE: both relationType and attribute names/values are interpreted as regexes,
+     * NOTE: both fullRelationType and attribute names/values are interpreted as regexes,
      * so any regex special characters you wish to find should be escaped!
      *
-     * @param relationType relation type
+     * @param fullRelationType full relation type
      * @param attributes any attribute criteria for this relation
      * @return regex to find this relation
      */
-    public static String relationSearchRegex(String relationType, Map<String, String> attributes) {
+    public static String relationSearchRegex(String fullRelationType, Map<String, String> attributes) {
         // Sort and concatenate the attribute names and values
         String attrPart = attributes == null ? "" : attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -173,27 +179,45 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return relationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
+        return fullRelationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
     }
 
-    public static String inlineTagRelationType(String tagName) {
-        return INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR + tagName;
+    /**
+     * Get the full relation type for a relation class and relation type.
+     *
+     * @param relClass relation class, e.g. "dep" for dependency relations
+     * @param type relation type, e.g. "nsubj" for a nominal subject
+     * @return full relation type
+     */
+    public static String fullRelationType(String relClass, String type) {
+        return relClass + RELATION_CLASS_TYPE_SEPARATOR + type;
     }
 
-    public static String inlineTagNameFromRelationType(String relationType) {
-        if (relationType.startsWith(INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR)) {
-            // Actual inline tag relation. Strip off the prefix and suffix.
-            if (relationType.endsWith(ATTR_SEPARATOR)) {
-                // Trailing separator; remove it
-                return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length(),
-                        relationType.length() - ATTR_SEPARATOR.length());
-            } else {
-                // No trailing separator
-                return relationType.substring((INLINE_TAG_RELATION_TYPE_PREFIX + KEY_VALUE_SEPARATOR).length());
-            }
-        }
-        // Other type of relation. Just return unchanged.
-        return relationType;
+    /**
+     * Get the full relation type for an inline tag.
+     *
+     * @param tagName tag name
+     * @return full relation type
+     */
+    public static String tagFullRelationType(String tagName) {
+        return fullRelationType(RELATION_CLASS_INLINE_TAG, tagName);
+    }
+
+    /**
+     * Split a full relation type into relation class and relation type.
+     *
+     * Relations are indexed with a full type, consisting of a relation class and a relation type.
+     * The class is used to distinguish between different groups of relations, e.g. inline tags
+     * and dependency relations.
+     *
+     * @param fullRelationType full relation type
+     * @return relation class and relation type
+     */
+    public static String[] relationClassAndType(String fullRelationType) {
+        int sep = fullRelationType.indexOf(RELATION_CLASS_TYPE_SEPARATOR);
+        if (sep < 0)
+            return new String[] { "", fullRelationType };
+        return new String[] { fullRelationType.substring(0, sep), fullRelationType.substring(sep + RELATION_CLASS_TYPE_SEPARATOR.length()) };
     }
 
     /**

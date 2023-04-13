@@ -419,18 +419,18 @@ public class AnnotationWriter {
     public int indexInlineTag(String tagName, int startPos, int endPos,
             Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo relationInfo = new RelationInfo(false, startPos, startPos, endPos, endPos);
-        String relationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : AnnotatedFieldNameUtil.inlineTagRelationType(tagName);
-        return indexRelation(relationType, startPos, attributes, indexType, relationInfo);
+        String fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? tagName : AnnotatedFieldNameUtil.tagFullRelationType(tagName);
+        return indexRelation(fullRelationType, startPos, attributes, indexType, relationInfo);
     }
 
-    public int indexRelation(String relationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
+    public int indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStart, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo relationInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
         int indexAt = Math.min(sourceStart, targetStart);
-        return indexRelation(relationType, indexAt, attributes, indexType, relationInfo);
+        return indexRelation(fullRelationType, indexAt, attributes, indexType, relationInfo);
     }
 
-    private int indexRelation(String relationType, int indexAt, Map<String, String> attributes,
+    private int indexRelation(String fullRelationType, int indexAt, Map<String, String> attributes,
             BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
@@ -444,7 +444,7 @@ public class AnnotationWriter {
                     PayloadUtils.tagEndPositionPayload(relationInfo.getFullSpanStart(), relationInfo.getFullSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES) :
                     null;
-            addValueAtPosition(relationType, indexAt, payload);
+            addValueAtPosition(fullRelationType, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
                 String term = AnnotatedFieldNameUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
@@ -460,7 +460,7 @@ public class AnnotationWriter {
                 throw new RuntimeException(e);
             }
             payload = new BytesRef(os.toByteArray());
-            String value = AnnotatedFieldNameUtil.relationIndexTerm(relationType, attributes);
+            String value = AnnotatedFieldNameUtil.relationIndexTerm(fullRelationType, attributes);
             addValueAtPosition(value, indexAt, payload);
             tagIndexInAnnotation = lastValueIndex();
         }

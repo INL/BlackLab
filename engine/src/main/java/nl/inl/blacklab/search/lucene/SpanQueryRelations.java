@@ -198,7 +198,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public String getElementName() {
-        return AnnotatedFieldNameUtil.inlineTagNameFromRelationType(relationType);
+        return AnnotatedFieldNameUtil.relationClassAndType(relationType)[1];
     }
 
     @Override

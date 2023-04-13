@@ -65,14 +65,14 @@ public class TestAnnotatedFieldNameUtil {
 
     @Test
     public void testInlineTagRelationType() {
-        String rt = AnnotatedFieldNameUtil.inlineTagRelationType("word");
-        String tagName = AnnotatedFieldNameUtil.inlineTagNameFromRelationType(rt);
+        String rt = AnnotatedFieldNameUtil.tagFullRelationType("word");
+        String tagName = AnnotatedFieldNameUtil.relationClassAndType(rt)[1];
         Assert.assertEquals("word", tagName);
     }
 
     @Test
     public void testRelationIndexTerm() {
-        String rt = AnnotatedFieldNameUtil.inlineTagRelationType("word");
+        String rt = AnnotatedFieldNameUtil.tagFullRelationType("word");
 
         // Index with attributes in one order - should be sorted alphabetically
         Map<String, String> attr = Map.of("attr3", "v3", "attr2", "v2", "attr1", "v1");
