@@ -12,7 +12,9 @@ import org.apache.lucene.store.DataOutput;
 public class RelationInfo {
 
     public static RelationInfo captureGroupSpan(int start, int end) {
-        return new RelationInfo(false, start, start, end, end);
+        RelationInfo relationInfo = new RelationInfo(false, start, start, end, end);
+        relationInfo.span = true;
+        return relationInfo;
     }
 
     /**
@@ -78,6 +80,9 @@ public class RelationInfo {
 
     /** Is it a root relationship, that only has a target, no source? */
     public static final byte FLAG_ONLY_HAS_TARGET = 0x02;
+
+    /** Is this just a span, not an actual relation? (capture groups) */
+    private boolean span = false;
 
     /** Does this relation only have a target? (i.e. a root relation) */
     private boolean onlyHasTarget;
@@ -186,12 +191,8 @@ public class RelationInfo {
             dataOutput.writeVInt(otherLength);
     }
 
-    public void copyFrom(RelationInfo other) {
-        onlyHasTarget = other.onlyHasTarget;
-        sourceStart = other.sourceStart;
-        sourceEnd = other.sourceEnd;
-        targetStart = other.targetStart;
-        targetEnd = other.targetEnd;
+    public RelationInfo copy() {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
     }
 
     public boolean isRoot() {
@@ -274,5 +275,23 @@ public class RelationInfo {
 
     public boolean isFullSpanEmpty() {
         return getFullSpanStart() == getFullSpanEnd();
+    }
+
+    public boolean isSpan() {
+        return span;
+    }
+
+    @Override
+    public String toString() {
+        if (isRoot())
+            return "rootrel(" + targetStart + "-" + targetEnd + ")";
+        if (isSpan())
+            return "span(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+        if (isTag())
+            return "tag(" + getFullSpanStart() + "-" + getFullSpanEnd() + ")";
+        return "rel(sourceStart=" + sourceStart +
+                ", sourceEnd=" + sourceEnd +
+                ", targetStart=" + targetStart +
+                ", targetEnd=" + targetEnd + ")";
     }
 }

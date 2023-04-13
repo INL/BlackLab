@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Provides per-hit query-wide context, such as captured groups.
  *
@@ -56,14 +54,33 @@ public class HitQueryContext {
      * Register a captured group, assigning it a unique index number.
      *
      * @param name the group's name
+     * @param deduplicate if true, make the group name unique if it already exists
+     * @return the group's assigned index
+     */
+    public int registerCapturedGroup(String name, boolean deduplicate) {
+        numberOfTimesGroupRegistered++;
+        while (groupNames.contains(name)) {
+            if (deduplicate) {
+                // Ensure the group name is unique
+                name += "_";
+            } else {
+                return groupNames.indexOf(name); // already registered, reuse
+            }
+        }
+        groupNames.add(name);
+        return groupNames.size() - 1; // index in array
+    }
+
+    /**
+     * Register a captured group, assigning it a unique index number.
+     *
+     * If the group name already exists, the existing index number will be returned.
+     *
+     * @param name the group's name
      * @return the group's assigned index
      */
     public int registerCapturedGroup(String name) {
-        numberOfTimesGroupRegistered++;
-        if (groupNames.contains(name))
-            return groupNames.indexOf(name); // already registered
-        groupNames.add(name);
-        return groupNames.size() - 1; // index in array
+        return registerCapturedGroup(name, false);
     }
 
     /**

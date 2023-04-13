@@ -8,7 +8,6 @@ import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
@@ -43,6 +42,12 @@ class SpansRelations extends BLSpans {
     /** What span to return for the relations found */
     private final RelationInfo.SpanMode spanMode;
 
+    /** Group number where we'll capture our relation info */
+    private int groupIndex;
+
+    /** Relation type we're looking for */
+    private String relationType;
+
     /**
      * Construct SpansRelations.
      *
@@ -53,7 +58,8 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode) {
+    public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode) {
+        this.relationType = relationType;
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
@@ -62,12 +68,15 @@ class SpansRelations extends BLSpans {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        // NOP
+        // Only keep Unicode letters from relationType
+        String groupName = relationType.replaceAll("[^\\p{L}]", "");
+        // Register our group
+        this.groupIndex = context.registerCapturedGroup(groupName, true);
     }
 
     @Override
     public void getCapturedGroups(RelationInfo[] capturedGroups) {
-        // NOP
+        capturedGroups[groupIndex] = relationInfo.copy();
     }
 
     @Override
