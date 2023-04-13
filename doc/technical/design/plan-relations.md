@@ -4,9 +4,9 @@
 
 ## Goal
 
-We want to index (and search for) relations between two words, such as the dependency relation "verb X has object Y". In this case, we have two words, X and Y, and the `has_object` relation pointing from X to Y:
+We want to index (and search for) relations between two words, such as the dependency relation "verb X has object Y". In this case, we have two words, X and Y, and the `object` relation pointing from X to Y:
 
-    X  ---has_object-->  Y
+    X  ---object-->  Y
 
 Example:
 
@@ -64,7 +64,7 @@ Better yet, we should generalize the notion of an "inline tag" such as `<s/>` we
 
 ### Where to index relations
 
-We could index relations at the source or target position X (with the term we index representing the type of relation, i.e. `has_object`) and store the position of the opposite position (target/source) Y in the payload. Which token we should choose to store a relation depends on which direction is more commonly queried, as having to decode the payload to find the "other end" of the relation takes slightly longer. We may even choose to index at both positions, meaning we would also need to store the direction of the relation. Though we should first test if any of this actually makes a difference in practice.
+We could index relations at the source or target position X (with the term we index representing the type of relation, i.e. `object`) and store the position of the opposite position (target/source) Y in the payload. Which token we should choose to store a relation depends on which direction is more commonly queried, as having to decode the payload to find the "other end" of the relation takes slightly longer. We may even choose to index at both positions, meaning we would also need to store the direction of the relation. Though we should first test if any of this actually makes a difference in practice.
 
 ### Groups of words
 
@@ -80,10 +80,10 @@ We should also consider only storing certain values if they differ from the comm
 
 Obviously, we'd need a query to find a relation, such as:
 
-1. find all `has_object` relations
-2. find `has_object` relations where the source lemma equals `bite`
+1. find all `object` relations
+2. find `object` relations where the source lemma equals `bite`
 3. find all relations where the source lemma equals `bite`
-4. find `has_object` relations where the target lemma equals `man`
+4. find `object` relations where the target lemma equals `man`
 
 Of course, we also want to run more complex queries that combine several relations. There's two common ways to combine relations: two relations involving the same word, and two transitive relations. Examples:
 
@@ -138,14 +138,20 @@ For example, a syntax specific to dependency relations (the likely most common u
 
 - exclude relations
 - requirement that certain groups may not contain the same match (e.g. targets of two relations attached to the same source must be different, so you can e.g. find two different adjectives attached to a noun)
-- ordering restrictions (combine with previous item? different matches implies different positions. although overlapping matches can be different as well, which might complicate matters)
 
 
 ### Quick reference
 
+#### rel
+
 Find relations by type and direction.
 
-    rel(reltype = ".*", direction = "both")
+    rel(reltype = ".*", spanMode = "target", direction = "both")
+
+`spanMode` can take the values:
+- `"source"` (span becomes the source of the relation)
+- `"target"` (span becomes the target of the relation - this is how relations start)
+- `"full"` (span becomes the full span of the relation, including source and target)
 
 `direction` can take the values:
 - `"root"` (only root relations)
@@ -153,54 +159,60 @@ Find relations by type and direction.
 - `"backward"` (only relations pointing backward in the document)
 - `"both"` (the default)
 
-We can adjust the spans returned by `rel(...)` according to what we need:
+#### rspan
 
-    rspan(relation_matches, mode = "full")
+We can also change the spanMode of the spans returned by `rel(...)` according to what we need:
+
+    rspan(relation_matches, spanMode = "full", relationNumber = 1)
 
 This will return the same relation matches, but with the span start and end set 
-according to the value of mode.
-
-`mode` can take the values:
-- `"source"` (span becomes the source of the relation)
-- `"target"` (span becomes the target of the relation)
-- `"full"` (span becomes the full span of the relation, including source and target - this is how relations start)
+according to the value of `spanMode`.
 
 By default `rel(...)` returns spans that match the target of the relation. So e.g.
-`rel('nsubj')` will find subjects, and `rspan(rel('nsubj'), 'source')` will find words
-that have a subject, and `rspan(rel('nsubj'), 'full')` will find spans that include both
+`rel('nsubj')` will find subjects, and `rel('nsubj'), _, 'source')` will find words
+that have a subject, and `rel('nsubj'), _, 'full')` will find spans that include both
 the source and target.
+
+**TODO:** `relationNumber` can be used to select a specific relation if multiple relations have been combined using `&`. Relations are numbered in the order they appear in the query.
+
+### rtype
+
+Construct a relation type string that may include attributes
+
+    rtype(class, type, attributes = {})
 
 ### Finding relations
 
-Below are examples of how to use the `rel(source, type, target)` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used. Parameter defaults are: `rel(source=[], type='.+', target=[])`.
+Below are examples of how to use the `rel` function to find relations between words. Note `_` indicates the default value for a parameter. Parameters at the end may be omitted; their default values will also be used.
 
-Find `has_object` relations where the source word equals `bites`:
+Find all `object` relations (spans will contain the objects):
 
-    'bites' & rspan(rel('has_object'), 'source')
+    rel('dep::object', 'target')
+    rel('dep::object')
+
+Find `object` relations where the source word equals `bites`:
+
+    'bites' & rel('dep::object', 'source')
 
 Find all relations where the source word equals `bites`:
 
-    'bites' & rspan(rel(), 'source'))
+    'bites' & rel('dep::.*', 'source')
 
-Find `has_object` relations where the target word equals `man`:
+Find `object` relations where the target word equals `man`:
 
-    'man' & rspan(rel('has_object'), 'target')
+    'man' & rel('dep::object')
 
-Find all relations where the target word equals `man`:
+Find all `object` relations that point forward:
 
-    'man' & rspan(rel(_), 'target')
-
-Find all `has_object` relations:
-
-    rel('has_object')
-
-Find all `has_object` relations that point forward:
-
-    rel('has_object', 'forward')
+    rel('dep::object', _, 'forward')
 
 Find all root relations:
 
-    rel(_, 'root')
+    rel(_, _, 'root')
+
+Find all dependency relations:
+
+    rel('dep::.*'))
 
 Find all relations (a very taxing query in a huge corpus, obviously):
 
@@ -209,24 +221,24 @@ Find all relations (a very taxing query in a huge corpus, obviously):
 Find sentences:
 
     <s/>
-    rel(rtspan('s'))
+    rel(rtype('__tag', 's'))
+    rel('__tag::s'))
 
-Find sentences with happy sentiment (these are all equivalent):
+Find sentences with happy sentiment:
 
     <s sentiment='happy' confidence='10' />
-    rel(rtspan('s', 'sentiment', 'happy', 'confidence', '10'))
-    rel('__tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy'))
+    rel(rtype('__tag', 's', list('sentiment', 'happy', 'confidence', '10')))
+    rel('__tag::s\u0001confidence\u000210\u0001sentiment\u0002happy'))
 
 ### Extract source or target
 
-Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'has_object'"):
+Find words that have 'man' as their object ("find relation source where target is 'man' and type is 'object'"):
 
-    'man' & rspan(rel('has_object'), 'target'))
-    rsource(man'))
+    rspan('man' & rel('dep::object'), 'source')
 
-Find words that are the object for 'bites' ("find relation target where source is 'bites' and type is 'has_object'"):
+Find words that are the object for 'bites' ("find relation target where source is `bites` and type is `object`"):
 
-    rspan('bites' & rspan(rel('has_object'), 'source'), 'target')
+    rspan('bites' & rel('dep::object', 'source'), 'target')
 
 
 ### Combining relation matches
@@ -235,34 +247,34 @@ We can combine relation matches using the standard CQL operators.
 
 Some examples follow.
 
-Find words that are the target of both a `has_object` and a `has_subject` relation (doesn't make sense, but ok):
+Find words that are both a subject and an object (doesn't make sense, but ok):
 
-    rspan(rel('has_object'), 'target') &
-    rspan(rel('has_subject'), 'target')
+    rel('dep::object') & rel('dep::subject')
 
-Find words that have 'man' as their object and 'dog' as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
+Find words that have `man` as their object and `dog` as their subject (i.e. find X in `'man' <-O- X -S-> 'dog'`):
 
-    rspan(rspan(rel('has_object'), 'target') & 'man', 'source') &
-    rspan(rspan(rel('has_subject'), 'target') & 'dog', 'source')
+    rspan( rel('dep::object') & 'man' , 'source') &
+    rspan( rel('dep::subject') & 'dog' , 'source')
 
 Find words that are the subject of a word that has 'man' as its object (i.e. find X in `'man' <-O- ? -S-> X`):
 
     rspan(
-        rspan(rel('has_subject'), 'source') &
-        rspan(rspan(rel('has_object'), 'target') & 'man', 'source'),
+        rel('dep::subject', 'source') & rspan( rel('dep::object') & 'man' , 'source'),
         'target'
     )
 
-Note in the above that when combining relations matches with `&`, a new relations match is created that has the first relation as its 'main' relation, although it remembers all relations involved in matching, so a tree structure could be built.
+Note in the above that when combining two relations matches with `&`, a new relations match is created that stores the information for both relations. The third `rspan` parameter can be used to select the relation, but the default is the first of the two relations combined.
 
 
 ### Capturing parts
 
+**TODO:** see if we can unify capture groups and relations (WIP)
+
 Just like in other CQL queries, we can tag parts with a group name to capture them.
 
     V:(
-        rspan(S:rspan(rel('has_subject'), 'target'), 'source') & 
-        rspan(O:rspan(rel('has_object'), 'target'), 'source') & 
+        rspan(S:rel('dep::subject'), 'source') & 
+        rspan(O:rel('dep::object'), 'source') & 
         [pos='VERB']
     )
 
@@ -285,9 +297,9 @@ A potential downside of is that this could greatly increase the number of unique
 
 For example, to encode a tag `<s sentiment="happy" confidence="10" />` into a single term we can index this term in the `_relation` attribute:
 
-    __tag\u0002s\u0001confidence\u000210\u0001sentiment\u0002happy
+    __tag::s\u0001confidence\u000210\u0001sentiment\u0002happy
 
-So the "relation type" here is `__tag\u0002s`, from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a faster prefix query.
+So the "full relation type" here is `__tag::s` (consisting of relation class `__tag` and relation type `s`), from which the tag name `s` can be decoded. We keep the tag name as part of the relation type so it's always at the start of the term, allowing us to use a fast prefix query.
 
 After that, the attributes follow, in alphabetical order, each attribute name preceded by `\u0001` and each value preceded by `\u0002`. The alphabetical order is so we can construct an efficient regex to find multiple of them. (if we didn't know the order they were indexed in, we'd have to construct an awkwardly long and likely slow regex to find all matches)
 
@@ -297,22 +309,22 @@ Inline tags don't really have a source and target word, and using the first word
 
 Instead, we'll opt to store a 0-length source and target for the tag. This source will start and end at the first word of the tag, and the target will start and end at the first word after the tag. This way the calculations line up.
 
-### rtspan function
+### rtype function
 
 Because we have XML-style syntax for spans, we likely won't need it, but just in case, a utility function  `rtspan` could be provided, so that:
 
-    rtspan('s', 'sentiment', 'happy', 'confidence', '10')
+    rtype('__tag', s', list('sentiment', 'happy', 'confidence', '10'))
 
 would return the regex:
 
-    __tag\u0002s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
+    __tag::s.*\u0001confidence\u000210.*\u0001sentiment\u0002happy.*
 
 
 ### Better keep track of spans hierarchy?
 
 > **NOTE:** this is beyong the scope of this task, but it's good to keep it in the back of our mind
 
-Span nesting has never been completely accurately recorded in the index, because only the start and end token is stored, not the nesting level. If two spans have the same start and end, we can't tell which one is the parent of the other.
+Span nesting has never been completely accurately recorded in the index, because only the start and end tokens are stored, not the nesting level. If two spans have the same start and end, we can't tell which one is the parent of the other.
 
 We could include the nesting hierarchy in the indexed term, e.g. `<b><i>dog</i></b>` would be indexed as `b_i`. In addition to giving us the correct nesting, it would also help to speed up queries like `("dog" within <i/>) within <b/>`, which would only have to search for `"dog" within <b_i />`
 
@@ -321,8 +333,7 @@ We also can't efficiently find an inline tag's ancestors or descendants; `within
 
 ## Specification of indexing relations
 
-This is a complete specification of how relations will be indexed in BlackLab. This includes the new way of
-indexing spans as relations as well.
+This is a complete specification of how relations will be indexed in BlackLab. This includes the new way of indexing spans as relations as well.
 
 Relations (and spans) are indexed in the `_relation` annotation. A relation is encoded as a single term with a payload.
 
@@ -331,15 +342,17 @@ We have to choose where to index relations:
 1. always at the source, or always at the target
 2. always at the first position in the document (whether that's the source or target)
 
-We'll start with the second option, which has the advantage that the associated spans don't need to be sorted to be in order of increasing start position. It is also the way inline tags are indexed right now, so no existing invariants and optimizations are messed up. This does need that we will have to record whether the relation was indexed at the source or target.
+We'll start with the second option, which has the advantage that the associated spans don't need to be sorted to be in order of increasing start position. It is also the way inline tags are indexed right now, so no existing invariants and optimizations are messed up. This does mean that we will have to record whether the relation was indexed at the source or target.
 
 ### Term
 
 The term indexed is a string of the form:
 
-    relationtype\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
+    relClass::relType\u0001attr1\u0002value1\u0001attr2\u0002value2\u0001...
 
-The relationtype always ends with `\u0001` (such a closing character is useful to avoid unwanted prefix matches when using regexes). For spans, the relation type is `__tag\u0002tagname\u0001`, where `tagname` is the name of the tag, e.g. `s`.
+We call `relClass::relType` the _full relation type_. It consists of the relation class and the relation type. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
+
+There is always a `\u0001` after the full relation type (such a closing character is useful to avoid unwanted prefix matches when using regexes).
 
 Attributes are sorted alphabetically by name. Each attribute name is followed by `\u0002`, then the value, and finally `\u0001`.
 
