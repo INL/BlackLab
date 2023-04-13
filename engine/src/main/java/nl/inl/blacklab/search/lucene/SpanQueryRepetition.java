@@ -33,7 +33,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
     }
 
@@ -123,6 +123,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
         }
 
         @Override
+        @Deprecated
         public void extractTerms(Set<Term> terms) {
             weight.extractTerms(terms);
         }

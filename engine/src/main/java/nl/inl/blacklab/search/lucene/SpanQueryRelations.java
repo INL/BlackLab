@@ -44,7 +44,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         // Return any relation
         BOTH_DIRECTIONS("both");
 
-        private String code;
+        private final String code;
 
         Direction(String code) {
             this.code = code;
@@ -199,10 +199,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     public String getElementName() {
         return AnnotatedFieldNameUtil.inlineTagNameFromRelationType(relationType);
-    }
-
-    public String getRelationType() {
-        return relationType;
     }
 
     @Override

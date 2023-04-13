@@ -31,7 +31,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
         // Only return relations where target occurs before source
         FULL_SPAN("full");
 
-        private String code;
+        private final String code;
 
         Mode(String code) {
             this.code = code;
@@ -56,13 +56,12 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
         }
     }
 
-    private BLSpanQuery clause;
+    private final BLSpanQuery clause;
 
-    private Mode mode;
+    private final Mode mode;
 
     public SpanQueryRelationSpanAdjust(BLSpanQuery clause, Mode mode) {
         super(clause.queryInfo);
-        this.clause = clause;
         this.clause = clause;
         this.mode = mode;
     }
