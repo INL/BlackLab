@@ -22,25 +22,23 @@ class SpansRelations extends BLSpans {
 
     private final int NOT_YET_NEXTED = -1;
 
-    private final int PAYLOAD_NOT_YET_READ = -2;
-
     /** Term query that found our relations */
     private final BLSpans relationsMatches;
 
-    /** Span end position (or NOT_YET_NEXTED, or PAYLOAD_NOT_YET_READ) */
+    /** Span end position (or NOT_YET_NEXTED) */
     private int start = NOT_YET_NEXTED;
 
-    /** Span end position (or NOT_YET_NEXTED, or PAYLOAD_NOT_YET_READ) */
+    /** Span end position (or NOT_YET_NEXTED) */
     private int end = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
-    private RelationInfo relationInfo = new RelationInfo();
+    private final RelationInfo relationInfo = new RelationInfo();
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
-    private boolean payloadIndicatesPrimaryValues;
+    private final boolean payloadIndicatesPrimaryValues;
 
     /** Filter to apply to the relations */
-    private Direction direction;
+    private final Direction direction;
 
     /**
      * Construct SpansRelations.
@@ -70,13 +68,13 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
-        end = NOT_YET_NEXTED;
+        start = end = NOT_YET_NEXTED;
         return relationsMatches.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
-        end = NOT_YET_NEXTED;
+        start = end = NOT_YET_NEXTED;
         return relationsMatches.advance(target);
     }
 
@@ -87,17 +85,19 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
-        end = PAYLOAD_NOT_YET_READ;
-        int startPosition;
         do {
-            startPosition = relationsMatches.nextStartPosition();
-            if (startPosition == NO_MORE_POSITIONS)
+            start = relationsMatches.nextStartPosition();
+            if (start == NO_MORE_POSITIONS) {
+                end = NO_MORE_POSITIONS;
                 break;
+            }
+            fetchRelationInfo();
+            end = relationInfo.getFullSpanEnd();
         } while (!matchesFilter());
-        return startPosition;
+        return start;
     }
 
-    private boolean matchesFilter() throws IOException {
+    private boolean matchesFilter() {
         switch (direction) {
         case ROOT:
             return getRelationInfo().isRoot();
@@ -114,22 +114,19 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int startPosition() {
-        return relationsMatches.startPosition();
+        return start;
     }
 
     private final PayloadSpanCollector collector = new PayloadSpanCollector();
 
     @Override
     public int endPosition() {
-        if (relationsMatches.startPosition() == NO_MORE_POSITIONS)
+        if (start == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
-            if (end == PAYLOAD_NOT_YET_READ) {
-                decodePayload();
-            }
-            return end;
+        return end;
     }
 
-    private void decodePayload() {
+    private void fetchRelationInfo() {
         try {
             // Fetch the payload
             collector.reset();
@@ -139,15 +136,12 @@ class SpansRelations extends BLSpans {
             byte[] payload = collector.getPayloads().iterator().next();
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
             relationInfo.deserialize(startPosition(), dataInput);
-            end = relationInfo.getFullSpanEnd();
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
     }
 
     public RelationInfo getRelationInfo() {
-        if (end == PAYLOAD_NOT_YET_READ)
-            decodePayload();
         return relationInfo;
     }
 

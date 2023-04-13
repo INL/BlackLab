@@ -35,6 +35,8 @@ class SpansRelationSpanAdjust extends BLSpans {
 
     @Override
     public int startPosition() {
+        if (clause.startPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
         switch (mode) {
         case SOURCE:
             return clause.getRelationInfo().getSourceStart();
@@ -49,6 +51,8 @@ class SpansRelationSpanAdjust extends BLSpans {
 
     @Override
     public int endPosition() {
+        if (clause.endPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
         switch (mode) {
         case SOURCE:
             return clause.getRelationInfo().getSourceEnd();
