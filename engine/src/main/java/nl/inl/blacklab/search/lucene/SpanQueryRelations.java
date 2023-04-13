@@ -79,7 +79,10 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private Direction direction;
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, Map<String, String> attributes, Direction direction) {
+    private RelationInfo.SpanMode spanMode;
+
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
+            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
 
         // Construct the clause from the field, relation type and attributes
@@ -87,20 +90,22 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
         BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
 
-        init(relationFieldName, relationType, clause, direction);
+        init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause, Direction direction) {
+    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
+            Direction direction, RelationInfo.SpanMode spanMode) {
         super(queryInfo);
-        init(relationFieldName, relationType, clause, direction);
+        init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction) {
+    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
         this.clause = clause;
         this.direction = direction;
+        this.spanMode = spanMode;
     }
 
     @Override
@@ -108,7 +113,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten, direction);
+        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten, direction, spanMode);
     }
 
     @Override
@@ -152,7 +157,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(spans, primaryIndicator, direction);
+            return new SpansRelations(spans, primaryIndicator, direction,
+                    spanMode);
         }
 
     }

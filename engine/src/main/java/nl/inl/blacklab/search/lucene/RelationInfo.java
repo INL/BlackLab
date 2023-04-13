@@ -11,6 +11,44 @@ import org.apache.lucene.store.DataOutput;
  */
 public class RelationInfo {
 
+    /**
+     * Different spans we can return for a relation
+     */
+    public enum SpanMode {
+        // Only return root relations (relations without a source)
+        SOURCE("source"),
+
+        // Only return relations where target occurs after source
+        TARGET("target"),
+
+        // Only return relations where target occurs before source
+        FULL_SPAN("full");
+
+        private final String code;
+
+        SpanMode(String code) {
+            this.code = code;
+        }
+
+        public String getCode() {
+            return code;
+        }
+
+        @Override
+        public String toString() {
+            return getCode();
+        }
+
+        public static SpanMode fromCode(String code) {
+            for (SpanMode mode: values()) {
+                if (mode.getCode().equals(code)) {
+                    return mode;
+                }
+            }
+            throw new IllegalArgumentException("Unknown span mode: " + code);
+        }
+    }
+
     /** Default value for where the other end of this relation starts.
      *  We use 1 because it's pretty common for adjacent words to have a
      *  relation, and in this case we don't store the value. */
@@ -178,6 +216,32 @@ public class RelationInfo {
 
     public int getFullSpanEnd() {
         return Math.max(sourceEnd, targetEnd);
+    }
+
+    public int spanStart(SpanMode mode) {
+        switch (mode) {
+        case SOURCE:
+            return getSourceStart();
+        case TARGET:
+            return getTargetStart();
+        case FULL_SPAN:
+            return getFullSpanStart();
+        default:
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
+    }
+
+    public int spanEnd(SpanMode mode) {
+        switch (mode) {
+        case SOURCE:
+            return getSourceEnd();
+        case TARGET:
+            return getTargetEnd();
+        case FULL_SPAN:
+            return getFullSpanEnd();
+        default:
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
     }
 
     @Override

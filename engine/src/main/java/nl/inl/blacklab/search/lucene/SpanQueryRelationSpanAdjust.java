@@ -21,46 +21,11 @@ import nl.inl.blacklab.search.results.QueryInfo;
  */
 public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
-    public enum Mode {
-        // Only return root relations (relations without a source)
-        SOURCE("source"),
-
-        // Only return relations where target occurs after source
-        TARGET("target"),
-
-        // Only return relations where target occurs before source
-        FULL_SPAN("full");
-
-        private final String code;
-
-        Mode(String code) {
-            this.code = code;
-        }
-
-        public String getCode() {
-            return code;
-        }
-
-        @Override
-        public String toString() {
-            return getCode();
-        }
-
-        public static Mode fromCode(String code) {
-            for (Mode mode : values()) {
-                if (mode.getCode().equals(code)) {
-                    return mode;
-                }
-            }
-            throw new IllegalArgumentException("Unknown span mode: " + code);
-        }
-    }
-
     private final BLSpanQuery clause;
 
-    private final Mode mode;
+    private final RelationInfo.SpanMode mode;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, Mode mode) {
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, RelationInfo.SpanMode mode) {
         super(clause.queryInfo);
         this.clause = clause;
         this.mode = mode;
@@ -177,7 +142,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     @Override
     public boolean hitsStartPointSorted() {
-        return mode == Mode.FULL_SPAN;
+        return mode == RelationInfo.SpanMode.FULL_SPAN;
     }
 
     @Override

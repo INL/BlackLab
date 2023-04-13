@@ -40,6 +40,9 @@ class SpansRelations extends BLSpans {
     /** Filter to apply to the relations */
     private final Direction direction;
 
+    /** What span to return for the relations found */
+    private final RelationInfo.SpanMode spanMode;
+
     /**
      * Construct SpansRelations.
      *
@@ -50,10 +53,11 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction) {
+    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode) {
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
+        this.spanMode = spanMode;
     }
 
     @Override
@@ -86,22 +90,27 @@ class SpansRelations extends BLSpans {
     @Override
     public int nextStartPosition() throws IOException {
         do {
-            int clauseStart = relationsMatches.nextStartPosition();
-            if (clauseStart == NO_MORE_POSITIONS) {
+            if (relationsMatches.nextStartPosition() == NO_MORE_POSITIONS) {
                 start = NO_MORE_POSITIONS;
                 end = NO_MORE_POSITIONS;
                 return start;
             }
             fetchRelationInfo(); // decode the payload
-        } while (!matchesFilter());
+        } while (!suitableMatch());
 
         // By default, we return the target of the relation (but this can be changed using rspan())
-        start = relationInfo.getTargetStart();
-        end = relationInfo.getTargetEnd();
+        start = relationInfo.spanStart(spanMode);
+        end = relationInfo.spanEnd(spanMode);
         return start;
     }
 
-    private boolean matchesFilter() {
+    private boolean suitableMatch() {
+        if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
+            // Root relations have no source
+            return false;
+        }
+
+        // See if it's the correct direction
         switch (direction) {
         case ROOT:
             return relationInfo.isRoot();

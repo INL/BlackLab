@@ -6,6 +6,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -19,12 +20,13 @@ public class XFRelations implements ExtensionFunctionClass {
         String relationType = (String) args.get(0);
         SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String) args.get(1));
         String field = context.withRelationAnnotation().luceneField();
-        return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String> )null, direction);
+        return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String> )null, direction,
+                RelationInfo.SpanMode.TARGET);
     }
 
     private static BLSpanQuery rspan(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
-        SpanQueryRelationSpanAdjust.Mode mode = SpanQueryRelationSpanAdjust.Mode.fromCode((String)args.get(1));
+        RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String)args.get(1));
         return new SpanQueryRelationSpanAdjust(relations, mode);
     }
 
