@@ -26,14 +26,20 @@ public class QueryExtensions {
     /** Three queries as an argument */
     public static final List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
 
+    /** Two strings */
+    public static final List<ArgType> ARGS_S = List.of(ArgType.STRING, ArgType.STRING);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SSS = List.of(ArgType.STRING, ArgType.STRING, ArgType.STRING);
+
     /** A query and a string */
     public static final List<ArgType> ARGS_QS = List.of(ArgType.QUERY, ArgType.STRING);
 
     /** A query, a string and another query */
     public static final List<ArgType> ARGS_QSQ = List.of(ArgType.QUERY, ArgType.STRING, ArgType.QUERY);
-
-    /** Two strings */
-    public static final List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
 
     enum ArgType {
         QUERY,

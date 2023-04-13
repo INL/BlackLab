@@ -19,9 +19,10 @@ public class XFRelations implements ExtensionFunctionClass {
     private static BLSpanQuery rel(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         String relationType = (String) args.get(0);
         SpanQueryRelations.Direction direction = SpanQueryRelations.Direction.fromCode((String) args.get(1));
+        RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.fromCode((String)args.get(2));
         String field = context.withRelationAnnotation().luceneField();
         return new SpanQueryRelations(queryInfo, field, relationType, (Map<String, String> )null, direction,
-                RelationInfo.SpanMode.TARGET);
+                spanMode);
     }
 
     private static BLSpanQuery rspan(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
@@ -32,7 +33,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     public void register() {
         /** Resolve second clause using forward index and the first clause using regular reverse index */
-        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SS, List.of(".*", "both"));
+        QueryExtensions.register("rel", XFRelations::rel, QueryExtensions.ARGS_SSS, List.of(".*", "both", "target"));
         QueryExtensions.register("rspan", XFRelations::rspan, QueryExtensions.ARGS_QS, Arrays.asList(null, "full"));
     }
 
