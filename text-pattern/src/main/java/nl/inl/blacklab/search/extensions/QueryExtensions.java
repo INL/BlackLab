@@ -153,14 +153,18 @@ public class QueryExtensions {
         List<Object> newArgs = new ArrayList<>(args);
         for (int i = 0; i < funcInfo.argTypes.size(); i++) {
             // Fill in default value for argument if missing
-            if (i >= args.size()) {
-                // Missing argument.
-                if (i >= funcInfo.defaultValues.size())
-                    throw new IllegalArgumentException("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
-                newArgs.add(funcInfo.defaultValues.get(i));
-            } else if (newArgs.get(i) == null) {
-                // Explicitly set to empty (_)
-                newArgs.set(i, funcInfo.defaultValues.get(i));
+            if (i < funcInfo.defaultValues.size()) {
+                if (i >= args.size()) {
+                    // Missing argument; use default value
+                    newArgs.add(funcInfo.defaultValues.get(i));
+                } else if (newArgs.get(i) == null) {
+                    // Explicitly set to undefined (_); use default value
+                    newArgs.set(i, funcInfo.defaultValues.get(i));
+                }
+            }
+            if (newArgs.get(i) == null) {
+                // Still null, so no default value available
+                throw new IllegalArgumentException("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
             }
 
             // Check argument type
@@ -180,7 +184,7 @@ public class QueryExtensions {
 
         if (newArgs.size() != funcInfo.argTypes.size())
             throw new IllegalArgumentException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
-        return funcInfo.func.apply(queryInfo, context, args);
+        return funcInfo.func.apply(queryInfo, context, newArgs);
     }
 
 }

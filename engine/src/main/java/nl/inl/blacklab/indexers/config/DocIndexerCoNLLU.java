@@ -182,7 +182,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
             // Store this line now, so the start/end offsets are correct
             if (isStoreDocuments())
-                csvData.append(origLine);
+                csvData.append(origLine).append(" ");
 
             // Index dependency relation
             String strHead = record.size() > COL_HEAD ? record.get(COL_HEAD) : "_";

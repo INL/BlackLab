@@ -74,6 +74,10 @@ public abstract class BLSpans extends Spans {
      * Always at least advances to the next hit, even if the current start position
      * is already at or beyond the target.
      *
+     * CAUTION: this method only makes sense if you produce spans sorted
+     * by start position. If not, this method should not be called (or rather,
+     * {@link BLSpanQuery#ensureSorted(BLSpanQuery)} should be used).
+     *
      * @param target target start position to advance to
      * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with
      *         this document
@@ -129,7 +133,7 @@ public abstract class BLSpans extends Spans {
         return spans;
     }
 
-    public RelationInfo getRelationInfo() throws IOException {
+    public RelationInfo getRelationInfo() {
         return null;
     }
 

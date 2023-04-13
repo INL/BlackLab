@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -73,10 +72,10 @@ public class TestPayloadUtils {
             b = PayloadUtils.tagEndPositionPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED);
             RelationInfo r = new RelationInfo();
             r.deserialize(starts[i], new ByteArrayDataInput(b.bytes));
-            Assert.assertEquals(starts[i], r.getSpanStart());
+            Assert.assertEquals(starts[i], r.getFullSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());
             Assert.assertEquals(starts[i], r.getSourceEnd());
-            Assert.assertEquals(ends[i], r.getSpanEnd());
+            Assert.assertEquals(ends[i], r.getFullSpanEnd());
             Assert.assertEquals(ends[i], r.getTargetEnd());
             Assert.assertEquals(ends[i], r.getTargetStart());
         }

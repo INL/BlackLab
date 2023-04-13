@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -13,40 +12,28 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
- *
- * Returns relation spans matching the given type and (optionally) attributes.
- * <p>
- * This version works with the integrated index and the new _relation annotation.
- * <p>
- * For example, SpanQueryTags("ne") will give us spans for all the {@code <ne>}
- * elements in the document.
+ * Adjust relation spans to match source, target, or entire relation.
  */
-public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
+public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
-    public enum Direction {
+    public enum Mode {
         // Only return root relations (relations without a source)
-        ROOT("root"),
+        SOURCE("source"),
 
         // Only return relations where target occurs after source
-        FORWARD("forward"),
+        TARGET("target"),
 
         // Only return relations where target occurs before source
-        BACKWARD("backward"),
-
-        // Return any relation
-        BOTH_DIRECTIONS("both");
+        FULL_SPAN("full");
 
         private String code;
 
-        Direction(String code) {
+        Mode(String code) {
             this.code = code;
         }
 
@@ -59,48 +46,25 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             return getCode();
         }
 
-        public static Direction fromCode(String code) {
-            for (Direction dir : values()) {
-                if (dir.getCode().equals(code)) {
-                    return dir;
+        public static Mode fromCode(String code) {
+            for (Mode mode : values()) {
+                if (mode.getCode().equals(code)) {
+                    return mode;
                 }
             }
-            throw new IllegalArgumentException("Unknown relation direction: " + code);
+            throw new IllegalArgumentException("Unknown span mode: " + code);
         }
     }
 
     private BLSpanQuery clause;
 
-    private String relationType;
+    private Mode mode;
 
-    private String baseFieldName;
-
-    private String relationFieldName;
-
-    private Direction direction;
-
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, Map<String, String> attributes, Direction direction) {
-        super(queryInfo);
-
-        // Construct the clause from the field, relation type and attributes
-        String regexp = AnnotatedFieldNameUtil.relationSearchRegex(relationType, attributes);
-        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexp));
-        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
-
-        init(relationFieldName, relationType, clause, direction);
-    }
-
-    public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause, Direction direction) {
-        super(queryInfo);
-        init(relationFieldName, relationType, clause, direction);
-    }
-
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction) {
-        this.relationType = relationType;
-        baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
-        this.relationFieldName = relationFieldName;
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, Mode mode) {
+        super(clause.queryInfo);
         this.clause = clause;
-        this.direction = direction;
+        this.clause = clause;
+        this.mode = mode;
     }
 
     @Override
@@ -108,7 +72,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         BLSpanQuery rewritten = clause.rewrite(reader);
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelations(queryInfo, relationFieldName, relationType, rewritten, direction);
+        return new SpanQueryRelationSpanAdjust(rewritten, mode);
     }
 
     @Override
@@ -130,7 +94,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
         public Weight(BLSpanWeight weight, IndexSearcher searcher, Map<Term, TermStates> terms, float boost)
                 throws IOException {
-            super(SpanQueryRelations.this, searcher, terms, boost);
+            super(SpanQueryRelationSpanAdjust.this, searcher, terms, boost);
             this.weight = weight;
         }
 
@@ -150,17 +114,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
-            boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(spans, primaryIndicator, direction);
+            return new SpansRelationSpanAdjust(spans, mode);
         }
-
     }
 
     @Override
     public String toString(String field) {
-        // TODO: we should really change this to REL but it breaks tests for the integrated index...
-        return "TAGS(" + relationType + ")";
+        return "RSPAN(" + clause + ", " + mode + ")";
     }
 
     @Override
@@ -169,14 +129,13 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        SpanQueryRelations that = (SpanQueryRelations) o;
-        return clause.equals(that.clause) && relationType.equals(that.relationType) && baseFieldName.equals(that.baseFieldName)
-                && relationFieldName.equals(that.relationFieldName);
+        SpanQueryRelationSpanAdjust that = (SpanQueryRelationSpanAdjust) o;
+        return clause.equals(that.clause) && mode == that.mode;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, relationType, baseFieldName, relationFieldName);
+        return Objects.hash(clause, mode);
     }
 
     /**
@@ -189,20 +148,12 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
      */
     @Override
     public String getField() {
-        return baseFieldName;
+        return clause.getField();
     }
 
     @Override
     public String getRealField() {
-        return relationFieldName;
-    }
-
-    public String getElementName() {
-        return AnnotatedFieldNameUtil.inlineTagNameFromRelationType(relationType);
-    }
-
-    public String getRelationType() {
-        return relationType;
+        return clause.getRealField();
     }
 
     @Override
@@ -227,12 +178,12 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return mode == Mode.FULL_SPAN;
     }
 
     @Override
     public boolean hitsHaveUniqueStart() {
-        return true;
+        return false;
     }
 
     @Override
@@ -242,7 +193,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public boolean hitsAreUnique() {
-        return hitsHaveUniqueStart() || hitsHaveUniqueEnd();
+        return false;
     }
 
     @Override

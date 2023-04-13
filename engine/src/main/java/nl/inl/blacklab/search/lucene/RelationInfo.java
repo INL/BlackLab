@@ -172,11 +172,11 @@ public class RelationInfo {
         return targetEnd;
     }
 
-    public int getSpanStart() {
+    public int getFullSpanStart() {
         return Math.min(sourceStart, targetStart);
     }
 
-    public int getSpanEnd() {
+    public int getFullSpanEnd() {
         return Math.max(sourceEnd, targetEnd);
     }
 

@@ -139,6 +139,9 @@ public final class AnnotatedFieldNameUtil {
      * @return term to index in Lucene
      */
     public static String relationIndexTermMulti(String relationType, Map<String, Collection<String>> attributes) {
+        if (attributes == null)
+            return relationType + ATTR_SEPARATOR;
+
         // Sort and concatenate the attribute names and values
         String attrPart = attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
@@ -149,7 +152,7 @@ public final class AnnotatedFieldNameUtil {
                 .collect(Collectors.joining());
 
         // The term to index consists of the type followed by the (sorted) attributes.
-        return relationType + attrPart;
+        return relationType + ATTR_SEPARATOR + attrPart;
     }
 
     /**
@@ -164,13 +167,13 @@ public final class AnnotatedFieldNameUtil {
      */
     public static String relationSearchRegex(String relationType, Map<String, String> attributes) {
         // Sort and concatenate the attribute names and values
-        String attrPart = attributes.entrySet().stream()
+        String attrPart = attributes == null ? "" : attributes.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
                 .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(), BlackLabIndex.IndexType.INTEGRATED))
                 .collect(Collectors.joining(".*")); // zero or more chars between attribute matches
 
         // The regex consists of the type part followed by the (sorted) attributes part.
-        return relationType + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
+        return relationType + ATTR_SEPARATOR + ".*" + (attrPart.isEmpty() ? "" : attrPart + ".*");
     }
 
     public static String inlineTagRelationType(String tagName) {

@@ -9,6 +9,7 @@ import org.apache.lucene.store.ByteArrayDataInput;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Span;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
  * Gets spans for relations matches.
@@ -19,15 +20,18 @@ import nl.inl.blacklab.search.Span;
  */
 class SpansRelations extends BLSpans {
 
-    private final int END_NOT_YET_NEXTED = -1;
+    private final int NOT_YET_NEXTED = -1;
 
-    private final int END_PAYLOAD_NOT_YET_READ = -2;
+    private final int PAYLOAD_NOT_YET_READ = -2;
 
     /** Term query that found our relations */
     private final BLSpans relationsMatches;
 
-    /** Span end position (or END_NOT_YET_NEXTED, or END_PAYLOAD_NOT_YET_READ) */
-    private int end = END_NOT_YET_NEXTED;
+    /** Span end position (or NOT_YET_NEXTED, or PAYLOAD_NOT_YET_READ) */
+    private int start = NOT_YET_NEXTED;
+
+    /** Span end position (or NOT_YET_NEXTED, or PAYLOAD_NOT_YET_READ) */
+    private int end = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
     private RelationInfo relationInfo = new RelationInfo();
@@ -36,7 +40,7 @@ class SpansRelations extends BLSpans {
     private boolean payloadIndicatesPrimaryValues;
 
     /** Filter to apply to the relations */
-    private SpanQueryRelations.Filter filter;
+    private Direction direction;
 
     /**
      * Construct SpansRelations.
@@ -48,10 +52,10 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, SpanQueryRelations.Filter filter) {
+    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction) {
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
-        this.filter = filter;
+        this.direction = direction;
     }
 
     @Override
@@ -66,13 +70,13 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int nextDoc() throws IOException {
-        end = END_NOT_YET_NEXTED;
+        end = NOT_YET_NEXTED;
         return relationsMatches.nextDoc();
     }
 
     @Override
     public int advance(int target) throws IOException {
-        end = END_NOT_YET_NEXTED;
+        end = NOT_YET_NEXTED;
         return relationsMatches.advance(target);
     }
 
@@ -83,7 +87,7 @@ class SpansRelations extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
-        end = END_PAYLOAD_NOT_YET_READ;
+        end = PAYLOAD_NOT_YET_READ;
         int startPosition;
         do {
             startPosition = relationsMatches.nextStartPosition();
@@ -94,7 +98,7 @@ class SpansRelations extends BLSpans {
     }
 
     private boolean matchesFilter() throws IOException {
-        switch (filter) {
+        switch (direction) {
         case ROOT:
             return getRelationInfo().isRoot();
         case FORWARD:
@@ -104,7 +108,7 @@ class SpansRelations extends BLSpans {
         case BOTH_DIRECTIONS:
             return true;
         default:
-            throw new IllegalArgumentException("Unknown filter: " + filter);
+            throw new IllegalArgumentException("Unknown filter: " + direction);
         }
     }
 
@@ -119,30 +123,30 @@ class SpansRelations extends BLSpans {
     public int endPosition() {
         if (relationsMatches.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
-        try {
-            if (end == END_PAYLOAD_NOT_YET_READ) {
+            if (end == PAYLOAD_NOT_YET_READ) {
                 decodePayload();
             }
             return end;
+    }
+
+    private void decodePayload() {
+        try {
+            // Fetch the payload
+            collector.reset();
+            // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
+            //   each relation gets a payload, so there should always be one
+            relationsMatches.collect(collector);
+            byte[] payload = collector.getPayloads().iterator().next();
+            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
+            relationInfo.deserialize(startPosition(), dataInput);
+            end = relationInfo.getFullSpanEnd();
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
     }
 
-    private void decodePayload() throws IOException {
-        // Fetch the payload
-        collector.reset();
-        // NOTE: relationsMatches is from a BLSpanTermQuery, a leaf, so we know there can only be one payload
-        //   each relation gets a payload, so there should always be one
-        relationsMatches.collect(collector);
-        byte[] payload = collector.getPayloads().iterator().next();
-        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
-        relationInfo.deserialize(startPosition(), dataInput);
-        end = relationInfo.getSpanEnd();
-    }
-
-    public RelationInfo getRelationInfo() throws IOException {
-        if (end == END_PAYLOAD_NOT_YET_READ)
+    public RelationInfo getRelationInfo() {
+        if (end == PAYLOAD_NOT_YET_READ)
             decodePayload();
         return relationInfo;
     }

@@ -143,24 +143,32 @@ For example, a syntax specific to dependency relations (the likely most common u
 
 ### Quick reference
 
-Find relations by type, what direction they point in and whether or not they are root.
-Use `spanMode` to indicate what you want the associated span start/end to be.
+Find relations by type and direction.
 
-    rel(reltype, filter = "both")
+    rel(reltype = ".*", direction = "both")
 
-    # filter: "root", "forward", "backward", "both" (default)
+`direction` can take the values:
+- `"root"` (only root relations)
+- `"forward"` (only relations pointing forward in the document)
+- `"backward"` (only relations pointing backward in the document)
+- `"both"` (the default)
 
-Span adjustment:
+We can adjust the spans returned by `rel(...)` according to what we need:
 
-    # Same relation matches, but span is set to the source
-    rspan(relation_matches, 'source')
+    rspan(relation_matches, mode = "full")
 
-    # Same relation matches, but span is set to the target
-    rspan(relation_matches, 'target')
+This will return the same relation matches, but with the span start and end set 
+according to the value of mode.
 
-    # Same relation matches, but span is set to contain both source and target
-    rspan(relation_matches, 'full')
+`mode` can take the values:
+- `"source"` (span becomes the source of the relation)
+- `"target"` (span becomes the target of the relation)
+- `"full"` (span becomes the full span of the relation, including source and target - this is how relations start)
 
+By default `rel(...)` returns spans that match the target of the relation. So e.g.
+`rel('nsubj')` will find subjects, and `rspan(rel('nsubj'), 'source')` will find words
+that have a subject, and `rspan(rel('nsubj'), 'full')` will find spans that include both
+the source and target.
 
 ### Finding relations
 

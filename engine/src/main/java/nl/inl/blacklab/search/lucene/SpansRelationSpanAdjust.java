@@ -7,27 +7,25 @@ import org.apache.lucene.search.spans.SpanCollector;
 import nl.inl.blacklab.search.Span;
 
 /**
- * Returns either the left edge or right edge of the specified query.
- *
- * Note that the results of this query are zero-length spans.
+ * Adjust relations spans to match source, target, or entire relation.
  */
-class SpansEdge extends BLSpans {
+class SpansRelationSpanAdjust extends BLSpans {
 
     /** query the query to determine edges from */
     private final BLSpans clause;
 
-    /** if true, return the right edges; if false, the left */
-    private final boolean rightEdge;
+    /** how to adjust spans */
+    private final SpanQueryRelationSpanAdjust.Mode mode;
 
     /**
      * Constructs a SpansEdge.
-     * 
+     *
      * @param clause the clause to get an edge from
-     * @param rightEdge whether or not to get the right edge
+     * @param mode how to adjust spans
      */
-    public SpansEdge(BLSpans clause, boolean rightEdge) {
+    public SpansRelationSpanAdjust(BLSpans clause, SpanQueryRelationSpanAdjust.Mode mode) {
         this.clause = clause;
-        this.rightEdge = rightEdge;
+        this.mode = mode;
     }
 
     @Override
@@ -37,12 +35,30 @@ class SpansEdge extends BLSpans {
 
     @Override
     public int startPosition() {
-        return rightEdge ? clause.endPosition() : clause.startPosition();
+        switch (mode) {
+        case SOURCE:
+            return clause.getRelationInfo().getSourceStart();
+        case TARGET:
+            return clause.getRelationInfo().getTargetStart();
+        case FULL_SPAN:
+            return clause.getRelationInfo().getFullSpanStart();
+        default:
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
     }
 
     @Override
     public int endPosition() {
-        return rightEdge ? clause.endPosition() : clause.startPosition();
+        switch (mode) {
+        case SOURCE:
+            return clause.getRelationInfo().getSourceEnd();
+        case TARGET:
+            return clause.getRelationInfo().getTargetEnd();
+        case FULL_SPAN:
+            return clause.getRelationInfo().getFullSpanEnd();
+        default:
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
     }
 
     @Override
@@ -52,26 +68,28 @@ class SpansEdge extends BLSpans {
 
     @Override
     public int nextStartPosition() throws IOException {
-        if (rightEdge) {
+        while (true) {
             if (clause.nextStartPosition() == NO_MORE_POSITIONS)
                 return NO_MORE_POSITIONS;
-            return clause.endPosition();
+            // If we're looking for sources, skip root relations because they have none
+            if (!clause.getRelationInfo().isRoot() || mode != SpanQueryRelationSpanAdjust.Mode.SOURCE) {
+                return startPosition();
+            }
         }
-        return clause.nextStartPosition();
     }
 
     @Override
     public int advanceStartPosition(int target) throws IOException {
-        if (rightEdge) {
-            // We can't skip because the spans we produce are not sorted by start.
+        if (mode != SpanQueryRelationSpanAdjust.Mode.FULL_SPAN) {
+            // We can't skip because our spans are not sorted by start.
             // Call the naive implementation.
-            // (note that this method should not be called on Spans that are not sorted by start,
-            //  as it only makes sense in terms of sorted spans)
             if (super.advanceStartPosition(target) == NO_MORE_POSITIONS)
                 return NO_MORE_POSITIONS;
-            return clause.endPosition();
+        } else {
+            if (clause.advanceStartPosition(target) == NO_MORE_POSITIONS)
+                return NO_MORE_POSITIONS;
         }
-        return clause.advanceStartPosition(target);
+        return startPosition();
     }
 
     @Override
@@ -81,7 +99,7 @@ class SpansEdge extends BLSpans {
 
     @Override
     public String toString() {
-        return "SpansEdge(" + clause + ", " + (rightEdge ? "RIGHT" : "LEFT") + ")";
+        return "rspan(" + clause + ", " + mode + ")";
     }
 
     @Override
