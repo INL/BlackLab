@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Will be the base class for all our own Spans classes. Is able to give extra
  * guarantees about the hits in this Spans object, such as if every hit is equal
@@ -29,23 +27,25 @@ public abstract class BLSpans extends Spans {
     protected boolean childClausesCaptureGroups = true;
 
     /**
-     * Give the BLSpans tree a way to access captured groups, and the capture groups
-     * themselves a way to register themselves..
+     * Give the BLSpans tree a way to access match info (captured groups etc.),
+     * and the classes that capture match info a way to register themselves.
      *
      * subclasses should override this method, pass the context to their child
-     * clauses (if any), and either: - register the captured group they represent
-     * with the context (SpansCaptureGroup does this), OR - store the context so
-     * they can later use it to access captured groups (SpansBackreference does
-     * this)
+     * clauses (if any), and either:
      *
-     * @param context the hit query context, that e.g. keeps track of captured
-     *            groups
+     * <ul>
+     *   <li>register the match info they represent with the context (SpansCaptureGroup, SpansRelations do this), OR</li>
+     *   <li>store the context so they can later use it to access match info (although this can be problematic
+     *       as it may not be available during matching)</li>
+     * </ul>
+     *
+     * @param context the hit query context, that e.g. keeps track of captured groups
      */
     public void setHitQueryContext(HitQueryContext context) {
-        int before = context.getCaptureRegisterNumber();
+        int before = context.getMatchInfoRegisterNumber();
         passHitQueryContextToClauses(context);
-        if (context.getCaptureRegisterNumber() == before) {
-            // Our clauses don't capture any groups; optimize
+        if (context.getMatchInfoRegisterNumber() == before) {
+            // Our clauses don't capture any match info; optimize
             childClausesCaptureGroups = false;
         }
     }
@@ -62,11 +62,11 @@ public abstract class BLSpans extends Spans {
      * Get the start and end position for the captured groups contained in this
      * BLSpans (sub)tree.
      *
-     * @param capturedGroups an array the size of the total number of groups in the
+     * @param relationInfo an array the size of the total number of groups in the
      *            query; the start and end positions for the groups in this subtree
      *            will be placed in here.
      */
-    abstract public void getCapturedGroups(Span[] capturedGroups);
+    abstract public void getMatchInfo(MatchInfo[] relationInfo);
 
     /**
      * Advance the start position in the current doc to target or beyond.
@@ -74,9 +74,11 @@ public abstract class BLSpans extends Spans {
      * Always at least advances to the next hit, even if the current start position
      * is already at or beyond the target.
      *
-     * CAUTION: this method only makes sense if you produce spans sorted
-     * by start position. If not, this method should not be called (or rather,
-     * {@link BLSpanQuery#ensureSorted(BLSpanQuery)} should be used).
+     * <b>CAUTION:</b> if your spans are not start point sorted, this method can
+     * not guarantee to skip over all hits that start before the target.
+     * Any class that uses this method should be aware of this.
+     * {@link BLSpanQuery#ensureSorted(BLSpanQuery)} can be used to ensure
+     * that the spans are start point sorted.
      *
      * @param target target start position to advance to
      * @return new start position, or Spans.NO_MORE_POSITIONS if we're done with
@@ -133,7 +135,7 @@ public abstract class BLSpans extends Spans {
         return spans;
     }
 
-    public RelationInfo getRelationInfo() {
+    public MatchInfo getRelationInfo() {
         return null;
     }
 

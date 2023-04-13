@@ -75,7 +75,7 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
 
     @Override
     public boolean hitsStartPointSorted() {
-        return true;
+        return clauses.get(0).hitsStartPointSorted();
     }
 
     @Override

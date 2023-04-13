@@ -6,7 +6,6 @@ import java.util.NavigableSet;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -205,6 +204,8 @@ class SpansFiSeq extends BLSpans {
             int anchorPos = startOfAnchor ? anchorStart : anchor.endPosition();
             if (direction < 0)
                 anchorPos--;
+            // OPT: sometimes anchorPos may be the same as the previous one. We could check for
+            //      this to avoid re-running the NFA. This is likely fairly rare though.
             NavigableSet<Integer> setMatchEndpoints = nfa.findMatches(currentFiDoc, anchorPos, direction);
             if (setMatchEndpoints.size() > 0) {
                 if (direction == 1)
@@ -254,10 +255,10 @@ class SpansFiSeq extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        anchor.getCapturedGroups(capturedGroups);
+        anchor.getMatchInfo(relationInfo);
         // what to do for NFA? (NFAs cannot be used right now if we're trying to capture groups)
     }
 

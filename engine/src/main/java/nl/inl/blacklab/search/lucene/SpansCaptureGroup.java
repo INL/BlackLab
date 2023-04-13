@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Captures its clause as a captured group.
  *
@@ -113,7 +111,7 @@ class SpansCaptureGroup extends BLSpans {
     @Override
     public void setHitQueryContext(HitQueryContext context) {
         super.setHitQueryContext(context);
-        this.groupIndex = context.registerCapturedGroup(name);
+        this.groupIndex = context.registerMatchInfo(name);
     }
 
     @Override
@@ -122,12 +120,12 @@ class SpansCaptureGroup extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (childClausesCaptureGroups)
-            clause.getCapturedGroups(capturedGroups);
+            clause.getMatchInfo(relationInfo);
 
         // Place our start and end position at the correct index in the array
-        capturedGroups[groupIndex] = new Span(startPosition() + leftAdjust, endPosition() + rightAdjust);
+        relationInfo[groupIndex] = MatchInfo.captureGroupSpan(startPosition() + leftAdjust, endPosition() + rightAdjust);
     }
 
     @Override

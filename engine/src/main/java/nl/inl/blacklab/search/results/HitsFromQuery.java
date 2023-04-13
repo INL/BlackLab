@@ -53,7 +53,8 @@ public class HitsFromQuery extends HitsMutable {
     protected boolean allSourceSpansFullyRead = false;
 
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        super(queryInfo, HitsInternal.create(-1, true, true)); // explicitly construct HitsInternal so they're writeable
+        // NOTE: we explicitly construct HitsInternal so they're writeable
+        super(queryInfo, HitsInternal.create(-1, true, true), null);
         final BlackLabIndex index = queryInfo.index();
         final IndexReader reader = index.reader();
         BLSpanQuery optimizedQuery;
@@ -91,7 +92,10 @@ public class HitsFromQuery extends HitsMutable {
                 if (traceOptimization)
                     logger.debug("Query after rewrite(): " + optimizedQuery);
 
-                optimizedQuery = BLSpanQuery.ensureSortedUnique(optimizedQuery);
+                // NOTE: we used to call ensureSortedUnique() here, but we cannot
+                // determine uniqueness without looking at the matchInfo too. Instead
+                // we'll do it in SpansReader, where we already have access to the matchInfo.
+                optimizedQuery = BLSpanQuery.ensureSorted(optimizedQuery);
 
                 // Restore previous FI match threshold
                 if (searchSettings.fiMatchFactor() != -1) {
@@ -112,8 +116,7 @@ public class HitsFromQuery extends HitsMutable {
                     leafReaderContext,
                     this.hitQueryContext,
                     this.hitsInternalMutable,
-                    this.capturedGroupsMutable,
-                    this.globalDocsProcessed,
+                        this.globalDocsProcessed,
                     this.globalDocsCounted,
                     this.globalHitsProcessed,
                     this.globalHitsCounted,
@@ -135,9 +138,8 @@ public class HitsFromQuery extends HitsMutable {
 
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
-                    if (hitQueryContextForThisSpans.getCaptureRegisterNumber() > 0) {
-                        capturedGroups = capturedGroupsMutable = new CapturedGroupsImpl(hitQueryContextForThisSpans.getCapturedGroupNames());
-                        spansReader.setCapturedGroups(capturedGroupsMutable);
+                    if (hitQueryContextForThisSpans.getMatchInfoRegisterNumber() > 0) {
+                        matchInfoNames = hitQueryContextForThisSpans.getMatchInfoNames();
                     }
 
                     hasInitialized = true;

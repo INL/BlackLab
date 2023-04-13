@@ -23,7 +23,7 @@ public class CompareHitsInternalImpls {
 
     static void testFill(HitsInternalMutable hits) {
         for (int i = 0; i < ITERATIONS; i++) {
-            hits.add(1, 2, 3);
+            hits.add(1, 2, 3, null);
         }
     }
 

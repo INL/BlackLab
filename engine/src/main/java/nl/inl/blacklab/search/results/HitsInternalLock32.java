@@ -5,8 +5,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -27,18 +29,20 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         super(initialCapacity);
     }
 
-    HitsInternalLock32(IntList docs, IntList starts, IntList ends) {
-        super(docs, starts, ends);
+    HitsInternalLock32(IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+        super(docs, starts, ends, matchInfos);
     }
 
     @Override
-    public void add(int doc, int start, int end) {
+    public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
             docs.add(doc);
             starts.add(start);
             ends.add(end);
+            if (matchInfo != null)
+                matchInfos.add(matchInfo);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -53,6 +57,8 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             docs.add(hit.doc);
             starts.add(hit.start);
             ends.add(hit.end);
+            if (hit.matchInfo != null)
+                matchInfos.add(hit.matchInfo);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -67,6 +73,8 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             docs.add(hit.doc());
             starts.add(hit.start());
             ends.add(hit.end());
+            if (hit.matchInfo() != null)
+                matchInfos.add(hit.matchInfo());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -117,7 +125,8 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index));
+            MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            return new HitImpl(docs.getInt((int)index), starts.getInt((int)index), ends.getInt((int)index), matchInfo);
         } finally {
             lock.readLock().unlock();
         }
@@ -145,6 +154,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             h.doc = docs.getInt((int)index);
             h.start = starts.getInt((int)index);
             h.end = ends.getInt((int)index);
+            h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
         } finally {
             lock.readLock().unlock();
         }
@@ -177,6 +187,17 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             return this.ends.getInt((int)index);
+        } finally {
+            // Don't call super method, this is faster (hot code)
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public MatchInfo[] matchInfo(long index) {
+        lock.readLock().lock();
+        try {
+            return this.matchInfos.isEmpty() ? null : this.matchInfos.get((int)index);
         } finally {
             // Don't call super method, this is faster (hot code)
             lock.readLock().unlock();

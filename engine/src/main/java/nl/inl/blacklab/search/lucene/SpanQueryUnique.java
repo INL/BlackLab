@@ -18,6 +18,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 /**
  * Makes sure the resulting hits do not contain consecutive duplicate hits.
  * These may arise when e.g. combining multiple SpanFuzzyQueries with OR.
+ *
+ * Note that MatchInfo is not taken into account here, because that is only
+ * available after matching.
  */
 class SpanQueryUnique extends BLSpanQuery {
     final BLSpanQuery src;

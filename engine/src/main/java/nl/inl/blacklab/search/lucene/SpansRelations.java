@@ -2,13 +2,14 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
@@ -32,7 +33,7 @@ class SpansRelations extends BLSpans {
     private int end = NOT_YET_NEXTED;
 
     /** Source and target for this relation */
-    private final RelationInfo relationInfo = new RelationInfo();
+    private final MatchInfo relationInfo = new MatchInfo();
 
     /** If true, we have to skip the primary value indicator in the payload (see PayloadUtils) */
     private final boolean payloadIndicatesPrimaryValues;
@@ -41,7 +42,13 @@ class SpansRelations extends BLSpans {
     private final Direction direction;
 
     /** What span to return for the relations found */
-    private final RelationInfo.SpanMode spanMode;
+    private final MatchInfo.SpanMode spanMode;
+
+    /** Group number where we'll capture our relation info */
+    private int groupIndex;
+
+    /** Relation type we're looking for */
+    private String relationType;
 
     /**
      * Construct SpansRelations.
@@ -53,7 +60,8 @@ class SpansRelations extends BLSpans {
      * @param relationsMatches relation matches for us to decode
      * @param payloadIndicatesPrimaryValues whether or not there's "is primary value" indicators in the payloads
      */
-    public SpansRelations(BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode) {
+    public SpansRelations(String relationType, BLSpans relationsMatches, boolean payloadIndicatesPrimaryValues, Direction direction, MatchInfo.SpanMode spanMode) {
+        this.relationType = relationType;
         this.relationsMatches = relationsMatches;
         this.payloadIndicatesPrimaryValues = payloadIndicatesPrimaryValues;
         this.direction = direction;
@@ -62,12 +70,15 @@ class SpansRelations extends BLSpans {
 
     @Override
     protected void passHitQueryContextToClauses(HitQueryContext context) {
-        // NOP
+        // Only keep Unicode letters from relationType
+        String groupName = relationType.replaceAll("[^\\p{L}]", "");
+        // Register our group
+        this.groupIndex = context.registerMatchInfo(groupName, true);
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
-        // NOP
+    public void getMatchInfo(MatchInfo[] relationInfo) {
+        relationInfo[groupIndex] = this.relationInfo.copy();
     }
 
     @Override
@@ -105,7 +116,7 @@ class SpansRelations extends BLSpans {
     }
 
     private boolean suitableMatch() {
-        if (relationInfo.isRoot() && spanMode == RelationInfo.SpanMode.SOURCE) {
+        if (relationInfo.isRoot() && spanMode == MatchInfo.SpanMode.SOURCE) {
             // Root relations have no source
             return false;
         }
@@ -130,7 +141,17 @@ class SpansRelations extends BLSpans {
         return start;
     }
 
-    private final PayloadSpanCollector collector = new PayloadSpanCollector();
+    private static class PayloadAndtermCollector extends PayloadSpanCollector {
+        public Term term;
+
+        @Override
+        public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
+            this.term = term;
+            super.collectLeaf(postings, position, term);
+        }
+    }
+
+    private final PayloadAndtermCollector collector = new PayloadAndtermCollector();
 
     @Override
     public int endPosition() {
@@ -149,12 +170,13 @@ class SpansRelations extends BLSpans {
             byte[] payload = collector.getPayloads().iterator().next();
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
             relationInfo.deserialize(relationsMatches.startPosition(), dataInput);
+            relationInfo.setRelationTerm(collector.term.text());
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
     }
 
-    public RelationInfo getRelationInfo() {
+    public MatchInfo getRelationInfo() {
         return relationInfo;
     }
 

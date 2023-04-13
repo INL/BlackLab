@@ -8,8 +8,6 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.spans.Spans;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Gather hits from a Spans object in "buckets" by the start point of the hits.
  * Allow us to retrieve all hits that start at a certain point.
@@ -29,7 +27,7 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
 
     private IntArrayList endPoints = new IntArrayList(LIST_INITIAL_CAPACITY);
 
-    private List<Span[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
+    private List<MatchInfo[]> capturedGroupsPerEndpoint = new ArrayList<>(LIST_INITIAL_CAPACITY);
 
     private int bucketSize = 0;
 
@@ -111,15 +109,15 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
         }
 
         doCapturedGroups = clauseCapturesGroups && source != null && hitQueryContext != null
-                && hitQueryContext.numberOfCapturedGroups() > 0;
+                && hitQueryContext.numberOfMatchInfos() > 0;
 
         bucketSize = 0;
         currentBucketStart = currentSpansStart;
         while (currentSpansStart != Spans.NO_MORE_POSITIONS && currentSpansStart == currentBucketStart) {
             endPoints.add(source.endPosition());
             if (doCapturedGroups) {
-                Span[] capturedGroups = new Span[hitQueryContext.numberOfCapturedGroups()];
-                source.getCapturedGroups(capturedGroups);
+                MatchInfo[] capturedGroups = new MatchInfo[hitQueryContext.numberOfMatchInfos()];
+                source.getMatchInfo(capturedGroups);
                 capturedGroupsPerEndpoint.add(capturedGroups);
             }
             bucketSize++;
@@ -169,23 +167,23 @@ class SpansInBucketsPerStartPoint extends DocIdSetIterator implements SpansInBuc
     @Override
     public void setHitQueryContext(HitQueryContext context) {
         this.hitQueryContext = context;
-        int before = context.getCaptureRegisterNumber();
+        int before = context.getMatchInfoRegisterNumber();
         source.setHitQueryContext(context);
-        if (context.getCaptureRegisterNumber() == before) {
+        if (context.getMatchInfoRegisterNumber() == before) {
             // Our clause doesn't capture any groups; optimize
             clauseCapturesGroups = false;
         }
     }
 
     @Override
-    public void getCapturedGroups(int indexInBucket, Span[] capturedGroups) {
+    public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
         if (!doCapturedGroups || capturedGroupsPerEndpoint.isEmpty())
             return;
-        Span[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
+        MatchInfo[] previouslyCapturedGroups = capturedGroupsPerEndpoint.get(indexInBucket);
         if (previouslyCapturedGroups != null) {
-            for (int i = 0; i < capturedGroups.length; i++) {
+            for (int i = 0; i < matchInfo.length; i++) {
                 if (previouslyCapturedGroups[i] != null)
-                    capturedGroups[i] = previouslyCapturedGroups[i];
+                    matchInfo[i] = previouslyCapturedGroups[i];
             }
         }
     }
