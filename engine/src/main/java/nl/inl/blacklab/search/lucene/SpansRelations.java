@@ -86,25 +86,29 @@ class SpansRelations extends BLSpans {
     @Override
     public int nextStartPosition() throws IOException {
         do {
-            start = relationsMatches.nextStartPosition();
-            if (start == NO_MORE_POSITIONS) {
+            int clauseStart = relationsMatches.nextStartPosition();
+            if (clauseStart == NO_MORE_POSITIONS) {
+                start = NO_MORE_POSITIONS;
                 end = NO_MORE_POSITIONS;
-                break;
+                return start;
             }
-            fetchRelationInfo();
-            end = relationInfo.getFullSpanEnd();
+            fetchRelationInfo(); // decode the payload
         } while (!matchesFilter());
+
+        // By default, we return the target of the relation (but this can be changed using rspan())
+        start = relationInfo.getTargetStart();
+        end = relationInfo.getTargetEnd();
         return start;
     }
 
     private boolean matchesFilter() {
         switch (direction) {
         case ROOT:
-            return getRelationInfo().isRoot();
+            return relationInfo.isRoot();
         case FORWARD:
-            return getRelationInfo().getSourceStart() <= getRelationInfo().getTargetStart();
+            return relationInfo.getSourceStart() <= getRelationInfo().getTargetStart();
         case BACKWARD:
-            return getRelationInfo().getSourceStart() >= getRelationInfo().getTargetStart();
+            return relationInfo.getSourceStart() >= getRelationInfo().getTargetStart();
         case BOTH_DIRECTIONS:
             return true;
         default:
@@ -135,7 +139,7 @@ class SpansRelations extends BLSpans {
             relationsMatches.collect(collector);
             byte[] payload = collector.getPayloads().iterator().next();
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
-            relationInfo.deserialize(startPosition(), dataInput);
+            relationInfo.deserialize(relationsMatches.startPosition(), dataInput);
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error getting payload");
         }
