@@ -2,11 +2,11 @@ package nl.inl.blacklab.search.matchfilter;
 
 import java.util.Arrays;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterSameTokens extends MatchFilter {
     private final String annotationName;
@@ -72,17 +72,17 @@ public class MatchFilterSameTokens extends MatchFilter {
     public void setHitQueryContext(HitQueryContext context) {
         groupIndex = new int[2];
         for (int i = 0; i < 2; i++)
-            groupIndex[i] = context.registerCapturedGroup(groupName[i]);
+            groupIndex[i] = context.registerMatchInfo(groupName[i]);
     }
 
     @Override
-    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, Span[] capturedGroups) {
+    public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] capturedGroups) {
         int[] segmentTermIds = new int[2];
         for (int i = 0; i < 2; i++) {
-            Span span = capturedGroups[groupIndex[i]];
+            MatchInfo span = capturedGroups[groupIndex[i]];
             if (span == null)
                 return ConstraintValue.get(false); // if either side is undefined, they are not equal
-            int tokenPosition = span.start();
+            int tokenPosition = span.getFullSpanStart();
             if (annotIndex < 0) {
                 // strange... (if not annotation given, compare positions..!? shouldn't happen, but...)
                 segmentTermIds[i] = tokenPosition;

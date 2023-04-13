@@ -7,6 +7,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A list of simple hits.
@@ -114,6 +115,15 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      * @return end position
      */
     int end(long index);
+
+    /**
+     * Get extra information for a match, such as captured groups and relations.
+     *
+     * Only available if the query captures such information.
+     *
+     * @return extra information for a match, or null if none available
+     */
+    MatchInfo[] matchInfo(long index);
 
     long size();
 

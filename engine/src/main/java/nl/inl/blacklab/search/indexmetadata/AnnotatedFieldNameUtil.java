@@ -204,6 +204,21 @@ public final class AnnotatedFieldNameUtil {
     }
 
     /**
+     * Given the indexed term, return the full relation type.
+     *
+     * This leaves out any attributes indexed with the relation.
+     *
+     * @param indexedTerm the term indexed in Lucene
+     * @return the full relation type
+     */
+    public static String fullRelationTypeFromIndexedTerm(String indexedTerm) {
+        int sep = indexedTerm.indexOf(ATTR_SEPARATOR);
+        if (sep < 0)
+            return indexedTerm;
+        return indexedTerm.substring(0, sep);
+    }
+
+    /**
      * Split a full relation type into relation class and relation type.
      *
      * Relations are indexed with a full type, consisting of a relation class and a relation type.

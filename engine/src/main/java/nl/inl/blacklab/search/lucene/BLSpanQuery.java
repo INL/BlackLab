@@ -102,15 +102,6 @@ public abstract class BLSpanQuery extends SpanQuery {
         return clausesToString(field, Arrays.asList(clauses));
     }
 
-    public static BLSpanQuery ensureSortedUnique(BLSpanQuery spanQuery) {
-        if (spanQuery.hitsStartPointSorted()) {
-            if (spanQuery.hitsAreUnique())
-                return spanQuery;
-            return new SpanQueryUnique(spanQuery);
-        }
-        return new SpanQuerySorted(spanQuery, false, !spanQuery.hitsAreUnique());
-    }
-
     public static BLSpanQuery ensureSorted(BLSpanQuery spanQuery) {
         if (spanQuery.hitsStartPointSorted()) {
             return spanQuery;
@@ -259,11 +250,6 @@ public abstract class BLSpanQuery extends SpanQuery {
     /**
      * When hit B follows hit A, is it guaranteed that B.start &gt;= A.start? Also,
      * if A.start == B.start, is B.end &gt; A.end?
-     *
-     * Any query class that can return false here MUST ensure that its BLSpans will
-     * be sorted (using {@link BLSpans#ensureStartPointSorted(BLSpans)}), so that
-     * all BLSpans are guaranteed to be startpoint sorted (which is necessary for
-     * {@link BLSpans#advanceStartPosition(int)} to work correctly).
      *
      * @return true if this is guaranteed, false if not
      */

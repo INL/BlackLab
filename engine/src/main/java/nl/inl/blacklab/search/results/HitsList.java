@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.List;
+
 import it.unimi.dsi.fastutil.ints.IntIterator;
 
 /**
@@ -22,11 +24,10 @@ public class HitsList extends HitsAbstract {
      *
      * @param queryInfo query info
      * @param hits the list of hits to wrap, or null for a new list
-     * @param capturedGroups the list of hits to wrap, or null for no captured groups
+     * @param matchInfoNames names of our match infos (e.g. capture groups)
      */
-    protected HitsList(QueryInfo queryInfo, HitsInternal hits, CapturedGroups capturedGroups) {
-        super(queryInfo, hits);
-        this.capturedGroups = capturedGroups;
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits, List<String> matchInfoNames) {
+        super(queryInfo, hits, matchInfoNames);
 
         hitsCounted = this.hitsInternal.size();
 
@@ -59,16 +60,15 @@ public class HitsList extends HitsAbstract {
                        long hitsCounted,
                        long docsRetrieved,
                        long docsCounted,
-                       CapturedGroups capturedGroups,
+                       List<String> matchInfoNames,
                        boolean ascendingLuceneDocIds
                        ) {
-        super(queryInfo, hits);
+        super(queryInfo, hits, matchInfoNames);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         this.hitsCounted = hitsCounted;
         this.docsRetrieved = docsRetrieved;
         this.docsCounted = docsCounted;
-        this.capturedGroups = capturedGroups;
         this.ascendingLuceneDocIds = ascendingLuceneDocIds;
     }
 

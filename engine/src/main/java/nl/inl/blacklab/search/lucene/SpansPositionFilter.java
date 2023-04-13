@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
 /**
@@ -492,11 +491,11 @@ class SpansPositionFilter extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        producer.getCapturedGroups(capturedGroups);
-        filter.getCapturedGroups(filterIndex, capturedGroups);
+        producer.getMatchInfo(relationInfo);
+        filter.getMatchInfo(filterIndex, relationInfo);
     }
 
     @Override

@@ -6,7 +6,6 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.spans.SpanCollector;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Expands the source spans to the left and right to form N-grams.
@@ -370,10 +369,10 @@ class SpansFilterNGramsRaw extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        clause.getCapturedGroups(capturedGroups);
+        clause.getMatchInfo(relationInfo);
     }
 
     @Override

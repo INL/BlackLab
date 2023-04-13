@@ -11,9 +11,9 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * Stub Spans class for testing. Takes arrays and iterates through 'hits' from
@@ -231,7 +231,7 @@ public class MockSpans extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         // just ignore this here
     }
 
