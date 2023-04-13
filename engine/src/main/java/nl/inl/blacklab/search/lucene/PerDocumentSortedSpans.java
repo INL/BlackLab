@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Sort the given Spans per document, according to the given comparator.
  */
@@ -148,10 +146,10 @@ final class PerDocumentSortedSpans extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (indexInBucket < 0 || indexInBucket >= bucketedSpans.bucketSize())
             return;
-        bucketedSpans.getCapturedGroups(indexInBucket, capturedGroups);
+        bucketedSpans.getMatchInfo(indexInBucket, relationInfo);
     }
 
     @Override

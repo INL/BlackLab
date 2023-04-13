@@ -9,7 +9,7 @@ import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * Utilities for dealing with payloads in BlackLab.
@@ -196,7 +196,7 @@ public class PayloadUtils {
 
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            RelationInfo.serializeInlineTag(startPosition, endPosition, new OutputStreamDataOutput(os));
+            MatchInfo.serializeInlineTag(startPosition, endPosition, new OutputStreamDataOutput(os));
             return new BytesRef(os.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);

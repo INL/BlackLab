@@ -11,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class TestRelationInfo {
+public class TestMatchInfo {
 
     /** Bound for our random numbers, chosen safely to avoid over/underflow */
     public static final int RND_BOUND = Integer.MAX_VALUE / 3;
@@ -26,10 +26,10 @@ public class TestRelationInfo {
     }
 
     @Test
-    public void testRelationInfoSerialization() throws IOException {
+    public void testMatchInfoSerialization() throws IOException {
         for (int i = 0; i < NUMBER_OF_TESTS; i++) {
 
-            // Create a random RelationInfo structure
+            // Create a random MatchInfo structure
             boolean onlyHasTarget = random.nextBoolean();
             int sourceStart = random.nextInt(RND_BOUND);
             int sourceEnd = sourceStart + random.nextInt(RND_BOUND);
@@ -41,7 +41,7 @@ public class TestRelationInfo {
                 sourceStart = targetStart;
                 sourceEnd = targetEnd;
             }
-            RelationInfo relationInfo = new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
+            MatchInfo relationInfo = new MatchInfo(null, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd);
 
             // Randomly index at either source or target
             int currentPos = random.nextBoolean() ? sourceStart : targetStart;
@@ -52,7 +52,7 @@ public class TestRelationInfo {
             byte[] payload = new BytesRef(os.toByteArray()).bytes;
 
             // Decode it again
-            RelationInfo decoded = new RelationInfo();
+            MatchInfo decoded = new MatchInfo();
             decoded.deserialize(currentPos, new ByteArrayDataInput(payload));
 
             Assert.assertEquals(relationInfo, decoded);

@@ -79,10 +79,10 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private Direction direction;
 
-    private RelationInfo.SpanMode spanMode;
+    private MatchInfo.SpanMode spanMode;
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType,
-            Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode) {
+            Map<String, String> attributes, Direction direction, MatchInfo.SpanMode spanMode) {
         super(queryInfo);
 
         // Construct the clause from the field, relation type and attributes
@@ -94,12 +94,12 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationType, BLSpanQuery clause,
-            Direction direction, RelationInfo.SpanMode spanMode) {
+            Direction direction, MatchInfo.SpanMode spanMode) {
         super(queryInfo);
         init(relationFieldName, relationType, clause, direction, spanMode);
     }
 
-    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode) {
+    private void init(String relationFieldName, String relationType, BLSpanQuery clause, Direction direction, MatchInfo.SpanMode spanMode) {
         this.relationType = relationType;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(relationFieldName);
         this.relationFieldName = relationFieldName;
@@ -157,8 +157,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
-            return new SpansRelations(spans, primaryIndicator, direction,
-                    spanMode);
+            return new SpansRelations(relationType, spans, primaryIndicator, direction, spanMode);
         }
 
     }

@@ -9,7 +9,6 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.Span;
 
 /**
  * Return all n-grams of certain lengths.
@@ -221,7 +220,7 @@ class SpansNGrams extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         // no clause, no groups
     }
 

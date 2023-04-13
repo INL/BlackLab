@@ -5,8 +5,6 @@ import java.io.IOException;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Remove consecutive duplicate hits from a source spans.
  */
@@ -106,10 +104,10 @@ class SpansUnique extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        src.getCapturedGroups(capturedGroups);
+        src.getMatchInfo(relationInfo);
     }
 
     @Override

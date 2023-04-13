@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
  * same document id, the same start and the same end positions will be kept.
@@ -225,11 +223,11 @@ class SpansAnd extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        spans[0].getCapturedGroups(capturedGroups);
-        spans[1].getCapturedGroups(capturedGroups);
+        spans[0].getMatchInfo(relationInfo);
+        spans[1].getMatchInfo(relationInfo);
     }
 
     @Override

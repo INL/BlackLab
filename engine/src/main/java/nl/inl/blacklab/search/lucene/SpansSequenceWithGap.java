@@ -4,8 +4,6 @@ import java.io.IOException;
 
 import org.apache.lucene.search.spans.SpanCollector;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Combines spans, keeping only combinations of hits that occur one after the
  * other. The order is significant: a hit from the first span must be followed
@@ -404,11 +402,11 @@ class SpansSequenceWithGap extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
-        left.getCapturedGroups(capturedGroups);
-        right.getCapturedGroups(indexInBucketLeftEnd, capturedGroups);
+        left.getMatchInfo(relationInfo);
+        right.getMatchInfo(indexInBucketLeftEnd, relationInfo);
     }
 
     @Override

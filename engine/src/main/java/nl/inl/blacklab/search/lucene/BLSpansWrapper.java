@@ -6,8 +6,6 @@ import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.TermSpans;
 
-import nl.inl.blacklab.search.Span;
-
 /**
  * Wrap a "simple" Spans object in a BLSpans object. It will give the guarantees
  * appropriate for single-term Spans like that of SpanTermQuery, SpanRegexQuery,
@@ -59,11 +57,11 @@ public class BLSpansWrapper extends BLSpans {
     }
 
     @Override
-    public void getCapturedGroups(Span[] capturedGroups) {
+    public void getMatchInfo(MatchInfo[] relationInfo) {
         if (!childClausesCaptureGroups)
             return;
         if (source instanceof BLSpans) // shouldn't happen, but ok
-            ((BLSpans) source).getCapturedGroups(capturedGroups);
+            ((BLSpans) source).getMatchInfo(relationInfo);
     }
 
     @Override

@@ -1,23 +1,21 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.search.spans.SpanWeight.Postings;
+import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.search.Span;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.util.ThreadAborter;
 
 /** 
@@ -59,8 +57,6 @@ class SpansReader implements Runnable {
     final AtomicLong globalHitsToCount;
     /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
     private final HitsInternalMutable globalResults;
-    /** Master list of capturedGroups (only set if any groups to capture. Should always be locked before writing! */
-    private CapturedGroupsImpl globalCapturedGroups;
 
     // Internal state
     boolean isDone = false;
@@ -73,11 +69,11 @@ class SpansReader implements Runnable {
     private int prevDoc = -1;
 
     /**
+     * TODO: update this (CapturedGroups doesn't exist anymore)
+     *
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
-     *
-     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object, HitQueryContext and
+     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
      * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
-     *
      * It is done this way because of an initialization order issue with capture groups.
      * The issue is as follows:
      * - we want to lazy-initialize Spans objects:
@@ -85,24 +81,19 @@ class SpansReader implements Runnable {
      * 2. because only a few SpansReaders are active at a time.
      * 3. because they take a long time to setup.
      * 4. because we might not even need them all if a hits limit has been set.
-     *
      * So if we pre-create them all, we're doing a lot of upfront work we possibly don't need to.
      * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
      * simultaneously even though we're not using them simultaneously.
      * However, in order to know whether a query (such as A:([pos="A.*"]) "ship") uses/produces capture groups (and how many groups)
      * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
-     *
      * No why we need to know this:
      * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
      * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
-     *
      * So to summarise: there is an order issue.
      * - we want to lazy-init the Spans.
      * - but we need the capture groups object.
      * - for that we need at least one Spans object created.
-     *
      * Hence the explicit initialization of the first SpansReader by HitsFromQueryParallel.
-     *
      * This will create one of the Spans objects so we can create and set the CapturedGroups object in this
      * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
      * lazy-initialize when needed.
@@ -111,7 +102,6 @@ class SpansReader implements Runnable {
      * @param leafReaderContext     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
      * @param globalResults         global results object (must be locked before writing)
-     * @param globalCapturedGroups  global captured groups object (must be locked before writing)
      * @param globalDocsProcessed   global docs retrieved counter
      * @param globalDocsCounted     global docs counter (includes ones that weren't retrieved because of max. settings)
      * @param globalHitsProcessed   global hits retrieved counter
@@ -125,8 +115,7 @@ class SpansReader implements Runnable {
         HitQueryContext sourceHitQueryContext,
 
         HitsInternalMutable globalResults,
-        CapturedGroupsImpl globalCapturedGroups,
-        AtomicLong globalDocsProcessed,
+            AtomicLong globalDocsProcessed,
         AtomicLong globalDocsCounted,
         AtomicLong globalHitsProcessed,
         AtomicLong globalHitsCounted,
@@ -142,7 +131,6 @@ class SpansReader implements Runnable {
         this.leafReaderContext = leafReaderContext;
 
         this.globalResults = globalResults;
-        this.globalCapturedGroups = globalCapturedGroups;
         this.globalDocsProcessed = globalDocsProcessed;
         this.globalDocsCounted = globalDocsCounted;
         this.globalHitsProcessed = globalHitsProcessed;
@@ -152,6 +140,23 @@ class SpansReader implements Runnable {
 
         this.isInitialized = false;
         this.isDone = false;
+    }
+
+    /**
+     * Check if hit is the same as the last hit.
+     *
+     * @param doc   the document number
+     * @param start the start position
+     * @param end   the end position
+     * @param matchInfo the match info
+     */
+    public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
+        long prev = hits.size() - 1;
+        if (hits.size() == 0 || doc != hits.doc(prev) || start != hits.start(prev) || end != hits.end(prev) ||
+                !MatchInfo.equal(matchInfo, hits.matchInfo(prev))) {
+            return false;
+        }
+        return true;
     }
 
     void initialize() {
@@ -216,8 +221,7 @@ class SpansReader implements Runnable {
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
             return;
 
-        final int numCaptureGroups = hitQueryContext.numberOfCapturedGroups();
-        final ArrayList<Span[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
+        final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
         final HitsInternalMutable results = HitsInternal.create(-1, true, true);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
@@ -241,10 +245,24 @@ class SpansReader implements Runnable {
                 if (abortBeforeCounting)
                     return;
 
-                // only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we store this hit.
-                final boolean storeThisHit = this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
-
+                // Find all the hit information
                 final int doc = spans.docID() + docBase;
+                int start = spans.startPosition();
+                int end = spans.endPosition();
+                MatchInfo[] matchInfo = null;
+                if (numMatchInfos > 0) {
+                    matchInfo = new MatchInfo[numMatchInfos];
+                    hitQueryContext.getMatchInfo(matchInfo);
+                }
+
+                // Check that this is a unique hit, not the exact same as the previous one.
+                boolean isSameAsLast = isSameAsLast(results, doc, start, end, matchInfo);
+
+                // only if unique hit and previous value (which is returned) was not yet at the limit
+                // (and thus we actually incremented) do we store this hit.
+                final boolean storeThisHit = !isSameAsLast &&
+                        this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
+
                 if (doc != prevDoc) {
                     globalDocsCounted.incrementAndGet();
                     if (storeThisHit) {
@@ -266,20 +284,13 @@ class SpansReader implements Runnable {
                         //     operations per leaf reader instead of merging results from leaf readers at an early
                         //     stage like we do here.]
 
-                        addToGlobalResults(results, capturedGroups);
+                        addToGlobalResults(results);
                         results.clear();
                     }
                 }
 
                 if (storeThisHit) {
-                    int start = spans.startPosition();
-                    int end = spans.endPosition();
-                    results.add(doc, start, end);
-                    if (capturedGroups != null) {
-                        Span[] groups = new Span[numCaptureGroups];
-                        hitQueryContext.getCapturedGroups(groups);
-                        capturedGroups.add(groups);
-                    }
+                    results.add(doc, start, end, matchInfo);
                 }
 
                 hasPrefetchedHit = advanceSpansToNextHit(spans, liveDocs);
@@ -295,7 +306,7 @@ class SpansReader implements Runnable {
         } finally {
             // write out leftover hits in last document/aborted document
             if (results.size() > 0) {
-                addToGlobalResults(results, capturedGroups);
+                addToGlobalResults(results);
                 results.clear();
             }
         }
@@ -308,28 +319,11 @@ class SpansReader implements Runnable {
         this.leafReaderContext = null;
     }
 
-    void addToGlobalResults(HitsInternal hits, List<Span[]> capturedGroups) {
+    void addToGlobalResults(HitsInternal hits) {
         globalResults.addAll(hits);
-
-        if (globalCapturedGroups != null) {
-            synchronized (globalCapturedGroups) {
-                HitsInternal.Iterator it = hits.iterator();
-                int i = 0;
-                while (it.hasNext()) {
-                    Hit h = it.next().toHit();
-                    globalCapturedGroups.put(h, capturedGroups.get(i));
-                    ++i;
-                }
-                capturedGroups.clear();
-            }
-        }
     }
 
     public HitQueryContext getHitContext() {
         return hitQueryContext;
-    }
-
-    public void setCapturedGroups(CapturedGroupsImpl capturedGroups) {
-        globalCapturedGroups = capturedGroups;
     }
 }
