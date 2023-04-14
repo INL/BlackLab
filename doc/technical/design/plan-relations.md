@@ -100,7 +100,7 @@ In certain cases we may want to combine two relations into a single larger span,
 
 A simple way to implement this operation is to return a combined span that has the source and target of the first relation. The source/target from the second relation that was not matched on is lost, but users could still capture those in a group if necessary.
 
-For the low-level syntax, capturing would be up to the user, but for the specicic dependency relations syntax, we could automatically capture relevant parts.
+For the low-level syntax, capturing would be up to the user, but for the specific dependency relations syntax, we could automatically capture relevant parts.
 
 ### Longer sources and targets
 
@@ -127,7 +127,7 @@ In addition to finding specific relations and combining them, maybe we want to f
 
 ## CQL syntax
 
-We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in #396, we'll use a simple function call style for now.
+We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in [#396](https://github.com/INL/BlackLab/issues/396), we'll use a simple function call style for now.
 
 We can always add more user-friendly CQL extensions or additional query languages later if we want.
 
