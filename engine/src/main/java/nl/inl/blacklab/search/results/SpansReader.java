@@ -1,8 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongUnaryOperator;
 
@@ -71,6 +69,8 @@ class SpansReader implements Runnable {
     private int prevDoc = -1;
 
     /**
+     * TODO: update this (CapturedGroups doesn't exist anymore)
+     *
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
      * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
      * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
@@ -221,10 +221,7 @@ class SpansReader implements Runnable {
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
             return;
 
-        final int numCaptureGroups = hitQueryContext.numberOfMatchInfos();
-
-        // FIXME: remove when matchInfo is fully integrated
-        final ArrayList<MatchInfo[]> capturedGroups = numCaptureGroups > 0 ? new ArrayList<>() : null;
+        final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
         final HitsInternalMutable results = HitsInternal.create(-1, true, true);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
@@ -253,10 +250,9 @@ class SpansReader implements Runnable {
                 int start = spans.startPosition();
                 int end = spans.endPosition();
                 MatchInfo[] matchInfo = null;
-                if (numCaptureGroups > 0) {
-                    matchInfo = new MatchInfo[numCaptureGroups];
+                if (numMatchInfos > 0) {
+                    matchInfo = new MatchInfo[numMatchInfos];
                     hitQueryContext.getMatchInfo(matchInfo);
-                    //capturedGroups.add(matchInfo);
                 }
 
                 // Check that this is a unique hit, not the exact same as the previous one.
@@ -288,7 +284,7 @@ class SpansReader implements Runnable {
                         //     operations per leaf reader instead of merging results from leaf readers at an early
                         //     stage like we do here.]
 
-                        addToGlobalResults(results, capturedGroups);
+                        addToGlobalResults(results);
                         results.clear();
                     }
                 }
@@ -310,7 +306,7 @@ class SpansReader implements Runnable {
         } finally {
             // write out leftover hits in last document/aborted document
             if (results.size() > 0) {
-                addToGlobalResults(results, capturedGroups);
+                addToGlobalResults(results);
                 results.clear();
             }
         }
@@ -323,7 +319,7 @@ class SpansReader implements Runnable {
         this.leafReaderContext = null;
     }
 
-    void addToGlobalResults(HitsInternal hits, List<MatchInfo[]> capturedGroups) {
+    void addToGlobalResults(HitsInternal hits) {
         globalResults.addAll(hits);
     }
 
